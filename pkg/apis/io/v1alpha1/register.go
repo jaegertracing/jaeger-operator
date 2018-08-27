@@ -14,8 +14,12 @@ const (
 )
 
 var (
+	// SchemeBuilder for the operator, with our known types
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	AddToScheme   = SchemeBuilder.AddToScheme
+
+	// AddToScheme for the operator, based on the scheme builder
+	AddToScheme = SchemeBuilder.AddToScheme
+
 	// SchemeGroupVersion is the group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: groupName, Version: version}
 )

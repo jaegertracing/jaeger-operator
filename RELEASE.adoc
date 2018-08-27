@@ -1,0 +1,14 @@
+= Releasing the Jaeger Operator for Kubernetes
+
+1. Set the image name
+
+  export BUILD_IMAGE=jaegertracing/jaeger-operator:1.6
+
+1. Build
+
+  operator-sdk build ${BUILD_IMAGE}
+
+1. Push the image
+
+  docker push ${BUILD_IMAGE}
+

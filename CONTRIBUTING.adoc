@@ -1,0 +1,119 @@
+= How to Contribute to the Jaeger Operator for Kubernetes
+:toc[]:
+
+We'd love your help!
+
+This project is link:LICENSE[Apache 2.0 licensed] and accepts contributions via GitHub pull requests. This document outlines some of the conventions on development workflow, commit message formatting, contact points and other resources to make it easier to get your contribution accepted.
+
+We gratefully welcome improvements to documentation as well as to code.
+
+== Certificate of Origin
+
+By contributing to this project you agree to the link:https://developercertificate.org/[Developer Certificate of Origin] (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. See the [DCO](DCO) file for details.
+
+== Getting Started
+
+This project is a regular link:https://coreos.com/operators/[Kubernetes Operator]  built using the Operator SDK. Refer to the Operator SDK documentation to understand the basic architecture of this operator.
+
+=== Installing the Operator SDK command line tool
+
+At the time of this writing, the link:https://github.com/operator-framework/operator-sdk[Operator SDK GitHub page] listed the following commands as required to install the command line tool:
+
+[source,bash]
+----
+mkdir -p $GOPATH/src/github.com/operator-framework
+cd $GOPATH/src/github.com/operator-framework
+git clone https://github.com/operator-framework/operator-sdk
+cd operator-sdk
+git checkout master
+make dep
+make install
+----
+
+=== Developing
+
+As usual for operators following the Operator SDK, the dependencies are checked into the source repository under the `vendor` directory. The dependencies are managed using link:https://github.com/golang/dep[`go dep`]. Refer to that project's documentation for instructions on how to add or update dependencies.
+
+The first step is to get a local Kubernetes instance up and running. The recommended approach is using `minikube`. Refer to the Kubernetes'  link:https://kubernetes.io/docs/tasks/tools/install-minikube/[documentation] for instructions on how to install it.
+
+Once `minikube` is installed, it can be started with:
+
+[source,bash]
+----
+minikube start
+----
+
+NOTE: Make sure to read the documentation to learn the performance switches that can be applied to your platform.
+
+Once minikube has finished starting, get the Operator running:
+
+[source,bash]
+----
+make run
+----
+
+At this point, a Jaeger instance can be installed:
+
+[source,bash]
+----
+kubectl apply -f deploy/simplest.yaml
+kubectl get jaegers
+kubectl get pods
+----
+
+To remove the instance:
+[source,bash]
+----
+kubectl delete -f deploy/simplest.yaml
+----
+
+Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
+
+[source,bash]
+----
+make test
+----
+
+NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
+
+==== Model changes
+
+The Operator SDK generates the `pkg/apis/io/v1alpha1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/io/v1alpha1/types.go`)
+
+==== Ingress configuration
+
+Kubernetes comes with no ingress provider by default. For development purposes, when running `minikube`, the following command can be executed to install an ingress provider:
+
+[source,bash]
+----
+make ingress
+----
+
+This will install the `NGINX` ingress provider. It's recommended to wait for the ingress pods to be in the `READY` and `RUNNING` state before starting the operator. You can check it by running:
+
+[source,bash]
+----
+kubectl get pods -n ingress-nginx
+----
+
+To verify that it's working, deploy the `simplest.yaml` and check the ingress routes:
+
+[source,bash]
+----
+$ kubectl apply -f deploy/examples/simplest.yaml 
+jaeger.io.jaegertracing/simplest created
+$ kubectl get ingress
+NAME             HOSTS     ADDRESS          PORTS     AGE
+simplest-query   *         192.168.122.69   80        12s
+----
+
+Accessing the provided "address" in your web browser should display the Jaeger UI.
+
+==== Storage configuration
+
+There's a template under the `test` directory that can be used to setup an Elasticsearch cluster. Alternatively, the following command can be executed to install it:
+
+[source,bash]
+----
+make es
+----

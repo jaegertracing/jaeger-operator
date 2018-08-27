@@ -1,0 +1,127 @@
+image:https://travis-ci.org/jaegertracing/jaeger-operator.svg?branch=master["Build Status", link="https://travis-ci.org/jaegertracing/jaeger-operator"]
+image:https://goreportcard.com/badge/github.com/jaegertracing/jaeger-operator["Go Report Card", link="https://goreportcard.com/report/github.com/jaegertracing/jaeger-operator"]
+image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/badge.svg["Code Coverage", link="https://codecov.io/gh/jaegertracing/jaeger-operator"]
+
+= Jaeger Operator for Kubernetes
+:toc:
+
+WARNING: this is still work in progress. The YAML files mentioned here might (or will) change without notice.
+
+== Installing the operator
+
+NOTE: Make sure your `kubectl` command is properly configured to talk to a valid Kubernetes cluster. If you don't have one yet, check link:https://kubernetes.io/docs/tasks/tools/install-minikube/[`minikube`] out.
+
+To install the operator, run:
+
+[source,bash]
+----
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/rbac.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crd.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
+----
+
+At this point, there should be a `jaeger-operator` deployment available:
+
+[source,bash]
+----
+$ kubectl get deployment jaeger-operator
+NAME              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+jaeger-operator   1         1         1            1           48s
+----
+
+The operator is now ready to create Jaeger instances!
+
+== Creating a new Jaeger instance
+The simplest possible way to install is by creating a YAML file like the following:
+
+.simplest.yaml
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: simplest
+----
+
+The YAML file can then be used with `kubectl`:
+[source,bash]
+----
+kubectl apply -f simplest.yaml
+----
+
+In a few seconds, a new in-memory all-in-one instance of Jaeger will be available, suitable for quick demos and development purposes. To check the instances that were created, list the `jaeger` objects:
+
+[source,bash]
+----
+$ kubectl get jaeger
+NAME        CREATED AT
+simplest    28s
+----
+
+To get the pod name, query for the pods belonging to the `simplest` Jaeger  instance:
+
+[source,bash]
+----
+$ kubectl get pods -l jaeger=simplest
+NAME                        READY     STATUS    RESTARTS   AGE
+simplest-6499bb6cdd-kqx75   1/1       Running   0          2m
+----
+
+Similarly, the logs can be queried either from the pod directly using the pod name obtained from the previous example, or from all pods belonging to our instance:
+
+[source,bash]
+----
+$ kubectl logs -l jaeger=simplest 
+...
+{"level":"info","ts":1535385688.0951214,"caller":"healthcheck/handler.go:133","msg":"Health Check state change","status":"ready"}
+----
+
+For reference, here's how a more complex all-in-one instance can be created:
+
+.all-in-one.yaml
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: my-jaeger
+spec:
+  strategy: all-in-one # <1>
+  all-in-one:
+    image: jaegertracing/all-in-one:1.6 # <2>
+    options: # <3>
+      log-level: debug # <4>
+      memory: # <5>
+        max-traces: 100000
+----
+<1> The default strategy is `all-in-one`. The only other possible value is `production`.
+<2> The image to use, in a regular Docker syntax
+<3> The options to be passed verbatim to the underlying binary.Refer to the Jaeger documentation and/or to the `--help` option from the related binary for all the available options
+<4> The option is a simple `key: value` map. In this case, we want the option `--log-level=debug` to be passed to the binary.
+<5> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
+
+== Removing an instance
+
+To remove an instance, just use the `delete` command with the file used for the instance creation:
+[source,bash]
+----
+kubectl delete -f simplest.yaml
+----
+
+Alternatively, you can remove a Jaeger instance by running:
+[source,bash]
+----
+kubectl delete jaeger simplest
+----
+
+NOTE: deleting the instance will not remove the data from a permanent storage used with this instance. Data from in-memory instances, however, will be lost.
+
+== Uninstalling the operator
+
+Similar to the installation, just run:
+
+[source,bash]
+----
+kubectl create -f deploy/operator.yaml
+kubectl create -f deploy/rbac.yaml
+----
