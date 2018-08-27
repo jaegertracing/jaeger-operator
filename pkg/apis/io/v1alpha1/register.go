@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	sdkK8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,8 +13,12 @@ const (
 )
 
 var (
+	// SchemeBuilder for the operator, with our known types
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	AddToScheme   = SchemeBuilder.AddToScheme
+
+	// AddToScheme for the operator, based on the scheme builder
+	AddToScheme = SchemeBuilder.AddToScheme
+
 	// SchemeGroupVersion is the group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: groupName, Version: version}
 )

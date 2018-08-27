@@ -3,66 +3,59 @@ package stub
 import (
 	"context"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 )
 
+// NewHandler constructs a new Jaeger operator handler
 func NewHandler() sdk.Handler {
 	return &Handler{}
 }
 
+// Handler holds the state for our handler
 type Handler struct {
-	// Fill me
 }
 
+// Handle the event triggered by the operator
 func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.Jaeger:
-		err := sdk.Create(newbusyBoxPod(o))
-		if err != nil && !errors.IsAlreadyExists(err) {
-			logrus.Errorf("failed to create busybox pod : %v", err)
-			return err
+		if event.Deleted {
+			logrus.Infof("Deleting '%s'", o.Name)
+			// aparently, everything created by the CR should cascade the deletion to the
+			// resources it created, so, no need to do anything
+			// on a next version, we could think about cleaning up the data pertaining to
+			// us at the storage level, but not for now
+			return nil
+		}
+
+		ctrl := controller.NewController(ctx, o)
+
+		objs := ctrl.Create()
+		for _, obj := range objs {
+			err := sdk.Create(obj)
+			if err != nil && !apierrors.IsAlreadyExists(err) {
+				logrus.Errorf("failed to create %v", obj)
+				return err
+			}
+
+			if err == nil {
+				logrus.Infof("Created '%v'", o.Name)
+			}
+		}
+
+		objs = ctrl.Update()
+		for _, obj := range objs {
+			logrus.Debugf("Updating %v", obj)
+			if err := sdk.Update(obj); err != nil {
+				logrus.Errorf("failed to update %v", obj)
+				return err
+			}
 		}
 	}
 	return nil
-}
-
-// newbusyBoxPod demonstrates how to create a busybox pod
-func newbusyBoxPod(cr *v1alpha1.Jaeger) *corev1.Pod {
-	labels := map[string]string{
-		"app": "busy-box",
-	}
-	return &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "busy-box",
-			Namespace: cr.Namespace,
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
-					Group:   v1alpha1.SchemeGroupVersion.Group,
-					Version: v1alpha1.SchemeGroupVersion.Version,
-					Kind:    "Jaeger",
-				}),
-			},
-			Labels: labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
-	}
 }
