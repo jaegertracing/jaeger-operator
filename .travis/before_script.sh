@@ -31,6 +31,7 @@ cd operator-sdk
 git checkout master > /dev/null
 make dep > /dev/null
 make install > /dev/null
+cd ${TRAVIS_BUILD_DIR}
 
 echo "Starting a Kubernetes cluster with minikube/localkube"
 sudo minikube start --vm-driver=none --kubernetes-version=v1.10.0 --bootstrapper=localkube > /dev/null
