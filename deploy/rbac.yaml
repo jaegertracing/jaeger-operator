@@ -30,6 +30,12 @@ rules:
   - statefulsets
   verbs:
   - "*"
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - "*"
 
 ---
 

@@ -100,6 +100,27 @@ spec:
 <4> The option is a simple `key: value` map. In this case, we want the option `--log-level=debug` to be passed to the binary.
 <5> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
 
+== Accessing the UI
+
+The operator creates a Kubernetes link:https://kubernetes.io/docs/concepts/services-networking/ingress/[`ingress`] route, which is the Kubernetes' standard for exposing a service to the outside world, but it comes with no Ingress providers by default. link:https://kubernetes.github.io/ingress-nginx/deploy/#verify-installation[Check the documentation] on what's the most appropriate way to achieve that for your platform, but the following commands should provide a good start on `minikube`:
+
+[source,bash]
+----
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml
+minikube addons enable ingress
+----
+
+Once that is done, the UI can be found by querying the Ingress object:
+
+[source,bash]
+----
+$ kubectl get ingress
+NAME             HOSTS     ADDRESS          PORTS     AGE
+simplest-query   *         192.168.122.34   80        3m
+----
+
+In this example, the Jaeger UI is available at http://192.168.122.34
+
 == Removing an instance
 
 To remove an instance, just use the `delete` command with the file used for the instance creation:
