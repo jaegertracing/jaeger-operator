@@ -54,5 +54,5 @@ generate:
 	@operator-sdk generate k8s
 
 test: unit-tests e2e-tests
-all: check format lint test
+all: check format lint unit-tests
 ci: all

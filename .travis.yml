@@ -1,20 +1,20 @@
 language: go
 sudo: required
 
-services:
-- docker
+# services:
+# - docker
 
 go:
 - 1.10.1
 
-env:
-- BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}" KUBERNETES_CONFIG_FILE=$HOME/.kube/config CHANGE_MINIKUBE_NONE_USER=true
+# env:
+# - BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}" KUBERNETES_CONFIG_FILE=$HOME/.kube/config CHANGE_MINIKUBE_NONE_USER=true
 
-before_script:
-- ./.travis/before_script.sh
+# before_script:
+# - ./.travis/before_script.sh
 
-install:
-- ./.travis/install.sh
+install: true
+# - ./.travis/install.sh
 
 script:
 - ./.travis/script.sh
@@ -22,5 +22,5 @@ script:
 after_success:
 - ./.travis/after_success.sh
 
-after_failure:
-- ./.travis/after_failure.sh
+# after_failure:
+# - ./.travis/after_failure.sh
