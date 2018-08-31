@@ -31,6 +31,7 @@ cd operator-sdk
 git checkout master > /dev/null
 make dep > /dev/null
 make install > /dev/null
+cd ${TRAVIS_BUILD_DIR}
 
 echo "Starting a Kubernetes cluster with minikube/localkube"
 sudo minikube start --vm-driver=none --kubernetes-version=v1.10.0 --bootstrapper=localkube > /dev/null
@@ -45,5 +46,6 @@ echo "Performing a 'docker login' operation"
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 echo "Initializing an Elasticsearch cluster"
+cat Makefile
 make es
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get pods -lapp=jaeger-elasticsearch -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
