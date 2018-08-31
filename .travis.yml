@@ -10,8 +10,8 @@ go:
 # env:
 # - BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}" KUBERNETES_CONFIG_FILE=$HOME/.kube/config CHANGE_MINIKUBE_NONE_USER=true
 
-# before_script:
-# - ./.travis/before_script.sh
+before_script:
+- ./.travis/before_script.sh
 
 install: true
 # - ./.travis/install.sh
