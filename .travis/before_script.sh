@@ -45,5 +45,6 @@ echo "Performing a 'docker login' operation"
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 echo "Initializing an Elasticsearch cluster"
+cat Makefile
 make es
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get pods -lapp=jaeger-elasticsearch -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
