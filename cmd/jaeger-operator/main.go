@@ -34,5 +34,5 @@ func main() {
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
-	sdk.Run(context.TODO())
+	sdk.Run(context.Background())
 }
