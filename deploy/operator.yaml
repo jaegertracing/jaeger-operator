@@ -14,12 +14,13 @@ spec:
     spec:
       containers:
         - name: jaeger-operator
-          image: jpkroehling/jaeger-operator:latest
+          image: jaegertracing/jaeger-operator:1.6
           ports:
           - containerPort: 60000
             name: metrics
           command:
           - jaeger-operator
+          args: ["start"]
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

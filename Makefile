@@ -1,10 +1,17 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 CI_COMMIT_SHA ?= $(shell git rev-parse HEAD)
 GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
-OPERATOR_NAME=jaeger-operator
-NAMESPACE="$(USER)"
-BUILD_IMAGE="$(NAMESPACE)/$(OPERATOR_NAME):latest"
+KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
+WATCH_NAMESPACE ?= default
+BIN_DIR ?= "_output/bin"
 
+OPERATOR_NAME ?= jaeger-operator
+NAMESPACE ?= "$(USER)"
+BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
+VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/cmd/version"
+
+LD_FLAGS ?= "-X $(VERSION_PKG).gitCommit=$(CI_COMMIT_SHA) -X $(VERSION_PKG).buildDate=$(VERSION_DATE)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
 
 .DEFAULT_GOAL := build
@@ -24,23 +31,29 @@ lint:
 
 build: format
 	@echo Building...
-	@operator-sdk build $(BUILD_IMAGE) > /dev/null
+	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
+
+docker:
+	@docker build -t "$(BUILD_IMAGE)" .
 
 push:
-	@echo Pushing image...
+	@echo Pushing image $(BUILD_IMAGE)...
 	@docker push $(BUILD_IMAGE) > /dev/null
 
 unit-tests:
 	@echo Running unit tests...
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
-e2e-tests: build push
+e2e-tests: build docker push
 	@echo Running end-to-end tests...
-	@operator-sdk test --test-location ./test/e2e
+	@cp deploy/rbac.yaml deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
+	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
+	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crd.yaml -root .
 
 run:
 	@kubectl create -f deploy/crd.yaml > /dev/null 2>&1 || true
-	@OPERATOR_NAME=$(OPERATOR_NAME) operator-sdk up local
+	@OPERATOR_NAME=$(OPERATOR_NAME) KUBERNETES_CONFIG=$(KUBERNETES_CONFIG) WATCH_NAMESPACE=$(WATCH_NAMESPACE) ./_output/bin/jaeger-operator start
 
 es:
 	@kubectl create -f ./test/elasticsearch.yml
@@ -54,5 +67,5 @@ generate:
 	@operator-sdk generate k8s
 
 test: unit-tests e2e-tests
-all: check format lint unit-tests
+all: check format lint unit-tests docker
 ci: all

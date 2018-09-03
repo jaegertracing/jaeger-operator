@@ -3,7 +3,7 @@
 tmp/_output
 tmp/_test
 deploy/test
-
+_output
 
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 
