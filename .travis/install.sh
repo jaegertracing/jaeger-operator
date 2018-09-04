@@ -11,9 +11,6 @@ go get github.com/securego/gosec/cmd/gosec/...
 echo "Installing golint"
 go get -u golang.org/x/lint/golint
 
-# echo "Performing a 'docker login' operation"
-# echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
 # if [ ! -d ${HOME}/google-cloud-sdk ]; then
 #     curl https://sdk.cloud.google.com | bash;
 # fi
