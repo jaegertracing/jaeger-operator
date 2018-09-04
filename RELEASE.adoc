@@ -1,14 +1,13 @@
 = Releasing the Jaeger Operator for Kubernetes
 
-1. Set the image name
+1. Test!
 
-  export BUILD_IMAGE=jaegertracing/jaeger-operator:1.6
+  export BUILD_IMAGE_TEST="${USER}/jaeger-operator:latest"
+  export BUILD_IMAGE="${BUILD_IMAGE_TEST}"
+  make all
 
-1. Build
+1. Tag and push
 
-  operator-sdk build ${BUILD_IMAGE}
-
-1. Push the image
-
+  export BUILD_IMAGE="jaegertracing/jaeger-operator:1.6"
+  docker tag ${BUILD_IMAGE_TEST} ${BUILD_IMAGE}
   docker push ${BUILD_IMAGE}
-

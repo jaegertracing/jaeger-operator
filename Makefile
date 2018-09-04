@@ -44,21 +44,21 @@ unit-tests:
 	@echo Running unit tests...
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
-e2e-tests: build docker push
+e2e-tests: es crd build docker push
 	@echo Running end-to-end tests...
 	@cp deploy/rbac.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
-	@echo "---" >> deploy/test/namespace-manifests.yaml
-	@cat test/elasticsearch.yml >> deploy/test/namespace-manifests.yaml
 	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crd.yaml -root .
 
-run:
-	@kubectl create -f deploy/crd.yaml > /dev/null 2>&1 || true
+run: crd
 	@OPERATOR_NAME=$(OPERATOR_NAME) KUBERNETES_CONFIG=$(KUBERNETES_CONFIG) WATCH_NAMESPACE=$(WATCH_NAMESPACE) ./_output/bin/jaeger-operator start
 
 es:
-	@kubectl create -f ./test/elasticsearch.yml
+	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
+
+crd:
+	@kubectl create -f deploy/crd.yaml 2>&1 | grep -v "already exists" || true
 
 ingress:
 	# see https://kubernetes.github.io/ingress-nginx/deploy/#verify-installation

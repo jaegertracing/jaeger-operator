@@ -13,7 +13,7 @@ import (
 
 var (
 	retryInterval = time.Second * 5
-	timeout       = time.Minute * 10
+	timeout       = time.Minute * 1
 )
 
 func TestJaeger(t *testing.T) {
@@ -30,10 +30,10 @@ func TestJaeger(t *testing.T) {
 	}
 
 	t.Run("jaeger-group", func(t *testing.T) {
-		// t.Run("my-jaeger", JaegerAllInOne)
-		// t.Run("my-other-jaeger", JaegerAllInOne)
+		t.Run("my-jaeger", JaegerAllInOne)
+		t.Run("my-other-jaeger", JaegerAllInOne)
 
-		// t.Run("simplest", SimplestJaeger)
+		t.Run("simplest", SimplestJaeger)
 		t.Run("simple-prod", SimpleProd)
 	})
 }
@@ -52,7 +52,7 @@ func prepare(t *testing.T) framework.TestCtx {
 	}
 	// get global framework variables
 	f := framework.Global
-	// wait for memcached-operator to be ready
+	// wait for the operator to be ready
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)

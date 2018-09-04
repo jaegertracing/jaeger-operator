@@ -7,9 +7,6 @@ go:
 env:
 - BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}"
 
-# before_install:
-# - openssl aes-256-cbc -K $encrypted_001cf465ebf5_key -iv $encrypted_001cf465ebf5_iv -in test/client-secret.json.enc -out test/client-secret.json -d
-
 install:
 - "./.travis/install.sh"
 
