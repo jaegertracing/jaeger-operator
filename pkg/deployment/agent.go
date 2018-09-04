@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 
@@ -20,7 +21,7 @@ type Agent struct {
 // NewAgent builds a new Agent struct based on the given spec
 func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 	if jaeger.Spec.Agent.Image == "" {
-		jaeger.Spec.Agent.Image = "jaegertracing/jaeger-agent:1.6" // TODO: externalize this
+		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &Agent{jaeger: jaeger}

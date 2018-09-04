@@ -1,7 +1,10 @@
 package deployment
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
@@ -21,7 +24,7 @@ type AllInOne struct {
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = "jaegertracing/all-in-one:1.6" // TODO: externalize this
+		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &AllInOne{jaeger: jaeger}

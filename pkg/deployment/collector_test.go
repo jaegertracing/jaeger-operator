@@ -3,10 +3,16 @@ package deployment
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
+
+func init() {
+	viper.SetDefault("jaeger-version", "1.6")
+	viper.SetDefault("jaeger-collector-image", "jaegertracing/all-in-one")
+}
 
 func TestNegativeSize(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNegativeSize")
@@ -38,11 +44,15 @@ func TestCollectorServices(t *testing.T) {
 	assert.Len(t, svcs, 2)
 }
 
-func TestCollectorImage(t *testing.T) {
+func TestDefaultCollectorImage(t *testing.T) {
+	viper.Set("jaeger-collector-image", "org/custom-collector-image")
+	viper.Set("jaeger-version", "123")
+	defer viper.Reset()
+
 	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))
 	dep := collector.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
-	assert.Contains(t, containers[0].Image, "jaeger-collector")
+	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
 }

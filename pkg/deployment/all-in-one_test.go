@@ -3,17 +3,26 @@ package deployment
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
-func TestAllInOneDefaultImage(t *testing.T) {
+func init() {
+	viper.SetDefault("jaeger-version", "1.6")
+	viper.SetDefault("jaeger-all-in-one-image", "jaegertracing/all-in-one")
+}
+
+func TestDefaultAllInOneImage(t *testing.T) {
+	viper.Set("jaeger-all-in-one-image", "org/custom-all-in-one-image")
+	viper.Set("jaeger-version", "123")
+	defer viper.Reset()
+
 	d := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneDefaultImage")).Get()
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
-	// for now, we just assume there one default, but not which one it is
-	assert.NotEmpty(t, d.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestAllInOneHasOwner(t *testing.T) {

@@ -9,9 +9,10 @@ OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
-VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/cmd/version"
+VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
+JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 
-LD_FLAGS ?= "-X $(VERSION_PKG).gitCommit=$(CI_COMMIT_SHA) -X $(VERSION_PKG).buildDate=$(VERSION_DATE)"
+LD_FLAGS ?= "-X $(VERSION_PKG).commit=$(CI_COMMIT_SHA) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
 
 .DEFAULT_GOAL := build

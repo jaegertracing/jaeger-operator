@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +26,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 	}
 
 	if jaeger.Spec.Collector.Image == "" {
-		jaeger.Spec.Collector.Image = "jaegertracing/jaeger-collector:1.6" // TODO: externalize this
+		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &Collector{jaeger: jaeger}

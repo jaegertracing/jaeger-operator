@@ -1,0 +1,5 @@
+# this file contains the version of the Jaeger components that will be used
+# by default with the Jaeger Operator. This would usually be the latest 
+# stable Jaeger version. When you update this file, make sure to update the
+# deploy/operator.yaml and the docs as well.
+1.6

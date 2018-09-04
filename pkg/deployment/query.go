@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
@@ -27,7 +28,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 	}
 
 	if jaeger.Spec.Query.Image == "" {
-		jaeger.Spec.Query.Image = "jaegertracing/jaeger-query:1.6" // TODO: externalize this
+		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-query-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &Query{jaeger: jaeger}

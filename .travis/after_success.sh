@@ -8,8 +8,9 @@ if [ "${TRAVIS_BRANCH}" = "master" -a "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   make docker BUILD_IMAGE=${BUILD_IMAGE}
 
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  export JAEGER_VERSION="$(grep -v '\#' jaeger.version)"
   export BUILD_IMAGE_TEST=${BUILD_IMAGE}
-  export BUILD_IMAGE="jaegertracing/jaeger-operator:1.6"
+  export BUILD_IMAGE="jaegertracing/jaeger-operator:${JAEGER_VERSION}"
   docker tag ${BUILD_IMAGE_TEST} ${BUILD_IMAGE}
   docker push ${BUILD_IMAGE}
 fi

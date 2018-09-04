@@ -6,10 +6,16 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
+
+func init() {
+	viper.SetDefault("jaeger-version", "1.6")
+	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+}
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"

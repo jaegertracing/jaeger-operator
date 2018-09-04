@@ -6,12 +6,18 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
+
+func init() {
+	viper.SetDefault("jaeger-version", "1.6")
+	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+}
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
