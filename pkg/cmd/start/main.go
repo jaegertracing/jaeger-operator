@@ -10,7 +10,6 @@ import (
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // this
 
 	stub "github.com/jaegertracing/jaeger-operator/pkg/stub"
 )

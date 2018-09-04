@@ -1,26 +1,20 @@
 language: go
 sudo: required
 
-# services:
-# - docker
-
 go:
 - 1.10.1
 
-# env:
-# - BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}" KUBERNETES_CONFIG_FILE=$HOME/.kube/config CHANGE_MINIKUBE_NONE_USER=true
+env:
+- BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}"
 
-before_script:
-- ./.travis/before_script.sh
+# before_install:
+# - openssl aes-256-cbc -K $encrypted_001cf465ebf5_key -iv $encrypted_001cf465ebf5_iv -in test/client-secret.json.enc -out test/client-secret.json -d
 
-install: true
-# - ./.travis/install.sh
+install:
+- "./.travis/install.sh"
 
 script:
-- ./.travis/script.sh
+- "./.travis/script.sh"
 
 after_success:
-- ./.travis/after_success.sh
-
-# after_failure:
-# - ./.travis/after_failure.sh
+- "./.travis/after_success.sh"

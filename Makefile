@@ -49,6 +49,8 @@ e2e-tests: build docker push
 	@cp deploy/rbac.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
+	@cat test/elasticsearch.yml >> deploy/test/namespace-manifests.yaml
 	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crd.yaml -root .
 
 run:
@@ -66,6 +68,6 @@ ingress:
 generate:
 	@operator-sdk generate k8s
 
-test: unit-tests docker e2e-tests
-all: check format lint unit-tests
-ci: all
+test: unit-tests e2e-tests
+all: check format lint build test
+ci: check format lint build unit-tests
