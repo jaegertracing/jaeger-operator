@@ -7,7 +7,7 @@ image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/ba
 
 WARNING: this is still work in progress. The YAML files mentioned here might (or will) change without notice.
 
-== Installing the operator
+== Installing the operator on Kubernetes
 
 NOTE: Make sure your `kubectl` command is properly configured to talk to a valid Kubernetes cluster. If you don't have one yet, check link:https://kubernetes.io/docs/tasks/tools/install-minikube/[`minikube`] out.
 
@@ -30,6 +30,31 @@ jaeger-operator   1         1         1            1           48s
 ----
 
 The operator is now ready to create Jaeger instances!
+
+== Installing the operator on OpenShift
+
+The instructions from the previous section also work on OpenShift, but make sure to install the RBAC rules, the CRD and the operator as a privileged user, such as `system:admin`. 
+
+[source,bash]
+----
+oc login -u system:admin
+
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/rbac.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crd.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
+----
+
+Once the operator is installed, grant the role `jaeger-operator` to users who should be able to install individual Jaeger instances. The following example creates a role binding allowing the user `developer` to create Jaeger instances:
+
+[source,bash]
+----
+oc create \
+  rolebinding developer-jaeger-operator \
+  --role=jaeger-operator \
+  --user=developer
+----
+
+After the role is granted, switch back to a non-privileged user.
 
 == Creating a new Jaeger instance
 The simplest possible way to install is by creating a YAML file like the following:
@@ -106,7 +131,6 @@ The operator creates a Kubernetes link:https://kubernetes.io/docs/concepts/servi
 
 [source,bash]
 ----
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml
 minikube addons enable ingress
 ----
 
@@ -120,6 +144,24 @@ simplest-query   *         192.168.122.34   80        3m
 ----
 
 In this example, the Jaeger UI is available at http://192.168.122.34
+
+=== OpenShift
+
+For OpenShift, the preferred approach is to create a `route` object that will expose the UI under a specific address:
+
+[source,bash]
+----
+oc create route edge --service simplest-query --port 16686
+----
+
+Check the hostname/port with the following command:
+
+[source,bash]
+----
+oc get routes
+----
+
+NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
 
 == Removing an instance
 
