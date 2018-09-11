@@ -5,8 +5,6 @@ image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/ba
 = Jaeger Operator for Kubernetes
 :toc:
 
-WARNING: this is still work in progress. The YAML files mentioned here might (or will) change without notice.
-
 == Installing the operator on Kubernetes
 
 NOTE: Make sure your `kubectl` command is properly configured to talk to a valid Kubernetes cluster. If you don't have one yet, check link:https://kubernetes.io/docs/tasks/tools/install-minikube/[`minikube`] out.
