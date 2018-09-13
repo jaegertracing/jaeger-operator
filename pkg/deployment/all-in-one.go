@@ -35,6 +35,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	logrus.Debug("Assembling an all-in-one deployment")
 	selector := a.selector()
 	trueVar := true
+	annotations := map[string]string{
+		"prometheus.io/scrape": "true",
+		"prometheus.io/port":   "16686",
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -60,7 +64,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: selector,
+					Labels:      selector,
+					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{

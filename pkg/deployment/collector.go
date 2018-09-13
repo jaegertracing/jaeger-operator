@@ -39,6 +39,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 	selector := c.selector()
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
+	annotations := map[string]string{
+		"prometheus.io/scrape": "true",
+		"prometheus.io/port":   "14268",
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -65,7 +69,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: selector,
+					Labels:      selector,
+					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
