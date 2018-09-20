@@ -62,7 +62,7 @@ func TestQueryServices(t *testing.T) {
 }
 
 func TestQueryIngresses(t *testing.T) {
-	newBool := func (value bool) *bool {
+	newBool := func(value bool) *bool {
 		return &value
 	}
 
@@ -78,12 +78,12 @@ func TestQueryIngresses(t *testing.T) {
 		},
 		{
 			name:                   "IngressEnabledFalse",
-			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled:newBool(false)},
+			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled: newBool(false)},
 			expectedIngressesCount: 0,
 		},
 		{
 			name:                   "IngressEnabledTrue",
-			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled:newBool(true)},
+			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled: newBool(true)},
 			expectedIngressesCount: 1,
 		},
 	}
