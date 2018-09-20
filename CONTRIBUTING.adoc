@@ -56,7 +56,7 @@ At this point, a Jaeger instance can be installed:
 
 [source,bash]
 ----
-kubectl apply -f deploy/simplest.yaml
+kubectl apply -f deploy/examples/simplest.yaml
 kubectl get jaegers
 kubectl get pods
 ----
@@ -64,7 +64,7 @@ kubectl get pods
 To remove the instance:
 [source,bash]
 ----
-kubectl delete -f deploy/simplest.yaml
+kubectl delete -f deploy/examples/simplest.yaml
 ----
 
 Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
