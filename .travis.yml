@@ -4,14 +4,38 @@ sudo: required
 go:
 - 1.10.1
 
-env:
-- BUILD_IMAGE="jaegertracing/jaeger-operator:JOB_${TRAVIS_JOB_NUMBER}"
+stages:
+  - name: build
+  - name: deploy
+    if: type != pull_request
 
-install:
-- "./.travis/install.sh"
+jobs:
+  include:
+    - stage: build
+      env:
+        global:
+        - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
+      name: "Build"
+      install:
+      - "./.travis/install.sh"
+      script:
+      - "./.travis/script.sh"
+      after_success:
+      - "./.travis/after_success.sh"
 
-script:
-- "./.travis/script.sh"
+    - stage: deploy
+      name: "Publish latest image"
+      env:
+        global:
+        - OPERATOR_VERSION="${TRAVIS_BRANCH}"
+      script:
+      - "./.travis/publish-images.sh"
 
-after_success:
-- "./.travis/after_success.sh"
+    - stage: deploy
+      name: "Release"
+      env:
+        global:
+        - OPERATOR_VERSION="${TRAVIS_BRANCH}"
+      script:
+      - "./.travis/release.sh"
+      if: tag =~ /^release\/v.[\d\.]+(\-.*)?$/

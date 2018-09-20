@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	commit        string
+	version       string
 	buildDate     string
 	defaultJaeger string
 )
@@ -17,7 +17,6 @@ var (
 // Version holds this Operator's version as well as the version of some of the components it uses
 type Version struct {
 	Operator    string `json:"jaeger-operator"`
-	GitCommit   string `json:"git-commit"`
 	BuildDate   string `json:"build-date"`
 	Jaeger      string `json:"jaeger-version"`
 	Go          string `json:"go-version"`
@@ -34,8 +33,7 @@ func Get() Version {
 	}
 
 	return Version{
-		Operator:    jaeger, // for now, we just follow the same versioning name as the main components
-		GitCommit:   commit,
+		Operator:    version,
 		BuildDate:   buildDate,
 		Jaeger:      jaeger,
 		Go:          runtime.Version(),
@@ -45,9 +43,8 @@ func Get() Version {
 
 func (v Version) String() string {
 	return fmt.Sprintf(
-		"Version(Operator='%v', GitCommit='%v', BuildDate='%v', Jaeger='%v', Go='%v', OperatorSDK='%v')",
+		"Version(Operator='%v', BuildDate='%v', Jaeger='%v', Go='%v', OperatorSDK='%v')",
 		v.Operator,
-		v.GitCommit,
 		v.BuildDate,
 		v.Jaeger,
 		v.Go,
