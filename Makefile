@@ -53,7 +53,7 @@ e2e-tests: es crd build docker push
 	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crd.yaml -root .
 
 run: crd
-	@OPERATOR_NAME=$(OPERATOR_NAME) KUBERNETES_CONFIG=$(KUBERNETES_CONFIG) WATCH_NAMESPACE=$(WATCH_NAMESPACE) ./_output/bin/jaeger-operator start
+	bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags $(LD_FLAGS) main.go start'
 
 es:
 	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
