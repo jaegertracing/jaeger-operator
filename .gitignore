@@ -106,5 +106,9 @@ tags
 !.vscode/extensions.json
 .history
 
+### IntelliJ ###
+.idea
+*.iml
+
 
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
