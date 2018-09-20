@@ -24,7 +24,12 @@ type AllInOne struct {
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
+		imageVersion := viper.GetString("jaeger-version")
+		if len(imageVersion) == 0 {
+			// default to latest when no version has been set
+			imageVersion = "latest"
+		}
+		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), imageVersion)
 	}
 
 	return &AllInOne{jaeger: jaeger}
