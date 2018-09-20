@@ -49,7 +49,7 @@ Once minikube has finished starting, get the Operator running:
 
 [source,bash]
 ----
-make run
+make build run
 ----
 
 At this point, a Jaeger instance can be installed:
