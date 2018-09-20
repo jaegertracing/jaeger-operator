@@ -117,9 +117,13 @@ func (q *Query) Services() []*v1.Service {
 
 // Ingresses returns a list of ingress rules to be deployed along with the all-in-one deployment
 func (q *Query) Ingresses() []*v1beta1.Ingress {
-	return []*v1beta1.Ingress{
-		ingress.NewQueryIngress(q.jaeger),
+	if q.jaeger.Spec.Query.Ingress.Enabled == nil || *q.jaeger.Spec.Query.Ingress.Enabled == true {
+		return []*v1beta1.Ingress{
+			ingress.NewQueryIngress(q.jaeger),
+		}
 	}
+
+	return []*v1beta1.Ingress{}
 }
 
 func (q *Query) selector() map[string]string {

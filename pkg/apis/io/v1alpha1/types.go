@@ -40,9 +40,15 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Size    int     `json:"size"`
-	Image   string  `json:"image"`
-	Options Options `json:"options"`
+	Ingress JaegerQueryIngressSpec `json:"ingress"`
+	Size    int                    `json:"size"`
+	Image   string                 `json:"image"`
+	Options Options                `json:"options"`
+}
+
+// JaegerQueryIngressSpec defines the options to be used when deploying the query ingress
+type JaegerQueryIngressSpec struct {
+	Enabled *bool `json:"enabled"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
