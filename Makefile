@@ -12,7 +12,7 @@ VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 
-LD_FLAGS ?= "-X $(VERSION_PKG).commit=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
+LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
 
 .DEFAULT_GOAL := build

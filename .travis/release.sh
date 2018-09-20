@@ -21,5 +21,5 @@ else
     git add deploy/operator.yaml
     git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     git tag ${TAG}
-    git push --tags --repo=https://${GH_WRITE_TOKEN}@github.com/jpkrohling/jaeger-operator.git
+    git push --tags --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git
 fi

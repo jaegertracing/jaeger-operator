@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	commit        string
+	version       string
 	buildDate     string
 	defaultJaeger string
 )
@@ -33,7 +33,7 @@ func Get() Version {
 	}
 
 	return Version{
-		Operator:    commit,
+		Operator:    version,
 		BuildDate:   buildDate,
 		Jaeger:      jaeger,
 		Go:          runtime.Version(),
