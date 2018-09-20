@@ -9,9 +9,23 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
-func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-all-in-one-image", "jaegertracing/all-in-one")
+func TestVersionSetForAllInOneImage(t *testing.T) {
+	viper.Set("jaeger-version", "1.6")
+	viper.Set("jaeger-all-in-one-image", "jaegertracing/all-in-one")
+	defer viper.Reset()
+
+	d := NewAllInOne(v1alpha1.NewJaeger("TestNoVersionSetForAllInOneImage")).Get()
+
+	assert.Equal(t, "jaegertracing/all-in-one:1.6", d.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestNoVersionSetForAllInOneImage(t *testing.T) {
+	viper.Set("jaeger-all-in-one-image", "jaegertracing/all-in-one")
+	defer viper.Reset()
+
+	d := NewAllInOne(v1alpha1.NewJaeger("TestNoVersionSetForAllInOneImage")).Get()
+
+	assert.Equal(t, "jaegertracing/all-in-one:latest", d.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestDefaultAllInOneImage(t *testing.T) {
