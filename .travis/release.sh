@@ -21,10 +21,6 @@ else
     git add deploy/operator.yaml
     git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     git tag ${TAG}
-    git push --tags --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git
-
-    ## release commit should reach master!
-    git checkout master
-    git merge ${TAG}
-    git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git
+    git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git --tags
+    git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git HEAD:master
 fi
