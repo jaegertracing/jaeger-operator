@@ -62,8 +62,39 @@ func TestQueryServices(t *testing.T) {
 }
 
 func TestQueryIngresses(t *testing.T) {
-	query := NewQuery(v1alpha1.NewJaeger("TestQueryIngresses"))
-	svcs := query.Ingresses()
+	newBool := func(value bool) *bool {
+		return &value
+	}
 
-	assert.Len(t, svcs, 1)
+	subTestCases := []struct {
+		name                   string
+		ingressSpec            v1alpha1.JaegerIngressSpec
+		expectedIngressesCount int
+	}{
+		{
+			name:                   "IngressEnabledDefault",
+			ingressSpec:            v1alpha1.JaegerIngressSpec{},
+			expectedIngressesCount: 1,
+		},
+		{
+			name:                   "IngressEnabledFalse",
+			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
+			expectedIngressesCount: 0,
+		},
+		{
+			name:                   "IngressEnabledTrue",
+			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
+			expectedIngressesCount: 1,
+		},
+	}
+
+	for _, stc := range subTestCases {
+		t.Run(stc.name, func(t *testing.T) {
+			query := NewQuery(v1alpha1.NewJaeger("TestQueryIngresses"))
+			query.jaeger.Spec.Query.Ingress = stc.ingressSpec
+			ingresses := query.Ingresses()
+
+			assert.Len(t, ingresses, stc.expectedIngressesCount)
+		})
+	}
 }
