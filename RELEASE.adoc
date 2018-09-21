@@ -8,5 +8,6 @@
 
 1. Tag and push
 
-  git tag release/1.6.1
+  git checkout master ## it's only possible to release from master for now!
+  git tag release/v1.6.1
   git push git@github.com:jaegertracing/jaeger-operator.git release/v1.6.1
