@@ -7,7 +7,11 @@ go:
 stages:
   - name: build
   - name: deploy
-    if: type != pull_request
+    # only deploy if:
+    ## we are not in a PR
+    ## tag is blank (ie, master or any other branch)
+    ## tag is a release tag (release/v1.6.1, which is the release build)
+    if: (type != pull_request) AND ((tag IS blank) OR (tag =~ /^release\/v.[\d\.]+(\-.*)?$/))
 
 jobs:
   include:
