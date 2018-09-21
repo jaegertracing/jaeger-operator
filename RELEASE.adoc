@@ -8,6 +8,5 @@
 
 1. Tag and push
 
-  export BUILD_IMAGE="jaegertracing/jaeger-operator:1.6"
-  docker tag ${BUILD_IMAGE_TEST} ${BUILD_IMAGE}
-  docker push ${BUILD_IMAGE}
+  git tag release/1.6.1
+  git push git@github.com:jaegertracing/jaeger-operator.git release/v1.6.1

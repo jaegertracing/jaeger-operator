@@ -13,8 +13,7 @@ jobs:
   include:
     - stage: build
       env:
-        global:
-        - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
+      - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
       name: "Build"
       install:
       - "./.travis/install.sh"
@@ -26,16 +25,14 @@ jobs:
     - stage: deploy
       name: "Publish latest image"
       env:
-        global:
-        - OPERATOR_VERSION="${TRAVIS_BRANCH}"
+      - OPERATOR_VERSION="${TRAVIS_BRANCH}"
       script:
       - "./.travis/publish-images.sh"
 
     - stage: deploy
       name: "Release"
       env:
-        global:
-        - OPERATOR_VERSION="${TRAVIS_BRANCH}"
+      - OPERATOR_VERSION="${TRAVIS_BRANCH}"
       script:
       - "./.travis/release.sh"
       if: tag =~ /^release\/v.[\d\.]+(\-.*)?$/
