@@ -18,4 +18,4 @@ if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
 fi
 
 echo "Building and publishing image ${BUILD_IMAGE}"
-make docker push BUILD_IMAGE=${BUILD_IMAGE}
+make build docker push BUILD_IMAGE=${BUILD_IMAGE}
