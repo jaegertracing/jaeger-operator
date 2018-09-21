@@ -68,22 +68,22 @@ func TestQueryIngresses(t *testing.T) {
 
 	subTestCases := []struct {
 		name                   string
-		ingressSpec            v1alpha1.JaegerQueryIngressSpec
+		ingressSpec            v1alpha1.JaegerIngressSpec
 		expectedIngressesCount int
 	}{
 		{
 			name:                   "IngressEnabledDefault",
-			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{},
+			ingressSpec:            v1alpha1.JaegerIngressSpec{},
 			expectedIngressesCount: 1,
 		},
 		{
 			name:                   "IngressEnabledFalse",
-			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled: newBool(false)},
+			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
 			expectedIngressesCount: 0,
 		},
 		{
 			name:                   "IngressEnabledTrue",
-			ingressSpec:            v1alpha1.JaegerQueryIngressSpec{Enabled: newBool(true)},
+			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
 			expectedIngressesCount: 1,
 		},
 	}
