@@ -111,7 +111,7 @@ metadata:
 spec:
   strategy: all-in-one # <1>
   all-in-one:
-    image: jaegertracing/all-in-one:1.6 # <2>
+    image: jaegertracing/all-in-one:1.7 # <2>
     options: # <3>
       log-level: debug # <4>
       memory: # <5>
