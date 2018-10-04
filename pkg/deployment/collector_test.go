@@ -56,3 +56,50 @@ func TestDefaultCollectorImage(t *testing.T) {
 	assert.Len(t, containers, 1)
 	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
 }
+
+func TestCollectorPrometheusAnnotations(t *testing.T) {
+	name := "TestCollectorPrometheusAnnotations"
+	c := NewCollector(v1alpha1.NewJaeger(name))
+	annotations := c.Get().Annotations
+	assert.Equal(t, 2, len(annotations))
+
+	for k := range annotations {
+		assert.Contains(t, k, "prometheus.io/")
+	}
+}
+
+func TestCollectorLabels(t *testing.T) {
+	name := "TestCollectorLabels"
+	k, v := "some-label-name", "some-label-value"
+	labels := map[string]string{k: v}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Collector.Labels = labels
+
+	c := NewCollector(j)
+
+	// test the deployments
+	dep := c.Get()
+	assert.Equal(t, len(labels)+len(c.selector()), len(dep.Labels))
+	assert.Equal(t, len(labels)+len(c.selector()), len(dep.Spec.Template.Labels))
+	assert.Equal(t, v, dep.Labels[k])
+	assert.Equal(t, v, dep.Spec.Template.Labels[k])
+}
+
+func TestCollectorAnnotations(t *testing.T) {
+	name := "TestCollectorAnnotations"
+	k, v := "some-annotation-name", "some-annotation-value"
+	annotations := map[string]string{k: v}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Collector.Annotations = annotations
+
+	c := NewCollector(j)
+
+	// test the deployments
+	dep := c.Get()
+	assert.Equal(t, len(annotations)+2, len(dep.Annotations))               // see TestCollectorPrometheusAnnotations
+	assert.Equal(t, len(annotations)+2, len(dep.Spec.Template.Annotations)) // see TestCollectorPrometheusAnnotations
+	assert.Equal(t, v, dep.Annotations[k])
+	assert.Equal(t, v, dep.Spec.Template.Annotations[k])
+}

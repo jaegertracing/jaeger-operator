@@ -98,3 +98,63 @@ func TestQueryIngresses(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryPrometheusAnnotations(t *testing.T) {
+	name := "TestQueryPrometheusAnnotations"
+	c := NewQuery(v1alpha1.NewJaeger(name))
+	ann := c.Get().Annotations
+	assert.Equal(t, 2, len(ann))
+	assert.Equal(t, "16686", ann["prometheus.io/port"])
+
+	for k := range ann {
+		assert.Contains(t, k, "prometheus.io/")
+	}
+}
+
+func TestQueryLabels(t *testing.T) {
+	name := "TestCollectorLabels"
+	k, v := "some-label-name", "some-label-value"
+	labels := map[string]string{k: v}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Query.Labels = labels
+
+	q := NewQuery(j)
+
+	// test the deployments
+	dep := q.Get()
+	assert.Equal(t, len(labels)+len(q.selector()), len(dep.Labels))
+	assert.Equal(t, len(labels)+len(q.selector()), len(dep.Spec.Template.Labels))
+	assert.Equal(t, v, dep.Labels[k])
+	assert.Equal(t, v, dep.Spec.Template.Labels[k])
+}
+
+func TestOverridePrometheusAnnotation(t *testing.T) {
+	name := "TestOverridePrometheusAnnotation"
+	ann := map[string]string{"prometheus.io/port": "8080"} // default is 16686
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Query.Annotations = ann
+	c := NewQuery(j)
+	dAnn := c.Get().Annotations
+	assert.Equal(t, 2, len(dAnn))
+	assert.Equal(t, "8080", dAnn["prometheus.io/port"])
+}
+
+func TestQueryAnnotations(t *testing.T) {
+	name := "TestQueryAnnotations"
+	k, v := "some-annotation-name", "some-annotation-value"
+	annotations := map[string]string{k: v}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Query.Annotations = annotations
+
+	q := NewQuery(j)
+
+	// test the deployments
+	dep := q.Get()
+	assert.Equal(t, len(annotations)+2, len(dep.Annotations))               // see TestQueryPrometheusAnnotations
+	assert.Equal(t, len(annotations)+2, len(dep.Spec.Template.Annotations)) // see TestQueryPrometheusAnnotations
+	assert.Equal(t, v, dep.Annotations[k])
+	assert.Equal(t, v, dep.Spec.Template.Annotations[k])
+}
