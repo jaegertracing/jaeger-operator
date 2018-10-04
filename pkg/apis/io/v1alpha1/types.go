@@ -53,8 +53,9 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
-	Image   string  `json:"image"`
-	Options Options `json:"options"`
+	Ingress JaegerIngressSpec `json:"ingress"`
+	Image   string            `json:"image"`
+	Options Options           `json:"options"`
 }
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
