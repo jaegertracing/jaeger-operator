@@ -144,9 +144,13 @@ func (a *AllInOne) Services() []*v1.Service {
 
 // Ingresses returns a list of ingress rules to be deployed along with the all-in-one deployment
 func (a *AllInOne) Ingresses() []*v1beta1.Ingress {
-	return []*v1beta1.Ingress{
-		ingress.NewQueryIngress(a.jaeger),
+	if a.jaeger.Spec.AllInOne.Ingress.Enabled == nil || *a.jaeger.Spec.AllInOne.Ingress.Enabled == true {
+		return []*v1beta1.Ingress{
+			ingress.NewQueryIngress(a.jaeger),
+		}
 	}
+
+	return []*v1beta1.Ingress{}
 }
 
 func (a *AllInOne) selector() map[string]string {
