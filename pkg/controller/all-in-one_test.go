@@ -21,7 +21,18 @@ func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
 	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false)
+}
+
+func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
+	name := "TestCreateAllInOneDeploymentWithDaemonSetAgent"
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Agent.Strategy = "DaemonSet"
+
+	c := newAllInOneController(context.TODO(), j)
+	objs := c.Create()
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, true)
 }
 
 func TestUpdateAllInOneDeployment(t *testing.T) {
@@ -30,12 +41,20 @@ func TestUpdateAllInOneDeployment(t *testing.T) {
 	assert.Len(t, objs, 0)
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object) {
-	assert.Len(t, objs, 6)
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
+	if hasDaemonSet {
+		assert.Len(t, objs, 7)
+	} else {
+		assert.Len(t, objs, 6)
+	}
 
 	// we should have one deployment, named after the Jaeger's name (ObjectMeta.Name)
 	deployments := map[string]bool{
 		name: false,
+	}
+
+	daemonsets := map[string]bool{
+		fmt.Sprintf("%s-agent-daemonset", name): !hasDaemonSet,
 	}
 
 	// and these services
@@ -51,5 +70,5 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []s
 		fmt.Sprintf("%s-query", name): false,
 	}
 
-	assertHasAllObjects(t, name, objs, deployments, services, ingresses)
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses)
 }

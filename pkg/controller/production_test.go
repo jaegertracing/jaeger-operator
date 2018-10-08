@@ -23,7 +23,18 @@ func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
 	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs)
+	assertDeploymentsAndServicesForProduction(t, name, objs, false)
+}
+
+func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
+	name := "TestCreateProductionDeploymentWithDaemonSetAgent"
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Agent.Strategy = "DaemonSet"
+
+	c := newProductionController(context.TODO(), j)
+	objs := c.Create()
+	assertDeploymentsAndServicesForProduction(t, name, objs, true)
 }
 
 func TestUpdateProductionDeployment(t *testing.T) {
@@ -85,12 +96,20 @@ func TestOptionsArePassed(t *testing.T) {
 	}
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object) {
-	assert.Len(t, objs, 6)
+func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
+	if hasDaemonSet {
+		assert.Len(t, objs, 7)
+	} else {
+		assert.Len(t, objs, 6)
+	}
 
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
 		fmt.Sprintf("%s-query", name):     false,
+	}
+
+	daemonsets := map[string]bool{
+		fmt.Sprintf("%s-agent-daemonset", name): !hasDaemonSet,
 	}
 
 	services := map[string]bool{
@@ -103,5 +122,5 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 		fmt.Sprintf("%s-query", name): false,
 	}
 
-	assertHasAllObjects(t, name, objs, deployments, services, ingresses)
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses)
 }

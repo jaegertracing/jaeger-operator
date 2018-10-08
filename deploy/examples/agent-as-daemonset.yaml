@@ -1,0 +1,9 @@
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: agent-as-daemonset
+spec:
+  agent:
+    strategy: DaemonSet
+    options:
+      log-level: debug

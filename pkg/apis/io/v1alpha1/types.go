@@ -67,8 +67,9 @@ type JaegerCollectorSpec struct {
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
 type JaegerAgentSpec struct {
-	Strategy string `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
-	Image    string `json:"image"`
+	Strategy string  `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
+	Image    string  `json:"image"`
+	Options  Options `json:"options"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
