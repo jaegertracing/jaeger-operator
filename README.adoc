@@ -118,6 +118,8 @@ spec:
         max-traces: 100000
     ingress:
       enabled: false # <6>
+  agent:
+    strategy: DaemonSet # <7>
 ----
 <1> The default strategy is `all-in-one`. The only other possible value is `production`.
 <2> The image to use, in a regular Docker syntax
@@ -125,6 +127,7 @@ spec:
 <4> The option is a simple `key: value` map. In this case, we want the option `--log-level=debug` to be passed to the binary.
 <5> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
 <6> By default, an ingress object is created for the query service. It can be disabled by setting its `enabled` option to `false`. This is also available for the `query` spec.
+<7> By default, the operator assumes that agents are deployed as sidecars within the target pods. Specifying the strategy as "DaemonSet" changes that and makes the operator deploy the agent as DaemonSet. Note that your tracer client will probably have to override the "JAEGER_AGENT_HOST" env var to use the node's IP.
 
 == Accessing the UI
 
@@ -163,6 +166,50 @@ oc get routes
 ----
 
 NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
+
+== Agent as DaemonSet
+
+By default, the Operator expects the agents to be deployed as sidecars to the target applications. This is convenient for several purposes, like in a multi-tenant scenario or to have better load balancing, but there are scenarios where it's desirable to install the agent as a `DaemonSet`. In that case, specify the Agent's strategy to `DaemonSet`, as follows:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: my-jaeger
+spec:
+  agent:
+    strategy: DaemonSet
+----
+
+IMPORTANT: if you attempt to install two Jaeger instances on the same cluster with `DaemonSet` as the strategy, only *one* will end up deploying a `DaemonSet`, as the agent is required to bind to well-known ports on the node. Because of that, the second daemon set will fail to bind to those ports.
+
+Your tracer client will then most likely need to be told where the agent is located. This is usually done by setting the env var `JAEGER_AGENT_HOST` and should be set to the value of the Kubernetes node's IP, like:
+
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: acme/myapp:myversion
+        env:
+        - name: JAEGER_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+----
 
 == Removing an instance
 
