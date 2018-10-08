@@ -27,6 +27,12 @@ func (c allInOneController) Create() []sdk.Object {
 
 	dep := deployment.NewAllInOne(c.jaeger)
 	os := []sdk.Object{dep.Get()}
+
+	ds := deployment.NewAgent(c.jaeger).Get()
+	if nil != ds {
+		os = append(os, ds)
+	}
+
 	for _, svc := range dep.Services() {
 		os = append(os, svc)
 	}

@@ -116,12 +116,15 @@ spec:
       log-level: debug # <4>
       memory: # <5>
         max-traces: 100000
+  agent:
+    strategy: DaemonSet # <6>
 ----
 <1> The default strategy is `all-in-one`. The only other possible value is `production`.
 <2> The image to use, in a regular Docker syntax
 <3> The options to be passed verbatim to the underlying binary.Refer to the Jaeger documentation and/or to the `--help` option from the related binary for all the available options
 <4> The option is a simple `key: value` map. In this case, we want the option `--log-level=debug` to be passed to the binary.
 <5> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
+<6> By default, the operator expects agents to be deployed as sidecars to the target applications. Specify the strategy as "DaemonSet" use that instead.
 
 == Accessing the UI
 
@@ -160,6 +163,23 @@ oc get routes
 ----
 
 NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
+
+== Agent as DaemonSet
+
+By default, the Operator expects the agents to be deployed as sidecars to the target applications. This is convenient for several purposes, like in a multi-tenant scenario or to have better load balancing, but there are scenarios where it's desirable to install the agent as a `DaemonSet`. In that case, specify the Agent's strategy to `DaemonSet`, as follows:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: my-jaeger
+spec:
+  agent:
+    strategy: DaemonSet
+----
+
+IMPORTANT: if you attempt to install two Jaeger instances on the same cluster with `DaemonSet` as the strategy, only *one* will end up deploying a `DaemonSet`, as the agent is required to bind to well-known ports on the node. Because of that, the second daemon set will fail to bind to those ports.
 
 == Removing an instance
 

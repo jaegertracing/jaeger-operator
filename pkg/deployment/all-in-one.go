@@ -122,7 +122,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 									Port: intstr.FromInt(14269),
 								},
 							},
-							InitialDelaySeconds: 5,
+							InitialDelaySeconds: 1,
 						},
 					}},
 				},

@@ -56,7 +56,7 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewAgent")
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	agent := NewAgent(jaeger)
-	assert.Nil(t, agent.Get()) // it's not implemented yet
+	assert.NotNil(t, agent.Get())
 }
 
 func TestInjectSidecar(t *testing.T) {

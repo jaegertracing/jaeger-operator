@@ -90,15 +90,17 @@ func getDeployments(objs []sdk.Object) []*appsv1.Deployment {
 	return deps
 }
 
-func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deployments map[string]bool, services map[string]bool, ingresses map[string]bool) {
+func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool) {
 	for _, obj := range objs {
 		switch typ := obj.(type) {
 		case *appsv1.Deployment:
-			deployments[obj.(*appsv1.Deployment).ObjectMeta.Name] = true
+			deployments[obj.(*appsv1.Deployment).Name] = true
+		case *appsv1.DaemonSet:
+			daemonsets[obj.(*appsv1.DaemonSet).Name] = true
 		case *v1.Service:
-			services[obj.(*v1.Service).ObjectMeta.Name] = true
+			services[obj.(*v1.Service).Name] = true
 		case *v1beta1.Ingress:
-			ingresses[obj.(*v1beta1.Ingress).ObjectMeta.Name] = true
+			ingresses[obj.(*v1beta1.Ingress).Name] = true
 		default:
 			assert.Failf(t, "unknown type to be deployed", "%v", typ)
 		}
@@ -106,6 +108,10 @@ func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deploymen
 
 	for k, v := range deployments {
 		assert.True(t, v, "Expected %s to have been returned from the list of deployments", k)
+	}
+
+	for k, v := range daemonsets {
+		assert.True(t, v, "Expected %s to have been returned from the list of daemonsets", k)
 	}
 
 	for k, v := range services {
