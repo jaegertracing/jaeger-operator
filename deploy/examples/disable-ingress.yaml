@@ -1,0 +1,8 @@
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: disable-ingress
+spec:
+  all-in-one:
+    ingress:
+      enabled: false
