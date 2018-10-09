@@ -37,11 +37,11 @@ func TestJaeger(t *testing.T) {
 		t.Run("simple-prod", SimpleProd)
 
 		t.Run("daemonset", DaemonSet)
+		t.Run("sidecar", Sidecar)
 	})
 }
 
 func prepare(t *testing.T) framework.TestCtx {
-	t.Parallel() // so far, our tests can run concurrently
 	ctx := framework.NewTestCtx(t)
 	err := ctx.InitializeClusterResources()
 	if err != nil {
