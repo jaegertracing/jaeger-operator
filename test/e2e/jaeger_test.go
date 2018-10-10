@@ -35,11 +35,13 @@ func TestJaeger(t *testing.T) {
 
 		t.Run("simplest", SimplestJaeger)
 		t.Run("simple-prod", SimpleProd)
+
+		t.Run("daemonset", DaemonSet)
 	})
 }
 
 func prepare(t *testing.T) framework.TestCtx {
-	t.Parallel()
+	t.Parallel() // so far, our tests can run concurrently
 	ctx := framework.NewTestCtx(t)
 	err := ctx.InitializeClusterResources()
 	if err != nil {
@@ -59,4 +61,18 @@ func prepare(t *testing.T) framework.TestCtx {
 	}
 
 	return ctx
+}
+
+type resp struct {
+	Data []trace `json:"data"`
+}
+
+type trace struct {
+	TraceID string `json:"traceID"`
+	Spans   []span `json:"spans"`
+}
+
+type span struct {
+	TraceID string `json:"traceID"`
+	SpanID  string `json:"spanID"`
 }

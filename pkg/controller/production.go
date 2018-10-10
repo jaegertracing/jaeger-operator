@@ -32,6 +32,11 @@ func (c *productionController) Create() []sdk.Object {
 		agent.InjectSidecar(*query.Get()),
 	}
 
+	ds := agent.Get()
+	if nil != ds {
+		components = append(components, ds)
+	}
+
 	for _, svc := range collector.Services() {
 		components = append(components, svc)
 	}

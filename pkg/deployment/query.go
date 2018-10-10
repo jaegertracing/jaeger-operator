@@ -97,7 +97,7 @@ func (q *Query) Get() *appsv1.Deployment {
 									Port: intstr.FromInt(16687),
 								},
 							},
-							InitialDelaySeconds: 5,
+							InitialDelaySeconds: 1,
 						},
 					},
 					},
