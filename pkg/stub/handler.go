@@ -26,16 +26,13 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	case *v1alpha1.Jaeger:
 		if event.Deleted {
 			logrus.Infof("Deleting '%s'", o.Name)
-			// aparently, everything created by the CR should cascade the deletion to the
-			// resources it created, so, no need to do anything
-			// on a next version, we could think about cleaning up the data pertaining to
-			// us at the storage level, but not for now
 			return nil
 		}
 
 		ctrl := controller.NewController(ctx, o)
 
 		objs := ctrl.Create()
+		created := false
 		for _, obj := range objs {
 			err := sdk.Create(obj)
 			if err != nil && !apierrors.IsAlreadyExists(err) {
@@ -44,8 +41,12 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			}
 
 			if err == nil {
-				logrus.Infof("Created '%v'", o.Name)
+				created = true
 			}
+		}
+
+		if created {
+			logrus.Infof("Configured %v", o.Name)
 		}
 
 		objs = ctrl.Update()
@@ -55,6 +56,12 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 				logrus.Errorf("failed to update %v", obj)
 				return err
 			}
+		}
+
+		// we store back the changed CR, so that what is stored reflects what is being used
+		if err := sdk.Update(o); err != nil {
+			logrus.Errorf("failed to update %v", o)
+			return err
 		}
 	}
 	return nil
