@@ -15,14 +15,29 @@ import (
 func NewQueryIngress(jaeger *v1alpha1.Jaeger) *v1beta1.Ingress {
 	trueVar := true
 
+	// this is pretty much the only object where we don't directly gain anything
+	// from copying the map, instead of reusing the source map,
+	// but for consistency's sake, let's do the same here...
+	labels := map[string]string{}
+	for k, v := range jaeger.Spec.Query.Labels {
+		labels[k] = v
+	}
+
+	annotations := map[string]string{}
+	for k, v := range jaeger.Spec.Query.Annotations {
+		annotations[k] = v
+	}
+
 	return &v1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Ingress",
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-query", jaeger.Name),
-			Namespace: jaeger.Namespace,
+			Name:        fmt.Sprintf("%s-query", jaeger.Name),
+			Namespace:   jaeger.Namespace,
+			Labels:      labels,
+			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,

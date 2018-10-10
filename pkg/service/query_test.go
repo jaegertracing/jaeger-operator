@@ -20,3 +20,31 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 }
+
+func TestQueryServiceAnnotations(t *testing.T) {
+	name := "TestQueryServiceAnnotations"
+	k, v := "some-annotation-name", "some-annotation-value"
+	annotations := map[string]string{k: v}
+	selector := map[string]string{"app": name}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Query.Annotations = annotations
+
+	svc := NewQueryService(j, selector)
+	assert.Equal(t, len(annotations), len(svc.Annotations))
+	assert.Equal(t, v, svc.Annotations[k])
+}
+
+func TestQueryServiceLabels(t *testing.T) {
+	name := "TestQueryServiceLabels"
+	k, v := "some-label-name", "some-label-value"
+	labels := map[string]string{k: v}
+	selector := map[string]string{"app": name}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Query.Labels = labels
+
+	svc := NewQueryService(j, selector)
+	assert.Equal(t, len(labels)+len(selector), len(svc.Labels))
+	assert.Equal(t, v, svc.Labels[k])
+}

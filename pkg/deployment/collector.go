@@ -39,9 +39,23 @@ func (c *Collector) Get() *appsv1.Deployment {
 	selector := c.selector()
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
+
+	labels := map[string]string{}
+	for k, v := range c.jaeger.Spec.Collector.Labels {
+		labels[k] = v
+	}
+
+	// and we append the selectors that we need to be there in a controlled way
+	for k, v := range selector {
+		labels[k] = v
+	}
+
 	annotations := map[string]string{
 		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "14268",
+		"prometheus.io/port":   "16686",
+	}
+	for k, v := range c.jaeger.Spec.Collector.Annotations {
+		annotations[k] = v
 	}
 
 	return &appsv1.Deployment{
@@ -50,8 +64,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-collector", c.jaeger.Name),
-			Namespace: c.jaeger.Namespace,
+			Name:        fmt.Sprintf("%s-collector", c.jaeger.Name),
+			Namespace:   c.jaeger.Namespace,
+			Labels:      labels,
+			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: c.jaeger.APIVersion,
@@ -69,7 +85,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{

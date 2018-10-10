@@ -32,3 +32,31 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	}
 
 }
+
+func TestCollectorServiceAnnotations(t *testing.T) {
+	name := "TestCollectorServiceAnnotations"
+	k, v := "some-annotation-name", "some-annotation-value"
+	annotations := map[string]string{k: v}
+	selector := map[string]string{"app": name}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Collector.Annotations = annotations
+
+	svc := NewCollectorService(j, selector)
+	assert.Equal(t, len(annotations), len(svc.Annotations))
+	assert.Equal(t, v, svc.Annotations[k])
+}
+
+func TestCollectorServiceLabels(t *testing.T) {
+	name := "TestCollectorServiceLabels"
+	k, v := "some-label-name", "some-label-value"
+	labels := map[string]string{k: v}
+	selector := map[string]string{"app": name}
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.Collector.Labels = labels
+
+	svc := NewCollectorService(j, selector)
+	assert.Equal(t, len(labels)+len(selector), len(svc.Labels))
+	assert.Equal(t, v, svc.Labels[k])
+}

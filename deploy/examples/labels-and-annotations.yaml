@@ -1,0 +1,10 @@
+apiVersion: "io.jaegertracing/v1alpha1"
+kind: "Jaeger"
+metadata:
+  name: "labels-and-annotations"
+spec:
+  all-in-one:
+    labels:
+      some-label: some-label-value # this is applied to the deployment, pods, services and ingresses
+    annotations:
+      some-annotation: some-annotation-value # this is *also* applied to the mentioned objects
