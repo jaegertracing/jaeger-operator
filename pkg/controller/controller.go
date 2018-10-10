@@ -45,9 +45,10 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
 		logrus.Infof(
-			"The provided storage type for the Jaeger instance '%v' is unknown ('%v'). Falling back to 'memory'",
+			"The provided storage type for the Jaeger instance '%v' is unknown ('%v'). Falling back to 'memory'. Known options: %v",
 			jaeger.Name,
 			jaeger.Spec.Storage.Type,
+			knownStorages(),
 		)
 		jaeger.Spec.Storage.Type = "memory"
 	}
@@ -70,18 +71,20 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 }
 
 func unknownStorage(typ string) bool {
-	known := []string{
-		"memory",
-		"kafka",
-		"elasticsearch",
-		"cassandra",
-	}
-
-	for _, k := range known {
+	for _, k := range knownStorages() {
 		if strings.ToLower(typ) == k {
 			return false
 		}
 	}
 
 	return true
+}
+
+func knownStorages() []string {
+	return []string{
+		"memory",
+		"kafka",
+		"elasticsearch",
+		"cassandra",
+	}
 }
