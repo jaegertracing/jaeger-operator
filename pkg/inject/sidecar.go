@@ -39,14 +39,13 @@ func Needed(dep *appsv1.Deployment) bool {
 
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	hasSidecar := false
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
-			hasSidecar = true
+			return false
 		}
 	}
 
-	return !hasSidecar
+	return true
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
