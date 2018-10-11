@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/start"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/version"
+)
+
+const (
+	persistentFlagName  = "config"
+	persistentFlagValue = ""
+	persistentFlagUsage = "config file (default is $HOME/.jaeger-operator.yaml)"
+	jaegerOperator      = ".jaeger-operator"
 )
 
 var cfgFile string
@@ -33,7 +40,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.jaeger-operator.yaml)")
+	RootCmd.PersistentFlags().StringVar(
+		&cfgFile,
+		persistentFlagName,
+		persistentFlagValue,
+		persistentFlagUsage,
+	)
 
 	RootCmd.AddCommand(start.NewStartCommand())
 	RootCmd.AddCommand(version.NewVersionCommand())
@@ -54,7 +66,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".jaeger-operator" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".jaeger-operator")
+		viper.SetConfigName(jaegerOperator)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

@@ -126,19 +126,21 @@ func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deploymen
 		}
 	}
 
+	msg := "Expected %s to have been returned from the list of"
+
 	for k, v := range deployments {
-		assert.True(t, v, "Expected %s to have been returned from the list of deployments", k)
+		assert.True(t, v, msg+" deployments", k)
 	}
 
 	for k, v := range daemonsets {
-		assert.True(t, v, "Expected %s to have been returned from the list of daemonsets", k)
+		assert.True(t, v, msg+" daemonsets", k)
 	}
 
 	for k, v := range services {
-		assert.True(t, v, "Expected %s to have been returned from the list of services", k)
+		assert.True(t, v, msg+" services", k)
 	}
 
 	for k, v := range ingresses {
-		assert.True(t, v, "Expected %s to have been returned from the list of ingress rules", k)
+		assert.True(t, v, msg+" rules", k)
 	}
 }

@@ -6,14 +6,23 @@ import (
 	"os/signal"
 	"syscall"
 
-	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
-	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	stub "github.com/jaegertracing/jaeger-operator/pkg/stub"
+	"github.com/jaegertracing/jaeger-operator/pkg/stub"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
+)
+
+const (
+	shortHand      = ""
+	jaegerVersion  = "jaeger-version"
+	agentImage     = "jaeger-agent-image"
+	queryImage     = "jaeger-query-image"
+	collectorImage = "jaeger-collector-image"
+	allInOneImage  = "jaeger-all-in-one-image"
 )
 
 // NewStartCommand starts the Jaeger Operator
@@ -27,25 +36,31 @@ func NewStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("jaeger-version", "", version.DefaultJaeger(), "The Jaeger version to use")
-	viper.BindPFlag("jaeger-version", cmd.Flags().Lookup("jaeger-version"))
+	cmd.Flags().StringP(jaegerVersion, shortHand, version.DefaultJaeger(), "The Jaeger version to use")
+	viper.BindPFlag(jaegerVersion, cmd.Flags().Lookup(jaegerVersion))
 
-	cmd.Flags().StringP("jaeger-agent-image", "", "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
-	viper.BindPFlag("jaeger-agent-image", cmd.Flags().Lookup("jaeger-agent-image"))
+	cmd.Flags().StringP(agentImage, shortHand, "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
+	viper.BindPFlag(agentImage, cmd.Flags().Lookup(agentImage))
 
-	cmd.Flags().StringP("jaeger-query-image", "", "jaegertracing/jaeger-query", "The Docker image for the Jaeger Query")
-	viper.BindPFlag("jaeger-query-image", cmd.Flags().Lookup("jaeger-query-image"))
+	cmd.Flags().StringP(queryImage, shortHand, "jaegertracing/jaeger-query", "The Docker image for the Jaeger Query")
+	viper.BindPFlag(queryImage, cmd.Flags().Lookup(queryImage))
 
-	cmd.Flags().StringP("jaeger-collector-image", "", "jaegertracing/jaeger-collector", "The Docker image for the Jaeger Collector")
-	viper.BindPFlag("jaeger-collector-image", cmd.Flags().Lookup("jaeger-collector-image"))
+	cmd.Flags().StringP(collectorImage, shortHand, "jaegertracing/jaeger-collector", "The Docker image for the Jaeger Collector")
+	viper.BindPFlag(collectorImage, cmd.Flags().Lookup(collectorImage))
 
-	cmd.Flags().StringP("jaeger-all-in-one-image", "", "jaegertracing/all-in-one", "The Docker image for the Jaeger all-in-one")
-	viper.BindPFlag("jaeger-all-in-one-image", cmd.Flags().Lookup("jaeger-all-in-one-image"))
+	cmd.Flags().StringP(allInOneImage, shortHand, "jaegertracing/all-in-one", "The Docker image for the Jaeger all-in-one")
+	viper.BindPFlag(allInOneImage, cmd.Flags().Lookup(allInOneImage))
 
 	return cmd
 }
 
 func start(cmd *cobra.Command, args []string) {
+
+	const (
+		resource = "io.jaegertracing/v1alpha1"
+		kind     = "Jaeger"
+	)
+
 	var ch = make(chan os.Signal, 0)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
@@ -55,8 +70,6 @@ func start(cmd *cobra.Command, args []string) {
 
 	sdk.ExposeMetricsPort()
 
-	resource := "io.jaegertracing/v1alpha1"
-	kind := "Jaeger"
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
