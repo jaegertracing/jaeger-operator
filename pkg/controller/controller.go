@@ -10,6 +10,20 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
+const (
+
+	memoryStorageType = "memory"
+	allInOneStrategy = "all-in-one"
+	productionStrategy = "production"
+)
+
+var knownStorages = []string {
+	"memory",
+	"kafka",
+	"elasticsearch",
+	"cassandra",
+}
+
 // Controller knows what type of deployments to build based on a given spec
 type Controller interface {
 	Create() []sdk.Object
@@ -21,7 +35,7 @@ func NewController(ctx context.Context, jaeger *v1alpha1.Jaeger) Controller {
 	normalize(jaeger)
 
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
-	if jaeger.Spec.Strategy == "all-in-one" {
+	if jaeger.Spec.Strategy == allInOneStrategy {
 		return newAllInOneController(ctx, jaeger)
 	}
 
@@ -40,7 +54,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
 		logrus.Infof("Storage type wasn't provided for the Jaeger instance '%v'. Falling back to 'memory'", jaeger.Name)
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = memoryStorageType
 	}
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
@@ -48,43 +62,38 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 			"The provided storage type for the Jaeger instance '%v' is unknown ('%v'). Falling back to 'memory'. Known options: %v",
 			jaeger.Name,
 			jaeger.Spec.Storage.Type,
-			knownStorages(),
+			knownStorages,
 		)
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = memoryStorageType
 	}
 
 	// normalize the deployment strategy
-	if strings.ToLower(jaeger.Spec.Strategy) != "production" {
-		jaeger.Spec.Strategy = "all-in-one"
+	if strings.ToLower(jaeger.Spec.Strategy) != productionStrategy {
+		jaeger.Spec.Strategy = allInOneStrategy
 	}
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if strings.ToLower(jaeger.Spec.Storage.Type) == "memory" && strings.ToLower(jaeger.Spec.Strategy) != "all-in-one" {
+	if strings.ToLower(jaeger.Spec.Storage.Type) == memoryStorageType && strings.ToLower(jaeger.Spec.Strategy) != allInOneStrategy {
 		logrus.Warnf(
 			"No suitable storage was provided for the Jaeger instance '%v'. Falling back to all-in-one. Storage type: '%v'",
 			jaeger.Name,
 			jaeger.Spec.Storage.Type,
 		)
-		jaeger.Spec.Strategy = "all-in-one"
+		jaeger.Spec.Strategy = allInOneStrategy
 	}
 }
 
 func unknownStorage(typ string) bool {
-	for _, k := range knownStorages() {
-		if strings.ToLower(typ) == k {
+
+	for _, v := range knownStorages {
+
+		if v == strings.ToLower(typ) {
 			return false
 		}
+
 	}
 
 	return true
-}
 
-func knownStorages() []string {
-	return []string{
-		"memory",
-		"kafka",
-		"elasticsearch",
-		"cassandra",
-	}
 }

@@ -40,7 +40,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 
 func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
-	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Strategy = productionStrategy
 
 	ctrl := NewController(context.TODO(), jaeger)
 	ds := ctrl.Create()
@@ -51,12 +51,12 @@ func TestUnknownStorage(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
 	jaeger.Spec.Storage.Type = "unknown"
 	normalize(jaeger)
-	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
+	assert.Equal(t, memoryStorageType, jaeger.Spec.Storage.Type)
 }
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestElasticsearchAsStorageOptions")
-	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Strategy = productionStrategy
 	jaeger.Spec.Storage.Type = "elasticsearch"
 	jaeger.Spec.Storage.Options = v1alpha1.NewOptions(map[string]interface{}{
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
@@ -87,14 +87,14 @@ func TestDefaultName(t *testing.T) {
 func TestIncompatibleStorageForProduction(t *testing.T) {
 	jaeger := &v1alpha1.Jaeger{
 		Spec: v1alpha1.JaegerSpec{
-			Strategy: "production",
+			Strategy: productionStrategy,
 			Storage: v1alpha1.JaegerStorageSpec{
-				Type: "memory",
+				Type: memoryStorageType,
 			},
 		},
 	}
 	normalize(jaeger)
-	assert.Equal(t, "all-in-one", jaeger.Spec.Strategy)
+	assert.Equal(t, allInOneStrategy, jaeger.Spec.Strategy)
 }
 
 func getDeployments(objs []sdk.Object) []*appsv1.Deployment {
