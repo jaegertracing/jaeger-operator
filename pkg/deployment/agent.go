@@ -137,39 +137,6 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 }
 
-// InjectSidecar adds a new container to the deployment, containing Jaeger's agent
-func (a *Agent) InjectSidecar(dep appsv1.Deployment) *appsv1.Deployment {
-	sidecar := v1.Container{
-		Image: a.jaeger.Spec.Agent.Image,
-		Name:  agent,
-		Args:  []string{fmt.Sprintf(format, service.GetNameForCollectorService(a.jaeger))},
-		Ports: []v1.ContainerPort{
-			{
-				ContainerPort: zkCompactTrftPort,
-				Name:          zkCompactTrft,
-				Protocol:      v1.ProtocolUDP,
-			},
-			{
-				ContainerPort: configRestPort,
-				Name:          configRest,
-			},
-			{
-				ContainerPort: jgCompactTrftPort,
-				Name:          jgCompactTrft,
-				Protocol:      v1.ProtocolUDP,
-			},
-			{
-				ContainerPort: jgBinaryTrftPort,
-				Name:          jgBinaryTrft,
-				Protocol:      v1.ProtocolUDP,
-			},
-		},
-	}
-
-	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, sidecar)
-	return &dep
-}
-
 func (a *Agent) selector() map[string]string {
 	return map[string]string{app: jaeger, jaeger: a.jaeger.Name, jaegerComponent: "agent-daemonset"}
 }

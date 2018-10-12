@@ -8,7 +8,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -41,24 +40,6 @@ func TestUpdateProductionDeployment(t *testing.T) {
 	name := "TestUpdateProductionDeployment"
 	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
 	assert.Len(t, c.Update(), 0)
-}
-
-func TestAgentIsInjectedIntoQuery(t *testing.T) {
-	name := "TestAgentIsInjectedIntoQuery"
-	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
-	objs := c.Create()
-	var dep *appsv1.Deployment
-
-	for _, obj := range objs {
-		switch obj.(type) {
-		case *appsv1.Deployment:
-			dep = obj.(*appsv1.Deployment)
-			break
-		}
-	}
-
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 }
 
 func TestOptionsArePassed(t *testing.T) {
