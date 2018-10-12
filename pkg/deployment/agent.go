@@ -32,7 +32,7 @@ func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
 	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != "daemonset" {
-		logrus.Infof(
+		logrus.Debugf(
 			"The Jaeger instance '%v' is using a Sidecar strategy for the Jaeger Agent. Skipping its DaemonSet deployment.",
 			a.jaeger.Name,
 		)
@@ -118,39 +118,6 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			},
 		},
 	}
-}
-
-// InjectSidecar adds a new container to the deployment, containing Jaeger's agent
-func (a *Agent) InjectSidecar(dep appsv1.Deployment) *appsv1.Deployment {
-	sidecar := v1.Container{
-		Image: a.jaeger.Spec.Agent.Image,
-		Name:  "jaeger-agent",
-		Args:  []string{fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(a.jaeger))},
-		Ports: []v1.ContainerPort{
-			{
-				ContainerPort: 5775,
-				Name:          "zk-compact-trft",
-				Protocol:      v1.ProtocolUDP,
-			},
-			{
-				ContainerPort: 5778,
-				Name:          "config-rest",
-			},
-			{
-				ContainerPort: 6831,
-				Name:          "jg-compact-trft",
-				Protocol:      v1.ProtocolUDP,
-			},
-			{
-				ContainerPort: 6832,
-				Name:          "jg-binary-trft",
-				Protocol:      v1.ProtocolUDP,
-			},
-		},
-	}
-
-	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, sidecar)
-	return &dep
 }
 
 func (a *Agent) selector() map[string]string {

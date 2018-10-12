@@ -167,6 +167,35 @@ oc get routes
 
 NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
 
+== Auto injection of Jaeger Agent sidecars
+
+The operator can also inject Jaeger Agent sidecars in `Deployment` workloads, provided that the deployment has the annotation `inject-jaeger-agent` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.
+
+The following snippet shows a simple application that will get a sidecar injected, with the Jaeger Agent pointing to the single Jaeger instance available in the same namespace:
+
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    inject-jaeger-agent: "true" # <1>
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: acme/myapp:myversion
+----
+<1> Either `"true"` (as string) or the Jaeger instance name
+
 == Agent as DaemonSet
 
 By default, the Operator expects the agents to be deployed as sidecars to the target applications. This is convenient for several purposes, like in a multi-tenant scenario or to have better load balancing, but there are scenarios where it's desirable to install the agent as a `DaemonSet`. In that case, specify the Agent's strategy to `DaemonSet`, as follows:

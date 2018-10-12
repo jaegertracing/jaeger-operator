@@ -29,7 +29,7 @@ func (c *productionController) Create() []sdk.Object {
 
 	components := []sdk.Object{
 		collector.Get(),
-		agent.InjectSidecar(*query.Get()),
+		query.Get(),
 	}
 
 	ds := agent.Get()
