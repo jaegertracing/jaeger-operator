@@ -11,13 +11,14 @@ import (
 )
 
 const (
-
-	memoryStorageType = "memory"
-	allInOneStrategy = "all-in-one"
+	// storages
+	memoryStorageType  = "memory"
+	// strategies
+	allInOneStrategy   = "all-in-one"
 	productionStrategy = "production"
 )
 
-var knownStorages = []string {
+var knownStorages = []string{
 	"memory",
 	"kafka",
 	"elasticsearch",

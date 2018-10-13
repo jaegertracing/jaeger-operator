@@ -16,16 +16,17 @@ const (
 	persistentFlagName  = "config"
 	persistentFlagValue = ""
 	persistentFlagUsage = "config file (default is $HOME/.jaeger-operator.yaml)"
-	jaegerOperator      = ".jaeger-operator"
+	jaegerOperator      = "jaeger-operator"
+	jaegerDescription   = "The Kubernetes operator for Jaeger"
 )
 
 var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "jaeger-operator",
-	Short: "The Kubernetes operator for Jaeger",
-	Long:  `The Kubernetes operator for Jaeger`,
+	Use:   jaegerOperator,
+	Short: jaegerDescription,
+	Long:  jaegerDescription,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -66,7 +67,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".jaeger-operator" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(jaegerOperator)
+		viper.SetConfigName("." + jaegerOperator)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
