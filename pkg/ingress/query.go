@@ -13,12 +13,18 @@ import (
 
 // NewQueryIngress returns a new ingress object for the Query service
 func NewQueryIngress(jaeger *v1alpha1.Jaeger) *v1beta1.Ingress {
+
+	const (
+		metaKind       = "Ingress"
+		metaAPIVersion = "v1"
+	)
+
 	trueVar := true
 
 	return &v1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Ingress",
-			APIVersion: "extensions/v1beta1",
+			Kind:       metaKind,
+			APIVersion: metaAPIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", jaeger.Name),

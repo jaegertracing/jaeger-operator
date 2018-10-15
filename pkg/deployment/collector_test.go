@@ -10,8 +10,8 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-collector-image", "jaegertracing/all-in-one")
+	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(collector, allInOneValue)
 }
 
 func TestNegativeSize(t *testing.T) {
@@ -45,8 +45,8 @@ func TestCollectorServices(t *testing.T) {
 }
 
 func TestDefaultCollectorImage(t *testing.T) {
-	viper.Set("jaeger-collector-image", "org/custom-collector-image")
-	viper.Set("jaeger-version", "123")
+	viper.Set(collector, "org/custom-collector-image")
+	viper.Set(versionKey, "123")
 	defer viper.Reset()
 
 	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))

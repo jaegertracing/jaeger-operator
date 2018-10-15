@@ -11,6 +11,7 @@ import (
 
 // NewVersionCommand creates the command that exposes the version
 func NewVersionCommand() *cobra.Command {
+
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print the version",

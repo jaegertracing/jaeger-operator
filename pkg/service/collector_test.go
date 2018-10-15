@@ -11,7 +11,7 @@ import (
 
 func TestCollectorServiceNameAndPorts(t *testing.T) {
 	name := "TestCollectorServiceNameAndPorts"
-	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
+	selector := map[string]string{app: "myapp", jaegerKey: name, component: "collector"}
 
 	jaeger := v1alpha1.NewJaeger(name)
 	svc := NewCollectorService(jaeger, selector)

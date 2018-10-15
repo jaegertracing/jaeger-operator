@@ -13,20 +13,21 @@ import (
 )
 
 const (
-	persistentFlagName  = "config"
-	persistentFlagValue = ""
-	persistentFlagUsage = "config file (default is $HOME/.jaeger-operator.yaml)"
-	jaegerOperator      = "jaeger-operator"
-	jaegerDescription   = "The Kubernetes operator for Jaeger"
+	// jaeger
+	jaegerOperator         = "jaeger-operator"
+	jaegerShortDescription = "The Kubernetes operator for Jaeger"
+	jaegerLongDescription
 )
+
+type Flag string
 
 var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   jaegerOperator,
-	Short: jaegerDescription,
-	Long:  jaegerDescription,
+	Short: jaegerShortDescription,
+	Long:  jaegerLongDescription,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -39,6 +40,14 @@ func Execute() {
 }
 
 func init() {
+
+	const (
+		// flag options
+		persistentFlagName  = "config"
+		persistentFlagValue = ""
+		persistentFlagUsage = "config file (default is $HOME/.jaeger-operator.yaml)"
+	)
+
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(

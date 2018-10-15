@@ -11,8 +11,8 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-query-image", "jaegertracing/all-in-one")
+	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(queryImage, allInOneValue)
 }
 
 func TestQueryNegativeSize(t *testing.T) {
@@ -34,8 +34,8 @@ func TestQueryDefaultSize(t *testing.T) {
 }
 
 func TestDefaultQueryImage(t *testing.T) {
-	viper.Set("jaeger-query-image", "org/custom-query-image")
-	viper.Set("jaeger-version", "123")
+	viper.Set(queryImage, "org/custom-query-image")
+	viper.Set(versionKey, "123")
 	defer viper.Reset()
 
 	query := NewQuery(v1alpha1.NewJaeger("TestQueryImage"))
@@ -72,17 +72,17 @@ func TestQueryIngresses(t *testing.T) {
 		expectedIngressesCount int
 	}{
 		{
-			name:                   "IngressEnabledDefault",
+			name:                   ingressEnabledDefault,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{},
 			expectedIngressesCount: 1,
 		},
 		{
-			name:                   "IngressEnabledFalse",
+			name:                   ingressEnabledFalse,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
 			expectedIngressesCount: 0,
 		},
 		{
-			name:                   "IngressEnabledTrue",
+			name:                   ingressEnabledTrue,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
 			expectedIngressesCount: 1,
 		},

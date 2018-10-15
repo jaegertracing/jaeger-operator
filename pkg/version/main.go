@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const versionKey = "jaeger-version"
+
 var (
 	version       string
 	buildDate     string
@@ -26,8 +28,8 @@ type Version struct {
 // Get returns the Version object with the relevant information
 func Get() Version {
 	var jaeger string
-	if viper.IsSet("jaeger-version") {
-		jaeger = viper.GetString("jaeger-version")
+	if viper.IsSet(versionKey) {
+		jaeger = viper.GetString(versionKey)
 	} else {
 		jaeger = defaultJaeger
 	}

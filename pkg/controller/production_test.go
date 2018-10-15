@@ -15,8 +15,8 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(agentImageKey, agentImageValue)
 }
 
 func TestCreateProductionDeployment(t *testing.T) {
@@ -72,9 +72,9 @@ func TestOptionsArePassed(t *testing.T) {
 			Namespace: "simple-prod-ns",
 		},
 		Spec: v1alpha1.JaegerSpec{
-			Strategy: "production",
+			Strategy: productionStrategy,
 			Storage: v1alpha1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: elasticsearch,
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",

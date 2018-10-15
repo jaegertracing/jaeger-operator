@@ -12,16 +12,15 @@ import (
 
 const (
 	// storages
-	memoryStorageType  = "memory"
+	memoryStorageType = "memory"
 	// strategies
-	allInOneStrategy   = "all-in-one"
-	productionStrategy = "production"
+	allInOneStrategy = "all-in-one"
 )
 
 var knownStorages = []string{
-	"memory",
+	memoryStorageType,
 	"kafka",
-	"elasticsearch",
+	elasticsearch,
 	"cassandra",
 }
 

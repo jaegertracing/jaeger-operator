@@ -11,7 +11,7 @@ import (
 
 func TestQueryServiceNameAndPorts(t *testing.T) {
 	name := "TestQueryServiceNameAndPorts"
-	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
+	selector := map[string]string{app: "myapp", jaegerKey: name, component: "query"}
 
 	jaeger := v1alpha1.NewJaeger(name)
 	svc := NewQueryService(jaeger, selector)

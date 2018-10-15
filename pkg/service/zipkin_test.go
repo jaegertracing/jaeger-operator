@@ -11,7 +11,7 @@ import (
 
 func TestZipkinServiceNameAndPort(t *testing.T) {
 	name := "TestZipkinServiceNameAndPort"
-	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "zipkin"}
+	selector := map[string]string{app: "myapp", jaegerKey: name, component: "zipkin"}
 
 	jaeger := v1alpha1.NewJaeger(name)
 	svc := NewZipkinService(jaeger, selector)

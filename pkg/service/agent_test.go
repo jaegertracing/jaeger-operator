@@ -11,7 +11,7 @@ import (
 
 func TestAgentServiceNameAndPorts(t *testing.T) {
 	name := "TestAgentServiceNameAndPorts"
-	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "agent"}
+	selector := map[string]string{app: "myapp", jaegerKey: name, component: "agent"}
 
 	jaeger := v1alpha1.NewJaeger(name)
 	svc := NewAgentService(jaeger, selector)

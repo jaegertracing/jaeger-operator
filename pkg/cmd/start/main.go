@@ -16,31 +16,32 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
-const (
-
-	// command
-	command          = "start"
-	shortDescription = "Starts a new Jaeger Operator"
-	longDescription  = shortDescription
-
-	// flags
-	shortHand       = ""
-	// images
-	agentImage      = "jaeger-agent-image"
-	queryImage      = "jaeger-query-image"
-	collectorImage  = "jaeger-collector-image"
-	allInOneImage   = "jaeger-all-in-one-image"
-	// operators
-	jaegerTracing   = "jaegertracing"
-	jaegerAgent     = "jaeger-agent"
-	jaegerQuery     = "jaeger-query"
-	jaegerCollector = "jaeger-collector"
-	jaegerAllInOne  = "all-in-one"
-	jaegerVersion   = "jaeger-version"
-)
-
 // NewStartCommand starts the Jaeger Operator
 func NewStartCommand() *cobra.Command {
+
+	const (
+
+		// command
+		command          = "start"
+		shortDescription = "Starts a new Jaeger Operator"
+		longDescription
+
+		// flags
+		shortHand = ""
+		// images
+		agentImage     = "jaeger-agent-image"
+		queryImage     = "jaeger-query-image"
+		collectorImage = "jaeger-collector-image"
+		allInOneImage  = "jaeger-all-in-one-image"
+		// operators
+		jaegerTracing   = "jaegertracing"
+		jaegerAgent     = "jaeger-agent"
+		jaegerQuery     = "jaeger-query"
+		jaegerCollector = "jaeger-collector"
+		jaegerAllInOne  = "all-in-one"
+		jaegerVersion   = "jaeger-version"
+	)
+
 	cmd := &cobra.Command{
 		Use:   command,
 		Short: shortDescription,

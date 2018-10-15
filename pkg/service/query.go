@@ -15,8 +15,8 @@ func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Se
 
 	return &v1.Service{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
+			Kind:       metaKind,
+			APIVersion: metaAPIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetNameForQueryService(jaeger),
@@ -34,7 +34,7 @@ func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Se
 		},
 		Spec: v1.ServiceSpec{
 			Selector:  selector,
-			ClusterIP: "None",
+			ClusterIP: clusterIP,
 			Ports: []v1.ServicePort{
 				{
 					Name: "query",

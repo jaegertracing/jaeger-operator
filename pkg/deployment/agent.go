@@ -15,6 +15,22 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
+const (
+	// agent
+	agent = "jaeger-agent"
+	//collector
+	format = "--collector.host-port=%s:14267"
+	// image
+	agentImageKey = "jaeger-agent-image"
+	// strategy
+	daemonSetStrategy = "daemonset"
+	// containers
+	zkCompactTrftPort = 5775
+	configRestPort    = 5778
+	jgCompactTrftPort = 6831
+	jgBinaryTrftPort  = 6832
+)
+
 // Agent builds pods for jaegertracing/jaeger-agent
 type Agent struct {
 	jaeger *v1alpha1.Jaeger
@@ -23,7 +39,7 @@ type Agent struct {
 // NewAgent builds a new Agent struct based on the given spec
 func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 	if jaeger.Spec.Agent.Image == "" {
-		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString(agentImageKey), viper.GetString(versionKey))
 	}
 
 	return &Agent{jaeger: jaeger}
@@ -31,7 +47,8 @@ func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
-	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != "daemonset" {
+
+	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != daemonSetStrategy {
 		logrus.Infof(
 			"The Jaeger instance '%v' is using a Sidecar strategy for the Jaeger Agent. Skipping its DaemonSet deployment.",
 			a.jaeger.Name,
@@ -39,17 +56,17 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		return nil
 	}
 
-	args := append(a.jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(a.jaeger)))
+	args := append(a.jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf(format, service.GetNameForCollectorService(a.jaeger)))
 	trueVar := true
 	selector := a.selector()
 	annotations := map[string]string{
-		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "5778",
+		prometheusScrapeKey: prometheusScrapeValue,
+		prometheusPortKey:   "5778",
 	}
 
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
+			APIVersion: metaAPIVersion,
 			Kind:       "DaemonSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,26 +98,26 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Args:  args,
 						Ports: []v1.ContainerPort{
 							{
-								ContainerPort: 5775,
-								HostPort:      5775,
-								Name:          "zk-compact-trft",
+								ContainerPort: zkCompactTrftPort,
+								HostPort:      zkCompactTrftPort,
+								Name:          zkCompactTrft,
 								Protocol:      v1.ProtocolUDP,
 							},
 							{
-								ContainerPort: 5778,
-								HostPort:      5778,
-								Name:          "config-rest",
+								ContainerPort: configRestPort,
+								HostPort:      configRestPort,
+								Name:          configRest,
 							},
 							{
-								ContainerPort: 6831,
-								HostPort:      6831,
-								Name:          "jg-compact-trft",
+								ContainerPort: jgCompactTrftPort,
+								HostPort:      jgCompactTrftPort,
+								Name:          jgCompactTrft,
 								Protocol:      v1.ProtocolUDP,
 							},
 							{
-								ContainerPort: 6832,
-								HostPort:      6832,
-								Name:          "jg-binary-trft",
+								ContainerPort: jgBinaryTrftPort,
+								HostPort:      jgBinaryTrftPort,
+								Name:          jgBinaryTrft,
 								Protocol:      v1.ProtocolUDP,
 							},
 						},
@@ -124,26 +141,26 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 func (a *Agent) InjectSidecar(dep appsv1.Deployment) *appsv1.Deployment {
 	sidecar := v1.Container{
 		Image: a.jaeger.Spec.Agent.Image,
-		Name:  "jaeger-agent",
-		Args:  []string{fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(a.jaeger))},
+		Name:  agent,
+		Args:  []string{fmt.Sprintf(format, service.GetNameForCollectorService(a.jaeger))},
 		Ports: []v1.ContainerPort{
 			{
-				ContainerPort: 5775,
-				Name:          "zk-compact-trft",
+				ContainerPort: zkCompactTrftPort,
+				Name:          zkCompactTrft,
 				Protocol:      v1.ProtocolUDP,
 			},
 			{
-				ContainerPort: 5778,
-				Name:          "config-rest",
+				ContainerPort: configRestPort,
+				Name:          configRest,
 			},
 			{
-				ContainerPort: 6831,
-				Name:          "jg-compact-trft",
+				ContainerPort: jgCompactTrftPort,
+				Name:          jgCompactTrft,
 				Protocol:      v1.ProtocolUDP,
 			},
 			{
-				ContainerPort: 6832,
-				Name:          "jg-binary-trft",
+				ContainerPort: jgBinaryTrftPort,
+				Name:          jgBinaryTrft,
 				Protocol:      v1.ProtocolUDP,
 			},
 		},
@@ -154,5 +171,5 @@ func (a *Agent) InjectSidecar(dep appsv1.Deployment) *appsv1.Deployment {
 }
 
 func (a *Agent) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": a.jaeger.Name, "jaeger-component": "agent-daemonset"}
+	return map[string]string{app: jaeger, jaeger: a.jaeger.Name, jaegerComponent: "agent-daemonset"}
 }

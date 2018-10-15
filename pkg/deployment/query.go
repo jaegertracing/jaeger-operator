@@ -16,6 +16,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
+const queryImage = "jaeger-query-image"
+
 // Query builds pods for jaegertracing/jaeger-query
 type Query struct {
 	jaeger *v1alpha1.Jaeger
@@ -28,7 +30,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 	}
 
 	if jaeger.Spec.Query.Image == "" {
-		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-query-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString(queryImage), viper.GetString(versionKey))
 	}
 
 	return &Query{jaeger: jaeger}
@@ -41,14 +43,14 @@ func (q *Query) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
 	annotations := map[string]string{
-		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "16686",
+		prometheusScrapeKey: prometheusScrapeValue,
+		prometheusPortKey:   "16686",
 	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
+			APIVersion: metaAPIVersion,
+			Kind:       metaDeployment,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", q.jaeger.Name),
@@ -80,14 +82,14 @@ func (q *Query) Get() *appsv1.Deployment {
 						Args:  allArgs(q.jaeger.Spec.Query.Options, q.jaeger.Spec.Storage.Options),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
+								Name:  spanStorageType,
 								Value: q.jaeger.Spec.Storage.Type,
 							},
 						},
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
-								Name:          "query",
+								Name:          query,
 							},
 						},
 						ReadinessProbe: &v1.Probe{
@@ -127,5 +129,5 @@ func (q *Query) Ingresses() []*v1beta1.Ingress {
 }
 
 func (q *Query) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": q.jaeger.Name, "jaeger-component": "query"}
+	return map[string]string{app: jaeger, jaeger: q.jaeger.Name, jaegerComponent: "query"}
 }

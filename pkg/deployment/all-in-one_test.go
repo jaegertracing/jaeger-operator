@@ -10,13 +10,13 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-all-in-one-image", "jaegertracing/all-in-one")
+	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(allInOneImageKey, allInOneValue)
 }
 
 func TestDefaultAllInOneImage(t *testing.T) {
-	viper.Set("jaeger-all-in-one-image", "org/custom-all-in-one-image")
-	viper.Set("jaeger-version", "123")
+	viper.Set(allInOneImageKey, "org/custom-all-in-one-image")
+	viper.Set(versionKey, "123")
 	defer viper.Reset()
 
 	d := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneDefaultImage")).Get()
@@ -54,17 +54,17 @@ func TestAllInOneNumberOfIngresses(t *testing.T) {
 		expectedIngressesCount int
 	}{
 		{
-			name:                   "IngressEnabledDefault",
+			name:                   ingressEnabledDefault,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{},
 			expectedIngressesCount: 1,
 		},
 		{
-			name:                   "IngressEnabledFalse",
+			name:                   ingressEnabledFalse,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
 			expectedIngressesCount: 0,
 		},
 		{
-			name:                   "IngressEnabledTrue",
+			name:                   ingressEnabledTrue,
 			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
 			expectedIngressesCount: 1,
 		},

@@ -16,6 +16,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
+const allInOneImageKey = "jaeger-all-in-one-image"
+
 // AllInOne builds pods for jaegertracing/all-in-one
 type AllInOne struct {
 	jaeger *v1alpha1.Jaeger
@@ -24,7 +26,7 @@ type AllInOne struct {
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString(allInOneImageKey), viper.GetString(versionKey))
 	}
 
 	return &AllInOne{jaeger: jaeger}
@@ -36,14 +38,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	selector := a.selector()
 	trueVar := true
 	annotations := map[string]string{
-		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "16686",
+		prometheusScrapeKey: prometheusScrapeValue,
+		prometheusPortKey:   "16686",
 	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
+			APIVersion: metaAPIVersion,
+			Kind:       metaDeployment,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.jaeger.Name,
@@ -70,49 +72,49 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
 						Image: a.jaeger.Spec.AllInOne.Image,
-						Name:  "jaeger",
+						Name:  jaeger,
 						Args:  allArgs(a.jaeger.Spec.AllInOne.Options, a.jaeger.Spec.Storage.Options),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
+								Name:  spanStorageType,
 								Value: a.jaeger.Spec.Storage.Type,
 							},
 						},
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
-								Name:          "zk-compact-trft", // max 15 chars!
+								Name:          zkCompactTrft, // max 15 chars!
 								Protocol:      v1.ProtocolUDP,
 							},
 							{
 								ContainerPort: 5778,
-								Name:          "config-rest",
+								Name:          configRest,
 							},
 							{
 								ContainerPort: 6831,
-								Name:          "jg-compact-trft",
+								Name:          jgCompactTrft,
 								Protocol:      v1.ProtocolUDP,
 							},
 							{
 								ContainerPort: 6832,
-								Name:          "jg-binary-trft",
+								Name:          jgBinaryTrft,
 								Protocol:      v1.ProtocolUDP,
 							},
 							{
 								ContainerPort: 9411,
-								Name:          "zipkin",
+								Name:          zipkin,
 							},
 							{
 								ContainerPort: 14267,
-								Name:          "c-tchan-trft", // for collector
+								Name:          cTchanTrft, // for collector
 							},
 							{
 								ContainerPort: 14268,
-								Name:          "c-binary-trft",
+								Name:          cBinaryTrft,
 							},
 							{
 								ContainerPort: 16686,
-								Name:          "query",
+								Name:          query,
 							},
 						},
 						ReadinessProbe: &v1.Probe{
@@ -154,5 +156,5 @@ func (a *AllInOne) Ingresses() []*v1beta1.Ingress {
 }
 
 func (a *AllInOne) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": a.jaeger.Name}
+	return map[string]string{app: jaeger, jaeger: a.jaeger.Name}
 }

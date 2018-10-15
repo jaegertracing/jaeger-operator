@@ -26,7 +26,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 	}
 
 	if jaeger.Spec.Collector.Image == "" {
-		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString(collector), viper.GetString(versionKey))
 	}
 
 	return &Collector{jaeger: jaeger}
@@ -40,14 +40,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 	annotations := map[string]string{
-		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "14268",
+		prometheusScrapeKey: prometheusScrapeValue,
+		prometheusPortKey:   "14268",
 	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
+			APIVersion: metaAPIVersion,
+			Kind:       metaDeployment,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-collector", c.jaeger.Name),
@@ -79,22 +79,22 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Args:  allArgs(c.jaeger.Spec.Collector.Options, c.jaeger.Spec.Storage.Options),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
+								Name:  spanStorageType,
 								Value: c.jaeger.Spec.Storage.Type,
 							},
 						},
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 9411,
-								Name:          "zipkin",
+								Name:          zipkin,
 							},
 							{
 								ContainerPort: 14267,
-								Name:          "c-tchan-trft", // for collector
+								Name:          cTchanTrft, // for collector
 							},
 							{
 								ContainerPort: 14268,
-								Name:          "c-binary-trft",
+								Name:          cBinaryTrft,
 							},
 						},
 						ReadinessProbe: &v1.Probe{
@@ -123,5 +123,5 @@ func (c *Collector) Services() []*v1.Service {
 }
 
 func (c *Collector) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": c.jaeger.Name, "jaeger-component": "collector"}
+	return map[string]string{app: jaeger, jaeger: c.jaeger.Name, jaegerComponent: "collector"}
 }

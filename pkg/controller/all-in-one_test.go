@@ -13,8 +13,8 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(agentImageKey, agentImageValue)
 }
 
 func TestCreateAllInOneDeployment(t *testing.T) {
