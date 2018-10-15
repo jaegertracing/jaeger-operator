@@ -13,6 +13,7 @@ import (
 )
 
 func SimpleProd(t *testing.T) {
+	t.Parallel()
 	ctx := prepare(t)
 	defer ctx.Cleanup(t)
 

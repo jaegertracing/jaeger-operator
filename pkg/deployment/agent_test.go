@@ -47,27 +47,16 @@ func TestGetDefaultAgentDeployment(t *testing.T) {
 	assert.Nil(t, agent.Get()) // it's not implemented yet
 }
 
-func TestGetSicedarDeployment(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger(testNewAgent)
+func TestGetSidecarDeployment(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestNewAgent")
 	jaeger.Spec.Agent.Strategy = "sidecar"
 	agent := NewAgent(jaeger)
 	assert.Nil(t, agent.Get()) // it's not implemented yet
 }
 
 func TestGetDaemonSetDeployment(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger(testNewAgent)
+	jaeger := v1alpha1.NewJaeger("TestNewAgent")
 	jaeger.Spec.Agent.Strategy = daemonSetStrategy
 	agent := NewAgent(jaeger)
 	assert.NotNil(t, agent.Get())
-}
-
-func TestInjectSidecar(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger(testNewAgent)
-	dep := NewQuery(jaeger).Get()
-	agent := NewAgent(jaeger)
-
-	dep = agent.InjectSidecar(*dep)
-
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, agent)
 }

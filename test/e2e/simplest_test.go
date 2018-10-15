@@ -13,6 +13,7 @@ import (
 )
 
 func SimplestJaeger(t *testing.T) {
+	t.Parallel()
 	ctx := prepare(t)
 	defer ctx.Cleanup(t)
 
