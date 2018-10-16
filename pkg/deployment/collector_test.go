@@ -68,4 +68,6 @@ func TestDefaultCollectorImage(t *testing.T) {
 		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
+
+	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
 }

@@ -42,6 +42,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	annotations := map[string]string{
 		prometheusScrapeKey: prometheusScrapeValue,
 		prometheusPortKey:   "14268",
+		"sidecar.istio.io/inject": "false",
 	}
 
 	return &appsv1.Deployment{
