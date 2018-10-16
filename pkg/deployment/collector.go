@@ -82,6 +82,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: c.jaeger.Spec.Storage.Type,
 							},
+							v1.EnvVar{
+								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+								Value: "9411",
+							},
 						},
 						Ports: []v1.ContainerPort{
 							{
