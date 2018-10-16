@@ -5,25 +5,24 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func JaegerAllInOne(t *testing.T) {
 	t.Parallel()
 	ctx := prepare(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 
 	if err := allInOneTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func allInOneTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -51,7 +50,7 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) e
 	}
 
 	logrus.Infof("passing %v", exampleJaeger)
-	err = f.DynamicClient.Create(goctx.TODO(), exampleJaeger)
+	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
 		return err
 	}
