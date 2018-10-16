@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -23,6 +24,18 @@ func TestDefaultAllInOneImage(t *testing.T) {
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)
+
+	envvars := []v1.EnvVar{
+		v1.EnvVar{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "",
+		},
+		v1.EnvVar{
+			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+			Value: "9411",
+		},
+	}
+	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }
 
 func TestAllInOneHasOwner(t *testing.T) {
