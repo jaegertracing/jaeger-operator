@@ -44,6 +44,8 @@ func TestDefaultQueryImage(t *testing.T) {
 
 	assert.Len(t, containers, 1)
 	assert.Equal(t, "org/custom-query-image:123", containers[0].Image)
+
+	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
 }
 
 func TestQueryPodName(t *testing.T) {

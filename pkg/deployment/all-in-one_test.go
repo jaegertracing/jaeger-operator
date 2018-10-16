@@ -36,6 +36,8 @@ func TestDefaultAllInOneImage(t *testing.T) {
 		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
+
+	assert.Equal(t, "false", d.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
 }
 
 func TestAllInOneHasOwner(t *testing.T) {

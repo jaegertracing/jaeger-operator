@@ -56,5 +56,9 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewAgent")
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	agent := NewAgent(jaeger)
-	assert.NotNil(t, agent.Get())
+
+	ds := agent.Get()
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, "false", ds.Spec.Template.Annotations["sidecar.istio.io/inject"])
 }

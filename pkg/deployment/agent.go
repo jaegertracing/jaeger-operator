@@ -43,8 +43,9 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	trueVar := true
 	selector := a.selector()
 	annotations := map[string]string{
-		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "5778",
+		"prometheus.io/scrape":    "true",
+		"prometheus.io/port":      "5778",
+		"sidecar.istio.io/inject": "false",
 	}
 
 	return &appsv1.DaemonSet{
