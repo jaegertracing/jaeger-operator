@@ -5,24 +5,23 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func SimplestJaeger(t *testing.T) {
 	t.Parallel()
 	ctx := prepare(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 
 	if err := simplest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func simplest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func simplest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -40,7 +39,7 @@ func simplest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error
 		},
 		Spec: v1alpha1.JaegerSpec{},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), exampleJaeger)
+	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
 		return err
 	}

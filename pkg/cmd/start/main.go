@@ -6,16 +6,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
-	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"time"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	stub "github.com/jaegertracing/jaeger-operator/pkg/stub"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
+	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // NewStartCommand starts the Jaeger Operator
@@ -87,7 +87,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	sdk.ExposeMetricsPort()
 
-	resyncPeriod := 5
+	resyncPeriod := 5 * time.Second
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
@@ -107,7 +107,7 @@ func start(cmd *cobra.Command, args []string) {
 	}
 }
 
-func watch(apiVersion, kind, namespace string, resyncPeriod int) {
+func watch(apiVersion, kind, namespace string, resyncPeriod time.Duration) {
 	logrus.Infof("Watching %s, %s, %s, %d", apiVersion, kind, namespace, resyncPeriod)
 	sdk.Watch(apiVersion, kind, namespace, resyncPeriod)
 }
