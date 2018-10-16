@@ -42,6 +42,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	annotations := map[string]string{
 		prometheusScrapeKey: prometheusScrapeValue,
 		prometheusPortKey:   "14268",
+		"sidecar.istio.io/inject": "false",
 	}
 
 	return &appsv1.Deployment{
@@ -81,6 +82,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 							v1.EnvVar{
 								Name:  spanStorageType,
 								Value: c.jaeger.Spec.Storage.Type,
+							},
+							v1.EnvVar{
+								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+								Value: "9411",
 							},
 						},
 						Ports: []v1.ContainerPort{

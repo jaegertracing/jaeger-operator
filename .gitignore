@@ -69,7 +69,6 @@ flycheck_*.el
 *.out
 
 ### Go Patch ###
-/vendor/
 /Godeps/
 
 ### Intellij ###

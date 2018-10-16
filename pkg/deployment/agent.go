@@ -62,6 +62,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	annotations := map[string]string{
 		prometheusScrapeKey: prometheusScrapeValue,
 		prometheusPortKey:   "5778",
+		"sidecar.istio.io/inject": "false",
 	}
 
 	return &appsv1.DaemonSet{

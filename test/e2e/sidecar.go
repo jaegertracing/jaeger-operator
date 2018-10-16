@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,22 +18,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 // Sidecar runs a test with the agent as sidecar
 func Sidecar(t *testing.T) {
 	ctx := prepare(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 
 	if err := sidecarTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func sidecarTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -57,7 +57,7 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) er
 		},
 	}
 
-	err = f.DynamicClient.Create(goctx.TODO(), j)
+	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) er
 			},
 		},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), dep)
+	err = f.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	if err != nil {
 		return err
 	}

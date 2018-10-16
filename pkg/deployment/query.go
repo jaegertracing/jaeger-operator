@@ -45,6 +45,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	annotations := map[string]string{
 		prometheusScrapeKey: prometheusScrapeValue,
 		prometheusPortKey:   "16686",
+		"sidecar.istio.io/inject": "false",
 		// note that we are explicitly using a string here, not the value from `inject.Annotation`
 		// this has two reasons:
 		// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
