@@ -1,4 +1,3 @@
-
 # Temporary Build Files
 tmp/_output
 tmp/_test
@@ -83,7 +82,6 @@ flycheck_*.el
 .idea/**/shelf
 
 # Generated files
-.idea/
 .idea/**/contentModel.xml
 
 # Sensitive or high-churn files
