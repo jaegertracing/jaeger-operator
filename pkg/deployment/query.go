@@ -30,7 +30,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 	}
 
 	if jaeger.Spec.Query.Image == "" {
-		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString(queryImage), viper.GetString(versionKey))
+		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString(queryImage), viper.GetString(versionLabel))
 	}
 
 	return &Query{jaeger: jaeger}
@@ -43,8 +43,8 @@ func (q *Query) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
 	annotations := map[string]string{
-		prometheusScrapeKey: prometheusScrapeValue,
-		prometheusPortKey:   "16686",
+		prometheusScrapeLabel: prometheusScrapeValue,
+		prometheusPortLabel:   "16686",
 		"sidecar.istio.io/inject": "false",
 		// note that we are explicitly using a string here, not the value from `inject.Annotation`
 		// this has two reasons:

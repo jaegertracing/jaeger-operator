@@ -11,13 +11,13 @@ import (
 )
 
 func init() {
-	viper.SetDefault(versionKey, versionValue)
-	viper.SetDefault(allInOneImageKey, allInOneValue)
+	viper.SetDefault(versionLabel, versionValue)
+	viper.SetDefault(allInOneImageLabel, allInOneValue)
 }
 
 func TestDefaultAllInOneImage(t *testing.T) {
-	viper.Set(allInOneImageKey, "org/custom-all-in-one-image")
-	viper.Set(versionKey, "123")
+	viper.Set(allInOneImageLabel, "org/custom-all-in-one-image")
+	viper.Set(versionLabel, "123")
 	defer viper.Reset()
 
 	d := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneDefaultImage")).Get()

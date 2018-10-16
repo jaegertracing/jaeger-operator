@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(versionLabel, versionValue)
 	viper.SetDefault(queryImage, allInOneValue)
 }
 
@@ -35,7 +35,7 @@ func TestQueryDefaultSize(t *testing.T) {
 
 func TestDefaultQueryImage(t *testing.T) {
 	viper.Set(queryImage, "org/custom-query-image")
-	viper.Set(versionKey, "123")
+	viper.Set(versionLabel, "123")
 	defer viper.Reset()
 
 	query := NewQuery(v1alpha1.NewJaeger("TestQueryImage"))

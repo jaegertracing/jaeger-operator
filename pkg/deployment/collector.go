@@ -26,7 +26,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 	}
 
 	if jaeger.Spec.Collector.Image == "" {
-		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString(collector), viper.GetString(versionKey))
+		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString(collector), viper.GetString(versionLabel))
 	}
 
 	return &Collector{jaeger: jaeger}
@@ -40,8 +40,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 	annotations := map[string]string{
-		prometheusScrapeKey: prometheusScrapeValue,
-		prometheusPortKey:   "14268",
+		prometheusScrapeLabel: prometheusScrapeValue,
+		prometheusPortLabel:   "14268",
 		"sidecar.istio.io/inject": "false",
 	}
 

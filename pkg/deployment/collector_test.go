@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	viper.SetDefault(versionKey, versionValue)
+	viper.SetDefault(versionLabel, versionValue)
 	viper.SetDefault(collector, allInOneValue)
 }
 
@@ -47,7 +47,7 @@ func TestCollectorServices(t *testing.T) {
 
 func TestDefaultCollectorImage(t *testing.T) {
 	viper.Set(collector, "org/custom-collector-image")
-	viper.Set(versionKey, "123")
+	viper.Set(versionLabel, "123")
 	defer viper.Reset()
 
 	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))

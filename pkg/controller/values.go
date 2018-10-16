@@ -11,5 +11,5 @@ const (
 	// strategies
 	productionStrategy = "production"
 	// storages
-	elasticsearch = "elasticsearch"
+	elasticsearchStorageType = "elasticsearch"
 )

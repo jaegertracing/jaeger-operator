@@ -21,7 +21,7 @@ const (
 	//collector
 	format = "--collector.host-port=%s:14267"
 	// image
-	agentImageKey = "jaeger-agent-image"
+	agentImageLabel = "jaeger-agent-image"
 	// strategy
 	daemonSetStrategy = "daemonset"
 	// containers
@@ -39,7 +39,7 @@ type Agent struct {
 // NewAgent builds a new Agent struct based on the given spec
 func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 	if jaeger.Spec.Agent.Image == "" {
-		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString(agentImageKey), viper.GetString(versionKey))
+		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString(agentImageLabel), viper.GetString(versionLabel))
 	}
 
 	return &Agent{jaeger: jaeger}
@@ -60,8 +60,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	trueVar := true
 	selector := a.selector()
 	annotations := map[string]string{
-		prometheusScrapeKey: prometheusScrapeValue,
-		prometheusPortKey:   "5778",
+		prometheusScrapeLabel: prometheusScrapeValue,
+		prometheusPortLabel:   "5778",
 		"sidecar.istio.io/inject": "false",
 	}
 

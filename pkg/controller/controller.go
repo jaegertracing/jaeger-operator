@@ -12,16 +12,18 @@ import (
 
 const (
 	// storages
+	cassandraStorageType =  "cassandra"
 	memoryStorageType = "memory"
+	kafkaStorageType = "kafka"
 	// strategies
 	allInOneStrategy = "all-in-one"
 )
 
 var knownStorages = []string{
 	memoryStorageType,
-	"kafka",
-	elasticsearch,
-	"cassandra",
+	kafkaStorageType,
+	elasticsearchStorageType,
+	cassandraStorageType,
 }
 
 // Controller knows what type of deployments to build based on a given spec
