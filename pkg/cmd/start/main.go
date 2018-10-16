@@ -23,25 +23,19 @@ func NewStartCommand() *cobra.Command {
 
 	const (
 
+		jaegerVersion   = "jaeger-jaegerVersion"
+
 		// command
 		command          = "start"
 		shortDescription = "Starts a new Jaeger Operator"
 		longDescription
 
-		// flags
-		shortHand = ""
 		// images
-		agentImage     = "jaeger-agent-image"
-		queryImage     = "jaeger-query-image"
-		collectorImage = "jaeger-collector-image"
-		allInOneImage  = "jaeger-all-in-one-image"
-		// operators
-		jaegerTracing   = "jaegertracing"
-		jaegerAgent     = "jaeger-agent"
-		jaegerQuery     = "jaeger-query"
-		jaegerCollector = "jaeger-collector"
-		jaegerAllInOne  = "all-in-one"
-		jaegerVersion   = "jaeger-version"
+		imageNS   = "jaegertracing"
+		imageAgent     = "jaeger-agent-image"
+		imageQuery     = "jaeger-query-image"
+		imageCollector = "jaeger-collector-image"
+		imageAllInOne  = "jaeger-all-in-one-image"
 	)
 
 	cmd := &cobra.Command{
@@ -53,31 +47,25 @@ func NewStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP(jaegerVersion, shortHand, version.DefaultJaeger(), "The Jaeger version to use")
+	cmd.Flags().StringP(jaegerVersion, "", version.DefaultJaeger(), "The Jaeger jaegerVersion to use")
 	viper.BindPFlag(jaegerVersion, cmd.Flags().Lookup(jaegerVersion))
 
-	cmd.Flags().StringP(agentImage, shortHand, jaegerTracing+"/"+jaegerAgent, "The Docker image for the Jaeger Agent")
-	viper.BindPFlag(agentImage, cmd.Flags().Lookup(agentImage))
+	cmd.Flags().StringP(imageAgent, "", imageNS+"/jaeger-agent", "The Docker image for the Jaeger Agent")
+	viper.BindPFlag(imageAgent, cmd.Flags().Lookup(imageAgent))
 
-	cmd.Flags().StringP(queryImage, shortHand, jaegerTracing+"/"+jaegerQuery, "The Docker image for the Jaeger Query")
-	viper.BindPFlag(queryImage, cmd.Flags().Lookup(queryImage))
+	cmd.Flags().StringP(imageQuery, "", imageNS+"/jaeger-query", "The Docker image for the Jaeger Query")
+	viper.BindPFlag(imageQuery, cmd.Flags().Lookup(imageQuery))
 
-	cmd.Flags().StringP(collectorImage, shortHand, jaegerTracing+"/"+jaegerCollector, "The Docker image for the Jaeger Collector")
-	viper.BindPFlag(collectorImage, cmd.Flags().Lookup(collectorImage))
+	cmd.Flags().StringP(imageCollector, "", imageNS+"/jaeger-collector", "The Docker image for the Jaeger Collector")
+	viper.BindPFlag(imageCollector, cmd.Flags().Lookup(imageCollector))
 
-	cmd.Flags().StringP(allInOneImage, shortHand, jaegerTracing+"/"+jaegerAllInOne, "The Docker image for the Jaeger all-in-one")
-	viper.BindPFlag(allInOneImage, cmd.Flags().Lookup(allInOneImage))
+	cmd.Flags().StringP(imageAllInOne, "", imageNS+"/all-in-one", "The Docker image for the Jaeger all-in-one")
+	viper.BindPFlag(imageAllInOne, cmd.Flags().Lookup(imageAllInOne))
 
 	return cmd
 }
 
 func start(cmd *cobra.Command, args []string) {
-
-	const (
-		resource = "io.jaegertracing/v1alpha1"
-		kind     = "Jaeger"
-	)
-
 	var ch = make(chan os.Signal, 0)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 

@@ -10,12 +10,12 @@ const (
 	jaeger          = "jaeger"
 	jaegerComponent = "jaeger-component"
 	// version
-	versionKey   = "jaeger-version"
+	versionLabel   = "jaeger-version"
 	versionValue = "1.6"
 	// prometheus
-	prometheusScrapeKey   = "prometheus.io/scrape"
+	prometheusScrapeLabel   = "prometheus.io/scrape"
 	prometheusScrapeValue = "true"
-	prometheusPortKey     = "prometheus.io/port"
+	prometheusPortLabel     = "prometheus.io/port"
 	// meta
 	metaAPIVersion = "apps/v1"
 	metaDeployment = "Deployment"

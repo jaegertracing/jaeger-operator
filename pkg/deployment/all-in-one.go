@@ -16,7 +16,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
-const allInOneImageKey = "jaeger-all-in-one-image"
+const allInOneImageLabel = "jaeger-all-in-one-image"
 
 // AllInOne builds pods for jaegertracing/all-in-one
 type AllInOne struct {
@@ -26,7 +26,7 @@ type AllInOne struct {
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString(allInOneImageKey), viper.GetString(versionKey))
+		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString(allInOneImageLabel), viper.GetString(versionLabel))
 	}
 
 	return &AllInOne{jaeger: jaeger}
@@ -38,8 +38,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	selector := a.selector()
 	trueVar := true
 	annotations := map[string]string{
-		prometheusScrapeKey: prometheusScrapeValue,
-		prometheusPortKey:   "16686",
+		prometheusScrapeLabel: prometheusScrapeValue,
+		prometheusPortLabel:   "16686",
 		"sidecar.istio.io/inject": "false",
 	}
 

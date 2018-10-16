@@ -19,8 +19,6 @@ const (
 	jaegerLongDescription
 )
 
-type Flag string
-
 var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands

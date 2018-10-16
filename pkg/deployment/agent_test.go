@@ -10,8 +10,8 @@ import (
 )
 
 func setDefaults() {
-	viper.SetDefault(versionKey, versionValue)
-	viper.SetDefault(agentImageKey, "jaegertracing/jaeger-agent")
+	viper.SetDefault(versionLabel, versionValue)
+	viper.SetDefault(agentImageLabel, "jaegertracing/jaeger-agent")
 }
 
 func init() {
@@ -30,8 +30,8 @@ func TestNewAgent(t *testing.T) {
 }
 
 func TestDefaultAgentImage(t *testing.T) {
-	viper.Set(agentImageKey, "org/custom-agent-image")
-	viper.Set(versionKey, "123")
+	viper.Set(agentImageLabel, "org/custom-agent-image")
+	viper.Set(versionLabel, "123")
 	defer reset()
 
 	jaeger := v1alpha1.NewJaeger("TestDefaultAgentImage")
