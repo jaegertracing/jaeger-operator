@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
@@ -17,21 +18,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 // DaemonSet runs a test with the agent as DaemonSet
 func DaemonSet(t *testing.T) {
 	ctx := prepare(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 
 	if err := daemonsetTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func daemonsetTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -59,7 +59,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) 
 	}
 
 	logrus.Infof("passing %v", j)
-	err = f.DynamicClient.Create(goctx.TODO(), j)
+	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) 
 			},
 		},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), dep)
+	err = f.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	if err != nil {
 		return err
 	}

@@ -4,11 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 var (
@@ -41,9 +40,9 @@ func TestJaeger(t *testing.T) {
 	})
 }
 
-func prepare(t *testing.T) framework.TestCtx {
+func prepare(t *testing.T) *framework.TestCtx {
 	ctx := framework.NewTestCtx(t)
-	err := ctx.InitializeClusterResources()
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
