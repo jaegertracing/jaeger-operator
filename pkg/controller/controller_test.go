@@ -57,7 +57,7 @@ func TestUnknownStorage(t *testing.T) {
 func TestElasticsearchAsStorageOptions(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestElasticsearchAsStorageOptions")
 	jaeger.Spec.Strategy = productionStrategy
-	jaeger.Spec.Storage.Type = elasticsearch
+	jaeger.Spec.Storage.Type = elasticsearchStorageType
 	jaeger.Spec.Storage.Options = v1alpha1.NewOptions(map[string]interface{}{
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})

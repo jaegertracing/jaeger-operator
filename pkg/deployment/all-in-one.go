@@ -38,8 +38,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	selector := a.selector()
 	trueVar := true
 	annotations := map[string]string{
-		prometheusScrapeLabel: prometheusScrapeValue,
-		prometheusPortLabel:   "16686",
+		prometheusScrapeLabel:     prometheusScrapeValue,
+		prometheusPortLabel:       "16686",
 		"sidecar.istio.io/inject": "false",
 	}
 

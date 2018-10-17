@@ -12,9 +12,9 @@ import (
 
 const (
 	// storages
-	cassandraStorageType =  "cassandra"
-	memoryStorageType = "memory"
-	kafkaStorageType = "kafka"
+	cassandraStorageType = "cassandra"
+	memoryStorageType    = "memory"
+	kafkaStorageType     = "kafka"
 	// strategies
 	allInOneStrategy = "all-in-one"
 )

@@ -60,8 +60,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	trueVar := true
 	selector := a.selector()
 	annotations := map[string]string{
-		prometheusScrapeLabel: prometheusScrapeValue,
-		prometheusPortLabel:   "5778",
+		prometheusScrapeLabel:     prometheusScrapeValue,
+		prometheusPortLabel:       "5778",
 		"sidecar.istio.io/inject": "false",
 	}
 
