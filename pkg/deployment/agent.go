@@ -47,7 +47,6 @@ func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
-
 	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != daemonSetStrategy {
 		logrus.Infof(
 			"The Jaeger instance '%v' is using a Sidecar strategy for the Jaeger Agent. Skipping its DaemonSet deployment.",
