@@ -52,3 +52,9 @@ func TestMultipleSubValues(t *testing.T) {
 	args := o.ToArgs()
 	assert.Len(t, args, 3)
 }
+
+func TestExposedMap(t *testing.T) {
+	o := NewOptions(nil)
+	o.UnmarshalJSON([]byte(`{"cassandra": {"servers": "cassandra:9042"}}`))
+	assert.Equal(t, "cassandra:9042", o.Map()["cassandra.servers"])
+}

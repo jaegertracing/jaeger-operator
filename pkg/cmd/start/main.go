@@ -44,6 +44,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().StringP("jaeger-all-in-one-image", "", "jaegertracing/all-in-one", "The Docker image for the Jaeger all-in-one")
 	viper.BindPFlag("jaeger-all-in-one-image", cmd.Flags().Lookup("jaeger-all-in-one-image"))
 
+	cmd.Flags().StringP("jaeger-cassandra-schema-image", "", "jaegertracing/jaeger-cassandra-schema", "The Docker image for the Jaeger Cassandra Schema")
+	viper.BindPFlag("jaeger-cassandra-schema-image", cmd.Flags().Lookup("jaeger-cassandra-schema-image"))
+
 	return cmd
 }
 

@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 func init() {
@@ -75,6 +76,12 @@ func TestOptionsArePassed(t *testing.T) {
 			assert.Contains(t, arg, "es.")
 		}
 	}
+}
+
+func TestDelegateProductionDepedencies(t *testing.T) {
+	// for now, we just have storage dependencies
+	c := newProductionController(context.TODO(), v1alpha1.NewJaeger("TestDelegateProductionDepedencies"))
+	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
 func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {

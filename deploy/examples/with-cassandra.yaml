@@ -1,0 +1,15 @@
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: with-cassandra
+spec:
+  strategy: all-in-one
+  storage:
+    type: cassandra
+    options:
+      cassandra:
+        servers: cassandra
+        keyspace: jaeger_v1_datacenter3
+    cassandra-create-schema:
+      datacenter: "datacenter3"
+      mode: "test"

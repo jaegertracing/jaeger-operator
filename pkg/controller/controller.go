@@ -6,12 +6,14 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 // Controller knows what type of deployments to build based on a given spec
 type Controller interface {
+	Dependencies() []batchv1.Job
 	Create() []sdk.Object
 	Update() []sdk.Object
 }
