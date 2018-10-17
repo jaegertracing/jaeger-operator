@@ -68,6 +68,10 @@ run: crd
 es:
 	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
 
+.PHONY: cassandra
+cassandra:
+	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
+
 .PHONY: crd
 crd:
 	@kubectl create -f deploy/crd.yaml 2>&1 | grep -v "already exists" || true

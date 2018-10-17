@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 func init() {
@@ -39,6 +40,12 @@ func TestUpdateAllInOneDeployment(t *testing.T) {
 	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger("TestUpdateAllInOneDeployment"))
 	objs := c.Update()
 	assert.Len(t, objs, 0)
+}
+
+func TestDelegateAllInOneDepedencies(t *testing.T) {
+	// for now, we just have storage dependencies
+	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger("TestDelegateAllInOneDepedencies"))
+	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
 func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {

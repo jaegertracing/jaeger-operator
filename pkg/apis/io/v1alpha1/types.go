@@ -74,6 +74,15 @@ type JaegerAgentSpec struct {
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
 type JaegerStorageSpec struct {
-	Type    string  `json:"type"` // can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
-	Options Options `json:"options"`
+	Type                  string                          `json:"type"` // can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
+	Options               Options                         `json:"options"`
+	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandra-create-schema"`
+}
+
+// JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
+type JaegerCassandraCreateSchemaSpec struct {
+	Enabled    *bool  `json:"enabled"`
+	Image      string `json:"image"`
+	Datacenter string `json:"datacenter"`
+	Mode       string `json:"mode"`
 }

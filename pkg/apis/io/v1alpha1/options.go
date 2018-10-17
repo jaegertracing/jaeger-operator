@@ -68,3 +68,9 @@ func (o *Options) ToArgs() []string {
 
 	return nil
 }
+
+// Map returns a map representing the option entries. Items are flattened, with dots as separators. For instance
+// an option "cassandra" with a nested "servers" object becomes an entry with the key "cassandra.servers"
+func (o *Options) Map() map[string]string {
+	return o.opts
+}

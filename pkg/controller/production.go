@@ -5,9 +5,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 type productionController struct {
@@ -55,4 +57,8 @@ func (c *productionController) Create() []sdk.Object {
 func (c *productionController) Update() []sdk.Object {
 	logrus.Debug("Update isn't yet available")
 	return []sdk.Object{}
+}
+
+func (c *productionController) Dependencies() []batchv1.Job {
+	return storage.Dependencies(c.jaeger)
 }
