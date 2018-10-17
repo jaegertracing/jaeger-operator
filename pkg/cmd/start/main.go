@@ -22,8 +22,7 @@ import (
 func NewStartCommand() *cobra.Command {
 
 	const (
-
-		jaegerVersion   = "jaeger-jaegerVersion"
+		jaegerVersion = "jaeger-version"
 
 		// command
 		command          = "start"
@@ -31,7 +30,7 @@ func NewStartCommand() *cobra.Command {
 		longDescription
 
 		// images
-		imageNS   = "jaegertracing"
+		imageNS        = "jaegertracing"
 		imageAgent     = "jaeger-agent-image"
 		imageQuery     = "jaeger-query-image"
 		imageCollector = "jaeger-collector-image"

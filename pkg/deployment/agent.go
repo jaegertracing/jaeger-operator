@@ -47,9 +47,8 @@ func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
-
 	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != daemonSetStrategy {
-		logrus.Debugf(
+		logrus.Infof(
 			"The Jaeger instance '%v' is using a Sidecar strategy for the Jaeger Agent. Skipping its DaemonSet deployment.",
 			a.jaeger.Name,
 		)
@@ -60,8 +59,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	trueVar := true
 	selector := a.selector()
 	annotations := map[string]string{
-		prometheusScrapeLabel: prometheusScrapeValue,
-		prometheusPortLabel:   "5778",
+		prometheusScrapeLabel:     prometheusScrapeValue,
+		prometheusPortLabel:       "5778",
 		"sidecar.istio.io/inject": "false",
 	}
 

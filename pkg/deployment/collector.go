@@ -40,8 +40,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 	annotations := map[string]string{
-		prometheusScrapeLabel: prometheusScrapeValue,
-		prometheusPortLabel:   "14268",
+		prometheusScrapeLabel:     prometheusScrapeValue,
+		prometheusPortLabel:       "14268",
 		"sidecar.istio.io/inject": "false",
 	}
 

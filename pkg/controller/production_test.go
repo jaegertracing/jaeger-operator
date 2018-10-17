@@ -55,7 +55,7 @@ func TestOptionsArePassed(t *testing.T) {
 		Spec: v1alpha1.JaegerSpec{
 			Strategy: productionStrategy,
 			Storage: v1alpha1.JaegerStorageSpec{
-				Type: elasticsearch,
+				Type: elasticsearchStorageType,
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",
