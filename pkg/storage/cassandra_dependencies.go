@@ -25,8 +25,9 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 	}
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Datacenter == "" {
-		logrus.WithField("instance", jaeger.Name).Info("Datacenter not specified. Using 'dc1' for the cassandra-create-schema job.")
-		jaeger.Spec.Storage.CassandraCreateSchema.Datacenter = "dc1"
+		// the default in the create-schema is "dc1", but the default in Jaeger is "test"! We align with Jaeger here
+		logrus.WithField("instance", jaeger.Name).Info("Datacenter not specified. Using 'test' for the cassandra-create-schema job.")
+		jaeger.Spec.Storage.CassandraCreateSchema.Datacenter = "test"
 	}
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Mode == "" {
