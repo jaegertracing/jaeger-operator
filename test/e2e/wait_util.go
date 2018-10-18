@@ -87,3 +87,29 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 	t.Logf("Ingress available\n")
 	return nil
 }
+
+// WaitForJob checks to see if a given job has the completed successfuly
+// See #WaitForDeployment for the full semantics
+func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		job, err := kubeclient.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of %s job\n", name)
+				return false, nil
+			}
+			return false, err
+		}
+
+		if job.Status.Succeeded > 0 && job.Status.Failed == 0 && job.Status.Active == 0 {
+			return true, nil
+		}
+		t.Logf("Waiting for job %s to succeed. Succeeded: %d, failed: %d, active: %d\n", name, job.Status.Succeeded, job.Status.Failed, job.Status.Active)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("Jobs succeeded\n")
+	return nil
+}

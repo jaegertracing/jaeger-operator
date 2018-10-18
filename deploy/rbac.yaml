@@ -36,7 +36,12 @@ rules:
   - ingresses
   verbs:
   - "*"
-
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - "*"
 ---
 
 kind: RoleBinding

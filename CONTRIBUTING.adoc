@@ -111,9 +111,10 @@ Accessing the provided "address" in your web browser should display the Jaeger U
 
 ==== Storage configuration
 
-There's a template under the `test` directory that can be used to setup an Elasticsearch cluster. Alternatively, the following command can be executed to install it:
+There are a set of templates under the `test` directory that can be used to setup an Elasticsearch and/or Cassandra cluster. Alternatively, the following commands can be executed to install it:
 
 [source,bash]
 ----
 make es
+make cassandra
 ----
