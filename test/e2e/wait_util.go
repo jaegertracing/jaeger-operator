@@ -88,7 +88,7 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 	return nil
 }
 
-// WaitForJob checks to see if a given job has the completed successfuly
+// WaitForJob checks to see if a given job has completed successfuly
 // See #WaitForDeployment for the full semantics
 func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
