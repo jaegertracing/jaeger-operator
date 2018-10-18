@@ -1,9 +1,11 @@
+:toc: macro
+
 image:https://travis-ci.org/jaegertracing/jaeger-operator.svg?branch=master["Build Status", link="https://travis-ci.org/jaegertracing/jaeger-operator"]
 image:https://goreportcard.com/badge/github.com/jaegertracing/jaeger-operator["Go Report Card", link="https://goreportcard.com/report/github.com/jaegertracing/jaeger-operator"]
 image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/badge.svg["Code Coverage", link="https://codecov.io/gh/jaegertracing/jaeger-operator"]
 
 = Jaeger Operator for Kubernetes
-:toc:
+toc::[]
 
 == Installing the operator on Kubernetes
 
