@@ -5,9 +5,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 type allInOneController struct {
@@ -22,7 +24,7 @@ func newAllInOneController(ctx context.Context, jaeger *v1alpha1.Jaeger) *allInO
 	}
 }
 
-func (c allInOneController) Create() []sdk.Object {
+func (c *allInOneController) Create() []sdk.Object {
 	logrus.Debugf("Creating all-in-one for '%v'", c.jaeger.Name)
 
 	dep := deployment.NewAllInOne(c.jaeger)
@@ -43,7 +45,11 @@ func (c allInOneController) Create() []sdk.Object {
 	return os
 }
 
-func (c allInOneController) Update() []sdk.Object {
+func (c *allInOneController) Update() []sdk.Object {
 	logrus.Debug("Update isn't available for all-in-one")
 	return []sdk.Object{}
+}
+
+func (c *allInOneController) Dependencies() []batchv1.Job {
+	return storage.Dependencies(c.jaeger)
 }

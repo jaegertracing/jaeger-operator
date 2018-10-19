@@ -242,6 +242,53 @@ spec:
               fieldPath: status.hostIP
 ----
 
+== Schema migration
+
+=== Cassandra
+
+When the storage type is set to Cassandra, the operator will automatically create a batch job that creates the required schema for Jaeger to run. This batch job will block the Jaeger installation, so that it starts only after the schema is successfuly created. The creation of this batch job can be disabled by setting the `enabled` property to `false`:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: cassandra-without-create-schema
+spec:
+  strategy: all-in-one
+  storage:
+    type: cassandra
+    cassandra-create-schema:
+      enabled: false # <1>
+----
+<1> Defaults to `true`
+
+Further aspects of the batch job can be configured as well. An example with all the possible options is shown below:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: cassandra-with-create-schema
+spec:
+  strategy: all-in-one # <1>
+  storage:
+    type: cassandra
+    options: # <2>
+      cassandra:
+        servers: cassandra
+        keyspace: jaeger_v1_datacenter3
+    cassandra-create-schema: # <3>
+      datacenter: "datacenter3"
+      mode: "test"
+----
+<1> The same works for `production`
+<2> These options are for the regular Jaeger components, like `collector` and `query`
+<3> The options for the `create-schema` job
+
+NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/v1.7.0/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
+
 == Removing an instance
 
 To remove an instance, just use the `delete` command with the file used for the instance creation:

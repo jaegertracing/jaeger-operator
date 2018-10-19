@@ -53,7 +53,7 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: es crd build docker push
+e2e-tests: cassandra es crd build docker push
 	@echo Running end-to-end tests...
 	@cp deploy/rbac.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
@@ -67,6 +67,10 @@ run: crd
 .PHONY: es
 es:
 	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
+
+.PHONY: cassandra
+cassandra:
+	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
 
 .PHONY: crd
 crd:
