@@ -143,7 +143,6 @@ func (a *AllInOne) Services() []*v1.Service {
 		service.NewCollectorService(a.jaeger, selector),
 		service.NewQueryService(a.jaeger, selector),
 		service.NewAgentService(a.jaeger, selector),
-		service.NewZipkinService(a.jaeger, selector),
 	}
 }
 

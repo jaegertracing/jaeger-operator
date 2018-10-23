@@ -86,9 +86,9 @@ func TestDelegateProductionDepedencies(t *testing.T) {
 
 func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
 	if hasDaemonSet {
-		assert.Len(t, objs, 7)
-	} else {
 		assert.Len(t, objs, 6)
+	} else {
+		assert.Len(t, objs, 5)
 	}
 
 	deployments := map[string]bool{
@@ -103,7 +103,6 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	services := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
 		fmt.Sprintf("%s-query", name):     false,
-		fmt.Sprintf("%s-zipkin", name):    false,
 	}
 
 	ingresses := map[string]bool{

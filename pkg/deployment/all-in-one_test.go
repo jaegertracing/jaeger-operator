@@ -49,7 +49,7 @@ func TestAllInOneHasOwner(t *testing.T) {
 func TestAllInOneNumberOfServices(t *testing.T) {
 	name := "TestNumberOfServices"
 	services := NewAllInOne(v1alpha1.NewJaeger(name)).Services()
-	assert.Len(t, services, 4) // collector, query, agent,zipkin
+	assert.Len(t, services, 3) // collector, query, agent
 
 	for _, svc := range services {
 		owners := svc.ObjectMeta.OwnerReferences
