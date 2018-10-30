@@ -123,7 +123,6 @@ func (c *Collector) Services() []*v1.Service {
 	selector := c.selector()
 	return []*v1.Service{
 		service.NewCollectorService(c.jaeger, selector),
-		service.NewZipkinService(c.jaeger, selector),
 	}
 }
 

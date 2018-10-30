@@ -50,9 +50,9 @@ func TestDelegateAllInOneDepedencies(t *testing.T) {
 
 func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
 	if hasDaemonSet {
-		assert.Len(t, objs, 7)
-	} else {
 		assert.Len(t, objs, 6)
+	} else {
+		assert.Len(t, objs, 5)
 	}
 
 	// we should have one deployment, named after the Jaeger's name (ObjectMeta.Name)
@@ -69,7 +69,6 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []s
 		fmt.Sprintf("%s-agent", name):     false,
 		fmt.Sprintf("%s-collector", name): false,
 		fmt.Sprintf("%s-query", name):     false,
-		fmt.Sprintf("%s-zipkin", name):    false,
 	}
 
 	// and the ingress rule

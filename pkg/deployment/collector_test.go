@@ -42,7 +42,7 @@ func TestName(t *testing.T) {
 func TestCollectorServices(t *testing.T) {
 	collector := NewCollector(v1alpha1.NewJaeger("TestName"))
 	svcs := collector.Services()
-	assert.Len(t, svcs, 2)
+	assert.Len(t, svcs, 1)
 }
 
 func TestDefaultCollectorImage(t *testing.T) {
