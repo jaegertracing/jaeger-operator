@@ -69,6 +69,7 @@ func start(cmd *cobra.Command, args []string) {
 	apiVersion := fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
 	watch(apiVersion, "Jaeger", namespace, resyncPeriod)
 	watch("apps/v1", "Deployment", namespace, resyncPeriod)
+	watch("apps/v1", "StatefulSet", namespace, resyncPeriod)
 
 	sdk.Handle(stub.NewHandler())
 	go sdk.Run(ctx)
