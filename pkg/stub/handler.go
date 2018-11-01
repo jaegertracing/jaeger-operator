@@ -106,14 +106,14 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			jaeger := statefulset.Select(o, pods)
 			if jaeger != nil {
 				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-				logrus.WithFields(logrus.Fields{"deployment": o.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
+				logrus.WithFields(logrus.Fields{"statefulset": o.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
 				statefulset.Sidecar(o, jaeger)
 				if err := sdk.Update(o); err != nil {
-					logrus.WithField("deployment", o).Error("failed to update")
+					logrus.WithField("statefulset", o).Error("failed to update")
 					return err
 				}
 			} else {
-				logrus.WithField("deployment", o.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+				logrus.WithField("statefulset", o.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 			}
 		}
 
