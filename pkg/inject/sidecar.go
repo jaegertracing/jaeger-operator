@@ -70,6 +70,7 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList)
 	return nil
 }
 
+// Return a container for sidecar injection
 func Container(jaeger *v1alpha1.Jaeger) v1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(jaeger)))
 	return v1.Container{
