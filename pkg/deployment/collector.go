@@ -40,9 +40,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "14268",
-		"sidecar.istio.io/inject": "false",
+		"prometheus.io/scrape":                       "true",
+		"prometheus.io/port":                         "14268",
+		"sidecar.istio.io/inject":                    "false",
+		"scheduler.alpha.kubernetes.io/critical-pod": "",
 	}
 
 	return &appsv1.Deployment{

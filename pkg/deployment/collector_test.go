@@ -70,4 +70,8 @@ func TestDefaultCollectorImage(t *testing.T) {
 	assert.Equal(t, envvars, containers[0].Env)
 
 	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+
+	criticalpod, found := dep.Spec.Template.ObjectMeta.Annotations["scheduler.alpha.kubernetes.io/critical-pod"]
+	assert.True(t, found)
+	assert.Equal(t, "", criticalpod)
 }

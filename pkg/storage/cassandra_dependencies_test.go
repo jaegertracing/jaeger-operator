@@ -23,7 +23,15 @@ func TestCassandraCreateSchemaEnabled(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestCassandraCreateSchemaEnabled")
 	jaeger.Spec.Storage.CassandraCreateSchema.Enabled = &trueVar
 
-	assert.Len(t, cassandraDeps(jaeger), 1)
+	jobs := cassandraDeps(jaeger)
+	assert.Len(t, jobs, 1)
+
+	assert.Equal(t, "false", jobs[0].Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "false", jobs[0].Spec.Template.Annotations["sidecar.istio.io/inject"])
+
+	criticalpod, found := jobs[0].Spec.Template.Annotations["scheduler.alpha.kubernetes.io/critical-pod"]
+	assert.True(t, found)
+	assert.Equal(t, "", criticalpod)
 }
 
 func TestCassandraCreateSchemaEnabledNil(t *testing.T) {

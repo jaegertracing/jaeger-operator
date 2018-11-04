@@ -41,9 +41,10 @@ func (q *Query) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
 	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "16686",
-		"sidecar.istio.io/inject": "false",
+		"prometheus.io/scrape":                       "true",
+		"prometheus.io/port":                         "16686",
+		"sidecar.istio.io/inject":                    "false",
+		"scheduler.alpha.kubernetes.io/critical-pod": "",
 
 		// note that we are explicitly using a string here, not the value from `inject.Annotation`
 		// this has two reasons:

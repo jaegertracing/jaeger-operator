@@ -36,9 +36,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	selector := a.selector()
 	trueVar := true
 	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "16686",
-		"sidecar.istio.io/inject": "false",
+		"prometheus.io/scrape":                       "true",
+		"prometheus.io/port":                         "16686",
+		"sidecar.istio.io/inject":                    "false",
+		"scheduler.alpha.kubernetes.io/critical-pod": "",
 	}
 
 	return &appsv1.Deployment{

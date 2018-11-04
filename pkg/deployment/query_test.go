@@ -46,6 +46,10 @@ func TestDefaultQueryImage(t *testing.T) {
 	assert.Equal(t, "org/custom-query-image:123", containers[0].Image)
 
 	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+
+	criticalpod, found := dep.Spec.Template.ObjectMeta.Annotations["scheduler.alpha.kubernetes.io/critical-pod"]
+	assert.True(t, found)
+	assert.Equal(t, "", criticalpod)
 }
 
 func TestQueryPodName(t *testing.T) {

@@ -38,6 +38,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 
 	assert.Equal(t, "false", d.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+
+	criticalpod, found := d.Spec.Template.ObjectMeta.Annotations["scheduler.alpha.kubernetes.io/critical-pod"]
+	assert.True(t, found)
+	assert.Equal(t, "", criticalpod)
 }
 
 func TestAllInOneHasOwner(t *testing.T) {

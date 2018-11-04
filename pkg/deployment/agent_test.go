@@ -61,4 +61,8 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 	assert.NotNil(t, ds)
 
 	assert.Equal(t, "false", ds.Spec.Template.Annotations["sidecar.istio.io/inject"])
+
+	criticalpod, found := ds.Spec.Template.Annotations["scheduler.alpha.kubernetes.io/critical-pod"]
+	assert.True(t, found)
+	assert.Equal(t, "", criticalpod)
 }
