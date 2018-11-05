@@ -40,6 +40,9 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		"prometheus.io/port":      "16686",
 		"sidecar.istio.io/inject": "false",
 	}
+	for k, v := range a.jaeger.Spec.AllInOne.Annotations {
+		annotations[k] = v
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

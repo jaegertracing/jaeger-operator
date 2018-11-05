@@ -44,8 +44,19 @@ func TestDefaultQueryImage(t *testing.T) {
 
 	assert.Len(t, containers, 1)
 	assert.Equal(t, "org/custom-query-image:123", containers[0].Image)
+}
+
+func TestQueryAnnotations(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryAnnotations")
+	jaeger.Spec.Query.Annotations = map[string]string{
+		"hello": "world",
+	}
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
 
 	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", dep.Spec.Template.ObjectMeta.Annotations["hello"])
 }
 
 func TestQueryPodName(t *testing.T) {

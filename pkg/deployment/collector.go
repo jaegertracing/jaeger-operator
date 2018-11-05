@@ -44,6 +44,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 		"prometheus.io/port":      "14268",
 		"sidecar.istio.io/inject": "false",
 	}
+	for k, v := range c.jaeger.Spec.Collector.Annotations {
+		annotations[k] = v
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
