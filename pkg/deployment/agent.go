@@ -77,9 +77,10 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
-						Image: a.jaeger.Spec.Agent.Image,
-						Name:  "jaeger-agent-daemonset",
-						Args:  args,
+						Image:        a.jaeger.Spec.Agent.Image,
+						Name:         "jaeger-agent-daemonset",
+						Args:         args,
+						VolumeMounts: append(a.jaeger.Spec.VolumeMounts, a.jaeger.Spec.Agent.VolumeMounts...),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
@@ -115,6 +116,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							InitialDelaySeconds: 1,
 						},
 					}},
+					Volumes: append(a.jaeger.Spec.Volumes, a.jaeger.Spec.Agent.Volumes...),
 				},
 			},
 		},

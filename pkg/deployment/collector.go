@@ -88,6 +88,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Value: "9411",
 							},
 						},
+						VolumeMounts: append(c.jaeger.Spec.VolumeMounts, c.jaeger.Spec.Collector.VolumeMounts...),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 9411,
@@ -112,6 +113,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 							InitialDelaySeconds: 1,
 						},
 					}},
+					Volumes: append(c.jaeger.Spec.Volumes, c.jaeger.Spec.Collector.Volumes...),
 				},
 			},
 		},
