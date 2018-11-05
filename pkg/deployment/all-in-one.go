@@ -86,6 +86,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: "9411",
 							},
 						},
+						VolumeMounts: append(a.jaeger.Spec.VolumeMounts, a.jaeger.Spec.AllInOne.VolumeMounts...),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
@@ -133,6 +134,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							InitialDelaySeconds: 1,
 						},
 					}},
+					Volumes: append(a.jaeger.Spec.Volumes, a.jaeger.Spec.AllInOne.Volumes...),
 				},
 			},
 		},

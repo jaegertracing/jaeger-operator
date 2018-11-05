@@ -95,6 +95,7 @@ func (q *Query) Get() *appsv1.Deployment {
 								Value: q.jaeger.Spec.Storage.Type,
 							},
 						},
+						VolumeMounts: append(q.jaeger.Spec.VolumeMounts, q.jaeger.Spec.Query.VolumeMounts...),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
@@ -112,6 +113,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 					},
 					},
+					Volumes: append(q.jaeger.Spec.Volumes, q.jaeger.Spec.Query.Volumes...),
 				},
 			},
 		},
