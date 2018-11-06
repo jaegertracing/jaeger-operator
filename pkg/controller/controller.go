@@ -23,7 +23,7 @@ func NewController(ctx context.Context, jaeger *v1alpha1.Jaeger) Controller {
 	normalize(jaeger)
 
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
-	if jaeger.Spec.Strategy == "all-in-one" {
+	if jaeger.Spec.Strategy == "allInOne" {
 		return newAllInOneController(ctx, jaeger)
 	}
 
@@ -57,18 +57,18 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 
 	// normalize the deployment strategy
 	if strings.ToLower(jaeger.Spec.Strategy) != "production" {
-		jaeger.Spec.Strategy = "all-in-one"
+		jaeger.Spec.Strategy = "allInOne"
 	}
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if strings.ToLower(jaeger.Spec.Storage.Type) == "memory" && strings.ToLower(jaeger.Spec.Strategy) != "all-in-one" {
+	if strings.ToLower(jaeger.Spec.Storage.Type) == "memory" && strings.ToLower(jaeger.Spec.Strategy) != "allInOne" {
 		logrus.Warnf(
 			"No suitable storage was provided for the Jaeger instance '%v'. Falling back to all-in-one. Storage type: '%v'",
 			jaeger.Name,
 			jaeger.Spec.Storage.Type,
 		)
-		jaeger.Spec.Strategy = "all-in-one"
+		jaeger.Spec.Strategy = "allInOne"
 	}
 }
 
