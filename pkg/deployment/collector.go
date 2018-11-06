@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Collector builds pods for jaegertracing/jaeger-collector
@@ -88,7 +89,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Value: "9411",
 							},
 						},
-						VolumeMounts: append(c.jaeger.Spec.VolumeMounts, c.jaeger.Spec.Collector.VolumeMounts...),
+						VolumeMounts: util.RemoveDuplicatedVolumeMounts(append(c.jaeger.Spec.Collector.VolumeMounts, c.jaeger.Spec.VolumeMounts...)),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 9411,
@@ -113,7 +114,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 							InitialDelaySeconds: 1,
 						},
 					}},
-					Volumes: append(c.jaeger.Spec.Volumes, c.jaeger.Spec.Collector.Volumes...),
+					Volumes: util.RemoveDuplicatedVolumes(append(c.jaeger.Spec.Collector.Volumes, c.jaeger.Spec.Volumes...)),
 				},
 			},
 		},

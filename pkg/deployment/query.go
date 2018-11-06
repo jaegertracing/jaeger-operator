@@ -14,6 +14,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Query builds pods for jaegertracing/jaeger-query
@@ -92,7 +93,7 @@ func (q *Query) Get() *appsv1.Deployment {
 								Value: q.jaeger.Spec.Storage.Type,
 							},
 						},
-						VolumeMounts: append(q.jaeger.Spec.VolumeMounts, q.jaeger.Spec.Query.VolumeMounts...),
+						VolumeMounts: util.RemoveDuplicatedVolumeMounts(append(q.jaeger.Spec.Query.VolumeMounts, q.jaeger.Spec.VolumeMounts...)),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
@@ -110,7 +111,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 					},
 					},
-					Volumes: append(q.jaeger.Spec.Volumes, q.jaeger.Spec.Query.Volumes...),
+					Volumes: util.RemoveDuplicatedVolumes(append(q.jaeger.Spec.Query.Volumes, q.jaeger.Spec.Volumes...)),
 				},
 			},
 		},

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"k8s.io/api/core/v1"
 )
 
 func init() {
@@ -99,4 +99,145 @@ func TestQueryIngresses(t *testing.T) {
 			assert.Len(t, ingresses, stc.expectedIngressesCount)
 		})
 	}
+}
+
+func TestQueryVolumeMountsWithVolumes(t *testing.T) {
+	name := "TestQueryVolumeMountsWithVolumes"
+
+	globalVolumes := []v1.Volume{
+		v1.Volume{
+			Name:         "globalVolume",
+			VolumeSource: v1.VolumeSource{},
+		},
+	}
+
+	globalVolumeMounts := []v1.VolumeMount{
+		v1.VolumeMount{
+			Name: "globalVolume",
+		},
+	}
+
+	queryVolumes := []v1.Volume{
+		v1.Volume{
+			Name:         "queryVolume",
+			VolumeSource: v1.VolumeSource{},
+		},
+	}
+
+	queryVolumeMounts := []v1.VolumeMount{
+		v1.VolumeMount{
+			Name: "queryVolume",
+		},
+	}
+
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Volumes = globalVolumes
+	jaeger.Spec.VolumeMounts = globalVolumeMounts
+	jaeger.Spec.Query.Volumes = queryVolumes
+	jaeger.Spec.Query.VolumeMounts = queryVolumeMounts
+	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
+
+	assert.Len(t, podSpec.Volumes, len(append(queryVolumes, globalVolumes...)))
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(queryVolumeMounts, globalVolumeMounts...)))
+
+	// query is first while global is second
+	for index, volume := range podSpec.Volumes {
+		if index == 0 {
+			assert.Equal(t, "queryVolume", volume.Name)
+		} else if index == 1 {
+			assert.Equal(t, "globalVolume", volume.Name)
+		}
+	}
+
+	for index, volumeMount := range podSpec.Containers[0].VolumeMounts {
+		if index == 0 {
+			assert.Equal(t, "queryVolume", volumeMount.Name)
+		} else if index == 1 {
+			assert.Equal(t, "globalVolume", volumeMount.Name)
+		}
+	}
+
+}
+
+func TestQueryMountGlobalVolumes(t *testing.T) {
+	name := "TestQueryMountGlobalVolumes"
+
+	globalVolumes := []v1.Volume{
+		v1.Volume{
+			Name:         "globalVolume",
+			VolumeSource: v1.VolumeSource{},
+		},
+	}
+
+	queryVolumeMounts := []v1.VolumeMount{
+		v1.VolumeMount{
+			Name:     "globalVolume",
+			ReadOnly: true,
+		},
+	}
+
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Volumes = globalVolumes
+	jaeger.Spec.Query.VolumeMounts = queryVolumeMounts
+	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
+
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// query volume is mounted
+	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
+
+}
+func TestQueryVolumeMountsWithSameName(t *testing.T) {
+	name := "TestQueryVolumeMountsWithSameName"
+
+	globalVolumeMounts := []v1.VolumeMount{
+		v1.VolumeMount{
+			Name:     "data",
+			ReadOnly: true,
+		},
+	}
+
+	queryVolumeMounts := []v1.VolumeMount{
+		v1.VolumeMount{
+			Name:     "data",
+			ReadOnly: false,
+		},
+	}
+
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.VolumeMounts = globalVolumeMounts
+	jaeger.Spec.Query.VolumeMounts = queryVolumeMounts
+	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
+
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// query volume is mounted
+	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
+
+}
+
+func TestQueryVolumeWithSameName(t *testing.T) {
+	name := "TestQueryVolumeWithSameName"
+
+	globalVolumes := []v1.Volume{
+		v1.Volume{
+			Name:         "data",
+			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
+		},
+	}
+
+	queryVolumes := []v1.Volume{
+		v1.Volume{
+			Name:         "data",
+			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
+		},
+	}
+
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Volumes = globalVolumes
+	jaeger.Spec.Query.Volumes = queryVolumes
+	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
+
+	assert.Len(t, podSpec.Volumes, 1)
+	// query volume is mounted
+	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
+
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // AllInOne builds pods for jaegertracing/all-in-one
@@ -83,7 +84,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: "9411",
 							},
 						},
-						VolumeMounts: append(a.jaeger.Spec.VolumeMounts, a.jaeger.Spec.AllInOne.VolumeMounts...),
+						VolumeMounts: util.RemoveDuplicatedVolumeMounts(append(a.jaeger.Spec.AllInOne.VolumeMounts, a.jaeger.Spec.VolumeMounts...)),
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
@@ -131,7 +132,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							InitialDelaySeconds: 1,
 						},
 					}},
-					Volumes: append(a.jaeger.Spec.Volumes, a.jaeger.Spec.AllInOne.Volumes...),
+					Volumes: util.RemoveDuplicatedVolumes(append(a.jaeger.Spec.AllInOne.Volumes, a.jaeger.Spec.Volumes...)),
 				},
 			},
 		},
