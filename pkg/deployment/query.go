@@ -7,12 +7,10 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
@@ -124,17 +122,6 @@ func (q *Query) Services() []*v1.Service {
 	return []*v1.Service{
 		service.NewQueryService(q.jaeger, selector),
 	}
-}
-
-// Ingresses returns a list of ingress rules to be deployed along with the all-in-one deployment
-func (q *Query) Ingresses() []*v1beta1.Ingress {
-	if q.jaeger.Spec.Query.Ingress.Enabled == nil || *q.jaeger.Spec.Query.Ingress.Enabled == true {
-		return []*v1beta1.Ingress{
-			ingress.NewQueryIngress(q.jaeger),
-		}
-	}
-
-	return []*v1beta1.Ingress{}
 }
 
 func (q *Query) selector() map[string]string {

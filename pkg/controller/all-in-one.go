@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
+
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -38,8 +40,10 @@ func (c *allInOneController) Create() []sdk.Object {
 	for _, svc := range dep.Services() {
 		os = append(os, svc)
 	}
-	for _, ingress := range dep.Ingresses() {
-		os = append(os, ingress)
+
+	qi := ingress.NewQueryIngress(c.jaeger).Get()
+	if nil != qi {
+		os = append(os, qi)
 	}
 
 	return os

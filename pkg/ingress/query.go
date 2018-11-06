@@ -11,8 +11,22 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
+// QueryIngress builds pods for jaegertracing/jaeger-query
+type QueryIngress struct {
+	jaeger *v1alpha1.Jaeger
+}
+
 // NewQueryIngress returns a new ingress object for the Query service
-func NewQueryIngress(jaeger *v1alpha1.Jaeger) *v1beta1.Ingress {
+func NewQueryIngress(jaeger *v1alpha1.Jaeger) *QueryIngress {
+	return &QueryIngress{jaeger: jaeger}
+}
+
+// Get returns a query ingress
+func (i *QueryIngress) Get() *v1beta1.Ingress {
+	if i.jaeger.Spec.Ingress.Enabled != nil && *i.jaeger.Spec.Ingress.Enabled == false {
+		return nil
+	}
+
 	trueVar := true
 
 	return &v1beta1.Ingress{
@@ -21,22 +35,22 @@ func NewQueryIngress(jaeger *v1alpha1.Jaeger) *v1beta1.Ingress {
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-query", jaeger.Name),
-			Namespace: jaeger.Namespace,
+			Name:      fmt.Sprintf("%s-query", i.jaeger.Name),
+			Namespace: i.jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
-					APIVersion: jaeger.APIVersion,
-					Kind:       jaeger.Kind,
-					Name:       jaeger.Name,
-					UID:        jaeger.UID,
+					APIVersion: i.jaeger.APIVersion,
+					Kind:       i.jaeger.Kind,
+					Name:       i.jaeger.Name,
+					UID:        i.jaeger.UID,
 					Controller: &trueVar,
 				},
 			},
 		},
 		Spec: v1beta1.IngressSpec{
 			Backend: &v1beta1.IngressBackend{
-				ServiceName: service.GetNameForQueryService(jaeger),
-				ServicePort: intstr.FromInt(service.GetPortForQueryService(jaeger)),
+				ServiceName: service.GetNameForQueryService(i.jaeger),
+				ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 			},
 		},
 	}
