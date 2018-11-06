@@ -22,6 +22,11 @@ type Controller interface {
 func NewController(ctx context.Context, jaeger *v1alpha1.Jaeger) Controller {
 	normalize(jaeger)
 
+	if jaeger.Spec.Strategy == "all-in-one" {
+		logrus.Warnf("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
+		jaeger.Spec.Strategy = "allInOne"
+	}
+
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
 	if jaeger.Spec.Strategy == "allInOne" {
 		return newAllInOneController(ctx, jaeger)
