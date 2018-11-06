@@ -68,6 +68,19 @@ func TestDefaultCollectorImage(t *testing.T) {
 		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
+}
 
-	assert.Equal(t, "false", dep.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+func TestCollectorAnnotations(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestCollectorAnnotations")
+	jaeger.Spec.Collector.Annotations = map[string]string{
+		"hello":                "world",
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }

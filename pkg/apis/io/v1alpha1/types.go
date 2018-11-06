@@ -40,10 +40,11 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Ingress JaegerIngressSpec `json:"ingress"`
-	Size    int               `json:"size"`
-	Image   string            `json:"image"`
-	Options Options           `json:"options"`
+	Ingress     JaegerIngressSpec `json:"ingress"`
+	Size        int               `json:"size"`
+	Image       string            `json:"image"`
+	Options     Options           `json:"options"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
@@ -53,23 +54,26 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
-	Ingress JaegerIngressSpec `json:"ingress"`
-	Image   string            `json:"image"`
-	Options Options           `json:"options"`
+	Ingress     JaegerIngressSpec `json:"ingress"`
+	Image       string            `json:"image"`
+	Options     Options           `json:"options"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
-	Size    int     `json:"size"`
-	Image   string  `json:"image"`
-	Options Options `json:"options"`
+	Size        int               `json:"size"`
+	Image       string            `json:"image"`
+	Options     Options           `json:"options"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
 type JaegerAgentSpec struct {
-	Strategy string  `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
-	Image    string  `json:"image"`
-	Options  Options `json:"options"`
+	Strategy    string            `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
+	Image       string            `json:"image"`
+	Options     Options           `json:"options"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector

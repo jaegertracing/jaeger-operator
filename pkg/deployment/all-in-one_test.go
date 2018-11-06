@@ -36,8 +36,21 @@ func TestDefaultAllInOneImage(t *testing.T) {
 		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
+}
 
-	assert.Equal(t, "false", d.Spec.Template.ObjectMeta.Annotations["sidecar.istio.io/inject"])
+func TestAllInOneAnnotations(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAllInOneAnnotations")
+	jaeger.Spec.AllInOne.Annotations = map[string]string{
+		"hello":                "world",
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
 func TestAllInOneHasOwner(t *testing.T) {

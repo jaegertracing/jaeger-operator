@@ -59,6 +59,20 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 
 	ds := agent.Get()
 	assert.NotNil(t, ds)
+}
 
-	assert.Equal(t, "false", ds.Spec.Template.Annotations["sidecar.istio.io/inject"])
+func TestDaemonSetAgentAnnotations(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestDaemonSetAgentAnnotations")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.Annotations = map[string]string{
+		"hello":                "world",
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
