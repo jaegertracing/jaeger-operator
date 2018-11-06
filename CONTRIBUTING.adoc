@@ -76,6 +76,8 @@ make test
 
 NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
 
+Similar instructions also work for OpenShift, but the target `run-openshift` can be used instead of `run`.
+
 ==== Model changes
 
 The Operator SDK generates the `pkg/apis/io/v1alpha1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/io/v1alpha1/types.go`)

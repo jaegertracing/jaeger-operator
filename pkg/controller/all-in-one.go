@@ -3,14 +3,15 @@ package controller
 import (
 	"context"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
+	"github.com/jaegertracing/jaeger-operator/pkg/route"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -41,9 +42,16 @@ func (c *allInOneController) Create() []sdk.Object {
 		os = append(os, svc)
 	}
 
-	qi := ingress.NewQueryIngress(c.jaeger).Get()
-	if nil != qi {
-		os = append(os, qi)
+	if viper.GetBool("openshift") {
+		qr := route.NewQueryRoute(c.jaeger).Get()
+		if nil != qr {
+			os = append(os, qr)
+		}
+	} else {
+		qi := ingress.NewQueryIngress(c.jaeger).Get()
+		if nil != qi {
+			os = append(os, qi)
+		}
 	}
 
 	return os

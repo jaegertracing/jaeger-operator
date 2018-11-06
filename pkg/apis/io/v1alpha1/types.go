@@ -32,6 +32,7 @@ type JaegerSpec struct {
 	Agent     JaegerAgentSpec     `json:"agent"`
 	Storage   JaegerStorageSpec   `json:"storage"`
 	Ingress   JaegerIngressSpec   `json:"ingress"`
+	Route     JaegerRouteSpec     `json:"route"`
 }
 
 // JaegerStatus defines what is to be returned from a status query
@@ -49,6 +50,11 @@ type JaegerQuerySpec struct {
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
 type JaegerIngressSpec struct {
+	Enabled *bool `json:"enabled"`
+}
+
+// JaegerRouteSpec defines the options to be used when deploying the query route (OpenShift-specific)
+type JaegerRouteSpec struct {
 	Enabled *bool `json:"enabled"`
 }
 
