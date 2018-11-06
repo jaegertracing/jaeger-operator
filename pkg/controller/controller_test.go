@@ -94,7 +94,7 @@ func TestIncompatibleStorageForProduction(t *testing.T) {
 		},
 	}
 	normalize(jaeger)
-	assert.Equal(t, "all-in-one", jaeger.Spec.Strategy)
+	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
 func getDeployments(objs []sdk.Object) []*appsv1.Deployment {

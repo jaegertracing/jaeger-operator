@@ -47,7 +47,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 			Namespace: namespace,
 		},
 		Spec: v1alpha1.JaegerSpec{
-			Strategy: "all-in-one",
+			Strategy: "allInOne",
 			AllInOne: v1alpha1.JaegerAllInOneSpec{},
 			Agent: v1alpha1.JaegerAgentSpec{
 				Strategy: "DaemonSet",
