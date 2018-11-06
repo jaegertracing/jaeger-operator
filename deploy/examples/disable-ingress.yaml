@@ -3,6 +3,6 @@ kind: Jaeger
 metadata:
   name: disable-ingress
 spec:
-  all-in-one:
+  allInOne:
     ingress:
       enabled: false
