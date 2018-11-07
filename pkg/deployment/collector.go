@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 // Collector builds pods for jaegertracing/jaeger-collector
@@ -80,7 +81,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: c.jaeger.Spec.Collector.Image,
 						Name:  "jaeger-collector",
-						Args:  allArgs(c.jaeger.Spec.Collector.Options, c.jaeger.Spec.Storage.Options),
+						Args: allArgs(c.jaeger.Spec.Collector.Options,
+							c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(c.jaeger.Spec.Storage.Type))),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",

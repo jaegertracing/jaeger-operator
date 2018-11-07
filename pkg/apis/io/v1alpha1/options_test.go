@@ -46,11 +46,31 @@ func TestMarshalling(t *testing.T) {
 	assert.Contains(t, s, `"es.username":"elastic"`)
 }
 
+func TestMarshallingWithFilter(t *testing.T) {
+	o := NewOptions(map[string]interface{}{
+		"es.server-urls":    "http://elasticsearch.default.svc:9200",
+		"memory.max-traces": "50000",
+	})
+	o = o.Filter("memory")
+	args := o.ToArgs()
+	assert.Len(t, args, 1)
+	assert.Equal(t, "50000", o.Map()["memory.max-traces"])
+}
+
 func TestMultipleSubValues(t *testing.T) {
 	o := NewOptions(nil)
 	o.UnmarshalJSON([]byte(`{"es": {"server-urls": "http://elasticsearch:9200", "username": "elastic", "password": "changeme"}}`))
 	args := o.ToArgs()
 	assert.Len(t, args, 3)
+}
+
+func TestMultipleSubValuesWithFilter(t *testing.T) {
+	o := NewOptions(nil)
+	o.UnmarshalJSON([]byte(`{"memory": {"max-traces": "50000"}, "es": {"server-urls": "http://elasticsearch:9200", "username": "elastic", "password": "changeme"}}`))
+	o = o.Filter("memory")
+	args := o.ToArgs()
+	assert.Len(t, args, 1)
+	assert.Equal(t, "50000", o.Map()["memory.max-traces"])
 }
 
 func TestExposedMap(t *testing.T) {

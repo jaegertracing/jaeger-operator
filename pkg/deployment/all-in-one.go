@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 // AllInOne builds pods for jaegertracing/all-in-one
@@ -73,7 +74,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: a.jaeger.Spec.AllInOne.Image,
 						Name:  "jaeger",
-						Args:  allArgs(a.jaeger.Spec.AllInOne.Options, a.jaeger.Spec.Storage.Options),
+						Args: allArgs(a.jaeger.Spec.AllInOne.Options,
+							a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type))),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
