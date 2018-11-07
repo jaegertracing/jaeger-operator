@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: jaeger-operator
+  template:
+    metadata:
+      labels:
+        name: jaeger-operator
+    spec:
+      containers:
+        - name: jaeger-operator
+          image: jaegertracing/jaeger-operator:1.7.0
+          ports:
+          - containerPort: 60000
+            name: metrics
+          args: ["start", "--platform=openshift"]
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "jaeger-operator"

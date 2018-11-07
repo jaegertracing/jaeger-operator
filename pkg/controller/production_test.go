@@ -26,6 +26,15 @@ func TestCreateProductionDeployment(t *testing.T) {
 	assertDeploymentsAndServicesForProduction(t, name, objs, false)
 }
 
+func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+	name := "TestCreateProductionDeploymentOnOpenShift"
+	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
+	objs := c.Create()
+	assertDeploymentsAndServicesForProduction(t, name, objs, false)
+}
+
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "TestCreateProductionDeploymentWithDaemonSetAgent"
 
@@ -105,9 +114,19 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 		fmt.Sprintf("%s-query", name):     false,
 	}
 
-	ingresses := map[string]bool{
-		fmt.Sprintf("%s-query", name): false,
+	var ingresses map[string]bool
+	var routes map[string]bool
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
+		ingresses = map[string]bool{}
+		routes = map[string]bool{
+			fmt.Sprintf("%s", name): false,
+		}
+	} else {
+		ingresses = map[string]bool{
+			fmt.Sprintf("%s-query", name): false,
+		}
+		routes = map[string]bool{}
 	}
 
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses)
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes)
 }

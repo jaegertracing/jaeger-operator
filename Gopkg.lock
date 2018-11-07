@@ -279,6 +279,14 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "release-3.11"
+  digest = "1:416ab68f11332bbaad8d2ee219dccb42e06f2e4321eb5dc210adc86f860e1004"
+  name = "github.com/openshift/api"
+  packages = ["route/v1"]
+  pruneopts = "NUT"
+  revision = "5ad8479f64f1b60ee9c62ce8ef1fe6638838725e"
+
+[[projects]]
   digest = "1:849835cff411090d517da03b18b08d7eb832ec62fdaf44d6e999e3dd5d9e83bb"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -776,6 +784,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/mitchellh/go-homedir",
+    "github.com/openshift/api/route/v1",
     "github.com/operator-framework/operator-sdk/pkg/sdk",
     "github.com/operator-framework/operator-sdk/pkg/test",
     "github.com/operator-framework/operator-sdk/pkg/test/e2eutil",
@@ -786,6 +795,7 @@
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "k8s.io/api/apps/v1",
+    "k8s.io/api/batch/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
