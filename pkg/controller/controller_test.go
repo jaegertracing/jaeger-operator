@@ -103,7 +103,7 @@ func TestDreprecatedAllInOneStrategy(t *testing.T) {
 			Strategy: "all-in-one",
 		},
 	}
-	normalize(jaeger)
+	NewController(context.TODO(), jaeger)
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
