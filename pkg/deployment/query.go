@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 // Query builds pods for jaegertracing/jaeger-query
@@ -86,7 +87,8 @@ func (q *Query) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: q.jaeger.Spec.Query.Image,
 						Name:  "jaeger-query",
-						Args:  allArgs(q.jaeger.Spec.Query.Options, q.jaeger.Spec.Storage.Options),
+						Args: allArgs(q.jaeger.Spec.Query.Options,
+							q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type))),
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",

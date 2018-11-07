@@ -9,6 +9,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 // Controller knows what type of deployments to build based on a given spec
@@ -55,7 +56,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 			"The provided storage type for the Jaeger instance '%v' is unknown ('%v'). Falling back to 'memory'. Known options: %v",
 			jaeger.Name,
 			jaeger.Spec.Storage.Type,
-			knownStorages(),
+			storage.ValidTypes(),
 		)
 		jaeger.Spec.Storage.Type = "memory"
 	}
@@ -78,20 +79,11 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 }
 
 func unknownStorage(typ string) bool {
-	for _, k := range knownStorages() {
+	for _, k := range storage.ValidTypes() {
 		if strings.ToLower(typ) == k {
 			return false
 		}
 	}
 
 	return true
-}
-
-func knownStorages() []string {
-	return []string{
-		"memory",
-		"kafka",
-		"elasticsearch",
-		"cassandra",
-	}
 }

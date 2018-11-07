@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // Options defines a common options parameter to the different structs
@@ -14,6 +15,22 @@ type Options struct {
 func NewOptions(o map[string]interface{}) Options {
 	options := Options{}
 	options.parse(o)
+	return options
+}
+
+// Filter creates a new Options object with just the elements identified by the supplied prefix
+func (o *Options) Filter(prefix string) Options {
+	options := Options{}
+	options.opts = make(map[string]string)
+
+	prefix += "."
+
+	for k, v := range o.opts {
+		if strings.HasPrefix(k, prefix) {
+			options.opts[k] = v
+		}
+	}
+
 	return options
 }
 
