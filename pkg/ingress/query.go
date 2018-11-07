@@ -16,12 +16,12 @@ type QueryIngress struct {
 	jaeger *v1alpha1.Jaeger
 }
 
-// NewQueryIngress returns a new ingress object for the Query service
+// NewQueryIngress builds a new QueryIngress struct based on the given spec
 func NewQueryIngress(jaeger *v1alpha1.Jaeger) *QueryIngress {
 	return &QueryIngress{jaeger: jaeger}
 }
 
-// Get returns a query ingress
+// Get returns an ingress specification for the current instance
 func (i *QueryIngress) Get() *v1beta1.Ingress {
 	if i.jaeger.Spec.Ingress.Enabled != nil && *i.jaeger.Spec.Ingress.Enabled == false {
 		return nil
