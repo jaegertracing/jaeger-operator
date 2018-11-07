@@ -9,6 +9,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -47,8 +48,9 @@ func (c *productionController) Create() []sdk.Object {
 		components = append(components, svc)
 	}
 
-	for _, ingress := range query.Ingresses() {
-		components = append(components, ingress)
+	qi := ingress.NewQueryIngress(c.jaeger).Get()
+	if nil != qi {
+		components = append(components, qi)
 	}
 
 	return components

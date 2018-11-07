@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,35 @@ import (
 )
 
 func TestQueryIngress(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryIngress")
+	name := "TestQueryIngress"
+	jaeger := v1alpha1.NewJaeger(name)
 	ingress := NewQueryIngress(jaeger)
-	assert.Contains(t, ingress.Spec.Backend.ServiceName, "query")
+
+	dep := ingress.Get()
+
+	assert.Contains(t, dep.Spec.Backend.ServiceName, fmt.Sprintf("%s-query", name))
+}
+
+func TestQueryIngressDisabled(t *testing.T) {
+	enabled := false
+	name := "TestQueryIngressDisabled"
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Ingress.Enabled = &enabled
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.Nil(t, dep)
+}
+
+func TestQueryIngressEnabled(t *testing.T) {
+	enabled := true
+	name := "TestQueryIngressEnabled"
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Ingress.Enabled = &enabled
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
 }

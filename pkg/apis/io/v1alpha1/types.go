@@ -31,6 +31,7 @@ type JaegerSpec struct {
 	Collector JaegerCollectorSpec `json:"collector"`
 	Agent     JaegerAgentSpec     `json:"agent"`
 	Storage   JaegerStorageSpec   `json:"storage"`
+	Ingress   JaegerIngressSpec   `json:"ingress"`
 }
 
 // JaegerStatus defines what is to be returned from a status query
@@ -40,7 +41,6 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Ingress     JaegerIngressSpec `json:"ingress"`
 	Size        int               `json:"size"`
 	Image       string            `json:"image"`
 	Options     Options           `json:"options"`
@@ -54,7 +54,6 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
-	Ingress     JaegerIngressSpec `json:"ingress"`
 	Image       string            `json:"image"`
 	Options     Options           `json:"options"`
 	Annotations map[string]string `json:"annotations,omitempty"`

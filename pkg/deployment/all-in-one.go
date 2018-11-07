@@ -7,12 +7,10 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
@@ -147,17 +145,6 @@ func (a *AllInOne) Services() []*v1.Service {
 		service.NewQueryService(a.jaeger, selector),
 		service.NewAgentService(a.jaeger, selector),
 	}
-}
-
-// Ingresses returns a list of ingress rules to be deployed along with the all-in-one deployment
-func (a *AllInOne) Ingresses() []*v1beta1.Ingress {
-	if a.jaeger.Spec.AllInOne.Ingress.Enabled == nil || *a.jaeger.Spec.AllInOne.Ingress.Enabled == true {
-		return []*v1beta1.Ingress{
-			ingress.NewQueryIngress(a.jaeger),
-		}
-	}
-
-	return []*v1beta1.Ingress{}
 }
 
 func (a *AllInOne) selector() map[string]string {
