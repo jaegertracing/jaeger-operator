@@ -107,6 +107,19 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
+func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "memory",
+			},
+		},
+	}
+	NewController(context.TODO(), jaeger)
+	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+}
+
 func getDeployments(objs []sdk.Object) []*appsv1.Deployment {
 	var deps []*appsv1.Deployment
 
