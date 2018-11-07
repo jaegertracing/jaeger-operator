@@ -149,7 +149,7 @@ NAME             HOSTS     ADDRESS          PORTS     AGE
 simplest-query   *         192.168.122.34   80        3m
 ----
 
-IMPORTANT: an `Ingress` object is *not* created when the operator is started with the `--openshift=true` flag as, such as when using the resource `operator-openshift.yaml`.
+IMPORTANT: an `Ingress` object is *not* created when the operator is started with the `--platform=openshift` flag, such as when using the resource `operator-openshift.yaml`.
 
 In this example, the Jaeger UI is available at http://192.168.122.34
 

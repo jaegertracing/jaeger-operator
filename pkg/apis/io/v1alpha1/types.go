@@ -6,6 +6,14 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+const (
+	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
+	FlagPlatformOpenShift = "openshift"
+
+	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
+	FlagPlatformKubernetes = "kubernetes"
+)
+
 // JaegerList is a list of Jaeger structs
 type JaegerList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -32,7 +40,6 @@ type JaegerSpec struct {
 	Agent     JaegerAgentSpec     `json:"agent"`
 	Storage   JaegerStorageSpec   `json:"storage"`
 	Ingress   JaegerIngressSpec   `json:"ingress"`
-	Route     JaegerRouteSpec     `json:"route"`
 }
 
 // JaegerStatus defines what is to be returned from a status query
@@ -50,11 +57,6 @@ type JaegerQuerySpec struct {
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
 type JaegerIngressSpec struct {
-	Enabled *bool `json:"enabled"`
-}
-
-// JaegerRouteSpec defines the options to be used when deploying the query route (OpenShift-specific)
-type JaegerRouteSpec struct {
 	Enabled *bool `json:"enabled"`
 }
 

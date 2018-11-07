@@ -26,7 +26,7 @@ func TestCreateAllInOneDeployment(t *testing.T) {
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
-	viper.Set("openshift", true)
+	viper.Set("platform", "openshift")
 	defer viper.Reset()
 	name := "TestCreateAllInOneDeploymentOnOpenShift"
 	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger(name))
@@ -83,14 +83,12 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []s
 	// the ingress rule, if we are not on openshift
 	var ingresses map[string]bool
 	var routes map[string]bool
-	if viper.GetBool("openshift") {
-		fmt.Println("openshift deployment!")
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
 		ingresses = map[string]bool{}
 		routes = map[string]bool{
 			fmt.Sprintf("%s", name): false,
 		}
 	} else {
-		fmt.Println("NOT openshift deployment!")
 		ingresses = map[string]bool{
 			fmt.Sprintf("%s-query", name): false,
 		}

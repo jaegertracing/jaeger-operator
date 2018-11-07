@@ -23,7 +23,7 @@ func NewQueryRoute(jaeger *v1alpha1.Jaeger) *QueryRoute {
 
 // Get returns an ingress specification for the current instance
 func (r *QueryRoute) Get() *v1.Route {
-	if r.jaeger.Spec.Route.Enabled != nil && *r.jaeger.Spec.Route.Enabled == false {
+	if r.jaeger.Spec.Ingress.Enabled != nil && *r.jaeger.Spec.Ingress.Enabled == false {
 		return nil
 	}
 

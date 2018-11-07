@@ -23,7 +23,7 @@ func TestQueryRouteDisabled(t *testing.T) {
 	enabled := false
 	name := "TestQueryRouteDisabled"
 	jaeger := v1alpha1.NewJaeger(name)
-	jaeger.Spec.Route.Enabled = &enabled
+	jaeger.Spec.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
 	dep := route.Get()
@@ -35,7 +35,7 @@ func TestQueryRouteEnabled(t *testing.T) {
 	enabled := true
 	name := "TestQueryRouteEnabled"
 	jaeger := v1alpha1.NewJaeger(name)
-	jaeger.Spec.Route.Enabled = &enabled
+	jaeger.Spec.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
 	dep := route.Get()

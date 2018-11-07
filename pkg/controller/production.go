@@ -50,7 +50,7 @@ func (c *productionController) Create() []sdk.Object {
 		components = append(components, svc)
 	}
 
-	if viper.GetBool("openshift") {
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
 		qr := route.NewQueryRoute(c.jaeger).Get()
 		if nil != qr {
 			components = append(components, qr)

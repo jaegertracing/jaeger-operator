@@ -48,8 +48,8 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("jaeger-cassandra-schema-image", "jaegertracing/jaeger-cassandra-schema", "The Docker image for the Jaeger Cassandra Schema")
 	viper.BindPFlag("jaeger-cassandra-schema-image", cmd.Flags().Lookup("jaeger-cassandra-schema-image"))
 
-	cmd.Flags().Bool("openshift", false, "Whether the operator should use OpenShift-specific features, like Routes and OAuth proxy for the UIs")
-	viper.BindPFlag("openshift", cmd.Flags().Lookup("openshift"))
+	cmd.Flags().String("platform", "kubernetes", "The target platform the operator will run. Possible values: 'kubernetes' and 'openshift'")
+	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 
 	return cmd
 }

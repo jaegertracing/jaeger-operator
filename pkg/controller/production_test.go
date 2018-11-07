@@ -27,7 +27,7 @@ func TestCreateProductionDeployment(t *testing.T) {
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
-	viper.Set("openshift", true)
+	viper.Set("platform", "openshift")
 	defer viper.Reset()
 	name := "TestCreateProductionDeploymentOnOpenShift"
 	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
@@ -116,7 +116,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 
 	var ingresses map[string]bool
 	var routes map[string]bool
-	if viper.GetBool("openshift") {
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
 		ingresses = map[string]bool{}
 		routes = map[string]bool{
 			fmt.Sprintf("%s", name): false,

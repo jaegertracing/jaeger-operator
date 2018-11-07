@@ -42,7 +42,7 @@ func (c *allInOneController) Create() []sdk.Object {
 		os = append(os, svc)
 	}
 
-	if viper.GetBool("openshift") {
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
 		qr := route.NewQueryRoute(c.jaeger).Get()
 		if nil != qr {
 			os = append(os, qr)
