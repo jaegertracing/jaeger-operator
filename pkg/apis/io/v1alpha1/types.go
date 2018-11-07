@@ -4,15 +4,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 const (
-	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
-	FlagPlatformOpenShift = "openshift"
-
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
+
+	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
+	FlagPlatformOpenShift = "openshift"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // JaegerList is a list of Jaeger structs
 type JaegerList struct {
