@@ -26,7 +26,7 @@ type Jaeger struct {
 // JaegerSpec defines the structure of the Jaeger JSON object from the CR
 type JaegerSpec struct {
 	Strategy  string              `json:"strategy"`
-	AllInOne  JaegerAllInOneSpec  `json:"all-in-one"`
+	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
 	Query     JaegerQuerySpec     `json:"query"`
 	Collector JaegerCollectorSpec `json:"collector"`
 	Agent     JaegerAgentSpec     `json:"agent"`
@@ -79,7 +79,7 @@ type JaegerAgentSpec struct {
 type JaegerStorageSpec struct {
 	Type                  string                          `json:"type"` // can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
 	Options               Options                         `json:"options"`
-	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandra-create-schema"`
+	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

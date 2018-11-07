@@ -3,8 +3,8 @@ kind: "Jaeger"
 metadata:
   name: "my-jaeger"
 spec:
-  strategy: all-in-one
-  all-in-one:
+  strategy: allInOne
+  allInOne:
     image: jaegertracing/all-in-one:1.7
     options:
       log-level: debug
