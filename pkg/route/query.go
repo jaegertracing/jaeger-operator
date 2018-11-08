@@ -26,6 +26,13 @@ func (r *QueryRoute) Get() *v1.Route {
 
 	trueVar := true
 
+	var termination v1.TLSTerminationType
+	if r.jaeger.Spec.Ingress.OAuthProxy != nil && *r.jaeger.Spec.Ingress.OAuthProxy {
+		termination = v1.TLSTerminationReencrypt
+	} else {
+		termination = v1.TLSTerminationEdge
+	}
+
 	return &v1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
@@ -50,7 +57,7 @@ func (r *QueryRoute) Get() *v1.Route {
 				Name: service.GetNameForQueryService(r.jaeger),
 			},
 			TLS: &v1.TLSConfig{
-				Termination: v1.TLSTerminationReencrypt,
+				Termination: termination,
 			},
 		},
 	}

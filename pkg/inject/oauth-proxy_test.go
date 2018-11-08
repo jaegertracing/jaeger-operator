@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,23 @@ func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 }
 
 func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsAdded")
+	jaeger := v1alpha1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault")
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
+}
+
+func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
+	// see https://github.com/openshift/oauth-proxy/issues/95
+	jaeger := v1alpha1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
+	b := true
+	jaeger.Spec.Ingress.OAuthProxy = &b
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == fmt.Sprintf("--openshift-service-account=%s", dep.Spec.Template.Spec.ServiceAccountName) {
+			found = true
+		}
+	}
+	assert.True(t, found)
 }
