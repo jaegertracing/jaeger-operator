@@ -157,6 +157,7 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
 }
+
 func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithSameName"
 
