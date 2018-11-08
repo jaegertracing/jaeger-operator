@@ -157,6 +157,11 @@ func (in *JaegerIngressSpec) DeepCopyInto(out *JaegerIngressSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.OAuthProxy != nil {
+		in, out := &in.OAuthProxy, &out.OAuthProxy
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

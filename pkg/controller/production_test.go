@@ -23,16 +23,20 @@ func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
 	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false)
+	assertDeploymentsAndServicesForProduction(t, name, objs, false, false)
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 	name := "TestCreateProductionDeploymentOnOpenShift"
-	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
+
+	jaeger := v1alpha1.NewJaeger(name)
+	normalize(jaeger)
+
+	c := newProductionController(context.TODO(), jaeger)
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false)
+	assertDeploymentsAndServicesForProduction(t, name, objs, false, true)
 }
 
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -43,7 +47,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 
 	c := newProductionController(context.TODO(), j)
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, true)
+	assertDeploymentsAndServicesForProduction(t, name, objs, true, false)
 }
 
 func TestUpdateProductionDeployment(t *testing.T) {
@@ -93,11 +97,15 @@ func TestDelegateProductionDepedencies(t *testing.T) {
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
+func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool, hasOAuthProxy bool) {
+	expectedNumObjs := 5
+
 	if hasDaemonSet {
-		assert.Len(t, objs, 6)
-	} else {
-		assert.Len(t, objs, 5)
+		expectedNumObjs++
+	}
+
+	if hasOAuthProxy {
+		expectedNumObjs++
 	}
 
 	deployments := map[string]bool{
@@ -114,19 +122,17 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 		fmt.Sprintf("%s-query", name):     false,
 	}
 
-	var ingresses map[string]bool
-	var routes map[string]bool
+	ingresses := map[string]bool{}
+	routes := map[string]bool{}
 	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
-		ingresses = map[string]bool{}
-		routes = map[string]bool{
-			fmt.Sprintf("%s", name): false,
-		}
+		routes[fmt.Sprintf("%s", name)] = false
 	} else {
-		ingresses = map[string]bool{
-			fmt.Sprintf("%s-query", name): false,
-		}
-		routes = map[string]bool{}
+		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
 
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes)
+	serviceAccounts := map[string]bool{}
+	if hasOAuthProxy {
+		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
+	}
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts)
 }

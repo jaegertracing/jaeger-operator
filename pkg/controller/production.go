@@ -8,9 +8,11 @@ import (
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
@@ -31,38 +33,44 @@ func (c *productionController) Create() []sdk.Object {
 	collector := deployment.NewCollector(c.jaeger)
 	query := deployment.NewQuery(c.jaeger)
 	agent := deployment.NewAgent(c.jaeger)
+	os := []sdk.Object{}
 
-	components := []sdk.Object{
+	// add all service accounts
+	for _, acc := range account.Get(c.jaeger) {
+		os = append(os, acc)
+	}
+
+	// add the deployments
+	os = append(os,
 		collector.Get(),
-		query.Get(),
+		inject.OAuthProxy(c.jaeger, query.Get()),
+	)
+
+	if ds := agent.Get(); nil != ds {
+		os = append(os, ds)
 	}
 
-	ds := agent.Get()
-	if nil != ds {
-		components = append(components, ds)
-	}
-
+	// add the services
 	for _, svc := range collector.Services() {
-		components = append(components, svc)
+		os = append(os, svc)
 	}
 
 	for _, svc := range query.Services() {
-		components = append(components, svc)
+		os = append(os, svc)
 	}
 
+	// add the routes/ingresses
 	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
-		qr := route.NewQueryRoute(c.jaeger).Get()
-		if nil != qr {
-			components = append(components, qr)
+		if q := route.NewQueryRoute(c.jaeger).Get(); nil != q {
+			os = append(os, q)
 		}
 	} else {
-		qi := ingress.NewQueryIngress(c.jaeger).Get()
-		if nil != qi {
-			components = append(components, qi)
+		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
+			os = append(os, q)
 		}
 	}
 
-	return components
+	return os
 }
 
 func (c *productionController) Update() []sdk.Object {
