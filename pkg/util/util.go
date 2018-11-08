@@ -4,7 +4,7 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-// RemoveDuplicatedVolumes defines to remove the last duplicated items in slice if the Name of Volume is the same
+// RemoveDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
 func RemoveDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
 	var results []v1.Volume
 	existing := map[string]bool{}
@@ -20,7 +20,7 @@ func RemoveDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
 	return results
 }
 
-// RemoveDuplicatedVolumeMounts defines to remove the last duplicated item in slice if the Name of Volume is the same
+// RemoveDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
 func RemoveDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMount {
 	var results []v1.VolumeMount
 	existing := map[string]bool{}
