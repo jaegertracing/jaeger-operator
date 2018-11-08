@@ -72,14 +72,19 @@ func TestDefaultCollectorImage(t *testing.T) {
 
 func TestCollectorAnnotations(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestCollectorAnnotations")
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
 	jaeger.Spec.Collector.Annotations = map[string]string{
-		"hello":                "world",
+		"hello":                "world", // Override top level annotation
 		"prometheus.io/scrape": "false", // Override implicit value
 	}
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
+	assert.Equal(t, "operator", dep.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
