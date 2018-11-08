@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func init() {
