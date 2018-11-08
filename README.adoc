@@ -179,6 +179,19 @@ oc get routes
 
 NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
 
+By default, the Jaeger UI is protected with OpenShift's OAuth service and any valid user is able to login. For development purposes, the user/password combination `developer/developer` can be used. To disable this feature and leave the Jaeger UI unsecured, set the Ingress property `oauth-proxy` to `false`:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: disable-oauth-proxy
+spec:
+  ingress:
+    oauth-proxy: false
+----
+
 == Auto injection of Jaeger Agent sidecars
 
 The operator can also inject Jaeger Agent sidecars in `Deployment` workloads, provided that the deployment has the annotation `inject-jaeger-agent` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.

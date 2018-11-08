@@ -18,6 +18,7 @@ func OAuthProxy(jaeger *v1alpha1.Jaeger, dep *appsv1.Deployment) *appsv1.Deploym
 		return dep
 	}
 
+	dep.Spec.Template.Spec.ServiceAccountName = account.OAuthProxyAccountNameFor(jaeger)
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, getOAuthProxyContainer(jaeger))
 	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, v1.Volume{
 		Name: service.GetTLSSecretNameForQueryService(jaeger),
