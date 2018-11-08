@@ -46,6 +46,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 		"prometheus.io/port":      "14268",
 		"sidecar.istio.io/inject": "false",
 	}
+	for k, v := range c.jaeger.Spec.Annotations {
+		annotations[k] = v
+	}
 	for k, v := range c.jaeger.Spec.Collector.Annotations {
 		annotations[k] = v
 	}

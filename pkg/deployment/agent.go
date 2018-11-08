@@ -47,6 +47,9 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		"prometheus.io/port":      "5778",
 		"sidecar.istio.io/inject": "false",
 	}
+	for k, v := range a.jaeger.Spec.Annotations {
+		annotations[k] = v
+	}
 	for k, v := range a.jaeger.Spec.Agent.Annotations {
 		annotations[k] = v
 	}

@@ -52,6 +52,9 @@ func (q *Query) Get() *appsv1.Deployment {
 		// it at will. So, we leave this configured just like any other application would
 		"inject-jaeger-agent": q.jaeger.Name,
 	}
+	for k, v := range q.jaeger.Spec.Annotations {
+		annotations[k] = v
+	}
 	for k, v := range q.jaeger.Spec.Query.Annotations {
 		annotations[k] = v
 	}

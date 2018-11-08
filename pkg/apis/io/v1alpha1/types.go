@@ -43,6 +43,7 @@ type JaegerSpec struct {
 	Ingress      JaegerIngressSpec   `json:"ingress"`
 	Volumes      []v1.Volume         `json:"volumes"`
 	VolumeMounts []v1.VolumeMount    `json:"volumeMounts"`
+	Annotations  map[string]string   `json:"annotations,omitempty"`
 }
 
 // JaegerStatus defines what is to be returned from a status query

@@ -130,6 +130,8 @@ spec:
     enabled: false # <8>
   agent:
     strategy: DaemonSet # <9>
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: "" # <10>
 ----
 <1> The default strategy is `allInOne`. The only other possible value is `production`.
 <2> The image to use, in a regular Docker syntax
@@ -140,6 +142,7 @@ spec:
 <7> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
 <8> By default, an ingress object is created for the query service. It can be disabled by setting its `enabled` option to `false`. If deploying on OpenShift, this will be represented by a Route object.
 <9> By default, the operator assumes that agents are deployed as sidecars within the target pods. Specifying the strategy as "DaemonSet" changes that and makes the operator deploy the agent as DaemonSet. Note that your tracer client will probably have to override the "JAEGER_AGENT_HOST" env var to use the node's IP.
+<10> Define annotations to be applied to all deployments (not services). These can be overridden by annotations defined on the individual components.
 
 == Accessing the UI
 
