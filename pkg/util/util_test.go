@@ -1,9 +1,10 @@
 package util
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {

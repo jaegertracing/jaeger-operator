@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -22,6 +24,9 @@ func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Se
 			Name:      GetNameForQueryService(jaeger),
 			Namespace: jaeger.Namespace,
 			Labels:    selector,
+			Annotations: map[string]string{
+				"service.alpha.openshift.io/serving-cert-secret-name": GetTLSSecretNameForQueryService(jaeger),
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,
@@ -37,8 +42,9 @@ func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Se
 			ClusterIP: "None",
 			Ports: []v1.ServicePort{
 				{
-					Name: "query",
-					Port: int32(GetPortForQueryService(jaeger)),
+					Name:       "query",
+					Port:       int32(GetPortForQueryService(jaeger)),
+					TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
 				},
 			},
 		},
@@ -50,7 +56,22 @@ func GetNameForQueryService(jaeger *v1alpha1.Jaeger) string {
 	return fmt.Sprintf("%s-query", jaeger.Name)
 }
 
+// GetTLSSecretNameForQueryService returns the auto-generated TLS secret name for the Query Service for the given Jaeger instance
+func GetTLSSecretNameForQueryService(jaeger *v1alpha1.Jaeger) string {
+	return fmt.Sprintf("%s-ui-oauth-proxy-tls", jaeger.Name)
+}
+
 // GetPortForQueryService returns the query service name for this Jaeger instance
 func GetPortForQueryService(jaeger *v1alpha1.Jaeger) int {
+	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+		return 443
+	}
+	return 16686
+}
+
+func getTargetPortForQueryService(jaeger *v1alpha1.Jaeger) int {
+	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+		return 8443
+	}
 	return 16686
 }

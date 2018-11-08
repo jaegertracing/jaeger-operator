@@ -6,6 +6,7 @@ import (
 
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -121,6 +122,48 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
+func TestSetOAuthProxyToFalseByDefault(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
+	normalize(jaeger)
+	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
+	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+}
+
+func TestSetOAuthProxyToTrueByDefaultOnOpenShift(t *testing.T) {
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+
+	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
+	normalize(jaeger)
+	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
+	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, true)
+}
+
+func TestSetOAuthProxyToFalseOnNonOpenShift(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
+	b := true
+	jaeger.Spec.Ingress.OAuthProxy = &b
+
+	normalize(jaeger)
+
+	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
+	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+}
+
+func TestAcceptValueFromOAuthProxyWhenOnOpenShift(t *testing.T) {
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+
+	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
+	b := false
+	jaeger.Spec.Ingress.OAuthProxy = &b
+
+	normalize(jaeger)
+
+	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
+	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+}
+
 func getDeployments(objs []sdk.Object) []*appsv1.Deployment {
 	var deps []*appsv1.Deployment
 
@@ -134,7 +177,7 @@ func getDeployments(objs []sdk.Object) []*appsv1.Deployment {
 	return deps
 }
 
-func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool) {
+func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool) {
 	for _, obj := range objs {
 		switch typ := obj.(type) {
 		case *appsv1.Deployment:
@@ -147,6 +190,8 @@ func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deploymen
 			ingresses[obj.(*v1beta1.Ingress).Name] = true
 		case *osv1.Route:
 			routes[obj.(*osv1.Route).Name] = true
+		case *v1.ServiceAccount:
+			serviceAccounts[obj.(*v1.ServiceAccount).Name] = true
 		default:
 			assert.Failf(t, "unknown type to be deployed", "%v", typ)
 		}
@@ -170,5 +215,9 @@ func assertHasAllObjects(t *testing.T, name string, objs []sdk.Object, deploymen
 
 	for k, v := range routes {
 		assert.True(t, v, "Expected %s to have been returned from the list of routes", k)
+	}
+
+	for k, v := range serviceAccounts {
+		assert.True(t, v, "Expected %s to have been returned from the list of service accounts", k)
 	}
 }

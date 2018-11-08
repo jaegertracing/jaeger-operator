@@ -62,7 +62,8 @@ type JaegerQuerySpec struct {
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
 type JaegerIngressSpec struct {
-	Enabled *bool `json:"enabled"`
+	Enabled    *bool `json:"enabled"`
+	OAuthProxy *bool `json:"oauth-proxy"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query

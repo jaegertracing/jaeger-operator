@@ -6,6 +6,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -75,6 +76,17 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 			jaeger.Spec.Storage.Type,
 		)
 		jaeger.Spec.Strategy = "allInOne"
+	}
+
+	if viper.GetString("platform") != v1alpha1.FlagPlatformOpenShift {
+		// for now, we only know about the OpenShift OAuth Proxy, so, disable it if
+		// the platform isn't OpenShift
+		b := false
+		jaeger.Spec.Ingress.OAuthProxy = &b
+	} else if jaeger.Spec.Ingress.OAuthProxy == nil {
+		// we are on openshift, so, set it to true if omitted
+		b := true
+		jaeger.Spec.Ingress.OAuthProxy = &b
 	}
 }
 
