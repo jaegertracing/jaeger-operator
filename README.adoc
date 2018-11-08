@@ -7,7 +7,9 @@ image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/ba
 = Jaeger Operator for Kubernetes
 toc::[]
 
-== Installing the operator on Kubernetes
+== Installing the operator
+
+=== Kubernetes
 
 NOTE: Make sure your `kubectl` command is properly configured to talk to a valid Kubernetes cluster. If you don't have one yet, check link:https://kubernetes.io/docs/tasks/tools/install-minikube/[`minikube`] out.
 
@@ -31,7 +33,7 @@ jaeger-operator   1         1         1            1           48s
 
 The operator is now ready to create Jaeger instances!
 
-== Installing the operator on OpenShift
+=== OpenShift
 
 The instructions from the previous section also work on OpenShift given that the `operator-openshift.yaml` is used instead of `operator.yaml`. Make sure to install the RBAC rules, the CRD and the operator as a privileged user, such as `system:admin`.
 
@@ -57,6 +59,9 @@ oc create \
 After the role is granted, switch back to a non-privileged user.
 
 == Creating a new Jaeger instance
+
+Example custom resources, for different configurations of Jaeger, can be found https://github.com/jaegertracing/jaeger-operator/tree/master/deploy/examples[here].
+
 The simplest possible way to install is by creating a YAML file like the following:
 
 .simplest.yaml
@@ -116,22 +121,29 @@ spec:
     image: jaegertracing/all-in-one:1.7 # <2>
     options: # <3>
       log-level: debug # <4>
-      memory: # <5>
+  storage:
+    type: memory # <5>
+    options: # <6>
+      memory: # <7>
         max-traces: 100000
-    ingress:
-      enabled: false # <6>
+  ingress:
+    enabled: false # <8>
   agent:
-    strategy: DaemonSet # <7>
+    strategy: DaemonSet # <9>
 ----
 <1> The default strategy is `allInOne`. The only other possible value is `production`.
 <2> The image to use, in a regular Docker syntax
-<3> The options to be passed verbatim to the underlying binary.Refer to the Jaeger documentation and/or to the `--help` option from the related binary for all the available options
+<3> The (non-storage related) options to be passed verbatim to the underlying binary. Refer to the Jaeger documentation and/or to the `--help` option from the related binary for all the available options.
 <4> The option is a simple `key: value` map. In this case, we want the option `--log-level=debug` to be passed to the binary.
-<5> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
-<6> By default, an ingress object is created for the query service. It can be disabled by setting its `enabled` option to `false`. This is also available for the `query` spec.
-<7> By default, the operator assumes that agents are deployed as sidecars within the target pods. Specifying the strategy as "DaemonSet" changes that and makes the operator deploy the agent as DaemonSet. Note that your tracer client will probably have to override the "JAEGER_AGENT_HOST" env var to use the node's IP.
+<5> The storage type to be used. By default it will be `memory`, but can be any other supported storage type (e.g. elasticsearch, cassandra, kafka, etc).
+<6> All storage related options should be placed here, rather than under the 'allInOne' or other component options.
+<7> Some options are namespaced and we can alternatively break them into nested objects. We could have specified `memory.max-traces: 100000`.
+<8> By default, an ingress object is created for the query service. It can be disabled by setting its `enabled` option to `false`. If deploying on OpenShift, this will be represented by a Route object.
+<9> By default, the operator assumes that agents are deployed as sidecars within the target pods. Specifying the strategy as "DaemonSet" changes that and makes the operator deploy the agent as DaemonSet. Note that your tracer client will probably have to override the "JAEGER_AGENT_HOST" env var to use the node's IP.
 
 == Accessing the UI
+
+=== Kubernetes
 
 The operator creates a Kubernetes link:https://kubernetes.io/docs/concepts/services-networking/ingress/[`ingress`] route, which is the Kubernetes' standard for exposing a service to the outside world, but it comes with no Ingress providers by default. link:https://kubernetes.github.io/ingress-nginx/deploy/#verify-installation[Check the documentation] on what's the most appropriate way to achieve that for your platform, but the following commands should provide a good start on `minikube`:
 
