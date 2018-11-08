@@ -76,44 +76,6 @@ func TestQueryServices(t *testing.T) {
 	assert.Len(t, svcs, 1)
 }
 
-func TestQueryIngresses(t *testing.T) {
-	newBool := func(value bool) *bool {
-		return &value
-	}
-
-	subTestCases := []struct {
-		name                   string
-		ingressSpec            v1alpha1.JaegerIngressSpec
-		expectedIngressesCount int
-	}{
-		{
-			name:                   "IngressEnabledDefault",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{},
-			expectedIngressesCount: 1,
-		},
-		{
-			name:                   "IngressEnabledFalse",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
-			expectedIngressesCount: 0,
-		},
-		{
-			name:                   "IngressEnabledTrue",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
-			expectedIngressesCount: 1,
-		},
-	}
-
-	for _, stc := range subTestCases {
-		t.Run(stc.name, func(t *testing.T) {
-			query := NewQuery(v1alpha1.NewJaeger("TestQueryIngresses"))
-			query.jaeger.Spec.Query.Ingress = stc.ingressSpec
-			ingresses := query.Ingresses()
-
-			assert.Len(t, ingresses, stc.expectedIngressesCount)
-		})
-	}
-}
-
 func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestQueryVolumeMountsWithVolumes"
 
@@ -154,22 +116,10 @@ func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(queryVolumeMounts, globalVolumeMounts...)))
 
 	// query is first while global is second
-	for index, volume := range podSpec.Volumes {
-		if index == 0 {
-			assert.Equal(t, "queryVolume", volume.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volume.Name)
-		}
-	}
-
-	for index, volumeMount := range podSpec.Containers[0].VolumeMounts {
-		if index == 0 {
-			assert.Equal(t, "queryVolume", volumeMount.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volumeMount.Name)
-		}
-	}
-
+	assert.Equal(t, "queryVolume", podSpec.Volumes[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Volumes[1].Name)
+	assert.Equal(t, "queryVolume", podSpec.Containers[0].VolumeMounts[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
 func TestQueryMountGlobalVolumes(t *testing.T) {
@@ -197,8 +147,8 @@ func TestQueryMountGlobalVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// query volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
-
 }
+
 func TestQueryVolumeMountsWithSameName(t *testing.T) {
 	name := "TestQueryVolumeMountsWithSameName"
 
@@ -224,7 +174,6 @@ func TestQueryVolumeMountsWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// query volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
-
 }
 
 func TestQueryVolumeWithSameName(t *testing.T) {
@@ -252,5 +201,4 @@ func TestQueryVolumeWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Volumes, 1)
 	// query volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
-
 }

@@ -125,22 +125,10 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(collectorVolumeMounts, globalVolumeMounts...)))
 
 	// collector is first while global is second
-	for index, volume := range podSpec.Volumes {
-		if index == 0 {
-			assert.Equal(t, "collectorVolume", volume.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volume.Name)
-		}
-	}
-
-	for index, volumeMount := range podSpec.Containers[0].VolumeMounts {
-		if index == 0 {
-			assert.Equal(t, "collectorVolume", volumeMount.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volumeMount.Name)
-		}
-	}
-
+	assert.Equal(t, "collectorVolume", podSpec.Volumes[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Volumes[1].Name)
+	assert.Equal(t, "collectorVolume", podSpec.Containers[0].VolumeMounts[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
 func TestCollectorMountGlobalVolumes(t *testing.T) {
@@ -168,7 +156,6 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
-
 }
 func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithSameName"
@@ -195,7 +182,6 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
-
 }
 
 func TestCollectorVolumeWithSameName(t *testing.T) {
@@ -223,5 +209,4 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Volumes, 1)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
-
 }

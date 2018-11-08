@@ -23,6 +23,8 @@ func TestRemoveDuplicatedVolumes(t *testing.T) {
 	}
 
 	assert.Len(t, RemoveDuplicatedVolumes(volumes), 2)
+	assert.Equal(t, "volume1", volumes[0].Name)
+	assert.Equal(t, "volume2", volumes[1].Name)
 }
 
 func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
@@ -42,4 +44,6 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 	}
 
 	assert.Len(t, RemoveDuplicatedVolumeMounts(volumeMounts), 2)
+	assert.Equal(t, "data1", volumeMounts[0].Name)
+	assert.Equal(t, "data2", volumeMounts[1].Name)
 }

@@ -4,48 +4,34 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-// RemoveDuplicatedVolumes defines to remove the duplicated item in slice if the Name of Volume is the same
+// RemoveDuplicatedVolumes defines to remove the last duplicated items in slice if the Name of Volume is the same
 func RemoveDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
+	var results []v1.Volume
+	existing := map[string]bool{}
 
-	var result []v1.Volume
-
-	for i := 0; i < len(volumes); i++ {
-		// Scan slice for a previous element of the same value.
-		exists := false
-		for v := 0; v < i; v++ {
-			if volumes[v].Name == volumes[i].Name {
-				exists = true
-				break
-			}
+	for _, volume := range volumes {
+		if existing[volume.Name] {
+			continue
 		}
-		// If no previous element exists, append this one.
-		if !exists {
-			result = append(result, volumes[i])
-		}
+		results = append(results, volume)
+		existing[volume.Name] = true
 	}
 	// Return the new slice.
-	return result
+	return results
 }
 
-// RemoveDuplicatedVolumeMounts defines to remove the duplicated item in slice if the Name of Volume is the same
+// RemoveDuplicatedVolumeMounts defines to remove the last duplicated item in slice if the Name of Volume is the same
 func RemoveDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMount {
+	var results []v1.VolumeMount
+	existing := map[string]bool{}
 
-	var result []v1.VolumeMount
-
-	for i := 0; i < len(volumeMounts); i++ {
-		// Scan slice for a previous element of the same value.
-		exists := false
-		for v := 0; v < i; v++ {
-			if volumeMounts[v].Name == volumeMounts[i].Name {
-				exists = true
-				break
-			}
+	for _, volumeMount := range volumeMounts {
+		if existing[volumeMount.Name] {
+			continue
 		}
-		// If no previous element exists, append this one.
-		if !exists {
-			result = append(result, volumeMounts[i])
-		}
+		results = append(results, volumeMount)
+		existing[volumeMount.Name] = true
 	}
 	// Return the new slice.
-	return result
+	return results
 }

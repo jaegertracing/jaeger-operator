@@ -70,44 +70,6 @@ func TestAllInOneNumberOfServices(t *testing.T) {
 	}
 }
 
-func TestAllInOneNumberOfIngresses(t *testing.T) {
-	name := "TestAllInOneNumberOfIngresses"
-	newBool := func(value bool) *bool {
-		return &value
-	}
-
-	subTestCases := []struct {
-		name                   string
-		ingressSpec            v1alpha1.JaegerIngressSpec
-		expectedIngressesCount int
-	}{
-		{
-			name:                   "IngressEnabledDefault",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{},
-			expectedIngressesCount: 1,
-		},
-		{
-			name:                   "IngressEnabledFalse",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(false)},
-			expectedIngressesCount: 0,
-		},
-		{
-			name:                   "IngressEnabledTrue",
-			ingressSpec:            v1alpha1.JaegerIngressSpec{Enabled: newBool(true)},
-			expectedIngressesCount: 1,
-		},
-	}
-
-	for _, stc := range subTestCases {
-		t.Run(stc.name, func(t *testing.T) {
-			jaeger := v1alpha1.NewJaeger(name)
-			jaeger.Spec.AllInOne.Ingress = stc.ingressSpec
-			ingresses := NewAllInOne(jaeger).Ingresses()
-			assert.Len(t, ingresses, stc.expectedIngressesCount)
-		})
-	}
-}
-
 func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithVolumes"
 
@@ -148,22 +110,10 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(allInOneVolumeMounts, globalVolumeMounts...)))
 
 	// AllInOne is first while global is second
-	for index, volume := range podSpec.Volumes {
-		if index == 0 {
-			assert.Equal(t, "allInOneVolume", volume.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volume.Name)
-		}
-	}
-
-	for index, volumeMount := range podSpec.Containers[0].VolumeMounts {
-		if index == 0 {
-			assert.Equal(t, "allInOneVolume", volumeMount.Name)
-		} else if index == 1 {
-			assert.Equal(t, "globalVolume", volumeMount.Name)
-		}
-	}
-
+	assert.Equal(t, "allInOneVolume", podSpec.Volumes[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Volumes[1].Name)
+	assert.Equal(t, "allInOneVolume", podSpec.Containers[0].VolumeMounts[0].Name)
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
 func TestAllInOneMountGlobalVolumes(t *testing.T) {
@@ -191,8 +141,8 @@ func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
-
 }
+
 func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithSameName"
 
@@ -218,7 +168,6 @@ func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
-
 }
 
 func TestAllInOneVolumeWithSameName(t *testing.T) {
@@ -244,7 +193,6 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
 
 	assert.Len(t, podSpec.Volumes, 1)
-	// collector volume is mounted
+	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
-
 }

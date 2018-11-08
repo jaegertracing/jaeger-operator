@@ -52,10 +52,10 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Ingress      JaegerIngressSpec `json:"ingress"`
 	Size         int               `json:"size"`
 	Image        string            `json:"image"`
 	Options      Options           `json:"options"`
+	Ingress      JaegerIngressSpec `json:"ingress"`
 	Volumes      []v1.Volume       `json:"volumes"`
 	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
 	Annotations  map[string]string `json:"annotations,omitempty"`
@@ -68,9 +68,9 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
-	Ingress      JaegerIngressSpec `json:"ingress"`
 	Image        string            `json:"image"`
 	Options      Options           `json:"options"`
+	Ingress      JaegerIngressSpec `json:"ingress"`
 	Volumes      []v1.Volume       `json:"volumes"`
 	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
 	Annotations  map[string]string `json:"annotations,omitempty"`
