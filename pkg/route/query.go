@@ -1,11 +1,8 @@
 package route
 
 import (
-	"fmt"
-
 	"github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -29,13 +26,20 @@ func (r *QueryRoute) Get() *v1.Route {
 
 	trueVar := true
 
+	var termination v1.TLSTerminationType
+	if r.jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
+		termination = v1.TLSTerminationReencrypt
+	} else {
+		termination = v1.TLSTerminationEdge
+	}
+
 	return &v1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
 			APIVersion: "route.openshift.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s", r.jaeger.Name),
+			Name:      r.jaeger.Name,
 			Namespace: r.jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -52,11 +56,8 @@ func (r *QueryRoute) Get() *v1.Route {
 				Kind: "Service",
 				Name: service.GetNameForQueryService(r.jaeger),
 			},
-			Port: &v1.RoutePort{
-				TargetPort: intstr.FromInt(service.GetPortForQueryService(r.jaeger)),
-			},
 			TLS: &v1.TLSConfig{
-				Termination: v1.TLSTerminationEdge,
+				Termination: termination,
 			},
 		},
 	}

@@ -22,16 +22,20 @@ func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
 	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false)
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 	name := "TestCreateAllInOneDeploymentOnOpenShift"
-	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger(name))
+
+	jaeger := v1alpha1.NewJaeger(name)
+	normalize(jaeger)
+
+	c := newAllInOneController(context.TODO(), jaeger)
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, true)
 }
 
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -42,7 +46,7 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 
 	c := newAllInOneController(context.TODO(), j)
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, true)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, true, false)
 }
 
 func TestUpdateAllInOneDeployment(t *testing.T) {
@@ -57,12 +61,18 @@ func TestDelegateAllInOneDepedencies(t *testing.T) {
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool) {
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []sdk.Object, hasDaemonSet bool, hasOAuthProxy bool) {
+	expectedNumObjs := 5
+
 	if hasDaemonSet {
-		assert.Len(t, objs, 6)
-	} else {
-		assert.Len(t, objs, 5)
+		expectedNumObjs++
 	}
+
+	if hasOAuthProxy {
+		expectedNumObjs++
+	}
+
+	assert.Len(t, objs, expectedNumObjs)
 
 	// we should have one deployment, named after the Jaeger's name (ObjectMeta.Name)
 	deployments := map[string]bool{
@@ -81,19 +91,17 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []s
 	}
 
 	// the ingress rule, if we are not on openshift
-	var ingresses map[string]bool
-	var routes map[string]bool
+	ingresses := map[string]bool{}
+	routes := map[string]bool{}
 	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
-		ingresses = map[string]bool{}
-		routes = map[string]bool{
-			fmt.Sprintf("%s", name): false,
-		}
+		routes[fmt.Sprintf("%s", name)] = false
 	} else {
-		ingresses = map[string]bool{
-			fmt.Sprintf("%s-query", name): false,
-		}
-		routes = map[string]bool{}
+		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
 
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes)
+	serviceAccounts := map[string]bool{}
+	if hasOAuthProxy {
+		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
+	}
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts)
 }

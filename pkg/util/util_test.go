@@ -3,9 +3,10 @@ package util
 import (
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {

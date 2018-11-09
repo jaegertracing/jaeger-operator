@@ -6,6 +6,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -75,6 +76,16 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 			jaeger.Spec.Storage.Type,
 		)
 		jaeger.Spec.Strategy = "allInOne"
+	}
+
+	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1alpha1.IngressSecurityNoneExplicit {
+		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
+	} else {
+		// cases:
+		// - omitted on Kubernetes
+		// - 'none' on any platform
+		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
 	}
 }
 
