@@ -179,7 +179,7 @@ oc get routes
 
 NOTE: make sure to use `https` with the hostname/port you get from the command above, otherwise you'll see a message like: "Application is not available".
 
-By default, the Jaeger UI is protected with OpenShift's OAuth service and any valid user is able to login. For development purposes, the user/password combination `developer/developer` can be used. To disable this feature and leave the Jaeger UI unsecured, set the Ingress property `oauth-proxy` to `false`:
+By default, the Jaeger UI is protected with OpenShift's OAuth service and any valid user is able to login. For development purposes, the user/password combination `developer/developer` can be used. To disable this feature and leave the Jaeger UI unsecured, set the Ingress property `security` to `none`:
 
 [source,yaml]
 ----
@@ -189,7 +189,7 @@ metadata:
   name: disable-oauth-proxy
 spec:
   ingress:
-    oauth-proxy: false
+    security: none
 ----
 
 == Auto injection of Jaeger Agent sidecars
