@@ -14,7 +14,7 @@ import (
 
 // OAuthProxy injects an appropriate proxy into the given deployment
 func OAuthProxy(jaeger *v1alpha1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
-	if jaeger.Spec.Ingress.OAuthProxy == nil || !*jaeger.Spec.Ingress.OAuthProxy {
+	if jaeger.Spec.Ingress.Security != v1alpha1.IngressSecurityOAuthProxy {
 		return dep
 	}
 

@@ -20,8 +20,7 @@ func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
 
 func TestOAuthProxyContainerIsAdded(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestOAuthProxyContainerIsAdded")
-	b := true
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, "oauth-proxy", dep.Spec.Template.Spec.Containers[1].Name)
@@ -29,8 +28,7 @@ func TestOAuthProxyContainerIsAdded(t *testing.T) {
 
 func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsAdded")
-	b := true
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
 	assert.Equal(t, dep.Spec.Template.Spec.Volumes[0].Name, service.GetTLSSecretNameForQueryService(jaeger))
@@ -45,8 +43,7 @@ func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
 func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 	// see https://github.com/openshift/oauth-proxy/issues/95
 	jaeger := v1alpha1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
-	b := true
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false

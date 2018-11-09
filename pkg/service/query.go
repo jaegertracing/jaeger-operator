@@ -16,7 +16,7 @@ func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Se
 	trueVar := true
 
 	annotations := map[string]string{}
-	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+	if jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
 		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
 	}
 
@@ -66,14 +66,14 @@ func GetTLSSecretNameForQueryService(jaeger *v1alpha1.Jaeger) string {
 
 // GetPortForQueryService returns the query service name for this Jaeger instance
 func GetPortForQueryService(jaeger *v1alpha1.Jaeger) int {
-	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+	if jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
 		return 443
 	}
 	return 16686
 }
 
 func getTargetPortForQueryService(jaeger *v1alpha1.Jaeger) int {
-	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+	if jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
 		return 8443
 	}
 	return 16686

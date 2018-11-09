@@ -122,46 +122,48 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
-func TestSetOAuthProxyToFalseByDefault(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
+func TestSetSecurityToNoneByDefault(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneByDefault")
 	normalize(jaeger)
-	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
-	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
-func TestSetOAuthProxyToTrueByDefaultOnOpenShift(t *testing.T) {
+func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNoneExplicit
+	normalize(jaeger)
+	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+}
+
+func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
-	normalize(jaeger)
-	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
-	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, true)
-}
-
-func TestSetOAuthProxyToFalseOnNonOpenShift(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
-	b := true
-	jaeger.Spec.Ingress.OAuthProxy = &b
-
+	jaeger := v1alpha1.NewJaeger("TestSetSecurityToOAuthProxyByDefaultOnOpenShift")
 	normalize(jaeger)
 
-	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
-	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+	assert.Equal(t, v1alpha1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
 
-func TestAcceptValueFromOAuthProxyWhenOnOpenShift(t *testing.T) {
+func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneOnNonOpenShift")
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
+
+	normalize(jaeger)
+
+	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+}
+
+func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1alpha1.NewJaeger("TestSetOAuthProxyToFalseByDefault")
-	b := false
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger := v1alpha1.NewJaeger("TestAcceptExplicitValueFromSecurityWhenOnOpenShift")
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNoneExplicit
 
 	normalize(jaeger)
 
-	assert.NotNil(t, jaeger.Spec.Ingress.OAuthProxy)
-	assert.Equal(t, *jaeger.Spec.Ingress.OAuthProxy, false)
+	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
 func getDeployments(objs []sdk.Object) []*appsv1.Deployment {

@@ -45,9 +45,8 @@ func TestQueryRouteEnabled(t *testing.T) {
 }
 
 func TestQueryRouteTerminationTypeWithOAuthProxy(t *testing.T) {
-	b := true
 	jaeger := v1alpha1.NewJaeger("TestQueryRouteTerminationTypeWithOAuthProxy")
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 	route := NewQueryRoute(jaeger)
 
 	r := route.Get()
@@ -55,9 +54,8 @@ func TestQueryRouteTerminationTypeWithOAuthProxy(t *testing.T) {
 }
 
 func TestQueryRouteTerminationTypeWithoutOAuthProxy(t *testing.T) {
-	b := false
 	jaeger := v1alpha1.NewJaeger("TestQueryRouteTerminationTypeWithOAuthProxy")
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
 	route := NewQueryRoute(jaeger)
 
 	r := route.Get()
