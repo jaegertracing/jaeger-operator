@@ -4,4 +4,4 @@ metadata:
   name: disable-oauth-proxy
 spec:
   ingress:
-    security: oauth-proxy
+    security: none
