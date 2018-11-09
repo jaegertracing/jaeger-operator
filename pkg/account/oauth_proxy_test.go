@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,4 +15,12 @@ func TestOAuthRedirectReference(t *testing.T) {
 	jaeger.Spec.Ingress.OAuthProxy = &b
 
 	assert.Contains(t, getOAuthRedirectReference(jaeger), jaeger.Name)
+}
+
+func TestOAuthProxy(t *testing.T) {
+	b := true
+	jaeger := v1alpha1.NewJaeger("TestOAuthProxy")
+	jaeger.Spec.Ingress.OAuthProxy = &b
+
+	assert.Equal(t, OAuthProxy(jaeger).Name, fmt.Sprintf("%s-ui-proxy", jaeger.Name))
 }

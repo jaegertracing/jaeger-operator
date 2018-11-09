@@ -34,7 +34,6 @@ func TestQueryServiceNameAndPortsWithOAuthProxy(t *testing.T) {
 
 	assert.Equal(t, fmt.Sprintf("%s-query", name), svc.ObjectMeta.Name)
 	assert.Len(t, svc.Spec.Ports, 1)
-	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(443), svc.Spec.Ports[0].Port)
 	assert.Equal(t, intstr.FromInt(8443), svc.Spec.Ports[0].TargetPort)
 }

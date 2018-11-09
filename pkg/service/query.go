@@ -15,18 +15,21 @@ import (
 func NewQueryService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Service {
 	trueVar := true
 
+	annotations := map[string]string{}
+	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
+	}
+
 	return &v1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetNameForQueryService(jaeger),
-			Namespace: jaeger.Namespace,
-			Labels:    selector,
-			Annotations: map[string]string{
-				"service.alpha.openshift.io/serving-cert-secret-name": GetTLSSecretNameForQueryService(jaeger),
-			},
+			Name:        GetNameForQueryService(jaeger),
+			Namespace:   jaeger.Namespace,
+			Labels:      selector,
+			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,

@@ -108,6 +108,8 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 		expectedNumObjs++
 	}
 
+	assert.Len(t, objs, expectedNumObjs)
+
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
 		fmt.Sprintf("%s-query", name):     false,

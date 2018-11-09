@@ -12,7 +12,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
-// OAuthProxy injects an appropriate OpenShift proxy into the given deployment
+// OAuthProxy injects an appropriate proxy into the given deployment
 func OAuthProxy(jaeger *v1alpha1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	if jaeger.Spec.Ingress.OAuthProxy == nil || !*jaeger.Spec.Ingress.OAuthProxy {
 		return dep
