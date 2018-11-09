@@ -51,12 +51,8 @@ func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
 				annotations[k] = v
 			}
 		}
-		for _, volumeMount := range commonSpec.VolumeMounts {
-			volumeMounts = append(volumeMounts, volumeMount)
-		}
-		for _, volume := range commonSpec.Volumes {
-			volumes = append(volumes, volume)
-		}
+		volumeMounts = append(volumeMounts, commonSpec.VolumeMounts...)
+		volumes = append(volumes, commonSpec.Volumes...)
 	}
 
 	return &v1alpha1.JaegerCommonSpec{
