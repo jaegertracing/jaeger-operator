@@ -13,6 +13,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Agent builds pods for jaegertracing/jaeger-agent
@@ -42,17 +43,16 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	args := append(a.jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(a.jaeger)))
 	trueVar := true
 	selector := a.selector()
-	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "5778",
-		"sidecar.istio.io/inject": "false",
+
+	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "true",
+			"prometheus.io/port":      "5778",
+			"sidecar.istio.io/inject": "false",
+		},
 	}
-	for k, v := range a.jaeger.Spec.Annotations {
-		annotations[k] = v
-	}
-	for k, v := range a.jaeger.Spec.Agent.Annotations {
-		annotations[k] = v
-	}
+
+	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -79,7 +79,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      selector,
-					Annotations: annotations,
+					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{

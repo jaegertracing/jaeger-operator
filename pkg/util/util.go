@@ -1,11 +1,12 @@
 package util
 
 import (
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"k8s.io/api/core/v1"
 )
 
-// RemoveDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
-func RemoveDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
+// removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
+func removeDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
 	var results []v1.Volume
 	existing := map[string]bool{}
 
@@ -20,8 +21,8 @@ func RemoveDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
 	return results
 }
 
-// RemoveDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
-func RemoveDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMount {
+// removeDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
+func removeDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMount {
 	var results []v1.VolumeMount
 	existing := map[string]bool{}
 
@@ -34,4 +35,33 @@ func RemoveDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMoun
 	}
 	// Return the new slice.
 	return results
+}
+
+// Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
+func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
+	annotations := make(map[string]string)
+	var volumeMounts []v1.VolumeMount
+	var volumes []v1.Volume
+
+	for _, commonSpec := range commonSpecs {
+		// Merge annotations
+		for k, v := range commonSpec.Annotations {
+			// Only use the value if key has not already been used
+			if _, ok := annotations[k]; !ok {
+				annotations[k] = v
+			}
+		}
+		for _, volumeMount := range commonSpec.VolumeMounts {
+			volumeMounts = append(volumeMounts, volumeMount)
+		}
+		for _, volume := range commonSpec.Volumes {
+			volumes = append(volumes, volume)
+		}
+	}
+
+	return &v1alpha1.JaegerCommonSpec{
+		Annotations:  annotations,
+		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
+		Volumes:      removeDuplicatedVolumes(volumes),
+	}
 }

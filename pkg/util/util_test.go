@@ -1,9 +1,11 @@
 package util
 
 import (
+	"testing"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {
@@ -22,7 +24,7 @@ func TestRemoveDuplicatedVolumes(t *testing.T) {
 		},
 	}
 
-	assert.Len(t, RemoveDuplicatedVolumes(volumes), 2)
+	assert.Len(t, removeDuplicatedVolumes(volumes), 2)
 	assert.Equal(t, "volume1", volumes[0].Name)
 	assert.Equal(t, "/data1", volumes[0].VolumeSource.HostPath.Path)
 	assert.Equal(t, "volume2", volumes[1].Name)
@@ -44,8 +46,29 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 		},
 	}
 
-	assert.Len(t, RemoveDuplicatedVolumeMounts(volumeMounts), 2)
+	assert.Len(t, removeDuplicatedVolumeMounts(volumeMounts), 2)
 	assert.Equal(t, "data1", volumeMounts[0].Name)
 	assert.Equal(t, false, volumeMounts[0].ReadOnly)
 	assert.Equal(t, "data2", volumeMounts[1].Name)
+}
+
+func TestMergeAnnotations(t *testing.T) {
+	generalSpec := v1alpha1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"name":  "operator",
+			"hello": "jaeger",
+		},
+	}
+	specificSpec := v1alpha1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"hello":                "world", // Override general annotation
+			"prometheus.io/scrape": "false",
+		},
+	}
+
+	merged := Merge([]v1alpha1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Equal(t, "operator", merged.Annotations["name"])
+	assert.Equal(t, "world", merged.Annotations["hello"])
+	assert.Equal(t, "false", merged.Annotations["prometheus.io/scrape"])
 }
