@@ -8,24 +8,22 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
-func TestWithOAuthProxyNil(t *testing.T) {
+func TestWithSecurityNil(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestWithOAuthProxyNil")
-	assert.Nil(t, jaeger.Spec.Ingress.OAuthProxy)
+	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 	assert.Len(t, Get(jaeger), 0)
 }
 
-func TestWithOAuthProxyFalse(t *testing.T) {
-	b := false
+func TestWithSecurityNone(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestWithOAuthProxyFalse")
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
 
 	assert.Len(t, Get(jaeger), 0)
 }
 
-func TestWithOAuthProxyTrue(t *testing.T) {
-	b := true
+func TestWithSecurityOAuthProxy(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestWithOAuthProxyTrue")
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 
 	assert.Len(t, Get(jaeger), 1)
 }

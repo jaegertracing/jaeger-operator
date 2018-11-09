@@ -5,12 +5,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// IngressSecurityType represents the possible values for the security type
+type IngressSecurityType string
+
 const (
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
 
 	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
 	FlagPlatformOpenShift = "openshift"
+
+	// IngressSecurityNone disables any form of security for ingress objects (default)
+	IngressSecurityNone IngressSecurityType = ""
+
+	// IngressSecurityNoneExplicit used when the user specifically set it to 'none'
+	IngressSecurityNoneExplicit IngressSecurityType = "none"
+
+	// IngressSecurityOAuthProxy represents an OAuth Proxy as security type
+	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -62,8 +74,8 @@ type JaegerQuerySpec struct {
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
 type JaegerIngressSpec struct {
-	Enabled    *bool `json:"enabled"`
-	OAuthProxy *bool `json:"oauth-proxy"`
+	Enabled  *bool               `json:"enabled"`
+	Security IngressSecurityType `json:"security"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query

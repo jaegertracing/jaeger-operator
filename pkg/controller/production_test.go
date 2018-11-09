@@ -127,7 +127,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
 	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
-		routes[fmt.Sprintf("%s", name)] = false
+		routes[name] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}

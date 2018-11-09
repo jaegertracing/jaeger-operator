@@ -9,7 +9,7 @@ import (
 // Get returns all the service accounts to be created for this Jaeger instance
 func Get(jaeger *v1alpha1.Jaeger) []*v1.ServiceAccount {
 	accounts := []*v1.ServiceAccount{}
-	if jaeger.Spec.Ingress.OAuthProxy != nil && *jaeger.Spec.Ingress.OAuthProxy {
+	if jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
 		accounts = append(accounts, OAuthProxy(jaeger))
 	}
 	return accounts

@@ -78,15 +78,14 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 		jaeger.Spec.Strategy = "allInOne"
 	}
 
-	if viper.GetString("platform") != v1alpha1.FlagPlatformOpenShift {
-		// for now, we only know about the OpenShift OAuth Proxy, so, disable it if
-		// the platform isn't OpenShift
-		b := false
-		jaeger.Spec.Ingress.OAuthProxy = &b
-	} else if jaeger.Spec.Ingress.OAuthProxy == nil {
-		// we are on openshift, so, set it to true if omitted
-		b := true
-		jaeger.Spec.Ingress.OAuthProxy = &b
+	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1alpha1.IngressSecurityNoneExplicit {
+		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
+	} else {
+		// cases:
+		// - omitted on Kubernetes
+		// - 'none' on any platform
+		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
 	}
 }
 

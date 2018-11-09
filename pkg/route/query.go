@@ -27,7 +27,7 @@ func (r *QueryRoute) Get() *v1.Route {
 	trueVar := true
 
 	var termination v1.TLSTerminationType
-	if r.jaeger.Spec.Ingress.OAuthProxy != nil && *r.jaeger.Spec.Ingress.OAuthProxy {
+	if r.jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
 		termination = v1.TLSTerminationReencrypt
 	} else {
 		termination = v1.TLSTerminationEdge

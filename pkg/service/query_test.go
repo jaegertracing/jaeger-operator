@@ -28,8 +28,7 @@ func TestQueryServiceNameAndPortsWithOAuthProxy(t *testing.T) {
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
 
 	jaeger := v1alpha1.NewJaeger(name)
-	b := true
-	jaeger.Spec.Ingress.OAuthProxy = &b
+	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
 	svc := NewQueryService(jaeger, selector)
 
 	assert.Equal(t, fmt.Sprintf("%s-query", name), svc.ObjectMeta.Name)
