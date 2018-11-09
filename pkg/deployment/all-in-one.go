@@ -35,17 +35,16 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	logrus.Debug("Assembling an all-in-one deployment")
 	selector := a.selector()
 	trueVar := true
-	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "16686",
-		"sidecar.istio.io/inject": "false",
+
+	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "true",
+			"prometheus.io/port":      "16686",
+			"sidecar.istio.io/inject": "false",
+		},
 	}
-	for k, v := range a.jaeger.Spec.Annotations {
-		annotations[k] = v
-	}
-	for k, v := range a.jaeger.Spec.AllInOne.Annotations {
-		annotations[k] = v
-	}
+
+	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -72,7 +71,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      selector,
-					Annotations: annotations,
+					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
@@ -90,7 +89,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: "9411",
 							},
 						},
-						VolumeMounts: util.RemoveDuplicatedVolumeMounts(append(a.jaeger.Spec.AllInOne.VolumeMounts, a.jaeger.Spec.VolumeMounts...)),
+						VolumeMounts: commonSpec.VolumeMounts,
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
@@ -138,7 +137,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							InitialDelaySeconds: 1,
 						},
 					}},
-					Volumes: util.RemoveDuplicatedVolumes(append(a.jaeger.Spec.AllInOne.Volumes, a.jaeger.Spec.Volumes...)),
+					Volumes: commonSpec.Volumes,
 				},
 			},
 		},

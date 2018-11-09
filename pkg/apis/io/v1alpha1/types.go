@@ -34,16 +34,21 @@ type Jaeger struct {
 
 // JaegerSpec defines the structure of the Jaeger JSON object from the CR
 type JaegerSpec struct {
-	Strategy     string              `json:"strategy"`
-	AllInOne     JaegerAllInOneSpec  `json:"allInOne"`
-	Query        JaegerQuerySpec     `json:"query"`
-	Collector    JaegerCollectorSpec `json:"collector"`
-	Agent        JaegerAgentSpec     `json:"agent"`
-	Storage      JaegerStorageSpec   `json:"storage"`
-	Ingress      JaegerIngressSpec   `json:"ingress"`
-	Volumes      []v1.Volume         `json:"volumes"`
-	VolumeMounts []v1.VolumeMount    `json:"volumeMounts"`
-	Annotations  map[string]string   `json:"annotations,omitempty"`
+	Strategy  string              `json:"strategy"`
+	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
+	Query     JaegerQuerySpec     `json:"query"`
+	Collector JaegerCollectorSpec `json:"collector"`
+	Agent     JaegerAgentSpec     `json:"agent"`
+	Storage   JaegerStorageSpec   `json:"storage"`
+	Ingress   JaegerIngressSpec   `json:"ingress"`
+	JaegerCommonSpec
+}
+
+// JaegerCommonSpec defines the common elements used in multiple other spec structs
+type JaegerCommonSpec struct {
+	Volumes      []v1.Volume       `json:"volumes"`
+	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
+	Annotations  map[string]string `json:"annotations,omitempty"`
 }
 
 // JaegerStatus defines what is to be returned from a status query
@@ -53,12 +58,10 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Size         int               `json:"size"`
-	Image        string            `json:"image"`
-	Options      Options           `json:"options"`
-	Volumes      []v1.Volume       `json:"volumes"`
-	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
-	Annotations  map[string]string `json:"annotations,omitempty"`
+	Size    int     `json:"size"`
+	Image   string  `json:"image"`
+	Options Options `json:"options"`
+	JaegerCommonSpec
 }
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
@@ -68,31 +71,25 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
-	Image        string            `json:"image"`
-	Options      Options           `json:"options"`
-	Volumes      []v1.Volume       `json:"volumes"`
-	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
-	Annotations  map[string]string `json:"annotations,omitempty"`
+	Image   string  `json:"image"`
+	Options Options `json:"options"`
+	JaegerCommonSpec
 }
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
-	Size         int               `json:"size"`
-	Image        string            `json:"image"`
-	Options      Options           `json:"options"`
-	Volumes      []v1.Volume       `json:"volumes"`
-	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
-	Annotations  map[string]string `json:"annotations,omitempty"`
+	Size    int     `json:"size"`
+	Image   string  `json:"image"`
+	Options Options `json:"options"`
+	JaegerCommonSpec
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
 type JaegerAgentSpec struct {
-	Strategy     string            `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
-	Image        string            `json:"image"`
-	Options      Options           `json:"options"`
-	Volumes      []v1.Volume       `json:"volumes"`
-	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
-	Annotations  map[string]string `json:"annotations,omitempty"`
+	Strategy string  `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
+	Image    string  `json:"image"`
+	Options  Options `json:"options"`
+	JaegerCommonSpec
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector

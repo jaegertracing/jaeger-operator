@@ -40,24 +40,23 @@ func (q *Query) Get() *appsv1.Deployment {
 	selector := q.selector()
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
-	annotations := map[string]string{
-		"prometheus.io/scrape":    "true",
-		"prometheus.io/port":      "16686",
-		"sidecar.istio.io/inject": "false",
 
-		// note that we are explicitly using a string here, not the value from `inject.Annotation`
-		// this has two reasons:
-		// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
-		// 2) this specific string is part of the "public API" of the operator: we should not change
-		// it at will. So, we leave this configured just like any other application would
-		"inject-jaeger-agent": q.jaeger.Name,
+	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "true",
+			"prometheus.io/port":      "16686",
+			"sidecar.istio.io/inject": "false",
+
+			// note that we are explicitly using a string here, not the value from `inject.Annotation`
+			// this has two reasons:
+			// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
+			// 2) this specific string is part of the "public API" of the operator: we should not change
+			// it at will. So, we leave this configured just like any other application would
+			"inject-jaeger-agent": q.jaeger.Name,
+		},
 	}
-	for k, v := range q.jaeger.Spec.Annotations {
-		annotations[k] = v
-	}
-	for k, v := range q.jaeger.Spec.Query.Annotations {
-		annotations[k] = v
-	}
+
+	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -85,7 +84,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      selector,
-					Annotations: annotations,
+					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
@@ -99,7 +98,7 @@ func (q *Query) Get() *appsv1.Deployment {
 								Value: q.jaeger.Spec.Storage.Type,
 							},
 						},
-						VolumeMounts: util.RemoveDuplicatedVolumeMounts(append(q.jaeger.Spec.Query.VolumeMounts, q.jaeger.Spec.VolumeMounts...)),
+						VolumeMounts: commonSpec.VolumeMounts,
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
@@ -117,7 +116,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 					},
 					},
-					Volumes: util.RemoveDuplicatedVolumes(append(q.jaeger.Spec.Query.Volumes, q.jaeger.Spec.Volumes...)),
+					Volumes: commonSpec.Volumes,
 				},
 			},
 		},
