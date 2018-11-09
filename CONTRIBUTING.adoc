@@ -30,6 +30,16 @@ make dep
 make install
 ----
 
+Alternatively, a released binary can be used instead:
+
+[source,bash]
+----
+curl https://github.com/operator-framework/operator-sdk/releases/download/v0.0.7/operator-sdk-v0.0.7-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
+chmod +x $GOPATH/bin/operator-sdk
+----
+
+NOTE: Make sure your `$GOPATH/bin` is part of your regular `$PATH`.
+
 === Developing
 
 As usual for operators following the Operator SDK, the dependencies are checked into the source repository under the `vendor` directory. The dependencies are managed using link:https://github.com/golang/dep[`go dep`]. Refer to that project's documentation for instructions on how to add or update dependencies.
