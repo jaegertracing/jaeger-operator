@@ -41,4 +41,43 @@ func TestQueryIngressEnabled(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
+	assert.NotNil(t, dep.Spec.Backend)
+}
+
+func TestQueryIngressAllInOneBasePath(t *testing.T) {
+	enabled := true
+	name := "TestQueryIngressAllInOneBasePath"
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Strategy = "allInOne"
+	jaeger.Spec.AllInOne.Options = v1alpha1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
+	assert.Nil(t, dep.Spec.Backend)
+	assert.Len(t, dep.Spec.Rules, 1)
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
+	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+}
+
+func TestQueryIngressQueryBasePath(t *testing.T) {
+	enabled := true
+	name := "TestQueryIngressQueryBasePath"
+	jaeger := v1alpha1.NewJaeger(name)
+	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Query.Options = v1alpha1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
+	assert.Nil(t, dep.Spec.Backend)
+	assert.Len(t, dep.Spec.Rules, 1)
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
+	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }

@@ -2,6 +2,7 @@ package ingress
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,37 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 
 	trueVar := true
 
+	spec := v1beta1.IngressSpec{}
+	backend := &v1beta1.IngressBackend{
+		ServiceName: service.GetNameForQueryService(i.jaeger),
+		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
+	}
+	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "allinone" {
+		rule := &v1beta1.IngressRule{}
+		rule.HTTP = &v1beta1.HTTPIngressRuleValue{
+			Paths: []v1beta1.HTTPIngressPath{
+				v1beta1.HTTPIngressPath{
+					Path:    i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"],
+					Backend: *backend,
+				},
+			},
+		}
+		spec.Rules = append(spec.Rules, *rule)
+	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "production" {
+		rule := &v1beta1.IngressRule{}
+		rule.HTTP = &v1beta1.HTTPIngressRuleValue{
+			Paths: []v1beta1.HTTPIngressPath{
+				v1beta1.HTTPIngressPath{
+					Path:    i.jaeger.Spec.Query.Options.Map()["query.base-path"],
+					Backend: *backend,
+				},
+			},
+		}
+		spec.Rules = append(spec.Rules, *rule)
+	} else {
+		spec.Backend = backend
+	}
+
 	return &v1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Ingress",
@@ -47,11 +79,6 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 				},
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			Backend: &v1beta1.IngressBackend{
-				ServiceName: service.GetNameForQueryService(i.jaeger),
-				ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
-			},
-		},
+		Spec: spec,
 	}
 }
