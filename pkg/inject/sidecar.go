@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
@@ -18,22 +21,39 @@ var (
 	Annotation = "inject-jaeger-agent"
 )
 
-// Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
+// Sidecar adds a new container to the object, connecting to the given jaeger instance
+func Sidecar(obj *sdk.Object, jaeger *v1alpha1.Jaeger) {
+
+}
+
+// injectSidecarInDeployment adds a new container to the deployment, connecting to the given jaeger instance
+func injectSidecarInDeployment(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 
 	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
 		logrus.Debugf("Skipping sidecar injection for deployment %v", dep.Name)
 	} else {
 		logrus.Debugf("Injecting sidecar for pod %v", dep.Name)
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, Container(jaeger))
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
+	}
+}
+
+// injectSidecarInStatefulset adds a new container to the deployment, connecting to the given jaeger instance
+func injectSidecarInStatefulset(sset *appsv1.StatefulSet, jaeger *v1alpha1.Jaeger) {
+	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
+
+	if jaeger == nil || sset.Annotations[Annotation] != jaeger.Name {
+		logrus.Debugf("Skipping sidecar injection for deployment %v", sset.Name)
+	} else {
+		logrus.Debugf("Injecting sidecar for pod %v", sset.Name)
+		dep.Spec.Template.Spec.Containers = append(sset.Spec.Template.Spec.Containers, container(jaeger))
 	}
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment) bool {
-	if dep.Annotations[Annotation] == "" {
-		logrus.Debugf("Not needed, annotation not present for %v", dep.Name)
+func Needed(obj *runtime.Object) bool {
+	if obj.Annotations[Annotation] == "" {
+		logrus.Debugf("Not needed, annotation not present for %v", obj.Name)
 		return false
 	}
 
@@ -71,7 +91,7 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList)
 }
 
 // Return a container for sidecar injection
-func Container(jaeger *v1alpha1.Jaeger) v1.Container {
+func container(jaeger *v1alpha1.Jaeger) v1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(jaeger)))
 	return v1.Container{
 		Image: jaeger.Spec.Agent.Image,
