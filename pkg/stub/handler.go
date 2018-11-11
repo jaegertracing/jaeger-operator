@@ -16,7 +16,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
-	"github.com/jaegertracing/jaeger-operator/pkg/statefulset"
 )
 
 // NewHandler constructs a new Jaeger operator handler
@@ -62,7 +61,7 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			logrus.Errorf("failed to update %v", o)
 			return err
 		}
-	case *appsv1.Deployment:
+	default:
 		if inject.Needed(o) {
 			pods := &v1alpha1.JaegerList{
 				TypeMeta: metav1.TypeMeta{
@@ -89,34 +88,6 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 				logrus.WithField("deployment", o.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 			}
 		}
-	case *appsv1.StatefulSet:
-		if statefulset.Needed(o) {
-			pods := &v1alpha1.JaegerList{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Jaeger",
-					APIVersion: fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version),
-				},
-			}
-			err := sdk.List(o.GetNamespace(), pods)
-			if err != nil {
-				logrus.WithError(err).Error("failed to get the available Jaeger pods")
-				return err
-			}
-
-			jaeger := statefulset.Select(o, pods)
-			if jaeger != nil {
-				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-				logrus.WithFields(logrus.Fields{"statefulset": o.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
-				statefulset.Sidecar(o, jaeger)
-				if err := sdk.Update(o); err != nil {
-					logrus.WithField("statefulset", o).Error("failed to update")
-					return err
-				}
-			} else {
-				logrus.WithField("statefulset", o.Name).Info("No suitable Jaeger instances found to inject a sidecar")
-			}
-		}
-
 	}
 	return nil
 }
