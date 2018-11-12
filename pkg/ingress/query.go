@@ -36,27 +36,9 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
 	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "allinone" {
-		rule := &v1beta1.IngressRule{}
-		rule.HTTP = &v1beta1.HTTPIngressRuleValue{
-			Paths: []v1beta1.HTTPIngressPath{
-				v1beta1.HTTPIngressPath{
-					Path:    i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"],
-					Backend: *backend,
-				},
-			},
-		}
-		spec.Rules = append(spec.Rules, *rule)
+		spec.Rules = append(spec.Rules, *getRule(i.jaeger.Spec.AllInOne.Options, backend))
 	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "production" {
-		rule := &v1beta1.IngressRule{}
-		rule.HTTP = &v1beta1.HTTPIngressRuleValue{
-			Paths: []v1beta1.HTTPIngressPath{
-				v1beta1.HTTPIngressPath{
-					Path:    i.jaeger.Spec.Query.Options.Map()["query.base-path"],
-					Backend: *backend,
-				},
-			},
-		}
-		spec.Rules = append(spec.Rules, *rule)
+		spec.Rules = append(spec.Rules, *getRule(i.jaeger.Spec.Query.Options, backend))
 	} else {
 		spec.Backend = backend
 	}
@@ -81,4 +63,17 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 		},
 		Spec: spec,
 	}
+}
+
+func getRule(options v1alpha1.Options, backend *v1beta1.IngressBackend) *v1beta1.IngressRule {
+	rule := &v1beta1.IngressRule{}
+	rule.HTTP = &v1beta1.HTTPIngressRuleValue{
+		Paths: []v1beta1.HTTPIngressPath{
+			v1beta1.HTTPIngressPath{
+				Path:    options.Map()["query.base-path"],
+				Backend: *backend,
+			},
+		},
+	}
+	return rule
 }
