@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -23,6 +22,10 @@ func JaegerAllInOne(t *testing.T) {
 	defer ctx.Cleanup()
 
 	if err := allInOneTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := allInOneWithUIBasePathTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -109,7 +112,7 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 	}
 
 	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s/api/traces?service=order", address)
+	url := fmt.Sprintf("http://%s/search", address)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -128,12 +131,6 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			return false, err
 		}
 
-		resp := &resp{}
-		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, err
-		}
-
-		return len(resp.Data) > 0, nil
+		return len(body) > 0, nil
 	})
 }
