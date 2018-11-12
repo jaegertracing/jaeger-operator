@@ -34,16 +34,16 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec})
 
 	spec := v1beta1.IngressSpec{}
-	backend := &v1beta1.IngressBackend{
+	backend := v1beta1.IngressBackend{
 		ServiceName: service.GetNameForQueryService(i.jaeger),
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
 	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "allinone" {
-		spec.Rules = append(spec.Rules, *getRule(i.jaeger.Spec.AllInOne.Options, backend))
+		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.AllInOne.Options, backend))
 	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "production" {
-		spec.Rules = append(spec.Rules, *getRule(i.jaeger.Spec.Query.Options, backend))
+		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.Query.Options, backend))
 	} else {
-		spec.Backend = backend
+		spec.Backend = &backend
 	}
 
 	return &v1beta1.Ingress{
@@ -69,13 +69,13 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 	}
 }
 
-func getRule(options v1alpha1.Options, backend *v1beta1.IngressBackend) *v1beta1.IngressRule {
-	rule := &v1beta1.IngressRule{}
+func getRule(options v1alpha1.Options, backend v1beta1.IngressBackend) v1beta1.IngressRule {
+	rule := v1beta1.IngressRule{}
 	rule.HTTP = &v1beta1.HTTPIngressRuleValue{
 		Paths: []v1beta1.HTTPIngressPath{
 			v1beta1.HTTPIngressPath{
 				Path:    options.Map()["query.base-path"],
-				Backend: *backend,
+				Backend: backend,
 			},
 		},
 	}
