@@ -42,6 +42,7 @@ func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
 	annotations := make(map[string]string)
 	var volumeMounts []v1.VolumeMount
 	var volumes []v1.Volume
+	resources := &v1.ResourceRequirements{}
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -53,11 +54,36 @@ func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
 		}
 		volumeMounts = append(volumeMounts, commonSpec.VolumeMounts...)
 		volumes = append(volumes, commonSpec.Volumes...)
+
+		// Merge resources
+		mergeResources(resources, commonSpec.Resources)
 	}
 
 	return &v1alpha1.JaegerCommonSpec{
 		Annotations:  annotations,
 		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:      removeDuplicatedVolumes(volumes),
+		Resources:    *resources,
+	}
+}
+
+func mergeResources(resources *v1.ResourceRequirements, res v1.ResourceRequirements) {
+
+	for k, v := range res.Limits {
+		if _, ok := resources.Limits[k]; !ok {
+			if resources.Limits == nil {
+				resources.Limits = make(v1.ResourceList)
+			}
+			resources.Limits[k] = v
+		}
+	}
+
+	for k, v := range res.Requests {
+		if _, ok := resources.Requests[k]; !ok {
+			if resources.Requests == nil {
+				resources.Requests = make(v1.ResourceList)
+			}
+			resources.Requests[k] = v
+		}
 	}
 }

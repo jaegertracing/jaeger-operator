@@ -58,9 +58,10 @@ type JaegerSpec struct {
 
 // JaegerCommonSpec defines the common elements used in multiple other spec structs
 type JaegerCommonSpec struct {
-	Volumes      []v1.Volume       `json:"volumes"`
-	VolumeMounts []v1.VolumeMount  `json:"volumeMounts"`
-	Annotations  map[string]string `json:"annotations,omitempty"`
+	Volumes      []v1.Volume             `json:"volumes"`
+	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
+	Annotations  map[string]string       `json:"annotations,omitempty"`
+	Resources    v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // JaegerStatus defines what is to be returned from a status query

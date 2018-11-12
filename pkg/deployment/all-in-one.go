@@ -136,6 +136,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
+						Resources: commonSpec.Resources,
 					}},
 					Volumes: commonSpec.Volumes,
 				},

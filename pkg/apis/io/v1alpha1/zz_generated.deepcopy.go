@@ -136,6 +136,7 @@ func (in *JaegerCommonSpec) DeepCopyInto(out *JaegerCommonSpec) {
 			(*out)[key] = val
 		}
 	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	return
 }
 

@@ -120,6 +120,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							},
 							InitialDelaySeconds: 1,
 						},
+						Resources: commonSpec.Resources,
 					}},
 				},
 			},

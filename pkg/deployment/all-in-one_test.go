@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -200,4 +201,38 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 	assert.Len(t, podSpec.Volumes, 1)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
+}
+
+func TestAllInOneResources(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAllInOneResources")
+	jaeger.Spec.Resources = v1.ResourceRequirements{
+		Limits: v1.ResourceList{
+			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			v1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: v1.ResourceList{
+			v1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+	jaeger.Spec.AllInOne.Resources = v1.ResourceRequirements{
+		Limits: v1.ResourceList{
+			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		},
+		Requests: v1.ResourceList{
+			v1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			v1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		},
+	}
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
 }
