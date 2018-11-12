@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // QueryIngress builds pods for jaegertracing/jaeger-query
@@ -29,6 +30,8 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 	}
 
 	trueVar := true
+
+	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec})
 
 	spec := v1beta1.IngressSpec{}
 	backend := &v1beta1.IngressBackend{
@@ -60,6 +63,7 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 					Controller: &trueVar,
 				},
 			},
+			Annotations: commonSpec.Annotations,
 		},
 		Spec: spec,
 	}

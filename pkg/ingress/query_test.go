@@ -81,3 +81,22 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
+
+func TestQueryIngressAnnotations(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryIngressAnnotations")
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Ingress.Annotations = map[string]string{
+		"hello":                "world", // Override top level annotation
+		"prometheus.io/scrape": "false",
+	}
+
+	ingress := NewQueryIngress(jaeger)
+	dep := ingress.Get()
+
+	assert.Equal(t, "operator", dep.Annotations["name"])
+	assert.Equal(t, "world", dep.Annotations["hello"])
+	assert.Equal(t, "false", dep.Annotations["prometheus.io/scrape"])
+}

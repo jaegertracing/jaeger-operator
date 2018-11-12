@@ -94,6 +94,10 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 		},
 	}
 
+	j.Spec.Annotations = map[string]string{
+		"nginx.ingress.kubernetes.io/ssl-redirect": "false",
+	}
+
 	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
 	if err != nil {
 		return err
