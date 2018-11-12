@@ -81,6 +81,7 @@ type JaegerQuerySpec struct {
 type JaegerIngressSpec struct {
 	Enabled  *bool               `json:"enabled"`
 	Security IngressSecurityType `json:"security"`
+	JaegerCommonSpec
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
