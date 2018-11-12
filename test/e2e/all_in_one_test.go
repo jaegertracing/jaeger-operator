@@ -73,6 +73,8 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
+	basePath := "/jaeger"
+
 	j := &v1alpha1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -86,7 +88,7 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			Strategy: "allInOne",
 			AllInOne: v1alpha1.JaegerAllInOneSpec{
 				Options: v1alpha1.NewOptions(map[string]interface{}{
-					"query.base-path": "/jaeger",
+					"query.base-path": basePath,
 				}),
 			},
 		},
@@ -112,7 +114,7 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 	}
 
 	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s/search", address)
+	url := fmt.Sprintf("http://%s%s/search", address, basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -124,6 +126,10 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 		res, err := c.Do(req)
 		if err != nil {
 			return false, err
+		}
+
+		if res.StatusCode != 200 {
+			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
 		}
 
 		body, err := ioutil.ReadAll(res.Body)
