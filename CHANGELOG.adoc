@@ -2,7 +2,7 @@
 
 = Changelog
 
-== v1.7.1 (2018-13-11)
+== v1.8.0 (2018-13-11)
 
 *Notable new Features*
 * Query base path should be used to configure correct path in ingress (https://github.com/jaegertracing/jaeger-operator/pull/108[#108])
