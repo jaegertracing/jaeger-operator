@@ -13,12 +13,13 @@ TAG=${TAG:-"v${OPERATOR_VERSION}"}
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
 
 sed "s~image: jaegertracing\/jaeger-operator\:.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
+sed "s~image: jaegertracing\/jaeger-operator\:.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator-openshift.yaml
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
     echo "No changes detected. Skipping."
 else
-    git add deploy/operator.yaml
+    git add deploy/operator.yaml deploy/operator-openshift.yaml
     git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     git tag ${TAG}
     git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git --tags

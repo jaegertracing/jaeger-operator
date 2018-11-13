@@ -118,7 +118,7 @@ metadata:
 spec:
   strategy: allInOne # <1>
   allInOne:
-    image: jaegertracing/all-in-one:1.7 # <2>
+    image: jaegertracing/all-in-one:1.8 # <2>
     options: # <3>
       log-level: debug # <4>
   storage:
@@ -310,7 +310,7 @@ spec:
 <2> These options are for the regular Jaeger components, like `collector` and `query`
 <3> The options for the `create-schema` job
 
-NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/v1.7.0/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
+NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/v1.8.0/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
 
 == Removing an instance
 

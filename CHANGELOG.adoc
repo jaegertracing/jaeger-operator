@@ -1,0 +1,103 @@
+:toc:
+
+= Changelog
+
+== v1.8.0 (2018-13-11)
+
+*Notable new Features*
+* Query base path should be used to configure correct path in ingress (https://github.com/jaegertracing/jaeger-operator/pull/108[#108])
+* Enable resources to be defined at top level and overridden at compone… (https://github.com/jaegertracing/jaeger-operator/pull/110[#110])
+* Add OAuth Proxy to UI when on OpenShift (https://github.com/jaegertracing/jaeger-operator/pull/100[#100])
+* Enable top level annotations to be defined (https://github.com/jaegertracing/jaeger-operator/pull/97[#97])
+* Support volumes and volumeMounts (https://github.com/jaegertracing/jaeger-operator/pull/82[#82])
+* Add support for OpenShift routes (https://github.com/jaegertracing/jaeger-operator/pull/93[#93])
+* Enable annotations to be specified with the deployable components (https://github.com/jaegertracing/jaeger-operator/pull/86[#86])
+* Add support for Cassandra create-schema job (https://github.com/jaegertracing/jaeger-operator/pull/71[#71])
+* Inject sidecar in properly annotated pods (https://github.com/jaegertracing/jaeger-operator/pull/58[#58])
+* Support deployment of agent as a DaemonSet (https://github.com/jaegertracing/jaeger-operator/pull/52[#52])
+
+*Breaking changes*
+
+* Change CRD to use lower camel case (https://github.com/jaegertracing/jaeger-operator/pull/87[#87])
+* Factor out ingress from all-in-one and query, as common to both but i… (https://github.com/jaegertracing/jaeger-operator/pull/91[#91])
+* Remove zipkin service (https://github.com/jaegertracing/jaeger-operator/pull/75[#75])
+
+*Full list of commits:*
+
+* Query base path should be used to configure correct path in ingress (https://github.com/jaegertracing/jaeger-operator/pull/108[#108])
+* Enable resources to be defined at top level and overridden at compone… (https://github.com/jaegertracing/jaeger-operator/pull/110[#110])
+* Fix disable-oauth-proxy example (https://github.com/jaegertracing/jaeger-operator/pull/107[#107])
+* Add OAuth Proxy to UI when on OpenShift (https://github.com/jaegertracing/jaeger-operator/pull/100[#100])
+* Refactor common spec elements into a single struct with common proces… (https://github.com/jaegertracing/jaeger-operator/pull/105[#105])
+* Ensure 'make generate' has been executed when model changes are made (https://github.com/jaegertracing/jaeger-operator/pull/101[#101])
+* Enable top level annotations to be defined (https://github.com/jaegertracing/jaeger-operator/pull/97[#97])
+* Update generated code and reverted change to 'all-in-one' in CRD (https://github.com/jaegertracing/jaeger-operator/pull/98[#98])
+* Support volumes and volumeMounts (https://github.com/jaegertracing/jaeger-operator/pull/82[#82])
+* Update readme to include info about storage options being located in … (https://github.com/jaegertracing/jaeger-operator/pull/96[#96])
+* Enable storage options to be filtered out based on specified storage … (https://github.com/jaegertracing/jaeger-operator/pull/94[#94])
+* Add support for OpenShift routes (https://github.com/jaegertracing/jaeger-operator/pull/93[#93])
+* Change CRD to use lower camel case (https://github.com/jaegertracing/jaeger-operator/pull/87[#87])
+* Factor out ingress from all-in-one and query, as common to both but i… (https://github.com/jaegertracing/jaeger-operator/pull/91[#91])
+* Fix operator SDK version as master is too unpredicatable at the moment (https://github.com/jaegertracing/jaeger-operator/pull/92[#92])
+* Update generated file after new annotations field (https://github.com/jaegertracing/jaeger-operator/pull/90[#90])
+* Enable annotations to be specified with the deployable components (https://github.com/jaegertracing/jaeger-operator/pull/86[#86])
+* Remove zipkin service (https://github.com/jaegertracing/jaeger-operator/pull/75[#75])
+* Add support for Cassandra create-schema job (https://github.com/jaegertracing/jaeger-operator/pull/71[#71])
+* Fix table of contents on readme (https://github.com/jaegertracing/jaeger-operator/pull/73[#73])
+* Update the Operator SDK version (https://github.com/jaegertracing/jaeger-operator/pull/69[#69])
+* Add sidecar.istio.io/inject=false annotation to all-in-one, agent (da… (https://github.com/jaegertracing/jaeger-operator/pull/67[#67])
+* Fix zipkin port issue (https://github.com/jaegertracing/jaeger-operator/pull/65[#65])
+* Go 1.11.1 (https://github.com/jaegertracing/jaeger-operator/pull/61[#61])
+* Inject sidecar in properly annotated pods (https://github.com/jaegertracing/jaeger-operator/pull/58[#58])
+* Support deployment of agent as a DaemonSet (https://github.com/jaegertracing/jaeger-operator/pull/52[#52])
+* Normalize options on the stub and update the normalized CR (https://github.com/jaegertracing/jaeger-operator/pull/54[#54])
+* Document the disable ingress feature (https://github.com/jaegertracing/jaeger-operator/pull/55[#55])
+* dep ensure (https://github.com/jaegertracing/jaeger-operator/pull/51[#51])
+* Add support for JaegerIngressSpec to all-in-one
+
+== v1.7.0 (2018-09-25)
+
+This release brings Jaeger v1.7 to the Operator.
+
+*Full list of commits:*
+
+* Release v1.7.0
+* Bump Jaeger to 1.7 (https://github.com/jaegertracing/jaeger-operator/pull/41[#41])
+
+== v1.6.5 (2018-09-21)
+
+This is our initial release based on Jaeger 1.6.
+
+*Full list of commits:*
+
+* Release v1.6.5
+* Push the tag with the new commit to master, not the release tag
+* Fix git push syntax
+* Push tag to master
+* Merge release commit into master (https://github.com/jaegertracing/jaeger-operator/pull/39[#39])
+* Add query ingress enable switch (https://github.com/jaegertracing/jaeger-operator/pull/36[#36])
+* Fix the run goal (https://github.com/jaegertracing/jaeger-operator/pull/35[#35])
+* Release v1.6.1
+* Add 'build' step when publishing image
+* Fix docker push command and update release instructions
+* Add release scripts (https://github.com/jaegertracing/jaeger-operator/pull/32[#32])
+* Fix command to deploy the simplest operator (https://github.com/jaegertracing/jaeger-operator/pull/34[#34])
+* Add IntelliJ specific files to gitignore (https://github.com/jaegertracing/jaeger-operator/pull/33[#33])
+* Add prometheus scrape annotations to Jaeger collector, query and all-in-one (https://github.com/jaegertracing/jaeger-operator/pull/27[#27])
+* Remove work in progress notice
+* Add instructions on how to run the operator on OpenShift
+* Support Jaeger version and image override
+* Fix publishing of release
+* Release Docker image upon merge to master
+* Reuse the same ES for all tests
+* Improved how to execute the e2e tests
+* Correct uninstall doc to reference delete not create (https://github.com/jaegertracing/jaeger-operator/pull/16[#16])
+* Set ENTRYPOINT for Dockerfile
+* Run 'docker' target only before e2e-tests
+* 'dep ensure' after adding Cobra/Viper
+* Update the Jaeger Operator version at build time
+* Add ingress permission to the jaeger-operator
+* Install golint/gosec
+* Disabled e2e tests on Travis
+* Initial working version
+* INITIAL COMMIT
