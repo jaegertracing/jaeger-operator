@@ -5,6 +5,7 @@
 == v1.8.0 (2018-13-11)
 
 *Notable new Features*
+
 * Query base path should be used to configure correct path in ingress (https://github.com/jaegertracing/jaeger-operator/pull/108[#108])
 * Enable resources to be defined at top level and overridden at compone… (https://github.com/jaegertracing/jaeger-operator/pull/110[#110])
 * Add OAuth Proxy to UI when on OpenShift (https://github.com/jaegertracing/jaeger-operator/pull/100[#100])
