@@ -51,6 +51,7 @@ type JaegerSpec struct {
 	Query     JaegerQuerySpec     `json:"query"`
 	Collector JaegerCollectorSpec `json:"collector"`
 	Agent     JaegerAgentSpec     `json:"agent"`
+	UI        JaegerUISpec        `json:"ui"`
 	Storage   JaegerStorageSpec   `json:"storage"`
 	Ingress   JaegerIngressSpec   `json:"ingress"`
 	JaegerCommonSpec
@@ -75,6 +76,11 @@ type JaegerQuerySpec struct {
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
+}
+
+// JaegerUISpec defines the options to be used to configure the UI
+type JaegerUISpec struct {
+	Options FreeForm `json:"options"`
 }
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress

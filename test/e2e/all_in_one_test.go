@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+const TrackingID = "MyTrackingId"
+
 func JaegerAllInOne(t *testing.T) {
 	t.Parallel()
 	ctx := prepare(t)
@@ -26,6 +29,10 @@ func JaegerAllInOne(t *testing.T) {
 	}
 
 	if err := allInOneWithUIBasePathTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -142,5 +149,92 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 		}
 
 		return len(body) > 0, nil
+	})
+}
+
+func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return fmt.Errorf("could not get namespace: %v", err)
+	}
+
+	j := &v1alpha1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "io.jaegertracing/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "all-in-one-with-ui-config",
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "allInOne",
+			UI: v1alpha1.JaegerUISpec{
+				Options: v1alpha1.NewFreeForm(map[string]interface{}{
+					"tracking": map[string]interface{}{
+						"gaID": TrackingID,
+					},
+				}),
+			},
+		},
+	}
+
+	j.Spec.Annotations = map[string]string{
+		"nginx.ingress.kubernetes.io/ssl-redirect": "false",
+	}
+
+	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	if err != nil {
+		return err
+	}
+
+	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-ui-config-query", retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-ui-config-query", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(i.Status.LoadBalancer.Ingress) != 1 {
+		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(i.Status.LoadBalancer.Ingress))
+	}
+
+	address := i.Status.LoadBalancer.Ingress[0].IP
+	url := fmt.Sprintf("http://%s/search", address)
+	c := http.Client{Timeout: time.Second}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		res, err := c.Do(req)
+		if err != nil {
+			return false, err
+		}
+
+		if res.StatusCode != 200 {
+			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return false, err
+		}
+
+		if len(body) == 0 {
+			return false, fmt.Errorf("empty body")
+		}
+
+		if !strings.Contains(string(body), TrackingID) {
+			return false, fmt.Errorf("body does not include tracking id: %s", TrackingID)
+		}
+
+		return true, nil
 	})
 }
