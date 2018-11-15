@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -58,6 +59,11 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
+	options := allArgs(q.jaeger.Spec.Query.Options,
+		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
+
+	configmap.Update(q.jaeger, commonSpec, &options)
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -90,8 +96,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: q.jaeger.Spec.Query.Image,
 						Name:  "jaeger-query",
-						Args: allArgs(q.jaeger.Spec.Query.Options,
-							q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type))),
+						Args:  options,
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",

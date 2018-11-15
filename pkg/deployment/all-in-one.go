@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -46,6 +47,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
+	options := allArgs(a.jaeger.Spec.AllInOne.Options,
+		a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type)))
+
+	configmap.Update(a.jaeger, commonSpec, &options)
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -77,8 +83,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: a.jaeger.Spec.AllInOne.Image,
 						Name:  "jaeger",
-						Args: allArgs(a.jaeger.Spec.AllInOne.Options,
-							a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type))),
+						Args:  options,
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
