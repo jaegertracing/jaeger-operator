@@ -63,6 +63,16 @@ func (q *Query) Get() *appsv1.Deployment {
 		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
+	var envFromSource []v1.EnvFromSource
+	for _, v := range q.jaeger.Spec.Storage.Secrets.Items {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: v.Name,
+				},
+			},
+		})
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -104,6 +114,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
+						EnvFrom:      envFromSource,
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
