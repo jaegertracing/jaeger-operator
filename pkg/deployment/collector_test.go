@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -89,6 +90,27 @@ func TestCollectorAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
+}
+
+func TestCollectorSecrets(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestCollectorSecrets")
+	data := map[string]string{
+		"hello": "world",
+	}
+	secret := []v1.Secret{
+		v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "mysecret",
+			},
+			StringData: data,
+		},
+	}
+	jaeger.Spec.Storage.Secrets.Items = secret
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
