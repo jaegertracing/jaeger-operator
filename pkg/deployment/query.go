@@ -58,6 +58,17 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
+	var envFromSource []v1.EnvFromSource
+	for _, v := range q.jaeger.Spec.Storage.Secrets.Items {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: v.Name,
+				},
+			},
+		})
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -99,6 +110,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
+						EnvFrom:      envFromSource,
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 16686,
