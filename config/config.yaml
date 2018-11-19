@@ -1,3 +1,0 @@
-apiVersion: io.jaegertracing/v1alpha1
-kind: Jaeger
-projectName: jaeger-operator

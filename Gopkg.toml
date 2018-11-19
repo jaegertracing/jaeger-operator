@@ -1,6 +1,4 @@
-
 # Force dep to vendor the code generators, which aren't imported just used at dev time.
-# Picking a subpackage with Go code won't be necessary once https://github.com/golang/dep/pull/1545 is merged.
 required = [
   "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
@@ -36,24 +34,9 @@ required = [
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.4"
 
-[prune]
-  go-tests = true
-  non-go = true
-  unused-packages = true
-
-  [[prune.project]]
-    name = "k8s.io/code-generator"
-    non-go = false
-    unused-packages = false
-
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
-  # The version rule is used for a specific release and the master branch for in between releases.
-  version = "=v0.0.7"
-
-[[constraint]]
-  name = "github.com/stretchr/testify"
-  version = "1.2.2"
+  version = "=v0.1.1"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
@@ -64,5 +47,27 @@ required = [
   version = "1.1.0"
 
 [[constraint]]
+  name = "github.com/mitchellh/go-homedir"
+  version = "v1.0.0"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "v1.2.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "v1.2.2"
+
+[[constraint]]
   name = "github.com/openshift/api"
   branch = "release-3.11" # why don't they have tags/versions??
+
+[prune]
+  go-tests = true
+  non-go = true
+  unused-packages = true
+  
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    non-go = false
+    unused-packages = false

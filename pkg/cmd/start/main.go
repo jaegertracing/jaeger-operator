@@ -1,21 +1,18 @@
 package start
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"runtime"
 
-	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
-	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-	"github.com/sirupsen/logrus"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	stub "github.com/jaegertracing/jaeger-operator/pkg/stub"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -58,36 +55,45 @@ func NewStartCommand() *cobra.Command {
 }
 
 func start(cmd *cobra.Command, args []string) {
-	var ch = make(chan os.Signal, 0)
-	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	log.WithFields(log.Fields{
+		"os":      runtime.GOOS,
+		"arch":    runtime.GOARCH,
+		"version": runtime.Version(),
+	}).Print("Go")
 
-	logrus.Infof("Versions used by this operator: %v", version.Get())
+	log.WithField("version", version.Get().OperatorSdk).Print("operator-sdk")
 
-	ctx := context.Background()
-
-	sdk.ExposeMetricsPort()
-
-	resyncPeriod := 5 * time.Second
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		logrus.Fatalf("failed to get watch namespace: %v", err)
+		log.Fatalf("failed to get watch namespace: %v", err)
 	}
 
-	apiVersion := fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
-	watch(apiVersion, "Jaeger", namespace, resyncPeriod)
-	watch("apps/v1", "Deployment", namespace, resyncPeriod)
-
-	sdk.Handle(stub.NewHandler())
-	go sdk.Run(ctx)
-
-	select {
-	case <-ch:
-		ctx.Done()
-		logrus.Info("Jaeger Operator finished")
+	// Get a config to talk to the apiserver
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
 	}
-}
 
-func watch(apiVersion, kind, namespace string, resyncPeriod time.Duration) {
-	logrus.Infof("Watching %s, %s, %s, %d", apiVersion, kind, namespace, resyncPeriod)
-	sdk.Watch(apiVersion, kind, namespace, resyncPeriod)
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("Registering Components.")
+
+	// Setup Scheme for all resources
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Fatal(err)
+	}
+
+	// Setup all Controllers
+	if err := controller.AddToManager(mgr); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("Starting the Cmd.")
+
+	// Start the Cmd
+	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }
