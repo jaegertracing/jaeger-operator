@@ -31,15 +31,15 @@ func TestJaeger(t *testing.T) {
 	}
 
 	t.Run("jaeger-group", func(t *testing.T) {
-		// t.Run("my-jaeger", JaegerAllInOne)
-		// t.Run("my-other-jaeger", JaegerAllInOne)
+		t.Run("my-jaeger", JaegerAllInOne)
+		t.Run("my-other-jaeger", JaegerAllInOne)
 
-		// t.Run("simplest", SimplestJaeger)
-		// t.Run("simple-prod", SimpleProd)
+		t.Run("simplest", SimplestJaeger)
+		t.Run("simple-prod", SimpleProd)
 
 		t.Run("daemonset", DaemonSet)
-		// t.Run("sidecar", Sidecar)
-		// t.Run("cassandra", Cassandra)
+		t.Run("sidecar", Sidecar)
+		t.Run("cassandra", Cassandra)
 	})
 }
 
