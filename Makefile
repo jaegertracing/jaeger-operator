@@ -57,7 +57,7 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: cassandra es crd #build docker push
+e2e-tests: cassandra es crd build docker push
 	@echo Running end-to-end tests...
 	@operator-sdk test local ./test/e2e --go-test-flags="${GO_TEST_FLAGS}"
 
