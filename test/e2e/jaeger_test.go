@@ -4,10 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 var (
@@ -23,7 +25,7 @@ func TestJaeger(t *testing.T) {
 		},
 	}
 
-	err := framework.AddToFrameworkScheme(v1alpha1.AddToScheme, jaegerList)
+	err := framework.AddToFrameworkScheme(apis.AddToScheme, jaegerList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -47,11 +49,13 @@ func prepare(t *testing.T) *framework.TestCtx {
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
-	t.Log("Initialized cluster resources")
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log("Initialized cluster resources. Namespace: " + namespace)
+
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready

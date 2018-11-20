@@ -2,7 +2,7 @@ VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= default
-BIN_DIR ?= "_output/bin"
+BIN_DIR ?= "build/_output/bin"
 
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
@@ -44,7 +44,7 @@ build: format
 
 .PHONY: docker
 docker:
-	@docker build -t "$(BUILD_IMAGE)" .
+	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
 
 .PHONY: push
 push:
@@ -59,10 +59,7 @@ unit-tests:
 .PHONY: e2e-tests
 e2e-tests: cassandra es crd build docker push
 	@echo Running end-to-end tests...
-	@cp deploy/rbac.yaml deploy/test/namespace-manifests.yaml
-	@echo "---" >> deploy/test/namespace-manifests.yaml
-	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
-	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crd.yaml -root .
+	@operator-sdk test local ./test/e2e --go-test-flags="${GO_TEST_FLAGS}"
 
 .PHONY: run
 run: crd
@@ -82,7 +79,7 @@ cassandra:
 
 .PHONY: crd
 crd:
-	@kubectl create -f deploy/crd.yaml 2>&1 | grep -v "already exists" || true
+	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: ingress
 ingress:
