@@ -59,7 +59,18 @@ unit-tests:
 .PHONY: e2e-tests
 e2e-tests: cassandra es crd build docker push
 	@echo Running end-to-end tests...
-	@operator-sdk test local ./test/e2e --go-test-flags="${GO_TEST_FLAGS}"
+
+	@cp deploy/role_binding.yaml deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
+
+	@cat deploy/role.yaml >> deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
+
+	@cat deploy/service_account.yaml >> deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
+
+	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
+	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/io_v1alpha1_jaeger_crd.yaml -root .
 
 .PHONY: run
 run: crd
