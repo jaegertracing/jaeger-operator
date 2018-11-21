@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -18,10 +18,10 @@ import (
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForAllInOneAsDefault")
 
-	ctrl := NewController(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger)
 	rightType := false
 	switch ctrl.(type) {
-	case *allInOneController:
+	case *allInOneStrategy:
 		rightType = true
 	}
 	assert.True(t, rightType)
@@ -31,10 +31,10 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
-	ctrl := NewController(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger)
 	rightType := false
 	switch ctrl.(type) {
-	case *allInOneController:
+	case *allInOneStrategy:
 		rightType = true
 	}
 	assert.True(t, rightType)
@@ -44,7 +44,7 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
 	jaeger.Spec.Strategy = "production"
 
-	ctrl := NewController(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger)
 	ds := ctrl.Create()
 	assert.Len(t, ds, 5)
 }
@@ -64,7 +64,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
 
-	ctrl := NewController(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger)
 	ds := ctrl.Create()
 	deps := getDeployments(ds)
 	assert.Len(t, deps, 2) // query and collector, for a production setup
@@ -105,7 +105,7 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 			Strategy: "all-in-one",
 		},
 	}
-	NewController(context.TODO(), jaeger)
+	For(context.TODO(), jaeger)
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
@@ -118,7 +118,7 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 			},
 		},
 	}
-	NewController(context.TODO(), jaeger)
+	For(context.TODO(), jaeger)
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
@@ -179,7 +179,7 @@ func getDeployments(objs []runtime.Object) []*appsv1.Deployment {
 	return deps
 }
 
-func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool) {
+func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
 	for _, obj := range objs {
 		switch typ := obj.(type) {
 		case *appsv1.Deployment:
@@ -194,6 +194,8 @@ func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deplo
 			routes[obj.(*osv1.Route).Name] = true
 		case *v1.ServiceAccount:
 			serviceAccounts[obj.(*v1.ServiceAccount).Name] = true
+		case *v1.ConfigMap:
+			configMaps[obj.(*v1.ConfigMap).Name] = true
 		default:
 			assert.Failf(t, "unknown type to be deployed", "%v", typ)
 		}
@@ -221,5 +223,9 @@ func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deplo
 
 	for k, v := range serviceAccounts {
 		assert.True(t, v, "Expected %s to have been returned from the list of service accounts", k)
+	}
+
+	for k, v := range configMaps {
+		assert.True(t, v, "Expected %s to have been returned from the list of config maps", k)
 	}
 }

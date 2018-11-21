@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -18,19 +18,19 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-type productionController struct {
+type productionStrategy struct {
 	ctx    context.Context
 	jaeger *v1alpha1.Jaeger
 }
 
-func newProductionController(ctx context.Context, jaeger *v1alpha1.Jaeger) *productionController {
-	return &productionController{
+func newProductionStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *productionStrategy {
+	return &productionStrategy{
 		ctx:    ctx,
 		jaeger: jaeger,
 	}
 }
 
-func (c *productionController) Create() []runtime.Object {
+func (c *productionStrategy) Create() []runtime.Object {
 	collector := deployment.NewCollector(c.jaeger)
 	query := deployment.NewQuery(c.jaeger)
 	agent := deployment.NewAgent(c.jaeger)
@@ -80,11 +80,11 @@ func (c *productionController) Create() []runtime.Object {
 	return os
 }
 
-func (c *productionController) Update() []runtime.Object {
+func (c *productionStrategy) Update() []runtime.Object {
 	logrus.Debug("Update isn't yet available")
 	return []runtime.Object{}
 }
 
-func (c *productionController) Dependencies() []batchv1.Job {
+func (c *productionStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }

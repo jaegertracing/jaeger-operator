@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
 type fakeStrategy struct {
@@ -63,7 +64,7 @@ func TestNewJaegerInstance(t *testing.T) {
 		NamespacedName: nsn,
 	}
 
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		jaeger.Spec.Strategy = "custom-strategy"
 		return &fakeStrategy{}
 	}
@@ -151,7 +152,7 @@ func TestHandleDependenciesSuccess(t *testing.T) {
 	}
 
 	handled := false
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		return &fakeStrategy{
 			dependencies: func() []batchv1.Job {
 				handled = true
@@ -209,7 +210,7 @@ func TestHandleDependenciesDoesNotComplete(t *testing.T) {
 	}
 
 	handled := false
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		return &fakeStrategy{
 			dependencies: func() []batchv1.Job {
 				handled = true
@@ -257,7 +258,7 @@ func TestHandleCreate(t *testing.T) {
 		Name:      "custom-deployment",
 		Namespace: jaeger.Namespace,
 	}
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		return &fakeStrategy{
 			create: func() []runtime.Object {
 				handled = true
@@ -311,7 +312,7 @@ func TestHandleUpdate(t *testing.T) {
 		Name:      "custom-deployment-to-update",
 		Namespace: jaeger.Namespace,
 	}
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		return &fakeStrategy{
 			create: func() []runtime.Object {
 				return []runtime.Object{

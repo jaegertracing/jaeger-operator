@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -12,15 +12,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// Controller knows what type of deployments to build based on a given spec
-type Controller interface {
+// S knows what type of deployments to build based on a given spec
+type S interface {
 	Dependencies() []batchv1.Job
 	Create() []runtime.Object
 	Update() []runtime.Object
 }
 
-// NewController build a new controller object for the given spec
-func NewController(ctx context.Context, jaeger *v1alpha1.Jaeger) Controller {
+// For returns the appropriate Strategy for the given Jaeger instance
+func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 	if strings.ToLower(jaeger.Spec.Strategy) == "all-in-one" {
 		logrus.Warnf("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
@@ -30,10 +30,10 @@ func NewController(ctx context.Context, jaeger *v1alpha1.Jaeger) Controller {
 
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
 	if strings.ToLower(jaeger.Spec.Strategy) == "allinone" {
-		return newAllInOneController(ctx, jaeger)
+		return newAllInOneStrategy(ctx, jaeger)
 	}
 
-	return newProductionController(ctx, jaeger)
+	return newProductionStrategy(ctx, jaeger)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when

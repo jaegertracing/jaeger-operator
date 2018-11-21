@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
 // Add creates a new Jaeger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -58,7 +59,7 @@ type ReconcileJaeger struct {
 	// that reads objects from the cache and writes to the apiserver
 	client          client.Client
 	scheme          *runtime.Scheme
-	strategyChooser func(*v1alpha1.Jaeger) Controller
+	strategyChooser func(*v1alpha1.Jaeger) strategy.S
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -92,14 +93,14 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.APIVersion = fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
 	instance.Kind = "Jaeger"
 
-	ctrl := r.runStrategyChooser(instance)
+	str := r.runStrategyChooser(instance)
 
 	// wait for all the dependencies to succeed
-	if err := r.handleDependencies(ctrl); err != nil {
+	if err := r.handleDependencies(str); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	created, err := r.handleCreate(ctrl)
+	created, err := r.handleCreate(str)
 	if err != nil {
 		log.WithField("instance", instance).WithError(err).Error("failed to create")
 		return reconcile.Result{}, err
@@ -109,7 +110,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		log.WithField("name", instance.Name).Info("Configured Jaeger instance")
 	}
 
-	if err := r.handleUpdate(ctrl); err != nil {
+	if err := r.handleUpdate(str); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -122,7 +123,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) Controller {
+func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 	if nil == r.strategyChooser {
 		return defaultStrategyChooser(instance)
 	}
@@ -130,12 +131,12 @@ func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) Controll
 	return r.strategyChooser(instance)
 }
 
-func defaultStrategyChooser(instance *v1alpha1.Jaeger) Controller {
-	return NewController(context.Background(), instance)
+func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
+	return strategy.For(context.Background(), instance)
 }
 
-func (r *ReconcileJaeger) handleCreate(ctrl Controller) (bool, error) {
-	objs := ctrl.Create()
+func (r *ReconcileJaeger) handleCreate(str strategy.S) (bool, error) {
+	objs := str.Create()
 	created := false
 	for _, obj := range objs {
 		err := r.client.Create(context.Background(), obj)
@@ -152,8 +153,8 @@ func (r *ReconcileJaeger) handleCreate(ctrl Controller) (bool, error) {
 	return created, nil
 }
 
-func (r *ReconcileJaeger) handleUpdate(ctrl Controller) error {
-	objs := ctrl.Update()
+func (r *ReconcileJaeger) handleUpdate(str strategy.S) error {
+	objs := str.Update()
 	for _, obj := range objs {
 		if err := r.client.Update(context.Background(), obj); err != nil {
 			log.WithError(err).Error("failed to update")
@@ -164,8 +165,8 @@ func (r *ReconcileJaeger) handleUpdate(ctrl Controller) error {
 	return nil
 }
 
-func (r *ReconcileJaeger) handleDependencies(ctrl Controller) error {
-	for _, dep := range ctrl.Dependencies() {
+func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
+	for _, dep := range str.Dependencies() {
 		err := r.client.Create(context.Background(), &dep)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			log.WithError(err).Error("failed to create")
