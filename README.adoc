@@ -19,8 +19,9 @@ To install the operator, run:
 
 [source,bash]
 ----
-kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/rbac.yaml
-kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crd.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
 ----
 
@@ -43,8 +44,9 @@ The instructions from the previous section also work on OpenShift given that the
 ----
 oc login -u system:admin
 
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/rbac.yaml
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crd.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator-openshift.yaml
 ----
 
