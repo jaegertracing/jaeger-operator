@@ -1,5 +1,9 @@
 = Releasing the Jaeger Operator for Kubernetes
 
+1. Prepare a changelog and get it merged. A list of commits since the last release (`v1.8.0` in the following example) can be obtained via:
+
+  $ git log --format="format:* %s" v1.8.0...HEAD
+
 1. Test!
 
   export BUILD_IMAGE_TEST="${USER}/jaeger-operator:latest"

@@ -2,7 +2,14 @@
 
 = Changelog
 
-== v1.8.0 (2018-13-11)
+== v1.8.1 (2018-11-21)
+
+* Add support for UI configuration (https://github.com/jaegertracing/jaeger-operator/pull/115[#115])
+* Use proper jaeger-operator version for e2e tests and remove readiness check from DaemonSet (https://github.com/jaegertracing/jaeger-operator/pull/120[#120])
+* Migrate to Operator SDK 0.1.0 (https://github.com/jaegertracing/jaeger-operator/pull/116[#116])
+* Fix changelog 'new features' header for 1.8 (https://github.com/jaegertracing/jaeger-operator/pull/113[#113])
+
+== v1.8.0 (2018-11-13)
 
 *Notable new Features*
 
