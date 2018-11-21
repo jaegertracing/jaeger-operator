@@ -7,6 +7,8 @@ image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/ba
 = Jaeger Operator for Kubernetes
 toc::[]
 
+IMPORTANT: The Jaeger Operator version is related to the version of the Jaeger components (Query, Collector, Agent) up to the minor portion. The patch version portion does *not* follow the ones from the Jaeger components. For instance, the Operator version 1.8.1 uses the Jaeger Docker images tagged with version 1.8 by default.
+
 == Installing the operator
 
 === Kubernetes
