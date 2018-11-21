@@ -10,6 +10,17 @@ spec:
       log-level: debug
       query:
         base-path: /jaeger
+  ui:
+    options:
+      dependencies:
+        menuEnabled: false
+      tracking: 
+        gaID: UA-000000-2
+      menu:
+        - label: "About Jaeger"
+          items:
+            - label: "Documentation"
+              url: "https://www.jaegertracing.io/docs/latest"
   storage:
     options:
       memory:

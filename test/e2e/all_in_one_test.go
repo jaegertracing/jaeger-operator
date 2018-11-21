@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+const TrackingID = "MyTrackingId"
+
 func JaegerAllInOne(t *testing.T) {
 	t.Parallel()
 	ctx := prepare(t)
@@ -25,7 +28,7 @@ func JaegerAllInOne(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := allInOneWithUIBasePathTest(t, framework.Global, ctx); err != nil {
+	if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -66,7 +69,7 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
 }
 
-func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -81,7 +84,7 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			APIVersion: "io.jaegertracing/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "all-in-one-with-base-path",
+			Name:      "all-in-one-with-ui-config",
 			Namespace: namespace,
 		},
 		Spec: v1alpha1.JaegerSpec{
@@ -89,6 +92,13 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			AllInOne: v1alpha1.JaegerAllInOneSpec{
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"query.base-path": basePath,
+				}),
+			},
+			UI: v1alpha1.JaegerUISpec{
+				Options: v1alpha1.NewFreeForm(map[string]interface{}{
+					"tracking": map[string]interface{}{
+						"gaID": TrackingID,
+					},
 				}),
 			},
 		},
@@ -103,12 +113,12 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 		return err
 	}
 
-	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-base-path-query", retryInterval, timeout)
+	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-ui-config-query", retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-base-path-query", metav1.GetOptions{})
+	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-ui-config-query", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -141,6 +151,14 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			return false, err
 		}
 
-		return len(body) > 0, nil
+		if len(body) == 0 {
+			return false, fmt.Errorf("empty body")
+		}
+
+		if !strings.Contains(string(body), TrackingID) {
+			return false, fmt.Errorf("body does not include tracking id: %s", TrackingID)
+		}
+
+		return true, nil
 	})
 }

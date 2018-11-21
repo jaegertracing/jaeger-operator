@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
@@ -38,6 +39,12 @@ func (c *productionController) Create() []runtime.Object {
 	// add all service accounts
 	for _, acc := range account.Get(c.jaeger) {
 		os = append(os, acc)
+	}
+
+	// add the config map
+	cm := configmap.NewUIConfig(c.jaeger).Get()
+	if nil != cm {
+		os = append(os, cm)
 	}
 
 	// add the deployments
