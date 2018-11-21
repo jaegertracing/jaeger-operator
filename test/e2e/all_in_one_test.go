@@ -28,10 +28,6 @@ func JaegerAllInOne(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := allInOneWithUIBasePathTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
-
 	if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +69,7 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
 }
 
-func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -88,7 +84,7 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 			APIVersion: "io.jaegertracing/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "all-in-one-with-base-path",
+			Name:      "all-in-one-with-ui-config",
 			Namespace: namespace,
 		},
 		Spec: v1alpha1.JaegerSpec{
@@ -98,78 +94,6 @@ func allInOneWithUIBasePathTest(t *testing.T, f *framework.Framework, ctx *frame
 					"query.base-path": basePath,
 				}),
 			},
-		},
-	}
-
-	j.Spec.Annotations = map[string]string{
-		"nginx.ingress.kubernetes.io/ssl-redirect": "false",
-	}
-
-	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
-	if err != nil {
-		return err
-	}
-
-	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-base-path-query", retryInterval, timeout)
-	if err != nil {
-		return err
-	}
-
-	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-base-path-query", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	if len(i.Status.LoadBalancer.Ingress) != 1 {
-		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(i.Status.LoadBalancer.Ingress))
-	}
-
-	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s%s/search", address, basePath)
-	c := http.Client{Timeout: time.Second}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil {
-			return false, err
-		}
-
-		if res.StatusCode != 200 {
-			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
-
-		return len(body) > 0, nil
-	})
-}
-
-func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
-
-	j := &v1alpha1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "all-in-one-with-ui-config",
-			Namespace: namespace,
-		},
-		Spec: v1alpha1.JaegerSpec{
-			Strategy: "allInOne",
 			UI: v1alpha1.JaegerUISpec{
 				Options: v1alpha1.NewFreeForm(map[string]interface{}{
 					"tracking": map[string]interface{}{
@@ -204,7 +128,7 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 	}
 
 	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s/search", address)
+	url := fmt.Sprintf("http://%s%s/search", address, basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
