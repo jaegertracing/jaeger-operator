@@ -41,6 +41,12 @@ func (c *allInOneController) Create() []runtime.Object {
 		os = append(os, acc)
 	}
 
+	// add the config map
+	cm := configmap.NewUIConfig(c.jaeger).Get()
+	if nil != cm {
+		os = append(os, cm)
+	}
+
 	// add the deployments
 	os = append(os, inject.OAuthProxy(c.jaeger, dep.Get()))
 
@@ -63,12 +69,6 @@ func (c *allInOneController) Create() []runtime.Object {
 		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
 			os = append(os, q)
 		}
-	}
-
-	// add the config map
-	cm := configmap.NewUIConfig(c.jaeger).Get()
-	if nil != cm {
-		os = append(os, cm)
 	}
 
 	return os
