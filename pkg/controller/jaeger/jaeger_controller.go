@@ -56,8 +56,9 @@ var _ reconcile.Reconciler = &ReconcileJaeger{}
 type ReconcileJaeger struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client          client.Client
+	scheme          *runtime.Scheme
+	strategyChooser func(*v1alpha1.Jaeger) Controller
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -91,7 +92,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.APIVersion = fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
 	instance.Kind = "Jaeger"
 
-	ctrl := NewController(context.Background(), instance)
+	ctrl := r.runStrategyChooser(instance)
 
 	// wait for all the dependencies to succeed
 	if err := r.handleDependencies(ctrl); err != nil {
@@ -114,11 +115,23 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// we store back the changed CR, so that what is stored reflects what is being used
 	if err := r.client.Update(context.Background(), instance); err != nil {
-		log.Errorf("failed to update %v", instance)
+		log.WithError(err).Error("failed to update")
 		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) Controller {
+	if nil == r.strategyChooser {
+		return defaultStrategyChooser(instance)
+	}
+
+	return r.strategyChooser(instance)
+}
+
+func defaultStrategyChooser(instance *v1alpha1.Jaeger) Controller {
+	return NewController(context.Background(), instance)
 }
 
 func (r *ReconcileJaeger) handleCreate(ctrl Controller) (bool, error) {
@@ -127,7 +140,7 @@ func (r *ReconcileJaeger) handleCreate(ctrl Controller) (bool, error) {
 	for _, obj := range objs {
 		err := r.client.Create(context.Background(), obj)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
-			log.Errorf("failed to create %v", obj)
+			log.WithError(err).Error("failed to create")
 			return false, err
 		}
 
@@ -142,9 +155,8 @@ func (r *ReconcileJaeger) handleCreate(ctrl Controller) (bool, error) {
 func (r *ReconcileJaeger) handleUpdate(ctrl Controller) error {
 	objs := ctrl.Update()
 	for _, obj := range objs {
-		log.Debugf("Updating %v", obj)
 		if err := r.client.Update(context.Background(), obj); err != nil {
-			log.Errorf("failed to update %v", obj)
+			log.WithError(err).Error("failed to update")
 			return err
 		}
 	}
@@ -156,7 +168,7 @@ func (r *ReconcileJaeger) handleDependencies(ctrl Controller) error {
 	for _, dep := range ctrl.Dependencies() {
 		err := r.client.Create(context.Background(), &dep)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
-			log.Errorf("failed to create %v", dep.Name)
+			log.WithError(err).Error("failed to create")
 			return err
 		}
 
@@ -166,7 +178,7 @@ func (r *ReconcileJaeger) handleDependencies(ctrl Controller) error {
 			batch := &batchv1.Job{}
 			err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch)
 			if err != nil {
-				log.Errorf("failed to get the status of the dependency %v", dep.Name)
+				log.WithField("dependency", dep.Name).WithError(err).Error("failed to get the status of the dependency")
 				return false, err
 			}
 

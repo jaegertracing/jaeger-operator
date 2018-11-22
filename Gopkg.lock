@@ -665,7 +665,7 @@
   version = "kubernetes-1.11.2"
 
 [[projects]]
-  digest = "1:77b7821a99c33c1c7713e363df03e021a77c88a50fde3e1b5af967a184d56618"
+  digest = "1:9e988ef2490ab68f809c9d8df0c55df96bff776e80c14756ee0176e160b61fed"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -710,6 +710,7 @@
     "rest",
     "rest/watch",
     "restmapper",
+    "testing",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -810,7 +811,7 @@
   revision = "c59034cc13d587f5ef4e85ca0ade0c1866ae8e1d"
 
 [[projects]]
-  digest = "1:dca19204224bb3835c1ece945b28aa2b19095f99bad4fff33b72e3a9d47ad968"
+  digest = "1:68ad7ace9293c311047cdd0bedace76042b070dad5621acf7b59ecd111ba8558"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -818,6 +819,7 @@
     "pkg/client",
     "pkg/client/apiutil",
     "pkg/client/config",
+    "pkg/client/fake",
     "pkg/controller",
     "pkg/event",
     "pkg/handler",
@@ -870,6 +872,7 @@
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
@@ -880,6 +883,7 @@
     "k8s.io/gengo/args",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
+    "sigs.k8s.io/controller-runtime/pkg/client/fake",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
