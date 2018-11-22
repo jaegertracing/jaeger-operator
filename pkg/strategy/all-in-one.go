@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -18,19 +18,19 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-type allInOneController struct {
+type allInOneStrategy struct {
 	ctx    context.Context
 	jaeger *v1alpha1.Jaeger
 }
 
-func newAllInOneController(ctx context.Context, jaeger *v1alpha1.Jaeger) *allInOneController {
-	return &allInOneController{
+func newAllInOneStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *allInOneStrategy {
+	return &allInOneStrategy{
 		ctx:    ctx,
 		jaeger: jaeger,
 	}
 }
 
-func (c *allInOneController) Create() []runtime.Object {
+func (c *allInOneStrategy) Create() []runtime.Object {
 	logrus.Debugf("Creating all-in-one for '%v'", c.jaeger.Name)
 
 	dep := deployment.NewAllInOne(c.jaeger)
@@ -74,11 +74,11 @@ func (c *allInOneController) Create() []runtime.Object {
 	return os
 }
 
-func (c *allInOneController) Update() []runtime.Object {
+func (c *allInOneStrategy) Update() []runtime.Object {
 	logrus.Debug("Update isn't available for all-in-one")
 	return []runtime.Object{}
 }
 
-func (c *allInOneController) Dependencies() []batchv1.Job {
+func (c *allInOneStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }

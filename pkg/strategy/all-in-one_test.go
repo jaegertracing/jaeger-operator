@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -20,9 +20,9 @@ func init() {
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
-	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger(name))
+	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
@@ -33,9 +33,9 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newAllInOneController(context.TODO(), jaeger)
+	c := newAllInOneStrategy(context.TODO(), jaeger)
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, true)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, true, false)
 }
 
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -44,24 +44,41 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1alpha1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newAllInOneController(context.TODO(), j)
+	c := newAllInOneStrategy(context.TODO(), j)
 	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, true, false)
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, true, false, false)
+}
+
+func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
+	name := "TestCreateAllInOneDeploymentWithUIConfigMap"
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.UI.Options = v1alpha1.NewFreeForm(map[string]interface{}{
+		"tracking": map[string]interface{}{
+			"gaID": "UA-000000-2",
+		},
+	})
+
+	c := newAllInOneStrategy(context.TODO(), j)
+	objs := c.Create()
+	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false, true)
 }
 
 func TestUpdateAllInOneDeployment(t *testing.T) {
-	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger("TestUpdateAllInOneDeployment"))
+	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestUpdateAllInOneDeployment"))
 	objs := c.Update()
 	assert.Len(t, objs, 0)
 }
 
 func TestDelegateAllInOneDepedencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	c := newAllInOneController(context.TODO(), v1alpha1.NewJaeger("TestDelegateAllInOneDepedencies"))
+	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateAllInOneDepedencies"))
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool) {
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+	// TODO(jpkroehling): this func deserves a refactoring already
+
 	expectedNumObjs := 5
 
 	if hasDaemonSet {
@@ -69,6 +86,10 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []r
 	}
 
 	if hasOAuthProxy {
+		expectedNumObjs++
+	}
+
+	if hasConfigMap {
 		expectedNumObjs++
 	}
 
@@ -103,5 +124,10 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []r
 	if hasOAuthProxy {
 		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
 	}
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts)
+
+	configMaps := map[string]bool{}
+	if hasConfigMap {
+		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
+	}
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }

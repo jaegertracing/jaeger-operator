@@ -1,4 +1,4 @@
-package jaeger
+package strategy
 
 import (
 	"context"
@@ -21,9 +21,9 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
+	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger(name))
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false, false)
+	assertDeploymentsAndServicesForProduction(t, name, objs, false, false, false)
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
@@ -34,9 +34,9 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newProductionController(context.TODO(), jaeger)
+	c := newProductionStrategy(context.TODO(), jaeger)
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false, true)
+	assertDeploymentsAndServicesForProduction(t, name, objs, false, true, false)
 }
 
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -45,14 +45,29 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1alpha1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newProductionController(context.TODO(), j)
+	c := newProductionStrategy(context.TODO(), j)
 	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, true, false)
+	assertDeploymentsAndServicesForProduction(t, name, objs, true, false, false)
+}
+
+func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
+	name := "TestCreateProductionDeploymentWithUIConfigMap"
+
+	j := v1alpha1.NewJaeger(name)
+	j.Spec.UI.Options = v1alpha1.NewFreeForm(map[string]interface{}{
+		"tracking": map[string]interface{}{
+			"gaID": "UA-000000-2",
+		},
+	})
+
+	c := newProductionStrategy(context.TODO(), j)
+	objs := c.Create()
+	assertDeploymentsAndServicesForProduction(t, name, objs, false, false, true)
 }
 
 func TestUpdateProductionDeployment(t *testing.T) {
 	name := "TestUpdateProductionDeployment"
-	c := newProductionController(context.TODO(), v1alpha1.NewJaeger(name))
+	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger(name))
 	assert.Len(t, c.Update(), 0)
 }
 
@@ -79,7 +94,7 @@ func TestOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := NewController(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger)
 	objs := ctrl.Create()
 	deployments := getDeployments(objs)
 	for _, dep := range deployments {
@@ -93,11 +108,11 @@ func TestOptionsArePassed(t *testing.T) {
 
 func TestDelegateProductionDepedencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	c := newProductionController(context.TODO(), v1alpha1.NewJaeger("TestDelegateProductionDepedencies"))
+	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateProductionDepedencies"))
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool) {
+func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	expectedNumObjs := 5
 
 	if hasDaemonSet {
@@ -105,6 +120,10 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	}
 
 	if hasOAuthProxy {
+		expectedNumObjs++
+	}
+
+	if hasConfigMap {
 		expectedNumObjs++
 	}
 
@@ -136,5 +155,10 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	if hasOAuthProxy {
 		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
 	}
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts)
+
+	configMaps := map[string]bool{}
+	if hasConfigMap {
+		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
+	}
+	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }
