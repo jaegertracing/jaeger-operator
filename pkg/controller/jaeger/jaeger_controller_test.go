@@ -46,21 +46,21 @@ func (c *fakeStrategy) Update() []runtime.Object {
 
 func TestNewJaegerInstance(t *testing.T) {
 	// prepare
-	jaeger := v1alpha1.NewJaeger("TestNewJaegerInstance")
+	nsn := types.NamespacedName{
+		Name: "TestNewJaegerInstance",
+	}
+
 	objs := []runtime.Object{
-		jaeger,
+		v1alpha1.NewJaeger(nsn.Name),
 	}
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
 	cl := fake.NewFakeClient(objs...)
 	r := &ReconcileJaeger{client: cl, scheme: s}
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      jaeger.Name,
-			Namespace: jaeger.Namespace,
-		},
+		NamespacedName: nsn,
 	}
 
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
@@ -74,11 +74,10 @@ func TestNewJaegerInstance(t *testing.T) {
 	// verify
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
-	assert.Empty(t, jaeger.Spec.Strategy)
 
 	persisted := &v1alpha1.Jaeger{}
 	err = cl.Get(context.Background(), req.NamespacedName, persisted)
-	assert.Equal(t, persisted.Name, jaeger.Name)
+	assert.Equal(t, persisted.Name, nsn.Name)
 	assert.NoError(t, err)
 
 	// these are filled with default values
@@ -315,7 +314,6 @@ func TestHandleUpdate(t *testing.T) {
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) Controller {
 		return &fakeStrategy{
 			create: func() []runtime.Object {
-				handled = true
 				return []runtime.Object{
 					&appsv1.Deployment{
 						ObjectMeta: metav1.ObjectMeta{
