@@ -42,6 +42,11 @@ build: format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
+.PHONY: dep
+dep:
+	@echo Bringing dependencies...
+	@dep ensure
+
 .PHONY: docker
 docker:
 	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
@@ -109,4 +114,4 @@ test: unit-tests e2e-tests
 all: check format lint build test
 
 .PHONY: ci
-ci: ensure-generate-is-noop check format lint build unit-tests
+ci: dep ensure-generate-is-noop check format lint build unit-tests
