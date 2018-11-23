@@ -18,6 +18,11 @@ var (
 	Annotation = "inject-jaeger-agent"
 )
 
+const (
+	serviceName = "JAEGER_SERVICE_NAME"
+	propagation = "JAEGER_PROPAGATION"
+)
+
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
 func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
@@ -25,6 +30,7 @@ func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
 		logrus.Debugf("Skipping sidecar injection for deployment %v", dep.Name)
 	} else {
+		decorate(dep)
 		logrus.Debugf("Injecting sidecar for pod %v", dep.Name)
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
 	}
@@ -95,4 +101,37 @@ func container(jaeger *v1alpha1.Jaeger) v1.Container {
 			},
 		},
 	}
+}
+
+func decorate(dep *appsv1.Deployment) {
+	if app, found := dep.Spec.Template.Labels["app"]; found {
+		if len(dep.Namespace) > 0 {
+			app += "." + dep.Namespace
+		} else {
+			app += ".default"
+		}
+		for i := 0; i < len(dep.Spec.Template.Spec.Containers); i++ {
+			if !hasEnv(serviceName, dep.Spec.Template.Spec.Containers[i].Env) {
+				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+					Name:  serviceName,
+					Value: app,
+				})
+			}
+			if !hasEnv(propagation, dep.Spec.Template.Spec.Containers[i].Env) {
+				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+					Name:  propagation,
+					Value: "jaeger,b3",
+				})
+			}
+		}
+	}
+}
+
+func hasEnv(name string, vars []v1.EnvVar) bool {
+	for i := 0; i < len(vars); i++ {
+		if vars[i].Name == name {
+			return true
+		}
+	}
+	return false
 }
