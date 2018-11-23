@@ -2,6 +2,10 @@
 build/_output
 build/_test
 deploy/test
+
+# vendor!
+vendor
+
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
