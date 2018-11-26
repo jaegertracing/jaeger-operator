@@ -42,57 +42,59 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
-	assert.Equal(t, serviceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "testapp.default", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, propagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
+	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
 	assert.Equal(t, "jaeger,b3", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
 func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVars")
+	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespace")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Namespace = "mynamespace"
 	Sidecar(dep, jaeger)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
-	assert.Equal(t, serviceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "testapp.mynamespace", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, propagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
+	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
 	assert.Equal(t, "jaeger,b3", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
-func TestInjectSidecarWithEnvVarsNoOverrideName(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsNoOverrideName")
+func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideName")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
-		Name:  serviceName,
+		Name:  envVarServiceName,
 		Value: "otherapp",
 	})
 	Sidecar(dep, jaeger)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
-	assert.Equal(t, serviceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	// Explicitly provided env var is used instead of injected "app.namespace" value
 	assert.Equal(t, "otherapp", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, propagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
+	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
 	assert.Equal(t, "jaeger,b3", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
-func TestInjectSidecarWithEnvVarsNoOverridePropagation(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsNoOverridePropagation")
+func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagation")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
-		Name:  propagation,
+		Name:  envVarPropagation,
 		Value: "tracecontext",
 	})
 	Sidecar(dep, jaeger)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
-	assert.Equal(t, propagation, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+	// Explicitly provided propagation env var used instead of injected "jaeger,b3" value
 	assert.Equal(t, "tracecontext", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, serviceName, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
+	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
 	assert.Equal(t, "testapp.default", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
