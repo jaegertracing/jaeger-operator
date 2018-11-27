@@ -25,7 +25,7 @@ mkdir -p $GOPATH/src/github.com/operator-framework
 cd $GOPATH/src/github.com/operator-framework
 git clone https://github.com/operator-framework/operator-sdk
 cd operator-sdk
-git checkout v0.0.7
+git checkout v0.1.1
 make dep
 make install
 ----
@@ -34,7 +34,7 @@ Alternatively, a released binary can be used instead:
 
 [source,bash]
 ----
-curl https://github.com/operator-framework/operator-sdk/releases/download/v0.0.7/operator-sdk-v0.0.7-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
+curl https://github.com/operator-framework/operator-sdk/releases/download/v0.1.1/operator-sdk-v0.1.1-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
 chmod +x $GOPATH/bin/operator-sdk
 ----
 
