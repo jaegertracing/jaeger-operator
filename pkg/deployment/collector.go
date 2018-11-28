@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -63,6 +64,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 		})
 	}
 
+	options := allArgs(c.jaeger.Spec.Collector.Options,
+		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(c.jaeger.Spec.Storage.Type)))
+
+	sampling.Update(c.jaeger, commonSpec, &options)
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -95,8 +101,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Containers: []v1.Container{{
 						Image: c.jaeger.Spec.Collector.Image,
 						Name:  "jaeger-collector",
-						Args: allArgs(c.jaeger.Spec.Collector.Options,
-							c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(c.jaeger.Spec.Storage.Type))),
+						Args:  options,
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
