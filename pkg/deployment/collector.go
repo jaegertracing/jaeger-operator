@@ -53,13 +53,15 @@ func (c *Collector) Get() *appsv1.Deployment {
 	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	var envFromSource []v1.EnvFromSource
-	envFromSource = append(envFromSource, v1.EnvFromSource{
-		SecretRef: &v1.SecretEnvSource{
-			LocalObjectReference: v1.LocalObjectReference{
-				Name: c.jaeger.Spec.Storage.SecretsName,
+	if len(c.jaeger.Spec.Storage.SecretName) > 0 {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: c.jaeger.Spec.Storage.SecretName,
+				},
 			},
-		},
-	})
+		})
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

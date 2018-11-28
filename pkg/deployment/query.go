@@ -64,13 +64,15 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	configmap.Update(q.jaeger, commonSpec, &options)
 	var envFromSource []v1.EnvFromSource
-	envFromSource = append(envFromSource, v1.EnvFromSource{
-		SecretRef: &v1.SecretEnvSource{
-			LocalObjectReference: v1.LocalObjectReference{
-				Name: c.jaeger.Spec.Storage.SecretsName,
+	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: q.jaeger.Spec.Storage.SecretName,
+				},
 			},
-		},
-	})
+		})
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
