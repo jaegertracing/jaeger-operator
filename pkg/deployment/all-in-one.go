@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -51,6 +52,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type)))
 
 	configmap.Update(a.jaeger, commonSpec, &options)
+	sampling.Update(a.jaeger, commonSpec, &options)
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

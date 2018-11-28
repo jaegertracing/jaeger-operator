@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
@@ -41,10 +42,16 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		os = append(os, acc)
 	}
 
-	// add the config map
+	// add the UI config map
 	cm := configmap.NewUIConfig(c.jaeger).Get()
 	if nil != cm {
 		os = append(os, cm)
+	}
+
+	// add the Sampling config map
+	scmp := sampling.NewConfig(c.jaeger).Get()
+	if nil != scmp {
+		os = append(os, scmp)
 	}
 
 	// add the deployments

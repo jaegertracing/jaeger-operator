@@ -46,7 +46,7 @@ func TestNewControllerForProduction(t *testing.T) {
 
 	ctrl := For(context.TODO(), jaeger)
 	ds := ctrl.Create()
-	assert.Len(t, ds, 5)
+	assert.Len(t, ds, 6)
 }
 
 func TestUnknownStorage(t *testing.T) {

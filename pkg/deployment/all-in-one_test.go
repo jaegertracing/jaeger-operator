@@ -112,8 +112,9 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	jaeger.Spec.AllInOne.VolumeMounts = allInOneVolumeMounts
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Volumes, len(append(allInOneVolumes, globalVolumes...)))
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(allInOneVolumeMounts, globalVolumeMounts...)))
+	// Additional 1 is sampling configmap
+	assert.Len(t, podSpec.Volumes, len(append(allInOneVolumes, globalVolumes...))+1)
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(allInOneVolumeMounts, globalVolumeMounts...))+1)
 
 	// AllInOne is first while global is second
 	assert.Equal(t, "allInOneVolume", podSpec.Volumes[0].Name)
@@ -144,7 +145,8 @@ func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	jaeger.Spec.AllInOne.VolumeMounts = allInOneVolumeMounts
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
 }
@@ -171,7 +173,8 @@ func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	jaeger.Spec.AllInOne.VolumeMounts = allInOneVolumeMounts
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
 }
@@ -198,7 +201,8 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 	jaeger.Spec.AllInOne.Volumes = allInOneVolumes
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Volumes, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Volumes, 2)
 	// allInOne volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
 }
