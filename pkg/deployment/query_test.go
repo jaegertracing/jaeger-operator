@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -71,18 +70,8 @@ func TestQueryAnnotations(t *testing.T) {
 
 func TestQuerySecrets(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestQuerySecrets")
-	data := map[string]string{
-		"hello": "world",
-	}
-	secret := []v1.Secret{
-		v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "mysecret",
-			},
-			StringData: data,
-		},
-	}
-	jaeger.Spec.Storage.Secrets.Items = secret
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
