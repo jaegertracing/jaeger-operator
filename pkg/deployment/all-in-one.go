@@ -52,6 +52,17 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	configmap.Update(a.jaeger, commonSpec, &options)
 
+	var envFromSource []v1.EnvFromSource
+	if len(a.jaeger.Spec.Storage.SecretName) > 0 {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: a.jaeger.Spec.Storage.SecretName,
+				},
+			},
+		})
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -95,6 +106,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
+						EnvFrom:      envFromSource,
 						Ports: []v1.ContainerPort{
 							{
 								ContainerPort: 5775,
