@@ -271,8 +271,8 @@ spec:
 
 == Secrets support
 
-The Operator supports passing secrets to the Collector and Query nodes. This can be used for example, to pass credentials (username/password) to access the underlying storage backend (for ex: Elasticsearch).
-The secrets are available as environment variables in the (Collector/Query) nodes.
+The Operator supports passing secrets to the Collector, Query and All-In-One deployments. This can be used for example, to pass credentials (username/password) to access the underlying storage backend (for ex: Elasticsearch).
+The secrets are available as environment variables in the (Collector/Query/All-In-One) nodes.
 
 [source,yaml]
 ----
