@@ -269,6 +269,23 @@ spec:
               fieldPath: status.hostIP
 ----
 
+== Agent as DaemonSet
+
+The Operator supports passing secrets to the Collector and Query nodes. This can be used for example, to pass credentials (username/password) to access the underlying storage backend (for ex: Elasticsearch).
+The secrets are available as environment variables in the (Collector/Query) nodes.
+
+[source,yaml]
+----
+	storage:
+	  type: elasticsearch
+	  options:
+		es:
+		  server-urls: http://elasticsearch:9200
+	  secretName: jaeger-secrets
+----
+
+The secret itself would be managed outside of the `jaeger-operator` CR.
+
 == Schema migration
 
 === Cassandra
