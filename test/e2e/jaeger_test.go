@@ -40,6 +40,8 @@ func TestJaeger(t *testing.T) {
 		t.Run("daemonset", DaemonSet)
 		t.Run("sidecar", Sidecar)
 		t.Run("cassandra", Cassandra)
+		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
+		t.Run("spark-dependencies-cass", SparkDependenciesCassandra)
 	})
 }
 
