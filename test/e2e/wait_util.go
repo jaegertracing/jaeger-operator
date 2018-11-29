@@ -113,3 +113,57 @@ func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 	t.Logf("Jobs succeeded\n")
 	return nil
 }
+
+// WaitForJobOfAnOwner checks to see if a given job has completed successfully
+// See #WaitForDeployment for the full semantics
+func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespace, ownerName string, retryInterval, timeout time.Duration) error {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		jobList, err := kubeclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{IncludeUninitialized: true})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of %s job owner\n", ownerName)
+				return false, nil
+			}
+			return false, err
+		}
+		for _, j := range jobList.Items {
+			for _, r := range j.OwnerReferences {
+				if ownerName == r.Name && j.Status.Succeeded > 0 && j.Status.Failed == 0 && j.Status.Active == 0 {
+					return true, nil
+				}
+			}
+		}
+		t.Logf("Waiting for job of owner %s to succeed.", ownerName)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("Jobs succeeded\n")
+	return nil
+}
+
+// WaitForCronJob checks to see if a given cron job scheduled a job
+// See #WaitForDeployment for the full semantics
+func WaitForCronJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		cronJob, err := kubeclient.BatchV1beta1().CronJobs(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of %s cronjob\n", name)
+				return false, nil
+			}
+			return false, err
+		}
+		if cronJob.Status.LastScheduleTime != nil {
+			return true, nil
+		}
+		t.Logf("Waiting for conjob %s to have scheduled", name)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("CronJob succeeded\n")
+	return nil
+}
