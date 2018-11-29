@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -76,6 +77,10 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
 			os = append(os, q)
 		}
+	}
+
+	if c.jaeger.Spec.SparkDependencies.Enabled {
+		os = append(os, cronjob.Create(c.jaeger))
 	}
 
 	return os

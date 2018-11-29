@@ -46,15 +46,16 @@ type Jaeger struct {
 
 // JaegerSpec defines the structure of the Jaeger JSON object from the CR
 type JaegerSpec struct {
-	Strategy  string              `json:"strategy"`
-	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
-	Query     JaegerQuerySpec     `json:"query"`
-	Collector JaegerCollectorSpec `json:"collector"`
-	Agent     JaegerAgentSpec     `json:"agent"`
-	UI        JaegerUISpec        `json:"ui"`
+	Strategy          string                      `json:"strategy"`
+	AllInOne          JaegerAllInOneSpec          `json:"allInOne"`
+	Query             JaegerQuerySpec             `json:"query"`
+	Collector         JaegerCollectorSpec         `json:"collector"`
+	Agent             JaegerAgentSpec             `json:"agent"`
+	UI                JaegerUISpec                `json:"ui"`
 	Sampling  JaegerSamplingSpec  `json:"sampling"`
-	Storage   JaegerStorageSpec   `json:"storage"`
-	Ingress   JaegerIngressSpec   `json:"ingress"`
+	Storage           JaegerStorageSpec           `json:"storage"`
+	Ingress           JaegerIngressSpec           `json:"ingress"`
+	SparkDependencies JaegerSparkDependenciesSpec `json:"sparkDependencies"`
 	JaegerCommonSpec
 }
 
@@ -133,6 +134,20 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Image      string `json:"image"`
 	Datacenter string `json:"datacenter"`
 	Mode       string `json:"mode"`
+}
+
+// JaegerSparkDependenciesSpec defined options for running spark-dependencies.
+type JaegerSparkDependenciesSpec struct {
+	Enabled                     bool   `json:"enabled"`
+	SparkMaster                 string `json:"sparkMaster"`
+	Schedule                    string `json:"schedule"`
+	Image                       string `json:"image"`
+	JavaOpts                    string `json:"javaOpts"`
+	CassandraUseSsl             bool   `json:"cassandraUseSsl"`
+	CassandraLocalDc            string `json:"cassandraLocalDc"`
+	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
+	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
+	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
 }
 
 func init() {

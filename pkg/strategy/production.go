@@ -2,7 +2,7 @@ package strategy
 
 import (
 	"context"
-
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
@@ -82,6 +82,10 @@ func (c *productionStrategy) Create() []runtime.Object {
 		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
 			os = append(os, q)
 		}
+	}
+
+	if c.jaeger.Spec.SparkDependencies.Enabled {
+		os = append(os, cronjob.Create(c.jaeger))
 	}
 
 	return os
