@@ -25,8 +25,3 @@ spec:
     options:
       memory:
         max-traces: 100000
-  sampling:
-    options:
-      default_strategy:
-        type: "probabilistic"
-        param: 50

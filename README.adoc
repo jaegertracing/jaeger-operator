@@ -288,6 +288,31 @@ The secrets are available as environment variables in the (Collector/Query/All-I
 
 The secret itself would be managed outside of the `jaeger-operator` CR.
 
+== Define sampling strategies
+
+The operator can be used to define sampling strategies that will be supplied to tracers that have been configured
+to use a remote sampler:
+
+[source,yaml]
+----
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: with-sampling
+spec:
+  strategy: allInOne
+  sampling:
+    options:
+      default_strategy:
+        type: "probabilistic"
+        param: 50
+----
+
+This example defines a default sampling strategy that is probabilitic, with 50% of the trace instances being
+sampled.
+
+Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/1.8/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The json representation described in that documentation can be used in the operator by converting to yaml.
+
 == Schema migration
 
 === Cassandra
