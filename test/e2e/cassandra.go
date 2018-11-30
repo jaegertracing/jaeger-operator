@@ -3,6 +3,9 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
+	"github.com/pkg/errors"
+	"k8s.io/client-go/kubernetes"
+	"strings"
 	"testing"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -59,5 +62,38 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return err
 	}
 
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	podName, err := GetPodName(namespace, "with-cassandra", f.KubeClient)
+	if err != nil {
+		return err
+	}
+	portForw, closeChan, err := CreatePortForward(namespace, podName, []string{"16686:16686", "14268:14268"}, f.KubeConfig)
+	if err != nil {
+		return err
+	}
+	defer close(closeChan)
+	defer portForw.Close()
+	go func() { portForw.ForwardPorts() }()
+	<- portForw.Ready
+	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
+}
+
+func GetPodName(namespace, ownerNamePrefix string, kubeclient kubernetes.Interface) (string, error) {
+	pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{IncludeUninitialized:true})
+	if err != nil {
+		return "", err
+	}
+	for _, pod := range pods.Items {
+		for _, or := range pod.OwnerReferences {
+
+			if strings.HasPrefix(or.Name, ownerNamePrefix) {
+				return pod.Name, nil
+			}
+		}
+	}
+	return "", errors.New(fmt.Sprintf("could not find pod of owner %s", ownerNamePrefix))
 }
