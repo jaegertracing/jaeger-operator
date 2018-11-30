@@ -91,6 +91,17 @@ func TestCollectorAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestCollectorSecrets(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestCollectorSecrets")
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithVolumes"
 

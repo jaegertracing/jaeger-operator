@@ -122,6 +122,17 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
+func TestAllInOneSecrets(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAllInOneSecrets")
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	allInOne := NewAllInOne(jaeger)
+	dep := allInOne.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	name := "TestAllInOneMountGlobalVolumes"
 

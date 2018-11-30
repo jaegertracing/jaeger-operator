@@ -68,6 +68,17 @@ func TestQueryAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestQuerySecrets(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQuerySecrets")
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestQueryPodName(t *testing.T) {
 	name := "TestQueryPodName"
 	query := NewQuery(v1alpha1.NewJaeger(name))

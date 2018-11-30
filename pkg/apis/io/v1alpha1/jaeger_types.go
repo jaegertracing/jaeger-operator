@@ -116,6 +116,7 @@ type JaegerAgentSpec struct {
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
 type JaegerStorageSpec struct {
 	Type                  string                          `json:"type"` // can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
+	SecretName            string                          `json:"secretName"`
 	Options               Options                         `json:"options"`
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
 }
