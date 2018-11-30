@@ -14,14 +14,12 @@ import (
 
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
 
-func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
-	if ok := supportedStorageTypes[jaeger.Spec.Storage.Type]; !ok {
-		return nil
-	}
+func SupportedStorage(storage string) bool {
+	return supportedStorageTypes[storage]
+}
 
+func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	applyDefaults(jaeger)
-	trueVar := true
-	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
 
 	envVars := []v1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
@@ -30,6 +28,8 @@ func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	}
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage, jaeger.Spec.SparkDependencies)...)
 
+	trueVar := true
+	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

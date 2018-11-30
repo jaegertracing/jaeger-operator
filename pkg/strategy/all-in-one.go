@@ -72,7 +72,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.SparkDependencies.Enabled {
+	if c.jaeger.Spec.SparkDependencies.Enabled && cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 		os = append(os, cronjob.Create(c.jaeger))
 	}
 

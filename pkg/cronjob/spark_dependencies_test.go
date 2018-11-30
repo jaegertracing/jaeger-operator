@@ -75,7 +75,5 @@ func TestStorageEnvs(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	assert.Nil(t, Create(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "foo"}}}))
 	assert.NotNil(t, Create(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}}}))
-	assert.NotNil(t, Create(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra"}}}))
 }
