@@ -2,8 +2,11 @@ package strategy
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -11,8 +14,6 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
@@ -228,4 +229,19 @@ func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deplo
 	for k, v := range configMaps {
 		assert.True(t, v, "Expected %s to have been returned from the list of config maps", k)
 	}
+}
+
+func getTypesOf(
+	objs []runtime.Object,
+	typ reflect.Type,
+) []runtime.Object {
+	var theTypes []runtime.Object
+	for _, obj := range objs {
+		if typ == reflect.TypeOf(obj) {
+			fmt.Println("appending")
+			fmt.Println(reflect.TypeOf(obj))
+			theTypes = append(theTypes, obj)
+		}
+	}
+	return theTypes
 }

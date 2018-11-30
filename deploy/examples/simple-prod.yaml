@@ -4,7 +4,7 @@ kind: Jaeger
 metadata:
   name: simple-prod
 spec:
-  strategy: production
+  strategy: allInOne
   storage:
     type: elasticsearch
     options:
@@ -12,3 +12,5 @@ spec:
         server-urls: http://elasticsearch:9200
         username: elastic
         password: changeme
+  sparkDependencies:
+    enabled: true
