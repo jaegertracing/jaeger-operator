@@ -3,6 +3,7 @@ package strategy
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -99,10 +100,19 @@ func TestOptionsArePassed(t *testing.T) {
 	deployments := getDeployments(objs)
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
-		assert.Len(t, args, 3)
-		for _, arg := range args {
-			assert.Contains(t, arg, "es.")
+		if strings.Contains(dep.Name, "collector") {
+			// Including parameter for sampling config
+			assert.Len(t, args, 4)
+		} else {
+			assert.Len(t, args, 3)
 		}
+		var escount int
+		for _, arg := range args {
+			if strings.Contains(arg, "es.") {
+				escount++
+			}
+		}
+		assert.Equal(t, 3, escount)
 	}
 }
 
@@ -113,7 +123,7 @@ func TestDelegateProductionDepedencies(t *testing.T) {
 }
 
 func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
-	expectedNumObjs := 5
+	expectedNumObjs := 6
 
 	if hasDaemonSet {
 		expectedNumObjs++

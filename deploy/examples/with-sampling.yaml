@@ -1,0 +1,11 @@
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: with-sampling
+spec:
+  strategy: allInOne
+  sampling:
+    options:
+      default_strategy:
+        type: probabilistic
+        param: 50

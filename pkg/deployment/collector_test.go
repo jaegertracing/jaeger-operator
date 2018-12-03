@@ -138,8 +138,9 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Volumes, len(append(collectorVolumes, globalVolumes...)))
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(collectorVolumeMounts, globalVolumeMounts...)))
+	// Additional 1 is sampling configmap
+	assert.Len(t, podSpec.Volumes, len(append(collectorVolumes, globalVolumes...))+1)
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(collectorVolumeMounts, globalVolumeMounts...))+1)
 
 	// collector is first while global is second
 	assert.Equal(t, "collectorVolume", podSpec.Volumes[0].Name)
@@ -170,7 +171,8 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
 }
@@ -197,7 +199,8 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
 }
@@ -224,7 +227,8 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 	jaeger.Spec.Collector.Volumes = collectorVolumes
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
 
-	assert.Len(t, podSpec.Volumes, 1)
+	// Count includes the sampling configmap
+	assert.Len(t, podSpec.Volumes, 2)
 	// collector volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
 }
