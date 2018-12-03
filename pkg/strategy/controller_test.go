@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -176,7 +175,6 @@ func getDeployments(objs []runtime.Object) []*appsv1.Deployment {
 			deps = append(deps, obj.(*appsv1.Deployment))
 		}
 	}
-
 	return deps
 }
 
@@ -238,8 +236,6 @@ func getTypesOf(
 	var theTypes []runtime.Object
 	for _, obj := range objs {
 		if typ == reflect.TypeOf(obj) {
-			fmt.Println("appending")
-			fmt.Println(reflect.TypeOf(obj))
 			theTypes = append(theTypes, obj)
 		}
 	}
