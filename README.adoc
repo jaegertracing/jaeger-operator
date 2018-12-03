@@ -278,12 +278,12 @@ The secrets are available as environment variables in the (Collector/Query/All-I
 
 [source,yaml]
 ----
-	storage:
-	  type: elasticsearch
-	  options:
-		es:
-		  server-urls: http://elasticsearch:9200
-	  secretName: jaeger-secrets
+    storage:
+      type: elasticsearch
+      options:
+        es:
+          server-urls: http://elasticsearch:9200
+      secretName: jaeger-secrets
 ----
 
 The secret itself would be managed outside of the `jaeger-operator` CR.
