@@ -2,12 +2,13 @@ package e2e
 
 import (
 	"errors"
-	"github.com/uber/jaeger-client-go/config"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/uber/jaeger-client-go/config"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func SmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interval, timeout time.Duration) error {

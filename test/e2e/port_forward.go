@@ -3,12 +3,13 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"net/url"
+	"net/http"
+	"strings"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Config) (*portforward.PortForwarder, chan struct{}, error) {
