@@ -304,14 +304,14 @@ spec:
   sampling:
     options:
       default_strategy:
-        type: "probabilistic"
+        type: probabilistic
         param: 50
 ----
 
-This example defines a default sampling strategy that is probabilitic, with 50% of the trace instances being
+This example defines a default sampling strategy that is probabilistic, with a 50% chance of the trace instances being
 sampled.
 
-Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/1.8/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The json representation described in that documentation can be used in the operator by converting to yaml.
+Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/1.8/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The JSON representation described in that documentation can be used in the operator by converting to YAML.
 
 == Schema migration
 

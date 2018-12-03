@@ -12,9 +12,9 @@ func TestNoSamplingConfig(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNoSamplingConfig")
 
 	config := NewConfig(jaeger)
-	dep := config.Get()
-	assert.NotNil(t, dep)
-	assert.Equal(t, defaultSamplingStrategy, dep.Data["sampling"])
+	cm := config.Get()
+	assert.NotNil(t, cm)
+	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
 
 func TestWithEmptySamplingConfig(t *testing.T) {
@@ -23,9 +23,9 @@ func TestWithEmptySamplingConfig(t *testing.T) {
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewConfig(jaeger)
-	dep := config.Get()
-	assert.NotNil(t, dep)
-	assert.Equal(t, defaultSamplingStrategy, dep.Data["sampling"])
+	cm := config.Get()
+	assert.NotNil(t, cm)
+	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
 
 func TestWithSamplingConfig(t *testing.T) {

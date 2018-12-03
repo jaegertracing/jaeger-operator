@@ -40,7 +40,7 @@ func (u *Config) Get() *v1.ConfigMap {
 		return nil
 	}
 
-	logrus.Debug("Assembling the Sampling configmap")
+	logrus.WithField("instance", u.jaeger.Name).Debug("Assembling the Sampling configmap")
 	trueVar := true
 
 	data := map[string]string{
