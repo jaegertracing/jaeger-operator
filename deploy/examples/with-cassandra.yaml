@@ -10,6 +10,6 @@ spec:
       cassandra:
         servers: cassandra
         keyspace: jaeger_v1_datacenter3
-    cassandra-create-schema:
+    cassandraCreateSchema:
       datacenter: "datacenter3"
       mode: "test"
