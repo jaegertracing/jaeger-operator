@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"k8s.io/api/core/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 // removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.

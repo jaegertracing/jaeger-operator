@@ -3,8 +3,9 @@ package storage
 import (
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func TestDefaultDependencies(t *testing.T) {

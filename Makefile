@@ -29,6 +29,7 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format:
 	@echo Formatting code...
+	@./scripts/import-order-cleanup.sh inplace
 	@go fmt $(PACKAGES)
 
 .PHONY: lint
