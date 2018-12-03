@@ -40,8 +40,8 @@ func TestWithSamplingConfig(t *testing.T) {
 	jaeger.Spec.Sampling.Options = samplingconfig
 
 	config := NewConfig(jaeger)
-	dep := config.Get()
-	assert.Equal(t, json, dep.Data["sampling"])
+	cm := config.Get()
+	assert.Equal(t, json, cm.Data["sampling"])
 }
 
 func TestUpdateNoSamplingConfig(t *testing.T) {
