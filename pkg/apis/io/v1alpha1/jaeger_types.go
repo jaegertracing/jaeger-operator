@@ -52,7 +52,7 @@ type JaegerSpec struct {
 	Collector         JaegerCollectorSpec         `json:"collector"`
 	Agent             JaegerAgentSpec             `json:"agent"`
 	UI                JaegerUISpec                `json:"ui"`
-	Sampling  JaegerSamplingSpec  `json:"sampling"`
+	Sampling          JaegerSamplingSpec          `json:"sampling"`
 	Storage           JaegerStorageSpec           `json:"storage"`
 	Ingress           JaegerIngressSpec           `json:"ingress"`
 	SparkDependencies JaegerSparkDependenciesSpec `json:"sparkDependencies"`

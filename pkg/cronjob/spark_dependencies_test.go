@@ -12,8 +12,7 @@ func TestApplyDefaults(t *testing.T) {
 		underTest *v1alpha1.Jaeger
 		expected  *v1alpha1.Jaeger
 	}{
-		{underTest: &v1alpha1.Jaeger{}, expected:
-			&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "55 23 * * *"}}}},
+		{underTest: &v1alpha1.Jaeger{}, expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "55 23 * * *"}}}},
 		{underTest: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}},
 			expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}},
 	}
