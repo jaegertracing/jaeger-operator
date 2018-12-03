@@ -304,7 +304,6 @@ func (in *JaegerSpec) DeepCopyInto(out *JaegerSpec) {
 	in.Sampling.DeepCopyInto(&out.Sampling)
 	in.Storage.DeepCopyInto(&out.Storage)
 	in.Ingress.DeepCopyInto(&out.Ingress)
-	out.SparkDependencies = in.SparkDependencies
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
@@ -340,6 +339,7 @@ func (in *JaegerStorageSpec) DeepCopyInto(out *JaegerStorageSpec) {
 	*out = *in
 	in.Options.DeepCopyInto(&out.Options)
 	in.CassandraCreateSchema.DeepCopyInto(&out.CassandraCreateSchema)
+	out.SparkDependencies = in.SparkDependencies
 	return
 }
 

@@ -23,10 +23,10 @@ func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 
 	envVars := []v1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
-		{Name: "SPARK_MASTER", Value: jaeger.Spec.SparkDependencies.SparkMaster},
-		{Name: "JAVA_OPTS", Value: jaeger.Spec.SparkDependencies.JavaOpts},
+		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.SparkDependencies.SparkMaster},
+		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.SparkDependencies.JavaOpts},
 	}
-	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage, jaeger.Spec.SparkDependencies)...)
+	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
 
 	trueVar := true
 	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
@@ -45,14 +45,14 @@ func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			Schedule: jaeger.Spec.SparkDependencies.Schedule,
+			Schedule: jaeger.Spec.Storage.SparkDependencies.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Template: v1.PodTemplateSpec{
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{
-									Image: jaeger.Spec.SparkDependencies.Image,
+									Image: jaeger.Spec.Storage.SparkDependencies.Image,
 									Name:  name,
 									// let spark job use its default values
 									Env: removeEmptyVars(envVars),
@@ -73,7 +73,7 @@ func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	}
 }
 
-func getStorageEnvs(s v1alpha1.JaegerStorageSpec, sj v1alpha1.JaegerSparkDependenciesSpec) []v1.EnvVar {
+func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 	sFlags := s.Options.Filter(storage.OptionsPrefix(s.Type))
 	sFlagsMap := sFlags.Map()
 	keyspace := sFlagsMap["cassandra.keyspace"]
@@ -87,9 +87,9 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec, sj v1alpha1.JaegerSparkDepende
 			{Name: "CASSANDRA_KEYSPACE", Value: keyspace},
 			{Name: "CASSANDRA_USERNAME", Value: sFlagsMap["cassandra.username"]},
 			{Name: "CASSANDRA_PASSWORD", Value: sFlagsMap["cassandra.password"]},
-			{Name: "CASSANDRA_USE_SSL", Value: strconv.FormatBool(sj.CassandraUseSsl)},
-			{Name: "CASSANDRA_LOCAL_DC", Value: sj.CassandraLocalDc},
-			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(sj.CassandraClientAuthEnabled)},
+			{Name: "CASSANDRA_USE_SSL", Value: strconv.FormatBool(s.SparkDependencies.CassandraUseSsl)},
+			{Name: "CASSANDRA_LOCAL_DC", Value: s.SparkDependencies.CassandraLocalDc},
+			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.SparkDependencies.CassandraClientAuthEnabled)},
 		}
 	case "elasticsearch":
 		return []v1.EnvVar{
@@ -97,8 +97,8 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec, sj v1alpha1.JaegerSparkDepende
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
-			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(sj.ElasticsearchClientNodeOnly)},
-			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(sj.ElasticsearchNodesWanOnly)},
+			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.SparkDependencies.ElasticsearchClientNodeOnly)},
+			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.SparkDependencies.ElasticsearchNodesWanOnly)},
 		}
 	default:
 		return nil
@@ -106,11 +106,11 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec, sj v1alpha1.JaegerSparkDepende
 }
 
 func applyDefaults(jaeger *v1alpha1.Jaeger) {
-	if jaeger.Spec.SparkDependencies.Image == "" {
-		jaeger.Spec.SparkDependencies.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
+	if jaeger.Spec.Storage.SparkDependencies.Image == "" {
+		jaeger.Spec.Storage.SparkDependencies.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
 	}
-	if jaeger.Spec.SparkDependencies.Schedule == "" {
-		jaeger.Spec.SparkDependencies.Schedule = "55 23 * * *"
+	if jaeger.Spec.Storage.SparkDependencies.Schedule == "" {
+		jaeger.Spec.Storage.SparkDependencies.Schedule = "55 23 * * *"
 	}
 }
 

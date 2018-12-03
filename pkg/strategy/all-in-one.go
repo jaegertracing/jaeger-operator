@@ -79,8 +79,12 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.SparkDependencies.Enabled && cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
-		os = append(os, cronjob.Create(c.jaeger))
+	if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
+		if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+			os = append(os, cronjob.Create(c.jaeger))
+		} else {
+			logrus.Info("Spark dependencies are disabled - need to be enabled explicitly")
+		}
 	}
 
 	return os

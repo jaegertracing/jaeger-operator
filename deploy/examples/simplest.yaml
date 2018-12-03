@@ -2,13 +2,3 @@ apiVersion: io.jaegertracing/v1alpha1
 kind: Jaeger
 metadata:
   name: simplest
-  strategy: allInOne
-  storage:
-    type: elasticsearch
-    options:
-      es:
-        server-urls: http://elasticsearch:9200
-        username: elastic
-        password: changeme
-  sparkDependencies:
-    enabled: true
