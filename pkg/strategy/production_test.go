@@ -100,8 +100,12 @@ func TestOptionsArePassed(t *testing.T) {
 	deployments := getDeployments(objs)
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
-		// Including parameter for sampling config
-		assert.Len(t, args, 4)
+		if strings.Contains(dep.Name, "collector") {
+			// Including parameter for sampling config
+			assert.Len(t, args, 4)
+		} else {
+			assert.Len(t, args, 3)
+		}
 		var escount int
 		for _, arg := range args {
 			if strings.Contains(arg, "es.") {
@@ -109,9 +113,6 @@ func TestOptionsArePassed(t *testing.T) {
 			}
 		}
 		assert.Equal(t, 3, escount)
-		// TODO: Added break as deployments includes both the original and modified
-		// version of the deployment - is that expected?
-		break
 	}
 }
 
