@@ -18,7 +18,6 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 	}
 
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod)
-	fmt.Println(kConfig.Host)
 	hostIP := strings.TrimLeft(kConfig.Host, "https://")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 
