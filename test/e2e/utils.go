@@ -3,9 +3,10 @@ package e2e
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
