@@ -83,11 +83,11 @@ run-openshift: crd
 
 .PHONY: deploy-es
 deploy-es:
-	@kubectl create -f ./test/elasticsearch.yml || true
+	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
 
 .PHONY: deploy-cassandra
 deploy-cassandra:
-	@kubectl create -f ./test/cassandra.yml || true
+	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
 
 .PHONY: clean-deploy
 clean-deploy:
