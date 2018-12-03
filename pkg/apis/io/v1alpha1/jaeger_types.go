@@ -46,16 +46,15 @@ type Jaeger struct {
 
 // JaegerSpec defines the structure of the Jaeger JSON object from the CR
 type JaegerSpec struct {
-	Strategy          string                      `json:"strategy"`
-	AllInOne          JaegerAllInOneSpec          `json:"allInOne"`
-	Query             JaegerQuerySpec             `json:"query"`
-	Collector         JaegerCollectorSpec         `json:"collector"`
-	Agent             JaegerAgentSpec             `json:"agent"`
-	UI                JaegerUISpec                `json:"ui"`
-	Sampling          JaegerSamplingSpec          `json:"sampling"`
-	Storage           JaegerStorageSpec           `json:"storage"`
-	Ingress           JaegerIngressSpec           `json:"ingress"`
-	SparkDependencies JaegerSparkDependenciesSpec `json:"sparkDependencies"`
+	Strategy  string              `json:"strategy"`
+	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
+	Query     JaegerQuerySpec     `json:"query"`
+	Collector JaegerCollectorSpec `json:"collector"`
+	Agent     JaegerAgentSpec     `json:"agent"`
+	UI        JaegerUISpec        `json:"ui"`
+	Sampling  JaegerSamplingSpec  `json:"sampling"`
+	Storage   JaegerStorageSpec   `json:"storage"`
+	Ingress   JaegerIngressSpec   `json:"ingress"`
 	JaegerCommonSpec
 }
 
@@ -126,6 +125,7 @@ type JaegerStorageSpec struct {
 	SecretName            string                          `json:"secretName"`
 	Options               Options                         `json:"options"`
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
+	SparkDependencies     JaegerSparkDependenciesSpec     `json:"sparkDependencies"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

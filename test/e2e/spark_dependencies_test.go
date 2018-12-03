@@ -45,6 +45,12 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
+	storage.SparkDependencies = v1alpha1.JaegerSparkDependenciesSpec{
+		Enabled: true,
+		// run immediately
+		Schedule: "*/1 * * * *",
+	}
+
 	name := "test-spark-deps"
 	j := &v1alpha1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -59,11 +65,6 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 			Strategy: "allInOne",
 			AllInOne: v1alpha1.JaegerAllInOneSpec{},
 			Storage:  storage,
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{
-				Enabled: true,
-				// run immediately
-				Schedule: "*/1 * * * *",
-			},
 		},
 	}
 

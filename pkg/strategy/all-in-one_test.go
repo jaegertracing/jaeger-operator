@@ -146,16 +146,16 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
-			Storage:           v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true},
+			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch",
+				SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
-			Storage:           v1alpha1.JaegerStorageSpec{Type: "cassandra"},
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true},
+			Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra",
+				SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
-			Storage:           v1alpha1.JaegerStorageSpec{Type: "kafka"},
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true},
+			Storage: v1alpha1.JaegerStorageSpec{Type: "kafka",
+				SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Enabled: true}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},

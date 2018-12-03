@@ -12,9 +12,12 @@ func TestApplyDefaults(t *testing.T) {
 		underTest *v1alpha1.Jaeger
 		expected  *v1alpha1.Jaeger
 	}{
-		{underTest: &v1alpha1.Jaeger{}, expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "55 23 * * *"}}}},
-		{underTest: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}},
-			expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}},
+		{underTest: &v1alpha1.Jaeger{}, expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
+			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "55 23 * * *"}}}}},
+		{underTest: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
+			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}},
+			expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
+				SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}}},
 	}
 	for _, test := range tests {
 		applyDefaults(test.underTest)
@@ -41,7 +44,6 @@ func TestRemoveEmptyVars(t *testing.T) {
 func TestStorageEnvs(t *testing.T) {
 	tests := []struct {
 		storage  v1alpha1.JaegerStorageSpec
-		deps     v1alpha1.JaegerSparkDependenciesSpec
 		expected []v1.EnvVar
 	}{
 		{storage: v1alpha1.JaegerStorageSpec{Type: "foo"}},
@@ -70,7 +72,7 @@ func TestStorageEnvs(t *testing.T) {
 			}},
 	}
 	for _, test := range tests {
-		envVars := getStorageEnvs(test.storage, test.deps)
+		envVars := getStorageEnvs(test.storage)
 		assert.Equal(t, test.expected, envVars)
 	}
 }
