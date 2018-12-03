@@ -98,7 +98,7 @@ Kubernetes comes with no ingress provider by default. For development purposes, 
 
 [source,bash]
 ----
-make ingress
+make deploy-ingress
 ----
 
 This will install the `NGINX` ingress provider. It's recommended to wait for the ingress pods to be in the `READY` and `RUNNING` state before starting the operator. You can check it by running:
@@ -127,6 +127,6 @@ There are a set of templates under the `test` directory that can be used to setu
 
 [source,bash]
 ----
-make es
-make cassandra
+make deploy-es
+make deploy-cassandra
 ----

@@ -1,4 +1,4 @@
-# setup an elasticsearch with `make es`
+# setup an elasticsearch with `make deploy-es`
 apiVersion: io.jaegertracing/v1alpha1
 kind: Jaeger
 metadata:

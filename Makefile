@@ -57,7 +57,7 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: cassandra es crd build docker push
+e2e-tests: deploy-cassandra deploy-es crd build docker push
 	mkdir -p deploy/test
 	@echo Running end-to-end tests...
 
@@ -81,20 +81,26 @@ run: crd
 run-openshift: crd
 	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start --platform=openshift'
 
-.PHONY: es
-es:
-	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
+.PHONY: deploy-es
+deploy-es:
+	@kubectl create -f ./test/elasticsearch.yml || true
 
-.PHONY: cassandra
-cassandra:
-	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
+.PHONY: deploy-cassandra
+deploy-cassandra:
+	@kubectl create -f ./test/cassandra.yml || true
+
+.PHONY: clean-deploy
+clean-deploy:
+	@kubectl delete -f ./test/cassandra.yml || true
+	@kubectl delete -f ./test/elasticsearch.yml || true
+	@kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml || true
 
 .PHONY: crd
 crd:
-	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
+	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml | grep -v "already exists" || true
 
-.PHONY: ingress
-ingress:
+.PHONY: deploy-ingress
+deploy-ingress:
 	# see https://kubernetes.github.io/ingress-nginx/deploy/#verify-installation
 	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml
 	@minikube addons enable ingress
