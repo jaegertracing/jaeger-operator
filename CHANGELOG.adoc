@@ -2,6 +2,18 @@
 
 = Changelog
 
+== v1.8.1 (2018-12-03)
+
+* Configure sampling strategies (https://github.com/jaegertracing/jaeger-operator/pull/139[#139])
+* Add support for secrets (https://github.com/jaegertracing/jaeger-operator/pull/114[#114])
+* Fix crd links (https://github.com/jaegertracing/jaeger-operator/pull/132[#132])
+* Create e2e testdir, fix contributing readme (https://github.com/jaegertracing/jaeger-operator/pull/131[#131])
+* Enable JAEGER_SERVICE_NAME and JAEGER_PROPAGATION env vars to be set … (https://github.com/jaegertracing/jaeger-operator/pull/128[#128])
+* Add CRD to install steps, and update cleanup instructions (https://github.com/jaegertracing/jaeger-operator/pull/129[#129])
+* Rename controller to strategy (https://github.com/jaegertracing/jaeger-operator/pull/125[#125])
+* Add tests for new operator-sdk related code (https://github.com/jaegertracing/jaeger-operator/pull/122[#122])
+* Update README.adoc to match yaml files in deploy (https://github.com/jaegertracing/jaeger-operator/pull/124[#124])
+
 == v1.8.1 (2018-11-21)
 
 * Add support for UI configuration (https://github.com/jaegertracing/jaeger-operator/pull/115[#115])
