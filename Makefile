@@ -58,7 +58,7 @@ unit-tests:
 
 .PHONY: e2e-tests
 e2e-tests: cassandra es crd build docker push
-	mkdir -p deploy/test
+	@mkdir -p deploy/test
 	@echo Running end-to-end tests...
 
 	@cp deploy/role_binding.yaml deploy/test/namespace-manifests.yaml
