@@ -49,8 +49,6 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 				Type: "elasticsearch",
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
-					"es.username":    "elastic",
-					"es.password":    "changeme",
 				}),
 			},
 		},

@@ -87,10 +87,14 @@ func (c *productionStrategy) Create() []runtime.Object {
 
 	if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 		if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
-			os = append(os, cronjob.Create(c.jaeger))
+			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
 			logrus.Info("Do not installing spark dependencies - need to be enabled explicitly")
 		}
+	}
+
+	if c.jaeger.Spec.Storage.Type == "elasticsearch" && c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
+		os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 	}
 
 	return os

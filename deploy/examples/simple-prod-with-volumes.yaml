@@ -10,8 +10,6 @@ spec:
     options:
       es:
         server-urls: http://elasticsearch:9200
-        username: elastic
-        password: changeme
   volumeMounts:
   - name: elastic-data
     mountPath: /usr/share/elasticsearch/data

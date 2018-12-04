@@ -22,7 +22,7 @@ func TestApplyDefaults(t *testing.T) {
 				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "foo"}}}}},
 	}
 	for _, test := range tests {
-		applyDefaults(test.underTest)
+		applySparkDependenciesDefaults(test.underTest)
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }
@@ -80,5 +80,5 @@ func TestStorageEnvs(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	assert.NotNil(t, Create(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}}}))
+	assert.NotNil(t, CreateSparkDependencies(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }

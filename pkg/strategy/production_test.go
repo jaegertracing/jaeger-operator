@@ -178,3 +178,9 @@ func TestSparkDependenciesProduction(t *testing.T) {
 		return &productionStrategy{jaeger: jaeger}
 	})
 }
+
+func TestEsIndexClenarProduction(t *testing.T) {
+	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
+		return &productionStrategy{jaeger: jaeger}
+	})
+}

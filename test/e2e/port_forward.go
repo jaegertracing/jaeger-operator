@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 )
 
+// CreatePortForward listens for local connections and forwards them to a remote pod
 func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Config) (*portforward.PortForwarder, chan struct{}, error) {
 	roundTripper, upgrader, err := spdy.RoundTripperFor(kConfig)
 	if err != nil {

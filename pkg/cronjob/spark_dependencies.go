@@ -20,8 +20,8 @@ func SupportedStorage(storage string) bool {
 	return supportedStorageTypes[storage]
 }
 
-func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
-	applyDefaults(jaeger)
+func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
+	applySparkDependenciesDefaults(jaeger)
 
 	envVars := []v1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
@@ -107,7 +107,7 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 	}
 }
 
-func applyDefaults(jaeger *v1alpha1.Jaeger) {
+func applySparkDependenciesDefaults(jaeger *v1alpha1.Jaeger) {
 	if jaeger.Spec.Storage.SparkDependencies.Image == "" {
 		jaeger.Spec.Storage.SparkDependencies.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
 	}
