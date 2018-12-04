@@ -13,11 +13,11 @@ func TestApplyDefaults(t *testing.T) {
 		expected  *v1alpha1.Jaeger
 	}{
 		{underTest: &v1alpha1.Jaeger{}, expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "55 23 * * *"}}}}},
+			SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *"}}}}},
 		{underTest: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-			SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}},
+			SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "foo"}}}},
 			expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-				SparkDependencies: v1alpha1.JaegerSparkDependenciesSpec{Schedule: "foo"}}}}},
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "foo"}}}}},
 	}
 	for _, test := range tests {
 		applyDefaults(test.underTest)

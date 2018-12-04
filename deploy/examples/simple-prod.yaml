@@ -12,5 +12,5 @@ spec:
         server-urls: http://elasticsearch:9200
         username: elastic
         password: changeme
-    sparkDependencies:
+    dependencies:
       enabled: true

@@ -125,7 +125,7 @@ type JaegerStorageSpec struct {
 	SecretName            string                          `json:"secretName"`
 	Options               Options                         `json:"options"`
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
-	SparkDependencies     JaegerSparkDependenciesSpec     `json:"sparkDependencies"`
+	SparkDependencies     JaegerDependenciesSpec          `json:"dependencies"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
@@ -136,8 +136,8 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Mode       string `json:"mode"`
 }
 
-// JaegerSparkDependenciesSpec defined options for running spark-dependencies.
-type JaegerSparkDependenciesSpec struct {
+// JaegerDependenciesSpec defined options for running spark-dependencies.
+type JaegerDependenciesSpec struct {
 	Enabled                     bool   `json:"enabled"`
 	SparkMaster                 string `json:"sparkMaster"`
 	Schedule                    string `json:"schedule"`
