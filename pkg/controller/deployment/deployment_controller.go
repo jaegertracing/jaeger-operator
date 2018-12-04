@@ -18,7 +18,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
-// Add creates a new Deployment Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new Controller for Deployment and StatefulSets and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
@@ -26,13 +26,13 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileDeployment{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileObject{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("deployment-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("object-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
@@ -43,33 +43,39 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Watch for changes to primary resource StatefulSet
+	err = c.Watch(&source.Kind{Type: &appsv1.StatefulSet{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileDeployment{}
+var _ reconcile.Reconciler = &ReconcileObject{}
 
-// ReconcileDeployment reconciles a Deployment object
-type ReconcileDeployment struct {
+// ReconcileObject reconciles a Kubernetes object
+type ReconcileObject struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a Deployment object and makes changes based on the state read
-// and what is in the Deployment.Spec
+// Reconcile reads that state of the cluster for a Kubernetes object and makes changes based on the
+// state read and what is in the Object Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Debug("Reconciling Deployment")
+	}).Debug("Reconciling the object")
 
-	// Fetch the Deployment instance
-	instance := &appsv1.Deployment{}
-	err := r.client.Get(context.Background(), request.NamespacedName, instance)
+	// Fetch the object instance
+	instance := *runtime.Object{}
+	err := r.client.Get(context.Background(), request.NamespacedName, *instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -81,16 +87,16 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		return reconcile.Result{}, err
 	}
 
-	if inject.Needed(instance) {
-		pods := &v1.JaegerList{}
-		opts := &client.ListOptions{}
+	if inject.Needed(instance.Name, instance.Annotations, instance.Spec.Template.Spec.Containers) {
+		pods := &v1alpha1.JaegerList{}
+		opts := &client.ListOptions{Namespace: instance.Namespace}
 		err := r.client.List(context.Background(), opts, pods)
 		if err != nil {
 			log.WithError(err).Error("failed to get the available Jaeger pods")
 			return reconcile.Result{}, err
 		}
 
-		jaeger := inject.Select(instance, pods)
+		jaeger := inject.Select(instance.Annotations, pods)
 		if jaeger != nil {
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
 			log.WithFields(log.Fields{
