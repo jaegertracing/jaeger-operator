@@ -172,3 +172,9 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	}
 	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }
+
+func TestSparkDependenciesProduction(t *testing.T) {
+	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
+		return &productionStrategy{jaeger: jaeger}
+	})
+}

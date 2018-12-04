@@ -12,3 +12,5 @@ spec:
         server-urls: http://elasticsearch:9200
         username: elastic
         password: changeme
+    dependencies:
+      enabled: true

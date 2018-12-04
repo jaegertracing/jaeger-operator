@@ -125,6 +125,7 @@ type JaegerStorageSpec struct {
 	SecretName            string                          `json:"secretName"`
 	Options               Options                         `json:"options"`
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
+	SparkDependencies     JaegerDependenciesSpec          `json:"dependencies"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
@@ -133,6 +134,20 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Image      string `json:"image"`
 	Datacenter string `json:"datacenter"`
 	Mode       string `json:"mode"`
+}
+
+// JaegerDependenciesSpec defined options for running spark-dependencies.
+type JaegerDependenciesSpec struct {
+	Enabled                     bool   `json:"enabled"`
+	SparkMaster                 string `json:"sparkMaster"`
+	Schedule                    string `json:"schedule"`
+	Image                       string `json:"image"`
+	JavaOpts                    string `json:"javaOpts"`
+	CassandraUseSsl             bool   `json:"cassandraUseSsl"`
+	CassandraLocalDc            string `json:"cassandraLocalDc"`
+	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
+	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
+	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
 }
 
 func init() {

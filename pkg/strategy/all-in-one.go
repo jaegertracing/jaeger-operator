@@ -12,6 +12,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
@@ -75,6 +76,14 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 	} else {
 		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
 			os = append(os, q)
+		}
+	}
+
+	if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
+		if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+			os = append(os, cronjob.Create(c.jaeger))
+		} else {
+			logrus.Info("Spark dependencies are disabled - need to be enabled explicitly")
 		}
 	}
 

@@ -3,10 +3,12 @@ package strategy
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -130,4 +132,43 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []r
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
 	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+}
+
+func TestSparkDependenciesAllInOne(t *testing.T) {
+	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
+		return &allInOneStrategy{jaeger: jaeger}
+	})
+}
+
+func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
+	tests := []struct {
+		jaeger              *v1alpha1.Jaeger
+		sparkCronJobEnabled bool
+	}{
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch",
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: true},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra",
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: true},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "kafka",
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: false},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},
+		}}, sparkCronJobEnabled: false},
+	}
+	for _, test := range tests {
+		s := fce(test.jaeger)
+		objs := s.Create()
+		cronJobs := getTypesOf(objs, reflect.TypeOf(&batchv1beta1.CronJob{}))
+		if test.sparkCronJobEnabled {
+			assert.Equal(t, 1, len(cronJobs))
+		} else {
+			assert.Equal(t, 0, len(cronJobs))
+		}
+	}
 }
