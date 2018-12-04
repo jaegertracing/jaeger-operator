@@ -65,5 +65,29 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 		return err
 	}
 
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+	queryPod, err := GetPod(namespace, "simple-prod-query","jaegertracing/jaeger-query", f.KubeClient)
+	if err != nil {
+		return err
+	}
+	collectorPod, err := GetPod(namespace, "simple-prod-collector","jaegertracing/jaeger-collector", f.KubeClient)
+	if err != nil {
+		return err
+	}
+	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	if err != nil {
+		return err
+	}
+	defer portForw.Close()
+	defer close(closeChan)
+	portForwColl, closeChanColl, err := CreatePortForward(namespace, collectorPod.Name, []string{"14268"}, f.KubeConfig)
+	if err != nil {
+		return err
+	}
+	defer portForwColl.Close()
+	defer close(closeChanColl)
+	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 }

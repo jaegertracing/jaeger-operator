@@ -1,12 +1,11 @@
 package deployment
 
 import (
-	"testing"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"testing"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )

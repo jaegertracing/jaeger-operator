@@ -41,10 +41,12 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		},
 		Spec: v1alpha1.JaegerSpec{
 			Strategy: "allInOne",
-			AllInOne: v1alpha1.JaegerAllInOneSpec{},
 			Storage: v1alpha1.JaegerStorageSpec{
 				Type:    "cassandra",
-				Options: v1alpha1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc"}),
+				Options: v1alpha1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+				CassandraCreateSchema: v1alpha1.JaegerCassandraCreateSchemaSpec{
+					Datacenter: "datacenter1",
+				},
 			},
 		},
 	}
@@ -60,5 +62,21 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return err
 	}
 
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	jaegerPod, err := GetPod(namespace, "with-cassandra", "jaegertracing/all-in-one", f.KubeClient)
+	if err != nil {
+		return err
+	}
+	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, f.KubeConfig)
+	if err != nil {
+		return err
+	}
+	defer portForw.Close()
+	defer close(closeChan)
+	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 }
+
