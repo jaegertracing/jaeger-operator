@@ -119,20 +119,20 @@ func TestSidecarNotNeeded(t *testing.T) {
 		},
 	}
 
-	assert.False(t, Needed(dep))
+	assert.False(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
 }
 
 func TestSidecarNeeded(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{})
-	assert.True(t, Needed(dep))
+	assert.True(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
 }
 
 func TestHasSidecarAlready(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
-	assert.True(t, Needed(dep))
+	assert.True(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
 	jaeger := v1alpha1.NewJaeger("TestHasSidecarAlready")
 	Sidecar(dep, jaeger)
-	assert.False(t, Needed(dep))
+	assert.False(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
 }
 
 func TestSelectSingleJaegerPod(t *testing.T) {
@@ -147,7 +147,7 @@ func TestSelectSingleJaegerPod(t *testing.T) {
 		},
 	}
 
-	jaeger := Select(dep, jaegerPods)
+	jaeger := Select(dep.Annotations, jaegerPods)
 	assert.NotNil(t, jaeger)
 	assert.Equal(t, "the-only-jaeger-instance-available", jaeger.Name)
 }
@@ -169,13 +169,13 @@ func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
 		},
 	}
 
-	jaeger := Select(dep, jaegerPods)
+	jaeger := Select(dep.Annotations, jaegerPods)
 	assert.Nil(t, jaeger)
 }
 
 func TestNoAvailableJaegerPods(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaeger := Select(dep, &v1alpha1.JaegerList{})
+	jaeger := Select(dep.Annotations, &v1alpha1.JaegerList{})
 	assert.Nil(t, jaeger)
 }
 
@@ -197,7 +197,7 @@ func TestSelectBasedOnName(t *testing.T) {
 		},
 	}
 
-	jaeger := Select(dep, jaegerPods)
+	jaeger := Select(dep.Annotations, jaegerPods)
 	assert.NotNil(t, jaeger)
 	assert.Equal(t, "the-second-jaeger-instance-available", jaeger.Name)
 }
