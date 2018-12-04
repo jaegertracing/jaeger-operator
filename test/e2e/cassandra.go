@@ -66,18 +66,16 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return err
 	}
 
-	jaegerPod, err := GetPod(namespace, "with-cassandra", "with-cassandra", f.KubeClient)
+	jaegerPod, err := GetPod(namespace, "with-cassandra", "jaegertracing/all-in-one", f.KubeClient)
 	if err != nil {
 		return err
 	}
-	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686:16686", "14268:14268"}, f.KubeConfig)
+	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, f.KubeConfig)
 	if err != nil {
 		return err
 	}
 	defer portForw.Close()
 	defer close(closeChan)
-	go func() { portForw.ForwardPorts() }()
-	<- portForw.Ready
 	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 }
 

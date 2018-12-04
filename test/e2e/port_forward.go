@@ -3,8 +3,8 @@ package e2e
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"k8s.io/client-go/rest"
@@ -39,5 +39,11 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 			fmt.Println(out.String())
 		}
 	}()
+	go func() {
+		if err := forwarder.ForwardPorts(); err != nil {
+			panic(err)
+		}
+	}()
+	<- forwarder.Ready
 	return forwarder, stopChan, nil
 }

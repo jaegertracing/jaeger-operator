@@ -72,6 +72,6 @@ required = [
     non-go = false
     unused-packages = false
 
-[[constraint]]
+[[override]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
