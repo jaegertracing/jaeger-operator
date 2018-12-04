@@ -94,6 +94,12 @@ es:
 cassandra:
 	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
 
+.PHONY: clean
+clean:
+	@kubectl delete -f ./test/cassandra.yml || true
+	@kubectl delete -f ./test/elasticsearch.yml || true
+	@kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml || true
+
 .PHONY: crd
 crd:
 	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
