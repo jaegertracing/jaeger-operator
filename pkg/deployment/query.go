@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"

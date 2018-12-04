@@ -11,7 +11,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	"github.com/jaegertracing/jaeger-operator/pkg/configmap"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
