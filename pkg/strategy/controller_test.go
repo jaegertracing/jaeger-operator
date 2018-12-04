@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +12,8 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {

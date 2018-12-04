@@ -2,14 +2,16 @@ package cronjob
 
 import (
 	"fmt"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	"strconv"
+
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}

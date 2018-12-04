@@ -3,11 +3,13 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"testing"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func SparkDependenciesElasticsearch(t *testing.T) {

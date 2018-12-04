@@ -1,10 +1,12 @@
 package cronjob
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
-	"testing"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
 func TestApplyDefaults(t *testing.T) {
