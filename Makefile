@@ -3,6 +3,8 @@ GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= default
 BIN_DIR ?= "build/_output/bin"
+IMPORT_LOG=import.log
+FMT_LOG=fmt.log
 
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
@@ -20,7 +22,9 @@ PACKAGES := $(shell go list ./cmd/... ./pkg/...)
 .PHONY: check
 check:
 	@echo Checking...
-	@$(foreach file, $(shell go fmt $(PACKAGES) 2>&1), echo "Some files need formatting. Failing." || exit 1)
+	@go fmt $(PACKAGES) > $(FMT_LOG)
+	@.travis/import-order-cleanup.sh stdout > $(IMPORT_LOG)
+	@[ ! -s "$(FMT_LOG)" -a ! -s "$(IMPORT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) $(IMPORT_LOG) && false)
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate
@@ -29,6 +33,7 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format:
 	@echo Formatting code...
+	@.travis/import-order-cleanup.sh inplace
 	@go fmt $(PACKAGES)
 
 .PHONY: lint
