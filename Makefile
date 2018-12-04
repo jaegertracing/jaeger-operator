@@ -97,7 +97,7 @@ clean:
 
 .PHONY: crd
 crd:
-	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml | grep -v "already exists" || true
+	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: ingress
 ingress:
