@@ -172,3 +172,42 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
 		}
 	}
 }
+
+func TestEsIndexCleanerAllInOne(t *testing.T) {
+	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
+		return &allInOneStrategy{jaeger: jaeger}
+	})
+}
+
+func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
+	tests := []struct {
+		jaeger              *v1alpha1.Jaeger
+		sparkCronJobEnabled bool
+	}{
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch",
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: true},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra",
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: false},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "kafka",
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+		}}, sparkCronJobEnabled: false},
+		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},
+		}}, sparkCronJobEnabled: false},
+	}
+	for _, test := range tests {
+		s := fce(test.jaeger)
+		objs := s.Create()
+		cronJobs := getTypesOf(objs, reflect.TypeOf(&batchv1beta1.CronJob{}))
+		if test.sparkCronJobEnabled {
+			assert.Equal(t, 1, len(cronJobs))
+		} else {
+			assert.Equal(t, 0, len(cronJobs))
+		}
+	}
+}

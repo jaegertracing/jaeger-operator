@@ -42,6 +42,7 @@ func TestJaeger(t *testing.T) {
 		t.Run("cassandra", Cassandra)
 		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
 		t.Run("spark-dependencies-cass", SparkDependenciesCassandra)
+		t.Run("es-index-cleaner", EsIndexCleaner)
 	})
 }
 

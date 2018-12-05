@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
@@ -20,9 +19,7 @@ func SupportedStorage(storage string) bool {
 	return supportedStorageTypes[storage]
 }
 
-func Create(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
-	applyDefaults(jaeger)
-
+func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	envVars := []v1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
 		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.SparkDependencies.SparkMaster},
@@ -104,15 +101,6 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 		}
 	default:
 		return nil
-	}
-}
-
-func applyDefaults(jaeger *v1alpha1.Jaeger) {
-	if jaeger.Spec.Storage.SparkDependencies.Image == "" {
-		jaeger.Spec.Storage.SparkDependencies.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
-	}
-	if jaeger.Spec.Storage.SparkDependencies.Schedule == "" {
-		jaeger.Spec.Storage.SparkDependencies.Schedule = "55 23 * * *"
 	}
 }
 

@@ -167,6 +167,42 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
+func TestNormalizeIndexCleaner(t *testing.T) {
+	viper.Set("jaeger-es-index-cleaner-image", "foo")
+	defer viper.Reset()
+	tests := []struct {
+		underTest v1alpha1.JaegerEsIndexCleanerSpec
+		expected  v1alpha1.JaegerEsIndexCleanerSpec
+	}{
+		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{},
+			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7}},
+		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55},
+			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55}},
+	}
+	for _, test := range tests {
+		normalizeIndexCleaner(&test.underTest)
+		assert.Equal(t, test.expected, test.underTest)
+	}
+}
+
+func TestNormalizeSparkDependencies(t *testing.T) {
+	viper.Set("jaeger-spark-dependencies-image", "foo")
+	defer viper.Reset()
+	tests := []struct {
+		underTest v1alpha1.JaegerDependenciesSpec
+		expected  v1alpha1.JaegerDependenciesSpec
+	}{
+		{underTest: v1alpha1.JaegerDependenciesSpec{},
+			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo"}},
+		{underTest: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla"},
+			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla"}},
+	}
+	for _, test := range tests {
+		normalizeSparkDependencies(&test.underTest)
+		assert.Equal(t, test.expected, test.underTest)
+	}
+}
+
 func getDeployments(objs []runtime.Object) []*appsv1.Deployment {
 	var deps []*appsv1.Deployment
 

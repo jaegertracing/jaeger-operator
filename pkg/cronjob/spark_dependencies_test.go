@@ -9,24 +9,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
-func TestApplyDefaults(t *testing.T) {
-	tests := []struct {
-		underTest *v1alpha1.Jaeger
-		expected  *v1alpha1.Jaeger
-	}{
-		{underTest: &v1alpha1.Jaeger{}, expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-			SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *"}}}}},
-		{underTest: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-			SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "foo"}}}},
-			expected: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{
-				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Schedule: "foo"}}}}},
-	}
-	for _, test := range tests {
-		applyDefaults(test.underTest)
-		assert.Equal(t, test.expected, test.underTest)
-	}
-}
-
 func TestRemoveEmptyVars(t *testing.T) {
 	tests := []struct {
 		underTest []v1.EnvVar
@@ -80,5 +62,5 @@ func TestStorageEnvs(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	assert.NotNil(t, Create(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}}}))
+	assert.NotNil(t, CreateSparkDependencies(&v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }

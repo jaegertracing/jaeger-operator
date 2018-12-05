@@ -126,6 +126,7 @@ type JaegerStorageSpec struct {
 	Options               Options                         `json:"options"`
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
 	SparkDependencies     JaegerDependenciesSpec          `json:"dependencies"`
+	EsIndexCleaner        JaegerEsIndexCleanerSpec        `json:"esIndexCleaner"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
@@ -148,6 +149,14 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
+}
+
+// JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
+type JaegerEsIndexCleanerSpec struct {
+	Enabled      bool   `json:"enabled"`
+	NumberOfDays int    `json:"numberOfDays"`
+	Schedule     string `json:"schedule"`
+	Image        string `json:"image"`
 }
 
 func init() {

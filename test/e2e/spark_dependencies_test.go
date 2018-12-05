@@ -19,8 +19,7 @@ func SparkDependenciesElasticsearch(t *testing.T) {
 		Type: "elasticsearch",
 		Options: v1alpha1.NewOptions(map[string]interface{}{
 			"es.server-urls": "http://elasticsearch.default.svc:9200",
-			"es.username":    "elastic",
-			"es.password":    "changeme"}),
+		}),
 	}
 	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
 		t.Fatal(err)

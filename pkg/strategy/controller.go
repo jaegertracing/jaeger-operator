@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -86,6 +87,30 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 		// - omitted on Kubernetes
 		// - 'none' on any platform
 		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
+	}
+
+	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies)
+	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner)
+}
+
+func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec) {
+	if spec.Image == "" {
+		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
+	}
+	if spec.Schedule == "" {
+		spec.Schedule = "55 23 * * *"
+	}
+}
+
+func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec) {
+	if spec.Image == "" {
+		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-index-cleaner-image"))
+	}
+	if spec.Schedule == "" {
+		spec.Schedule = "55 23 * * *"
+	}
+	if spec.NumberOfDays == 0 {
+		spec.NumberOfDays = 7
 	}
 }
 
