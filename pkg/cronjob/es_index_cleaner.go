@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
@@ -15,7 +14,6 @@ import (
 )
 
 func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
-	applyIndexCleanerDefaults(&jaeger.Spec.Storage.EsIndexCleaner)
 	esUrls := getEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
@@ -73,16 +71,4 @@ func getEsHostname(opts map[string]string) string {
 		return ""
 	}
 	return urlArr[0]
-}
-
-func applyIndexCleanerDefaults(spec *v1alpha1.JaegerEsIndexCleanerSpec) {
-	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-index-cleaner-image"))
-	}
-	if spec.Schedule == "" {
-		spec.Schedule = "55 23 * * *"
-	}
-	if spec.NumberOfDays == 0 {
-		spec.NumberOfDays = 7
-	}
 }

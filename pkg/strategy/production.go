@@ -93,8 +93,12 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.Type == "elasticsearch" && c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
-		os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
+	if c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
+		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
+			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
+		} else {
+			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Elasticsearch index cleaner is enabled for unsupported storage")
+		}
 	}
 
 	return os
