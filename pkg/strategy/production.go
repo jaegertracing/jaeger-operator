@@ -85,11 +85,11 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
-		if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+	if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
-			logrus.Info("Do not installing spark dependencies - need to be enabled explicitly")
+			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Spark dependencies is enabled for unsupported storage")
 		}
 	}
 
