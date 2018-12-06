@@ -139,7 +139,7 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
 type JaegerDependenciesSpec struct {
-	Enabled                     bool   `json:"enabled"`
+	Enabled                     *bool  `json:"enabled"`
 	SparkMaster                 string `json:"sparkMaster"`
 	Schedule                    string `json:"schedule"`
 	Image                       string `json:"image"`
@@ -153,7 +153,7 @@ type JaegerDependenciesSpec struct {
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
 type JaegerEsIndexCleanerSpec struct {
-	Enabled      bool   `json:"enabled"`
+	Enabled      *bool  `json:"enabled"`
 	NumberOfDays int    `json:"numberOfDays"`
 	Schedule     string `json:"schedule"`
 	Image        string `json:"image"`
