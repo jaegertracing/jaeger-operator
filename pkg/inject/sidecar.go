@@ -35,12 +35,12 @@ func Sidecar(obj runtime.Object, jaeger *v1.Jaeger) {
 	switch o := obj.(type) {
 	case *appsv1.Deployment:
 	case *appsv1.StatefulSet:
-		if jaeger == nil || obj.Annotations[Annotation] != jaeger.Name {
-			logrus.Debugf("Skipping sidecar injection for instance %v", obj.Name)
+		if jaeger == nil || o.Annotations[Annotation] != jaeger.Name {
+			logrus.Debugf("Skipping sidecar injection for instance %v", o.Name)
 		} else {
-			decorate(obj)
-			logrus.Debugf("Injecting sidecar for pod %v", obj.Name)
-			obj.Spec.Template.Spec.Containers = append(obj.Spec.Template.Spec.Containers, container(jaeger))
+			decorate(o)
+			logrus.Debugf("Injecting sidecar for pod %v", o.Name)
+			o.Spec.Template.Spec.Containers = append(o.Spec.Template.Spec.Containers, container(jaeger))
 		}
 	}
 
@@ -120,23 +120,23 @@ func decorate(obj runtime.Object) {
 	switch o := obj.(type) {
 	case *appsv1.Deployment:
 	case *appsv1.StatefulSet:
-		if app, found := obj.Spec.Template.Labels["app"]; found {
+		if app, found := o.Spec.Template.Labels["app"]; found {
 			// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
 			// which also matches with the style used in Istio.
-			if len(obj.Namespace) > 0 {
-				app += "." + obj.Namespace
+			if len(o.Namespace) > 0 {
+				app += "." + o.Namespace
 			} else {
 				app += ".default"
 			}
-			for i := 0; i < len(obj.Spec.Template.Spec.Containers); i++ {
-				if !hasEnv(envVarServiceName, obj.Spec.Template.Spec.Containers[i].Env) {
-					obj.Spec.Template.Spec.Containers[i].Env = append(obj.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+			for i := 0; i < len(o.Spec.Template.Spec.Containers); i++ {
+				if !hasEnv(envVarServiceName, o.Spec.Template.Spec.Containers[i].Env) {
+					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
 						Name:  envVarServiceName,
 						Value: app,
 					})
 				}
-				if !hasEnv(envVarPropagation, obj.Spec.Template.Spec.Containers[i].Env) {
-					obj.Spec.Template.Spec.Containers[i].Env = append(obj.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+				if !hasEnv(envVarPropagation, o.Spec.Template.Spec.Containers[i].Env) {
+					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
 						Name:  envVarPropagation,
 						Value: "jaeger,b3",
 					})

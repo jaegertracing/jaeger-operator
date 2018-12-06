@@ -74,8 +74,8 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 	}).Debug("Reconciling the object")
 
 	// Fetch the object instance
-	instance := *runtime.Object{}
-	err := r.client.Get(context.Background(), request.NamespacedName, *instance)
+	var obj runtime.Object
+	err := r.client.Get(context.Background(), request.NamespacedName, obj)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -110,8 +110,19 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 				log.WithField("deployment", instance).WithError(err).Error("failed to update")
 				return reconcile.Result{}, err
 			}
-		} else {
-			log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+
+			jaeger := inject.Select(instance.Annotations, pods)
+			if jaeger != nil {
+				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+				log.WithFields(log.Fields{"deployment": instance.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
+				inject.Sidecar(instance, jaeger)
+				if err := r.client.Update(context.Background(), instance); err != nil {
+					log.WithField("deployment", instance).WithError(err).Error("failed to update")
+					return reconcile.Result{}, err
+				}
+			} else {
+				log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+			}
 		}
 	}
 
