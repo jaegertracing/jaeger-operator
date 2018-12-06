@@ -74,8 +74,8 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 	}).Print("Reconciling the Object")
 
 	// Fetch the object instance
-	instance := *runtime.Object{}
-	err := r.client.Get(context.Background(), request.NamespacedName, *instance)
+	var obj runtime.Object
+	err := r.client.Get(context.Background(), request.NamespacedName, obj)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -87,26 +87,30 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	if inject.Needed(instance.Name, instance.Annotations, instance.Spec.Template.Spec.Containers) {
-		pods := &v1alpha1.JaegerList{}
-		opts := &client.ListOptions{Namespace: instance.Namespace}
-		err := r.client.List(context.Background(), opts, pods)
-		if err != nil {
-			log.WithError(err).Error("failed to get the available Jaeger pods")
-			return reconcile.Result{}, err
-		}
-
-		jaeger := inject.Select(instance.Annotations, pods)
-		if jaeger != nil {
-			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-			log.WithFields(log.Fields{"deployment": instance.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
-			inject.Sidecar(instance, jaeger)
-			if err := r.client.Update(context.Background(), instance); err != nil {
-				log.WithField("deployment", instance).WithError(err).Error("failed to update")
+	switch instance := obj.(type) {
+	case *appsv1.Deployment:
+	case *appsv1.StatefulSet:
+		if inject.Needed(instance.Name, instance.Annotations, instance.Spec.Template.Spec.Containers) {
+			pods := &v1alpha1.JaegerList{}
+			opts := &client.ListOptions{Namespace: instance.Namespace}
+			err := r.client.List(context.Background(), opts, pods)
+			if err != nil {
+				log.WithError(err).Error("failed to get the available Jaeger pods")
 				return reconcile.Result{}, err
 			}
-		} else {
-			log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+
+			jaeger := inject.Select(instance.Annotations, pods)
+			if jaeger != nil {
+				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+				log.WithFields(log.Fields{"deployment": instance.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
+				inject.Sidecar(instance, jaeger)
+				if err := r.client.Update(context.Background(), instance); err != nil {
+					log.WithField("deployment", instance).WithError(err).Error("failed to update")
+					return reconcile.Result{}, err
+				}
+			} else {
+				log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+			}
 		}
 	}
 
