@@ -44,7 +44,6 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 				}),
 				EsIndexCleaner:v1alpha1.JaegerEsIndexCleanerSpec{
-					Enabled:true,
 					Schedule: "*/1 * * * *",
 				},
 			},

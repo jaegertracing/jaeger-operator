@@ -141,21 +141,22 @@ func TestSparkDependenciesAllInOne(t *testing.T) {
 }
 
 func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
+	trueVar := true
 	tests := []struct {
 		jaeger              *v1alpha1.Jaeger
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch",
-				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra",
-				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "kafka",
-				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: true}},
+				SparkDependencies: v1alpha1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},
@@ -180,21 +181,22 @@ func TestEsIndexCleanerAllInOne(t *testing.T) {
 }
 
 func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
+	trueVar := true
 	tests := []struct {
 		jaeger              *v1alpha1.Jaeger
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch",
-				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "cassandra",
-				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "kafka",
-				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: true}},
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{
 			Storage: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"},

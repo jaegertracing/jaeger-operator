@@ -47,7 +47,6 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	}
 
 	storage.SparkDependencies = v1alpha1.JaegerDependenciesSpec{
-		Enabled: true,
 		// run immediately
 		Schedule: "*/1 * * * *",
 	}

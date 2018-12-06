@@ -170,17 +170,19 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 func TestNormalizeIndexCleaner(t *testing.T) {
 	viper.Set("jaeger-es-index-cleaner-image", "foo")
 	defer viper.Reset()
+	trueVar := true
+	falseVar := false
 	tests := []struct {
 		underTest v1alpha1.JaegerEsIndexCleanerSpec
 		expected  v1alpha1.JaegerEsIndexCleanerSpec
 	}{
 		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{},
-			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7}},
-		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55},
-			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55}},
+			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7, Enabled: &trueVar}},
+		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar},
+			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar}},
 	}
 	for _, test := range tests {
-		normalizeIndexCleaner(&test.underTest)
+		normalizeIndexCleaner(&test.underTest, "elasticsearch")
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }
@@ -188,17 +190,19 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 func TestNormalizeSparkDependencies(t *testing.T) {
 	viper.Set("jaeger-spark-dependencies-image", "foo")
 	defer viper.Reset()
+	trueVar := true
+	falseVar := false
 	tests := []struct {
 		underTest v1alpha1.JaegerDependenciesSpec
 		expected  v1alpha1.JaegerDependenciesSpec
 	}{
 		{underTest: v1alpha1.JaegerDependenciesSpec{},
-			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo"}},
-		{underTest: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla"},
-			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla"}},
+			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
+		{underTest: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar},
+			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
 	}
 	for _, test := range tests {
-		normalizeSparkDependencies(&test.underTest)
+		normalizeSparkDependencies(&test.underTest, "elasticsearch")
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }

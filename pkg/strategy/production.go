@@ -85,7 +85,7 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+	if isBoolTrue(c.jaeger.Spec.Storage.SparkDependencies.Enabled) {
 		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
@@ -93,7 +93,7 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
+	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
 			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 		} else {

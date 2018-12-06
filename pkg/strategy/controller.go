@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -89,11 +90,16 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
 	}
 
-	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies)
-	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner)
+	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
+	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 }
 
-func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec) {
+func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec, storage string) {
+	// auto enable only for supported storages
+	if cronjob.SupportedStorage(storage) && spec.Enabled == nil {
+		trueVar := true
+		spec.Enabled = &trueVar
+	}
 	if spec.Image == "" {
 		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
 	}
@@ -102,7 +108,12 @@ func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec) {
 	}
 }
 
-func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec) {
+func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec, storage string) {
+	// auto enable only for supported storages
+	if storage == "elasticsearch" && spec.Enabled == nil {
+		trueVar := true
+		spec.Enabled = &trueVar
+	}
 	if spec.Image == "" {
 		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-index-cleaner-image"))
 	}

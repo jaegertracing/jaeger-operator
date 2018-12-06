@@ -79,7 +79,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+	if isBoolTrue(c.jaeger.Spec.Storage.SparkDependencies.Enabled) {
 		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
@@ -87,7 +87,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
+	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
 			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 		} else {
@@ -105,4 +105,8 @@ func (c *allInOneStrategy) Update() []runtime.Object {
 
 func (c *allInOneStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
+}
+
+func isBoolTrue(b *bool) bool {
+	return b != nil && *b
 }
