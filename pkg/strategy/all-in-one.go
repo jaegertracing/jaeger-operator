@@ -83,7 +83,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
-			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Spark dependencies is enabled for unsupported storage")
+			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
 		}
 	}
 
@@ -91,7 +91,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
 			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 		} else {
-			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Elasticsearch index cleaner is enabled for unsupported storage")
+			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 
