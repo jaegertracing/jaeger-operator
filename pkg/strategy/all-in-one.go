@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -88,7 +89,7 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 	}
 
 	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
-		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
+		if strings.ToLower(c.jaeger.Spec.Storage.Type) == "elasticsearch" {
 			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 		} else {
 			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
