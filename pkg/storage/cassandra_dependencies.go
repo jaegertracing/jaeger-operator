@@ -15,6 +15,7 @@ import (
 func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 	trueVar := true
 
+	// TODO should be moved to normalize
 	if jaeger.Spec.Storage.CassandraCreateSchema.Enabled == nil {
 		jaeger.Spec.Storage.CassandraCreateSchema.Enabled = &trueVar
 	}

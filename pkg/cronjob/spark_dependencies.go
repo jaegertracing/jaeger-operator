@@ -3,6 +3,7 @@ package cronjob
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -16,7 +17,7 @@ import (
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
 
 func SupportedStorage(storage string) bool {
-	return supportedStorageTypes[storage]
+	return supportedStorageTypes[strings.ToLower(storage)]
 }
 
 func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {

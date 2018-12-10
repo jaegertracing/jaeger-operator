@@ -41,7 +41,7 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 								{
 									Image: jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Name:  name,
-									Env:   []v1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}},
+									Env:   removeEmptyVars([]v1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
 									Args:  []string{strconv.Itoa(jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
 								},
 							},

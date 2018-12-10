@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -85,7 +86,7 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.SparkDependencies.Enabled {
+	if isBoolTrue(c.jaeger.Spec.Storage.SparkDependencies.Enabled) {
 		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
 			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
 		} else {
@@ -93,8 +94,8 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
-	if c.jaeger.Spec.Storage.EsIndexCleaner.Enabled {
-		if c.jaeger.Spec.Storage.Type == "elasticsearch" {
+	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
+		if strings.ToLower(c.jaeger.Spec.Storage.Type) == "elasticsearch" {
 			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
 		} else {
 			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
