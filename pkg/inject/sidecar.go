@@ -34,6 +34,13 @@ func Sidecar(obj runtime.Object, jaeger *v1.Jaeger) {
 
 	switch o := obj.(type) {
 	case *appsv1.Deployment:
+		if jaeger == nil || o.Annotations[Annotation] != jaeger.Name {
+			logrus.Debugf("Skipping sidecar injection for instance %v", o.Name)
+		} else {
+			decorate(o)
+			logrus.Debugf("Injecting sidecar for pod %v", o.Name)
+			o.Spec.Template.Spec.Containers = append(o.Spec.Template.Spec.Containers, container(jaeger))
+		}
 	case *appsv1.StatefulSet:
 		if jaeger == nil || o.Annotations[Annotation] != jaeger.Name {
 			logrus.Debugf("Skipping sidecar injection for instance %v", o.Name)
@@ -119,6 +126,29 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 func decorate(obj runtime.Object) {
 	switch o := obj.(type) {
 	case *appsv1.Deployment:
+		if app, found := o.Spec.Template.Labels["app"]; found {
+			// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
+			// which also matches with the style used in Istio.
+			if len(o.Namespace) > 0 {
+				app += "." + o.Namespace
+			} else {
+				app += ".default"
+			}
+			for i := 0; i < len(o.Spec.Template.Spec.Containers); i++ {
+				if !hasEnv(envVarServiceName, o.Spec.Template.Spec.Containers[i].Env) {
+					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+						Name:  envVarServiceName,
+						Value: app,
+					})
+				}
+				if !hasEnv(envVarPropagation, o.Spec.Template.Spec.Containers[i].Env) {
+					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+						Name:  envVarPropagation,
+						Value: "jaeger,b3",
+					})
+				}
+			}
+		}
 	case *appsv1.StatefulSet:
 		if app, found := o.Spec.Template.Labels["app"]; found {
 			// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
