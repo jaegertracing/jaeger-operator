@@ -14,77 +14,82 @@ import (
 
 func init() {
 	viper.SetDefault("jaeger-version", "1.6")
-	viper.SetDefault("jaeger-collector-image", "jaegertracing/all-in-one")
+	viper.SetDefault("jaeger-ingester-image", "jaegertracing/jaeger-ingester")
 }
 
-func TestNegativeSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNegativeSize")
-	jaeger.Spec.Collector.Size = -1
+func TestIngesterNotDefined(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestIngesterNotDefined")
 
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	assert.Nil(t, ingester.Get())
+}
+
+func TestIngesterNegativeSize(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterNegativeSize")
+	jaeger.Spec.Ingester.Size = -1
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
 }
 
-func TestDefaultSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestDefaultSize")
-	jaeger.Spec.Collector.Size = 0
+func TestIngesterDefaultSize(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterDefaultSize")
+	jaeger.Spec.Ingester.Size = 0
 
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
 }
 
-func TestName(t *testing.T) {
-	collector := NewCollector(v1alpha1.NewJaeger("TestName"))
-	dep := collector.Get()
-	assert.Equal(t, "TestName-collector", dep.ObjectMeta.Name)
+func TestIngesterName(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterName")
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+	assert.Equal(t, "TestIngesterName-ingester", dep.ObjectMeta.Name)
 }
 
-func TestCollectorServices(t *testing.T) {
-	collector := NewCollector(v1alpha1.NewJaeger("TestName"))
-	svcs := collector.Services()
+func TestIngesterServices(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterServices")
+	ingester := NewIngester(jaeger)
+	svcs := ingester.Services()
 	assert.Len(t, svcs, 1)
 }
 
-func TestDefaultCollectorImage(t *testing.T) {
-	viper.Set("jaeger-collector-image", "org/custom-collector-image")
+func TestDefaultIngesterImage(t *testing.T) {
+	viper.Set("jaeger-ingester-image", "org/custom-ingester-image")
 	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))
-	dep := collector.Get()
+	ingester := NewIngester(newIngesterJaeger("TestIngesterImage"))
+	dep := ingester.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
-	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
+	assert.Equal(t, "org/custom-ingester-image:123", containers[0].Image)
 
 	envvars := []v1.EnvVar{
 		v1.EnvVar{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
 		},
-		v1.EnvVar{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
-		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
 }
 
-func TestCollectorAnnotations(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorAnnotations")
+func TestIngesterAnnotations(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
 	}
-	jaeger.Spec.Collector.Annotations = map[string]string{
+	jaeger.Spec.Ingester.Annotations = map[string]string{
 		"hello":                "world", // Override top level annotation
 		"prometheus.io/scrape": "false", // Override implicit value
 	}
 
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 
 	assert.Equal(t, "operator", dep.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
@@ -92,19 +97,19 @@ func TestCollectorAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
-func TestCollectorSecrets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorSecrets")
+func TestIngesterSecrets(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterSecrets")
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
-func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
-	name := "TestCollectorVolumeMountsWithVolumes"
+func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
+	name := "TestIngesterVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
 		v1.Volume{
@@ -119,39 +124,39 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 		},
 	}
 
-	collectorVolumes := []v1.Volume{
+	ingesterVolumes := []v1.Volume{
 		v1.Volume{
-			Name:         "collectorVolume",
+			Name:         "ingesterVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []v1.VolumeMount{
 		v1.VolumeMount{
-			Name: "collectorVolume",
+			Name: "ingesterVolume",
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := newIngesterJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
-	jaeger.Spec.Collector.Volumes = collectorVolumes
-	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
-	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
+	jaeger.Spec.Ingester.Volumes = ingesterVolumes
+	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
+	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
 	// Additional 1 is sampling configmap
-	assert.Len(t, podSpec.Volumes, len(append(collectorVolumes, globalVolumes...))+1)
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(collectorVolumeMounts, globalVolumeMounts...))+1)
+	assert.Len(t, podSpec.Volumes, len(append(ingesterVolumes, globalVolumes...))+1)
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(ingesterVolumeMounts, globalVolumeMounts...))+1)
 
-	// collector is first while global is second
-	assert.Equal(t, "collectorVolume", podSpec.Volumes[0].Name)
+	// ingester is first while global is second
+	assert.Equal(t, "ingesterVolume", podSpec.Volumes[0].Name)
 	assert.Equal(t, "globalVolume", podSpec.Volumes[1].Name)
-	assert.Equal(t, "collectorVolume", podSpec.Containers[0].VolumeMounts[0].Name)
+	assert.Equal(t, "ingesterVolume", podSpec.Containers[0].VolumeMounts[0].Name)
 	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
-func TestCollectorMountGlobalVolumes(t *testing.T) {
-	name := "TestCollectorMountGlobalVolumes"
+func TestIngesterMountGlobalVolumes(t *testing.T) {
+	name := "TestIngesterMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
 		v1.Volume{
@@ -160,26 +165,26 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []v1.VolumeMount{
 		v1.VolumeMount{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := newIngesterJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
-	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
-	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
+	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
+	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
-	// collector volume is mounted
+	// ingester volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
 }
 
-func TestCollectorVolumeMountsWithSameName(t *testing.T) {
-	name := "TestCollectorVolumeMountsWithSameName"
+func TestIngesterVolumeMountsWithSameName(t *testing.T) {
+	name := "TestIngesterVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
 		v1.VolumeMount{
@@ -188,26 +193,26 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []v1.VolumeMount{
 		v1.VolumeMount{
 			Name:     "data",
 			ReadOnly: false,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := newIngesterJaeger(name)
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
-	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
-	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
+	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
+	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
-	// collector volume is mounted
+	// ingester volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
 }
 
-func TestCollectorVolumeWithSameName(t *testing.T) {
-	name := "TestCollectorVolumeWithSameName"
+func TestIngesterVolumeWithSameName(t *testing.T) {
+	name := "TestIngesterVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
 		v1.Volume{
@@ -216,26 +221,26 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 		},
 	}
 
-	collectorVolumes := []v1.Volume{
+	ingesterVolumes := []v1.Volume{
 		v1.Volume{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := newIngesterJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
-	jaeger.Spec.Collector.Volumes = collectorVolumes
-	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
+	jaeger.Spec.Ingester.Volumes = ingesterVolumes
+	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Volumes, 2)
-	// collector volume is mounted
+	// ingester volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
 }
 
-func TestCollectorResources(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorResources")
+func TestIngesterResources(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterResources")
 	jaeger.Spec.Resources = v1.ResourceRequirements{
 		Limits: v1.ResourceList{
 			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
@@ -246,7 +251,7 @@ func TestCollectorResources(t *testing.T) {
 			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Collector.Resources = v1.ResourceRequirements{
+	jaeger.Spec.Ingester.Resources = v1.ResourceRequirements{
 		Limits: v1.ResourceList{
 			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
 			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
@@ -257,8 +262,8 @@ func TestCollectorResources(t *testing.T) {
 		},
 	}
 
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 
 	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
 	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
@@ -268,42 +273,10 @@ func TestCollectorResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
 }
 
-func TestCollectorWithDirectStorageType(t *testing.T) {
+func TestIngesterWithStorageType(t *testing.T) {
 	jaeger := &v1alpha1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "TestCollectorWithDirectStorageType",
-		},
-		Spec: v1alpha1.JaegerSpec{
-			Storage: v1alpha1.JaegerStorageSpec{
-				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
-					"es.server-urls": "http://somewhere",
-				}),
-			},
-		},
-	}
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
-
-	envvars := []v1.EnvVar{
-		v1.EnvVar{
-			Name:  "SPAN_STORAGE_TYPE",
-			Value: "elasticsearch",
-		},
-		v1.EnvVar{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
-		},
-	}
-	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
-	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[0])
-}
-
-func TestCollectorWithIngesterStorageType(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "TestCollectorWithIngesterStorageType",
+			Name: "TestIngesterStorageType",
 		},
 		Spec: v1alpha1.JaegerSpec{
 			Ingester: v1alpha1.JaegerIngesterSpec{
@@ -320,21 +293,34 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 			},
 		},
 	}
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
 
 	envvars := []v1.EnvVar{
 		v1.EnvVar{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: "kafka",
-		},
-		v1.EnvVar{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Value: "elasticsearch",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
-	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
-	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
+	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[2])
+	// Fourth arg is sampling strategy file
+}
+
+func newIngesterJaeger(name string) *v1alpha1.Jaeger {
+	return &v1alpha1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Ingester: v1alpha1.JaegerIngesterSpec{
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"any": "option",
+				}),
+			},
+		},
+	}
 }

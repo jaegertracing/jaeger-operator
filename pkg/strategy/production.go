@@ -37,6 +37,7 @@ func (c *productionStrategy) Create() []runtime.Object {
 	collector := deployment.NewCollector(c.jaeger)
 	query := deployment.NewQuery(c.jaeger)
 	agent := deployment.NewAgent(c.jaeger)
+	ingester := deployment.NewIngester(c.jaeger)
 	os := []runtime.Object{}
 
 	// add all service accounts
@@ -62,6 +63,11 @@ func (c *productionStrategy) Create() []runtime.Object {
 		inject.OAuthProxy(c.jaeger, query.Get()),
 	)
 
+	ingesterDeployment := ingester.Get()
+	if ingesterDeployment != nil {
+		os = append(os, ingesterDeployment)
+	}
+
 	if ds := agent.Get(); nil != ds {
 		os = append(os, ds)
 	}
@@ -72,6 +78,10 @@ func (c *productionStrategy) Create() []runtime.Object {
 	}
 
 	for _, svc := range query.Services() {
+		os = append(os, svc)
+	}
+
+	for _, svc := range ingester.Services() {
 		os = append(os, svc)
 	}
 

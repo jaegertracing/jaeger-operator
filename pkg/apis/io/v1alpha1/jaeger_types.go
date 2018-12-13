@@ -50,6 +50,7 @@ type JaegerSpec struct {
 	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
 	Query     JaegerQuerySpec     `json:"query"`
 	Collector JaegerCollectorSpec `json:"collector"`
+	Ingester  JaegerIngesterSpec  `json:"ingester"`
 	Agent     JaegerAgentSpec     `json:"agent"`
 	UI        JaegerUISpec        `json:"ui"`
 	Sampling  JaegerSamplingSpec  `json:"sampling"`
@@ -105,6 +106,14 @@ type JaegerAllInOneSpec struct {
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
+	Size    int     `json:"size"`
+	Image   string  `json:"image"`
+	Options Options `json:"options"`
+	JaegerCommonSpec
+}
+
+// JaegerIngesterSpec defines the options to be used when deploying the ingester
+type JaegerIngesterSpec struct {
 	Size    int     `json:"size"`
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
