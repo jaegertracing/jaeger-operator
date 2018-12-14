@@ -2,11 +2,13 @@ package inject
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
@@ -19,6 +21,12 @@ var (
 
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
+
+	// LimitCPU is the annotation name for cpu resource limits for a jaeger agent sidecar
+	LimitCPU = "jaeger-agent-cpu"
+
+	// LimitMem is the annotation name for memory resource limits for a jaeger agent sidecar
+	LimitMem = "jaeger-agent-mem"
 )
 
 const (
@@ -87,7 +95,20 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 
 func container(jaeger *v1.Jaeger) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s.%s:14267", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
-	return corev1.Container{
+	// Checking annotations for CPU/Memory limits
+	limitCPU := "2048"
+	limitMem := "123"
+	if dep.Annotations[LimitCPU] == "" {
+		limitCPU = dep.Annotations[LimitCPU]
+	}
+	if dep.Annotations[LimitMem] == "" {
+		limitMem = dep.Annotations[LimitMem]
+	}
+
+	CPULimit, _ := strconv.Atoi(limitCPU)
+	MemLimit, _ := strconv.Atoi(limitMem)
+
+	return v1.Container{
 		Image: jaeger.Spec.Agent.Image,
 		Name:  "jaeger-agent",
 		Args:  args,
@@ -107,6 +128,16 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 			{
 				ContainerPort: 6832,
 				Name:          "jg-binary-trft",
+			},
+		},
+		Resources: v1.ResourceRequirements{
+			Limits: v1.ResourceList{
+				v1.ResourceLimitsCPU:    *resource.NewQuantity(int64(CPULimit), resource.BinarySI),
+				v1.ResourceLimitsMemory: *resource.NewQuantity(int64(MemLimit), resource.DecimalSI),
+			},
+			Requests: v1.ResourceList{
+				v1.ResourceRequestsCPU:    *resource.NewQuantity(int64(CPULimit), resource.BinarySI),
+				v1.ResourceRequestsMemory: *resource.NewQuantity(int64(MemLimit), resource.DecimalSI),
 			},
 		},
 	}
