@@ -88,10 +88,10 @@ func container(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) v1.Container {
 	// Checking annotations for CPU/Memory limits
 	limitCPU := "2048"
 	limitMem := "123"
-	if dep.Annotations[LimitCPU] == "" {
+	if dep.Annotations[LimitCPU] != "" {
 		limitCPU = dep.Annotations[LimitCPU]
 	}
-	if dep.Annotations[LimitMem] == "" {
+	if dep.Annotations[LimitMem] != "" {
 		limitMem = dep.Annotations[LimitMem]
 	}
 
