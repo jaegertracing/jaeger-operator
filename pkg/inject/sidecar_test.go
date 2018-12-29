@@ -211,6 +211,38 @@ func TestSelectBasedOnName(t *testing.T) {
 	assert.Equal(t, "the-second-jaeger-instance-available", jaeger.Name)
 }
 
+func TestAgentResouceDefs(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAgentResouceDefs")
+	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+
+	// Inject sidecar agent
+	Sidecar(dep, jaeger)
+
+	// Assert that the agent is injected.
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+
+	// Check resource values for the injected sidecar.
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Cpu, 2048)
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Memory, 123)
+}
+
+func TestAgentResouceDefsOverride(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAgentResouceDefsOverride")
+	dep := dep(map[string]string{Annotation: jaeger.Name, "jaeger-agent-cpu": "1024", "jaeger-agent-mem": "100"}, map[string]string{})
+
+	// Inject sidecar agent
+	Sidecar(dep, jaeger)
+
+	// Assert that the agent is injected.
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+
+	// Check resource values for the injected sidecar.
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Cpu, 1024)
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Memory, 100)
+}
+
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
