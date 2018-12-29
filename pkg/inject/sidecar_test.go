@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -223,8 +224,8 @@ func TestAgentResouceDefs(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
 	// Check resource values for the injected sidecar.
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Cpu, 2048)
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Memory, 123)
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(2048), resource.BinarySI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(123), resource.DecimalSI))
 }
 
 func TestAgentResouceDefsOverride(t *testing.T) {
@@ -239,8 +240,8 @@ func TestAgentResouceDefsOverride(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
 	// Check resource values for the injected sidecar.
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Cpu, 1024)
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits.Memory, 100)
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(1024), resource.BinarySI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(100), resource.DecimalSI))
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
