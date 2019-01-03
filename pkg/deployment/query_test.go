@@ -98,27 +98,27 @@ func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestQueryVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "globalVolume",
 		},
 	}
 
 	queryVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "queryVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	queryVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "queryVolume",
 		},
 	}
@@ -144,14 +144,14 @@ func TestQueryMountGlobalVolumes(t *testing.T) {
 	name := "TestQueryMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	queryVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
@@ -171,14 +171,14 @@ func TestQueryVolumeMountsWithSameName(t *testing.T) {
 	name := "TestQueryVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
 	queryVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: false,
 		},
@@ -198,14 +198,14 @@ func TestQueryVolumeWithSameName(t *testing.T) {
 	name := "TestQueryVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
 	queryVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},

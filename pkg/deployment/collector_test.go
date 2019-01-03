@@ -61,11 +61,11 @@ func TestDefaultCollectorImage(t *testing.T) {
 	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
 		},
-		v1.EnvVar{
+		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},
@@ -108,27 +108,27 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "globalVolume",
 		},
 	}
 
 	collectorVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "collectorVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "collectorVolume",
 		},
 	}
@@ -155,14 +155,14 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 	name := "TestCollectorMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
@@ -183,14 +183,14 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: false,
 		},
@@ -211,14 +211,14 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
 	collectorVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},
@@ -296,11 +296,11 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 	dep := collector.Get()
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "elasticsearch",
 		},
-		v1.EnvVar{
+		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},
@@ -334,11 +334,11 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 	dep := collector.Get()
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "kafka",
 		},
-		v1.EnvVar{
+		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},

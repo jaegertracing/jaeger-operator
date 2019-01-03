@@ -69,7 +69,7 @@ func TestDefaultIngesterImage(t *testing.T) {
 	assert.Equal(t, "org/custom-ingester-image:123", containers[0].Image)
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
 		},
@@ -112,27 +112,27 @@ func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestIngesterVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "globalVolume",
 		},
 	}
 
 	ingesterVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "ingesterVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	ingesterVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "ingesterVolume",
 		},
 	}
@@ -159,14 +159,14 @@ func TestIngesterMountGlobalVolumes(t *testing.T) {
 	name := "TestIngesterMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	ingesterVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
@@ -187,14 +187,14 @@ func TestIngesterVolumeMountsWithSameName(t *testing.T) {
 	name := "TestIngesterVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
 	ingesterVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: false,
 		},
@@ -215,14 +215,14 @@ func TestIngesterVolumeWithSameName(t *testing.T) {
 	name := "TestIngesterVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
 	ingesterVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},
@@ -297,7 +297,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 	dep := ingester.Get()
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "elasticsearch",
 		},
