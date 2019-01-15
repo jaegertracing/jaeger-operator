@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -43,6 +43,7 @@ func TestJaeger(t *testing.T) {
 		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
 		t.Run("spark-dependencies-cass", SparkDependenciesCassandra)
 		t.Run("es-index-cleaner", EsIndexCleaner)
+		t.Run("k8s-secrets", Secrets)
 	})
 }
 
