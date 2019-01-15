@@ -23,10 +23,10 @@ var (
 	AnnotationLegacy = "inject-jaeger-agent"
 
 	// LimitCPU is the annotation name for cpu resource limits for a jaeger agent sidecar
-	LimitCPU = "jaeger-agent-cpu"
+	LimitCPU = "jaeger-agent-max-cpu"
 
 	// LimitMem is the annotation name for memory resource limits for a jaeger agent sidecar
-	LimitMem = "jaeger-agent-mem"
+	LimitMem = "jaeger-agent-max-memory"
 )
 
 const (
