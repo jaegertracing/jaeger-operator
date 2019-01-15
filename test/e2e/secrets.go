@@ -43,6 +43,12 @@ func secretTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 		StringData: data,
 	}
 
+	logrus.Infof("passing %v", secret)
+	err = f.Client.Create(goctx.TODO(), secret, cleanupOptions)
+	if err != nil {
+		return err
+	}
+
 	j := &v1alpha1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
