@@ -39,6 +39,7 @@ func TestJaeger(t *testing.T) {
 		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
 		t.Run("spark-dependencies-cass", SparkDependenciesCassandra)
 		// t.Run("es-index-cleaner", EsIndexCleaner)
+		t.Run("k8s-secrets", Secrets)
 	})
 }
 
