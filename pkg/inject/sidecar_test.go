@@ -221,7 +221,7 @@ func TestAgentResouceDefs(t *testing.T) {
 
 func TestAgentResouceDefsOverride(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestAgentResouceDefsOverride")
-	dep := dep(map[string]string{Annotation: jaeger.Name, "jaeger-agent-cpu": "1024", "jaeger-agent-mem": "100"}, map[string]string{})
+	dep := dep(map[string]string{Annotation: jaeger.Name, "jaeger-agent-max-cpu": "1024", "jaeger-agent-max-memory": "100"}, map[string]string{})
 
 	// Inject sidecar agent
 	Sidecar(dep, jaeger)
