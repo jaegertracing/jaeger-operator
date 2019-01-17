@@ -316,6 +316,7 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 			Name: "TestCollectorWithIngesterStorageType",
 		},
 		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
 			Ingester: v1alpha1.JaegerIngesterSpec{
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"kafka.topic": "mytopic",
@@ -347,4 +348,38 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
 	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
 	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
+}
+
+func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "TestCollectorWithIngesterNoOptionsStorageType",
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"kafka.brokers":  "http://brokers",
+					"es.server-urls": "http://somewhere",
+				}),
+			},
+		},
+	}
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	envvars := []v1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "kafka",
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+			Value: "9411",
+		},
+	}
+	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
+	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
 }

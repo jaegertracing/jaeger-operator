@@ -21,22 +21,23 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-type productionStrategy struct {
+type streamingStrategy struct {
 	ctx    context.Context
 	jaeger *v1alpha1.Jaeger
 }
 
-func newProductionStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *productionStrategy {
-	return &productionStrategy{
+func newStreamingStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *streamingStrategy {
+	return &streamingStrategy{
 		ctx:    ctx,
 		jaeger: jaeger,
 	}
 }
 
-func (c *productionStrategy) Create() []runtime.Object {
+func (c *streamingStrategy) Create() []runtime.Object {
 	collector := deployment.NewCollector(c.jaeger)
 	query := deployment.NewQuery(c.jaeger)
 	agent := deployment.NewAgent(c.jaeger)
+	ingester := deployment.NewIngester(c.jaeger)
 	os := []runtime.Object{}
 
 	// add all service accounts
@@ -62,6 +63,11 @@ func (c *productionStrategy) Create() []runtime.Object {
 		inject.OAuthProxy(c.jaeger, query.Get()),
 	)
 
+	ingesterDeployment := ingester.Get()
+	if ingesterDeployment != nil {
+		os = append(os, ingesterDeployment)
+	}
+
 	if ds := agent.Get(); nil != ds {
 		os = append(os, ds)
 	}
@@ -72,6 +78,10 @@ func (c *productionStrategy) Create() []runtime.Object {
 	}
 
 	for _, svc := range query.Services() {
+		os = append(os, svc)
+	}
+
+	for _, svc := range ingester.Services() {
 		os = append(os, svc)
 	}
 
@@ -105,11 +115,11 @@ func (c *productionStrategy) Create() []runtime.Object {
 	return os
 }
 
-func (c *productionStrategy) Update() []runtime.Object {
+func (c *streamingStrategy) Update() []runtime.Object {
 	logrus.Debug("Update isn't yet available")
 	return []runtime.Object{}
 }
 
-func (c *productionStrategy) Dependencies() []batchv1.Job {
+func (c *streamingStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }
