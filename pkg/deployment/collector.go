@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -65,9 +66,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 	}
 
 	storageType := c.jaeger.Spec.Storage.Type
-	// If ingester options have been defined, then change storage type
+	// If sttategy is "streaming", then change storage type
 	// to Kafka, and the storage options will be used in the Ingester instead
-	if len(c.jaeger.Spec.Ingester.Options.Map()) > 0 {
+	if strings.EqualFold(c.jaeger.Spec.Strategy, "streaming") {
 		storageType = "kafka"
 	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,

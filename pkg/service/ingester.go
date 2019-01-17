@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,8 +12,7 @@ import (
 
 // NewIngesterService returns a new Kubernetes service for Jaeger Ingester backed by the pods matching the selector
 func NewIngesterService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1.Service {
-	// Only create a service if ingester options have been defined
-	if len(jaeger.Spec.Ingester.Options.Map()) == 0 {
+	if !strings.EqualFold(jaeger.Spec.Strategy, "streaming") {
 		return nil
 	}
 

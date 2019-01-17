@@ -36,6 +36,10 @@ func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 		return newAllInOneStrategy(ctx, jaeger)
 	}
 
+	if strings.ToLower(jaeger.Spec.Strategy) == "streaming" {
+		return newStreamingStrategy(ctx, jaeger)
+	}
+
 	return newProductionStrategy(ctx, jaeger)
 }
 
@@ -65,7 +69,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 	}
 
 	// normalize the deployment strategy
-	if strings.ToLower(jaeger.Spec.Strategy) != "production" {
+	if strings.ToLower(jaeger.Spec.Strategy) != "production" && strings.ToLower(jaeger.Spec.Strategy) != "streaming" {
 		jaeger.Spec.Strategy = "allInOne"
 	}
 

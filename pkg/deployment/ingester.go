@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -11,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -37,8 +37,7 @@ func NewIngester(jaeger *v1alpha1.Jaeger) *Ingester {
 
 // Get returns a ingester pod
 func (i *Ingester) Get() *appsv1.Deployment {
-	// Only create a deployment if ingester options have been defined
-	if len(i.jaeger.Spec.Ingester.Options.Map()) == 0 {
+	if !strings.EqualFold(i.jaeger.Spec.Strategy, "streaming") {
 		return nil
 	}
 
@@ -73,8 +72,6 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	options := allArgs(i.jaeger.Spec.Ingester.Options,
 		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)),
 		i.jaeger.Spec.Storage.Options.Filter("kafka"))
-
-	sampling.Update(i.jaeger, commonSpec, &options)
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

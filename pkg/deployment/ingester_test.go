@@ -61,7 +61,7 @@ func TestDefaultIngesterImage(t *testing.T) {
 	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	ingester := NewIngester(newIngesterJaeger("TestIngesterImage"))
+	ingester := NewIngester(newIngesterJaeger("TestDefaultIngesterImage"))
 	dep := ingester.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
@@ -144,9 +144,8 @@ func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
 	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
 	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
-	// Additional 1 is sampling configmap
-	assert.Len(t, podSpec.Volumes, len(append(ingesterVolumes, globalVolumes...))+1)
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(ingesterVolumeMounts, globalVolumeMounts...))+1)
+	assert.Len(t, podSpec.Volumes, len(append(ingesterVolumes, globalVolumes...)))
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, len(append(ingesterVolumeMounts, globalVolumeMounts...)))
 
 	// ingester is first while global is second
 	assert.Equal(t, "ingesterVolume", podSpec.Volumes[0].Name)
@@ -177,8 +176,7 @@ func TestIngesterMountGlobalVolumes(t *testing.T) {
 	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
 	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
-	// Count includes the sampling configmap
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// ingester volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
 }
@@ -205,8 +203,7 @@ func TestIngesterVolumeMountsWithSameName(t *testing.T) {
 	jaeger.Spec.Ingester.VolumeMounts = ingesterVolumeMounts
 	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
-	// Count includes the sampling configmap
-	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
+	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// ingester volume is mounted
 	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
 }
@@ -233,8 +230,7 @@ func TestIngesterVolumeWithSameName(t *testing.T) {
 	jaeger.Spec.Ingester.Volumes = ingesterVolumes
 	podSpec := NewIngester(jaeger).Get().Spec.Template.Spec
 
-	// Count includes the sampling configmap
-	assert.Len(t, podSpec.Volumes, 2)
+	assert.Len(t, podSpec.Volumes, 1)
 	// ingester volume is mounted
 	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
 }
@@ -279,6 +275,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 			Name: "TestIngesterStorageType",
 		},
 		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
 			Ingester: v1alpha1.JaegerIngesterSpec{
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"kafka.topic": "mytopic",
@@ -303,11 +300,10 @@ func TestIngesterWithStorageType(t *testing.T) {
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
 	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[0])
 	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[1])
 	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[2])
-	// Fourth arg is sampling strategy file
 }
 
 func newIngesterJaeger(name string) *v1alpha1.Jaeger {
@@ -316,6 +312,7 @@ func newIngesterJaeger(name string) *v1alpha1.Jaeger {
 			Name: name,
 		},
 		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
 			Ingester: v1alpha1.JaegerIngesterSpec{
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"any": "option",
