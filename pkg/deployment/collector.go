@@ -39,7 +39,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 func (c *Collector) Get() *appsv1.Deployment {
 	logrus.Debugf("Assembling a collector deployment for %v", c.jaeger)
 
-	selector := c.selector()
+	labels := c.labels()
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 
@@ -75,7 +75,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-collector", c.jaeger.Name),
+			Name:      c.name(),
 			Namespace: c.jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -90,11 +90,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
+				MatchLabels: labels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
@@ -148,12 +148,26 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (c *Collector) Services() []*v1.Service {
-	selector := c.selector()
 	return []*v1.Service{
-		service.NewCollectorService(c.jaeger, selector),
+		service.NewCollectorService(c.jaeger, c.labels()),
 	}
 }
 
-func (c *Collector) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": c.jaeger.Name, "jaeger-component": "collector"}
+func (c *Collector) labels() map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":       c.name(),
+		"app.kubernetes.io/instance":   c.jaeger.Name,
+		"app.kubernetes.io/component":  "collector",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator", // should we qualify this with the operator's namespace?
+
+		// the 'version' label is out for now for two reasons:
+		// 1. https://github.com/jaegertracing/jaeger-operator/issues/166
+		// 2. these labels are also used as selectors, and as such, need to be consistent... this
+		// might be a problem once we support updating the jaeger version
+	}
+}
+
+func (c *Collector) name() string {
+	return fmt.Sprintf("%s-collector", c.jaeger.Name)
 }
