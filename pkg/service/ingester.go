@@ -42,8 +42,12 @@ func NewIngesterService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v1
 			ClusterIP: "None",
 			Ports: []v1.ServicePort{
 				{
-					Name: "c-tchan-trft",
-					Port: 14267,
+					Name: "hc-http",
+					Port: 14270,
+				},
+				{
+					Name: "metrics-http",
+					Port: 14271,
 				},
 			},
 		},

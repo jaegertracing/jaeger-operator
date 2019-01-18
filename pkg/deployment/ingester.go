@@ -50,7 +50,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      "2345",
+			"prometheus.io/port":      "14271",
 			"sidecar.istio.io/inject": "false",
 		},
 	}
@@ -115,15 +115,19 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						EnvFrom:      envFromSource,
 						Ports: []v1.ContainerPort{
 							{
-								ContainerPort: 2345,
-								Name:          "ingester-http",
+								ContainerPort: 14270,
+								Name:          "hc-http",
+							},
+							{
+								ContainerPort: 14271,
+								Name:          "metrics-http",
 							},
 						},
 						ReadinessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path: "/",
-									Port: intstr.FromInt(2345),
+									Port: intstr.FromInt(14270),
 								},
 							},
 							InitialDelaySeconds: 1,
