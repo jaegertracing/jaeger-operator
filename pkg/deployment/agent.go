@@ -41,7 +41,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 	args := append(a.jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(a.jaeger)))
 	trueVar := true
-	selector := a.selector()
+	labels := a.labels()
 
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -73,11 +73,11 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
+				MatchLabels: labels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
@@ -128,6 +128,17 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 }
 
-func (a *Agent) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": a.jaeger.Name, "jaeger-component": "agent-daemonset"}
+func (a *Agent) labels() map[string]string {
+	return map[string]string{
+		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app.kubernetes.io/name":       a.name(),
+		"app.kubernetes.io/instance":   a.jaeger.Name,
+		"app.kubernetes.io/component":  "agent",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+}
+
+func (a *Agent) name() string {
+	return fmt.Sprintf("%s-agent", a.jaeger.Name)
 }

@@ -1,6 +1,7 @@
 package deployment
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -117,4 +118,15 @@ func TestDaemonSetAgentResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+}
+
+func TestAgentLabels(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestAgentLabels")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "agent", dep.Spec.Template.Labels["app.kubernetes.io/component"])
+	assert.Equal(t, a.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
+	assert.Equal(t, fmt.Sprintf("%s-agent", a.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
