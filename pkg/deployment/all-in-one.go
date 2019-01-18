@@ -35,7 +35,7 @@ func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 // Get returns a pod for the current all-in-one configuration
 func (a *AllInOne) Get() *appsv1.Deployment {
 	logrus.Debug("Assembling an all-in-one deployment")
-	selector := a.selector()
+	labels := a.labels()
 	trueVar := true
 
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
@@ -85,11 +85,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
+				MatchLabels: labels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
@@ -166,14 +166,30 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*v1.Service {
-	selector := a.selector()
+	labels := a.labels()
 	return []*v1.Service{
-		service.NewCollectorService(a.jaeger, selector),
-		service.NewQueryService(a.jaeger, selector),
-		service.NewAgentService(a.jaeger, selector),
+		service.NewCollectorService(a.jaeger, labels),
+		service.NewQueryService(a.jaeger, labels),
+		service.NewAgentService(a.jaeger, labels),
 	}
 }
 
-func (a *AllInOne) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": a.jaeger.Name}
+func (a *AllInOne) labels() map[string]string {
+	return map[string]string{
+		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
+		"app.kubernetes.io/name":       a.name(),
+		"app.kubernetes.io/instance":   a.jaeger.Name,
+		"app.kubernetes.io/component":  "all-in-one",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator", // should we qualify this with the operator's namespace?
+
+		// the 'version' label is out for now for two reasons:
+		// 1. https://github.com/jaegertracing/jaeger-operator/issues/166
+		// 2. these labels are also used as selectors, and as such, need to be consistent... this
+		// might be a problem once we support updating the jaeger version
+	}
+}
+
+func (a *AllInOne) name() string {
+	return a.jaeger.Name
 }
