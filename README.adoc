@@ -168,7 +168,7 @@ The `production` strategy is intended (as the name suggests) for production envi
 
 The agent can be injected as a sidecar on the instrumented application or as a daemonset.
 
-The query and collector services are configured with a supported storage type - currently cassandra or elasticsearch. Multiple instances of each of these components can be provisions as required for performance and resilience purposes.
+The query and collector services are configured with a supported storage type - currently cassandra or elasticsearch. Multiple instances of each of these components can be provisioned as required for performance and resilience purposes.
 
 The main additional requirement is to provide the details of the storage type and options, e.g.
 
@@ -183,7 +183,7 @@ The main additional requirement is to provide the details of the storage type an
 
 === Streaming
 
-The `streaming` strategy is designed to augment the `production` strategy by providing a streaming capability that effectively sits between the collector and the backend storage (e.g. cassandra or elasticaearch). This provides the benefit of reducing the pressure on the backend storage, under high load situations, and enables other trace post processing capabilities to tap into the real time span data directly from the streaming platform (kafka).
+The `streaming` strategy is designed to augment the `production` strategy by providing a streaming capability that effectively sits between the collector and the backend storage (e.g. cassandra or elasticsearch). This provides the benefit of reducing the pressure on the backend storage, under high load situations, and enables other trace post processing capabilities to tap into the real time span data directly from the streaming platform (kafka).
 
 The only additional information required is to provide the details for accessing the Kafka platform, which is configured in a new `ingester` component:
 
