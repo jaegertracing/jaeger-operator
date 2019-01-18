@@ -49,9 +49,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape": "true",
-			// TODO: Need to check if metrics port is exposed, and on what port number
-			"prometheus.io/port":      "14268",
+			"prometheus.io/scrape":    "true",
+			"prometheus.io/port":      "2345",
 			"sidecar.istio.io/inject": "false",
 		},
 	}
@@ -116,15 +115,15 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						EnvFrom:      envFromSource,
 						Ports: []v1.ContainerPort{
 							{
-								ContainerPort: 14267,
-								Name:          "c-tchan-trft",
+								ContainerPort: 2345,
+								Name:          "ingester-http",
 							},
 						},
 						ReadinessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path: "/",
-									Port: intstr.FromInt(14267),
+									Port: intstr.FromInt(2345),
 								},
 							},
 							InitialDelaySeconds: 1,
