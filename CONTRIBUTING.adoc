@@ -130,3 +130,23 @@ There are a set of templates under the `test` directory that can be used to setu
 make es
 make cassandra
 ----
+
+==== Operator-Lifecycle-Manager Integration
+
+The link:https://github.com/operator-framework/operator-lifecycle-manager/[Operator-Lifecycle-Manager (OLM)] can install, manage, and upgrade operators and their dependencies in a cluster.
+
+With OLM, users can:
+
+* Define applications as a single Kubernetes resource that encapsulates requirements and metadata
+* Install applications automatically with dependency resolution or manually with nothing but kubectl
+* Upgrade applications automatically with different approval policies
+
+OLM also enforces some constraints on the components it manages in order to ensure a good user experience.
+
+The Jaeger community can provide and mantain a link:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md/[ClusterServiceVersion (CSV) YAML] to integrate with OLM.
+The CSV YAML can be tested with the operator-sdk:
+
+[source,bash]
+----
+operator-sdk scorecard --cr-manifest deploy/cr-example.yaml --csv-path ./deploy/bundle/camel-k.v0.1.0.clusterserviceversion.yaml 
+----
