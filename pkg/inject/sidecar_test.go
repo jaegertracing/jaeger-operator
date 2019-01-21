@@ -224,8 +224,8 @@ func TestAgentResouceDefs(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
 	// Check resource values for the injected sidecar.
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(2048), resource.BinarySI))
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(123), resource.DecimalSI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(500), resource.BinarySI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(128), resource.DecimalSI))
 }
 
 func TestAgentResouceDefsOverride(t *testing.T) {
