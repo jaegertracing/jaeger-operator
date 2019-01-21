@@ -86,8 +86,8 @@ func container(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) v1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(jaeger)))
 
 	// Checking annotations for CPU/Memory limits
-	limitCPU := "2048"
-	limitMem := "123"
+	limitCPU := "500"
+	limitMem := "128"
 	if dep.Annotations[LimitCPU] != "" {
 		limitCPU = dep.Annotations[LimitCPU]
 	}
