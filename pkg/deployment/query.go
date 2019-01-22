@@ -38,7 +38,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 // Get returns a deployment specification for the current instance
 func (q *Query) Get() *appsv1.Deployment {
 	logrus.Debug("Assembling a query deployment")
-	selector := q.selector()
+	labels := q.labels()
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
 
@@ -95,11 +95,11 @@ func (q *Query) Get() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
+				MatchLabels: labels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
@@ -141,12 +141,23 @@ func (q *Query) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the query deployment
 func (q *Query) Services() []*v1.Service {
-	selector := q.selector()
+	labels := q.labels()
 	return []*v1.Service{
-		service.NewQueryService(q.jaeger, selector),
+		service.NewQueryService(q.jaeger, labels),
 	}
 }
 
-func (q *Query) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": q.jaeger.Name, "jaeger-component": "query"}
+func (q *Query) labels() map[string]string {
+	return map[string]string{
+		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app.kubernetes.io/name":       q.name(),
+		"app.kubernetes.io/instance":   q.jaeger.Name,
+		"app.kubernetes.io/component":  "query",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+}
+
+func (q *Query) name() string {
+	return fmt.Sprintf("%s-query", q.jaeger.Name)
 }

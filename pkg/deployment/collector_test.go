@@ -1,6 +1,7 @@
 package deployment
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -265,4 +266,13 @@ func TestCollectorResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+}
+
+func TestCollectorLabels(t *testing.T) {
+	c := NewCollector(v1alpha1.NewJaeger("TestCollectorLabels"))
+	dep := c.Get()
+	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "collector", dep.Spec.Template.Labels["app.kubernetes.io/component"])
+	assert.Equal(t, c.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
+	assert.Equal(t, fmt.Sprintf("%s-collector", c.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
