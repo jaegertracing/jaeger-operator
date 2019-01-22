@@ -254,3 +254,12 @@ func TestQueryResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
 }
+
+func TestQueryLabels(t *testing.T) {
+	query := NewQuery(v1alpha1.NewJaeger("TestQueryLabels"))
+	dep := query.Get()
+	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "query", dep.Spec.Template.Labels["app.kubernetes.io/component"])
+	assert.Equal(t, query.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
+	assert.Equal(t, fmt.Sprintf("%s-query", query.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}

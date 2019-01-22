@@ -149,17 +149,12 @@ func (q *Query) Services() []*v1.Service {
 
 func (q *Query) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
+		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       q.name(),
 		"app.kubernetes.io/instance":   q.jaeger.Name,
 		"app.kubernetes.io/component":  "query",
 		"app.kubernetes.io/part-of":    "jaeger",
-		"app.kubernetes.io/managed-by": "jaeger-operator", // should we qualify this with the operator's namespace?
-
-		// the 'version' label is out for now for two reasons:
-		// 1. https://github.com/jaegertracing/jaeger-operator/issues/166
-		// 2. these labels are also used as selectors, and as such, need to be consistent... this
-		// might be a problem once we support updating the jaeger version
+		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 }
 
