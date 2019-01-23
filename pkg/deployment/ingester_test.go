@@ -1,6 +1,7 @@
 package deployment
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -304,6 +305,15 @@ func TestIngesterWithStorageType(t *testing.T) {
 	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[0])
 	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[1])
 	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[2])
+}
+
+func TestIngesterLabels(t *testing.T) {
+	ingester := NewIngester(newIngesterJaeger("TestIngesterLabels"))
+	dep := ingester.Get()
+	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "ingester", dep.Spec.Template.Labels["app.kubernetes.io/component"])
+	assert.Equal(t, ingester.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
+	assert.Equal(t, fmt.Sprintf("%s-ingester", ingester.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
 
 func newIngesterJaeger(name string) *v1alpha1.Jaeger {

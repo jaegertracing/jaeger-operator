@@ -43,7 +43,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	logrus.Debugf("Assembling a ingester deployment for %v", i.jaeger)
 
-	selector := i.selector()
+	labels := i.labels()
 	trueVar := true
 	replicas := int32(i.jaeger.Spec.Ingester.Size)
 
@@ -78,7 +78,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ingester", i.jaeger.Name),
+			Name:      i.name(),
 			Namespace: i.jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -93,11 +93,11 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
+				MatchLabels: labels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      selector,
+					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: v1.PodSpec{
@@ -145,7 +145,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 func (i *Ingester) Services() []*v1.Service {
 	services := []*v1.Service{}
 
-	service := service.NewIngesterService(i.jaeger, i.selector())
+	service := service.NewIngesterService(i.jaeger, i.labels())
 
 	if service != nil {
 		services = append(services, service)
@@ -154,6 +154,17 @@ func (i *Ingester) Services() []*v1.Service {
 	return services
 }
 
-func (i *Ingester) selector() map[string]string {
-	return map[string]string{"app": "jaeger", "jaeger": i.jaeger.Name, "jaeger-component": "ingester"}
+func (i *Ingester) labels() map[string]string {
+	return map[string]string{
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app.kubernetes.io/name":       i.name(),
+		"app.kubernetes.io/instance":   i.jaeger.Name,
+		"app.kubernetes.io/component":  "ingester",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+}
+
+func (i *Ingester) name() string {
+	return fmt.Sprintf("%s-ingester", i.jaeger.Name)
 }

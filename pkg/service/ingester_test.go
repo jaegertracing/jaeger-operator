@@ -31,7 +31,8 @@ func TestIngesterServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, svc.ObjectMeta.Name, fmt.Sprintf("%s-ingester", name))
 
 	ports := map[int32]bool{
-		14267: false,
+		14270: false,
+		14271: false,
 	}
 
 	for _, port := range svc.Spec.Ports {
