@@ -29,7 +29,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 	}
 
 	if jaeger.Spec.Collector.Image == "" {
-		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), jaeger.Spec.Version)
 	}
 
 	return &Collector{jaeger: jaeger}
@@ -155,7 +155,7 @@ func (c *Collector) Services() []*v1.Service {
 
 func (c *Collector) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
+		"app": "jaeger", // kept for backwards compatibility, remove by version 2.0
 		"app.kubernetes.io/name":       c.name(),
 		"app.kubernetes.io/instance":   c.jaeger.Name,
 		"app.kubernetes.io/component":  "collector",

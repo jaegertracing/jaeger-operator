@@ -48,6 +48,13 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 		jaeger.Name = "my-jaeger"
 	}
 
+	// normalize the version
+	if jaeger.Spec.Version == "" {
+		jaegerVersion := viper.GetString("jaeger-version")
+		logrus.Infof("Version wasn't provided for the Jaeger instance '%v'. Falling back to '%v'", jaeger.Name, jaegerVersion)
+		jaeger.Spec.Version = jaegerVersion
+	}
+
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
 		logrus.Infof("Storage type wasn't provided for the Jaeger instance '%v'. Falling back to 'memory'", jaeger.Name)

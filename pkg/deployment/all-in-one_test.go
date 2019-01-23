@@ -18,10 +18,9 @@ func init() {
 
 func TestDefaultAllInOneImage(t *testing.T) {
 	viper.Set("jaeger-all-in-one-image", "org/custom-all-in-one-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	d := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneDefaultImage")).Get()
+	d := NewAllInOne(v1alpha1.NewJaegerVersion("TestAllInOneDefaultImage", "123")).Get()
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)

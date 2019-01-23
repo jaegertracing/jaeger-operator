@@ -34,10 +34,9 @@ func TestNewAgent(t *testing.T) {
 
 func TestDefaultAgentImage(t *testing.T) {
 	viper.Set("jaeger-agent-image", "org/custom-agent-image")
-	viper.Set("jaeger-version", "123")
 	defer reset()
 
-	jaeger := v1alpha1.NewJaeger("TestNewAgent")
+	jaeger := v1alpha1.NewJaegerVersion("TestNewAgent", "123")
 	NewAgent(jaeger)
 	assert.Equal(t, "org/custom-agent-image:123", jaeger.Spec.Agent.Image)
 }

@@ -23,7 +23,7 @@ type Agent struct {
 // NewAgent builds a new Agent struct based on the given spec
 func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 	if jaeger.Spec.Agent.Image == "" {
-		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), jaeger.Spec.Version)
 	}
 
 	return &Agent{jaeger: jaeger}
@@ -130,7 +130,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 func (a *Agent) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       a.name(),
 		"app.kubernetes.io/instance":   a.jaeger.Name,
 		"app.kubernetes.io/component":  "agent",

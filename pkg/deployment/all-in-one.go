@@ -26,7 +26,7 @@ type AllInOne struct {
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), jaeger.Spec.Version)
 	}
 
 	return &AllInOne{jaeger: jaeger}
@@ -176,7 +176,7 @@ func (a *AllInOne) Services() []*v1.Service {
 
 func (a *AllInOne) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       a.name(),
 		"app.kubernetes.io/instance":   a.jaeger.Name,
 		"app.kubernetes.io/component":  "all-in-one",

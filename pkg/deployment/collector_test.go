@@ -49,10 +49,9 @@ func TestCollectorServices(t *testing.T) {
 
 func TestDefaultCollectorImage(t *testing.T) {
 	viper.Set("jaeger-collector-image", "org/custom-collector-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))
+	collector := NewCollector(v1alpha1.NewJaegerVersion("TestCollectorImage", "123"))
 	dep := collector.Get()
 
 	containers := dep.Spec.Template.Spec.Containers

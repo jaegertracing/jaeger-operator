@@ -1,12 +1,28 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // NewJaeger returns a new Jaeger instance with the given name
 func NewJaeger(name string) *Jaeger {
 	return &Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+		},
+	}
+}
+
+// NewJaegerVersion returns a new Jaeger instance with the given name and a version
+func NewJaegerVersion(name string, version string) *Jaeger {
+	return &Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: JaegerSpec{
+			JaegerCommonSpec: JaegerCommonSpec{
+				Version: version,
+			},
 		},
 	}
 }

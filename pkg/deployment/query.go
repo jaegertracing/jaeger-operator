@@ -29,7 +29,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 	}
 
 	if jaeger.Spec.Query.Image == "" {
-		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-query-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Query.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-query-image"), jaeger.Spec.Version)
 	}
 
 	return &Query{jaeger: jaeger}
@@ -149,7 +149,7 @@ func (q *Query) Services() []*v1.Service {
 
 func (q *Query) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       q.name(),
 		"app.kubernetes.io/instance":   q.jaeger.Name,
 		"app.kubernetes.io/component":  "query",

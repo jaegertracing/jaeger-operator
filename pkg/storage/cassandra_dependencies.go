@@ -37,7 +37,7 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 	}
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Image == "" {
-		jaeger.Spec.Storage.CassandraCreateSchema.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-cassandra-schema-image"), viper.GetString("jaeger-version"))
+		jaeger.Spec.Storage.CassandraCreateSchema.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-cassandra-schema-image"), jaeger.Spec.Version)
 	}
 
 	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]

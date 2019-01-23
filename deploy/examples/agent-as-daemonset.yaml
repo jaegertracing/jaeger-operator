@@ -3,6 +3,7 @@ kind: Jaeger
 metadata:
   name: agent-as-daemonset
 spec:
+  version: "123"
   agent:
     strategy: DaemonSet
     options:

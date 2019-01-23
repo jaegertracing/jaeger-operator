@@ -3,6 +3,7 @@ kind: Jaeger
 metadata:
   name: with-sampling
 spec:
+  version: "123"
   strategy: allInOne
   sampling:
     options:

@@ -1,8 +1,6 @@
 apiVersion: io.jaegertracing/v1alpha1
 kind: Jaeger
 metadata:
-  name: disable-oauth-proxy
+  name: simplest
 spec:
   version: "123"
-  ingress:
-    security: none

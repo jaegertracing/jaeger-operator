@@ -60,6 +60,7 @@ type JaegerSpec struct {
 
 // JaegerCommonSpec defines the common elements used in multiple other spec structs
 type JaegerCommonSpec struct {
+	Version      string                  `json:"version"`
 	Volumes      []v1.Volume             `json:"volumes"`
 	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
 	Annotations  map[string]string       `json:"annotations,omitempty"`

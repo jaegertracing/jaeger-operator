@@ -3,6 +3,7 @@ kind: Jaeger
 metadata:
   name: with-cassandra
 spec:
+  version: "123"
   strategy: all-in-one
   storage:
     type: cassandra

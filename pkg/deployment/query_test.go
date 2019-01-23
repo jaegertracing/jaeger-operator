@@ -37,10 +37,9 @@ func TestQueryDefaultSize(t *testing.T) {
 
 func TestDefaultQueryImage(t *testing.T) {
 	viper.Set("jaeger-query-image", "org/custom-query-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	query := NewQuery(v1alpha1.NewJaeger("TestQueryImage"))
+	query := NewQuery(v1alpha1.NewJaegerVersion("TestQueryImage", "123"))
 	dep := query.Get()
 	containers := dep.Spec.Template.Spec.Containers
 
