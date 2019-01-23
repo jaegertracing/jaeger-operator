@@ -31,9 +31,9 @@ func SparkDependenciesCassandra(t *testing.T) {
 	defer testCtx.Cleanup()
 
 	storage := v1alpha1.JaegerStorageSpec{
-		Type: "cassandra",
-		Options: v1alpha1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
-		CassandraCreateSchema:v1alpha1.JaegerCassandraCreateSchemaSpec{Datacenter:"datacenter1", Mode: "prod"},
+		Type:                  "cassandra",
+		Options:               v1alpha1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+		CassandraCreateSchema: v1alpha1.JaegerCassandraCreateSchemaSpec{Datacenter: "datacenter1", Mode: "prod"},
 	}
 	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
 		t.Fatal(err)

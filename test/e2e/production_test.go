@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -67,11 +67,11 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 	if err != nil {
 		return err
 	}
-	queryPod, err := GetPod(namespace, "simple-prod-query","jaegertracing/jaeger-query", f.KubeClient)
+	queryPod, err := GetPod(namespace, "simple-prod-query", "jaegertracing/jaeger-query", f.KubeClient)
 	if err != nil {
 		return err
 	}
-	collectorPod, err := GetPod(namespace, "simple-prod-collector","jaegertracing/jaeger-collector", f.KubeClient)
+	collectorPod, err := GetPod(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", f.KubeClient)
 	if err != nil {
 		return err
 	}

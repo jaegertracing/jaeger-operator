@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -38,12 +38,12 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 		},
 		Spec: v1alpha1.JaegerSpec{
 			Strategy: "allInOne",
-			Storage:  v1alpha1.JaegerStorageSpec{
+			Storage: v1alpha1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1alpha1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 				}),
-				EsIndexCleaner:v1alpha1.JaegerEsIndexCleanerSpec{
+				EsIndexCleaner: v1alpha1.JaegerEsIndexCleanerSpec{
 					Schedule: "*/1 * * * *",
 				},
 			},
