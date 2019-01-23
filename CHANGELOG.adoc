@@ -2,7 +2,23 @@
 
 = Changelog
 
-== v1.8.1 (2018-12-03)
+== v1.9.0 (2019-01-23)
+
+* Changed to use recommended labels (#172)
+* Enable dependencies and index cleaner by default (#162)
+* Fix log when spak depenencies are used with unsupported storage (#161)
+* Fix serviceaccount could not be created by the operator on openshift. (#165)
+* Add Elasticsearch index cleaner as cron job (#155)
+* Fix import order for collector-test (#158)
+* Smoke test (#145)
+* Add deploy clean target and rename es/cass to deploy- (#149)
+* Add spark job (#140)
+* Automatically format imports (#151)
+* Silence 'mkdir' from e2e-tests (#153)
+* Move pkg/configmap to pkg/config/ui (#152)
+* Fix secrets readme (#150)
+
+== v1.8.2 (2018-12-03)
 
 * Configure sampling strategies (https://github.com/jaegertracing/jaeger-operator/pull/139[#139])
 * Add support for secrets (https://github.com/jaegertracing/jaeger-operator/pull/114[#114])
