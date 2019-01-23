@@ -21,7 +21,6 @@ import (
 type fakeStrategy struct {
 	dependencies func() []batchv1.Job
 	create       func() []runtime.Object
-	update       func() []runtime.Object
 }
 
 func (c *fakeStrategy) Dependencies() []batchv1.Job {
@@ -36,13 +35,6 @@ func (c *fakeStrategy) Create() []runtime.Object {
 		return []runtime.Object{}
 	}
 	return c.create()
-}
-
-func (c *fakeStrategy) Update() []runtime.Object {
-	if nil == c.update {
-		return []runtime.Object{}
-	}
-	return c.update()
 }
 
 func TestNewJaegerInstance(t *testing.T) {
@@ -286,75 +278,4 @@ func TestHandleCreate(t *testing.T) {
 	err = cl.Get(context.Background(), nsn, retrieved)
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, retrieved.Name)
-}
-
-func TestHandleUpdate(t *testing.T) {
-	// prepare
-	jaeger := v1alpha1.NewJaeger("TestHandleUpdate")
-	objs := []runtime.Object{
-		jaeger,
-	}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, jaeger)
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      jaeger.Name,
-			Namespace: jaeger.Namespace,
-		},
-	}
-
-	handled := false
-	nsn := types.NamespacedName{
-		Name:      "custom-deployment-to-update",
-		Namespace: jaeger.Namespace,
-	}
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		return &fakeStrategy{
-			create: func() []runtime.Object {
-				return []runtime.Object{
-					&appsv1.Deployment{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      nsn.Name,
-							Namespace: nsn.Namespace,
-							Annotations: map[string]string{
-								"version": "1",
-							},
-						},
-					},
-				}
-			},
-			update: func() []runtime.Object {
-				handled = true
-				return []runtime.Object{
-					&appsv1.Deployment{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      nsn.Name,
-							Namespace: nsn.Namespace,
-							Annotations: map[string]string{
-								"version": "2",
-							},
-						},
-					},
-				}
-			},
-		}
-	}
-
-	// test
-	res, err := r.Reconcile(req)
-
-	// verify
-	assert.NoError(t, err)
-	assert.False(t, res.Requeue)
-	assert.True(t, handled)
-
-	retrieved := &appsv1.Deployment{}
-	err = cl.Get(context.Background(), nsn, retrieved)
-	assert.NoError(t, err)
-	assert.Equal(t, nsn.Name, retrieved.Name)
-	assert.Equal(t, "2", retrieved.Annotations["version"])
 }

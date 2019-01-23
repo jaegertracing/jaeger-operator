@@ -23,8 +23,9 @@ type Ingester struct {
 
 // NewIngester builds a new Ingester struct based on the given spec
 func NewIngester(jaeger *v1alpha1.Jaeger) *Ingester {
-	if jaeger.Spec.Ingester.Size <= 0 {
-		jaeger.Spec.Ingester.Size = 1
+	if nil == jaeger.Spec.Ingester.Size || *jaeger.Spec.Ingester.Size < 0 {
+		var size int32 = 1
+		jaeger.Spec.Ingester.Size = &size
 	}
 
 	if jaeger.Spec.Ingester.Image == "" {
@@ -44,7 +45,6 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	labels := i.labels()
 	trueVar := true
-	replicas := int32(i.jaeger.Spec.Ingester.Size)
 
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -90,7 +90,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: i.jaeger.Spec.Ingester.Size,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

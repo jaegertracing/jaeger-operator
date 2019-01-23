@@ -57,6 +57,19 @@ func TestUnknownStorage(t *testing.T) {
 	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
 }
 
+func TestInMemoryAllInOneWithMoreThanOneReplica(t *testing.T) {
+	var size int32 = 2
+
+	jaeger := v1alpha1.NewJaeger("TestInMemoryAllInOneWithMoreThanOneReplica")
+	jaeger.Spec.Storage.Type = "memory"
+	jaeger.Spec.AllInOne.Size = &size
+
+	normalize(jaeger)
+
+	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
+	assert.Equal(t, int32(1), *jaeger.Spec.AllInOne.Size)
+}
+
 func TestElasticsearchAsStorageOptions(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestElasticsearchAsStorageOptions")
 	jaeger.Spec.Strategy = "production"

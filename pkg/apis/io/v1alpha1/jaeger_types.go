@@ -74,7 +74,7 @@ type JaegerStatus struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Size    int     `json:"size"`
+	Size    *int32  `json:"size"`
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
@@ -99,6 +99,7 @@ type JaegerIngressSpec struct {
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
 type JaegerAllInOneSpec struct {
+	Size    *int32  `json:"size"`
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
@@ -106,7 +107,7 @@ type JaegerAllInOneSpec struct {
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
-	Size    int     `json:"size"`
+	Size    *int32  `json:"size"`
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
@@ -114,7 +115,7 @@ type JaegerCollectorSpec struct {
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
 type JaegerIngesterSpec struct {
-	Size    int     `json:"size"`
+	Size    *int32  `json:"size"`
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec

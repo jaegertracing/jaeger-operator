@@ -25,6 +25,11 @@ type AllInOne struct {
 
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
+	if nil == jaeger.Spec.AllInOne.Size || *jaeger.Spec.AllInOne.Size < 0 {
+		var size int32 = 1
+		jaeger.Spec.AllInOne.Size = &size
+	}
+
 	if jaeger.Spec.AllInOne.Image == "" {
 		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
 	}
@@ -84,6 +89,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
+			Replicas: a.jaeger.Spec.AllInOne.Size,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

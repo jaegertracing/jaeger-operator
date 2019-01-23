@@ -66,12 +66,6 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 	assertDeploymentsAndServicesForProduction(t, name, objs, false, false, true)
 }
 
-func TestUpdateProductionDeployment(t *testing.T) {
-	name := "TestUpdateProductionDeployment"
-	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	assert.Len(t, c.Update(), 0)
-}
-
 func TestOptionsArePassed(t *testing.T) {
 	jaeger := &v1alpha1.Jaeger{
 		TypeMeta: metav1.TypeMeta{

@@ -117,11 +117,6 @@ func (c *streamingStrategy) Create() []runtime.Object {
 	return os
 }
 
-func (c *streamingStrategy) Update() []runtime.Object {
-	logrus.Debug("Update isn't yet available")
-	return []runtime.Object{}
-}
-
 func (c *streamingStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }

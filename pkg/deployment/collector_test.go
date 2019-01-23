@@ -20,7 +20,7 @@ func init() {
 
 func TestNegativeSize(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNegativeSize")
-	jaeger.Spec.Collector.Size = -1
+	jaeger.Spec.Collector.Size = newSize(-1)
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
@@ -29,11 +29,19 @@ func TestNegativeSize(t *testing.T) {
 
 func TestDefaultSize(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestDefaultSize")
-	jaeger.Spec.Collector.Size = 0
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestZeroSize(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestDefaultSize")
+	jaeger.Spec.Collector.Size = newSize(0)
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
 }
 
 func TestName(t *testing.T) {
@@ -382,4 +390,10 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
 	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
+}
+
+func newSize(size int32) *int32 {
+	// TODO: this isn't the perfect place to store this function, as it's also used by the query_test,
+	// but there's no better place for now
+	return &size
 }

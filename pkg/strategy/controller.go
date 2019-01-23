@@ -19,7 +19,6 @@ import (
 type S interface {
 	Dependencies() []batchv1.Job
 	Create() []runtime.Object
-	Update() []runtime.Object
 }
 
 // For returns the appropriate Strategy for the given Jaeger instance
@@ -82,6 +81,15 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 			jaeger.Spec.Storage.Type,
 		)
 		jaeger.Spec.Strategy = "allInOne"
+	}
+
+	if strings.ToLower(jaeger.Spec.Storage.Type) == "memory" && (nil != jaeger.Spec.AllInOne.Size && *jaeger.Spec.AllInOne.Size > 1) {
+		logrus.WithFields(
+			logrus.Fields{"instance": jaeger, "requested-size": jaeger.Spec.AllInOne.Size},
+		).Warn("In-memory deployments cannot be scaled. Falling back to Size=1")
+
+		var size int32 = 1
+		jaeger.Spec.AllInOne.Size = &size
 	}
 
 	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'

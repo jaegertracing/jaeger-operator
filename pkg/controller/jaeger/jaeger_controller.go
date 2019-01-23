@@ -110,7 +110,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		log.WithField("name", instance.Name).Info("Configured Jaeger instance")
 	}
 
-	if err := r.handleUpdate(str); err != nil {
+	if err := r.handleUpdate(*instance); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -153,14 +153,8 @@ func (r *ReconcileJaeger) handleCreate(str strategy.S) (bool, error) {
 	return created, nil
 }
 
-func (r *ReconcileJaeger) handleUpdate(str strategy.S) error {
-	objs := str.Update()
-	for _, obj := range objs {
-		if err := r.client.Update(context.Background(), obj); err != nil {
-			log.WithError(err).Error("failed to update")
-			return err
-		}
-	}
+func (r *ReconcileJaeger) handleUpdate(instance v1alpha1.Jaeger) error {
+	r.UpdateReplicaSize(instance)
 
 	return nil
 }

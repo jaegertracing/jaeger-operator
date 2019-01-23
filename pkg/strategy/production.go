@@ -105,11 +105,6 @@ func (c *productionStrategy) Create() []runtime.Object {
 	return os
 }
 
-func (c *productionStrategy) Update() []runtime.Object {
-	logrus.Debug("Update isn't yet available")
-	return []runtime.Object{}
-}
-
 func (c *productionStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }

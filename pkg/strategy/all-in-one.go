@@ -99,11 +99,6 @@ func (c *allInOneStrategy) Create() []runtime.Object {
 	return os
 }
 
-func (c *allInOneStrategy) Update() []runtime.Object {
-	logrus.Debug("Update isn't available for all-in-one")
-	return []runtime.Object{}
-}
-
 func (c *allInOneStrategy) Dependencies() []batchv1.Job {
 	return storage.Dependencies(c.jaeger)
 }

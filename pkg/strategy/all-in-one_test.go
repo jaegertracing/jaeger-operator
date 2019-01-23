@@ -66,12 +66,6 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false, true)
 }
 
-func TestUpdateAllInOneDeployment(t *testing.T) {
-	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestUpdateAllInOneDeployment"))
-	objs := c.Update()
-	assert.Len(t, objs, 0)
-}
-
 func TestDelegateAllInOneDepedencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateAllInOneDepedencies"))

@@ -27,7 +27,7 @@ func TestIngesterNotDefined(t *testing.T) {
 
 func TestIngesterNegativeSize(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterNegativeSize")
-	jaeger.Spec.Ingester.Size = -1
+	jaeger.Spec.Ingester.Size = newSize(-1)
 
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
@@ -36,11 +36,11 @@ func TestIngesterNegativeSize(t *testing.T) {
 
 func TestIngesterDefaultSize(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterDefaultSize")
-	jaeger.Spec.Ingester.Size = 0
+	jaeger.Spec.Ingester.Size = newSize(0)
 
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
 }
 
 func TestIngesterName(t *testing.T) {

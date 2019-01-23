@@ -66,12 +66,6 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 	assertDeploymentsAndServicesForStreaming(t, name, objs, false, false, true)
 }
 
-func TestUpdateStreamingDeployment(t *testing.T) {
-	name := "TestUpdateStreamingDeployment"
-	c := newStreamingStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	assert.Len(t, c.Update(), 0)
-}
-
 func TestStreamingOptionsArePassed(t *testing.T) {
 	jaeger := &v1alpha1.Jaeger{
 		TypeMeta: metav1.TypeMeta{

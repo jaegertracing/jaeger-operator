@@ -19,7 +19,7 @@ func init() {
 
 func TestQueryNegativeSize(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestQueryNegativeSize")
-	jaeger.Spec.Query.Size = -1
+	jaeger.Spec.Query.Size = newSize(-1)
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
@@ -28,11 +28,19 @@ func TestQueryNegativeSize(t *testing.T) {
 
 func TestQueryDefaultSize(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestQueryDefaultSize")
-	jaeger.Spec.Query.Size = 0
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestQueryZeroSize(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryDefaultSize")
+	jaeger.Spec.Query.Size = newSize(0)
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
 }
 
 func TestDefaultQueryImage(t *testing.T) {

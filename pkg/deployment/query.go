@@ -24,8 +24,9 @@ type Query struct {
 
 // NewQuery builds a new Query struct based on the given spec
 func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
-	if jaeger.Spec.Query.Size <= 0 {
-		jaeger.Spec.Query.Size = 1
+	if nil == jaeger.Spec.Query.Size || *jaeger.Spec.Query.Size < 0 {
+		var size int32 = 1
+		jaeger.Spec.Query.Size = &size
 	}
 
 	if jaeger.Spec.Query.Image == "" {
@@ -40,7 +41,6 @@ func (q *Query) Get() *appsv1.Deployment {
 	logrus.Debug("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
-	replicas := int32(q.jaeger.Spec.Query.Size)
 
 	baseCommonSpec := v1alpha1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -93,7 +93,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: q.jaeger.Spec.Query.Size,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

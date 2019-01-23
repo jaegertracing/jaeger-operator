@@ -39,6 +39,32 @@ func TestDefaultAllInOneImage(t *testing.T) {
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }
 
+func TestAllInOneNegativeSize(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryNegativeSize")
+	jaeger.Spec.AllInOne.Size = newSize(-1)
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestAllInOneDefaultSize(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryDefaultSize")
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestAllInOneZeroSize(t *testing.T) {
+	jaeger := v1alpha1.NewJaeger("TestQueryDefaultSize")
+	jaeger.Spec.AllInOne.Size = newSize(0)
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
+}
+
 func TestAllInOneAnnotations(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestAllInOneAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
