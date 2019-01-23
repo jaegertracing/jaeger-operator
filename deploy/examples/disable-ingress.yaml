@@ -3,6 +3,5 @@ kind: Jaeger
 metadata:
   name: disable-ingress
 spec:
-  version: "123"
   ingress:
     enabled: false

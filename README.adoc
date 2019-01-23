@@ -114,15 +114,15 @@ $ kubectl logs -l jaeger=simplest
 
 A version string can be added to the Jaeger resource as shown in the snippet below.
 
-.simplest-with-version.yaml
+.with-version.yaml
 [source,yaml]
 ----
 apiVersion: io.jaegertracing/v1alpha1
 kind: Jaeger
 metadata:
-  name: simplest
+  name: with-version
 spec:
-  version: "123"
+  version: "1.8"
 ----
 
 For reference, here's how a more complex all-in-one instance can be created:
@@ -135,7 +135,6 @@ kind: Jaeger
 metadata:
   name: my-jaeger
 spec:
-  version: "123"
   strategy: allInOne # <1>
   allInOne:
     image: jaegertracing/all-in-one:1.8 # <2>

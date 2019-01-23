@@ -1,6 +1,6 @@
 apiVersion: io.jaegertracing/v1alpha1
 kind: Jaeger
 metadata:
-  name: simplest
+  name: with-version
 spec:
-  version: "123"
+  version: "1.8"

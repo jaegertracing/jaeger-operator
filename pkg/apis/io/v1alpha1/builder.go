@@ -12,17 +12,3 @@ func NewJaeger(name string) *Jaeger {
 		},
 	}
 }
-
-// NewJaegerVersion returns a new Jaeger instance with the given name and a version
-func NewJaegerVersion(name string, version string) *Jaeger {
-	return &Jaeger{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Spec: JaegerSpec{
-			JaegerCommonSpec: JaegerCommonSpec{
-				Version: version,
-			},
-		},
-	}
-}

@@ -4,7 +4,6 @@ kind: Jaeger
 metadata:
   name: simple-prod
 spec:
-  version: "123"
   strategy: production
   storage:
     type: elasticsearch
