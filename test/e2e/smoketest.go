@@ -13,8 +13,8 @@ import (
 
 func SmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interval, timeout time.Duration) error {
 	cfg := config.Configuration{
-		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
-		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
+		Reporter: &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
+		Sampler: &config.SamplerConfig{Type:"const", Param:1},
 		ServiceName: serviceName,
 	}
 	tracer, closer, err := cfg.NewTracer()
@@ -30,7 +30,7 @@ func SmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interva
 
 	return wait.Poll(interval, timeout, func() (done bool, err error) {
 		c := http.Client{Timeout: time.Second}
-		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+"?service="+serviceName, nil)
+		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+ "?service=" + serviceName, nil)
 		if err != nil {
 			return false, err
 		}

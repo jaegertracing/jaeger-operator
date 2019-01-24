@@ -45,6 +45,6 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 			panic(err)
 		}
 	}()
-	<-forwarder.Ready
+	<- forwarder.Ready
 	return forwarder, stopChan, nil
 }
