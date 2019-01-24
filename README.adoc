@@ -137,7 +137,7 @@ metadata:
 spec:
   strategy: allInOne # <1>
   allInOne:
-    image: jaegertracing/all-in-one:1.8 # <2>
+    image: jaegertracing/all-in-one:1.9 # <2>
     options: # <3>
       log-level: debug # <4>
   storage:
@@ -324,7 +324,7 @@ spec:
 This example defines a default sampling strategy that is probabilistic, with a 50% chance of the trace instances being
 sampled.
 
-Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/1.8/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The JSON representation described in that documentation can be used in the operator by converting to YAML.
+Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/latest/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The JSON representation described in that documentation can be used in the operator by converting to YAML.
 
 == Schema migration
 
@@ -371,7 +371,7 @@ spec:
 <2> These options are for the regular Jaeger components, like `collector` and `query`
 <3> The options for the `create-schema` job
 
-NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/v1.8.0/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
+NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
 
 == Removing an instance
 
