@@ -215,8 +215,8 @@ func TestAgentResouceDefs(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
 	// Check resource values for the injected sidecar.
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(500), resource.BinarySI))
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(128), resource.DecimalSI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewMilliQuantity(int64(500), resource.BinarySI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewScaledQuantity(int64(128), resource.Mega))
 }
 
 func TestAgentResouceDefsOverride(t *testing.T) {
@@ -231,8 +231,8 @@ func TestAgentResouceDefsOverride(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
 	// Check resource values for the injected sidecar.
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewQuantity(int64(1024), resource.BinarySI))
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewQuantity(int64(100), resource.DecimalSI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsCPU], *resource.NewMilliQuantity(int64(1024), resource.BinarySI))
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].Resources.Limits[v1.ResourceLimitsMemory], *resource.NewScaledQuantity(int64(100), resource.Mega))
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {

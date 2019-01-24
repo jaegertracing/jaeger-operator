@@ -122,12 +122,8 @@ func container(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) v1.Container {
 		},
 		Resources: v1.ResourceRequirements{
 			Limits: v1.ResourceList{
-				v1.ResourceLimitsCPU:    *resource.NewQuantity(int64(CPULimit), resource.BinarySI),
-				v1.ResourceLimitsMemory: *resource.NewQuantity(int64(MemLimit), resource.DecimalSI),
-			},
-			Requests: v1.ResourceList{
-				v1.ResourceRequestsCPU:    *resource.NewQuantity(int64(CPULimit), resource.BinarySI),
-				v1.ResourceRequestsMemory: *resource.NewQuantity(int64(MemLimit), resource.DecimalSI),
+				v1.ResourceLimitsCPU:    *resource.NewMilliQuantity(int64(CPULimit), resource.BinarySI),
+				v1.ResourceLimitsMemory: *resource.NewScaledQuantity(int64(MemLimit), resource.Mega),
 			},
 		},
 	}

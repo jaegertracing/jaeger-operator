@@ -313,6 +313,23 @@ sampled.
 
 Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/1.8/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The JSON representation described in that documentation can be used in the operator by converting to YAML.
 
+== Defining resouce limits
+
+By default, the Jaeger operator will create a container with limits of `500m` CPU and `128Mi` memory.
+This behavior can be overwritten through annotations `jaeger-agent-max-cpu` and `jaeger-agent-max-memory` on the deployment object.
+
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydepapp 
+  annotations:
+    inject-jaeger-agent: "true"
+    jaeger-agent-max-cpu: "1000"
+    jaeger-agent-max-memory: "256"
+----
+
 == Schema migration
 
 === Cassandra
