@@ -73,6 +73,18 @@ func TestMultipleSubValuesWithFilter(t *testing.T) {
 	assert.Equal(t, "50000", o.Map()["memory.max-traces"])
 }
 
+func TestMultipleSubValuesWithFilterWithArchive(t *testing.T) {
+	o := NewOptions(nil)
+	o.UnmarshalJSON([]byte(`{"memory": {"max-traces": "50000"}, "es": {"server-urls": "http://elasticsearch:9200", "username": "elastic", "password": "changeme"}, "es-archive": {"server-urls": "http://elasticsearch2:9200"}}`))
+	o = o.Filter("es")
+	args := o.ToArgs()
+	assert.Len(t, args, 4)
+	assert.Equal(t, "http://elasticsearch:9200", o.Map()["es.server-urls"])
+	assert.Equal(t, "http://elasticsearch2:9200", o.Map()["es-archive.server-urls"])
+	assert.Equal(t, "elastic", o.Map()["es.username"])
+	assert.Equal(t, "changeme", o.Map()["es.password"])
+}
+
 func TestExposedMap(t *testing.T) {
 	o := NewOptions(nil)
 	o.UnmarshalJSON([]byte(`{"cassandra": {"servers": "cassandra:9042"}}`))
