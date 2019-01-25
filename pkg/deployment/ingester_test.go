@@ -54,7 +54,7 @@ func TestIngesterServices(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterServices")
 	ingester := NewIngester(jaeger)
 	svcs := ingester.Services()
-	assert.Len(t, svcs, 1)
+	assert.Len(t, svcs, 0)
 }
 
 func TestDefaultIngesterImage(t *testing.T) {

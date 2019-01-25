@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -141,22 +140,16 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	}
 }
 
-// Services returns a list of services to be deployed along with the ingesterdeployment
+// Services returns a list of services to be deployed along with the ingester deployment
 func (i *Ingester) Services() []*v1.Service {
-	services := []*v1.Service{}
-
-	service := service.NewIngesterService(i.jaeger, i.labels())
-
-	if service != nil {
-		services = append(services, service)
-	}
-
-	return services
+	// Return empty list, as a service is not required for this deployment, which also
+	// simplifies switching between different strategies.
+	return []*v1.Service{}
 }
 
 func (i *Ingester) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       i.name(),
 		"app.kubernetes.io/instance":   i.jaeger.Name,
 		"app.kubernetes.io/component":  "ingester",
