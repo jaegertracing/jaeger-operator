@@ -66,7 +66,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	}
 
 	storageType := c.jaeger.Spec.Storage.Type
-	// If sttategy is "streaming", then change storage type
+	// If strategy is "streaming", then change storage type
 	// to Kafka, and the storage options will be used in the Ingester instead
 	if strings.EqualFold(c.jaeger.Spec.Strategy, "streaming") {
 		storageType = "kafka"
