@@ -34,6 +34,8 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *streami
 }
 
 func (c *streamingStrategy) Create() []runtime.Object {
+	// TODO: Look at ways to refactor this, with the production strategy Create(), to reuse
+	// common elements.
 	collector := deployment.NewCollector(c.jaeger)
 	query := deployment.NewQuery(c.jaeger)
 	agent := deployment.NewAgent(c.jaeger)
