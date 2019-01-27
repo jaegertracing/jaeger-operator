@@ -2,7 +2,6 @@ package inject
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -96,8 +95,12 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 func container(jaeger *v1.Jaeger) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s.%s:14267", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
 	// Checking annotations for CPU/Memory limits
-	limitCPU := "500"
-	limitMem := "128"
+	limitCPU := "500m"
+	limitMem := "128Mi"
+
+	CPULimitDefault, _ := resource.ParseQuantity(limitCPU)
+	MemLimitDefault, _ := resource.ParseQuantity(limitMem)
+
 	if dep.Annotations[LimitCPU] != "" {
 		limitCPU = dep.Annotations[LimitCPU]
 	}
@@ -105,8 +108,16 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 		limitMem = dep.Annotations[LimitMem]
 	}
 
-	CPULimit, _ := strconv.Atoi(limitCPU)
-	MemLimit, _ := strconv.Atoi(limitMem)
+	CPULimit, err := resource.ParseQuantity(limitCPU)
+	if err != nil {
+		logrus.Debugf("Could not parse quantity for CPU limits: %v, using defaults.", limitCPU)
+		CPULimit = CPULimitDefault
+	}
+	MemLimit, err := resource.ParseQuantity(limitMem)
+	if err != nil {
+		logrus.Debugf("Could not parse quantity for Memory limits: %v, using defaults.", limitMem)
+		MemLimit = MemLimitDefault
+	}
 
 	return v1.Container{
 		Image: jaeger.Spec.Agent.Image,
@@ -132,8 +143,8 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 		},
 		Resources: v1.ResourceRequirements{
 			Limits: v1.ResourceList{
-				v1.ResourceLimitsCPU:    *resource.NewMilliQuantity(int64(CPULimit), resource.BinarySI),
-				v1.ResourceLimitsMemory: *resource.NewScaledQuantity(int64(MemLimit), resource.Mega),
+				v1.ResourceLimitsCPU:    CPULimit,
+				v1.ResourceLimitsMemory: MemLimit,
 			},
 		},
 	}
