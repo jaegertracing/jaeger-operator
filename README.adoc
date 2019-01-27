@@ -326,8 +326,8 @@ metadata:
   name: mydepapp 
   annotations:
     inject-jaeger-agent: "true"
-    jaeger-agent-max-cpu: "1000" # in milli-CPU units. 1000 = 1 CPU.
-    jaeger-agent-max-memory: "256" # in MiB units. 
+    jaeger-agent-max-cpu: "1000m" # Use units of choice. 1000m = 1 CPU.
+    jaeger-agent-max-memory: "256Mi" # = 256MiB. 
 ----
 
 == Schema migration
