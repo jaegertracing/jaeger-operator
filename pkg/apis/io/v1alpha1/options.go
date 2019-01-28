@@ -23,10 +23,11 @@ func (o *Options) Filter(prefix string) Options {
 	options := Options{}
 	options.opts = make(map[string]string)
 
+	archivePrefix := prefix + "-archive."
 	prefix += "."
 
 	for k, v := range o.opts {
-		if strings.HasPrefix(k, prefix) {
+		if strings.HasPrefix(k, prefix) || strings.HasPrefix(k, archivePrefix) {
 			options.opts[k] = v
 		}
 	}
