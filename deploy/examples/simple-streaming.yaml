@@ -1,0 +1,24 @@
+# setup an elasticsearch with `make es`
+# setup a kafka platform using https://strimzi.io with quickstart instructions
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: simple-streaming
+spec:
+  strategy: streaming
+  collector:
+    options:
+      log-level: debug
+  ingester:
+    options:
+      kafka:
+        topic: jaeger-spans
+        brokers: my-cluster-kafka-brokers.kafka:9092
+      ingester:
+        deadlockInterval: 0
+      log-level: debug
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200

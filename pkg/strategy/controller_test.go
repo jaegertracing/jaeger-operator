@@ -100,6 +100,19 @@ func TestIncompatibleStorageForProduction(t *testing.T) {
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
+func TestIncompatibleStorageForStreaming(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "memory",
+			},
+		},
+	}
+	normalize(jaeger)
+	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+}
+
 func TestDeprecatedAllInOneStrategy(t *testing.T) {
 	jaeger := &v1alpha1.Jaeger{
 		Spec: v1alpha1.JaegerSpec{

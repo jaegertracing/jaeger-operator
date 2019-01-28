@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -64,8 +65,15 @@ func (c *Collector) Get() *appsv1.Deployment {
 		})
 	}
 
+	storageType := c.jaeger.Spec.Storage.Type
+	// If strategy is "streaming", then change storage type
+	// to Kafka, and the storage options will be used in the Ingester instead
+	if strings.EqualFold(c.jaeger.Spec.Strategy, "streaming") {
+		storageType = "kafka"
+	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,
-		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(c.jaeger.Spec.Storage.Type)))
+		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(storageType)),
+		c.jaeger.Spec.Ingester.Options.Filter(storage.OptionsPrefix(storageType)))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
 
@@ -105,7 +113,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Env: []v1.EnvVar{
 							v1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
-								Value: c.jaeger.Spec.Storage.Type,
+								Value: storageType,
 							},
 							v1.EnvVar{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",

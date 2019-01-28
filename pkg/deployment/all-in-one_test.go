@@ -27,11 +27,11 @@ func TestDefaultAllInOneImage(t *testing.T) {
 	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
 		},
-		v1.EnvVar{
+		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},
@@ -80,27 +80,27 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "globalVolume",
 		},
 	}
 
 	allInOneVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "allInOneVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	allInOneVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "allInOneVolume",
 		},
 	}
@@ -138,14 +138,14 @@ func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	name := "TestAllInOneMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	allInOneVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
@@ -166,14 +166,14 @@ func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
 	allInOneVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: false,
 		},
@@ -194,14 +194,14 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 	name := "TestAllInOneVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
 	allInOneVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},

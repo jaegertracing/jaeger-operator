@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
@@ -60,11 +61,11 @@ func TestDefaultCollectorImage(t *testing.T) {
 	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
 
 	envvars := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
 		},
-		v1.EnvVar{
+		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},
@@ -107,27 +108,27 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "globalVolume",
 		},
 	}
 
 	collectorVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "collectorVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name: "collectorVolume",
 		},
 	}
@@ -154,14 +155,14 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 	name := "TestCollectorMountGlobalVolumes"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "globalVolume",
 			VolumeSource: v1.VolumeSource{},
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
@@ -182,14 +183,14 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithSameName"
 
 	globalVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
 	collectorVolumeMounts := []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:     "data",
 			ReadOnly: false,
 		},
@@ -210,14 +211,14 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeWithSameName"
 
 	globalVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
 	collectorVolumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name:         "data",
 			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
 		},
@@ -275,4 +276,110 @@ func TestCollectorLabels(t *testing.T) {
 	assert.Equal(t, "collector", dep.Spec.Template.Labels["app.kubernetes.io/component"])
 	assert.Equal(t, c.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
 	assert.Equal(t, fmt.Sprintf("%s-collector", c.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}
+
+func TestCollectorWithDirectStorageType(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "TestCollectorWithDirectStorageType",
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"es.server-urls": "http://somewhere",
+				}),
+			},
+		},
+	}
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	envvars := []v1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "elasticsearch",
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+			Value: "9411",
+		},
+	}
+	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
+	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[0])
+}
+
+func TestCollectorWithIngesterStorageType(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "TestCollectorWithIngesterStorageType",
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
+			Ingester: v1alpha1.JaegerIngesterSpec{
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"kafka.topic": "mytopic",
+				}),
+			},
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"kafka.brokers":  "http://brokers",
+					"es.server-urls": "http://somewhere",
+				}),
+			},
+		},
+	}
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	envvars := []v1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "kafka",
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+			Value: "9411",
+		},
+	}
+	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
+	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
+}
+
+func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
+	jaeger := &v1alpha1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "TestCollectorWithIngesterNoOptionsStorageType",
+		},
+		Spec: v1alpha1.JaegerSpec{
+			Strategy: "streaming",
+			Storage: v1alpha1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1alpha1.NewOptions(map[string]interface{}{
+					"kafka.brokers":  "http://brokers",
+					"es.server-urls": "http://somewhere",
+				}),
+			},
+		},
+	}
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	envvars := []v1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "kafka",
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
+			Value: "9411",
+		},
+	}
+	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
+	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
 }
