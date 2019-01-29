@@ -6,9 +6,6 @@ metadata:
   name: simple-streaming
 spec:
   strategy: streaming
-  collector:
-    options:
-      log-level: debug
   ingester:
     options:
       kafka:
@@ -16,7 +13,6 @@ spec:
         brokers: my-cluster-kafka-brokers.kafka:9092
       ingester:
         deadlockInterval: 0
-      log-level: debug
   storage:
     type: elasticsearch
     options:
