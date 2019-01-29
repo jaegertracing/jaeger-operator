@@ -146,6 +146,10 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 				v1.ResourceLimitsCPU:    CPULimit,
 				v1.ResourceLimitsMemory: MemLimit,
 			},
+			Requests: v1.ResourceList{
+				v1.ResourceRequestsCPU:    CPULimit,
+				v1.ResourceRequestsMemory: MemLimit,
+			},
 		},
 	}
 }
