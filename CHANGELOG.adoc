@@ -2,6 +2,12 @@
 
 = Changelog
 
+== v1.9.1 (2019-01-30)
+
+* Remove debug logging from simple-streaming example (https://github.com/jaegertracing/jaeger-operator/pull/185[#185])
+* Add ingester (and kafka) support (https://github.com/jaegertracing/jaeger-operator/pull/168[#168])
+* When filtering storage options, also include '-archive' related options (https://github.com/jaegertracing/jaeger-operator/pull/182[#182])
+
 == v1.9.0 (2019-01-23)
 
 * Changed to use recommended labels (https://github.com/jaegertracing/jaeger-operator/pull/172[#172])
