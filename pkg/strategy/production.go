@@ -56,11 +56,15 @@ func (c *productionStrategy) Create() []runtime.Object {
 		os = append(os, scmp)
 	}
 
+	cDep := collector.Get()
+	queryDep := inject.OAuthProxy(c.jaeger, query.Get())
+	if storage.ShouldDeployElasticsearch(c.jaeger.Spec.Storage) {
+		es, _ := storage.CreateElasticsearchObjects(c.jaeger, &cDep.Spec.Template.Spec, &queryDep.Spec.Template.Spec)
+		os = append(os, es...)
+	}
+
 	// add the deployments
-	os = append(os,
-		collector.Get(),
-		inject.OAuthProxy(c.jaeger, query.Get()),
-	)
+	os = append(os, cDep, queryDep)
 
 	if ds := agent.Get(); nil != ds {
 		os = append(os, ds)
