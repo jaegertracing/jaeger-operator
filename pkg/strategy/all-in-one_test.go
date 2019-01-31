@@ -81,7 +81,7 @@ func TestDelegateAllInOneDepedencies(t *testing.T) {
 func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	// TODO(jpkroehling): this func deserves a refactoring already
 
-	expectedNumObjs := 6
+	expectedNumObjs := 7
 
 	if hasDaemonSet {
 		expectedNumObjs++

@@ -139,6 +139,7 @@ func (r *ReconcileJaeger) handleCreate(str strategy.S) (bool, error) {
 	objs := str.Create()
 	created := false
 	for _, obj := range objs {
+
 		err := r.client.Create(context.Background(), obj)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			log.WithError(err).Error("failed to create")

@@ -15,12 +15,12 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
         - name: jaeger-operator
-          image: jaegertracing/jaeger-operator:1.9.1
+          image: jaegertracing/jaeger-operator:latest
           ports:
           - containerPort: 60000
             name: metrics
           args: ["start", "--platform=openshift"]
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

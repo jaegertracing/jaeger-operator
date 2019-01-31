@@ -56,11 +56,11 @@ func (c *productionStrategy) Create() []runtime.Object {
 		os = append(os, scmp)
 	}
 
+	cDep := collector.Get()
+	queryDep := inject.OAuthProxy(c.jaeger, query.Get())
+
 	// add the deployments
-	os = append(os,
-		collector.Get(),
-		inject.OAuthProxy(c.jaeger, query.Get()),
-	)
+	os = append(os, cDep, queryDep)
 
 	if ds := agent.Get(); nil != ds {
 		os = append(os, ds)
@@ -102,6 +102,20 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
+	if strings.ToLower(c.jaeger.Spec.Storage.Type) == "elasticsearch" {
+		// TODO query and collector will be failing until ES is up - we could wait on readiness probe
+		// TODO we could create ES CR if no es.server-urls are provided (and ES CRD is defined)
+		err := storage.CreateESCerts()
+		if err != nil {
+			logrus.Error("Failed to create Elasticsearch certificates: ", err)
+		} else {
+			esSecret := storage.CreateESSecrets(c.jaeger)
+			for _, s := range esSecret {
+				os = append(os, s)
+			}
+			os = append(os, storage.GetESRoles(c.jaeger, cDep.Spec.Template.Spec.ServiceAccountName, queryDep.Spec.Template.Spec.ServiceAccountName)...)
+		}
+	}
 	return os
 }
 

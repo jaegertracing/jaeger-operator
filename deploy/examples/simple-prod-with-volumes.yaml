@@ -9,10 +9,17 @@ spec:
     type: elasticsearch
     options:
       es:
-        server-urls: http://elasticsearch:9200
+        server-urls: https://elasticsearch:9200
+        tls.ca: "/sec/ca"
+        token-file-path: /var/run/secrets/kubernetes.io/serviceaccount/token
+      es-archive:
+        server-urls: https://elasticsearch:9200
+        tls.ca: "/sec/ca"
+        token-file-path: /var/run/secrets/kubernetes.io/serviceaccount/token
   volumeMounts:
-  - name: elastic-data
-    mountPath: /usr/share/elasticsearch/data
+  - name: es-secrets
+    mountPath: "/sec"
   volumes:
-  - name: elastic-data
-    emptyDir: {}
+  - name: es-secrets
+    secret:
+      secretName: jaeger-elasticsearch
