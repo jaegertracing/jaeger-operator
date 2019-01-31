@@ -1,0 +1,16 @@
+# This CR deploys Jaeger and Elasticsearch
+apiVersion: io.jaegertracing/v1alpha1
+kind: Jaeger
+metadata:
+  name: simple-prod
+spec:
+  strategy: production
+  storage:
+    type: elasticsearch
+    elasticsearch:
+      nodeCount: 2
+      resources:
+    esIndexCleaner:
+      enabled: true
+      schedule: "*/30 * * * *"
+      numberOfDays: 1

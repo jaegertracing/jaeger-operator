@@ -123,7 +123,7 @@ func TestDelegateProductionDepedencies(t *testing.T) {
 }
 
 func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
-	expectedNumObjs := 6
+	expectedNumObjs := 7
 
 	if hasDaemonSet {
 		expectedNumObjs++
@@ -161,7 +161,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
 
-	serviceAccounts := map[string]bool{}
+	serviceAccounts := map[string]bool{fmt.Sprintf("%s", name): false}
 	if hasOAuthProxy {
 		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
 	}
