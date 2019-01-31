@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -147,7 +148,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
-					Volumes: commonSpec.Volumes,
+					Volumes:            commonSpec.Volumes,
+					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger),
 				},
 			},
 		},

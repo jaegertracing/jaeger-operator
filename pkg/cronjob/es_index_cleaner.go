@@ -16,6 +16,7 @@ import (
 func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	esUrls := getEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
+	one := int32(1)
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -35,6 +36,7 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 			Schedule: jaeger.Spec.Storage.EsIndexCleaner.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
+					Parallelism: &one,
 					Template: v1.PodTemplateSpec{
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{

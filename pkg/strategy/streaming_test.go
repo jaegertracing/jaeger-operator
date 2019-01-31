@@ -136,7 +136,7 @@ func TestDelegateStreamingDepedencies(t *testing.T) {
 }
 
 func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
-	expectedNumObjs := 6
+	expectedNumObjs := 7
 
 	if hasDaemonSet {
 		expectedNumObjs++
