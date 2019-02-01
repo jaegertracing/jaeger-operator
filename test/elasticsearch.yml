@@ -16,14 +16,13 @@ spec:
     spec:
       containers:
         - name: elasticsearch
-          image: docker.elastic.co/elasticsearch/elasticsearch:5.6.12
+          image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.0
           imagePullPolicy: Always
           command:
             - bin/elasticsearch
           args:
             - "-Ehttp.host=0.0.0.0"
             - "-Etransport.host=127.0.0.1"
-            - "-Expack.security.enabled=false"
           volumeMounts:
             - name: data
               mountPath: /data
