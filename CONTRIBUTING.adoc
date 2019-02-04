@@ -130,3 +130,53 @@ There are a set of templates under the `test` directory that can be used to setu
 make es
 make cassandra
 ----
+
+==== Operator-Lifecycle-Manager Integration
+
+The link:https://github.com/operator-framework/operator-lifecycle-manager/[Operator-Lifecycle-Manager (OLM)] can install, manage, and upgrade operators and their dependencies in a cluster.
+
+With OLM, users can:
+
+* Define applications as a single Kubernetes resource that encapsulates requirements and metadata
+* Install applications automatically with dependency resolution or manually with nothing but kubectl
+* Upgrade applications automatically with different approval policies
+
+OLM also enforces some constraints on the components it manages in order to ensure a good user experience.
+
+The Jaeger community provides and mantains a link:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md/[ClusterServiceVersion (CSV) YAML] to integrate with OLM.
+
+With the latest master branch of the operator-sdk one can generate and update CSVs based on the yaml files in the deploy folder.
+The Jaeger CSV can be updated to version 1.9.0 with the following command:
+[source,bash]
+----
+$ operator-sdk olm-catalog gen-csv --csv-version 1.9.0
+INFO[0000] Generating CSV manifest version 1.9.0
+INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml 
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml 
+----
+
+The CSV YAML can then be tested with this command:
+
+[source,bash]
+----
+$ operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger-operator.csv.yaml --init-timeout 30
+Checking for existence of spec and status blocks in CR
+Checking that operator actions are reflected in status
+Checking that writing into CRs has an effect
+Checking for CRD resources
+Checking for existence of example CRs
+Checking spec descriptors
+Checking status descriptors
+Basic Operator:
+	Spec Block Exists: 1/1 points
+	Status Block Exist: 1/1 points
+	Operator actions are reflected in status: 0/1 points
+	Writing into CRs has an effect: 1/1 points
+OLM Integration:
+	Owned CRDs have resources listed: 0/1 points
+	CRs have at least 1 example: 1/1 points
+	Spec fields with descriptors: 0/12 points
+	Status fields with descriptors: N/A (depends on an earlier test that failed)
+
+Total Score: 4/18 points
+----
