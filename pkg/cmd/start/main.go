@@ -79,12 +79,11 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	log.WithFields(log.Fields{
-		"os":      runtime.GOOS,
-		"arch":    runtime.GOARCH,
-		"version": runtime.Version(),
-	}).Info("Go")
-
-	log.WithField("version", version.Get().OperatorSdk).Print("operator-sdk")
+		"os":           runtime.GOOS,
+		"arch":         runtime.GOARCH,
+		"version":      runtime.Version(),
+		"operator-sdk": version.Get().OperatorSdk,
+	}).Info("Versions")
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
