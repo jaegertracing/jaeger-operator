@@ -331,9 +331,12 @@
 
 [[projects]]
   branch = "release-3.11"
-  digest = "1:416ab68f11332bbaad8d2ee219dccb42e06f2e4321eb5dc210adc86f860e1004"
+  digest = "1:1e9d328e3e116fb71d883b4f5c3b952995af89b767e5a9fd5a75853e3065c850"
   name = "github.com/openshift/api"
-  packages = ["route/v1"]
+  packages = [
+    "route",
+    "route/v1",
+  ]
   pruneopts = "NUT"
   revision = "5ad8479f64f1b60ee9c62ce8ef1fe6638838725e"
 
@@ -929,6 +932,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/mitchellh/go-homedir",
+    "github.com/openshift/api/route",
     "github.com/openshift/api/route/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/test",
@@ -941,6 +945,7 @@
     "github.com/uber/jaeger-client-go/config",
     "k8s.io/api/apps/v1",
     "k8s.io/api/batch/v1",
+    "k8s.io/api/batch/v1beta1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
