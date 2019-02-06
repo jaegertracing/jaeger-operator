@@ -86,7 +86,7 @@ make test
 
 NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
 
-Similar instructions also work for OpenShift, but the target `run-openshift` can be used instead of `run`.
+Similar instructions also work for OpenShift, but the target `run-openshift` can be used instead of `run`. Make sure you are using the `default` namespace or that you are overriding the target namespace by setting `NAMESPACE`, like: `make run-openshift WATCH_NAMESPACE=myproject`
 
 ==== Model changes
 
