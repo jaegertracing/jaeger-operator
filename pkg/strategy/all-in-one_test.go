@@ -1,15 +1,11 @@
 package strategy
 
 import (
-	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -22,9 +18,8 @@ func init() {
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
-	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false, false)
+	c := newAllInOneStrategy(v1alpha1.NewJaeger(name))
+	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
@@ -35,9 +30,8 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newAllInOneStrategy(context.TODO(), jaeger)
-	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, true, false)
+	c := newAllInOneStrategy(jaeger)
+	assertDeploymentsAndServicesForAllInOne(t, name, c, false, true, false)
 }
 
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -46,9 +40,8 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1alpha1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newAllInOneStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, true, false, false)
+	c := newAllInOneStrategy(j)
+	assertDeploymentsAndServicesForAllInOne(t, name, c, true, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
@@ -61,24 +54,18 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newAllInOneStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForAllInOne(t, name, objs, false, false, true)
+	c := newAllInOneStrategy(j)
+	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, true)
 }
 
-func TestUpdateAllInOneDeployment(t *testing.T) {
-	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestUpdateAllInOneDeployment"))
-	objs := c.Update()
-	assert.Len(t, objs, 0)
-}
-
-func TestDelegateAllInOneDepedencies(t *testing.T) {
+func TestDelegateAllInOneDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	c := newAllInOneStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateAllInOneDepedencies"))
-	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
+	j := v1alpha1.NewJaeger("TestDelegateAllInOneDependencies")
+	c := newAllInOneStrategy(j)
+	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	// TODO(jpkroehling): this func deserves a refactoring already
 
 	expectedNumObjs := 6
@@ -94,8 +81,6 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []r
 	if hasConfigMap {
 		expectedNumObjs++
 	}
-
-	assert.Len(t, objs, expectedNumObjs)
 
 	// we should have one deployment, named after the Jaeger's name (ObjectMeta.Name)
 	deployments := map[string]bool{
@@ -131,12 +116,12 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, objs []r
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }
 
 func TestSparkDependenciesAllInOne(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &allInOneStrategy{jaeger: jaeger}
+		return newAllInOneStrategy(jaeger)
 	})
 }
 
@@ -164,8 +149,7 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
 	}
 	for _, test := range tests {
 		s := fce(test.jaeger)
-		objs := s.Create()
-		cronJobs := getTypesOf(objs, reflect.TypeOf(&batchv1beta1.CronJob{}))
+		cronJobs := s.CronJobs()
 		if test.sparkCronJobEnabled {
 			assert.Equal(t, 1, len(cronJobs))
 		} else {
@@ -176,7 +160,7 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
 
 func TestEsIndexCleanerAllInOne(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &allInOneStrategy{jaeger: jaeger}
+		return newAllInOneStrategy(jaeger)
 	})
 }
 
@@ -204,8 +188,7 @@ func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1alpha1.Jaeger) S) {
 	}
 	for _, test := range tests {
 		s := fce(test.jaeger)
-		objs := s.Create()
-		cronJobs := getTypesOf(objs, reflect.TypeOf(&batchv1beta1.CronJob{}))
+		cronJobs := s.CronJobs()
 		if test.sparkCronJobEnabled {
 			assert.Equal(t, 1, len(cronJobs))
 		} else {

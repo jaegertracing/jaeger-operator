@@ -7,20 +7,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
-
-// S knows what type of deployments to build based on a given spec
-type S interface {
-	Dependencies() []batchv1.Job
-	Create() []runtime.Object
-	Update() []runtime.Object
-}
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
@@ -33,14 +24,14 @@ func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
 	if strings.ToLower(jaeger.Spec.Strategy) == "allinone" {
-		return newAllInOneStrategy(ctx, jaeger)
+		return newAllInOneStrategy(jaeger)
 	}
 
 	if strings.ToLower(jaeger.Spec.Strategy) == "streaming" {
-		return newStreamingStrategy(ctx, jaeger)
+		return newStreamingStrategy(jaeger)
 	}
 
-	return newProductionStrategy(ctx, jaeger)
+	return newProductionStrategy(jaeger)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when

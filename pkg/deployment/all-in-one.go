@@ -73,6 +73,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.jaeger.Name,
 			Namespace: a.jaeger.Namespace,
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: a.jaeger.APIVersion,

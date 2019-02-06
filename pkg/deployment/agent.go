@@ -61,6 +61,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-agent-daemonset", a.jaeger.Name),
 			Namespace: a.jaeger.Namespace,
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: a.jaeger.APIVersion,

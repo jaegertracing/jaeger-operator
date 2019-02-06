@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -22,9 +21,8 @@ func init() {
 
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "TestCreateStreamingDeployment"
-	c := newStreamingStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	objs := c.Create()
-	assertDeploymentsAndServicesForStreaming(t, name, objs, false, false, false)
+	c := newStreamingStrategy(v1alpha1.NewJaeger(name))
+	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
 }
 
 func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
@@ -35,9 +33,8 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newStreamingStrategy(context.TODO(), jaeger)
-	objs := c.Create()
-	assertDeploymentsAndServicesForStreaming(t, name, objs, false, true, false)
+	c := newStreamingStrategy(jaeger)
+	assertDeploymentsAndServicesForStreaming(t, name, c, false, true, false)
 }
 
 func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -46,9 +43,8 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1alpha1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newStreamingStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForStreaming(t, name, objs, true, false, false)
+	c := newStreamingStrategy(j)
+	assertDeploymentsAndServicesForStreaming(t, name, c, true, false, false)
 }
 
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
@@ -61,15 +57,8 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newStreamingStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForStreaming(t, name, objs, false, false, true)
-}
-
-func TestUpdateStreamingDeployment(t *testing.T) {
-	name := "TestUpdateStreamingDeployment"
-	c := newStreamingStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	assert.Len(t, c.Update(), 0)
+	c := newStreamingStrategy(j)
+	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, true)
 }
 
 func TestStreamingOptionsArePassed(t *testing.T) {
@@ -101,8 +90,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 	}
 
 	ctrl := For(context.TODO(), jaeger)
-	objs := ctrl.Create()
-	deployments := getDeployments(objs)
+	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
 		// Only the query and ingester should have the ES parameters defined
@@ -129,13 +117,14 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 	}
 }
 
-func TestDelegateStreamingDepedencies(t *testing.T) {
+func TestDelegateStreamingDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	c := newStreamingStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateStreamingDepedencies"))
-	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
+	j := v1alpha1.NewJaeger("TestDelegateStreamingDependencies")
+	c := newStreamingStrategy(j)
+	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
-func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	expectedNumObjs := 6
 
 	if hasDaemonSet {
@@ -149,8 +138,6 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, objs []
 	if hasConfigMap {
 		expectedNumObjs++
 	}
-
-	assert.Len(t, objs, expectedNumObjs)
 
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
@@ -183,17 +170,17 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, objs []
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }
 
 func TestSparkDependenciesStreaming(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &streamingStrategy{jaeger: jaeger}
+		return newStreamingStrategy(jaeger)
 	})
 }
 
 func TestEsIndexClenarStreaming(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &streamingStrategy{jaeger: jaeger}
+		return newStreamingStrategy(jaeger)
 	})
 }
