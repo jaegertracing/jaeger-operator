@@ -79,6 +79,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      i.name(),
 			Namespace: i.jaeger.Namespace,
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: i.jaeger.APIVersion,
@@ -138,13 +139,6 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 	}
-}
-
-// Services returns a list of services to be deployed along with the ingester deployment
-func (i *Ingester) Services() []*v1.Service {
-	// Return empty list, as a service is not required for this deployment, which also
-	// simplifies switching between different strategies.
-	return []*v1.Service{}
 }
 
 func (i *Ingester) labels() map[string]string {
