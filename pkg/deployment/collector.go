@@ -86,6 +86,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.name(),
 			Namespace: c.jaeger.Namespace,
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: c.jaeger.APIVersion,

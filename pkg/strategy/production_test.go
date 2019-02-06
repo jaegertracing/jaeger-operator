@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -22,9 +21,8 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false, false, false)
+	c := newProductionStrategy(v1alpha1.NewJaeger(name))
+	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
@@ -35,9 +33,8 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newProductionStrategy(context.TODO(), jaeger)
-	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false, true, false)
+	c := newProductionStrategy(jaeger)
+	assertDeploymentsAndServicesForProduction(t, name, c, false, true, false)
 }
 
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -46,9 +43,8 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1alpha1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newProductionStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, true, false, false)
+	c := newProductionStrategy(j)
+	assertDeploymentsAndServicesForProduction(t, name, c, true, false, false)
 }
 
 func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
@@ -61,15 +57,8 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newProductionStrategy(context.TODO(), j)
-	objs := c.Create()
-	assertDeploymentsAndServicesForProduction(t, name, objs, false, false, true)
-}
-
-func TestUpdateProductionDeployment(t *testing.T) {
-	name := "TestUpdateProductionDeployment"
-	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger(name))
-	assert.Len(t, c.Update(), 0)
+	c := newProductionStrategy(j)
+	assertDeploymentsAndServicesForProduction(t, name, c, false, false, true)
 }
 
 func TestOptionsArePassed(t *testing.T) {
@@ -96,8 +85,7 @@ func TestOptionsArePassed(t *testing.T) {
 	}
 
 	ctrl := For(context.TODO(), jaeger)
-	objs := ctrl.Create()
-	deployments := getDeployments(objs)
+	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
 		if strings.Contains(dep.Name, "collector") {
@@ -116,13 +104,14 @@ func TestOptionsArePassed(t *testing.T) {
 	}
 }
 
-func TestDelegateProductionDepedencies(t *testing.T) {
+func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	c := newProductionStrategy(context.TODO(), v1alpha1.NewJaeger("TestDelegateProductionDepedencies"))
-	assert.Equal(t, c.Dependencies(), storage.Dependencies(c.jaeger))
+	j := v1alpha1.NewJaeger("TestDelegateProductionDependencies")
+	c := newProductionStrategy(j)
+	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs []runtime.Object, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	expectedNumObjs := 7
 
 	if hasDaemonSet {
@@ -136,8 +125,6 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	if hasConfigMap {
 		expectedNumObjs++
 	}
-
-	assert.Len(t, objs, expectedNumObjs)
 
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
@@ -170,17 +157,17 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, objs [
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, objs, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
 }
 
 func TestSparkDependenciesProduction(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &productionStrategy{jaeger: jaeger}
+		return newProductionStrategy(jaeger)
 	})
 }
 
 func TestEsIndexClenarProduction(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
-		return &productionStrategy{jaeger: jaeger}
+		return newProductionStrategy(jaeger)
 	})
 }

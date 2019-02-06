@@ -50,13 +50,6 @@ func TestIngesterName(t *testing.T) {
 	assert.Equal(t, "TestIngesterName-ingester", dep.ObjectMeta.Name)
 }
 
-func TestIngesterServices(t *testing.T) {
-	jaeger := newIngesterJaeger("TestIngesterServices")
-	ingester := NewIngester(jaeger)
-	svcs := ingester.Services()
-	assert.Len(t, svcs, 0)
-}
-
 func TestDefaultIngesterImage(t *testing.T) {
 	viper.Set("jaeger-ingester-image", "org/custom-ingester-image")
 	viper.Set("jaeger-version", "123")
