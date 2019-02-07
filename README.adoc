@@ -19,12 +19,17 @@ To install the operator, run:
 
 [source,bash]
 ----
+kubectl create namespace observability # <1>
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
 ----
+<1> This creates the namespace used by default in the deployment files.
+
+If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
+files to change `observability` to the required value.
 
 At this point, there should be a `jaeger-operator` deployment available:
 
@@ -45,12 +50,17 @@ The instructions from the previous section also work on OpenShift given that the
 ----
 oc login -u system:admin
 
+oc new-project observability # <1>
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator-openshift.yaml
 ----
+<1> This creates the namespace used by default in the deployment files.
+
+If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
+files to change `observability` to the required value.
 
 Once the operator is installed, grant the role `jaeger-operator` to users who should be able to install individual Jaeger instances. The following example creates a role binding allowing the user `developer` to create Jaeger instances:
 
