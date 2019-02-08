@@ -60,15 +60,25 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("platform", "kubernetes", "The target platform the operator will run. Possible values: 'kubernetes' and 'openshift'")
 	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 
+	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
+	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
+
 	return cmd
 }
 
 func start(cmd *cobra.Command, args []string) {
+	level, err := log.ParseLevel(viper.GetString("log-level"))
+	if err != nil {
+		log.SetLevel(log.InfoLevel)
+	} else {
+		log.SetLevel(level)
+	}
+
 	log.WithFields(log.Fields{
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
 		"version": runtime.Version(),
-	}).Print("Go")
+	}).Info("Go")
 
 	log.WithField("version", version.Get().OperatorSdk).Print("operator-sdk")
 
