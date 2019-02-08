@@ -11,11 +11,11 @@ spec:
       es:
         server-urls: https://elasticsearch:9200
         tls.ca: "/sec/ca"
-        token-file-path: /var/run/secrets/kubernetes.io/serviceaccount/token
+        token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
       es-archive:
         server-urls: https://elasticsearch:9200
         tls.ca: "/sec/ca"
-        token-file-path: /var/run/secrets/kubernetes.io/serviceaccount/token
+        token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
   volumeMounts:
   - name: es-secrets
     mountPath: "/sec"

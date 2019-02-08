@@ -18,7 +18,7 @@ import (
 
 const (
 	workingDir = "/tmp/_working_dir"
-	certScript = "/usr/bin/scripts/cert_generation.sh"
+	certScript = "./scripts/cert_generation.sh"
 )
 
 var secretCertificates = map[string]map[string]string{

@@ -8,7 +8,8 @@ RUN INSTALL_PKGS=" \
     yum clean all && \
     mkdir /tmp/_working_dir && \
     chmod og+w /tmp/_working_dir
-COPY scripts/* /usr/bin/scripts/
+
+COPY scripts/* /scripts/
 
 USER nobody
 
