@@ -219,6 +219,67 @@ func TestDeleteDeployments(t *testing.T) {
 	assert.Error(t, err) // not found
 }
 
+func TestDeleteOnlyAfterSuccessfulUpdate(t *testing.T) {
+	// prepare
+	nsn := types.NamespacedName{
+		Name: "TestDeleteOnlyAfterSuccessfulUpdate",
+	}
+
+	// the deployment to be deleted
+	depToDelete := appsv1.Deployment{}
+	depToDelete.Name = nsn.Name + "-delete"
+	depToDelete.Annotations = map[string]string{
+		"app.kubernetes.io/instance":   nsn.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+	objs := []runtime.Object{v1alpha1.NewJaeger(nsn.Name), &depToDelete}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
+	cl := fake.NewFakeClient(objs...)
+	r := &ReconcileJaeger{client: cl, scheme: s}
+
+	// the deployment to be created
+	dep := appsv1.Deployment{}
+	dep.Name = nsn.Name
+	dep.Status.Replicas = 2
+	dep.Status.ReadyReplicas = 1
+
+	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+		s := strategy.New().WithDeployments([]appsv1.Deployment{dep})
+		return s
+	}
+
+	// sanity check that the deployment to be removed is indeed there in the first place...
+	persistedDelete := &appsv1.Deployment{}
+	assert.NoError(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
+	assert.Equal(t, depToDelete.Name, persistedDelete.Name)
+
+	// test
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		// will block until it finishes, which should happen after the deployments
+		// have achieved stability and everything has been created/updated/deleted
+		_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
+		assert.NoError(t, err)
+		wg.Done()
+	}()
+
+	dep.Status.ReadyReplicas = 2
+	wg.Wait() // will block until the reconcile logic finishes
+
+	// verify that the deployment to be created was created
+	persisted := &appsv1.Deployment{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, nsn.Name, persisted.Name)
+
+	// check that the deployment to be deleted was indeed deleted
+	persistedDelete = &appsv1.Deployment{}
+	assert.Error(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
+	assert.Empty(t, persistedDelete.Name)
+}
+
 func TestHandleDependencies(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{

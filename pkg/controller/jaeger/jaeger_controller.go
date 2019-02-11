@@ -160,7 +160,7 @@ func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
 			deadline = time.Duration(int64(*dep.Spec.ActiveDeadlineSeconds))
 		}
 
-		return wait.Poll(time.Second, deadline*time.Second, func() (done bool, err error) {
+		return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
 			batch := &batchv1.Job{}
 			err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch)
 			if err != nil {
@@ -232,6 +232,17 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 		}
 	}
 
+	for _, d := range depInventory.Create {
+		if err := r.waitForStability(d); err != nil {
+			return err
+		}
+	}
+	for _, d := range depInventory.Update {
+		if err := r.waitForStability(d); err != nil {
+			return err
+		}
+	}
+
 	for _, d := range depInventory.Delete {
 		log.WithFields(log.Fields{
 			"namespace":  jaeger.Namespace,
@@ -244,4 +255,30 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 	}
 
 	return nil
+}
+
+func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
+	return wait.PollImmediate(time.Second, time.Minute, func() (done bool, err error) {
+		d := &appsv1.Deployment{}
+		err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"namespace": dep.Namespace,
+				"name":      dep.Name,
+			}).WithError(err).Error("failed to get the status of the deployment")
+			return false, err
+		}
+
+		if d.Status.ReadyReplicas != d.Status.Replicas {
+			log.WithFields(log.Fields{
+				"namespace": dep.Namespace,
+				"name":      dep.Name,
+				"ready":     d.Status.ReadyReplicas,
+				"desired":   d.Status.Replicas,
+			}).Info("Waiting for deployment to estabilize")
+			return false, nil
+		}
+
+		return true, nil
+	})
 }
