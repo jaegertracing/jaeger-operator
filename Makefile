@@ -66,16 +66,16 @@ e2e-tests: cassandra es crd build docker push
 	@mkdir -p deploy/test
 	@echo Running end-to-end tests...
 
-	@cp deploy/role_binding.yaml deploy/test/namespace-manifests.yaml
+	@cp test/role_binding.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@cat deploy/role.yaml >> deploy/test/namespace-manifests.yaml
+	@cat test/role.yaml >> deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@cat deploy/service_account.yaml >> deploy/test/namespace-manifests.yaml
+	@cat test/service_account.yaml >> deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@cat deploy/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
+	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
 	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/io_v1alpha1_jaeger_crd.yaml -root .
 
 .PHONY: run
