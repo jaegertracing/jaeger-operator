@@ -64,23 +64,73 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: Jaeger
+    - description: A configuration file for a Jaeger custom resource.
+      displayName: Jaeger
+      kind: Jaeger
       name: jaegers.io.jaegertracing
       version: v1alpha1
   description: Provides monitoring and troubleshooting microservices-based distributed
     systems
   displayName: jaeger-operator
-  installModes:
-  - type: OwnNamespace
-    supported: false
-  - type: SingleNamespace
-    supported: false
-  - type: MultiNamespace
-    supported: false
-  - type: AllNamespaces
-    supported: true
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - serviceaccounts
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - io.jaegertracing
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - extensions
+          resources:
+          - ingresses
+          verbs:
+          - '*'
+        - apiGroups:
+          - batch
+          resources:
+          - jobs
+          - cronjobs
+          verbs:
+          - '*'
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          verbs:
+          - '*'
+        serviceAccountName: jaeger-operator
       deployments:
       - name: jaeger-operator
         spec:
@@ -98,19 +148,15 @@ spec:
               containers:
               - args:
                 - start
-                - --platform=openshift
                 env:
                 - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.9.0
+                image: jaegertracing/jaeger-operator:1.9.1
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -170,6 +216,15 @@ spec:
           - '*'
         serviceAccountName: jaeger-operator
     strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
   keywords:
   - tracing
   - monitoring
@@ -188,10 +243,3 @@ spec:
     matchLabels:
       name: jaeger-operator
   version: 1.9.0
-  customresourcedefinitions:
-    owned:
-    - name: jaegers.io.jaegertracing
-      version: v1alpha1
-      kind: Jaeger
-      displayName: Jaeger
-      description: A configuration file for a Jaeger custom resource.
