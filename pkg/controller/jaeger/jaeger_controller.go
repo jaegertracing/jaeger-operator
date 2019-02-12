@@ -73,7 +73,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
-	}).Info("Reconciling Jaeger")
+	}).Debug("Reconciling Jaeger")
 
 	// Fetch the Jaeger instance
 	instance := &v1alpha1.Jaeger{}
@@ -162,12 +162,7 @@ func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
 
 		return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
 			batch := &batchv1.Job{}
-			err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-				}).WithError(err).Error("failed to get the status of the dependency")
+			if err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
 				return false, err
 			}
 
@@ -176,7 +171,7 @@ func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
 				log.WithFields(log.Fields{
 					"namespace": dep.Namespace,
 					"name":      dep.Name,
-				}).Info("Waiting for dependency to complete")
+				}).Debug("Waiting for dependency to complete")
 				return false, nil
 			}
 
@@ -260,12 +255,7 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 	return wait.PollImmediate(time.Second, 5*time.Second, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
-		err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"namespace": dep.Namespace,
-				"name":      dep.Name,
-			}).WithError(err).Error("failed to get the status of the deployment")
+		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
 			return false, err
 		}
 
@@ -275,7 +265,7 @@ func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 				"name":      dep.Name,
 				"ready":     d.Status.ReadyReplicas,
 				"desired":   d.Status.Replicas,
-			}).Info("Waiting for deployment to estabilize")
+			}).Debug("Waiting for deployment to estabilize")
 			return false, nil
 		}
 
