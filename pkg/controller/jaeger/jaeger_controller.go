@@ -258,7 +258,7 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 }
 
 func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
-	return wait.PollImmediate(time.Second, time.Minute, func() (done bool, err error) {
+	return wait.PollImmediate(time.Second, 5*time.Second, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
 		err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d)
 		if err != nil {

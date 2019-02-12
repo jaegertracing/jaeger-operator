@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -266,11 +267,18 @@ func TestDeleteOnlyAfterSuccessfulUpdate(t *testing.T) {
 		wg.Done()
 	}()
 
-	dep.Status.ReadyReplicas = 2
+	// we assume that this sleep time is enough for the reconcile to reach the "wait" logic
+	time.Sleep(100 * time.Millisecond)
+
+	persisted := &appsv1.Deployment{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	persisted.Status.ReadyReplicas = 2
+	assert.NoError(t, cl.Status().Update(context.Background(), persisted))
+
 	wg.Wait() // will block until the reconcile logic finishes
 
 	// verify that the deployment to be created was created
-	persisted := &appsv1.Deployment{}
+	persisted = &appsv1.Deployment{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, nsn.Name, persisted.Name)
 
@@ -309,12 +317,18 @@ func TestHandleDependencies(t *testing.T) {
 		wg.Done()
 	}()
 
-	dep.Status.Succeeded = 1
+	// we assume that this sleep time is enough for the reconcile to reach the "wait" logic
+	time.Sleep(100 * time.Millisecond)
+
+	persisted := &batchv1.Job{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	persisted.Status.Succeeded = 1
+	assert.NoError(t, cl.Status().Update(context.Background(), persisted))
+
 	wg.Wait()
 
 	// verify
-	persisted := &batchv1.Job{}
-	err := cl.Get(context.Background(), nsn, persisted)
+	persisted = &batchv1.Job{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, nsn.Name, persisted.Name)
-	assert.NoError(t, err)
 }
