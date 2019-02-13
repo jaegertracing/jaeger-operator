@@ -84,6 +84,12 @@ func (s S) WithDependencies(deps []batchv1.Job) S {
 	return s
 }
 
+// WithIngresses returns the strategy with the given list of dependencies
+func (s S) WithIngresses(i []v1beta1.Ingress) S {
+	s.ingresses = i
+	return s
+}
+
 // Accounts returns the list of service accounts for this strategy
 func (s S) Accounts() []v1.ServiceAccount {
 	return s.accounts
