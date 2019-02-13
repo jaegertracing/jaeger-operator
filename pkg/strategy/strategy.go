@@ -96,6 +96,12 @@ func (s S) WithRoutes(r []osv1.Route) S {
 	return s
 }
 
+// WithServices returns the strategy with the given list of routes
+func (s S) WithServices(svcs []v1.Service) S {
+	s.services = svcs
+	return s
+}
+
 // Accounts returns the list of service accounts for this strategy
 func (s S) Accounts() []v1.ServiceAccount {
 	return s.accounts
