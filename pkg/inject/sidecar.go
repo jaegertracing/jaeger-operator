@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 
@@ -28,10 +28,10 @@ func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 
 	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
-		logrus.Debugf("Skipping sidecar injection for deployment %v", dep.Name)
+		log.WithField("deployment", dep.Name).Debug("skipping sidecar injection")
 	} else {
 		decorate(dep)
-		logrus.Debugf("Injecting sidecar for pod %v", dep.Name)
+		log.WithField("deployment", dep.Name).Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
 	}
 }
@@ -39,7 +39,7 @@ func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment) bool {
 	if dep.Annotations[Annotation] == "" {
-		logrus.Debugf("Not needed, annotation not present for %v", dep.Name)
+		log.WithField("deployment", dep.Name).Debug("annotation not present, not injecting")
 		return false
 	}
 

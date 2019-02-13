@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -39,7 +39,7 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 
 // Get returns a collector pod
 func (c *Collector) Get() *appsv1.Deployment {
-	logrus.Debugf("Assembling a collector deployment for %v", c.jaeger)
+	log.WithField("instance", c.jaeger.Name).Debug("assembling a collector deployment")
 
 	labels := c.labels()
 	trueVar := true

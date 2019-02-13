@@ -8,27 +8,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestDeploymentInventory(t *testing.T) {
-	toCreate := appsv1.Deployment{
+func TestDaemonSetInventory(t *testing.T) {
+	toCreate := appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-create",
 		},
 	}
-	toUpdate := appsv1.Deployment{
+	toUpdate := appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
 	}
-	toDelete := appsv1.Deployment{
+	toDelete := appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-delete",
 		},
 	}
 
-	existing := []appsv1.Deployment{toUpdate, toDelete}
-	desired := []appsv1.Deployment{toUpdate, toCreate}
+	existing := []appsv1.DaemonSet{toUpdate, toDelete}
+	desired := []appsv1.DaemonSet{toUpdate, toCreate}
 
-	inv := ForDeployments(existing, desired)
+	inv := ForDaemonSets(existing, desired)
 	assert.Len(t, inv.Create, 1)
 	assert.Equal(t, "to-create", inv.Create[0].Name)
 
