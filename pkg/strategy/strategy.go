@@ -90,6 +90,12 @@ func (s S) WithIngresses(i []v1beta1.Ingress) S {
 	return s
 }
 
+// WithRoutes returns the strategy with the given list of routes
+func (s S) WithRoutes(r []osv1.Route) S {
+	s.routes = r
+	return s
+}
+
 // Accounts returns the list of service accounts for this strategy
 func (s S) Accounts() []v1.ServiceAccount {
 	return s.accounts

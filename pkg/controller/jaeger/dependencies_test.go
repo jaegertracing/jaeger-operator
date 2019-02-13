@@ -10,8 +10,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -26,13 +24,10 @@ func TestHandleDependencies(t *testing.T) {
 
 	objs := []runtime.Object{v1alpha1.NewJaeger(nsn.Name)}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
 	dep := batchv1.Job{}
 	dep.Name = nsn.Name
+
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		s := strategy.New().WithDependencies([]batchv1.Job{dep})
 		return s

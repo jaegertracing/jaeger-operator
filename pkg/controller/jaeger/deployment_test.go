@@ -11,8 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -29,15 +27,11 @@ func TestDeploymentCreate(t *testing.T) {
 		v1alpha1.NewJaeger(nsn.Name),
 	}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
 	req := reconcile.Request{
 		NamespacedName: nsn,
 	}
 
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{{
 			ObjectMeta: metav1.ObjectMeta{
@@ -79,11 +73,7 @@ func TestDeploymentUpdate(t *testing.T) {
 		&depOriginal,
 	}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		depUpdated := appsv1.Deployment{}
 		depUpdated.Name = depOriginal.Name
@@ -122,11 +112,7 @@ func TestDeploymentDelete(t *testing.T) {
 		&depOriginal,
 	}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
@@ -161,17 +147,13 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	}
 	objs := []runtime.Object{v1alpha1.NewJaeger(nsn.Name), &depToDelete}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
 	// the deployment to be created
 	dep := appsv1.Deployment{}
 	dep.Name = nsn.Name
 	dep.Status.Replicas = 2
 	dep.Status.ReadyReplicas = 1
 
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{dep})
 		return s
