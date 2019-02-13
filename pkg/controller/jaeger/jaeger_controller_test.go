@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
+	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -25,15 +27,11 @@ func TestNewJaegerInstance(t *testing.T) {
 		v1alpha1.NewJaeger(nsn.Name),
 	}
 
-	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
-	cl := fake.NewFakeClient(objs...)
-	r := &ReconcileJaeger{client: cl, scheme: s}
-
 	req := reconcile.Request{
 		NamespacedName: nsn,
 	}
 
+	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
 		jaeger.Spec.Strategy = "custom-strategy"
 		return strategy.S{}
@@ -86,4 +84,12 @@ func TestDeletedInstance(t *testing.T) {
 	err = cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotEmpty(t, jaeger.Name)
 	assert.Empty(t, persisted.Name) // this means that the object wasn't found
+}
+
+func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
+	s := scheme.Scheme
+	osv1.Install(s)
+	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
+	cl := fake.NewFakeClient(objs...)
+	return &ReconcileJaeger{client: cl, scheme: s}, cl
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,10 +15,10 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
-func TestIngressesCreate(t *testing.T) {
+func TestRoutesCreate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestIngressesCreate",
+		Name: "TestRoutesCreate",
 	}
 
 	objs := []runtime.Object{
@@ -31,7 +31,7 @@ func TestIngressesCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		s := strategy.New().WithIngresses([]v1beta1.Ingress{{
+		s := strategy.New().WithRoutes([]osv1.Route{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestIngressesCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.Ingress{}
+	persisted := &osv1.Route{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -56,13 +56,13 @@ func TestIngressesCreate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestIngressesUpdate(t *testing.T) {
+func TestRoutesUpdate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestIngressesUpdate",
+		Name: "TestRoutesUpdate",
 	}
 
-	orig := v1beta1.Ingress{}
+	orig := osv1.Route{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 
@@ -73,11 +73,11 @@ func TestIngressesUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		updated := v1beta1.Ingress{}
+		updated := osv1.Route{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithIngresses([]v1beta1.Ingress{updated})
+		s := strategy.New().WithRoutes([]osv1.Route{updated})
 		return s
 	}
 
@@ -86,7 +86,7 @@ func TestIngressesUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Ingress{}
+	persisted := &osv1.Route{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -96,13 +96,13 @@ func TestIngressesUpdate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestIngressesDelete(t *testing.T) {
+func TestRoutesDelete(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestIngressesDelete",
+		Name: "TestRoutesDelete",
 	}
 
-	orig := v1beta1.Ingress{}
+	orig := osv1.Route{}
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
@@ -120,7 +120,7 @@ func TestIngressesDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Ingress{}
+	persisted := &osv1.Route{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
