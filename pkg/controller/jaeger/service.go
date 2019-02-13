@@ -26,8 +26,8 @@ func (r *ReconcileJaeger) applyServices(jaeger v1alpha1.Jaeger, desired []v1.Ser
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("creating cronjob")
+			"service":   d.Name,
+		}).Debug("creating service")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
@@ -37,8 +37,8 @@ func (r *ReconcileJaeger) applyServices(jaeger v1alpha1.Jaeger, desired []v1.Ser
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("updating cronjob")
+			"service":   d.Name,
+		}).Debug("updating service")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
@@ -48,8 +48,8 @@ func (r *ReconcileJaeger) applyServices(jaeger v1alpha1.Jaeger, desired []v1.Ser
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("deleting cronjob")
+			"service":   d.Name,
+		}).Debug("deleting service")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

@@ -26,8 +26,8 @@ func (r *ReconcileJaeger) applyIngresses(jaeger v1alpha1.Jaeger, desired []v1bet
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("creating cronjob")
+			"ingress":   d.Name,
+		}).Debug("creating ingress")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
@@ -37,8 +37,8 @@ func (r *ReconcileJaeger) applyIngresses(jaeger v1alpha1.Jaeger, desired []v1bet
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("updating cronjob")
+			"ingress":   d.Name,
+		}).Debug("updating ingress")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
@@ -48,8 +48,8 @@ func (r *ReconcileJaeger) applyIngresses(jaeger v1alpha1.Jaeger, desired []v1bet
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("deleting cronjob")
+			"ingress":   d.Name,
+		}).Debug("deleting ingress")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
