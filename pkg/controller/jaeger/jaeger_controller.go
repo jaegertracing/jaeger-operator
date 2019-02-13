@@ -160,5 +160,9 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, e
 		return false, err
 	}
 
+	if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
