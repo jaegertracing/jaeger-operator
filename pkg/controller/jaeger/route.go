@@ -26,8 +26,8 @@ func (r *ReconcileJaeger) applyRoutes(jaeger v1alpha1.Jaeger, desired []osv1.Rou
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("creating cronjob")
+			"route":     d.Name,
+		}).Debug("creating route")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
@@ -37,8 +37,8 @@ func (r *ReconcileJaeger) applyRoutes(jaeger v1alpha1.Jaeger, desired []osv1.Rou
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("updating cronjob")
+			"route":     d.Name,
+		}).Debug("updating route")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
@@ -48,8 +48,8 @@ func (r *ReconcileJaeger) applyRoutes(jaeger v1alpha1.Jaeger, desired []osv1.Rou
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("deleting cronjob")
+			"route":     d.Name,
+		}).Debug("deleting route")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
