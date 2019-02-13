@@ -48,9 +48,33 @@ func (s S) Type() Type {
 	return s.typ
 }
 
+// WithAccounts returns the strategy with the given list of service accounts
+func (s S) WithAccounts(accs []v1.ServiceAccount) S {
+	s.accounts = accs
+	return s
+}
+
+// WithConfigMaps returns the strategy with the given list of config maps
+func (s S) WithConfigMaps(c []v1.ConfigMap) S {
+	s.configMaps = c
+	return s
+}
+
+// WithCronJobs returns the strategy with the given list of cron jobs
+func (s S) WithCronJobs(c []batchv1beta1.CronJob) S {
+	s.cronJobs = c
+	return s
+}
+
 // WithDeployments returns the strategy with the given list of deployments
 func (s S) WithDeployments(deps []appsv1.Deployment) S {
 	s.deployments = deps
+	return s
+}
+
+// WithDaemonSets returns the strategy with the given list of daemonsets
+func (s S) WithDaemonSets(d []appsv1.DaemonSet) S {
+	s.daemonSets = d
 	return s
 }
 

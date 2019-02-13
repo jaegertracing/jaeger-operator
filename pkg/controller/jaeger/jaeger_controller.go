@@ -3,16 +3,10 @@ package jaeger
 import (
 	"context"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -21,7 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -146,129 +139,26 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 	return strategy.For(context.Background(), instance)
 }
 
-func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
-	for _, dep := range str.Dependencies() {
-		err := r.client.Create(context.Background(), &dep)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return err
-		}
-
-		// default to 2 minutes, in case we get a null pointer
-		deadline := time.Duration(int64(120))
-		if nil != dep.Spec.ActiveDeadlineSeconds {
-			// we probably want to add a couple of seconds to this deadline, but for now, this should be sufficient
-			deadline = time.Duration(int64(*dep.Spec.ActiveDeadlineSeconds))
-		}
-
-		return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
-			batch := &batchv1.Job{}
-			if err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
-				return false, err
-			}
-
-			// for now, we just assume each batch job has one pod
-			if batch.Status.Succeeded != 1 {
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-				}).Debug("Waiting for dependency to complete")
-				return false, nil
-			}
-
-			return true, nil
-		})
+func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, error) {
+	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
+		return false, err
 	}
 
-	return nil
-}
+	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
+		return false, err
+	}
 
-func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, error) {
+	if err := r.applyCronJobs(jaeger, str.CronJobs()); err != nil {
+		return false, err
+	}
+
+	if err := r.applyDaemonSets(jaeger, str.DaemonSets()); err != nil {
+		return false, err
+	}
+
 	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
 		return false, err
 	}
 
 	return true, nil
-}
-
-func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []appsv1.Deployment) error {
-	opts := client.MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	})
-	depList := &appsv1.DeploymentList{}
-	if err := r.client.List(context.Background(), opts, depList); err != nil {
-		return err
-	}
-
-	// we now traverse the list, so that we end up with three lists:
-	// 1) deployments that are on both `desired` and `existing` (update)
-	// 2) deployments that are only on `desired` (create)
-	// 3) deployments that are only on `existing` (delete)
-	depInventory := inventory.ForDeployments(depList.Items, desired)
-	for _, d := range depInventory.Create {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("creating deployment")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
-		}
-	}
-
-	for _, d := range depInventory.Update {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("updating deployment")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
-		}
-	}
-
-	for _, d := range depInventory.Create {
-		if err := r.waitForStability(d); err != nil {
-			return err
-		}
-	}
-	for _, d := range depInventory.Update {
-		if err := r.waitForStability(d); err != nil {
-			return err
-		}
-	}
-
-	for _, d := range depInventory.Delete {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("deleting deployment")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
-	return wait.PollImmediate(time.Second, 5*time.Second, func() (done bool, err error) {
-		d := &appsv1.Deployment{}
-		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
-			return false, err
-		}
-
-		if d.Status.ReadyReplicas != d.Status.Replicas {
-			log.WithFields(log.Fields{
-				"namespace": dep.Namespace,
-				"name":      dep.Name,
-				"ready":     d.Status.ReadyReplicas,
-				"desired":   d.Status.Replicas,
-			}).Debug("Waiting for deployment to estabilize")
-			return false, nil
-		}
-
-		return true, nil
-	})
 }
