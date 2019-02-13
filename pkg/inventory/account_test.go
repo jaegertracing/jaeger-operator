@@ -4,31 +4,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestDeploymentInventory(t *testing.T) {
-	toCreate := appsv1.Deployment{
+func TestAccountInventory(t *testing.T) {
+	toCreate := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-create",
 		},
 	}
-	toUpdate := appsv1.Deployment{
+	toUpdate := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
 	}
-	toDelete := appsv1.Deployment{
+	toDelete := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-delete",
 		},
 	}
 
-	existing := []appsv1.Deployment{toUpdate, toDelete}
-	desired := []appsv1.Deployment{toUpdate, toCreate}
+	existing := []v1.ServiceAccount{toUpdate, toDelete}
+	desired := []v1.ServiceAccount{toUpdate, toCreate}
 
-	inv := ForDeployments(existing, desired)
+	inv := ForAccounts(existing, desired)
 	assert.Len(t, inv.Create, 1)
 	assert.Equal(t, "to-create", inv.Create[0].Name)
 

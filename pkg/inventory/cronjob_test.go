@@ -4,31 +4,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestDeploymentInventory(t *testing.T) {
-	toCreate := appsv1.Deployment{
+func TestCronJobInventory(t *testing.T) {
+	toCreate := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-create",
 		},
 	}
-	toUpdate := appsv1.Deployment{
+	toUpdate := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
 	}
-	toDelete := appsv1.Deployment{
+	toDelete := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-delete",
 		},
 	}
 
-	existing := []appsv1.Deployment{toUpdate, toDelete}
-	desired := []appsv1.Deployment{toUpdate, toCreate}
+	existing := []batchv1beta1.CronJob{toUpdate, toDelete}
+	desired := []batchv1beta1.CronJob{toUpdate, toCreate}
 
-	inv := ForDeployments(existing, desired)
+	inv := ForCronJobs(existing, desired)
 	assert.Len(t, inv.Create, 1)
 	assert.Equal(t, "to-create", inv.Create[0].Name)
 

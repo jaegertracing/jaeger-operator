@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -32,10 +32,7 @@ func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
 	if strings.ToLower(a.jaeger.Spec.Agent.Strategy) != "daemonset" {
-		logrus.Debugf(
-			"The Jaeger instance '%v' is using a Sidecar strategy for the Jaeger Agent. Skipping its DaemonSet deployment.",
-			a.jaeger.Name,
-		)
+		log.WithFields(log.Fields{"instance": a.jaeger.Name, "strategy": a.jaeger.Spec.Agent.Strategy}).Debug("skipping agent daemonset")
 		return nil
 	}
 
