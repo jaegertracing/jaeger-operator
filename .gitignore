@@ -62,6 +62,8 @@ anaconda-mode/
 *.test
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+cover.html
+coverrage.html
 ### Vim ###
 # swap
 .sw[a-p]
