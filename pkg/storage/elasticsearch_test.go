@@ -42,7 +42,8 @@ func TestInject(t *testing.T) {
 			VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
 		}},
 	}
-	inject(p)
+	es := &ElasticsearchDeployment{}
+	es.InjectStorageConfiguration(p)
 	expVolumes := []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
 		Secret: &v1.SecretVolumeSource{
 			SecretName: "jaeger-elasticsearch",
@@ -53,11 +54,8 @@ func TestInject(t *testing.T) {
 		Args: []string{
 			"foo",
 			"--es.server-urls=https://elasticsearch:9200",
-			"--es-archive.server-urls=https://elasticsearch:9200",
 			"--es.token-file=" + k8sTokenFile,
-			"--es-archive.token-file=" + k8sTokenFile,
-			"--es.tls.ca=" + caCert,
-			"--es-archive.tls.ca=" + caCert,
+			"--es.tls.ca=" + caPath,
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{Name: "lol"},
@@ -73,7 +71,8 @@ func TestInject(t *testing.T) {
 
 func TestCreateElasticsearchObjects(t *testing.T) {
 	j := v1alpha1.NewJaeger("foo")
-	objs, err := CreateElasticsearchObjects(j, &v1.PodSpec{}, &v1.PodSpec{})
+	es := &ElasticsearchDeployment{Jaeger: j}
+	objs, err := es.CreateElasticsearchObjects()
 	assert.Nil(t, objs)
 	assert.EqualError(t, err, "failed to create Elasticsearch certificates: failed to get watch namespace: WATCH_NAMESPACE must be set")
 }

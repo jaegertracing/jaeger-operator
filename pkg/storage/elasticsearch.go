@@ -17,8 +17,10 @@ const (
 	// #nosec   G101: Potential hardcoded credentials (Confidence: LOW, Severity: HIGH)
 	k8sTokenFile    = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	volumeName      = "certs"
-	volumeMountPath = "/sec"
-	caCert          = volumeMountPath + "/ca"
+	volumeMountPath = "/certs"
+	caPath          = volumeMountPath + "/ca"
+	keyPath         = volumeMountPath + "/key"
+	certPath        = volumeMountPath + "/cert"
 )
 
 func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
@@ -32,26 +34,11 @@ func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
 	return true
 }
 
-func CreateElasticsearchObjects(j *v1alpha1.Jaeger, collector, query *v1.PodSpec) ([]runtime.Object, error) {
-	err := createESCerts(certScript)
-	if err != nil {
-		logrus.Error("Failed to create Elasticsearch certificates: ", err)
-		return nil, errors.Wrap(err, "failed to create Elasticsearch certificates")
-	}
-	os := []runtime.Object{}
-	esSecret := createESSecrets(j)
-	for _, s := range esSecret {
-		os = append(os, s)
-	}
-	os = append(os, getESRoles(j, collector.ServiceAccountName, query.ServiceAccountName)...)
-	os = append(os, createCr(j))
-	inject(collector)
-	inject(query)
-	return os, nil
+type ElasticsearchDeployment struct {
+	Jaeger *v1alpha1.Jaeger
 }
 
-// TODO inject curator certs to es-index-cleaner
-func inject(p *v1.PodSpec) {
+func (*ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	p.Volumes = append(p.Volumes, v1.Volume{
 		Name: volumeName,
 		VolumeSource: v1.VolumeSource{
@@ -62,19 +49,58 @@ func inject(p *v1.PodSpec) {
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
+		// TODO archive storage if it is enabled?
 		p.Containers[0].Args = append(p.Containers[0].Args,
 			"--es.server-urls=https://elasticsearch:9200",
-			"--es-archive.server-urls=https://elasticsearch:9200",
 			"--es.token-file="+k8sTokenFile,
-			"--es-archive.token-file="+k8sTokenFile,
-			"--es.tls.ca="+caCert,
-			"--es-archive.tls.ca="+caCert)
+			"--es.tls.ca="+caPath)
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  true,
 			MountPath: volumeMountPath,
 		})
 	}
+}
+
+func (*ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
+	p.Volumes = append(p.Volumes, v1.Volume{
+		Name: volumeName,
+		VolumeSource: v1.VolumeSource{
+			Secret: &v1.SecretVolumeSource{
+				SecretName: "curator",
+			},
+		},
+	})
+	// we assume jaeger containers are first
+	if len(p.Containers) > 0 {
+		// TODO archive storage if it is enabled?
+		p.Containers[0].Env = append(p.Containers[0].Env,
+			v1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
+			v1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
+			v1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
+		)
+		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  true,
+			MountPath: volumeMountPath,
+		})
+	}
+}
+
+func (ed *ElasticsearchDeployment) CreateElasticsearchObjects(serviceAccounts ...string) ([]runtime.Object, error) {
+	err := createESCerts(certScript)
+	if err != nil {
+		logrus.Error("Failed to create Elasticsearch certificates: ", err)
+		return nil, errors.Wrap(err, "failed to create Elasticsearch certificates")
+	}
+	os := []runtime.Object{}
+	esSecret := createESSecrets(ed.Jaeger)
+	for _, s := range esSecret {
+		os = append(os, s)
+	}
+	os = append(os, getESRoles(ed.Jaeger, serviceAccounts...)...)
+	os = append(os, createCr(ed.Jaeger))
+	return os, nil
 }
 
 func createCr(j *v1alpha1.Jaeger) *esv1alpha1.Elasticsearch {

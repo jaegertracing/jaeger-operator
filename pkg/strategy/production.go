@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -58,10 +59,6 @@ func (c *productionStrategy) Create() []runtime.Object {
 
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(c.jaeger, query.Get())
-	if storage.ShouldDeployElasticsearch(c.jaeger.Spec.Storage) {
-		es, _ := storage.CreateElasticsearchObjects(c.jaeger, &cDep.Spec.Template.Spec, &queryDep.Spec.Template.Spec)
-		os = append(os, es...)
-	}
 
 	// add the deployments
 	os = append(os, cDep, queryDep)
@@ -98,11 +95,26 @@ func (c *productionStrategy) Create() []runtime.Object {
 		}
 	}
 
+	var indexCleaner *batchv1beta1.CronJob
 	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if strings.ToLower(c.jaeger.Spec.Storage.Type) == "elasticsearch" {
-			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
+			indexCleaner = cronjob.CreateEsIndexCleaner(c.jaeger)
+			os = append(os, indexCleaner)
 		} else {
 			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+		}
+	}
+
+	if storage.ShouldDeployElasticsearch(c.jaeger.Spec.Storage) {
+		es := &storage.ElasticsearchDeployment{
+			Jaeger: c.jaeger,
+		}
+		objs, _ := es.CreateElasticsearchObjects(cDep.Spec.Template.Spec.ServiceAccountName, queryDep.Spec.Template.Spec.ServiceAccountName)
+		os = append(os, objs...)
+		es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
+		es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
+		if indexCleaner != nil {
+			es.InjectIndexCleanerConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
 		}
 	}
 
