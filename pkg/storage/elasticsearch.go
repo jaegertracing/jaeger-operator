@@ -102,27 +102,30 @@ func (ed *ElasticsearchDeployment) CreateElasticsearchObjects(serviceAccounts ..
 		os = append(os, s)
 	}
 	os = append(os, getESRoles(ed.Jaeger, serviceAccounts...)...)
-	os = append(os, createCr(ed.Jaeger))
+	os = append(os, ed.createCr())
 	return os, nil
 }
 
-func createCr(j *v1alpha1.Jaeger) *esv1alpha1.Elasticsearch {
+func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {
 	return &esv1alpha1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:       j.Namespace,
+			Namespace:       ed.Jaeger.Namespace,
 			Name:            "elasticsearch",
-			OwnerReferences: []metav1.OwnerReference{asOwner(j)},
+			OwnerReferences: []metav1.OwnerReference{asOwner(ed.Jaeger)},
 		},
 		Spec: esv1alpha1.ElasticsearchSpec{
-			Spec: esv1alpha1.ElasticsearchNodeSpec{
-				Resources: v1.ResourceRequirements{},
-			},
 			ManagementState:  esv1alpha1.ManagementStateManaged,
-			RedundancyPolicy: esv1alpha1.SingleRedundancy,
+			RedundancyPolicy: ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy,
+			Spec: esv1alpha1.ElasticsearchNodeSpec{
+				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
+			},
 			Nodes: []esv1alpha1.ElasticsearchNode{
 				{
-					NodeCount: 1,
-					Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster}},
+					NodeCount:    ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount,
+					Storage:      ed.Jaeger.Spec.Storage.Elasticsearch.Storage,
+					NodeSelector: ed.Jaeger.Spec.Storage.Elasticsearch.NodeSelector,
+					Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
+				},
 			},
 		},
 	}

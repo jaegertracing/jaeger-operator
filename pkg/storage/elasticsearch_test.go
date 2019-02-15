@@ -29,7 +29,8 @@ func TestCreateElasticsearchCR(t *testing.T) {
 	trueVar := true
 	j := v1alpha1.NewJaeger("foo")
 	j.Namespace = "myproject"
-	cr := createCr(j)
+	es := &ElasticsearchDeployment{Jaeger: j}
+	cr := es.createCr()
 	assert.Equal(t, "myproject", cr.Namespace)
 	assert.Equal(t, "elasticsearch", cr.Name)
 	assert.Equal(t, []metav1.OwnerReference{{Name: "foo", Controller: &trueVar}}, cr.OwnerReferences)

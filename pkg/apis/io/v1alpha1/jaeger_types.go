@@ -3,6 +3,9 @@ package v1alpha1
 import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 // IngressSecurityType represents the possible values for the security type
@@ -136,6 +139,15 @@ type JaegerStorageSpec struct {
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
 	SparkDependencies     JaegerDependenciesSpec          `json:"dependencies"`
 	EsIndexCleaner        JaegerEsIndexCleanerSpec        `json:"esIndexCleaner"`
+	Elasticsearch         ElasticsearchSpec               `json:"elasticsearch"`
+}
+
+type ElasticsearchSpec struct {
+	Resources        v1.ResourceRequirements             `json:"resources"`
+	NodeCount        int32                               `json:"nodeCount"`
+	NodeSelector     map[string]string                   `json:"nodeSelector,omitempty"`
+	Storage          esv1alpha1.ElasticsearchStorageSpec `json:"storage"`
+	RedundancyPolicy v1alpha1.RedundancyPolicyType       `json:"redundancyPolicy"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

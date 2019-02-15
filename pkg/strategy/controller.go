@@ -96,6 +96,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
+	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 }
 
 func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec, storage string) {
@@ -126,6 +127,12 @@ func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec, storage stri
 	}
 	if spec.NumberOfDays == 0 {
 		spec.NumberOfDays = 7
+	}
+}
+
+func normalizeElasticsearch(spec *v1alpha1.ElasticsearchSpec) {
+	if spec.NodeCount == 0 {
+		spec.NodeCount = 1
 	}
 }
 

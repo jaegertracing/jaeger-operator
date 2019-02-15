@@ -7,7 +7,10 @@ spec:
   strategy: production
   storage:
     type: elasticsearch
+    elasticsearch:
+      nodeCount: 1
+      resources:
     esIndexCleaner:
       eabled: true
-      schedule: "*/3 * * * *"
+      schedule: "*/30 * * * *"
       numberOfDays: 1
