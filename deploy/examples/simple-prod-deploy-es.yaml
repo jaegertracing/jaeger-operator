@@ -7,3 +7,7 @@ spec:
   strategy: production
   storage:
     type: elasticsearch
+    esIndexCleaner:
+      eabled: true
+      schedule: "*/3 * * * *"
+      numberOfDays: 1

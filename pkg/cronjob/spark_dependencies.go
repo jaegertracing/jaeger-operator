@@ -29,6 +29,7 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
 
 	trueVar := true
+	one := int32(1)
 	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -45,9 +46,11 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			Schedule: jaeger.Spec.Storage.SparkDependencies.Schedule,
+			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
+			Schedule:          jaeger.Spec.Storage.SparkDependencies.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
+					Parallelism: &one,
 					Template: v1.PodTemplateSpec{
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{

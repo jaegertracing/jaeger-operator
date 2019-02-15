@@ -15,12 +15,13 @@ import (
 
 const (
 	// #nosec   G101: Potential hardcoded credentials (Confidence: LOW, Severity: HIGH)
-	k8sTokenFile    = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-	volumeName      = "certs"
-	volumeMountPath = "/certs"
-	caPath          = volumeMountPath + "/ca"
-	keyPath         = volumeMountPath + "/key"
-	certPath        = volumeMountPath + "/cert"
+	k8sTokenFile     = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	volumeName       = "certs"
+	volumeMountPath  = "/certs"
+	caPath           = volumeMountPath + "/ca"
+	keyPath          = volumeMountPath + "/key"
+	certPath         = volumeMountPath + "/cert"
+	elasticsearchUrl = "https://elasticsearch:9200"
 )
 
 func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
@@ -51,7 +52,7 @@ func (*ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	if len(p.Containers) > 0 {
 		// TODO archive storage if it is enabled?
 		p.Containers[0].Args = append(p.Containers[0].Args,
-			"--es.server-urls=https://elasticsearch:9200",
+			"--es.server-urls="+elasticsearchUrl,
 			"--es.token-file="+k8sTokenFile,
 			"--es.tls.ca="+caPath)
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
@@ -73,8 +74,10 @@ func (*ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
-		// TODO archive storage if it is enabled?
+		// the size of arguments arr should be always 2
+		p.Containers[0].Args[1] = elasticsearchUrl
 		p.Containers[0].Env = append(p.Containers[0].Env,
+			v1.EnvVar{Name: "ES_TLS", Value: "true"},
 			v1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
 			v1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
 			v1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
@@ -112,8 +115,6 @@ func createCr(j *v1alpha1.Jaeger) *esv1alpha1.Elasticsearch {
 		},
 		Spec: esv1alpha1.ElasticsearchSpec{
 			Spec: esv1alpha1.ElasticsearchNodeSpec{
-				// TODO remove after https://github.com/openshift/origin-aggregated-logging/pull/1500 is merged
-				Image:     "pavolloffay/ecl-es:latest",
 				Resources: v1.ResourceRequirements{},
 			},
 			ManagementState:  esv1alpha1.ManagementStateManaged,
