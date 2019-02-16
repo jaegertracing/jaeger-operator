@@ -163,7 +163,7 @@ func (c *Collector) Services() []*v1.Service {
 
 func (c *Collector) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
+		"app": "jaeger", // kept for backwards compatibility, remove by version 2.0
 		"app.kubernetes.io/name":       c.name(),
 		"app.kubernetes.io/instance":   c.jaeger.Name,
 		"app.kubernetes.io/component":  "collector",

@@ -176,7 +176,7 @@ func (a *AllInOne) Services() []*v1.Service {
 
 func (a *AllInOne) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       a.name(),
 		"app.kubernetes.io/instance":   a.jaeger.Name,
 		"app.kubernetes.io/component":  "all-in-one",
