@@ -1,0 +1,6 @@
+FROM arm64v8/alpine:3.9
+
+USER nobody
+
+ADD build/_output/bin/jaeger-operator /usr/local/bin/jaeger-operator
+ENTRYPOINT ["/usr/local/bin/jaeger-operator"]

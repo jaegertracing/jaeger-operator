@@ -1,5 +1,6 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+GO_FLAGS_ARM64 ?= GOOS=linux GOARCH=arm64 CGO_ENABLED=0
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= default
 BIN_DIR ?= "build/_output/bin"
@@ -9,6 +10,7 @@ FMT_LOG=fmt.log
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+BUILD_IMAGE_ARM64 ?= "$(NAMESPACE)/$(OPERATOR_NAME)-arm64:latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
@@ -47,9 +49,19 @@ build: format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
+
+.PHONY: build-arm64
+build-arm64: format
+		@echo Building for arm64...
+		@${GO_FLAGS_ARM64} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
+
 .PHONY: docker
 docker:
 	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+
+.PHONY: docker-arm64
+docker-arm64:
+	@docker build --file build/Dockerfile.arm64 -t "$(BUILD_IMAGE_ARM64)" .
 
 .PHONY: push
 push:
