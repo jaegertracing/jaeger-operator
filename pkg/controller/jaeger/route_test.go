@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	osv1 "github.com/openshift/api/route/v1"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,6 +18,9 @@ import (
 
 func TestRoutesCreate(t *testing.T) {
 	// prepare
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
 		Name: "TestRoutesCreate",
 	}
@@ -58,6 +62,9 @@ func TestRoutesCreate(t *testing.T) {
 
 func TestRoutesUpdate(t *testing.T) {
 	// prepare
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
 		Name: "TestRoutesUpdate",
 	}
@@ -98,6 +105,9 @@ func TestRoutesUpdate(t *testing.T) {
 
 func TestRoutesDelete(t *testing.T) {
 	// prepare
+	viper.Set("platform", "openshift")
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
 		Name: "TestRoutesDelete",
 	}

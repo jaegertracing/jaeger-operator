@@ -21,7 +21,14 @@ func NewCollectorService(jaeger *v1alpha1.Jaeger, selector map[string]string) *v
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetNameForCollectorService(jaeger),
 			Namespace: jaeger.Namespace,
-			Labels:    selector,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       GetNameForCollectorService(jaeger),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "service-collector",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,

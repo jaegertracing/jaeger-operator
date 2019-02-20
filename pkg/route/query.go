@@ -41,6 +41,14 @@ func (r *QueryRoute) Get() *v1.Route {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.jaeger.Name,
 			Namespace: r.jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       r.jaeger.Name,
+				"app.kubernetes.io/instance":   r.jaeger.Name,
+				"app.kubernetes.io/component":  "query-route",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: r.jaeger.APIVersion,
