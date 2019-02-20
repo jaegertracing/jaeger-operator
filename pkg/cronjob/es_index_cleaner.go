@@ -13,6 +13,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
+// CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
 func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	esUrls := getEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
@@ -22,6 +23,14 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "cronjob-es-index-cleaner",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,

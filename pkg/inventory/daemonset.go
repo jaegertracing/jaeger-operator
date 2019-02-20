@@ -18,8 +18,16 @@ func ForDaemonSets(existing []appsv1.DaemonSet, desired []appsv1.DaemonSet) Daem
 	mdelete := daemonsetMap(existing)
 
 	for k, v := range mcreate {
-		if _, ok := mdelete[k]; ok {
-			update = append(update, v)
+		if t, ok := mdelete[k]; ok {
+			tp := t.DeepCopy()
+
+			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+			tp.Spec = v.Spec
+			tp.ObjectMeta.Labels = v.ObjectMeta.Labels
+			tp.ObjectMeta.Annotations = v.ObjectMeta.Annotations
+			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+			update = append(update, *tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}

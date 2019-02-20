@@ -54,6 +54,14 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", i.jaeger.Name),
 			Namespace: i.jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       fmt.Sprintf("%s-query", i.jaeger.Name),
+				"app.kubernetes.io/instance":   i.jaeger.Name,
+				"app.kubernetes.io/component":  "query-ingress",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: i.jaeger.APIVersion,

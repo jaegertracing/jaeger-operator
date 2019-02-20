@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -164,12 +165,14 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, e
 		return false, err
 	}
 
-	if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
-		return false, err
-	}
-
-	if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
-		return false, err
+	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
+		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
+			return false, err
+		}
+	} else {
+		if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
+			return false, err
+		}
 	}
 
 	return true, nil
