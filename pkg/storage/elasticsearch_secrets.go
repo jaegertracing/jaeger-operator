@@ -70,7 +70,10 @@ func secretName(jaeger, secret string) string {
 
 func createESSecrets(jaeger *v1alpha1.Jaeger) []*v1.Secret {
 	return []*v1.Secret{
-		// master and ES secrets have hardcoded name - e.g. do not use instance name in it
+		// master and ES secrets use hardcoded name - e.g. do not use instance name in it
+		// the other problem for us is that sg_config.yml defines a role which depends on namespace
+		// we could make the "resource" configurable once ES image and es-operator-are refactored
+		// https://jira.coreos.com/browse/LOG-326
 		createSecret(jaeger, masterSecret.name, getWorkingDirContents(masterSecret.content)),
 		createSecret(jaeger, esSecret.name, getWorkingDirContents(esSecret.content)),
 		createSecret(jaeger, secretName(jaeger.Name, jaegerSecret.name), getWorkingDirContents(jaegerSecret.content)),
