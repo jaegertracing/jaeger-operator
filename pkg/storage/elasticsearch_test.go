@@ -43,11 +43,11 @@ func TestInject(t *testing.T) {
 			VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
 		}},
 	}
-	es := &ElasticsearchDeployment{}
+	es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
 	es.InjectStorageConfiguration(p)
 	expVolumes := []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
 		Secret: &v1.SecretVolumeSource{
-			SecretName: "jaeger-elasticsearch",
+			SecretName: "hoo-jaeger-elasticsearch",
 		},
 	}}}
 	assert.Equal(t, expVolumes, p.Volumes)
