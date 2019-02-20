@@ -21,12 +21,23 @@ const (
 	certScript = "./scripts/cert_generation.sh"
 )
 
-var secretCertificates = map[string]map[string]string{
-	"master-certs": {
+type secret struct {
+	name    string
+	content map[string]string
+}
+
+// TODO remove?
+var masterSecret = secret{
+	name: "master-certs",
+	content: map[string]string{
 		"masterca":  "ca.crt",
-		"masterkey": "ca.key",
+		"masterkey": "ca.key", "ca": "ca.crt",
 	},
-	"elasticsearch": {
+}
+
+var esSecret = secret{
+	name: "elasticsearch",
+	content: map[string]string{
 		"elasticsearch.key": "elasticsearch.key",
 		"elasticsearch.crt": "elasticsearch.crt",
 		"logging-es.key":    "logging-es.key",
@@ -35,27 +46,36 @@ var secretCertificates = map[string]map[string]string{
 		"admin-cert":        "system.admin.crt",
 		"admin-ca":          "ca.crt",
 	},
-	"jaeger-elasticsearch": {
+}
+
+var jaegerSecret = secret{
+	name: "jaeger-elasticsearch",
+	content: map[string]string{
 		"ca": "ca.crt",
 	},
-	"curator": {
+}
+
+var curatorSecret = secret{
+	name: "curator",
+	content: map[string]string{
 		"ca":   "ca.crt",
 		"key":  "system.logging.curator.key",
 		"cert": "system.logging.curator.crt",
 	},
 }
 
+func secretName(jaeger, secret string) string {
+	return fmt.Sprintf("%s-%s", jaeger, secret)
+}
+
 func createESSecrets(jaeger *v1alpha1.Jaeger) []*v1.Secret {
-	var secrets []*v1.Secret
-	for name, content := range secretCertificates {
-		c := map[string][]byte{}
-		for secretKey, certName := range content {
-			c[secretKey] = getWorkingDirFileContents(certName)
-		}
-		s := createSecret(jaeger, name, c)
-		secrets = append(secrets, s)
+	return []*v1.Secret{
+		// master and ES secrets have hardcoded name - e.g. do not use instance name in it
+		createSecret(jaeger, masterSecret.name, getWorkingDirContents(masterSecret.content)),
+		createSecret(jaeger, esSecret.name, getWorkingDirContents(esSecret.content)),
+		createSecret(jaeger, secretName(jaeger.Name, jaegerSecret.name), getWorkingDirContents(jaegerSecret.content)),
+		createSecret(jaeger, secretName(jaeger.Name, curatorSecret.name), getWorkingDirContents(curatorSecret.content)),
 	}
-	return secrets
 }
 
 // createESCerts runs bash scripts which generates certificates
@@ -100,6 +120,14 @@ func asOwner(jaeger *v1alpha1.Jaeger) metav1.OwnerReference {
 		UID:        jaeger.UID,
 		Controller: &b,
 	}
+}
+
+func getWorkingDirContents(content map[string]string) map[string][]byte {
+	c := map[string][]byte{}
+	for secretKey, certName := range content {
+		c[secretKey] = getWorkingDirFileContents(certName)
+	}
+	return c
 }
 
 func getWorkingDirFileContents(filePath string) []byte {

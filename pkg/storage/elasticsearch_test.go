@@ -18,7 +18,7 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 		{j: v1alpha1.JaegerStorageSpec{}},
 		{j: v1alpha1.JaegerStorageSpec{Type: "cassandra"}},
 		{j: v1alpha1.JaegerStorageSpec{Type: "elasticsearch", Options: v1alpha1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})}},
-		{j: v1alpha1.JaegerStorageSpec{Type: "ElasticSearch"}, expected: true},
+		{j: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}, expected: true},
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.expected, ShouldDeployElasticsearch(test.j))

@@ -24,7 +24,7 @@ const (
 )
 
 func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
-	if strings.EqualFold(s.Type, "elasticsearch") {
+	if !strings.EqualFold(s.Type, "elasticsearch") {
 		return false
 	}
 	_, ok := s.Options.Map()["es.server-urls"]
@@ -38,12 +38,12 @@ type ElasticsearchDeployment struct {
 	Jaeger *v1alpha1.Jaeger
 }
 
-func (*ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
+func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	p.Volumes = append(p.Volumes, v1.Volume{
 		Name: volumeName,
 		VolumeSource: v1.VolumeSource{
 			Secret: &v1.SecretVolumeSource{
-				SecretName: "jaeger-elasticsearch",
+				SecretName: secretName(ed.Jaeger.Name, jaegerSecret.name),
 			},
 		},
 	})
@@ -62,12 +62,12 @@ func (*ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	}
 }
 
-func (*ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
+func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
 	p.Volumes = append(p.Volumes, v1.Volume{
 		Name: volumeName,
 		VolumeSource: v1.VolumeSource{
 			Secret: &v1.SecretVolumeSource{
-				SecretName: "curator",
+				SecretName: secretName(ed.Jaeger.Name, curatorSecret.name),
 			},
 		},
 	})
@@ -108,7 +108,7 @@ func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {
 	return &esv1alpha1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       ed.Jaeger.Namespace,
-			Name:            "elasticsearch",
+			Name:            esSecret.name,
 			OwnerReferences: []metav1.OwnerReference{asOwner(ed.Jaeger)},
 		},
 		Spec: esv1alpha1.ElasticsearchSpec{
