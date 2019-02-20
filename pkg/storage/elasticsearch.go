@@ -28,10 +28,7 @@ func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
 		return false
 	}
 	_, ok := s.Options.Map()["es.server-urls"]
-	if ok {
-		return false
-	}
-	return true
+	return !ok
 }
 
 type ElasticsearchDeployment struct {
@@ -49,7 +46,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
-		// TODO archive storage if it is enabled?
+		// TODO add to archive storage if it is enabled?
 		p.Containers[0].Args = append(p.Containers[0].Args,
 			"--es.server-urls="+elasticsearchUrl,
 			"--es.token-file="+k8sTokenFile,
@@ -73,7 +70,7 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
-		// the size of arguments arr should be always 2
+		// the size of arguments array should be always 2
 		p.Containers[0].Args[1] = elasticsearchUrl
 		p.Containers[0].Env = append(p.Containers[0].Env,
 			v1.EnvVar{Name: "ES_TLS", Value: "true"},

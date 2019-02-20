@@ -8,7 +8,8 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TODO temporal fix https://github.com/jaegertracing/jaeger-operator/issues/206
+// TODO remove this file, it's temporary copied from es-operator due to old SDK dependency
+//   https://github.com/jaegertracing/jaeger-operator/issues/206
 
 const (
 	ServiceAccountName string = "elasticsearch"
