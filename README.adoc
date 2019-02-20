@@ -221,6 +221,15 @@ spec:
 <1> Identifies the kafka configuration used by the collector, to produce the messages, and the ingester to consume the messages
 <2> The deadlock interval can be disabled to avoid the ingester being terminated when no messages arrive within the default 1 minute period
 
+== Elasticsearch storage
+
+If no `es.server-urls` are provided Jaeger operator creates Elasticsearch CR based on the configuration
+provided in storage section. Make sure link:https://github.com/openshift/elasticsearch-operator[elasticsearch-operator]
+is running in your cluster otherwise Elasticsearch deployment will not be created. The Elasticsearch is meant
+to be dedicated for a single Jaeger instance.
+
+At the moment there can be only one Jaeger with Elasticsearch instance in a namespace.
+
 == Accessing the UI
 
 === Kubernetes
