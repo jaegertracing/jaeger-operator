@@ -230,6 +230,8 @@ to be dedicated for a single Jaeger instance.
 
 At the moment there can be only one Jaeger with Elasticsearch instance in a namespace.
 
+Note that Elasticsearch requires virtual memory settings: `minikube ssh -- 'sudo sysctl -w vm.max_map_count=262144'`
+
 == Accessing the UI
 
 === Kubernetes
