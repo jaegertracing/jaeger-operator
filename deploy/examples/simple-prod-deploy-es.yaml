@@ -11,6 +11,6 @@ spec:
       nodeCount: 2
       resources:
     esIndexCleaner:
-      eabled: true
+      enabled: true
       schedule: "*/30 * * * *"
       numberOfDays: 1

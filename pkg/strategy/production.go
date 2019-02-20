@@ -109,12 +109,16 @@ func (c *productionStrategy) Create() []runtime.Object {
 		es := &storage.ElasticsearchDeployment{
 			Jaeger: c.jaeger,
 		}
-		objs, _ := es.CreateElasticsearchObjects(cDep.Spec.Template.Spec.ServiceAccountName, queryDep.Spec.Template.Spec.ServiceAccountName)
-		os = append(os, objs...)
-		es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
-		es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
-		if indexCleaner != nil {
-			es.InjectIndexCleanerConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+		objs, err := es.CreateElasticsearchObjects(cDep.Spec.Template.Spec.ServiceAccountName, queryDep.Spec.Template.Spec.ServiceAccountName)
+		if err != nil {
+			logrus.Error("Could not create Elasticsearch objects, Elasticsearch will not be deployed", err)
+		} else {
+			os = append(os, objs...)
+			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
+			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
+			if indexCleaner != nil {
+				es.InjectIndexCleanerConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+			}
 		}
 	}
 

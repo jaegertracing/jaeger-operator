@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +24,7 @@ const (
 )
 
 func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
-	if strings.ToLower(s.Type) != "elasticsearch" {
+	if strings.EqualFold(s.Type, "elasticsearch") {
 		return false
 	}
 	_, ok := s.Options.Map()["es.server-urls"]
@@ -93,7 +92,6 @@ func (*ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
 func (ed *ElasticsearchDeployment) CreateElasticsearchObjects(serviceAccounts ...string) ([]runtime.Object, error) {
 	err := createESCerts(certScript)
 	if err != nil {
-		logrus.Error("Failed to create Elasticsearch certificates: ", err)
 		return nil, errors.Wrap(err, "failed to create Elasticsearch certificates")
 	}
 	os := []runtime.Object{}

@@ -7,7 +7,7 @@ IMPORT_LOG=import.log
 FMT_LOG=fmt.log
 
 OPERATOR_NAME ?= jaeger-operator
-NAMESPACE ?= jaegertracing
+NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -48,7 +48,7 @@ build: format
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
 .PHONY: docker
-docker: build
+docker:
 	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
 
 .PHONY: push
@@ -62,7 +62,7 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: cassandra es crd build docker
+e2e-tests: cassandra es crd build docker push
 	@mkdir -p deploy/test
 	@echo Running end-to-end tests...
 
