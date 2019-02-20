@@ -31,7 +31,7 @@ var masterSecret = secret{
 	name: "master-certs",
 	content: map[string]string{
 		"masterca":  "ca.crt",
-		"masterkey": "ca.key", "ca": "ca.crt",
+		"masterkey": "ca.key",
 	},
 }
 
