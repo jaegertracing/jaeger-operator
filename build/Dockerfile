@@ -1,4 +1,4 @@
-FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+FROM centos
 
 RUN INSTALL_PKGS=" \
       openssl \
