@@ -1,4 +1,15 @@
-FROM alpine:3.8
+FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+
+RUN INSTALL_PKGS=" \
+      openssl \
+      " && \
+    yum install -y $INSTALL_PKGS && \
+    rpm -V $INSTALL_PKGS && \
+    yum clean all && \
+    mkdir /tmp/_working_dir && \
+    chmod og+w /tmp/_working_dir
+
+COPY scripts/* /scripts/
 
 USER nobody
 
