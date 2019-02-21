@@ -13,7 +13,15 @@ import (
 func ESRole(jaeger *v1alpha1.Jaeger) rbacv1.Role {
 	return rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations:     map[string]string{rbacv1.AutoUpdateAnnotationKey: "true"},
+			Annotations: map[string]string{rbacv1.AutoUpdateAnnotationKey: "true"},
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "es-role",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			Name:            fmt.Sprintf("%s-elasticsearch", jaeger.Name),
 			Namespace:       jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
@@ -36,8 +44,16 @@ func ESRole(jaeger *v1alpha1.Jaeger) rbacv1.Role {
 func ESRoleBinding(jaeger *v1alpha1.Jaeger, sas ...string) rbacv1.RoleBinding {
 	rb := rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-elasticsearch", jaeger.Name),
-			Namespace:       jaeger.Namespace,
+			Name:      fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+			Namespace: jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "es-rolebinding",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
 		},
 		RoleRef: rbacv1.RoleRef{
