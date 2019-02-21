@@ -18,6 +18,9 @@ const (
 	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
 	FlagPlatformOpenShift = "openshift"
 
+	// FlagPlatformAutoDetect represents the "auto-detect" value for the platform flag
+	FlagPlatformAutoDetect = "auto-detect"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""
 

@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -60,7 +61,7 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("openshift-oauth-proxy-image", "openshift/oauth-proxy:latest", "The Docker image location definition for the OpenShift OAuth Proxy")
 	viper.BindPFlag("openshift-oauth-proxy-image", cmd.Flags().Lookup("openshift-oauth-proxy-image"))
 
-	cmd.Flags().String("platform", "auto-detect", "The target platform the operator will run. Possible values: 'kubernetes' and 'openshift'")
+	cmd.Flags().String("platform", "auto-detect", "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")
 	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
@@ -102,7 +103,7 @@ func start(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if strings.EqualFold(viper.GetString("platform"), "auto-detect") {
+	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformAutoDetect) {
 		log.Debug("Attempting to auto-detect the platform")
 		os, err := detectOpenShift(mgr.GetConfig())
 		if err != nil {
@@ -110,9 +111,9 @@ func start(cmd *cobra.Command, args []string) {
 		}
 
 		if os {
-			viper.Set("platform", "openshift")
+			viper.Set("platform", v1alpha1.FlagPlatformOpenShift)
 		} else {
-			viper.Set("platform", "kubernetes")
+			viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
 		}
 
 		log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
