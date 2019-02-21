@@ -13,7 +13,7 @@ import (
 )
 
 func TestCreateCerts_ErrNoNamespace(t *testing.T) {
-	err := createESCerts(certScript)
+	err := CreateESCerts()
 	assert.EqualError(t, err, "failed to get watch namespace: WATCH_NAMESPACE must be set")
 }
 
@@ -32,7 +32,7 @@ func TestCreateESSecrets(t *testing.T) {
 	fmt.Println(os.Getwd())
 	err := createESCerts("../../scripts/cert_generation.sh")
 	assert.NoError(t, err)
-	sec := createESSecrets(j)
+	sec := ESSecrets(j)
 	assert.Equal(t, 4, len(sec))
 	assert.Equal(t, []string{
 		"master-certs",

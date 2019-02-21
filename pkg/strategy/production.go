@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -42,7 +43,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 	}
 
 	cDep := collector.Get()
-	queryDep := inject.OAuthProxy(c.jaeger, query.Get())
+	queryDep := inject.OAuthProxy(jaeger, query.Get())
 
 	// add the deployments
 	c.deployments = []appsv1.Deployment{*collector.Get(), *inject.OAuthProxy(jaeger, query.Get())}
@@ -80,9 +81,11 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 		}
 	}
 
+	var indexCleaner *batchv1beta1.CronJob
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
-			c.cronJobs = append(c.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
+			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
+			c.cronJobs = append(c.cronJobs, *indexCleaner)
 		} else {
 			logrus.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
@@ -92,11 +95,21 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 		es := &storage.ElasticsearchDeployment{
 			Jaeger: jaeger,
 		}
-		objs, err := es.CreateElasticsearchObjects(cDep.Spec.Template.Spec.ServiceAccountName, queryDep.Spec.Template.Spec.ServiceAccountName)
+
+		err := storage.CreateESCerts()
 		if err != nil {
-			logrus.Error("Could not create Elasticsearch objects, Elasticsearch will not be deployed", err)
+			logrus.WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
 		} else {
-			os = append(os, objs...)
+			c.secrets = storage.ESSecrets(jaeger)
+			c.roles = append(c.roles, storage.ESRole(jaeger))
+			c.roleBindings = append(
+				c.roleBindings,
+				storage.ESRoleBinding(jaeger,
+					cDep.Spec.Template.Spec.ServiceAccountName,
+					queryDep.Spec.Template.Spec.ServiceAccountName,
+				),
+			)
+
 			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
 			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
 			if indexCleaner != nil {

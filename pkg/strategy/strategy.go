@@ -5,6 +5,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 )
@@ -20,7 +22,10 @@ type S struct {
 	deployments  []appsv1.Deployment
 	ingresses    []v1beta1.Ingress
 	routes       []osv1.Route
+	roles        []rbacv1.Role
+	roleBindings []rbacv1.RoleBinding
 	services     []v1.Service
+	secrets      []v1.Secret
 }
 
 // Type represents a specific deployment strategy, like 'all-in-one'
@@ -90,6 +95,18 @@ func (s S) WithIngresses(i []v1beta1.Ingress) S {
 	return s
 }
 
+// WithRoles returns the strategy with the given list of roles
+func (s S) WithRoles(roles []rbacv1.Role) S {
+	s.roles = roles
+	return s
+}
+
+// WithRoleBindings returns the strategy with the given list of role bindings
+func (s S) WithRoleBindings(roleBindings []rbacv1.RoleBinding) S {
+	s.roleBindings = roleBindings
+	return s
+}
+
 // WithRoutes returns the strategy with the given list of routes
 func (s S) WithRoutes(r []osv1.Route) S {
 	s.routes = r
@@ -99,6 +116,12 @@ func (s S) WithRoutes(r []osv1.Route) S {
 // WithServices returns the strategy with the given list of routes
 func (s S) WithServices(svcs []v1.Service) S {
 	s.services = svcs
+	return s
+}
+
+// WithSecrets returns the strategy with the given list of secrets
+func (s S) WithSecrets(secrets []v1.Secret) S {
+	s.secrets = secrets
 	return s
 }
 
@@ -132,6 +155,16 @@ func (s S) Ingresses() []v1beta1.Ingress {
 	return s.ingresses
 }
 
+// Roles returns the list of roles to be created for this strategy.
+func (s S) Roles() []rbacv1.Role {
+	return s.roles
+}
+
+// RoleBindings returns the list of role bindings to be created for this strategy.
+func (s S) RoleBindings() []rbacv1.RoleBinding {
+	return s.roleBindings
+}
+
 // Routes returns the list of routes for this strategy. This might be platform-dependent
 func (s S) Routes() []osv1.Route {
 	return s.routes
@@ -140,6 +173,11 @@ func (s S) Routes() []osv1.Route {
 // Services returns the list of services for this strategy
 func (s S) Services() []v1.Service {
 	return s.services
+}
+
+// Secrets returns the list of secrets for this strategy
+func (s S) Secrets() []v1.Secret {
+	return s.secrets
 }
 
 // Dependencies returns the list of batches for this strategy that are considered dependencies

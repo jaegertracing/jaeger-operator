@@ -14,5 +14,5 @@ func Dependencies(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 		return cassandraDeps(jaeger)
 	}
 
-	return []batchv1.Job{}
+	return nil
 }
