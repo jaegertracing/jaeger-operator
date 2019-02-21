@@ -10,7 +10,7 @@ import (
 
 // Dependencies return a list of Jobs that have to be finished before the other components are deployed
 func Dependencies(jaeger *v1alpha1.Jaeger) []batchv1.Job {
-	if strings.ToLower(jaeger.Spec.Storage.Type) == "cassandra" {
+	if strings.EqualFold(jaeger.Spec.Storage.Type, "cassandra") {
 		return cassandraDeps(jaeger)
 	}
 

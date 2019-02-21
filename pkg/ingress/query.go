@@ -38,9 +38,9 @@ func (i *QueryIngress) Get() *v1beta1.Ingress {
 		ServiceName: service.GetNameForQueryService(i.jaeger),
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
-	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "allinone" {
+	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && strings.EqualFold(i.jaeger.Spec.Strategy, "allinone") {
 		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.AllInOne.Options, backend))
-	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && strings.ToLower(i.jaeger.Spec.Strategy) == "production" {
+	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && strings.EqualFold(i.jaeger.Spec.Strategy, "production") {
 		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.Query.Options, backend))
 	} else {
 		spec.Backend = &backend

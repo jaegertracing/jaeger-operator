@@ -16,7 +16,7 @@ func ValidTypes() []string {
 
 // OptionsPrefix returns the options prefix associated with the supplied storage type
 func OptionsPrefix(storageType string) string {
-	if strings.ToLower(storageType) == "elasticsearch" {
+	if strings.EqualFold(storageType, "elasticsearch") {
 		return "es"
 	}
 	return storageType
