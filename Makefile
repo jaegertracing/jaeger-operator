@@ -82,10 +82,6 @@ e2e-tests: cassandra es crd build docker push
 run: crd
 	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start'
 
-.PHONY: run-openshift
-run-openshift: crd
-	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start --platform=openshift'
-
 .PHONY: es
 es:
 	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true

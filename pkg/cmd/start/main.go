@@ -2,11 +2,14 @@ package start
 
 import (
 	"runtime"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -57,7 +60,7 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("openshift-oauth-proxy-image", "openshift/oauth-proxy:latest", "The Docker image location definition for the OpenShift OAuth Proxy")
 	viper.BindPFlag("openshift-oauth-proxy-image", cmd.Flags().Lookup("openshift-oauth-proxy-image"))
 
-	cmd.Flags().String("platform", "kubernetes", "The target platform the operator will run. Possible values: 'kubernetes' and 'openshift'")
+	cmd.Flags().String("platform", "auto-detect", "The target platform the operator will run. Possible values: 'kubernetes' and 'openshift'")
 	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
@@ -99,7 +102,23 @@ func start(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	log.Print("Registering Components.")
+	if strings.EqualFold(viper.GetString("platform"), "auto-detect") {
+		log.Debug("Attempting to auto-detect the platform")
+		os, err := detectOpenShift(mgr.GetConfig())
+		if err != nil {
+			log.WithError(err).Info("failed to auto-detect the platform, falling back to 'kubernetes'")
+		}
+
+		if os {
+			viper.Set("platform", "openshift")
+		} else {
+			viper.Set("platform", "kubernetes")
+		}
+
+		log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
+	} else {
+		log.WithField("platform", viper.GetString("platform")).Debug("The 'platform' option is set")
+	}
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -115,4 +134,24 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+}
+
+// copied from Snowdrop's Component Operator
+// https://github.com/snowdrop/component-operator/blob/744a9501c58f60877aa2b3a7e6c75da669519e8e/pkg/util/kubernetes/config.go
+func detectOpenShift(kubeconfig *rest.Config) (bool, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(kubeconfig)
+	if err != nil {
+		return false, err
+	}
+	apiList, err := discoveryClient.ServerGroups()
+	if err != nil {
+		return false, err
+	}
+	apiGroups := apiList.Groups
+	for i := 0; i < len(apiGroups); i++ {
+		if apiGroups[i].Name == "route.openshift.io" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
