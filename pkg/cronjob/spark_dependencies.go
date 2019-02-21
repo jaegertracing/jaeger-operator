@@ -17,7 +17,13 @@ import (
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
 
 func SupportedStorage(storage string) bool {
-	return supportedStorageTypes[strings.ToLower(storage)]
+	for type, supported := range supportedStorageTypes {
+		if strings.EqualFold(storage, type) {
+			return supported
+		}
+	}
+
+	return false
 }
 
 func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
