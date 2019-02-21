@@ -3,10 +3,8 @@ package storage
 import (
 	"strings"
 
-	"github.com/pkg/errors"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
@@ -84,21 +82,6 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 			MountPath: volumeMountPath,
 		})
 	}
-}
-
-func (ed *ElasticsearchDeployment) CreateElasticsearchObjects(serviceAccounts ...string) ([]runtime.Object, error) {
-	err := createESCerts(certScript)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Elasticsearch certificates")
-	}
-	os := []runtime.Object{}
-	esSecret := createESSecrets(ed.Jaeger)
-	for _, s := range esSecret {
-		os = append(os, s)
-	}
-	os = append(os, getESRoles(ed.Jaeger, serviceAccounts...)...)
-	os = append(os, ed.createCr())
-	return os, nil
 }
 
 func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {

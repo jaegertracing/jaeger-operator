@@ -141,11 +141,23 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, error) {
+	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
+		return false, err
+	}
+
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
 		return false, err
 	}
 
+	if err := r.applyRoleBindings(jaeger, str.RoleBindings()); err != nil {
+		return false, err
+	}
+
 	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
+		return false, err
+	}
+
+	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
 		return false, err
 	}
 

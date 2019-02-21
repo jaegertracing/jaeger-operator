@@ -11,9 +11,7 @@ import (
 
 func TestGetESRoles_NoDeployment(t *testing.T) {
 	j := v1alpha1.NewJaeger("foo")
-	roles := getESRoles(j)
-	assert.Equal(t, 2, len(roles))
-	r := roles[0].(*rbacv1.Role)
+	r := ESRole(j)
 	assert.Equal(t, []rbacv1.PolicyRule{
 		{
 			Verbs:     []string{"get"},
@@ -21,16 +19,16 @@ func TestGetESRoles_NoDeployment(t *testing.T) {
 			APIGroups: []string{"elasticsearch.jaegertracing.io"},
 		},
 	}, r.Rules)
-	rb := roles[1].(*rbacv1.RoleBinding)
+
+	rb := ESRoleBinding(j)
 	assert.Equal(t, 0, len(rb.Subjects))
 }
 
 func TestGetESRoles_ServiceAccount(t *testing.T) {
 	j := v1alpha1.NewJaeger("foo")
 	j.Namespace = "myproject"
-	roles := getESRoles(j, "bar")
-	assert.Equal(t, 2, len(roles))
-	r := roles[0].(*rbacv1.Role)
+
+	r := ESRole(j)
 	assert.Equal(t, []rbacv1.PolicyRule{
 		{
 			Verbs:     []string{"get"},
@@ -38,7 +36,8 @@ func TestGetESRoles_ServiceAccount(t *testing.T) {
 			APIGroups: []string{"elasticsearch.jaegertracing.io"},
 		},
 	}, r.Rules)
-	rb := roles[1].(*rbacv1.RoleBinding)
+
+	rb := ESRoleBinding(j, "bar")
 	assert.Equal(t, "foo-elasticsearch", rb.Name)
 	assert.Equal(t, []rbacv1.Subject{
 		{

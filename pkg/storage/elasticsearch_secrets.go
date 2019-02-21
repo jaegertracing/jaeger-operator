@@ -68,8 +68,9 @@ func secretName(jaeger, secret string) string {
 	return fmt.Sprintf("%s-%s", jaeger, secret)
 }
 
-func createESSecrets(jaeger *v1alpha1.Jaeger) []*v1.Secret {
-	return []*v1.Secret{
+// ESSecrets assembles a set of secrets related to Elasticsearch
+func ESSecrets(jaeger *v1alpha1.Jaeger) []v1.Secret {
+	return []v1.Secret{
 		// master and ES secrets use hardcoded name - e.g. do not use instance name in it
 		// the other problem for us is that sg_config.yml defines a role which depends on namespace
 		// we could make the "resource" configurable once ES image and es-operator-are refactored
@@ -79,6 +80,11 @@ func createESSecrets(jaeger *v1alpha1.Jaeger) []*v1.Secret {
 		createSecret(jaeger, secretName(jaeger.Name, jaegerSecret.name), getWorkingDirContents(jaegerSecret.content)),
 		createSecret(jaeger, secretName(jaeger.Name, curatorSecret.name), getWorkingDirContents(curatorSecret.content)),
 	}
+}
+
+// CreateESCerts runs bash scripts which generates certificates
+func CreateESCerts() error {
+	return createESCerts(certScript)
 }
 
 // createESCerts runs bash scripts which generates certificates
@@ -102,8 +108,8 @@ func createESCerts(script string) error {
 	return nil
 }
 
-func createSecret(jaeger *v1alpha1.Jaeger, secretName string, data map[string][]byte) *v1.Secret {
-	return &v1.Secret{
+func createSecret(jaeger *v1alpha1.Jaeger, secretName string, data map[string][]byte) v1.Secret {
+	return v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            secretName,
 			Namespace:       jaeger.Namespace,
