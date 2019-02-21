@@ -8,7 +8,7 @@ spec:
   storage:
     type: elasticsearch
     elasticsearch:
-      nodeCount: 2
+      nodeCount: 1
       resources:
     esIndexCleaner:
       enabled: true
