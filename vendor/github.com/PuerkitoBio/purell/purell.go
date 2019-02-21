@@ -270,7 +270,7 @@ func removeFragment(u *url.URL) {
 }
 
 func forceHTTP(u *url.URL) {
-	if strings.ToLower(u.Scheme) == "https" {
+	if strings.EqualFold(u.Scheme, "https") {
 		u.Scheme = "http"
 	}
 }

@@ -57,7 +57,7 @@ func Needed(dep *appsv1.Deployment) bool {
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
 func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList) *v1alpha1.Jaeger {
 	jaegerName := target.Annotations[Annotation]
-	if strings.ToLower(jaegerName) == "true" && len(availableJaegerPods.Items) == 1 {
+	if strings.EqualFold(jaegerName, "true") && len(availableJaegerPods.Items) == 1 {
 		// if there's only *one* jaeger within this namespace, then that's what
 		// we'll use -- otherwise, we should just not inject, as it's not clear which
 		// jaeger instance to use!

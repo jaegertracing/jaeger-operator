@@ -24,7 +24,7 @@ type S interface {
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
-	if strings.ToLower(jaeger.Spec.Strategy) == "all-in-one" {
+	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
 		logrus.Warnf("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
 	}
@@ -32,11 +32,11 @@ func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 	normalize(jaeger)
 
 	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
-	if strings.ToLower(jaeger.Spec.Strategy) == "allinone" {
+	if strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
 		return newAllInOneStrategy(ctx, jaeger)
 	}
 
-	if strings.ToLower(jaeger.Spec.Strategy) == "streaming" {
+	if strings.EqualFold(jaeger.Spec.Strategy, "streaming") {
 		return newStreamingStrategy(ctx, jaeger)
 	}
 
@@ -75,7 +75,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if strings.ToLower(jaeger.Spec.Storage.Type) == "memory" && strings.ToLower(jaeger.Spec.Strategy) != "allinone" {
+	if strings.EqualFold(jaeger.Spec.Storage.Type, "memory") && strings.ToLower(jaeger.Spec.Strategy) != "allinone" {
 		logrus.Warnf(
 			"No suitable storage was provided for the Jaeger instance '%v'. Falling back to all-in-one. Storage type: '%v'",
 			jaeger.Name,
