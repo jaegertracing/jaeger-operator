@@ -77,7 +77,9 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 }
 
 func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
-	return wait.PollImmediate(time.Second, 5*time.Second, func() (done bool, err error) {
+	// TODO: decide what's a good timeout... the first cold run might take a while to download
+	// the images, subsequent runs should take only a few seconds
+	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
 		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
 			return false, err
