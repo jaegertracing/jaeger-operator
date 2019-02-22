@@ -5,10 +5,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	rbacv1 "k8s.io/api/rbac/v1"
-
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 // S knows what type of deployments to build based on a given spec
