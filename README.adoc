@@ -108,7 +108,7 @@ To get the pod name, query for the pods belonging to the `simplest` Jaeger  inst
 
 [source,bash]
 ----
-$ kubectl get pods -l jaeger=simplest
+$ kubectl get pods -l app.kubernetes.io/instance=simplest
 NAME                        READY     STATUS    RESTARTS   AGE
 simplest-6499bb6cdd-kqx75   1/1       Running   0          2m
 ----
@@ -117,10 +117,19 @@ Similarly, the logs can be queried either from the pod directly using the pod na
 
 [source,bash]
 ----
-$ kubectl logs -l jaeger=simplest 
+$ kubectl logs -l app.kubernetes.io/instance=simplest
 ...
 {"level":"info","ts":1535385688.0951214,"caller":"healthcheck/handler.go:133","msg":"Health Check state change","status":"ready"}
 ----
+
+NOTE: On OpenShift the container name must be specified
+[source,bash]
+----
+$ kubectl logs -l app.kubernetes.io/instance=simplest -c jaeger
+...
+{"level":"info","ts":1535385688.0951214,"caller":"healthcheck/handler.go:133","msg":"Health Check state change","status":"ready"}
+----
+
 
 For reference, here's how a more complex all-in-one instance can be created:
 
