@@ -35,7 +35,7 @@ At this point, there should be a `jaeger-operator` deployment available:
 
 [source,bash]
 ----
-$ kubectl get deployment jaeger-operator
+$ kubectl get deployment jaeger-operator -n observability
 NAME              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 jaeger-operator   1         1         1            1           48s
 ----
