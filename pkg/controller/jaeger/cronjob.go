@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1alpha1.Jaeger, desired []batchv
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForCronJobs(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("creating cronjob")
+		logFields.WithField("cronjob", d.Name).Debug("creating cronjob")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("updating cronjob")
+		logFields.WithField("cronjob", d.Name).Debug("updating cronjob")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"cronjob":   d.Name,
-		}).Debug("deleting cronjob")
+		logFields.WithField("cronjob", d.Name).Debug("deleting cronjob")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

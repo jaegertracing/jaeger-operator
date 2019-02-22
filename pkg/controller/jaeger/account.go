@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyAccounts(jaeger v1alpha1.Jaeger, desired []v1.Ser
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForAccounts(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("creating service account")
+		logFields.WithField("account", d.Name).Debug("creating service account")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("updating service account")
+		logFields.WithField("account", d.Name).Debug("updating service account")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("deleting service account")
+		logFields.WithField("account", d.Name).Debug("deleting service account")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

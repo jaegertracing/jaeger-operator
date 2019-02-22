@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applySecrets(jaeger v1alpha1.Jaeger, desired []v1.Secr
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForSecrets(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"secret":    d.Name,
-		}).Debug("creating secrets")
+		logFields.WithField("secret", d.Name).Debug("creating secrets")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"secret":    d.Name,
-		}).Debug("updating secrets")
+		logFields.WithField("secret", d.Name).Debug("updating secrets")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"secret":    d.Name,
-		}).Debug("deleting secrets")
+		logFields.WithField("secret", d.Name).Debug("deleting secrets")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

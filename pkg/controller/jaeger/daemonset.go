@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyDaemonSets(jaeger v1alpha1.Jaeger, desired []apps
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForDaemonSets(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"daemonset": d.Name,
-		}).Debug("creating daemonset")
+		logFields.WithField("daemonset", d.Name).Debug("creating daemonset")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"daemonset": d.Name,
-		}).Debug("updating daemonset")
+		logFields.WithField("daemonset", d.Name).Debug("updating daemonset")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"daemonset": d.Name,
-		}).Debug("deleting daemonset")
+		logFields.WithField("daemonset", d.Name).Debug("deleting daemonset")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

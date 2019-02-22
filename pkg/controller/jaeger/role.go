@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyRoles(jaeger v1alpha1.Jaeger, desired []rbacv1.Ro
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForRoles(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("creating role")
+		logFields.WithField("account", d.Name).Debug("creating role")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("updating role")
+		logFields.WithField("account", d.Name).Debug("updating role")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"account":   d.Name,
-		}).Debug("deleting role")
+		logFields.WithField("account", d.Name).Debug("deleting role")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
