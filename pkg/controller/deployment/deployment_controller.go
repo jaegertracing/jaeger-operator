@@ -65,7 +65,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Print("Reconciling Deployment")
+	}).Debug("Reconciling Deployment")
 
 	// Fetch the Deployment instance
 	instance := &appsv1.Deployment{}
@@ -83,7 +83,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 
 	if inject.Needed(instance) {
 		pods := &v1alpha1.JaegerList{}
-		opts := &client.ListOptions{Namespace: instance.Namespace}
+		opts := &client.ListOptions{}
 		err := r.client.List(context.Background(), opts, pods)
 		if err != nil {
 			log.WithError(err).Error("failed to get the available Jaeger pods")
@@ -93,7 +93,12 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		jaeger := inject.Select(instance, pods)
 		if jaeger != nil {
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-			log.WithFields(log.Fields{"deployment": instance.Name, "jaeger": jaeger.Name}).Info("Injecting Jaeger Agent sidecar")
+			log.WithFields(log.Fields{
+				"deployment":       instance.Name,
+				"namespace":        instance.Namespace,
+				"jaeger":           jaeger.Name,
+				"jaeger-namespace": jaeger.Namespace,
+			}).Info("Injecting Jaeger Agent sidecar")
 			inject.Sidecar(instance, jaeger)
 			if err := r.client.Update(context.Background(), instance); err != nil {
 				log.WithField("deployment", instance).WithError(err).Error("failed to update")

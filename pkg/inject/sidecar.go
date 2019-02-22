@@ -77,7 +77,7 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList)
 }
 
 func container(jaeger *v1alpha1.Jaeger) v1.Container {
-	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s:14267", service.GetNameForCollectorService(jaeger)))
+	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s.%s:14267", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
 	return v1.Container{
 		Image: jaeger.Spec.Agent.Image,
 		Name:  "jaeger-agent",
