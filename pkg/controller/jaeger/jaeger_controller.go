@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -177,7 +178,7 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, e
 		return false, err
 	}
 
-	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
+	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformOpenShift) {
 		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
 			return false, err
 		}
