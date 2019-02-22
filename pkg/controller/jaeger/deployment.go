@@ -24,28 +24,25 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	// we now traverse the list, so that we end up with three lists:
 	// 1) deployments that are on both `desired` and `existing` (update)
 	// 2) deployments that are only on `desired` (create)
 	// 3) deployments that are only on `existing` (delete)
 	depInventory := inventory.ForDeployments(depList.Items, desired)
 	for _, d := range depInventory.Create {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("creating deployment")
+		logFields.WithField("deployment", d.Name).Debug("creating deployment")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range depInventory.Update {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("updating deployment")
+		logFields.WithField("deployment", d.Name).Debug("updating deployment")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
@@ -63,11 +60,7 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 	}
 
 	for _, d := range depInventory.Delete {
-		log.WithFields(log.Fields{
-			"namespace":  jaeger.Namespace,
-			"instance":   jaeger.Name,
-			"deployment": d.Name,
-		}).Debug("deleting deployment")
+		logFields.WithField("deployment", d.Name).Debug("deleting deployment")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

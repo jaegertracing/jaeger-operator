@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyRoutes(jaeger v1alpha1.Jaeger, desired []osv1.Rou
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForRoutes(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"route":     d.Name,
-		}).Debug("creating route")
+		logFields.WithField("route", d.Name).Debug("creating route")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"route":     d.Name,
-		}).Debug("updating route")
+		logFields.WithField("route", d.Name).Debug("updating route")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"route":     d.Name,
-		}).Debug("deleting route")
+		logFields.WithField("route", d.Name).Debug("deleting route")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

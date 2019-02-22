@@ -21,35 +21,28 @@ func (r *ReconcileJaeger) applyConfigMaps(jaeger v1alpha1.Jaeger, desired []v1.C
 		return err
 	}
 
+	logFields := log.WithFields(log.Fields{
+		"namespace": jaeger.Namespace,
+		"instance":  jaeger.Name,
+	})
+
 	inv := inventory.ForConfigMaps(list.Items, desired)
 	for _, d := range inv.Create {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"configMap": d.Name,
-		}).Debug("creating config maps")
+		logFields.WithField("configMap", d.Name).Debug("creating config maps")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"configMap": d.Name,
-		}).Debug("updating config maps")
+		logFields.WithField("configMap", d.Name).Debug("updating config maps")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-			"configMap": d.Name,
-		}).Debug("deleting config maps")
+		logFields.WithField("configMap", d.Name).Debug("deleting config maps")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
