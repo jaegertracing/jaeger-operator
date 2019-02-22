@@ -65,10 +65,12 @@ type ReconcileJaeger struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.WithFields(log.Fields{
+	logFields := log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
-	}).Debug("Reconciling Jaeger")
+	})
+
+	logFields.Debug("Reconciling Jaeger")
 
 	// Fetch the Jaeger instance
 	instance := &v1alpha1.Jaeger{}
@@ -94,35 +96,23 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// wait for all the dependencies to succeed
 	if err := r.handleDependencies(str); err != nil {
-		log.WithFields(log.Fields{
-			"namespace": instance.Namespace,
-			"instance":  instance.Name,
-		}).WithError(err).Error("failed to handle the dependencies")
+		logFields.WithError(err).Error("failed to handle the dependencies")
 		return reconcile.Result{}, err
 	}
 
 	applied, err := r.apply(*instance, str)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"namespace": instance.Namespace,
-			"instance":  instance.Name,
-		}).WithError(err).Error("failed to apply the changes")
+		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, err
 	}
 
 	if applied {
-		log.WithFields(log.Fields{
-			"namespace": instance.Namespace,
-			"instance":  instance.Name,
-		}).Info("Configured Jaeger instance")
+		logFields.Info("Configured Jaeger instance")
 	}
 
 	// we store back the changed CR, so that what is stored reflects what is being used
 	if err := r.client.Update(context.Background(), instance); err != nil {
-		log.WithFields(log.Fields{
-			"namespace": instance.Namespace,
-			"instance":  instance.Name,
-		}).WithError(err).Error("failed to store back the current CustomResource")
+		logFields.WithError(err).Error("failed to store back the current CustomResource")
 		return reconcile.Result{}, err
 	}
 

@@ -48,6 +48,8 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []app
 		}
 	}
 
+	// wait for the created and updated pods to stabilize, before we move on with
+	// the removal of the old deployments
 	for _, d := range depInventory.Create {
 		if err := r.waitForStability(d); err != nil {
 			return err
