@@ -298,6 +298,8 @@ spec:
 ----
 <1> Either `"true"` (as string) or the Jaeger instance name
 
+A complete sample deployment is available at link:./deploy/examples/business-application-injected-sidecar.yaml[`deploy/examples/business-application-injected-sidecar.yaml`]
+
 == Agent as DaemonSet
 
 By default, the Operator expects the agents to be deployed as sidecars to the target applications. This is convenient for several purposes, like in a multi-tenant scenario or to have better load balancing, but there are scenarios where it's desirable to install the agent as a `DaemonSet`. In that case, specify the Agent's strategy to `DaemonSet`, as follows:
