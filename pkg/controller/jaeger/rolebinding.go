@@ -28,21 +28,21 @@ func (r *ReconcileJaeger) applyRoleBindings(jaeger v1alpha1.Jaeger, desired []rb
 
 	inv := inventory.ForRoleBindings(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("account", d.Name).Debug("creating RoleBinding")
+		logFields.WithField("rolebinding", d.Name).Debug("creating RoleBinding")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("account", d.Name).Debug("updating RoleBinding")
+		logFields.WithField("rolebinding", d.Name).Debug("updating RoleBinding")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("account", d.Name).Debug("deleting RoleBinding")
+		logFields.WithField("rolebinding", d.Name).Debug("deleting RoleBinding")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

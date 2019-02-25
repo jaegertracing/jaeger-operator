@@ -100,15 +100,12 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	applied, err := r.apply(*instance, str)
-	if err != nil {
+	if err := r.apply(*instance, str); err != nil {
 		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, err
 	}
 
-	if applied {
-		logFields.Info("Configured Jaeger instance")
-	}
+	logFields.Info("Configured Jaeger instance")
 
 	// we store back the changed CR, so that what is stored reflects what is being used
 	if err := r.client.Update(context.Background(), instance); err != nil {
@@ -131,55 +128,55 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 	return strategy.For(context.Background(), instance)
 }
 
-func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, error) {
+func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyRoleBindings(jaeger, str.RoleBindings()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyCronJobs(jaeger, str.CronJobs()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyDaemonSets(jaeger, str.DaemonSets()); err != nil {
-		return false, err
+		return err
 	}
 
 	// seems counter intuitive to have services created *before* deployments,
 	// but some resources used by deployments are created by services, such as TLS certs
 	// for the oauth proxy, if one is used
 	if err := r.applyServices(jaeger, str.Services()); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
-		return false, err
+		return err
 	}
 
 	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformOpenShift) {
 		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
-			return false, err
+			return err
 		}
 	} else {
 		if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
-			return false, err
+			return err
 		}
 	}
 
-	return true, nil
+	return nil
 }

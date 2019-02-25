@@ -28,21 +28,21 @@ func (r *ReconcileJaeger) applyRoles(jaeger v1alpha1.Jaeger, desired []rbacv1.Ro
 
 	inv := inventory.ForRoles(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("account", d.Name).Debug("creating role")
+		logFields.WithField("role", d.Name).Debug("creating role")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("account", d.Name).Debug("updating role")
+		logFields.WithField("role", d.Name).Debug("updating role")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("account", d.Name).Debug("deleting role")
+		logFields.WithField("role", d.Name).Debug("deleting role")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
