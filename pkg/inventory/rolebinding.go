@@ -22,9 +22,15 @@ func ForRoleBindings(existing []rbacv1.RoleBinding, desired []rbacv1.RoleBinding
 			tp := t.DeepCopy()
 
 			tp.Subjects = v.Subjects
-			tp.ObjectMeta.Labels = v.ObjectMeta.Labels
-			tp.ObjectMeta.Annotations = v.ObjectMeta.Annotations
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+			for k, v := range v.ObjectMeta.Annotations {
+				tp.ObjectMeta.Annotations[k] = v
+			}
+
+			for k, v := range v.ObjectMeta.Labels {
+				tp.ObjectMeta.Labels[k] = v
+			}
 
 			update = append(update, *tp)
 			delete(mcreate, k)

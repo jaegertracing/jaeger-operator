@@ -25,9 +25,15 @@ func ForAccounts(existing []v1.ServiceAccount, desired []v1.ServiceAccount) Acco
 			tp.Secrets = v.Secrets
 			tp.ImagePullSecrets = v.ImagePullSecrets
 			tp.AutomountServiceAccountToken = v.AutomountServiceAccountToken
-			tp.ObjectMeta.Labels = v.ObjectMeta.Labels
-			tp.ObjectMeta.Annotations = v.ObjectMeta.Annotations
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+			for k, v := range v.ObjectMeta.Annotations {
+				tp.ObjectMeta.Annotations[k] = v
+			}
+
+			for k, v := range v.ObjectMeta.Labels {
+				tp.ObjectMeta.Labels[k] = v
+			}
 
 			update = append(update, *tp)
 			delete(mcreate, k)

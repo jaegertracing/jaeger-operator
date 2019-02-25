@@ -160,11 +160,14 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) (bool, e
 		return false, err
 	}
 
-	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
+	// seems counter intuitive to have services created *before* deployments,
+	// but some resources used by deployments are created by services, such as TLS certs
+	// for the oauth proxy, if one is used
+	if err := r.applyServices(jaeger, str.Services()); err != nil {
 		return false, err
 	}
 
-	if err := r.applyServices(jaeger, str.Services()); err != nil {
+	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
 		return false, err
 	}
 

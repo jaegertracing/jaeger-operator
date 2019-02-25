@@ -23,9 +23,15 @@ func ForSecrets(existing []v1.Secret, desired []v1.Secret) Secret {
 
 			tp.Data = v.Data
 			tp.StringData = v.StringData
-			tp.ObjectMeta.Labels = v.ObjectMeta.Labels
-			tp.ObjectMeta.Annotations = v.ObjectMeta.Annotations
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+			for k, v := range v.ObjectMeta.Annotations {
+				tp.ObjectMeta.Annotations[k] = v
+			}
+
+			for k, v := range v.ObjectMeta.Labels {
+				tp.ObjectMeta.Labels[k] = v
+			}
 
 			update = append(update, *tp)
 			delete(mcreate, k)
