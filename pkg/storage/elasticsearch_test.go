@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 func TestShouldDeployElasticsearch(t *testing.T) {
@@ -54,9 +55,11 @@ func TestInject(t *testing.T) {
 	expContainers := []v1.Container{{
 		Args: []string{
 			"foo",
-			"--es.server-urls=https://elasticsearch:9200",
+			"--es.server-urls=" + elasticsearchUrl,
 			"--es.token-file=" + k8sTokenFile,
 			"--es.tls.ca=" + caPath,
+			"--es.num-shards=0",
+			"--es.num-replicas=1",
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{Name: "lol"},
@@ -76,4 +79,24 @@ func TestCreateElasticsearchObjects(t *testing.T) {
 	objs, err := es.CreateElasticsearchObjects()
 	assert.Nil(t, objs)
 	assert.EqualError(t, err, "failed to create Elasticsearch certificates: failed to get watch namespace: WATCH_NAMESPACE must be set")
+}
+
+func TestCalculateReplicaShards(t *testing.T) {
+	tests := []struct {
+		dataNodes int
+		redType   esv1alpha1.RedundancyPolicyType
+		shards    int
+	}{
+		{redType: esv1alpha1.ZeroRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1alpha1.ZeroRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1alpha1.SingleRedundancy, dataNodes: 1, shards: 1},
+		{redType: esv1alpha1.SingleRedundancy, dataNodes: 20, shards: 1},
+		{redType: esv1alpha1.MultipleRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1alpha1.MultipleRedundancy, dataNodes: 20, shards: 9},
+		{redType: esv1alpha1.FullRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1alpha1.FullRedundancy, dataNodes: 20, shards: 19},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.shards, calculateReplicaShards(test.redType, test.dataNodes))
+	}
 }
