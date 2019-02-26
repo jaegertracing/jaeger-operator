@@ -5,12 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -20,12 +17,7 @@ func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForAllInOneAsDefault")
 
 	ctrl := For(context.TODO(), jaeger)
-	rightType := false
-	switch ctrl.(type) {
-	case *allInOneStrategy:
-		rightType = true
-	}
-	assert.True(t, rightType)
+	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
@@ -33,21 +25,16 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger)
-	rightType := false
-	switch ctrl.(type) {
-	case *allInOneStrategy:
-		rightType = true
-	}
-	assert.True(t, rightType)
+	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
 func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
 	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Storage.Type = "elasticsearch"
 
 	ctrl := For(context.TODO(), jaeger)
-	ds := ctrl.Create()
-	assert.Len(t, ds, 7)
+	assert.Equal(t, ctrl.Type(), Production)
 }
 
 func TestUnknownStorage(t *testing.T) {
@@ -66,8 +53,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 	})
 
 	ctrl := For(context.TODO(), jaeger)
-	ds := ctrl.Create()
-	deps := getDeployments(ds)
+	deps := ctrl.Deployments()
 	assert.Len(t, deps, 2) // query and collector, for a production setup
 	counter := 0
 	for _, dep := range deps {
@@ -232,26 +218,33 @@ func getDeployments(objs []runtime.Object) []*appsv1.Deployment {
 	return deps
 }
 
-func assertHasAllObjects(t *testing.T, name string, objs []runtime.Object, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
-	for _, obj := range objs {
-		switch typ := obj.(type) {
-		case *appsv1.Deployment:
-			deployments[obj.(*appsv1.Deployment).Name] = true
-		case *appsv1.DaemonSet:
-			daemonsets[obj.(*appsv1.DaemonSet).Name] = true
-		case *v1.Service:
-			services[obj.(*v1.Service).Name] = true
-		case *v1beta1.Ingress:
-			ingresses[obj.(*v1beta1.Ingress).Name] = true
-		case *osv1.Route:
-			routes[obj.(*osv1.Route).Name] = true
-		case *v1.ServiceAccount:
-			serviceAccounts[obj.(*v1.ServiceAccount).Name] = true
-		case *v1.ConfigMap:
-			configMaps[obj.(*v1.ConfigMap).Name] = true
-		default:
-			assert.Failf(t, "unknown type to be deployed", "%v", typ)
-		}
+func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
+	for _, o := range s.Deployments() {
+		deployments[o.Name] = true
+	}
+
+	for _, o := range s.DaemonSets() {
+		daemonsets[o.Name] = true
+	}
+
+	for _, o := range s.Services() {
+		services[o.Name] = true
+	}
+
+	for _, o := range s.Ingresses() {
+		ingresses[o.Name] = true
+	}
+
+	for _, o := range s.Routes() {
+		routes[o.Name] = true
+	}
+
+	for _, o := range s.Accounts() {
+		serviceAccounts[o.Name] = true
+	}
+
+	for _, o := range s.ConfigMaps() {
+		configMaps[o.Name] = true
 	}
 
 	for k, v := range deployments {

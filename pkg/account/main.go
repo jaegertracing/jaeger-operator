@@ -24,6 +24,14 @@ func getMain(jaeger *v1alpha1.Jaeger) *v1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      JaegerServiceAccountFor(jaeger),
 			Namespace: jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       JaegerServiceAccountFor(jaeger),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "service-account",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,

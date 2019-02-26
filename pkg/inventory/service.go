@@ -1,0 +1,65 @@
+package inventory
+
+import (
+	"k8s.io/api/core/v1"
+)
+
+// Service represents the inventory of routes based on the current and desired states
+type Service struct {
+	Create []v1.Service
+	Update []v1.Service
+	Delete []v1.Service
+}
+
+// ForServices builds an inventory of services based on the existing and desired states
+func ForServices(existing []v1.Service, desired []v1.Service) Service {
+	update := []v1.Service{}
+	mcreate := serviceMap(desired)
+	mdelete := serviceMap(existing)
+
+	for k, v := range mcreate {
+		if t, ok := mdelete[k]; ok {
+			tp := t.DeepCopy()
+
+			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+			tp.Spec = v.Spec
+			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+			// there might be annotations not created by us, so, we need to just replace the ones we care about,
+			// leaving all others there
+			for k, v := range v.ObjectMeta.Annotations {
+				tp.ObjectMeta.Annotations[k] = v
+			}
+
+			for k, v := range v.ObjectMeta.Labels {
+				tp.ObjectMeta.Labels[k] = v
+			}
+
+			update = append(update, *tp)
+			delete(mcreate, k)
+			delete(mdelete, k)
+		}
+	}
+
+	return Service{
+		Create: serviceList(mcreate),
+		Update: update,
+		Delete: serviceList(mdelete),
+	}
+}
+
+func serviceMap(deps []v1.Service) map[string]v1.Service {
+	m := map[string]v1.Service{}
+	for _, d := range deps {
+		m[d.Name] = d
+	}
+	return m
+}
+
+func serviceList(m map[string]v1.Service) []v1.Service {
+	l := []v1.Service{}
+	for _, v := range m {
+		l = append(l, v)
+	}
+	return l
+}

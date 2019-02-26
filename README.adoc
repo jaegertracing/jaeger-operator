@@ -169,6 +169,16 @@ spec:
 <9> By default, the operator assumes that agents are deployed as sidecars within the target pods. Specifying the strategy as "DaemonSet" changes that and makes the operator deploy the agent as DaemonSet. Note that your tracer client will probably have to override the "JAEGER_AGENT_HOST" env var to use the node's IP.
 <10> Define annotations to be applied to all deployments (not services). These can be overridden by annotations defined on the individual components.
 
+== Updating a Jaeger instance (experimental)
+
+A Jaeger instance can be updated by changing the `CustomResource`, either via `kubectl edit jaeger simplest`, where `simplest` is the Jaeger's instance name, or by applying the updated YAML file via `kubectl apply -f simplest.yaml`.
+
+IMPORTANT: the name of the Jaeger instance cannot be updated, as it's part of the identifying information for the resource
+
+Simpler changes such as changing the replica sizes can be applied without much concern, whereas changes to the strategy should be watched closely and might potentially cause an outage for individual components (collector/query/agent).
+
+While changing the backing storage is supported, migration of the data is not.
+
 == Strategies
 
 As shown in the example above, the Jaeger instance is associated with a strategy. The strategy determines the architecture to be used for the Jaeger backend.

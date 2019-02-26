@@ -3,15 +3,12 @@ package jaeger
 import (
 	"context"
 	"fmt"
-	"time"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
-	batchv1 "k8s.io/api/batch/v1"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -68,10 +65,12 @@ type ReconcileJaeger struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.WithFields(log.Fields{
+	logFields := log.WithFields(log.Fields{
 		"namespace": request.Namespace,
-		"name":      request.Name,
-	}).Print("Reconciling Jaeger")
+		"instance":  request.Name,
+	})
+
+	logFields.Debug("Reconciling Jaeger")
 
 	// Fetch the Jaeger instance
 	instance := &v1alpha1.Jaeger{}
@@ -97,28 +96,25 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// wait for all the dependencies to succeed
 	if err := r.handleDependencies(str); err != nil {
+		logFields.WithError(err).Error("failed to handle the dependencies")
 		return reconcile.Result{}, err
 	}
 
-	created, err := r.handleCreate(str)
-	if err != nil {
-		log.WithField("instance", instance).WithError(err).Error("failed to create")
+	if err := r.apply(*instance, str); err != nil {
+		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, err
 	}
 
-	if created {
-		log.WithField("name", instance.Name).Info("Configured Jaeger instance")
-	}
+	logFields.Info("Configured Jaeger instance")
 
-	if err := r.handleUpdate(str); err != nil {
-		return reconcile.Result{}, err
-	}
-
+	// See https://github.com/jaegertracing/jaeger-operator/issues/231
+	// Uncomment when the issue above is fixed
+	//
 	// we store back the changed CR, so that what is stored reflects what is being used
-	if err := r.client.Update(context.Background(), instance); err != nil {
-		log.WithError(err).Error("failed to update")
-		return reconcile.Result{}, err
-	}
+	// if err := r.client.Update(context.Background(), instance); err != nil {
+	// 	logFields.WithError(err).Error("failed to store back the current CustomResource")
+	// 	return reconcile.Result{}, err
+	// }
 
 	return reconcile.Result{}, nil
 }
@@ -135,62 +131,54 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 	return strategy.For(context.Background(), instance)
 }
 
-func (r *ReconcileJaeger) handleCreate(str strategy.S) (bool, error) {
-	objs := str.Create()
-	created := false
-	for _, obj := range objs {
-		err := r.client.Create(context.Background(), obj)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			log.WithError(err).Error("failed to create")
-			return false, err
-		}
-
-		if err == nil {
-			created = true
-		}
+func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
+	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
+		return err
 	}
 
-	return created, nil
-}
-
-func (r *ReconcileJaeger) handleUpdate(str strategy.S) error {
-	objs := str.Update()
-	for _, obj := range objs {
-		if err := r.client.Update(context.Background(), obj); err != nil {
-			log.WithError(err).Error("failed to update")
-			return err
-		}
+	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
+		return err
 	}
 
-	return nil
-}
+	if err := r.applyRoleBindings(jaeger, str.RoleBindings()); err != nil {
+		return err
+	}
 
-func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
-	for _, dep := range str.Dependencies() {
-		err := r.client.Create(context.Background(), &dep)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			log.WithError(err).Error("failed to create")
+	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
+		return err
+	}
+
+	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
+		return err
+	}
+
+	if err := r.applyCronJobs(jaeger, str.CronJobs()); err != nil {
+		return err
+	}
+
+	if err := r.applyDaemonSets(jaeger, str.DaemonSets()); err != nil {
+		return err
+	}
+
+	// seems counter intuitive to have services created *before* deployments,
+	// but some resources used by deployments are created by services, such as TLS certs
+	// for the oauth proxy, if one is used
+	if err := r.applyServices(jaeger, str.Services()); err != nil {
+		return err
+	}
+
+	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
+		return err
+	}
+
+	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformOpenShift) {
+		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
 			return err
 		}
-
-		// we probably want to add a couple of seconds to this deadline, but for now, this should be sufficient
-		deadline := time.Duration(*dep.Spec.ActiveDeadlineSeconds)
-		return wait.Poll(time.Second, deadline*time.Second, func() (done bool, err error) {
-			batch := &batchv1.Job{}
-			err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch)
-			if err != nil {
-				log.WithField("dependency", dep.Name).WithError(err).Error("failed to get the status of the dependency")
-				return false, err
-			}
-
-			// for now, we just assume each batch job has one pod
-			if batch.Status.Succeeded != 1 {
-				log.WithField("dependency", dep.Name).Info("Waiting for dependency to complete")
-				return false, nil
-			}
-
-			return true, nil
-		})
+	} else {
+		if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
+			return err
+		}
 	}
 
 	return nil

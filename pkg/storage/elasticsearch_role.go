@@ -5,17 +5,24 @@ import (
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
 )
 
-func getESRoles(jaeger *v1alpha1.Jaeger, sas ...string) []runtime.Object {
-	roleName := fmt.Sprintf("%s-elasticsearch", jaeger.Name)
-	r := &rbacv1.Role{
+// ESRole returns the role to be created for Elasticsearch
+func ESRole(jaeger *v1alpha1.Jaeger) rbacv1.Role {
+	return rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations:     map[string]string{rbacv1.AutoUpdateAnnotationKey: "true"},
-			Name:            roleName,
+			Annotations: map[string]string{rbacv1.AutoUpdateAnnotationKey: "true"},
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "es-role",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
+			Name:            fmt.Sprintf("%s-elasticsearch", jaeger.Name),
 			Namespace:       jaeger.Namespace,
 			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
 		},
@@ -31,15 +38,27 @@ func getESRoles(jaeger *v1alpha1.Jaeger, sas ...string) []runtime.Object {
 			},
 		},
 	}
-	rb := &rbacv1.RoleBinding{
+}
+
+// ESRoleBinding returns the Elasticsearch role bindings to be created for the given subjects
+func ESRoleBinding(jaeger *v1alpha1.Jaeger, sas ...string) rbacv1.RoleBinding {
+	rb := rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            roleName,
-			Namespace:       jaeger.Namespace,
+			Name:      fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+			Namespace: jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       fmt.Sprintf("%s-elasticsearch", jaeger.Name),
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "es-rolebinding",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind: "Role",
-			Name: roleName,
+			Name: fmt.Sprintf("%s-elasticsearch", jaeger.Name),
 		},
 	}
 	for _, sa := range sas {
@@ -50,5 +69,6 @@ func getESRoles(jaeger *v1alpha1.Jaeger, sas ...string) []runtime.Object {
 		}
 		rb.Subjects = append(rb.Subjects, sb)
 	}
-	return []runtime.Object{r, rb}
+
+	return rb
 }

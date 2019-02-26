@@ -16,10 +16,12 @@ import (
 
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
 
+// SupportedStorage returns whether the given storage is supported
 func SupportedStorage(storage string) bool {
 	return supportedStorageTypes[strings.ToLower(storage)]
 }
 
+// CreateSparkDependencies creates a new cronjob for the Spark Dependencies task
 func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	envVars := []v1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
@@ -35,6 +37,14 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: jaeger.Namespace,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/component":  "cronjob-spark-dependencies",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,

@@ -83,6 +83,7 @@ func (q *Query) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", q.jaeger.Name),
 			Namespace: q.jaeger.Namespace,
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: q.jaeger.APIVersion,

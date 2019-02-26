@@ -63,6 +63,14 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-cassandra-schema-job", jaeger.Name),
 				Namespace: jaeger.Namespace,
+				Labels: map[string]string{
+					"app":                          "jaeger",
+					"app.kubernetes.io/name":       fmt.Sprintf("%s-cassandra-schema-job", jaeger.Name),
+					"app.kubernetes.io/instance":   jaeger.Name,
+					"app.kubernetes.io/component":  "cronjob-cassandra-schema",
+					"app.kubernetes.io/part-of":    "jaeger",
+					"app.kubernetes.io/managed-by": "jaeger-operator",
+				},
 				OwnerReferences: []metav1.OwnerReference{
 					metav1.OwnerReference{
 						APIVersion: jaeger.APIVersion,

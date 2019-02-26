@@ -69,11 +69,3 @@ func TestInject(t *testing.T) {
 	}}
 	assert.Equal(t, expContainers, p.Containers)
 }
-
-func TestCreateElasticsearchObjects(t *testing.T) {
-	j := v1alpha1.NewJaeger("foo")
-	es := &ElasticsearchDeployment{Jaeger: j}
-	objs, err := es.CreateElasticsearchObjects()
-	assert.Nil(t, objs)
-	assert.EqualError(t, err, "failed to create Elasticsearch certificates: failed to get watch namespace: WATCH_NAMESPACE must be set")
-}

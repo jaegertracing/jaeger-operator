@@ -1,13 +1,11 @@
 package strategy
 
 import (
-	"context"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -21,91 +19,71 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-type allInOneStrategy struct {
-	ctx    context.Context
-	jaeger *v1alpha1.Jaeger
-}
+func newAllInOneStrategy(jaeger *v1alpha1.Jaeger) S {
+	c := S{typ: AllInOne}
 
-func newAllInOneStrategy(ctx context.Context, jaeger *v1alpha1.Jaeger) *allInOneStrategy {
-	return &allInOneStrategy{
-		ctx:    ctx,
-		jaeger: jaeger,
-	}
-}
+	logrus.Debugf("Creating all-in-one for '%v'", jaeger.Name)
 
-func (c *allInOneStrategy) Create() []runtime.Object {
-	logrus.Debugf("Creating all-in-one for '%v'", c.jaeger.Name)
-
-	dep := deployment.NewAllInOne(c.jaeger)
-	os := []runtime.Object{}
+	dep := deployment.NewAllInOne(jaeger)
 
 	// add all service accounts
-	for _, acc := range account.Get(c.jaeger) {
-		os = append(os, acc)
+	for _, acc := range account.Get(jaeger) {
+		c.accounts = append(c.accounts, *acc)
 	}
 
 	// add the UI config map
-	cm := configmap.NewUIConfig(c.jaeger).Get()
-	if nil != cm {
-		os = append(os, cm)
+	if cm := configmap.NewUIConfig(jaeger).Get(); cm != nil {
+		c.configMaps = append(c.configMaps, *cm)
 	}
 
 	// add the Sampling config map
-	scmp := sampling.NewConfig(c.jaeger).Get()
-	if nil != scmp {
-		os = append(os, scmp)
+	if cm := sampling.NewConfig(jaeger).Get(); cm != nil {
+		c.configMaps = append(c.configMaps, *cm)
 	}
 
 	// add the deployments
-	os = append(os, inject.OAuthProxy(c.jaeger, dep.Get()))
+	c.deployments = []appsv1.Deployment{*inject.OAuthProxy(jaeger, dep.Get())}
 
-	ds := deployment.NewAgent(c.jaeger).Get()
-	if nil != ds {
-		os = append(os, ds)
+	// add the daemonsets
+	if ds := deployment.NewAgent(jaeger).Get(); ds != nil {
+		c.daemonSets = []appsv1.DaemonSet{*ds}
 	}
 
 	// add the services
 	for _, svc := range dep.Services() {
-		os = append(os, svc)
+		c.services = append(c.services, *svc)
 	}
 
 	// add the routes/ingresses
 	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
-		if q := route.NewQueryRoute(c.jaeger).Get(); nil != q {
-			os = append(os, q)
+		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
+			c.routes = append(c.routes, *q)
 		}
 	} else {
-		if q := ingress.NewQueryIngress(c.jaeger).Get(); nil != q {
-			os = append(os, q)
+		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
+			c.ingresses = append(c.ingresses, *q)
 		}
 	}
 
-	if isBoolTrue(c.jaeger.Spec.Storage.SparkDependencies.Enabled) {
-		if cronjob.SupportedStorage(c.jaeger.Spec.Storage.Type) {
-			os = append(os, cronjob.CreateSparkDependencies(c.jaeger))
+	if isBoolTrue(jaeger.Spec.Storage.SparkDependencies.Enabled) {
+		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
+			c.cronJobs = append(c.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			logrus.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
 		}
 	}
 
-	if isBoolTrue(c.jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
-		if strings.EqualFold(c.jaeger.Spec.Storage.Type, "elasticsearch") {
-			os = append(os, cronjob.CreateEsIndexCleaner(c.jaeger))
+	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
+		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
+			c.cronJobs = append(c.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
 		} else {
-			logrus.WithField("type", c.jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			logrus.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 
-	return os
-}
+	c.dependencies = storage.Dependencies(jaeger)
 
-func (c *allInOneStrategy) Update() []runtime.Object {
-	logrus.Debug("Update isn't available for all-in-one")
-	return []runtime.Object{}
-}
-
-func (c *allInOneStrategy) Dependencies() []batchv1.Job {
-	return storage.Dependencies(c.jaeger)
+	return c
 }
 
 func isBoolTrue(b *bool) bool {
