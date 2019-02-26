@@ -96,7 +96,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 func TestInject(t *testing.T) {
 	tests := []struct {
 		pod      *v1.PodSpec
-		extected *v1.PodSpec
+		expected *v1.PodSpec
 	}{
 		{pod: &v1.PodSpec{
 			Containers: []v1.Container{{
@@ -104,7 +104,7 @@ func TestInject(t *testing.T) {
 				VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
 			}},
 		},
-			extected: &v1.PodSpec{
+			expected: &v1.PodSpec{
 				Containers: []v1.Container{{
 					Args: []string{
 						"foo",
@@ -129,7 +129,7 @@ func TestInject(t *testing.T) {
 				Args: []string{"--es.num-shards=15"},
 			}},
 		},
-			extected: &v1.PodSpec{
+			expected: &v1.PodSpec{
 				Containers: []v1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
@@ -152,7 +152,7 @@ func TestInject(t *testing.T) {
 	for _, test := range tests {
 		es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
 		es.InjectStorageConfiguration(test.pod)
-		assert.Equal(t, test.extected, test.pod)
+		assert.Equal(t, test.expected, test.pod)
 	}
 
 }
