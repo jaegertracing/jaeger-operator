@@ -18,6 +18,17 @@ func TestRoleInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		Rules: []rbacv1.PolicyRule{{
+			Verbs: []string{"get"},
+		}},
+	}
+	updated := rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		Rules: []rbacv1.PolicyRule{{
+			Verbs: []string{"delete"},
+		}},
 	}
 	toDelete := rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,14 +37,17 @@ func TestRoleInventory(t *testing.T) {
 	}
 
 	existing := []rbacv1.Role{toUpdate, toDelete}
-	desired := []rbacv1.Role{toUpdate, toCreate}
+	desired := []rbacv1.Role{updated, toCreate}
 
 	inv := ForRoles(existing, desired)
 	assert.Len(t, inv.Create, 1)
 	assert.Equal(t, "to-create", inv.Create[0].Name)
 
 	assert.Len(t, inv.Update, 1)
+	assert.Len(t, inv.Update[0].Rules, 1)
+	assert.Len(t, inv.Update[0].Rules[0].Verbs, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "delete", inv.Update[0].Rules[0].Verbs[0])
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

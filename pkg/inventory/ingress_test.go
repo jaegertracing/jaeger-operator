@@ -18,6 +18,21 @@ func TestIngressInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		Spec: v1beta1.IngressSpec{
+			Backend: &v1beta1.IngressBackend{
+				ServiceName: "service-a",
+			},
+		},
+	}
+	updated := v1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		Spec: v1beta1.IngressSpec{
+			Backend: &v1beta1.IngressBackend{
+				ServiceName: "service-b",
+			},
+		},
 	}
 	toDelete := v1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +41,7 @@ func TestIngressInventory(t *testing.T) {
 	}
 
 	existing := []v1beta1.Ingress{toUpdate, toDelete}
-	desired := []v1beta1.Ingress{toUpdate, toCreate}
+	desired := []v1beta1.Ingress{updated, toCreate}
 
 	inv := ForIngresses(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +49,7 @@ func TestIngressInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "service-b", inv.Update[0].Spec.Backend.ServiceName)
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

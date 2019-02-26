@@ -18,6 +18,17 @@ func TestRouteInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		Spec: osv1.RouteSpec{
+			Host: "v1.example.com",
+		},
+	}
+	updated := osv1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		Spec: osv1.RouteSpec{
+			Host: "v2.example.com",
+		},
 	}
 	toDelete := osv1.Route{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +37,7 @@ func TestRouteInventory(t *testing.T) {
 	}
 
 	existing := []osv1.Route{toUpdate, toDelete}
-	desired := []osv1.Route{toUpdate, toCreate}
+	desired := []osv1.Route{updated, toCreate}
 
 	inv := ForRoutes(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +45,7 @@ func TestRouteInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "v2.example.com", inv.Update[0].Spec.Host)
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

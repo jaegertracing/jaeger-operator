@@ -9,6 +9,8 @@ import (
 )
 
 func TestAccountInventory(t *testing.T) {
+	trueVar, falseVar := true, false
+
 	toCreate := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-create",
@@ -18,6 +20,13 @@ func TestAccountInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		AutomountServiceAccountToken: &trueVar,
+	}
+	updated := v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		AutomountServiceAccountToken: &falseVar,
 	}
 	toDelete := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +35,7 @@ func TestAccountInventory(t *testing.T) {
 	}
 
 	existing := []v1.ServiceAccount{toUpdate, toDelete}
-	desired := []v1.ServiceAccount{toUpdate, toCreate}
+	desired := []v1.ServiceAccount{updated, toCreate}
 
 	inv := ForAccounts(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +43,7 @@ func TestAccountInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, &falseVar, inv.Update[0].AutomountServiceAccountToken)
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

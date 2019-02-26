@@ -18,6 +18,17 @@ func TestConfigMapInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		Data: map[string]string{
+			"field": "foo",
+		},
+	}
+	updated := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		Data: map[string]string{
+			"field": "bar",
+		},
 	}
 	toDelete := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +37,7 @@ func TestConfigMapInventory(t *testing.T) {
 	}
 
 	existing := []v1.ConfigMap{toUpdate, toDelete}
-	desired := []v1.ConfigMap{toUpdate, toCreate}
+	desired := []v1.ConfigMap{updated, toCreate}
 
 	inv := ForConfigMaps(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +45,7 @@ func TestConfigMapInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "bar", inv.Update[0].Data["field"])
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

@@ -18,6 +18,17 @@ func TestCronJobInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		Spec: batchv1beta1.CronJobSpec{
+			Schedule: "0 1 * * *",
+		},
+	}
+	updated := batchv1beta1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		Spec: batchv1beta1.CronJobSpec{
+			Schedule: "0 2 * * *",
+		},
 	}
 	toDelete := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +37,7 @@ func TestCronJobInventory(t *testing.T) {
 	}
 
 	existing := []batchv1beta1.CronJob{toUpdate, toDelete}
-	desired := []batchv1beta1.CronJob{toUpdate, toCreate}
+	desired := []batchv1beta1.CronJob{updated, toCreate}
 
 	inv := ForCronJobs(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +45,7 @@ func TestCronJobInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "0 2 * * *", inv.Update[0].Spec.Schedule)
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)

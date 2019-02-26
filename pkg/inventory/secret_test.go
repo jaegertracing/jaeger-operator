@@ -18,6 +18,17 @@ func TestSecretInventory(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
+		StringData: map[string]string{
+			"field": "foo",
+		},
+	}
+	updated := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "to-update",
+		},
+		StringData: map[string]string{
+			"field": "bar",
+		},
 	}
 	toDelete := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -26,7 +37,7 @@ func TestSecretInventory(t *testing.T) {
 	}
 
 	existing := []v1.Secret{toUpdate, toDelete}
-	desired := []v1.Secret{toUpdate, toCreate}
+	desired := []v1.Secret{updated, toCreate}
 
 	inv := ForSecrets(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -34,6 +45,7 @@ func TestSecretInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
+	assert.Equal(t, "bar", inv.Update[0].StringData["field"])
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)
