@@ -27,50 +27,134 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 }
 
 func TestCreateElasticsearchCR(t *testing.T) {
-	trueVar := true
-	j := v1alpha1.NewJaeger("foo")
-	j.Namespace = "myproject"
-	es := &ElasticsearchDeployment{Jaeger: j}
-	cr := es.createCr()
-	assert.Equal(t, "myproject", cr.Namespace)
-	assert.Equal(t, "elasticsearch", cr.Name)
-	assert.Equal(t, []metav1.OwnerReference{{Name: "foo", Controller: &trueVar}}, cr.OwnerReferences)
+	tests := []struct {
+		jEsSpec v1alpha1.ElasticsearchSpec
+		esSpec  esv1alpha1.ElasticsearchSpec
+	}{
+		{
+			jEsSpec: v1alpha1.ElasticsearchSpec{
+				NodeCount:        2,
+				RedundancyPolicy: esv1alpha1.FullRedundancy,
+				Storage: esv1alpha1.ElasticsearchStorageSpec{
+					StorageClassName: "floppydisk",
+				},
+			},
+			esSpec: esv1alpha1.ElasticsearchSpec{
+				ManagementState:  esv1alpha1.ManagementStateManaged,
+				RedundancyPolicy: esv1alpha1.FullRedundancy,
+				Spec:             esv1alpha1.ElasticsearchNodeSpec{},
+				Nodes: []esv1alpha1.ElasticsearchNode{
+					{
+						NodeCount: 2,
+						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
+					},
+				},
+			},
+		},
+		{
+			jEsSpec: v1alpha1.ElasticsearchSpec{
+				NodeCount:        5,
+				RedundancyPolicy: esv1alpha1.FullRedundancy,
+				Storage: esv1alpha1.ElasticsearchStorageSpec{
+					StorageClassName: "floppydisk",
+				},
+			},
+			esSpec: esv1alpha1.ElasticsearchSpec{
+				ManagementState:  esv1alpha1.ManagementStateManaged,
+				RedundancyPolicy: esv1alpha1.FullRedundancy,
+				Spec:             esv1alpha1.ElasticsearchNodeSpec{},
+				Nodes: []esv1alpha1.ElasticsearchNode{
+					{
+						NodeCount: 3,
+						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
+					},
+					{
+						NodeCount: 2,
+						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
+					},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		j := v1alpha1.NewJaeger("foo")
+		j.Namespace = "myproject"
+		j.Spec.Storage.Elasticsearch = test.jEsSpec
+		es := &ElasticsearchDeployment{Jaeger: j}
+		cr := es.createCr()
+		assert.Equal(t, "myproject", cr.Namespace)
+		assert.Equal(t, "elasticsearch", cr.Name)
+		trueVar := true
+		assert.Equal(t, []metav1.OwnerReference{{Name: "foo", Controller: &trueVar}}, cr.OwnerReferences)
+		assert.Equal(t, cr.Spec, test.esSpec)
+	}
 }
 
 func TestInject(t *testing.T) {
-	p := &v1.PodSpec{
-		Containers: []v1.Container{{
-			Args:         []string{"foo"},
-			VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
-		}},
+	tests := []struct {
+		pod      *v1.PodSpec
+		extected *v1.PodSpec
+	}{
+		{pod: &v1.PodSpec{
+			Containers: []v1.Container{{
+				Args:         []string{"foo"},
+				VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
+			}},
+		},
+			extected: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Args: []string{
+						"foo",
+						"--es.server-urls=" + elasticsearchUrl,
+						"--es.token-file=" + k8sTokenFile,
+						"--es.tls.ca=" + caPath,
+						"--es.num-shards=0",
+						"--es.num-replicas=1",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{Name: "lol"},
+						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
+					},
+				}},
+				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "hoo-jaeger-elasticsearch"}}},
+				}},
+		},
+		{pod: &v1.PodSpec{
+			Containers: []v1.Container{{
+				Args: []string{"--es.num-shards=15"},
+			}},
+		},
+			extected: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Args: []string{
+						"--es.num-shards=15",
+						"--es.server-urls=" + elasticsearchUrl,
+						"--es.token-file=" + k8sTokenFile,
+						"--es.tls.ca=" + caPath,
+						"--es.num-replicas=1",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
+					},
+				}},
+				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "hoo-jaeger-elasticsearch"}}},
+				}},
+		},
 	}
-	es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
-	es.InjectStorageConfiguration(p)
-	expVolumes := []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
-		Secret: &v1.SecretVolumeSource{
-			SecretName: "hoo-jaeger-elasticsearch",
-		},
-	}}}
-	assert.Equal(t, expVolumes, p.Volumes)
-	expContainers := []v1.Container{{
-		Args: []string{
-			"foo",
-			"--es.server-urls=" + elasticsearchUrl,
-			"--es.token-file=" + k8sTokenFile,
-			"--es.tls.ca=" + caPath,
-			"--es.num-shards=0",
-			"--es.num-replicas=1",
-		},
-		VolumeMounts: []v1.VolumeMount{
-			{Name: "lol"},
-			{
-				Name:      volumeName,
-				ReadOnly:  true,
-				MountPath: volumeMountPath,
-			},
-		},
-	}}
-	assert.Equal(t, expContainers, p.Containers)
+
+	for _, test := range tests {
+		es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
+		es.InjectStorageConfiguration(test.pod)
+		assert.Equal(t, test.extected, test.pod)
+	}
+
 }
 
 func TestCalculateReplicaShards(t *testing.T) {

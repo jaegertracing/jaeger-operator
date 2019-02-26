@@ -107,14 +107,34 @@ func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {
 			Spec: esv1alpha1.ElasticsearchNodeSpec{
 				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
 			},
-			Nodes: []esv1alpha1.ElasticsearchNode{
-				{
-					NodeCount:    ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount,
-					Storage:      ed.Jaeger.Spec.Storage.Elasticsearch.Storage,
-					NodeSelector: ed.Jaeger.Spec.Storage.Elasticsearch.NodeSelector,
-					Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
-				},
+			Nodes: getNodes(ed.Jaeger.Spec.Storage.Elasticsearch),
+		},
+	}
+}
+
+func getNodes(es v1alpha1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
+	if es.NodeCount <= 3 {
+		return []esv1alpha1.ElasticsearchNode{
+			{
+				NodeCount:    es.NodeCount,
+				Storage:      es.Storage,
+				NodeSelector: es.NodeSelector,
+				Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
 			},
+		}
+	}
+	return []esv1alpha1.ElasticsearchNode{
+		{
+			NodeCount:    3,
+			Storage:      es.Storage,
+			NodeSelector: es.NodeSelector,
+			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
+		},
+		{
+			NodeCount:    es.NodeCount - 3,
+			Storage:      es.Storage,
+			NodeSelector: es.NodeSelector,
+			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
 		},
 	}
 }
