@@ -8,23 +8,26 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
+
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ          Type
-	accounts     []v1.ServiceAccount
-	configMaps   []v1.ConfigMap
-	cronJobs     []batchv1beta1.CronJob
-	daemonSets   []appsv1.DaemonSet
-	dependencies []batchv1.Job
-	deployments  []appsv1.Deployment
-	ingresses    []v1beta1.Ingress
-	routes       []osv1.Route
-	roles        []rbacv1.Role
-	roleBindings []rbacv1.RoleBinding
-	services     []v1.Service
-	secrets      []v1.Secret
+	typ             Type
+	accounts        []v1.ServiceAccount
+	configMaps      []v1.ConfigMap
+	cronJobs        []batchv1beta1.CronJob
+	daemonSets      []appsv1.DaemonSet
+	dependencies    []batchv1.Job
+	deployments     []appsv1.Deployment
+	elasticsearches []esv1alpha1.Elasticsearch
+	ingresses       []v1beta1.Ingress
+	routes          []osv1.Route
+	roles           []rbacv1.Role
+	roleBindings    []rbacv1.RoleBinding
+	services        []v1.Service
+	secrets         []v1.Secret
 }
 
 // Type represents a specific deployment strategy, like 'all-in-one'
@@ -88,6 +91,12 @@ func (s S) WithDependencies(deps []batchv1.Job) S {
 	return s
 }
 
+// WithElasticsearches returns the strategy with the given list of elastic search instances
+func (s S) WithElasticsearches(es []esv1alpha1.Elasticsearch) S {
+	s.elasticsearches = es
+	return s
+}
+
 // WithIngresses returns the strategy with the given list of dependencies
 func (s S) WithIngresses(i []v1beta1.Ingress) S {
 	s.ingresses = i
@@ -147,6 +156,11 @@ func (s S) DaemonSets() []appsv1.DaemonSet {
 // Deployments returns the list of deployments for this strategy
 func (s S) Deployments() []appsv1.Deployment {
 	return s.deployments
+}
+
+// Elasticsearches returns the list of elastic search instances for this strategy
+func (s S) Elasticsearches() []esv1alpha1.Elasticsearch {
+	return s.elasticsearches
 }
 
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent

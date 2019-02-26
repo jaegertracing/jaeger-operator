@@ -19,9 +19,10 @@ const (
 	caPath           = volumeMountPath + "/ca"
 	keyPath          = volumeMountPath + "/key"
 	certPath         = volumeMountPath + "/cert"
-	elasticsearchUrl = "https://elasticsearch:9200"
+	elasticsearchURL = "https://elasticsearch:9200"
 )
 
+// ShouldDeployElasticsearch determines whether a new instance of Elasticsearch should be deployed
 func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
 	if !strings.EqualFold(s.Type, "elasticsearch") {
 		return false
@@ -30,10 +31,12 @@ func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
 	return !ok
 }
 
+// ElasticsearchDeployment represents an ES deployment for Jaeger
 type ElasticsearchDeployment struct {
 	Jaeger *v1alpha1.Jaeger
 }
 
+// InjectStorageConfiguration changes the given spec to include ES-related command line options
 func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	p.Volumes = append(p.Volumes, v1.Volume{
 		Name: volumeName,
@@ -47,7 +50,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	if len(p.Containers) > 0 {
 		// TODO add to archive storage if it is enabled?
 		p.Containers[0].Args = append(p.Containers[0].Args,
-			"--es.server-urls="+elasticsearchUrl,
+			"--es.server-urls="+elasticsearchURL,
 			"--es.token-file="+k8sTokenFile,
 			"--es.tls.ca="+caPath)
 		if !containsPrefix("--es.num-shards", p.Containers[0].Args) {
@@ -67,6 +70,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 	}
 }
 
+// InjectIndexCleanerConfiguration changes the given spec to include the options for the index cleaner
 func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
 	p.Volumes = append(p.Volumes, v1.Volume{
 		Name: volumeName,
@@ -79,7 +83,7 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
 		// the size of arguments array should be always 2
-		p.Containers[0].Args[1] = elasticsearchUrl
+		p.Containers[0].Args[1] = elasticsearchURL
 		p.Containers[0].Env = append(p.Containers[0].Env,
 			v1.EnvVar{Name: "ES_TLS", Value: "true"},
 			v1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
@@ -94,7 +98,8 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 	}
 }
 
-func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {
+// Elasticsearch returns an ES CR for the deployment
+func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 	return &esv1alpha1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       ed.Jaeger.Namespace,

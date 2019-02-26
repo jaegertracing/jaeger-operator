@@ -7,6 +7,7 @@ import (
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -90,8 +92,18 @@ func TestDeletedInstance(t *testing.T) {
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	s := scheme.Scheme
+
+	// OpenShift Route
 	osv1.Install(s)
+
+	// Jaeger
 	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
+
+	// Jaeger's Elasticsearch
+	gv := schema.GroupVersion{Group: "logging.openshift.io", Version: "v1alpha1"}
+	s.AddKnownTypes(gv, &esv1alpha1.Elasticsearch{})
+	s.AddKnownTypes(gv, &esv1alpha1.ElasticsearchList{})
+
 	cl := fake.NewFakeClient(objs...)
 	return &ReconcileJaeger{client: cl, scheme: s}, cl
 }

@@ -3,6 +3,7 @@ package strategy
 import (
 	"testing"
 
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,6 +41,11 @@ func TestWithDependencies(t *testing.T) {
 func TestWithDeployments(t *testing.T) {
 	c := New().WithDeployments([]appsv1.Deployment{{}})
 	assert.Len(t, c.Deployments(), 1)
+}
+
+func TestWithElasticsearches(t *testing.T) {
+	c := New().WithElasticsearches([]esv1alpha1.Elasticsearch{{}})
+	assert.Len(t, c.Elasticsearches(), 1)
 }
 
 func TestWithIngresses(t *testing.T) {

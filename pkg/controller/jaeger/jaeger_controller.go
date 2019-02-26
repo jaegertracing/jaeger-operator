@@ -132,6 +132,10 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
+	if err := r.applyElasticsearches(jaeger, str.Elasticsearches()); err != nil {
+		return err
+	}
+
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
 		return err
 	}

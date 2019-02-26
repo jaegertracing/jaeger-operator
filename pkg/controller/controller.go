@@ -16,9 +16,11 @@ func AddToManager(m manager.Manager) error {
 	if err := routev1.AddToScheme(m.GetScheme()); err != nil {
 		return err
 	}
-	// TODO temporal fix https://github.com/jaegertracing/jaeger-operator/issues/206
+
+	// TODO temporary fix https://github.com/jaegertracing/jaeger-operator/issues/206
 	gv := schema.GroupVersion{Group: "logging.openshift.io", Version: "v1alpha1"}
 	m.GetScheme().AddKnownTypes(gv, &esv1alpha1.Elasticsearch{})
+	m.GetScheme().AddKnownTypes(gv, &esv1alpha1.ElasticsearchList{})
 
 	for _, f := range AddToManagerFuncs {
 		if err := f(m); err != nil {
