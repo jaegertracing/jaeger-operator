@@ -84,7 +84,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 		j.Namespace = "myproject"
 		j.Spec.Storage.Elasticsearch = test.jEsSpec
 		es := &ElasticsearchDeployment{Jaeger: j}
-		cr := es.createCr()
+		cr := es.Elasticsearch()
 		assert.Equal(t, "myproject", cr.Namespace)
 		assert.Equal(t, "elasticsearch", cr.Name)
 		trueVar := true
@@ -108,7 +108,7 @@ func TestInject(t *testing.T) {
 				Containers: []v1.Container{{
 					Args: []string{
 						"foo",
-						"--es.server-urls=" + elasticsearchUrl,
+						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
 						"--es.num-shards=0",
@@ -133,7 +133,7 @@ func TestInject(t *testing.T) {
 				Containers: []v1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
-						"--es.server-urls=" + elasticsearchUrl,
+						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
 						"--es.num-replicas=1",

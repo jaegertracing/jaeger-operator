@@ -242,14 +242,13 @@ spec:
 
 == Elasticsearch storage
 
-If no `es.server-urls` are provided Jaeger operator creates Elasticsearch CR based on the configuration
-provided in storage section. Make sure link:https://github.com/openshift/elasticsearch-operator[elasticsearch-operator]
-is running in your cluster otherwise Elasticsearch deployment will not be created. The Elasticsearch is meant
-to be dedicated for a single Jaeger instance.
+Under some circumstances, the Jaeger Operator can make use of the Elasticsearch operator to provision a suitable Elasticsearch cluster.
 
-At the moment there can be only one Jaeger with Elasticsearch instance in a namespace.
+IMPORTANT: this feature is experimental and currently works only on OpenShift clusters. Elasticsearch also requires the memory setting to be configured like `minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144'`
 
-Note that Elasticsearch requires virtual memory settings: `minikube ssh -- 'sudo sysctl -w vm.max_map_count=262144'`
+When there are no `es.server-urls` options as part of a Jaeger `production` instance, the Jaeger Operator creates an Elasticsearch cluster via the Elasticsearch Operator by creating a CR based on the configuration provided in storage section. Make sure link:https://github.com/openshift/elasticsearch-operator[elasticsearch-operator] is running in your cluster otherwise the Elasticsearch deployment will not be created. The Elasticsearch cluster is meant to be dedicated for a single Jaeger instance.
+
+IMPORTANT: At the moment there can be only one Jaeger with self-provisioned Elasticsearch instance per namespace.
 
 == Accessing the UI
 

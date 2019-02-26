@@ -42,12 +42,6 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 		c.configMaps = append(c.configMaps, *cm)
 	}
 
-	cDep := collector.Get()
-	queryDep := inject.OAuthProxy(jaeger, query.Get())
-
-	// add the deployments
-	c.deployments = []appsv1.Deployment{*collector.Get(), *inject.OAuthProxy(jaeger, query.Get())}
-
 	// add the daemonsets
 	if ds := agent.Get(); ds != nil {
 		c.daemonSets = []appsv1.DaemonSet{*ds}
@@ -85,12 +79,16 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
-			c.cronJobs = append(c.cronJobs, *indexCleaner)
 		} else {
 			logrus.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 
+	// prepare the deployments, which may get changed by the elasticsearch routine
+	cDep := collector.Get()
+	queryDep := inject.OAuthProxy(jaeger, query.Get())
+
+	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
 		es := &storage.ElasticsearchDeployment{
 			Jaeger: jaeger,
@@ -109,6 +107,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 					queryDep.Spec.Template.Spec.ServiceAccountName,
 				),
 			)
+			c.elasticsearches = append(c.elasticsearches, *es.Elasticsearch())
 
 			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
 			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
@@ -117,6 +116,14 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 			}
 		}
 	}
+
+	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
+	if indexCleaner != nil {
+		c.cronJobs = append(c.cronJobs, *indexCleaner)
+	}
+
+	// add the deployments, which may have been changed by the ES self-provisioning routine
+	c.deployments = []appsv1.Deployment{*cDep, *queryDep}
 
 	return c
 }
