@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/api/core/v1"
@@ -49,6 +50,15 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 			"--es.server-urls="+elasticsearchUrl,
 			"--es.token-file="+k8sTokenFile,
 			"--es.tls.ca="+caPath)
+		if !containsPrefix("--es.num-shards", p.Containers[0].Args) {
+			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
+			// every ES node is a data node
+			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
+		}
+		if !containsPrefix("--es.num-replicas", p.Containers[0].Args) {
+			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
+				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
+		}
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  true,
@@ -97,14 +107,59 @@ func (ed *ElasticsearchDeployment) createCr() *esv1alpha1.Elasticsearch {
 			Spec: esv1alpha1.ElasticsearchNodeSpec{
 				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
 			},
-			Nodes: []esv1alpha1.ElasticsearchNode{
-				{
-					NodeCount:    ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount,
-					Storage:      ed.Jaeger.Spec.Storage.Elasticsearch.Storage,
-					NodeSelector: ed.Jaeger.Spec.Storage.Elasticsearch.NodeSelector,
-					Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
-				},
-			},
+			Nodes: getNodes(ed.Jaeger.Spec.Storage.Elasticsearch),
 		},
 	}
+}
+
+func getNodes(es v1alpha1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
+	if es.NodeCount <= 3 {
+		return []esv1alpha1.ElasticsearchNode{
+			{
+				NodeCount:    es.NodeCount,
+				Storage:      es.Storage,
+				NodeSelector: es.NodeSelector,
+				Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
+			},
+		}
+	}
+	return []esv1alpha1.ElasticsearchNode{
+		{
+			NodeCount:    3,
+			Storage:      es.Storage,
+			NodeSelector: es.NodeSelector,
+			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
+		},
+		{
+			NodeCount:    es.NodeCount - 3,
+			Storage:      es.Storage,
+			NodeSelector: es.NodeSelector,
+			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
+		},
+	}
+}
+
+// taken from https://github.com/openshift/cluster-logging-operator/blob/1ead6701c7c7af9c0578aa66597261079b2781d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/defaults.go#L33
+func calculateReplicaShards(policyType esv1alpha1.RedundancyPolicyType, dataNodes int) int {
+	switch policyType {
+	case esv1alpha1.FullRedundancy:
+		return dataNodes - 1
+	case esv1alpha1.MultipleRedundancy:
+		return (dataNodes - 1) / 2
+	case esv1alpha1.SingleRedundancy:
+		return 1
+	case esv1alpha1.ZeroRedundancy:
+		return 0
+	default:
+		return 1
+	}
+}
+
+func containsPrefix(prefix string, arr []string) bool {
+	for _, a := range arr {
+		if strings.HasPrefix(a, prefix) {
+			return true
+		}
+	}
+	return false
 }
