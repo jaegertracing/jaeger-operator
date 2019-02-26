@@ -18,6 +18,18 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
+
+	var envFromSource []v1.EnvFromSource
+	if len(jaeger.Spec.Storage.SecretName) > 0 {
+		envFromSource = append(envFromSource, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: jaeger.Spec.Storage.SecretName,
+				},
+			},
+		})
+	}
+
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -41,10 +53,11 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{
-									Image: jaeger.Spec.Storage.EsIndexCleaner.Image,
-									Name:  name,
-									Env:   removeEmptyVars([]v1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
-									Args:  []string{strconv.Itoa(jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
+									Name:    name,
+									Env:     removeEmptyVars([]v1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
+									Args:    []string{strconv.Itoa(jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									EnvFrom: envFromSource,
 								},
 							},
 							RestartPolicy: v1.RestartPolicyNever,
