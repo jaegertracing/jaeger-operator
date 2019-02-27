@@ -10,6 +10,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+
+	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 func TestWithAccounts(t *testing.T) {
@@ -40,6 +42,11 @@ func TestWithDependencies(t *testing.T) {
 func TestWithDeployments(t *testing.T) {
 	c := New().WithDeployments([]appsv1.Deployment{{}})
 	assert.Len(t, c.Deployments(), 1)
+}
+
+func TestWithElasticsearches(t *testing.T) {
+	c := New().WithElasticsearches([]esv1alpha1.Elasticsearch{{}})
+	assert.Len(t, c.Elasticsearches(), 1)
 }
 
 func TestWithIngresses(t *testing.T) {
