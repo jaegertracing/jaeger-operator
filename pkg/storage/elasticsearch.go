@@ -102,8 +102,16 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 	return &esv1alpha1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:       ed.Jaeger.Namespace,
-			Name:            esSecret.name,
+			Namespace: ed.Jaeger.Namespace,
+			Name:      esSecret.name,
+			Labels: map[string]string{
+				"app":                          "jaeger",
+				"app.kubernetes.io/name":       esSecret.name,
+				"app.kubernetes.io/instance":   ed.Jaeger.Name,
+				"app.kubernetes.io/component":  "elasticsearch",
+				"app.kubernetes.io/part-of":    "jaeger",
+				"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
 			OwnerReferences: []metav1.OwnerReference{asOwner(ed.Jaeger)},
 		},
 		Spec: esv1alpha1.ElasticsearchSpec{
