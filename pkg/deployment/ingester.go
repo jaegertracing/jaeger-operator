@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -41,7 +41,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		return nil
 	}
 
-	logrus.Debugf("Assembling a ingester deployment for %v", i.jaeger)
+	log.WithFields(log.Fields{
+		"instance":  i.jaeger.Name,
+		"namespace": i.jaeger.Namespace,
+	}).Debug("Assembling an ingester deployment")
 
 	labels := i.labels()
 	trueVar := true

@@ -79,15 +79,16 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	log.WithFields(log.Fields{
-		"os":           runtime.GOOS,
-		"arch":         runtime.GOARCH,
-		"version":      runtime.Version(),
-		"operator-sdk": version.Get().OperatorSdk,
+		"os":              runtime.GOOS,
+		"arch":            runtime.GOARCH,
+		"version":         runtime.Version(),
+		"operator-sdk":    version.Get().OperatorSdk,
+		"jaeger-operator": version.Get().Operator,
 	}).Info("Versions")
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatalf("failed to get watch namespace: %v", err)
+		log.WithError(err).Fatal("failed to get watch namespace")
 	}
 
 	// Get a config to talk to the apiserver
@@ -106,7 +107,7 @@ func start(cmd *cobra.Command, args []string) {
 		log.Debug("Attempting to auto-detect the platform")
 		os, err := detectOpenShift(mgr.GetConfig())
 		if err != nil {
-			log.WithError(err).Info("failed to auto-detect the platform, falling back to 'kubernetes'")
+			log.WithError(err).Info("Failed to auto-detect the platform, falling back to 'kubernetes'")
 		}
 
 		if os {
@@ -129,8 +130,6 @@ func start(cmd *cobra.Command, args []string) {
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Fatal(err)
 	}
-
-	log.Print("Starting the Cmd.")
 
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))

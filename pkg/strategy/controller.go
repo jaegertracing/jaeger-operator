@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -15,14 +15,19 @@ import (
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
+	logFields := log.WithFields(log.Fields{
+		"instance":  jaeger.Name,
+		"namespace": jaeger.Namespace,
+	})
+
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
-		logrus.Warnf("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
+		logFields.Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
 	}
 
 	normalize(jaeger)
 
-	logrus.Debugf("Jaeger strategy: %s", jaeger.Spec.Strategy)
+	logFields.WithField("strategy", jaeger.Spec.Strategy).Debug("Strategy chosen")
 	if strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
 		return newAllInOneStrategy(jaeger)
 	}
@@ -39,23 +44,26 @@ func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 func normalize(jaeger *v1alpha1.Jaeger) {
 	// we need a name!
 	if jaeger.Name == "" {
-		logrus.Infof("This Jaeger instance was created without a name. Setting it to 'my-jaeger'")
 		jaeger.Name = "my-jaeger"
+		log.WithField("instance", jaeger.Name).Info("This Jaeger instance was created without a name. Applying a default name.")
 	}
+
+	logFields := log.WithFields(log.Fields{
+		"instance":  jaeger.Name,
+		"namespace": jaeger.Namespace,
+	})
 
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
-		logrus.Infof("Storage type wasn't provided for the Jaeger instance '%v'. Falling back to 'memory'", jaeger.Name)
+		logFields.Info("Storage type not provided. Falling back to 'memory'")
 		jaeger.Spec.Storage.Type = "memory"
 	}
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
-		logrus.Infof(
-			"The provided storage type for the Jaeger instance '%v' is unknown ('%v'). Falling back to 'memory'. Known options: %v",
-			jaeger.Name,
-			jaeger.Spec.Storage.Type,
-			storage.ValidTypes(),
-		)
+		logFields.WithFields(log.Fields{
+			"storage":       jaeger.Spec.Storage.Type,
+			"known-options": storage.ValidTypes(),
+		}).Info("The provided storage type is unknown. Falling back to 'memory'")
 		jaeger.Spec.Storage.Type = "memory"
 	}
 
@@ -67,11 +75,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
 	if strings.EqualFold(jaeger.Spec.Storage.Type, "memory") && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
-		logrus.Warnf(
-			"No suitable storage was provided for the Jaeger instance '%v'. Falling back to all-in-one. Storage type: '%v'",
-			jaeger.Name,
-			jaeger.Spec.Storage.Type,
-		)
+		logFields.WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to all-in-one")
 		jaeger.Spec.Strategy = "allInOne"
 	}
 

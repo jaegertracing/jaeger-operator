@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -68,6 +69,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	logFields := log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
+		"execution": time.Now().UTC(),
 	})
 
 	logFields.Debug("Reconciling Jaeger")

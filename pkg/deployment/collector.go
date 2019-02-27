@@ -39,7 +39,10 @@ func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
 
 // Get returns a collector pod
 func (c *Collector) Get() *appsv1.Deployment {
-	log.WithField("instance", c.jaeger.Name).Debug("assembling a collector deployment")
+	log.WithFields(log.Fields{
+		"instance":  c.jaeger.Name,
+		"namespace": c.jaeger.Namespace,
+	}).Debug("assembling a collector deployment")
 
 	labels := c.labels()
 	trueVar := true

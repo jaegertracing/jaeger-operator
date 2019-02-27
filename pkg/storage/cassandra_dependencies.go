@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
@@ -14,6 +14,10 @@ import (
 
 func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 	trueVar := true
+	logFields := log.WithFields(log.Fields{
+		"instance":  jaeger.Name,
+		"namespace": jaeger.Namespace,
+	})
 
 	// TODO should be moved to normalize
 	if jaeger.Spec.Storage.CassandraCreateSchema.Enabled == nil {
@@ -27,12 +31,12 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Datacenter == "" {
 		// the default in the create-schema is "dc1", but the default in Jaeger is "test"! We align with Jaeger here
-		logrus.WithField("instance", jaeger.Name).Info("Datacenter not specified. Using 'test' for the cassandra-create-schema job.")
+		logFields.Info("Datacenter not specified. Using 'test' for the cassandra-create-schema job.")
 		jaeger.Spec.Storage.CassandraCreateSchema.Datacenter = "test"
 	}
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Mode == "" {
-		logrus.WithField("instance", jaeger.Name).Info("Mode not specified. Using 'prod' for the cassandra-create-schema job.")
+		logFields.Info("Mode not specified. Using 'prod' for the cassandra-create-schema job.")
 		jaeger.Spec.Storage.CassandraCreateSchema.Mode = "prod"
 	}
 
@@ -42,7 +46,7 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 
 	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]
 	if host == "" {
-		logrus.WithField("instance", jaeger.Name).Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
+		logFields.Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
 	}
 
