@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -64,6 +65,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("platform", "auto-detect", "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")
 	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 
+	cmd.Flags().String("es-provision", "auto", "Whether to auto-provision an Elasticsearch cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'logging.openshift.io' is available, auto-provisioning is enabled.")
+	viper.BindPFlag("es-provision", cmd.Flags().Lookup("es-provision"))
+
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
 	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 
@@ -102,22 +106,39 @@ func start(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformAutoDetect) {
-		log.Debug("Attempting to auto-detect the platform")
-		os, err := detectOpenShift(mgr.GetConfig())
-		if err != nil {
-			log.WithError(err).Info("failed to auto-detect the platform, falling back to 'kubernetes'")
-		}
-
-		if os {
-			viper.Set("platform", v1alpha1.FlagPlatformOpenShift)
-		} else {
-			viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
-		}
-
-		log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
+	apiList, err := availableAPIs(mgr.GetConfig())
+	if err != nil {
+		log.WithError(err).Info("Failed to determine the platform capabilities. Auto-detected properties will fallback to their default values.")
+		viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
+		viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchFalse)
 	} else {
-		log.WithField("platform", viper.GetString("platform")).Debug("The 'platform' option is set")
+		// detect the platform
+		if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformAutoDetect) {
+			log.Debug("Attempting to auto-detect the platform")
+			if isOpenShift(apiList) {
+				viper.Set("platform", v1alpha1.FlagPlatformOpenShift)
+			} else {
+				viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
+			}
+
+			log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
+		} else {
+			log.WithField("platform", viper.GetString("platform")).Debug("The 'platform' option is explicitly set")
+		}
+
+		// detect whether the Elasticsearch operator is available
+		if strings.EqualFold(viper.GetString("es-provision"), v1alpha1.FlagProvisionElasticsearchAuto) {
+			log.Debug("Determining whether we should enable the Elasticsearch Operator integration")
+			if isElasticsearchOperatorAvailable(apiList) {
+				viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchTrue)
+			} else {
+				viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchFalse)
+			}
+
+			log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")
+		} else {
+			log.WithField("es-provision", viper.GetString("es-provision")).Debug("The 'es-provision' option is explicitly set")
+		}
 	}
 
 	// Setup Scheme for all resources
@@ -136,22 +157,36 @@ func start(cmd *cobra.Command, args []string) {
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }
 
-// copied from Snowdrop's Component Operator
-// https://github.com/snowdrop/component-operator/blob/744a9501c58f60877aa2b3a7e6c75da669519e8e/pkg/util/kubernetes/config.go
-func detectOpenShift(kubeconfig *rest.Config) (bool, error) {
+func availableAPIs(kubeconfig *rest.Config) (*metav1.APIGroupList, error) {
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(kubeconfig)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
+
 	apiList, err := discoveryClient.ServerGroups()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
+
+	return apiList, nil
+}
+
+func isOpenShift(apiList *metav1.APIGroupList) bool {
 	apiGroups := apiList.Groups
 	for i := 0; i < len(apiGroups); i++ {
 		if apiGroups[i].Name == "route.openshift.io" {
-			return true, nil
+			return true
 		}
 	}
-	return false, nil
+	return false
+}
+
+func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
+	apiGroups := apiList.Groups
+	for i := 0; i < len(apiGroups); i++ {
+		if apiGroups[i].Name == "logging.openshift.io" {
+			return true
+		}
+	}
+	return false
 }
