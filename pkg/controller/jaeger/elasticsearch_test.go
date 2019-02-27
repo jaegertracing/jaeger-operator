@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +17,9 @@ import (
 )
 
 func TestElasticsearchesCreate(t *testing.T) {
+	viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchTrue)
+	defer viper.Reset()
+
 	// prepare
 	nsn := types.NamespacedName{
 		Name: "TestElasticsearchesCreate",
@@ -57,6 +61,9 @@ func TestElasticsearchesCreate(t *testing.T) {
 }
 
 func TestElasticsearchesUpdate(t *testing.T) {
+	viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchTrue)
+	defer viper.Reset()
+
 	// prepare
 	nsn := types.NamespacedName{
 		Name: "TestElasticsearchesUpdate",
@@ -97,6 +104,9 @@ func TestElasticsearchesUpdate(t *testing.T) {
 }
 
 func TestElasticsearchesDelete(t *testing.T) {
+	viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchTrue)
+	defer viper.Reset()
+
 	// prepare
 	nsn := types.NamespacedName{
 		Name: "TestElasticsearchesDelete",

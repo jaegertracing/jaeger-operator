@@ -6,6 +6,7 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
@@ -18,17 +19,12 @@ var (
 )
 
 func TestJaeger(t *testing.T) {
-	jaegerList := &v1alpha1.JaegerList{
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1alpha1.JaegerList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "io.jaegertracing/v1alpha1",
 		},
-	}
-
-	err := framework.AddToFrameworkScheme(apis.AddToScheme, jaegerList)
-	if err != nil {
-		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
-	}
+	}))
 
 	t.Run("jaeger-group", func(t *testing.T) {
 		t.Run("my-jaeger", JaegerAllInOne)

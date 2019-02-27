@@ -21,6 +21,15 @@ const (
 	// FlagPlatformAutoDetect represents the "auto-detect" value for the platform flag
 	FlagPlatformAutoDetect = "auto-detect"
 
+	// FlagProvisionElasticsearchAuto represents the 'auto' value for the 'es-provision' flag
+	FlagProvisionElasticsearchAuto = "auto"
+
+	// FlagProvisionElasticsearchTrue represents the value 'true' for the 'es-provision' flag
+	FlagProvisionElasticsearchTrue = "true"
+
+	// FlagProvisionElasticsearchFalse represents the value 'false' for the 'es-provision' flag
+	FlagProvisionElasticsearchFalse = "false"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""
 
