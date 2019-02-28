@@ -2,6 +2,25 @@
 
 = Changelog
 
+== v1.10.0 (2019-02-28)
+
+* Automatically detect when the ES operator is available (https://github.com/jaegertracing/jaeger-operator/pull/239[#239])
+* Adjusted logs to be consistent across the code base (https://github.com/jaegertracing/jaeger-operator/pull/237[#237])
+* Fixed deployment of Elasticsearch via its operator (https://github.com/jaegertracing/jaeger-operator/pull/234[#234])
+* Set ES shards and replicas based on redundancy policy (https://github.com/jaegertracing/jaeger-operator/pull/229[#229])
+* Update Jaeger CR (https://github.com/jaegertracing/jaeger-operator/pull/193[#193])
+* Add storage secrets to es-index-cleaner cronjob (https://github.com/jaegertracing/jaeger-operator/pull/197[#197])
+* Removed constraint on namespace when obtaining available Jaeger instances (https://github.com/jaegertracing/jaeger-operator/pull/213[#213])
+* Added workaround for kubectl logs and get pods commands (https://github.com/jaegertracing/jaeger-operator/pull/225[#225])
+* Add -n observability so kubectl get deployment command works correctly (https://github.com/jaegertracing/jaeger-operator/pull/223[#223])
+* Added capability of detecting the platform (https://github.com/jaegertracing/jaeger-operator/pull/217[#217])
+* Deploy one ES node (https://github.com/jaegertracing/jaeger-operator/pull/221[#221])
+* Use centos image (https://github.com/jaegertracing/jaeger-operator/pull/220[#220])
+* Add support for deploying elasticsearch  (https://github.com/jaegertracing/jaeger-operator/pull/191[#191])
+* Replaced use of strings.ToLower comparison with EqualFold (https://github.com/jaegertracing/jaeger-operator/pull/214[#214])
+* Bump Jaeger to 1.10 (https://github.com/jaegertracing/jaeger-operator/pull/212[#212])
+* Ignore golang coverage html (https://github.com/jaegertracing/jaeger-operator/pull/208[#208])
+
 == v1.9.2 (2019-02-11)
 
 * Enable single operator to monitor all namespaces (https://github.com/jaegertracing/jaeger-operator/pull/188[#188])
