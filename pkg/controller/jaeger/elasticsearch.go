@@ -16,8 +16,8 @@ import (
 
 func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired []esv1alpha1.Elasticsearch) error {
 	opts := client.MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
+		"app.kubernetes.io/instance": jaeger.Name,
+		"app.kubernetes.io/part-of":  "jaeger",
 	})
 	list := &esv1alpha1.ElasticsearchList{}
 	if err := r.client.List(context.Background(), opts, list); err != nil {

@@ -105,12 +105,14 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 			Namespace: ed.Jaeger.Namespace,
 			Name:      esSecret.name,
 			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       esSecret.name,
-				"app.kubernetes.io/instance":   ed.Jaeger.Name,
-				"app.kubernetes.io/component":  "elasticsearch",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
+				"app":                         "jaeger",
+				"app.kubernetes.io/name":      esSecret.name,
+				"app.kubernetes.io/instance":  ed.Jaeger.Name,
+				"app.kubernetes.io/component": "elasticsearch",
+				"app.kubernetes.io/part-of":   "jaeger",
+				// we cannot use jaeger-operator because our component controllers removes all objects
+				// created by ES operator
+				//"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 			OwnerReferences: []metav1.OwnerReference{asOwner(ed.Jaeger)},
 		},
