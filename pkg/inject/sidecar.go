@@ -15,7 +15,10 @@ import (
 
 var (
 	// Annotation is the annotation name to look for when deciding whether or not to inject
-	Annotation = "inject-jaeger-agent"
+	Annotation = "sidecar.jaegertracing.io/inject"
+
+	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
+	AnnotationLegacy = "inject-jaeger-agent"
 )
 
 const (
@@ -24,17 +27,19 @@ const (
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
+func Sidecar(jaeger *v1alpha1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
-	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
+	if jaeger == nil || (dep.Annotations[Annotation] != jaeger.Name && dep.Annotations[AnnotationLegacy] != jaeger.Name) {
 		logFields.Debug("skipping sidecar injection")
 	} else {
 		decorate(dep)
 		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
 	}
+
+	return dep
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not

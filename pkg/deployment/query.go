@@ -53,7 +53,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
 			// 2) this specific string is part of the "public API" of the operator: we should not change
 			// it at will. So, we leave this configured just like any other application would
-			"inject-jaeger-agent": q.jaeger.Name,
+			"sidecar.jaegertracing.io/inject": q.jaeger.Name,
 		},
 	}
 
@@ -80,9 +80,10 @@ func (q *Query) Get() *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-query", q.jaeger.Name),
-			Namespace: q.jaeger.Namespace,
-			Labels:    labels,
+			Name:        fmt.Sprintf("%s-query", q.jaeger.Name),
+			Namespace:   q.jaeger.Namespace,
+			Labels:      labels,
+			Annotations: commonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: q.jaeger.APIVersion,
