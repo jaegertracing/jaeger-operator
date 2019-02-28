@@ -2,7 +2,12 @@ package jaeger
 
 import (
 	"context"
+	"time"
 
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -12,8 +17,8 @@ import (
 
 func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired []esv1alpha1.Elasticsearch) error {
 	opts := client.MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
+		"app.kubernetes.io/instance": jaeger.Name,
+		"app.kubernetes.io/part-of":  "jaeger",
 	})
 	list := &esv1alpha1.ElasticsearchList{}
 	if err := r.client.List(context.Background(), opts, list); err != nil {
@@ -25,6 +30,9 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired [
 		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("creating elasticsearch")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
+		}
+		if err := waitForAvailableElastic(r.client, d); err != nil {
+			return errors.Wrap(err, "elasticsearch cluster didn't get to ready state")
 		}
 	}
 
@@ -42,5 +50,32 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired [
 		}
 	}
 
+	return nil
+}
+
+func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error {
+	var expectedSize int32
+	for _, n := range es.Spec.Nodes {
+		expectedSize += n.NodeCount
+	}
+	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
+		depList := v1.DeploymentList{}
+		if err = c.List(context.Background(), client.MatchingLabels(es.Labels).InNamespace(es.Namespace), &depList); err != nil {
+			return false, err
+		}
+		available := int32(0)
+		for _, d := range depList.Items {
+			if d.Status.Replicas == d.Status.AvailableReplicas {
+				available++
+			}
+		}
+		logrus.WithFields(logrus.Fields{
+			"namespace":      es.Namespace,
+			"name":           es.Name,
+			"desiredNodes":   expectedSize,
+			"availableNodes": available,
+		}).Debug("Waiting for Elasticsearch to be available")
+		return available == expectedSize, nil
+	})
 	return nil
 }

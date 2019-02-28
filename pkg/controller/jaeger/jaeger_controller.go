@@ -136,6 +136,11 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
+	// secrets have to be created before ES - they are mounted to the ES pod
+	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
+		return err
+	}
+
 	elasticsearches := str.Elasticsearches()
 	if strings.EqualFold(viper.GetString("es-provision"), v1alpha1.FlagProvisionElasticsearchTrue) {
 		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
@@ -161,10 +166,6 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
 	}
 
 	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
-		return err
-	}
-
-	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
 		return err
 	}
 
