@@ -145,7 +145,7 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
 		log.WithFields(log.Fields{
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
-		}).Info("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+		}).Warn("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
 	}
 
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
