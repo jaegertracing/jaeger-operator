@@ -136,10 +136,16 @@ func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
+	elasticsearches := str.Elasticsearches()
 	if strings.EqualFold(viper.GetString("es-provision"), v1alpha1.FlagProvisionElasticsearchTrue) {
-		if err := r.applyElasticsearches(jaeger, str.Elasticsearches()); err != nil {
+		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
 			return err
 		}
+	} else if len(elasticsearches) > 0 {
+		log.WithFields(log.Fields{
+			"namespace": jaeger.Namespace,
+			"instance":  jaeger.Name,
+		}).Info("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
 	}
 
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
