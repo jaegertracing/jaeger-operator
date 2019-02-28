@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# The script it taken from https://github.com/openshift/cluster-logging-operator
+# The script is taken from https://github.com/openshift/cluster-logging-operator
 
 WORKING_DIR=${WORKING_DIR:-/tmp/_working_dir}
 NAMESPACE=${NAMESPACE:-openshift-logging}
