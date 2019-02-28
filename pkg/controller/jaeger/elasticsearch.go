@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
@@ -21,28 +20,23 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired [
 		return err
 	}
 
-	logFields := log.WithFields(log.Fields{
-		"namespace": jaeger.Namespace,
-		"instance":  jaeger.Name,
-	})
-
 	inv := inventory.ForElasticsearches(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("elasticsearch", d.Name).Debug("creating elasticsearch")
+		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("creating elasticsearch")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("elasticsearch", d.Name).Debug("updating elasticsearch")
+		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("updating elasticsearch")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("elasticsearch", d.Name).Debug("deleting elasticsearch")
+		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("deleting elasticsearch")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

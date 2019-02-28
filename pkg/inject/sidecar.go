@@ -26,11 +26,7 @@ const (
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
 func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := log.WithFields(log.Fields{
-		"instance":   jaeger.Name,
-		"namespace":  jaeger.Namespace,
-		"deployment": dep.Name,
-	})
+	logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
 	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
 		logFields.Debug("skipping sidecar injection")

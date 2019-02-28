@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -21,28 +20,23 @@ func (r *ReconcileJaeger) applyConfigMaps(jaeger v1alpha1.Jaeger, desired []v1.C
 		return err
 	}
 
-	logFields := log.WithFields(log.Fields{
-		"namespace": jaeger.Namespace,
-		"instance":  jaeger.Name,
-	})
-
 	inv := inventory.ForConfigMaps(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("configMap", d.Name).Debug("creating config maps")
+		jaeger.Logger().WithField("configMap", d.Name).Debug("creating config maps")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("configMap", d.Name).Debug("updating config maps")
+		jaeger.Logger().WithField("configMap", d.Name).Debug("updating config maps")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("configMap", d.Name).Debug("deleting config maps")
+		jaeger.Logger().WithField("configMap", d.Name).Debug("deleting config maps")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

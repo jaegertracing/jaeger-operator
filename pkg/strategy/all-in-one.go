@@ -3,7 +3,6 @@ package strategy
 import (
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -21,12 +20,7 @@ import (
 
 func newAllInOneStrategy(jaeger *v1alpha1.Jaeger) S {
 	c := S{typ: AllInOne}
-	logFields := log.WithFields(log.Fields{
-		"instance":  jaeger.Name,
-		"namespace": jaeger.Namespace,
-	})
-
-	logFields.Debug("Creating all-in-one deployment")
+	jaeger.Logger().Debug("Creating all-in-one deployment")
 
 	dep := deployment.NewAllInOne(jaeger)
 
@@ -73,7 +67,7 @@ func newAllInOneStrategy(jaeger *v1alpha1.Jaeger) S {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			c.cronJobs = append(c.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			logFields.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
 		}
 	}
 
@@ -81,7 +75,7 @@ func newAllInOneStrategy(jaeger *v1alpha1.Jaeger) S {
 		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
 			c.cronJobs = append(c.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
 		} else {
-			logFields.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 

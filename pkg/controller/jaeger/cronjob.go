@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -21,28 +20,23 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1alpha1.Jaeger, desired []batchv
 		return err
 	}
 
-	logFields := log.WithFields(log.Fields{
-		"namespace": jaeger.Namespace,
-		"instance":  jaeger.Name,
-	})
-
 	inv := inventory.ForCronJobs(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("cronjob", d.Name).Debug("creating cronjob")
+		jaeger.Logger().WithField("cronjob", d.Name).Debug("creating cronjob")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("cronjob", d.Name).Debug("updating cronjob")
+		jaeger.Logger().WithField("cronjob", d.Name).Debug("updating cronjob")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("cronjob", d.Name).Debug("deleting cronjob")
+		jaeger.Logger().WithField("cronjob", d.Name).Debug("deleting cronjob")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

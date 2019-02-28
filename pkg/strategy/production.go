@@ -3,7 +3,6 @@ package strategy
 import (
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -22,11 +21,6 @@ import (
 
 func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 	c := S{typ: Production}
-	logFields := log.WithFields(log.Fields{
-		"instance":  jaeger.Name,
-		"namespace": jaeger.Namespace,
-	})
-
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
 	agent := deployment.NewAgent(jaeger)
@@ -75,7 +69,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			c.cronJobs = append(c.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			logFields.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
 		}
 	}
 
@@ -84,7 +78,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
-			logFields.WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 
@@ -100,7 +94,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 
 		err := storage.CreateESCerts()
 		if err != nil {
-			logFields.WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+			jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
 		} else {
 			c.secrets = storage.ESSecrets(jaeger)
 			c.roles = append(c.roles, storage.ESRole(jaeger))

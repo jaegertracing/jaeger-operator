@@ -3,7 +3,6 @@ package deployment
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -35,10 +34,7 @@ func NewAllInOne(jaeger *v1alpha1.Jaeger) *AllInOne {
 
 // Get returns a pod for the current all-in-one configuration
 func (a *AllInOne) Get() *appsv1.Deployment {
-	log.WithFields(log.Fields{
-		"instance":  a.jaeger.Name,
-		"namespace": a.jaeger.Namespace,
-	}).Debug("Assembling an all-in-one deployment")
+	a.jaeger.Logger().Debug("Assembling an all-in-one deployment")
 	labels := a.labels()
 	trueVar := true
 
