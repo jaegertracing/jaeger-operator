@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -68,6 +69,12 @@ func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error
 				available++
 			}
 		}
+		logrus.WithFields(logrus.Fields{
+			"namespace":      es.Namespace,
+			"name":           es.Name,
+			"desiredNodes":   expectedSize,
+			"availableNodes": available,
+		}).Debug("Waiting for Elasticsearch to be available")
 		return available == expectedSize, nil
 	})
 	return nil
