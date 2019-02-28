@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"k8s.io/api/extensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -21,28 +20,23 @@ func (r *ReconcileJaeger) applyIngresses(jaeger v1alpha1.Jaeger, desired []v1bet
 		return err
 	}
 
-	logFields := log.WithFields(log.Fields{
-		"namespace": jaeger.Namespace,
-		"instance":  jaeger.Name,
-	})
-
 	inv := inventory.ForIngresses(list.Items, desired)
 	for _, d := range inv.Create {
-		logFields.WithField("ingress", d.Name).Debug("creating ingress")
+		jaeger.Logger().WithField("ingress", d.Name).Debug("creating ingress")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Update {
-		logFields.WithField("ingress", d.Name).Debug("updating ingress")
+		jaeger.Logger().WithField("ingress", d.Name).Debug("updating ingress")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		logFields.WithField("ingress", d.Name).Debug("deleting ingress")
+		jaeger.Logger().WithField("ingress", d.Name).Debug("deleting ingress")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

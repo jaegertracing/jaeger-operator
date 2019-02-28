@@ -3,7 +3,6 @@ package deployment
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -38,7 +37,7 @@ func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
 
 // Get returns a deployment specification for the current instance
 func (q *Query) Get() *appsv1.Deployment {
-	logrus.Debug("Assembling a query deployment")
+	q.jaeger.Logger().Debug("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)

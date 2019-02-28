@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -65,12 +66,13 @@ type ReconcileJaeger struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	logFields := log.WithFields(log.Fields{
+	execution := time.Now().UTC()
+
+	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
-	})
-
-	logFields.Debug("Reconciling Jaeger")
+		"execution": execution,
+	}).Debug("Reconciling Jaeger")
 
 	// Fetch the Jaeger instance
 	instance := &v1alpha1.Jaeger{}
@@ -93,6 +95,8 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.Kind = "Jaeger"
 
 	str := r.runStrategyChooser(instance)
+
+	logFields := instance.Logger().WithField("execution", execution)
 
 	// wait for all the dependencies to succeed
 	if err := r.handleDependencies(str); err != nil {

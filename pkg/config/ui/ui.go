@@ -3,7 +3,6 @@ package configmap
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,7 +31,7 @@ func (u *UIConfig) Get() *v1.ConfigMap {
 		return nil
 	}
 
-	logrus.Debug("Assembling the UI configmap")
+	u.jaeger.Logger().Debug("Assembling the UI configmap")
 	trueVar := true
 	data := map[string]string{
 		"ui": string(json),

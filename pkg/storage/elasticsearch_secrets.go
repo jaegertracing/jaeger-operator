@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -99,7 +99,7 @@ func createESCerts(script string) error {
 		"NAMESPACE="+namespace,
 	)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"script": script,
 			"out":    string(out)}).
 			Error("Failed to create certificates")

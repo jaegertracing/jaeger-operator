@@ -26,12 +26,13 @@ const (
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
 func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
+	logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
 	if jaeger == nil || dep.Annotations[Annotation] != jaeger.Name {
-		log.WithField("deployment", dep.Name).Debug("skipping sidecar injection")
+		logFields.Debug("skipping sidecar injection")
 	} else {
 		decorate(dep)
-		log.WithField("deployment", dep.Name).Debug("injecting sidecar")
+		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
 	}
 }
@@ -39,7 +40,10 @@ func Sidecar(dep *appsv1.Deployment, jaeger *v1alpha1.Jaeger) {
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment) bool {
 	if dep.Annotations[Annotation] == "" {
-		log.WithField("deployment", dep.Name).Debug("annotation not present, not injecting")
+		log.WithFields(log.Fields{
+			"namespace":  dep.Namespace,
+			"deployment": dep.Name,
+		}).Debug("annotation not present, not injecting")
 		return false
 	}
 
