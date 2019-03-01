@@ -84,7 +84,17 @@ type JaegerCommonSpec struct {
 
 // JaegerStatus defines what is to be returned from a status query
 type JaegerStatus struct {
-	// Fill me
+	// CollectorTracesReceived represents sum of the metric jaeger_collector_traces_received_total across all collectors
+	CollectorTracesReceived int `json:"collectorTracesReceived"`
+
+	// CollectorSpansReceived represents sum of the metric jaeger_collector_spans_received_total across all collectors
+	CollectorSpansReceived int `json:"collectorSpansReceived"`
+
+	// CollectorSpansDropped represents sum of the metric jaeger_collector_spans_dropped_total across all collectors
+	CollectorSpansDropped int `json:"collectorSpansDropped"`
+
+	// CollectorQueueLength represents sum of the metric jaeger_collector_queue_length across all collectors
+	CollectorQueueLength int `json:"collectorQueueLength"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -154,6 +164,7 @@ type JaegerStorageSpec struct {
 	Elasticsearch         ElasticsearchSpec               `json:"elasticsearch"`
 }
 
+// ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
 type ElasticsearchSpec struct {
 	Resources        v1.ResourceRequirements             `json:"resources"`
 	NodeCount        int32                               `json:"nodeCount"`
