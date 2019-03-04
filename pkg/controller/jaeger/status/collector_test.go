@@ -30,10 +30,8 @@ func TestPodsArePending(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 	s := scraper{ksClient: cl}
 	jaeger = s.scrape(jaeger)
-	assert.Equal(t, 0, jaeger.Status.CollectorQueueLength)
 	assert.Equal(t, 0, jaeger.Status.CollectorSpansDropped)
 	assert.Equal(t, 0, jaeger.Status.CollectorSpansReceived)
-	assert.Equal(t, 0, jaeger.Status.CollectorTracesReceived)
 }
 
 func TestPodsAreRunning(t *testing.T) {
@@ -43,10 +41,8 @@ func TestPodsAreRunning(t *testing.T) {
 func TestOldStatusIsReplaced(t *testing.T) {
 	assertMetricsAreCollected(t, v1alpha1.Jaeger{
 		Status: v1alpha1.JaegerStatus{
-			CollectorQueueLength:    1000,
-			CollectorSpansDropped:   2000,
-			CollectorSpansReceived:  3000,
-			CollectorTracesReceived: 4000,
+			CollectorSpansDropped:  2000,
+			CollectorSpansReceived: 3000,
 		},
 	})
 }
@@ -63,7 +59,7 @@ func TestAllInOnePodsAreRunning(t *testing.T) {
 
 func TestNonNumericMetric(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte(`jaeger_collector_queue_length{host="d096132db661"} N`))
+		rw.Write([]byte(`jaeger_collector_spans_received_total{debug="false",format="jaeger",svc="jaeger-query"} N`))
 	}))
 	// Close the server when test finishes
 	defer server.Close()
@@ -104,10 +100,8 @@ func assertMetricsAreCollected(t *testing.T, jaeger v1alpha1.Jaeger) {
 	s := scraper{ksClient: cl, hClient: *server.Client(), targetPort: port}
 	jaeger = s.scrape(jaeger)
 
-	assert.Equal(t, 2, jaeger.Status.CollectorQueueLength)
 	assert.Equal(t, 1, jaeger.Status.CollectorSpansDropped)
 	assert.Equal(t, 10, jaeger.Status.CollectorSpansReceived)
-	assert.Equal(t, 20, jaeger.Status.CollectorTracesReceived)
 }
 
 func assertZeroMetricsOnFailure(t *testing.T, server *httptest.Server) {
@@ -130,10 +124,8 @@ func assertZeroMetricsOnFailure(t *testing.T, server *httptest.Server) {
 	s := scraper{ksClient: cl, hClient: *server.Client(), targetPort: port}
 	jaeger = s.scrape(jaeger)
 
-	assert.Equal(t, 0, jaeger.Status.CollectorQueueLength)
 	assert.Equal(t, 0, jaeger.Status.CollectorSpansDropped)
 	assert.Equal(t, 0, jaeger.Status.CollectorSpansReceived)
-	assert.Equal(t, 0, jaeger.Status.CollectorTracesReceived)
 }
 
 type fakeHClient struct {

@@ -84,17 +84,11 @@ type JaegerCommonSpec struct {
 
 // JaegerStatus defines what is to be returned from a status query
 type JaegerStatus struct {
-	// CollectorTracesReceived represents sum of the metric jaeger_collector_traces_received_total across all collectors
-	CollectorTracesReceived int `json:"collectorTracesReceived"`
-
 	// CollectorSpansReceived represents sum of the metric jaeger_collector_spans_received_total across all collectors
 	CollectorSpansReceived int `json:"collectorSpansReceived"`
 
 	// CollectorSpansDropped represents sum of the metric jaeger_collector_spans_dropped_total across all collectors
 	CollectorSpansDropped int `json:"collectorSpansDropped"`
-
-	// CollectorQueueLength represents sum of the metric jaeger_collector_queue_length across all collectors
-	CollectorQueueLength int `json:"collectorQueueLength"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query

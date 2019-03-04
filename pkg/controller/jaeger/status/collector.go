@@ -133,11 +133,6 @@ func (s *scraper) extractMetric(jaeger v1alpha1.Jaeger, metricLine string) v1alp
 	parts := strings.SplitN(metricLine, " ", 2)
 	metric := parts[0]
 
-	// metric is like: jaeger_collector_traces_received_total{debug="false",format="jaeger",svc="other-services"}
-	if strings.HasPrefix(metric, "jaeger_collector_traces_received_total") {
-		jaeger.Status.CollectorTracesReceived = jaeger.Status.CollectorTracesReceived + valueFor(jaeger, parts[1])
-	}
-
 	// metric is like: jaeger_collector_spans_received_total{debug="false",format="jaeger",svc="other-services"}
 	if strings.HasPrefix(metric, "jaeger_collector_spans_received_total") {
 		jaeger.Status.CollectorSpansReceived = jaeger.Status.CollectorSpansReceived + valueFor(jaeger, parts[1])
@@ -146,11 +141,6 @@ func (s *scraper) extractMetric(jaeger v1alpha1.Jaeger, metricLine string) v1alp
 	// metric is like: jaeger_collector_spans_dropped_total{host="d096132db661"}
 	if strings.HasPrefix(metric, "jaeger_collector_spans_dropped_total") {
 		jaeger.Status.CollectorSpansDropped = jaeger.Status.CollectorSpansDropped + valueFor(jaeger, parts[1])
-	}
-
-	// metric is like: jaeger_collector_queue_length{host="d096132db661"}
-	if strings.HasPrefix(metric, "jaeger_collector_queue_length") {
-		jaeger.Status.CollectorQueueLength = jaeger.Status.CollectorQueueLength + valueFor(jaeger, parts[1])
 	}
 
 	return jaeger
