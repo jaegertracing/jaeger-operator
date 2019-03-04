@@ -97,6 +97,7 @@ func TestInject(t *testing.T) {
 	tests := []struct {
 		pod      *v1.PodSpec
 		expected *v1.PodSpec
+		es       v1alpha1.ElasticsearchSpec
 	}{
 		{pod: &v1.PodSpec{
 			Containers: []v1.Container{{
@@ -147,10 +148,32 @@ func TestInject(t *testing.T) {
 						SecretName: "hoo-jaeger-elasticsearch"}}},
 				}},
 		},
+		{
+			pod: &v1.PodSpec{Containers: []v1.Container{{}}},
+			es:  v1alpha1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			expected: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Args: []string{
+						"--es.server-urls=" + elasticsearchURL,
+						"--es.token-file=" + k8sTokenFile,
+						"--es.tls.ca=" + caPath,
+						"--es.num-shards=12",
+						"--es.num-replicas=11",
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
+					},
+				}},
+				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "hoo-jaeger-elasticsearch"}}},
+				}},
+		},
 	}
 
 	for _, test := range tests {
 		es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
+		es.Jaeger.Spec.Storage.Elasticsearch = test.es
 		es.InjectStorageConfiguration(test.pod)
 		assert.Equal(t, test.expected, test.pod)
 	}
