@@ -97,7 +97,7 @@ func TestInject(t *testing.T) {
 	tests := []struct {
 		pod      *v1.PodSpec
 		expected *v1.PodSpec
-		es v1alpha1.ElasticsearchSpec
+		es       v1alpha1.ElasticsearchSpec
 	}{
 		{pod: &v1.PodSpec{
 			Containers: []v1.Container{{
@@ -149,8 +149,8 @@ func TestInject(t *testing.T) {
 				}},
 		},
 		{
-			pod: &v1.PodSpec{Containers: []v1.Container{{}},},
-			es:v1alpha1.ElasticsearchSpec{NodeCount:15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			pod: &v1.PodSpec{Containers: []v1.Container{{}}},
+			es:  v1alpha1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
 			expected: &v1.PodSpec{
 				Containers: []v1.Container{{
 					Args: []string{
