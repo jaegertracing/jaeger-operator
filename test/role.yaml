@@ -61,13 +61,19 @@ rules:
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
-    - roles
-    - rolebindings
+  - roles
+  - rolebindings
   verbs:
-    - '*'
+  - '*'
 - apiGroups:
   - elasticsearch.jaegertracing.io
   resources:
   - jaeger
   verbs:
   - 'get'
+- apiGroups:
+  - logging.openshift.io
+  resources:
+  - elasticsearches
+  verbs:
+  - '*'
