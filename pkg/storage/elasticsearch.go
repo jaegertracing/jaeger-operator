@@ -56,11 +56,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 		if !containsPrefix("--es.num-shards", p.Containers[0].Args) {
 			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 			// every ES node is a data node
-			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
+			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
 		}
 		if !containsPrefix("--es.num-replicas", p.Containers[0].Args) {
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
-				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
+				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
 		}
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
 			Name:      volumeName,
@@ -146,12 +146,19 @@ func getNodes(es v1alpha1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
 			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
 		},
 		{
-			NodeCount:    es.NodeCount - 3,
+			NodeCount:    dataNodesCount(es.NodeCount),
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
 			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
 		},
 	}
+}
+
+func dataNodesCount(nodesCount int32) int32 {
+	if nodesCount > 3 {
+		return nodesCount - 3
+	}
+	return nodesCount
 }
 
 // taken from https://github.com/openshift/cluster-logging-operator/blob/1ead6701c7c7af9c0578aa66597261079b2781d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/defaults.go#L33
