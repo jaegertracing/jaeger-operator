@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/controller/jaeger/status"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -111,15 +112,18 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	if !reflect.DeepEqual(originalInstance, *instance) {
+	withStatus := status.Scrape(r.client, *instance)
+
+	if !reflect.DeepEqual(originalInstance, withStatus) {
 		// we store back the changed CR, so that what is stored reflects what is being used
-		if err := r.client.Update(context.Background(), instance); err != nil {
+		if err := r.client.Update(context.Background(), &withStatus); err != nil {
 			logFields.WithError(err).Error("failed to store back the current CustomResource")
 			return reconcile.Result{}, err
 		}
 	}
 
-	return reconcile.Result{}, nil
+	// reconcile in a few seconds, to get the status object updated
+	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
 func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
