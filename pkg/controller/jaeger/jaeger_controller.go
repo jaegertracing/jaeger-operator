@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -94,6 +95,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.APIVersion = fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
 	instance.Kind = "Jaeger"
 
+	originalInstance := *instance
 	str := r.runStrategyChooser(instance)
 
 	logFields := instance.Logger().WithField("execution", execution)
@@ -109,16 +111,13 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	logFields.Info("Configured Jaeger instance")
-
-	// See https://github.com/jaegertracing/jaeger-operator/issues/231
-	// Uncomment when the issue above is fixed
-	//
-	// we store back the changed CR, so that what is stored reflects what is being used
-	// if err := r.client.Update(context.Background(), instance); err != nil {
-	// 	logFields.WithError(err).Error("failed to store back the current CustomResource")
-	// 	return reconcile.Result{}, err
-	// }
+	if !reflect.DeepEqual(originalInstance, *instance) {
+		// we store back the changed CR, so that what is stored reflects what is being used
+		if err := r.client.Update(context.Background(), instance); err != nil {
+			logFields.WithError(err).Error("failed to store back the current CustomResource")
+			return reconcile.Result{}, err
+		}
+	}
 
 	return reconcile.Result{}, nil
 }
