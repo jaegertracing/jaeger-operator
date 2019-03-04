@@ -99,7 +99,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 				"jaeger":           jaeger.Name,
 				"jaeger-namespace": jaeger.Namespace,
 			}).Info("Injecting Jaeger Agent sidecar")
-			inject.Sidecar(instance, jaeger)
+			instance = inject.Sidecar(jaeger, instance)
 			if err := r.client.Update(context.Background(), instance); err != nil {
 				log.WithField("deployment", instance).WithError(err).Error("failed to update")
 				return reconcile.Result{}, err

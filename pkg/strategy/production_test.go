@@ -166,8 +166,19 @@ func TestSparkDependenciesProduction(t *testing.T) {
 	})
 }
 
-func TestEsIndexClenarProduction(t *testing.T) {
+func TestEsIndexCleanerProduction(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
 		return newProductionStrategy(jaeger)
 	})
+}
+
+func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) {
+	j := v1alpha1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
+	c := newProductionStrategy(j)
+	for _, dep := range c.Deployments() {
+		if strings.HasSuffix(dep.Name, "-query") {
+			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
+			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+		}
+	}
 }

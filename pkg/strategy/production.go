@@ -84,7 +84,7 @@ func newProductionStrategy(jaeger *v1alpha1.Jaeger) S {
 
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
-	queryDep := inject.OAuthProxy(jaeger, query.Get())
+	queryDep := inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {

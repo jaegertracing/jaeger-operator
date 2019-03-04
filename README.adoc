@@ -302,7 +302,7 @@ spec:
 
 == Auto injection of Jaeger Agent sidecars
 
-The operator can also inject Jaeger Agent sidecars in `Deployment` workloads, provided that the deployment has the annotation `inject-jaeger-agent` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.
+The operator can also inject Jaeger Agent sidecars in `Deployment` workloads, provided that the deployment has the annotation `sidecar.jaegertracing.io/inject` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.
 
 The following snippet shows a simple application that will get a sidecar injected, with the Jaeger Agent pointing to the single Jaeger instance available in the same namespace:
 
@@ -313,7 +313,7 @@ kind: Deployment
 metadata:
   name: myapp
   annotations:
-    inject-jaeger-agent: "true" # <1>
+    "sidecar.jaegertracing.io/inject": "true" # <1>
 spec:
   selector:
     matchLabels:

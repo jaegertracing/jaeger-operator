@@ -41,7 +41,7 @@ func newStreamingStrategy(jaeger *v1alpha1.Jaeger) S {
 	}
 
 	// add the deployments
-	c.deployments = []appsv1.Deployment{*collector.Get(), *inject.OAuthProxy(jaeger, query.Get())}
+	c.deployments = []appsv1.Deployment{*collector.Get(), *inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))}
 
 	if d := ingester.Get(); d != nil {
 		c.deployments = append(c.deployments, *d)

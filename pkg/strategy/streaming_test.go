@@ -184,3 +184,14 @@ func TestEsIndexClenarStreaming(t *testing.T) {
 		return newStreamingStrategy(jaeger)
 	})
 }
+
+func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
+	j := v1alpha1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreaming")
+	c := newStreamingStrategy(j)
+	for _, dep := range c.Deployments() {
+		if strings.HasSuffix(dep.Name, "-query") {
+			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
+			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+		}
+	}
+}
