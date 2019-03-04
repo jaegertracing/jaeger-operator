@@ -33,13 +33,12 @@ func TestCreateESSecrets(t *testing.T) {
 	err := createESCerts("../../scripts/cert_generation.sh")
 	assert.NoError(t, err)
 	sec := ESSecrets(j)
-	assert.Equal(t, 4, len(sec))
+	assert.Equal(t, 3, len(sec))
 	assert.Equal(t, []string{
-		"master-certs",
 		"elasticsearch",
 		fmt.Sprintf("%s-%s", j.Name, jaegerSecret.name),
 		fmt.Sprintf("%s-%s", j.Name, curatorSecret.name)},
-		[]string{sec[0].Name, sec[1].Name, sec[2].Name, sec[3].Name})
+		[]string{sec[0].Name, sec[1].Name, sec[2].Name})
 	for _, s := range sec {
 		if s.Name == fmt.Sprintf("%s-%s", j.Name, jaegerSecret.name) {
 			ca, err := ioutil.ReadFile(workingDir + "/ca.crt")

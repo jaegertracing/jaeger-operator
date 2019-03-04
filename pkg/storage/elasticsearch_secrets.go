@@ -26,15 +26,6 @@ type secret struct {
 	content map[string]string
 }
 
-// TODO remove?
-var masterSecret = secret{
-	name: "master-certs",
-	content: map[string]string{
-		"masterca":  "ca.crt",
-		"masterkey": "ca.key",
-	},
-}
-
 var esSecret = secret{
 	name: "elasticsearch",
 	content: map[string]string{
@@ -75,7 +66,6 @@ func ESSecrets(jaeger *v1alpha1.Jaeger) []v1.Secret {
 		// the other problem for us is that sg_config.yml defines a role which depends on namespace
 		// we could make the "resource" configurable once ES image and es-operator-are refactored
 		// https://jira.coreos.com/browse/LOG-326
-		createSecret(jaeger, masterSecret.name, getWorkingDirContents(masterSecret.content)),
 		createSecret(jaeger, esSecret.name, getWorkingDirContents(esSecret.content)),
 		createSecret(jaeger, secretName(jaeger.Name, jaegerSecret.name), getWorkingDirContents(jaegerSecret.content)),
 		createSecret(jaeger, secretName(jaeger.Name, curatorSecret.name), getWorkingDirContents(curatorSecret.content)),
