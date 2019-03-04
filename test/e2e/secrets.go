@@ -44,7 +44,7 @@ func secretTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 	}
 
 	logrus.Infof("passing %v", secret)
-	_, err = f.KubeClient.CoreV1().Secrets(namespace).Create(secret)
+	_, err = f.KubeClient.CoreV1().Secrets(namespace).Create(&secret)
 	if err != nil {
 		return err
 	}
