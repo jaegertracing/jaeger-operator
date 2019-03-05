@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "io.jaegertracing/v1alpha1",
+          "apiVersion": "jaegertracing.io/v1",
           "kind": "Jaeger",
           "metadata": {
             "name": "my-jaeger"
@@ -68,7 +68,7 @@ spec:
       displayName: Jaeger
       kind: Jaeger
       name: jaegers.io.jaegertracing
-      version: v1alpha1
+      version: v1
   description: Provides monitoring and troubleshooting microservices-based distributed
     systems
   displayName: jaeger-operator

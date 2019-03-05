@@ -7,7 +7,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
@@ -18,7 +18,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newStreamingStrategy(jaeger *v1alpha1.Jaeger) S {
+func newStreamingStrategy(jaeger *v1.Jaeger) S {
 	c := S{typ: Streaming}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
@@ -62,7 +62,7 @@ func newStreamingStrategy(jaeger *v1alpha1.Jaeger) S {
 	}
 
 	// add the routes/ingresses
-	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
 		}

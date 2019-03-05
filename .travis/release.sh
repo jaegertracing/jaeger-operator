@@ -22,7 +22,7 @@ sed "s/currentCSV: jaeger-operator.*/currentCSV: jaeger-operator.v${OPERATOR_VER
 sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
 sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
-## there's a "version: v1alpha1" there somewhere...
+## there's a "version: v1" there somewhere that we want to avoid
 sed -E "s/version: ([0-9\.]+).*/version: ${OPERATOR_VERSION}/gi" deploy/olm-catalog/jaeger-operator.csv.yaml
 
 # changes to test/operator.yaml

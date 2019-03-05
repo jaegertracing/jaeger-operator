@@ -1,39 +1,39 @@
 package route
 
 import (
-	"github.com/openshift/api/route/v1"
+	corev1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
 // QueryRoute builds a route for jaegertracing/jaeger-query
 type QueryRoute struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewQueryRoute builds a new QueryRoute struct based on the given spec
-func NewQueryRoute(jaeger *v1alpha1.Jaeger) *QueryRoute {
+func NewQueryRoute(jaeger *v1.Jaeger) *QueryRoute {
 	return &QueryRoute{jaeger: jaeger}
 }
 
 // Get returns an ingress specification for the current instance
-func (r *QueryRoute) Get() *v1.Route {
+func (r *QueryRoute) Get() *corev1.Route {
 	if r.jaeger.Spec.Ingress.Enabled != nil && *r.jaeger.Spec.Ingress.Enabled == false {
 		return nil
 	}
 
 	trueVar := true
 
-	var termination v1.TLSTerminationType
-	if r.jaeger.Spec.Ingress.Security == v1alpha1.IngressSecurityOAuthProxy {
-		termination = v1.TLSTerminationReencrypt
+	var termination corev1.TLSTerminationType
+	if r.jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
+		termination = corev1.TLSTerminationReencrypt
 	} else {
-		termination = v1.TLSTerminationEdge
+		termination = corev1.TLSTerminationEdge
 	}
 
-	return &v1.Route{
+	return &corev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
 			APIVersion: "route.openshift.io/v1",
@@ -59,12 +59,12 @@ func (r *QueryRoute) Get() *v1.Route {
 				},
 			},
 		},
-		Spec: v1.RouteSpec{
-			To: v1.RouteTargetReference{
+		Spec: corev1.RouteSpec{
+			To: corev1.RouteTargetReference{
 				Kind: "Service",
 				Name: service.GetNameForQueryService(r.jaeger),
 			},
-			TLS: &v1.TLSConfig{
+			TLS: &corev1.TLSConfig{
 				Termination: termination,
 			},
 		},

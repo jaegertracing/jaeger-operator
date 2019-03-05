@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller/jaeger/status"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -43,7 +43,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Jaeger
-	err = c.Watch(&source.Kind{Type: &v1alpha1.Jaeger{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ type ReconcileJaeger struct {
 	// that reads objects from the cache and writes to the apiserver
 	client          client.Client
 	scheme          *runtime.Scheme
-	strategyChooser func(*v1alpha1.Jaeger) strategy.S
+	strategyChooser func(*v1.Jaeger) strategy.S
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -77,7 +77,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}).Debug("Reconciling Jaeger")
 
 	// Fetch the Jaeger instance
-	instance := &v1alpha1.Jaeger{}
+	instance := &v1.Jaeger{}
 	err := r.client.Get(context.Background(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -93,7 +93,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	// workaround for https://github.com/kubernetes-sigs/controller-runtime/issues/202
 	// see also: https://github.com/kubernetes-sigs/controller-runtime/pull/212
 	// once there's a version incorporating the PR above, the manual setting of the GKV can be removed
-	instance.APIVersion = fmt.Sprintf("%s/%s", v1alpha1.SchemeGroupVersion.Group, v1alpha1.SchemeGroupVersion.Version)
+	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
 	instance.Kind = "Jaeger"
 
 	originalInstance := *instance
@@ -126,7 +126,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
+func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger) strategy.S {
 	if nil == r.strategyChooser {
 		return defaultStrategyChooser(instance)
 	}
@@ -134,18 +134,18 @@ func (r *ReconcileJaeger) runStrategyChooser(instance *v1alpha1.Jaeger) strategy
 	return r.strategyChooser(instance)
 }
 
-func defaultStrategyChooser(instance *v1alpha1.Jaeger) strategy.S {
+func defaultStrategyChooser(instance *v1.Jaeger) strategy.S {
 	return strategy.For(context.Background(), instance)
 }
 
-func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
+func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 	// secrets have to be created before ES - they are mounted to the ES pod
 	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
 		return err
 	}
 
 	elasticsearches := str.Elasticsearches()
-	if strings.EqualFold(viper.GetString("es-provision"), v1alpha1.FlagProvisionElasticsearchTrue) {
+	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchTrue) {
 		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (r *ReconcileJaeger) apply(jaeger v1alpha1.Jaeger, str strategy.S) error {
 		return err
 	}
 
-	if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformOpenShift) {
+	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformOpenShift) {
 		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
 			return err
 		}

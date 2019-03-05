@@ -10,18 +10,18 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNewControllerForAllInOneAsDefault")
+	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsDefault")
 
 	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
+	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger)
@@ -29,7 +29,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 }
 
 func TestNewControllerForProduction(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
+	jaeger := v1.NewJaeger("TestNewControllerForProduction")
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
@@ -38,17 +38,17 @@ func TestNewControllerForProduction(t *testing.T) {
 }
 
 func TestUnknownStorage(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNewControllerForProduction")
+	jaeger := v1.NewJaeger("TestNewControllerForProduction")
 	jaeger.Spec.Storage.Type = "unknown"
 	normalize(jaeger)
 	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
 }
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestElasticsearchAsStorageOptions")
+	jaeger := v1.NewJaeger("TestElasticsearchAsStorageOptions")
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
-	jaeger.Spec.Storage.Options = v1alpha1.NewOptions(map[string]interface{}{
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
 
@@ -68,16 +68,16 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 }
 
 func TestDefaultName(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{}
+	jaeger := &v1.Jaeger{}
 	normalize(jaeger)
 	assert.NotEmpty(t, jaeger.Name)
 }
 
 func TestIncompatibleStorageForProduction(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
-		Spec: v1alpha1.JaegerSpec{
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
 			Strategy: "production",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
@@ -87,10 +87,10 @@ func TestIncompatibleStorageForProduction(t *testing.T) {
 }
 
 func TestIncompatibleStorageForStreaming(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
-		Spec: v1alpha1.JaegerSpec{
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
@@ -100,8 +100,8 @@ func TestIncompatibleStorageForStreaming(t *testing.T) {
 }
 
 func TestDeprecatedAllInOneStrategy(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
-		Spec: v1alpha1.JaegerSpec{
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
 			Strategy: "all-in-one",
 		},
 	}
@@ -110,10 +110,10 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 }
 
 func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
-		Spec: v1alpha1.JaegerSpec{
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
 			Strategy: "production",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
@@ -123,47 +123,47 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 }
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneByDefault")
+	jaeger := v1.NewJaeger("TestSetSecurityToNoneByDefault")
 	normalize(jaeger)
-	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
-	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNoneExplicit
+	jaeger := v1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	normalize(jaeger)
-	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1alpha1.NewJaeger("TestSetSecurityToOAuthProxyByDefaultOnOpenShift")
+	jaeger := v1.NewJaeger("TestSetSecurityToOAuthProxyByDefaultOnOpenShift")
 	normalize(jaeger)
 
-	assert.Equal(t, v1alpha1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSetSecurityToNoneOnNonOpenShift")
-	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
+	jaeger := v1.NewJaeger("TestSetSecurityToNoneOnNonOpenShift")
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
 func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1alpha1.NewJaeger("TestAcceptExplicitValueFromSecurityWhenOnOpenShift")
-	jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNoneExplicit
+	jaeger := v1.NewJaeger("TestAcceptExplicitValueFromSecurityWhenOnOpenShift")
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1alpha1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 }
 
 func TestNormalizeIndexCleaner(t *testing.T) {
@@ -172,13 +172,13 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 	trueVar := true
 	falseVar := false
 	tests := []struct {
-		underTest v1alpha1.JaegerEsIndexCleanerSpec
-		expected  v1alpha1.JaegerEsIndexCleanerSpec
+		underTest v1.JaegerEsIndexCleanerSpec
+		expected  v1.JaegerEsIndexCleanerSpec
 	}{
-		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{},
-			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7, Enabled: &trueVar}},
-		{underTest: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar},
-			expected: v1alpha1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar}},
+		{underTest: v1.JaegerEsIndexCleanerSpec{},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7, Enabled: &trueVar}},
+		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar}},
 	}
 	for _, test := range tests {
 		normalizeIndexCleaner(&test.underTest, "elasticsearch")
@@ -192,13 +192,13 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	trueVar := true
 	falseVar := false
 	tests := []struct {
-		underTest v1alpha1.JaegerDependenciesSpec
-		expected  v1alpha1.JaegerDependenciesSpec
+		underTest v1.JaegerDependenciesSpec
+		expected  v1.JaegerDependenciesSpec
 	}{
-		{underTest: v1alpha1.JaegerDependenciesSpec{},
-			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
-		{underTest: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar},
-			expected: v1alpha1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+		{underTest: v1.JaegerDependenciesSpec{},
+			expected: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
+		{underTest: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar},
+			expected: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
 	}
 	for _, test := range tests {
 		normalizeSparkDependencies(&test.underTest, "elasticsearch")

@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -24,7 +24,7 @@ func TestDeploymentCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 	}
 
 	req := reconcile.Request{
@@ -32,7 +32,7 @@ func TestDeploymentCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -69,12 +69,12 @@ func TestDeploymentUpdate(t *testing.T) {
 	depOriginal.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&depOriginal,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		depUpdated := appsv1.Deployment{}
 		depUpdated.Name = depOriginal.Name
 		depUpdated.Annotations = map[string]string{"key": "new-value"}
@@ -108,12 +108,12 @@ func TestDeploymentDelete(t *testing.T) {
 	depOriginal.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&depOriginal,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -145,7 +145,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 		"app.kubernetes.io/instance":   nsn.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
-	objs := []runtime.Object{v1alpha1.NewJaeger(nsn.Name), &depToDelete}
+	objs := []runtime.Object{v1.NewJaeger(nsn.Name), &depToDelete}
 
 	// the deployment to be created
 	dep := appsv1.Deployment{}
@@ -154,7 +154,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	dep.Status.ReadyReplicas = 1
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{dep})
 		return s
 	}

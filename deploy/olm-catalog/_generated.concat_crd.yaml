@@ -10,4 +10,4 @@ spec:
     plural: jaegers
     singular: jaeger
   scope: Namespaced
-  version: v1alpha1
+  version: v1

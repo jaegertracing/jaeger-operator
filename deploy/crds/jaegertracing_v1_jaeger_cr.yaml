@@ -1,4 +1,4 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: simplest
+  name: example-jaeger

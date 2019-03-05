@@ -6,11 +6,11 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
-func (r *ReconcileJaeger) applyCronJobs(jaeger v1alpha1.Jaeger, desired []batchv1beta1.CronJob) error {
+func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",

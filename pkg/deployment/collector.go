@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -20,11 +20,11 @@ import (
 
 // Collector builds pods for jaegertracing/jaeger-collector
 type Collector struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewCollector builds a new Collector struct based on the given spec
-func NewCollector(jaeger *v1alpha1.Jaeger) *Collector {
+func NewCollector(jaeger *v1.Jaeger) *Collector {
 	if jaeger.Spec.Collector.Size <= 0 {
 		jaeger.Spec.Collector.Size = 1
 	}
@@ -44,7 +44,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(c.jaeger.Spec.Collector.Size)
 
-	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      "14268",
@@ -52,13 +52,13 @@ func (c *Collector) Get() *appsv1.Deployment {
 		},
 	}
 
-	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
-	var envFromSource []v1.EnvFromSource
+	var envFromSource []corev1.EnvFromSource
 	if len(c.jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, v1.EnvFromSource{
-			SecretRef: &v1.SecretEnvSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: c.jaeger.Spec.Storage.SecretName,
 				},
 			},
@@ -102,29 +102,29 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
 						Image: c.jaeger.Spec.Collector.Image,
 						Name:  "jaeger-collector",
 						Args:  options,
-						Env: []v1.EnvVar{
-							v1.EnvVar{
+						Env: []corev1.EnvVar{
+							corev1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: storageType,
 							},
-							v1.EnvVar{
+							corev1.EnvVar{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 								Value: "9411",
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
-						Ports: []v1.ContainerPort{
+						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 9411,
 								Name:          "zipkin",
@@ -138,9 +138,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Name:          "c-binary-trft",
 							},
 						},
-						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(14269),
 								},
@@ -158,8 +158,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 }
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
-func (c *Collector) Services() []*v1.Service {
-	return []*v1.Service{
+func (c *Collector) Services() []*corev1.Service {
+	return []*corev1.Service{
 		service.NewCollectorService(c.jaeger, c.labels()),
 	}
 }

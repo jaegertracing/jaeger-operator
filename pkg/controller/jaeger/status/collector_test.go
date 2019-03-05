@@ -8,19 +8,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestPodsArePending(t *testing.T) {
-	jaeger := v1alpha1.Jaeger{}
+	jaeger := v1.Jaeger{}
 
-	pod := v1.Pod{
-		Status: v1.PodStatus{
-			Phase: v1.PodPending,
+	pod := corev1.Pod{
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
 		},
 	}
 	objs := []runtime.Object{
@@ -35,12 +35,12 @@ func TestPodsArePending(t *testing.T) {
 }
 
 func TestPodsAreRunning(t *testing.T) {
-	assertMetricsAreCollected(t, v1alpha1.Jaeger{})
+	assertMetricsAreCollected(t, v1.Jaeger{})
 }
 
 func TestOldStatusIsReplaced(t *testing.T) {
-	assertMetricsAreCollected(t, v1alpha1.Jaeger{
-		Status: v1alpha1.JaegerStatus{
+	assertMetricsAreCollected(t, v1.Jaeger{
+		Status: v1.JaegerStatus{
 			CollectorSpansDropped:  2000,
 			CollectorSpansReceived: 3000,
 		},
@@ -48,8 +48,8 @@ func TestOldStatusIsReplaced(t *testing.T) {
 }
 
 func TestAllInOnePodsAreRunning(t *testing.T) {
-	jaeger := v1alpha1.Jaeger{
-		Spec: v1alpha1.JaegerSpec{
+	jaeger := v1.Jaeger{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
 		},
 	}
@@ -76,7 +76,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 	assertZeroMetricsOnFailure(t, server)
 }
 
-func assertMetricsAreCollected(t *testing.T, jaeger v1alpha1.Jaeger) {
+func assertMetricsAreCollected(t *testing.T, jaeger v1.Jaeger) {
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Write([]byte(response))
 	}))
@@ -86,9 +86,9 @@ func assertMetricsAreCollected(t *testing.T, jaeger v1alpha1.Jaeger) {
 	port, err := strconv.Atoi(server.URL[strings.LastIndex(server.URL, ":")+1:])
 	assert.NoError(t, err)
 
-	pod := v1.Pod{
-		Status: v1.PodStatus{
-			Phase: v1.PodRunning,
+	pod := corev1.Pod{
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
 			PodIP: "127.0.0.1",
 		},
 	}
@@ -105,14 +105,14 @@ func assertMetricsAreCollected(t *testing.T, jaeger v1alpha1.Jaeger) {
 }
 
 func assertZeroMetricsOnFailure(t *testing.T, server *httptest.Server) {
-	jaeger := v1alpha1.Jaeger{}
+	jaeger := v1.Jaeger{}
 
 	port, err := strconv.Atoi(server.URL[strings.LastIndex(server.URL, ":")+1:])
 	assert.NoError(t, err)
 
-	pod := v1.Pod{
-		Status: v1.PodStatus{
-			Phase: v1.PodRunning,
+	pod := corev1.Pod{
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
 			PodIP: "127.0.0.1",
 		},
 	}

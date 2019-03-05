@@ -1,5 +1,0 @@
-# see /examples
-apiVersion: io.jaegertracing/v1alpha1
-kind: Jaeger
-metadata:
-  name: example-jaeger

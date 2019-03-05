@@ -4,22 +4,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 func TestShouldDeployElasticsearch(t *testing.T) {
 	tests := []struct {
-		j        v1alpha1.JaegerStorageSpec
+		j        v1.JaegerStorageSpec
 		expected bool
 	}{
-		{j: v1alpha1.JaegerStorageSpec{}},
-		{j: v1alpha1.JaegerStorageSpec{Type: "cassandra"}},
-		{j: v1alpha1.JaegerStorageSpec{Type: "elasticsearch", Options: v1alpha1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})}},
-		{j: v1alpha1.JaegerStorageSpec{Type: "elasticsearch"}, expected: true},
+		{j: v1.JaegerStorageSpec{}},
+		{j: v1.JaegerStorageSpec{Type: "cassandra"}},
+		{j: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})}},
+		{j: v1.JaegerStorageSpec{Type: "elasticsearch"}, expected: true},
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.expected, ShouldDeployElasticsearch(test.j))
@@ -28,11 +28,11 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 
 func TestCreateElasticsearchCR(t *testing.T) {
 	tests := []struct {
-		jEsSpec v1alpha1.ElasticsearchSpec
+		jEsSpec v1.ElasticsearchSpec
 		esSpec  esv1alpha1.ElasticsearchSpec
 	}{
 		{
-			jEsSpec: v1alpha1.ElasticsearchSpec{
+			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        2,
 				RedundancyPolicy: esv1alpha1.FullRedundancy,
 				Storage: esv1alpha1.ElasticsearchStorageSpec{
@@ -53,7 +53,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			},
 		},
 		{
-			jEsSpec: v1alpha1.ElasticsearchSpec{
+			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        5,
 				RedundancyPolicy: esv1alpha1.FullRedundancy,
 				Storage: esv1alpha1.ElasticsearchStorageSpec{
@@ -80,7 +80,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		j := v1alpha1.NewJaeger("foo")
+		j := v1.NewJaeger("foo")
 		j.Namespace = "myproject"
 		j.Spec.Storage.Elasticsearch = test.jEsSpec
 		es := &ElasticsearchDeployment{Jaeger: j}
@@ -95,18 +95,18 @@ func TestCreateElasticsearchCR(t *testing.T) {
 
 func TestInject(t *testing.T) {
 	tests := []struct {
-		pod      *v1.PodSpec
-		expected *v1.PodSpec
-		es       v1alpha1.ElasticsearchSpec
+		pod      *corev1.PodSpec
+		expected *corev1.PodSpec
+		es       v1.ElasticsearchSpec
 	}{
-		{pod: &v1.PodSpec{
-			Containers: []v1.Container{{
+		{pod: &corev1.PodSpec{
+			Containers: []corev1.Container{{
 				Args:         []string{"foo"},
-				VolumeMounts: []v1.VolumeMount{{Name: "lol"}},
+				VolumeMounts: []corev1.VolumeMount{{Name: "lol"}},
 			}},
 		},
-			expected: &v1.PodSpec{
-				Containers: []v1.Container{{
+			expected: &corev1.PodSpec{
+				Containers: []corev1.Container{{
 					Args: []string{
 						"foo",
 						"--es.server-urls=" + elasticsearchURL,
@@ -115,23 +115,23 @@ func TestInject(t *testing.T) {
 						"--es.num-shards=0",
 						"--es.num-replicas=1",
 					},
-					VolumeMounts: []v1.VolumeMount{
+					VolumeMounts: []corev1.VolumeMount{
 						{Name: "lol"},
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
-					Secret: &v1.SecretVolumeSource{
+				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
 						SecretName: "hoo-jaeger-elasticsearch"}}},
 				}},
 		},
-		{pod: &v1.PodSpec{
-			Containers: []v1.Container{{
+		{pod: &corev1.PodSpec{
+			Containers: []corev1.Container{{
 				Args: []string{"--es.num-shards=15"},
 			}},
 		},
-			expected: &v1.PodSpec{
-				Containers: []v1.Container{{
+			expected: &corev1.PodSpec{
+				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
 						"--es.server-urls=" + elasticsearchURL,
@@ -139,20 +139,20 @@ func TestInject(t *testing.T) {
 						"--es.tls.ca=" + caPath,
 						"--es.num-replicas=1",
 					},
-					VolumeMounts: []v1.VolumeMount{
+					VolumeMounts: []corev1.VolumeMount{
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
-					Secret: &v1.SecretVolumeSource{
+				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
 						SecretName: "hoo-jaeger-elasticsearch"}}},
 				}},
 		},
 		{
-			pod: &v1.PodSpec{Containers: []v1.Container{{}}},
-			es:  v1alpha1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
-			expected: &v1.PodSpec{
-				Containers: []v1.Container{{
+			pod: &corev1.PodSpec{Containers: []corev1.Container{{}}},
+			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			expected: &corev1.PodSpec{
+				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
@@ -160,19 +160,19 @@ func TestInject(t *testing.T) {
 						"--es.num-shards=12",
 						"--es.num-replicas=11",
 					},
-					VolumeMounts: []v1.VolumeMount{
+					VolumeMounts: []corev1.VolumeMount{
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []v1.Volume{{Name: "certs", VolumeSource: v1.VolumeSource{
-					Secret: &v1.SecretVolumeSource{
+				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
 						SecretName: "hoo-jaeger-elasticsearch"}}},
 				}},
 		},
 	}
 
 	for _, test := range tests {
-		es := &ElasticsearchDeployment{Jaeger: v1alpha1.NewJaeger("hoo")}
+		es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger("hoo")}
 		es.Jaeger.Spec.Storage.Elasticsearch = test.es
 		es.InjectStorageConfiguration(test.pod)
 		assert.Equal(t, test.expected, test.pod)

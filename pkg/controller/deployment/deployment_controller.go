@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -82,7 +82,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	}
 
 	if inject.Needed(instance) {
-		pods := &v1alpha1.JaegerList{}
+		pods := &v1.JaegerList{}
 		opts := &client.ListOptions{}
 		err := r.client.List(context.Background(), opts, pods)
 		if err != nil {

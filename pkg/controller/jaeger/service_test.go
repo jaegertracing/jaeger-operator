@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -22,7 +22,7 @@ func TestServicesCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 	}
 
 	req := reconcile.Request{
@@ -30,8 +30,8 @@ func TestServicesCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		s := strategy.New().WithServices([]v1.Service{{
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithServices([]corev1.Service{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestServicesCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1.Service{}
+	persisted := &corev1.Service{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -62,22 +62,22 @@ func TestServicesUpdate(t *testing.T) {
 		Name: "TestServicesUpdate",
 	}
 
-	orig := v1.Service{}
+	orig := corev1.Service{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		updated := v1.Service{}
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		updated := corev1.Service{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithServices([]v1.Service{updated})
+		s := strategy.New().WithServices([]corev1.Service{updated})
 		return s
 	}
 
@@ -86,7 +86,7 @@ func TestServicesUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.Service{}
+	persisted := &corev1.Service{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -102,16 +102,16 @@ func TestServicesDelete(t *testing.T) {
 		Name: "TestServicesDelete",
 	}
 
-	orig := v1.Service{}
+	orig := corev1.Service{}
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -120,7 +120,7 @@ func TestServicesDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.Service{}
+	persisted := &corev1.Service{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,

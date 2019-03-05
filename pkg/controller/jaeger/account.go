@@ -3,19 +3,19 @@ package jaeger
 import (
 	"context"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
-func (r *ReconcileJaeger) applyAccounts(jaeger v1alpha1.Jaeger, desired []v1.ServiceAccount) error {
+func (r *ReconcileJaeger) applyAccounts(jaeger v1.Jaeger, desired []corev1.ServiceAccount) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
-	list := &v1.ServiceAccountList{}
+	list := &corev1.ServiceAccountList{}
 	if err := r.client.List(context.Background(), opts, list); err != nil {
 		return err
 	}

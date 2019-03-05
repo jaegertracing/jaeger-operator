@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -22,7 +22,7 @@ func TestServiceAccountCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 	}
 
 	r, cl := getReconciler(objs)
@@ -30,8 +30,8 @@ func TestServiceAccountCreate(t *testing.T) {
 		NamespacedName: nsn,
 	}
 
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		s := strategy.New().WithAccounts([]v1.ServiceAccount{{
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithAccounts([]corev1.ServiceAccount{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestServiceAccountCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1.ServiceAccount{}
+	persisted := &corev1.ServiceAccount{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -62,22 +62,22 @@ func TestServiceAccountUpdate(t *testing.T) {
 		Name: "TestServiceAccountUpdate",
 	}
 
-	orig := v1.ServiceAccount{}
+	orig := corev1.ServiceAccount{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		updated := v1.ServiceAccount{}
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		updated := corev1.ServiceAccount{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithAccounts([]v1.ServiceAccount{updated})
+		s := strategy.New().WithAccounts([]corev1.ServiceAccount{updated})
 		return s
 	}
 
@@ -86,7 +86,7 @@ func TestServiceAccountUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.ServiceAccount{}
+	persisted := &corev1.ServiceAccount{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -102,16 +102,16 @@ func TestServiceAccountDelete(t *testing.T) {
 		Name: "TestServiceAccountDelete",
 	}
 
-	orig := v1.ServiceAccount{}
+	orig := corev1.ServiceAccount{}
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -120,7 +120,7 @@ func TestServiceAccountDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.ServiceAccount{}
+	persisted := &corev1.ServiceAccount{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,

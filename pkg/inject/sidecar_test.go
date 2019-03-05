@@ -6,10 +6,10 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func setDefaults() {
@@ -27,7 +27,7 @@ func reset() {
 }
 
 func TestInjectSidecar(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecar")
+	jaeger := v1.NewJaeger("TestInjectSidecar")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -36,7 +36,7 @@ func TestInjectSidecar(t *testing.T) {
 }
 
 func TestInjectSidecarWithLegacyAnnotation(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithLegacyAnnotation")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithLegacyAnnotation")
 	dep := dep(map[string]string{AnnotationLegacy: jaeger.Name}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -45,7 +45,7 @@ func TestInjectSidecarWithLegacyAnnotation(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVars")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVars")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -58,7 +58,7 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespace")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespace")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Namespace = "mynamespace"
 	dep = Sidecar(jaeger, dep)
@@ -72,9 +72,9 @@ func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideName")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideName")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
-	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
+	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  envVarServiceName,
 		Value: "otherapp",
 	})
@@ -90,9 +90,9 @@ func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagation")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagation")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
-	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
+	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  envVarPropagation,
 		Value: "tracecontext",
 	})
@@ -108,7 +108,7 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 }
 
 func TestSkipInjectSidecar(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSkipInjectSidecar")
+	jaeger := v1.NewJaeger("TestSkipInjectSidecar")
 	dep := dep(map[string]string{Annotation: "non-existing-operator"}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
@@ -118,10 +118,10 @@ func TestSkipInjectSidecar(t *testing.T) {
 func TestSidecarNotNeeded(t *testing.T) {
 	dep := &appsv1.Deployment{
 		Spec: appsv1.DeploymentSpec{
-			Template: v1.PodTemplateSpec{
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						v1.Container{},
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						corev1.Container{},
 					},
 				},
 			},
@@ -139,16 +139,16 @@ func TestSidecarNeeded(t *testing.T) {
 func TestHasSidecarAlready(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
 	assert.True(t, Needed(dep))
-	jaeger := v1alpha1.NewJaeger("TestHasSidecarAlready")
+	jaeger := v1.NewJaeger("TestHasSidecarAlready")
 	dep = Sidecar(jaeger, dep)
 	assert.False(t, Needed(dep))
 }
 
 func TestSelectSingleJaegerPod(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-only-jaeger-instance-available",
 				},
@@ -163,14 +163,14 @@ func TestSelectSingleJaegerPod(t *testing.T) {
 
 func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1alpha1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -184,21 +184,21 @@ func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
 
 func TestNoAvailableJaegerPods(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaeger := Select(dep, &v1alpha1.JaegerList{})
+	jaeger := Select(dep, &v1.JaegerList{})
 	assert.Nil(t, jaeger)
 }
 
 func TestSelectBasedOnName(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "the-second-jaeger-instance-available"}, map[string]string{})
 
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1alpha1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -217,13 +217,13 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 			Annotations: annotations,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						v1.Container{},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						corev1.Container{},
 					},
 				},
 			},

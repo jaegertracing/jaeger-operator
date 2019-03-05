@@ -6,9 +6,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(jaeger *v1alpha1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
+func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
@@ -64,7 +64,7 @@ func Needed(dep *appsv1.Deployment) bool {
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList) *v1alpha1.Jaeger {
+func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
 	jaegerName := target.Annotations[Annotation]
 	if strings.EqualFold(jaegerName, "true") && len(availableJaegerPods.Items) == 1 {
 		// if there's only *one* jaeger within this namespace, then that's what
@@ -85,13 +85,13 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1alpha1.JaegerList)
 	return nil
 }
 
-func container(jaeger *v1alpha1.Jaeger) v1.Container {
+func container(jaeger *v1.Jaeger) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s.%s:14267", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
-	return v1.Container{
+	return corev1.Container{
 		Image: jaeger.Spec.Agent.Image,
 		Name:  "jaeger-agent",
 		Args:  args,
-		Ports: []v1.ContainerPort{
+		Ports: []corev1.ContainerPort{
 			{
 				ContainerPort: 5775,
 				Name:          "zk-compact-trft",
@@ -123,13 +123,13 @@ func decorate(dep *appsv1.Deployment) {
 		}
 		for i := 0; i < len(dep.Spec.Template.Spec.Containers); i++ {
 			if !hasEnv(envVarServiceName, dep.Spec.Template.Spec.Containers[i].Env) {
-				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarServiceName,
 					Value: app,
 				})
 			}
 			if !hasEnv(envVarPropagation, dep.Spec.Template.Spec.Containers[i].Env) {
-				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
+				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarPropagation,
 					Value: "jaeger,b3",
 				})
@@ -138,7 +138,7 @@ func decorate(dep *appsv1.Deployment) {
 	}
 }
 
-func hasEnv(name string, vars []v1.EnvVar) bool {
+func hasEnv(name string, vars []corev1.EnvVar) bool {
 	for i := 0; i < len(vars); i++ {
 		if vars[i].Name == name {
 			return true

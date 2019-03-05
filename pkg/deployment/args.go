@@ -1,10 +1,10 @@
 package deployment
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func allArgs(optionsList ...v1alpha1.Options) []string {
+func allArgs(optionsList ...v1.Options) []string {
 	args := []string{}
 	for _, options := range optionsList {
 		args = append(args, options.ToArgs()...)

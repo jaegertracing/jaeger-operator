@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func SimpleProd(t *testing.T) {
-	t.Parallel()
 	ctx := prepare(t)
 	defer ctx.Cleanup()
 
@@ -34,20 +33,20 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 	}
 
 	// create jaeger custom resource
-	exampleJaeger := &v1alpha1.Jaeger{
+	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "simple-prod",
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "production",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 				}),
 			},
@@ -67,11 +66,11 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 	if err != nil {
 		return err
 	}
-	queryPod, err := GetPod(namespace, "simple-prod-query","jaegertracing/jaeger-query", f.KubeClient)
+	queryPod, err := GetPod(namespace, "simple-prod-query", "jaegertracing/jaeger-query", f.KubeClient)
 	if err != nil {
 		return err
 	}
-	collectorPod, err := GetPod(namespace, "simple-prod-collector","jaegertracing/jaeger-collector", f.KubeClient)
+	collectorPod, err := GetPod(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", f.KubeClient)
 	if err != nil {
 		return err
 	}

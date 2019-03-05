@@ -15,13 +15,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 const TrackingID = "MyTrackingId"
 
 func JaegerAllInOne(t *testing.T) {
-	t.Parallel()
 	ctx := prepare(t)
 	defer ctx.Cleanup()
 
@@ -41,19 +40,19 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	}
 
 	// create jaeger custom resource
-	exampleJaeger := &v1alpha1.Jaeger{
+	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-jaeger",
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			AllInOne: v1alpha1.JaegerAllInOneSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			AllInOne: v1.JaegerAllInOneSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"log-level":         "debug",
 					"memory.max-traces": 10000,
 				}),
@@ -79,24 +78,24 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 
 	basePath := "/jaeger"
 
-	j := &v1alpha1.Jaeger{
+	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "all-in-one-with-ui-config",
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			AllInOne: v1alpha1.JaegerAllInOneSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			AllInOne: v1.JaegerAllInOneSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"query.base-path": basePath,
 				}),
 			},
-			UI: v1alpha1.JaegerUISpec{
-				Options: v1alpha1.NewFreeForm(map[string]interface{}{
+			UI: v1.JaegerUISpec{
+				Options: v1.NewFreeForm(map[string]interface{}{
 					"tracking": map[string]interface{}{
 						"gaID": TrackingID,
 					},

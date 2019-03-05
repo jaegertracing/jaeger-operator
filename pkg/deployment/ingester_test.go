@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func init() {
@@ -19,7 +19,7 @@ func init() {
 }
 
 func TestIngesterNotDefined(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestIngesterNotDefined")
+	jaeger := v1.NewJaeger("TestIngesterNotDefined")
 
 	ingester := NewIngester(jaeger)
 	assert.Nil(t, ingester.Get())
@@ -62,7 +62,7 @@ func TestDefaultIngesterImage(t *testing.T) {
 	assert.Len(t, containers, 1)
 	assert.Equal(t, "org/custom-ingester-image:123", containers[0].Image)
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
@@ -105,27 +105,27 @@ func TestIngesterSecrets(t *testing.T) {
 func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestIngesterVolumeMountsWithVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "globalVolume",
 		},
 	}
 
-	ingesterVolumes := []v1.Volume{
+	ingesterVolumes := []corev1.Volume{
 		{
 			Name:         "ingesterVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	ingesterVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "ingesterVolume",
 		},
@@ -151,14 +151,14 @@ func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
 func TestIngesterMountGlobalVolumes(t *testing.T) {
 	name := "TestIngesterMountGlobalVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	ingesterVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "globalVolume",
 			ReadOnly: true,
@@ -178,14 +178,14 @@ func TestIngesterMountGlobalVolumes(t *testing.T) {
 func TestIngesterVolumeMountsWithSameName(t *testing.T) {
 	name := "TestIngesterVolumeMountsWithSameName"
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
-	ingesterVolumeMounts := []v1.VolumeMount{
+	ingesterVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: false,
@@ -205,17 +205,17 @@ func TestIngesterVolumeMountsWithSameName(t *testing.T) {
 func TestIngesterVolumeWithSameName(t *testing.T) {
 	name := "TestIngesterVolumeWithSameName"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
-	ingesterVolumes := []v1.Volume{
+	ingesterVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data2"}},
 		},
 	}
 
@@ -231,53 +231,53 @@ func TestIngesterVolumeWithSameName(t *testing.T) {
 
 func TestIngesterResources(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterResources")
-	jaeger.Spec.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+	jaeger.Spec.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Ingester.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+	jaeger.Spec.Ingester.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
 	}
 
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
 
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
 func TestIngesterWithStorageType(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
+	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "TestIngesterStorageType",
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Ingester: v1alpha1.JaegerIngesterSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			Ingester: v1.JaegerIngesterSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.topic": "mytopic",
 				}),
 			},
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.brokers":  "http://brokers",
 					"es.server-urls": "http://somewhere",
 				}),
@@ -287,7 +287,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "elasticsearch",
@@ -309,15 +309,15 @@ func TestIngesterLabels(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%s-ingester", ingester.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
 
-func newIngesterJaeger(name string) *v1alpha1.Jaeger {
-	return &v1alpha1.Jaeger{
+func newIngesterJaeger(name string) *v1.Jaeger {
+	return &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Ingester: v1alpha1.JaegerIngesterSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			Ingester: v1.JaegerIngesterSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"any": "option",
 				}),
 			},

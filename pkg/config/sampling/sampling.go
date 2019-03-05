@@ -3,10 +3,10 @@ package sampling
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 const (
@@ -15,16 +15,16 @@ const (
 
 // Config represents a sampling configmap
 type Config struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewConfig builds a new Config struct based on the given spec
-func NewConfig(jaeger *v1alpha1.Jaeger) *Config {
+func NewConfig(jaeger *v1.Jaeger) *Config {
 	return &Config{jaeger: jaeger}
 }
 
 // Get returns a configmap specification for the current instance
-func (u *Config) Get() *v1.ConfigMap {
+func (u *Config) Get() *corev1.ConfigMap {
 	var jsonObject []byte
 	var err error
 
@@ -46,7 +46,7 @@ func (u *Config) Get() *v1.ConfigMap {
 		"sampling": string(jsonObject),
 	}
 
-	return &v1.ConfigMap{
+	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ConfigMap",
@@ -78,17 +78,17 @@ func (u *Config) Get() *v1.ConfigMap {
 
 // Update will modify the supplied common spec and options to include
 // support for the Sampling configmap.
-func Update(jaeger *v1alpha1.Jaeger, commonSpec *v1alpha1.JaegerCommonSpec, options *[]string) {
+func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 
-	volume := v1.Volume{
+	volume := corev1.Volume{
 		Name: fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name),
-		VolumeSource: v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: fmt.Sprintf("%s-sampling-configuration", jaeger.Name),
 				},
-				Items: []v1.KeyToPath{
-					v1.KeyToPath{
+				Items: []corev1.KeyToPath{
+					corev1.KeyToPath{
 						Key:  "sampling",
 						Path: "sampling.json",
 					},
@@ -96,7 +96,7 @@ func Update(jaeger *v1alpha1.Jaeger, commonSpec *v1alpha1.JaegerCommonSpec, opti
 			},
 		},
 	}
-	volumeMount := v1.VolumeMount{
+	volumeMount := corev1.VolumeMount{
 		Name:      fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name),
 		MountPath: "/etc/jaeger/sampling",
 		ReadOnly:  true,

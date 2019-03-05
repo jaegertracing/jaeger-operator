@@ -1,11 +1,10 @@
-package v1alpha1
+package v1
 
 import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
 // IngressSecurityType represents the possible values for the security type
@@ -40,26 +39,7 @@ const (
 	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
 )
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// JaegerList is a list of Jaeger structs
-type JaegerList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
-	Items           []Jaeger `json:"items"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Jaeger defines the main structure for the custom-resource
-type Jaeger struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata"`
-	Spec              JaegerSpec   `json:"spec"`
-	Status            JaegerStatus `json:"status,omitempty"`
-}
-
-// JaegerSpec defines the structure of the Jaeger JSON object from the CR
+// JaegerSpec defines the desired state of Jaeger
 type JaegerSpec struct {
 	Strategy  string              `json:"strategy"`
 	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
@@ -74,21 +54,32 @@ type JaegerSpec struct {
 	JaegerCommonSpec
 }
 
-// JaegerCommonSpec defines the common elements used in multiple other spec structs
-type JaegerCommonSpec struct {
-	Volumes      []v1.Volume             `json:"volumes"`
-	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
-	Annotations  map[string]string       `json:"annotations,omitempty"`
-	Resources    v1.ResourceRequirements `json:"resources,omitempty"`
-}
-
-// JaegerStatus defines what is to be returned from a status query
+// JaegerStatus defines the observed state of Jaeger
 type JaegerStatus struct {
 	// CollectorSpansReceived represents sum of the metric jaeger_collector_spans_received_total across all collectors
 	CollectorSpansReceived int `json:"collectorSpansReceived"`
 
 	// CollectorSpansDropped represents sum of the metric jaeger_collector_spans_dropped_total across all collectors
 	CollectorSpansDropped int `json:"collectorSpansDropped"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Jaeger is the Schema for the jaegers API
+type Jaeger struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   JaegerSpec   `json:"spec,omitempty"`
+	Status JaegerStatus `json:"status,omitempty"`
+}
+
+// JaegerCommonSpec defines the common elements used in multiple other spec structs
+type JaegerCommonSpec struct {
+	Volumes      []v1.Volume             `json:"volumes"`
+	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
+	Annotations  map[string]string       `json:"annotations,omitempty"`
+	Resources    v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -160,11 +151,11 @@ type JaegerStorageSpec struct {
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
 type ElasticsearchSpec struct {
-	Resources        v1.ResourceRequirements             `json:"resources"`
-	NodeCount        int32                               `json:"nodeCount"`
-	NodeSelector     map[string]string                   `json:"nodeSelector,omitempty"`
-	Storage          esv1alpha1.ElasticsearchStorageSpec `json:"storage"`
-	RedundancyPolicy v1alpha1.RedundancyPolicyType       `json:"redundancyPolicy"`
+	Resources        v1.ResourceRequirements           `json:"resources"`
+	NodeCount        int32                             `json:"nodeCount"`
+	NodeSelector     map[string]string                 `json:"nodeSelector,omitempty"`
+	Storage          v1alpha1.ElasticsearchStorageSpec `json:"storage"`
+	RedundancyPolicy v1alpha1.RedundancyPolicyType     `json:"redundancyPolicy"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
@@ -195,6 +186,15 @@ type JaegerEsIndexCleanerSpec struct {
 	NumberOfDays int    `json:"numberOfDays"`
 	Schedule     string `json:"schedule"`
 	Image        string `json:"image"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// JaegerList contains a list of Jaeger
+type JaegerList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Jaeger `json:"items"`
 }
 
 func init() {

@@ -5,12 +5,12 @@ import (
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -19,11 +19,11 @@ import (
 
 // Query builds pods for jaegertracing/jaeger-query
 type Query struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewQuery builds a new Query struct based on the given spec
-func NewQuery(jaeger *v1alpha1.Jaeger) *Query {
+func NewQuery(jaeger *v1.Jaeger) *Query {
 	if jaeger.Spec.Query.Size <= 0 {
 		jaeger.Spec.Query.Size = 1
 	}
@@ -42,7 +42,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(q.jaeger.Spec.Query.Size)
 
-	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      "16686",
@@ -57,17 +57,17 @@ func (q *Query) Get() *appsv1.Deployment {
 		},
 	}
 
-	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
-	var envFromSource []v1.EnvFromSource
+	var envFromSource []corev1.EnvFromSource
 	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, v1.EnvFromSource{
-			SecretRef: &v1.SecretEnvSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: q.jaeger.Spec.Storage.SecretName,
 				},
 			},
@@ -99,33 +99,33 @@ func (q *Query) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
 						Image: q.jaeger.Spec.Query.Image,
 						Name:  "jaeger-query",
 						Args:  options,
-						Env: []v1.EnvVar{
-							v1.EnvVar{
+						Env: []corev1.EnvVar{
+							corev1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: q.jaeger.Spec.Storage.Type,
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
-						Ports: []v1.ContainerPort{
+						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 16686,
 								Name:          "query",
 							},
 						},
-						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(16687),
 								},
@@ -143,9 +143,9 @@ func (q *Query) Get() *appsv1.Deployment {
 }
 
 // Services returns a list of services to be deployed along with the query deployment
-func (q *Query) Services() []*v1.Service {
+func (q *Query) Services() []*corev1.Service {
 	labels := q.labels()
-	return []*v1.Service{
+	return []*corev1.Service{
 		service.NewQueryService(q.jaeger, labels),
 	}
 }
