@@ -62,10 +62,11 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: cassandra es crd build docker push
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es
 	@mkdir -p deploy/test
-	@echo Running end-to-end tests...
 
+.PHONY: prepare-e2e-tests
+prepare-e2e-tests: crd build docker push
 	@cp test/role_binding.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
@@ -76,7 +77,21 @@ e2e-tests: cassandra es crd build docker push
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
 	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
-	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+
+.PHONY: e2e-tests-smoke
+e2e-tests-smoke: prepare-e2e-tests
+	@echo Running Smoke end-to-end tests...
+	@go test -tags=smoke ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+
+.PHONY: e2e-tests-cassandra
+e2e-tests-cassandra: prepare-e2e-tests cassandra
+	@echo Running Cassandra end-to-end tests...
+	@go test -tags=cassandra ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+
+.PHONY: e2e-tests-es
+e2e-tests-es: prepare-e2e-tests es
+	@echo Running Elasticsearch end-to-end tests...
+	@go test -tags=elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: run
 run: crd
