@@ -164,3 +164,18 @@ func TestMergeResourceRequests(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(1024, resource.BinarySI), merged.Resources.Requests[corev1.ResourceRequestsMemory])
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), merged.Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
+
+func TestGetEsHostname(t *testing.T) {
+	tests := []struct {
+		underTest map[string]string
+		hostname  string
+	}{
+		{hostname: ""},
+		{underTest: map[string]string{"": ""}, hostname: ""},
+		{underTest: map[string]string{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
+		{underTest: map[string]string{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.hostname, GetEsHostname(test.underTest))
+	}
+}

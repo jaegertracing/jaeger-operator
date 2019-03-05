@@ -82,6 +82,7 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
+	normalizeRollover(&jaeger.Spec.Storage.Rollover)
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string) {
@@ -118,6 +119,15 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 	if spec.NodeCount == 0 {
 		spec.NodeCount = 1
+	}
+}
+
+func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
+	if spec.Image == "" {
+		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-rollover-image"))
+	}
+	if spec.Schedule == "" {
+		spec.Schedule = "*/30 * * * *"
 	}
 }
 

@@ -8,21 +8,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestGetEsHostname(t *testing.T) {
-	tests := []struct {
-		underTest map[string]string
-		hostname  string
-	}{
-		{hostname: ""},
-		{underTest: map[string]string{"": ""}, hostname: ""},
-		{underTest: map[string]string{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
-		{underTest: map[string]string{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
-	}
-	for _, test := range tests {
-		assert.Equal(t, test.hostname, getEsHostname(test.underTest))
-	}
-}
-
 func TestCreateEsIndexCleaner(t *testing.T) {
 	jaeger := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(
 		map[string]interface{}{"es.index-prefix": "tenant1", "es.server-urls": "http://nowhere:666,foo"})}}}

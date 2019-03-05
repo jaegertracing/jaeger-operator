@@ -2,13 +2,10 @@ package strategy
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -186,6 +183,24 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 	}
 }
 
+func TestNormalizeRollover(t *testing.T) {
+	viper.Set("jaeger-es-rollover-image", "hoo")
+	defer viper.Reset()
+	tests := []struct {
+		underTest v1.JaegerEsRolloverSpec
+		expected  v1.JaegerEsRolloverSpec
+	}{
+		{underTest: v1.JaegerEsRolloverSpec{},
+			expected: v1.JaegerEsRolloverSpec{Image: "hoo", Schedule: "*/30 * * * *"}},
+		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
+			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"}},
+	}
+	for _, test := range tests {
+		normalizeRollover(&test.underTest)
+		assert.Equal(t, test.expected, test.underTest)
+	}
+}
+
 func TestNormalizeSparkDependencies(t *testing.T) {
 	viper.Set("jaeger-spark-dependencies-image", "foo")
 	defer viper.Reset()
@@ -204,18 +219,6 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 		normalizeSparkDependencies(&test.underTest, "elasticsearch")
 		assert.Equal(t, test.expected, test.underTest)
 	}
-}
-
-func getDeployments(objs []runtime.Object) []*appsv1.Deployment {
-	var deps []*appsv1.Deployment
-
-	for _, obj := range objs {
-		switch obj.(type) {
-		case *appsv1.Deployment:
-			deps = append(deps, obj.(*appsv1.Deployment))
-		}
-	}
-	return deps
 }
 
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
@@ -274,17 +277,4 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 	for k, v := range configMaps {
 		assert.True(t, v, "Expected %s to have been returned from the list of config maps", k)
 	}
-}
-
-func getTypesOf(
-	objs []runtime.Object,
-	typ reflect.Type,
-) []runtime.Object {
-	var theTypes []runtime.Object
-	for _, obj := range objs {
-		if typ == reflect.TypeOf(obj) {
-			theTypes = append(theTypes, obj)
-		}
-	}
-	return theTypes
 }

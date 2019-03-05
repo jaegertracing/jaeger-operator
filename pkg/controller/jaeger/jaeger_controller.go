@@ -101,12 +101,6 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	logFields := instance.Logger().WithField("execution", execution)
 
-	// wait for all the dependencies to succeed
-	if err := r.handleDependencies(str); err != nil {
-		logFields.WithError(err).Error("failed to handle the dependencies")
-		return reconcile.Result{}, err
-	}
-
 	if err := r.apply(*instance, str); err != nil {
 		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, err
@@ -154,6 +148,12 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
 		}).Warn("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+	}
+
+	// storage dependencies have to be deployed after ES is ready
+	if err := r.handleDependencies(str); err != nil {
+		jaeger.Logger().WithError(err).Error("failed to handle the dependencies")
+		return err
 	}
 
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
