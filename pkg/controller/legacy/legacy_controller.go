@@ -38,7 +38,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to primary resource Jaeger
 	err = c.Watch(&source.Kind{Type: &v1alpha1.Jaeger{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
-		return err
+		log.Debug("Legacy CRD not found. Legacy controller will not be active.")
 	}
 
 	return nil

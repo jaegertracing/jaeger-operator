@@ -113,7 +113,7 @@ To verify that it's working, deploy the `simplest.yaml` and check the ingress ro
 [source,bash]
 ----
 $ kubectl apply -f deploy/examples/simplest.yaml 
-jaeger.io.jaegertracing/simplest created
+jaeger.jaegertracing.io/simplest created
 $ kubectl get ingress
 NAME             HOSTS     ADDRESS          PORTS     AGE
 simplest-query   *         192.168.122.69   80        12s
