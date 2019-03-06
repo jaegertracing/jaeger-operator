@@ -480,6 +480,12 @@ kubectl delete jaeger simplest
 
 NOTE: deleting the instance will not remove the data from a permanent storage used with this instance. Data from in-memory instances, however, will be lost.
 
+== Monitoring the operator
+
+The Jaeger Operator starts a Prometheus-compatible endpoint on `0.0.0.0:8383/metrics` with internal metrics that can be used to monitor the process.
+
+NOTE: The Jaeger Operator does not yet publish its own metrics. Rather, it makes available metrics reported by the components it uses, such as the Operator SDK.
+
 == Uninstalling the operator
 
 Similar to the installation, just run:
