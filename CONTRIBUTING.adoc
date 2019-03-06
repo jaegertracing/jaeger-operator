@@ -90,7 +90,7 @@ Similar instructions also work for OpenShift, but the target `run-openshift` can
 
 ==== Model changes
 
-The Operator SDK generates the `pkg/apis/jaegertracing/v1beta1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1beta1/jaeger_types.go`)
+The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
 
 ==== Ingress configuration
 

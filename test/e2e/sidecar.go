@@ -161,7 +161,6 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) e
 		resp := &resp{}
 		err = json.Unmarshal(body, &resp)
 		if err != nil {
-			fmt.Println(body)
 			return false, err
 		}
 
