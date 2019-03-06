@@ -20,7 +20,7 @@ To install the operator, run:
 [source,bash]
 ----
 kubectl create namespace observability # <1>
-kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
@@ -51,7 +51,7 @@ The instructions from the previous section also work on OpenShift. Make sure to 
 oc login -u system:admin
 
 oc new-project observability # <1>
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
@@ -83,7 +83,7 @@ The simplest possible way to install is by creating a YAML file like the followi
 .simplest.yaml
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
@@ -136,7 +136,7 @@ For reference, here's how a more complex all-in-one instance can be created:
 .all-in-one.yaml
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: my-jaeger
@@ -218,7 +218,7 @@ The only additional information required is to provide the details for accessing
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simple-streaming
@@ -291,7 +291,7 @@ By default, the Jaeger UI is protected with OpenShift's OAuth service and any va
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: disable-oauth-proxy
@@ -337,7 +337,7 @@ By default, the Operator expects the agents to be deployed as sidecars to the ta
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: my-jaeger
@@ -399,7 +399,7 @@ to use a remote sampler:
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: with-sampling
@@ -425,7 +425,7 @@ When the storage type is set to Cassandra, the operator will automatically creat
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: cassandra-without-create-schema
@@ -442,7 +442,7 @@ Further aspects of the batch job can be configured as well. An example with all 
 
 [source,yaml]
 ----
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: cassandra-with-create-schema
@@ -490,5 +490,5 @@ kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operato
 kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
-kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml
+kubectl delete -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
 ----

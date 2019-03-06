@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -38,20 +38,20 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) e
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	j := &v1alpha1.Jaeger{
+	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "agent-as-sidecar",
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			AllInOne: v1alpha1.JaegerAllInOneSpec{},
-			Agent: v1alpha1.JaegerAgentSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			AllInOne: v1.JaegerAllInOneSpec{},
+			Agent: v1.JaegerAgentSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"log-level": "debug",
 				}),
 			},
@@ -78,31 +78,31 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) e
 			Selector: &metav1.LabelSelector{
 				MatchLabels: selector,
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: selector,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
 						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
 						Name:  "vertx-create-span-sidecar",
-						Ports: []v1.ContainerPort{
+						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 8080,
 							},
 						},
-						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(8080),
 								},
 							},
 							InitialDelaySeconds: 1,
 						},
-						LivenessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
+						LivenessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(8080),
 								},

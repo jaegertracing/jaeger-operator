@@ -6,16 +6,16 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
-func (r *ReconcileJaeger) applyElasticsearches(jaeger v1alpha1.Jaeger, desired []esv1alpha1.Elasticsearch) error {
+func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1alpha1.Elasticsearch) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance": jaeger.Name,
 		"app.kubernetes.io/part-of":  "jaeger",
@@ -59,7 +59,7 @@ func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error
 		expectedSize += n.NodeCount
 	}
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		depList := v1.DeploymentList{}
+		depList := corev1.DeploymentList{}
 		if err = c.List(context.Background(), client.MatchingLabels(es.Labels).InNamespace(es.Namespace), &depList); err != nil {
 			return false, err
 		}
@@ -77,5 +77,4 @@ func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error
 		}).Debug("Waiting for Elasticsearch to be available")
 		return available == expectedSize, nil
 	})
-	return nil
 }

@@ -6,14 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestCollectorServiceNameAndPorts(t *testing.T) {
 	name := "TestCollectorServiceNameAndPorts"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	svc := NewCollectorService(jaeger, selector)
 	assert.Equal(t, svc.ObjectMeta.Name, fmt.Sprintf("%s-collector", name))
 

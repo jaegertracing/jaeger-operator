@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // Cassandra runs a test with Cassandra as the backing storage
@@ -30,21 +30,21 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	j := &v1alpha1.Jaeger{
+	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "with-cassandra",
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type:    "cassandra",
-				Options: v1alpha1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
-				CassandraCreateSchema: v1alpha1.JaegerCassandraCreateSchemaSpec{
+				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+				CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{
 					Datacenter: "datacenter1",
 				},
 			},

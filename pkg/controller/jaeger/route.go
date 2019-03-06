@@ -6,11 +6,11 @@ import (
 	osv1 "github.com/openshift/api/route/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
-func (r *ReconcileJaeger) applyRoutes(jaeger v1alpha1.Jaeger, desired []osv1.Route) error {
+func (r *ReconcileJaeger) applyRoutes(jaeger v1.Jaeger, desired []osv1.Route) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",

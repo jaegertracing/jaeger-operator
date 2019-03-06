@@ -10,10 +10,10 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type scraper struct {
@@ -27,14 +27,14 @@ func withClient(c client.Client) scraper {
 }
 
 // Scrape fills a JaegerStatus object with the current state of all Jaeger pods (currently only collectors)
-func Scrape(c client.Client, jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
+func Scrape(c client.Client, jaeger v1.Jaeger) v1.Jaeger {
 	s := withClient(c)
 	return s.scrape(jaeger)
 }
 
-func (s *scraper) scrape(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
+func (s *scraper) scrape(jaeger v1.Jaeger) v1.Jaeger {
 	// reset the status object
-	jaeger.Status = v1alpha1.JaegerStatus{}
+	jaeger.Status = v1.JaegerStatus{}
 
 	if strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
 		return s.allInOnePodsState(jaeger)
@@ -43,7 +43,7 @@ func (s *scraper) scrape(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
 	return s.collectorPodsState(jaeger)
 }
 
-func (s *scraper) allInOnePodsState(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
+func (s *scraper) allInOnePodsState(jaeger v1.Jaeger) v1.Jaeger {
 	if s.targetPort == 0 {
 		s.targetPort = 16686
 	}
@@ -57,7 +57,7 @@ func (s *scraper) allInOnePodsState(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
 	return s.matchingPodsState(jaeger, opts)
 }
 
-func (s *scraper) collectorPodsState(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
+func (s *scraper) collectorPodsState(jaeger v1.Jaeger) v1.Jaeger {
 	if s.targetPort == 0 {
 		s.targetPort = 14268
 	}
@@ -71,8 +71,8 @@ func (s *scraper) collectorPodsState(jaeger v1alpha1.Jaeger) v1alpha1.Jaeger {
 	return s.matchingPodsState(jaeger, opts)
 }
 
-func (s *scraper) matchingPodsState(jaeger v1alpha1.Jaeger, opts *client.ListOptions) v1alpha1.Jaeger {
-	list := &v1.PodList{}
+func (s *scraper) matchingPodsState(jaeger v1.Jaeger, opts *client.ListOptions) v1.Jaeger {
+	list := &corev1.PodList{}
 	if err := s.ksClient.List(context.Background(), opts, list); err != nil {
 		jaeger.Logger().WithError(err).Error("failed to obtain the list of collectors")
 		return jaeger
@@ -83,7 +83,7 @@ func (s *scraper) matchingPodsState(jaeger v1alpha1.Jaeger, opts *client.ListOpt
 		jaeger.Logger().WithField("name", pod.Name).Debug("pod is part of the instance")
 
 		// the pod might still be starting, or terminating... we want metrics only from running pods
-		if pod.Status.Phase == v1.PodRunning {
+		if pod.Status.Phase == corev1.PodRunning {
 			url := fmt.Sprintf("http://%s:%d/metrics", pod.Status.PodIP, s.targetPort)
 			jaeger = s.aggregate(jaeger, url)
 		}
@@ -92,7 +92,7 @@ func (s *scraper) matchingPodsState(jaeger v1alpha1.Jaeger, opts *client.ListOpt
 	return jaeger
 }
 
-func (s *scraper) aggregate(jaeger v1alpha1.Jaeger, url string) v1alpha1.Jaeger {
+func (s *scraper) aggregate(jaeger v1.Jaeger, url string) v1.Jaeger {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	res, err := s.hClient.Do(req)
 	if err != nil {
@@ -121,7 +121,7 @@ func (s *scraper) aggregate(jaeger v1alpha1.Jaeger, url string) v1alpha1.Jaeger 
 	return jaeger
 }
 
-func (s *scraper) extractMetric(jaeger v1alpha1.Jaeger, metricLine string) v1alpha1.Jaeger {
+func (s *scraper) extractMetric(jaeger v1.Jaeger, metricLine string) v1.Jaeger {
 	// process only lines with collector metrics
 	if !strings.HasPrefix(metricLine, "jaeger_collector_") {
 		return jaeger
@@ -146,7 +146,7 @@ func (s *scraper) extractMetric(jaeger v1alpha1.Jaeger, metricLine string) v1alp
 	return jaeger
 }
 
-func valueFor(jaeger v1alpha1.Jaeger, v string) int {
+func valueFor(jaeger v1.Jaeger, v string) int {
 	value, err := strconv.Atoi(v)
 	if err != nil {
 		jaeger.Logger().WithFields(log.Fields{

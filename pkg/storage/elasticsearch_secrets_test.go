@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestCreateCerts_ErrNoNamespace(t *testing.T) {
@@ -26,7 +26,7 @@ func TestCreateCerts_ErrNoScript(t *testing.T) {
 
 func TestCreateESSecrets(t *testing.T) {
 	defer os.RemoveAll(workingDir)
-	j := v1alpha1.NewJaeger("foo")
+	j := v1.NewJaeger("foo")
 	os.Setenv("WATCH_NAMESPACE", "invalid.&*)(")
 	defer os.Unsetenv("WATCH_NAMESPACE")
 	fmt.Println(os.Getwd())
@@ -50,7 +50,7 @@ func TestCreateESSecrets(t *testing.T) {
 
 func TestCreteSecret(t *testing.T) {
 	defer os.RemoveAll(workingDir)
-	j := v1alpha1.NewJaeger("foo")
+	j := v1.NewJaeger("foo")
 	j.Namespace = "myproject"
 	s := createSecret(j, "bar", map[string][]byte{"foo": {}})
 	assert.Equal(t, "bar", s.ObjectMeta.Name)
@@ -58,7 +58,7 @@ func TestCreteSecret(t *testing.T) {
 	assert.Equal(t, j.Name, s.ObjectMeta.OwnerReferences[0].Name)
 	assert.Equal(t, j.Name, s.ObjectMeta.OwnerReferences[0].Name)
 	assert.Equal(t, map[string][]byte{"foo": {}}, s.Data)
-	assert.Equal(t, v1.SecretTypeOpaque, s.Type)
+	assert.Equal(t, corev1.SecretTypeOpaque, s.Type)
 }
 
 func TestGetWorkingFileDirContent(t *testing.T) {

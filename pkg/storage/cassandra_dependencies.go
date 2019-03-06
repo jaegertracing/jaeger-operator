@@ -5,13 +5,13 @@ import (
 
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
+func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	trueVar := true
 
 	// TODO should be moved to normalize
@@ -82,32 +82,26 @@ func cassandraDeps(jaeger *v1alpha1.Jaeger) []batchv1.Job {
 			},
 			Spec: batchv1.JobSpec{
 				ActiveDeadlineSeconds: &deadline,
-				Template: v1.PodTemplateSpec{
+				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,
 					},
-					Spec: v1.PodSpec{
-						Containers: []v1.Container{
-							v1.Container{
-								Image: jaeger.Spec.Storage.CassandraCreateSchema.Image,
-								Name:  fmt.Sprintf("%s-cassandra-schema", jaeger.Name),
-								Env: []v1.EnvVar{
-									v1.EnvVar{
-										Name:  "CQLSH_HOST",
-										Value: host,
-									},
-									v1.EnvVar{
-										Name:  "MODE",
-										Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
-									},
-									v1.EnvVar{
-										Name:  "DATACENTER",
-										Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
-									},
-								},
-							},
-						},
-						RestartPolicy: v1.RestartPolicyOnFailure,
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{{
+							Image: jaeger.Spec.Storage.CassandraCreateSchema.Image,
+							Name:  fmt.Sprintf("%s-cassandra-schema", jaeger.Name),
+							Env: []corev1.EnvVar{{
+								Name:  "CQLSH_HOST",
+								Value: host,
+							}, {
+								Name:  "MODE",
+								Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
+							}, {
+								Name:  "DATACENTER",
+								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+							}},
+						}},
+						RestartPolicy: corev1.RestartPolicyOnFailure,
 					},
 				},
 			},

@@ -6,23 +6,23 @@ import (
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Ingester builds pods for jaegertracing/jaeger-ingester
 type Ingester struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewIngester builds a new Ingester struct based on the given spec
-func NewIngester(jaeger *v1alpha1.Jaeger) *Ingester {
+func NewIngester(jaeger *v1.Jaeger) *Ingester {
 	if jaeger.Spec.Ingester.Size <= 0 {
 		jaeger.Spec.Ingester.Size = 1
 	}
@@ -46,7 +46,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	trueVar := true
 	replicas := int32(i.jaeger.Spec.Ingester.Size)
 
-	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      "14271",
@@ -54,13 +54,13 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		},
 	}
 
-	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{i.jaeger.Spec.Ingester.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingester.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
-	var envFromSource []v1.EnvFromSource
+	var envFromSource []corev1.EnvFromSource
 	if len(i.jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, v1.EnvFromSource{
-			SecretRef: &v1.SecretEnvSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: i.jaeger.Spec.Storage.SecretName,
 				},
 			},
@@ -95,25 +95,25 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
 						Image: i.jaeger.Spec.Ingester.Image,
 						Name:  "jaeger-ingester",
 						Args:  options,
-						Env: []v1.EnvVar{
-							v1.EnvVar{
+						Env: []corev1.EnvVar{
+							corev1.EnvVar{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: i.jaeger.Spec.Storage.Type,
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
-						Ports: []v1.ContainerPort{
+						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 14270,
 								Name:          "hc-http",
@@ -123,9 +123,9 @@ func (i *Ingester) Get() *appsv1.Deployment {
 								Name:          "metrics-http",
 							},
 						},
-						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(14270),
 								},

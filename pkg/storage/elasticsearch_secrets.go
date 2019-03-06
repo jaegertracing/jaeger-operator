@@ -10,10 +10,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 const (
@@ -60,8 +60,8 @@ func secretName(jaeger, secret string) string {
 }
 
 // ESSecrets assembles a set of secrets related to Elasticsearch
-func ESSecrets(jaeger *v1alpha1.Jaeger) []v1.Secret {
-	return []v1.Secret{
+func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
+	return []corev1.Secret{
 		// master and ES secrets use hardcoded name - e.g. do not use instance name in it
 		// the other problem for us is that sg_config.yml defines a role which depends on namespace
 		// we could make the "resource" configurable once ES image and es-operator-are refactored
@@ -98,8 +98,8 @@ func createESCerts(script string) error {
 	return nil
 }
 
-func createSecret(jaeger *v1alpha1.Jaeger, secretName string, data map[string][]byte) v1.Secret {
-	return v1.Secret{
+func createSecret(jaeger *v1.Jaeger, secretName string, data map[string][]byte) corev1.Secret {
+	return corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: jaeger.Namespace,
@@ -113,12 +113,12 @@ func createSecret(jaeger *v1alpha1.Jaeger, secretName string, data map[string][]
 			},
 			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
 		},
-		Type: v1.SecretTypeOpaque,
+		Type: corev1.SecretTypeOpaque,
 		Data: data,
 	}
 }
 
-func asOwner(jaeger *v1alpha1.Jaeger) metav1.OwnerReference {
+func asOwner(jaeger *v1.Jaeger) metav1.OwnerReference {
 	b := true
 	return metav1.OwnerReference{
 		APIVersion: jaeger.APIVersion,

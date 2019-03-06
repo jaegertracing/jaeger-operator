@@ -1,6 +1,6 @@
 # setup an elasticsearch with `make es`
 # setup a kafka platform using https://strimzi.io with quickstart instructions
-apiVersion: io.jaegertracing/v1alpha1
+apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simple-streaming

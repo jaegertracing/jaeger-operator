@@ -6,11 +6,11 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
-func (r *ReconcileJaeger) applyIngresses(jaeger v1alpha1.Jaeger, desired []v1beta1.Ingress) error {
+func (r *ReconcileJaeger) applyIngresses(jaeger v1.Jaeger, desired []v1beta1.Ingress) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",

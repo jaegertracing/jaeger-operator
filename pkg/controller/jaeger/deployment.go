@@ -10,11 +10,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
-func (r *ReconcileJaeger) applyDeployments(jaeger v1alpha1.Jaeger, desired []appsv1.Deployment) error {
+func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.Deployment) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",

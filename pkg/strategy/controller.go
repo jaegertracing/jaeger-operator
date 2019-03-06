@@ -8,13 +8,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
-func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
+func For(ctx context.Context, jaeger *v1.Jaeger) S {
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
 		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
@@ -36,7 +36,7 @@ func For(ctx context.Context, jaeger *v1alpha1.Jaeger) S {
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when
 // needed and incompatible options are cleaned
-func normalize(jaeger *v1alpha1.Jaeger) {
+func normalize(jaeger *v1.Jaeger) {
 	// we need a name!
 	if jaeger.Name == "" {
 		jaeger.Logger().Info("This Jaeger instance was created without a name. Applying a default name.")
@@ -70,13 +70,13 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 	}
 
 	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
-	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1alpha1.IngressSecurityNoneExplicit {
-		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityOAuthProxy
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
+		jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	} else {
 		// cases:
 		// - omitted on Kubernetes
 		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1alpha1.IngressSecurityNone
+		jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
 	}
 
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
@@ -84,7 +84,7 @@ func normalize(jaeger *v1alpha1.Jaeger) {
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 }
 
-func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec, storage string) {
+func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(storage) && spec.Enabled == nil {
 		trueVar := true
@@ -98,7 +98,7 @@ func normalizeSparkDependencies(spec *v1alpha1.JaegerDependenciesSpec, storage s
 	}
 }
 
-func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec, storage string) {
+func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 	// auto enable only for supported storages
 	if storage == "elasticsearch" && spec.Enabled == nil {
 		trueVar := true
@@ -115,7 +115,7 @@ func normalizeIndexCleaner(spec *v1alpha1.JaegerEsIndexCleanerSpec, storage stri
 	}
 }
 
-func normalizeElasticsearch(spec *v1alpha1.ElasticsearchSpec) {
+func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 	if spec.NodeCount == 0 {
 		spec.NodeCount = 1
 	}

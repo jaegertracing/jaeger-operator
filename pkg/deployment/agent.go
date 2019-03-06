@@ -6,21 +6,21 @@ import (
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Agent builds pods for jaegertracing/jaeger-agent
 type Agent struct {
-	jaeger *v1alpha1.Jaeger
+	jaeger *v1.Jaeger
 }
 
 // NewAgent builds a new Agent struct based on the given spec
-func NewAgent(jaeger *v1alpha1.Jaeger) *Agent {
+func NewAgent(jaeger *v1.Jaeger) *Agent {
 	if jaeger.Spec.Agent.Image == "" {
 		jaeger.Spec.Agent.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), viper.GetString("jaeger-version"))
 	}
@@ -39,7 +39,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	trueVar := true
 	labels := a.labels()
 
-	baseCommonSpec := v1alpha1.JaegerCommonSpec{
+	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      "5778",
@@ -47,7 +47,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		},
 	}
 
-	commonSpec := util.Merge([]v1alpha1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -72,22 +72,22 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
 					Annotations: commonSpec.Annotations,
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
 						Image: a.jaeger.Spec.Agent.Image,
 						Name:  "jaeger-agent-daemonset",
 						Args:  args,
-						Ports: []v1.ContainerPort{
+						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 5775,
 								HostPort:      5775,
 								Name:          "zk-compact-trft",
-								Protocol:      v1.ProtocolUDP,
+								Protocol:      corev1.ProtocolUDP,
 							},
 							{
 								ContainerPort: 5778,
@@ -98,19 +98,19 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 								ContainerPort: 6831,
 								HostPort:      6831,
 								Name:          "jg-compact-trft",
-								Protocol:      v1.ProtocolUDP,
+								Protocol:      corev1.ProtocolUDP,
 							},
 							{
 								ContainerPort: 6832,
 								HostPort:      6832,
 								Name:          "jg-binary-trft",
-								Protocol:      v1.ProtocolUDP,
+								Protocol:      corev1.ProtocolUDP,
 							},
 						},
 						// TODO(jpkroehling): enable it back once a version with jaegertracing/jaeger#1178 is released
-						// ReadinessProbe: &v1.Probe{
-						// 	Handler: v1.Handler{
-						// 		HTTPGet: &v1.HTTPGetAction{
+						// ReadinessProbe: &corev1.Probe{
+						// 	Handler: corev1.Handler{
+						// 		HTTPGet: &corev1.HTTPGetAction{
 						// 			Path: "/metrics",
 						// 			Port: intstr.FromInt(5778),
 						// 		},

@@ -9,7 +9,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func EsIndexCleaner(t *testing.T) {
@@ -27,23 +27,23 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	}
 
 	name := "test-es-index-cleaner"
-	j := &v1alpha1.Jaeger{
+	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			Storage:  v1alpha1.JaegerStorageSpec{
+			Storage:  v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 				}),
-				EsIndexCleaner:v1alpha1.JaegerEsIndexCleanerSpec{
+				EsIndexCleaner:v1.JaegerEsIndexCleanerSpec{
 					Schedule: "*/1 * * * *",
 				},
 			},

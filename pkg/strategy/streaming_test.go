@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -21,7 +21,7 @@ func init() {
 
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "TestCreateStreamingDeployment"
-	c := newStreamingStrategy(v1alpha1.NewJaeger(name))
+	c := newStreamingStrategy(v1.NewJaeger(name))
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
 }
 
@@ -30,7 +30,7 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	defer viper.Reset()
 	name := "TestCreateStreamingDeploymentOnOpenShift"
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	normalize(jaeger)
 
 	c := newStreamingStrategy(jaeger)
@@ -40,7 +40,7 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "TestCreateStreamingDeploymentWithDaemonSetAgent"
 
-	j := v1alpha1.NewJaeger(name)
+	j := v1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newStreamingStrategy(j)
@@ -50,8 +50,8 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 	name := "TestCreateStreamingDeploymentWithUIConfigMap"
 
-	j := v1alpha1.NewJaeger(name)
-	j.Spec.UI.Options = v1alpha1.NewFreeForm(map[string]interface{}{
+	j := v1.NewJaeger(name)
+	j.Spec.UI.Options = v1.NewFreeForm(map[string]interface{}{
 		"tracking": map[string]interface{}{
 			"gaID": "UA-000000-2",
 		},
@@ -62,25 +62,25 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 }
 
 func TestStreamingOptionsArePassed(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
+	jaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
-			APIVersion: "io.jaegertracing/v1alpha1",
+			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "simple-prod",
 			Namespace: "simple-prod-ns",
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Ingester: v1alpha1.JaegerIngesterSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			Ingester: v1.JaegerIngesterSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.topic": "mytopic",
 				}),
 			},
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",
 					"es.password":    "changeme",
@@ -119,7 +119,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 
 func TestDelegateStreamingDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	j := v1alpha1.NewJaeger("TestDelegateStreamingDependencies")
+	j := v1.NewJaeger("TestDelegateStreamingDependencies")
 	c := newStreamingStrategy(j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
@@ -155,7 +155,7 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
-	if viper.GetString("platform") == v1alpha1.FlagPlatformOpenShift {
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[name] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
@@ -174,19 +174,19 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 }
 
 func TestSparkDependenciesStreaming(t *testing.T) {
-	testSparkDependencies(t, func(jaeger *v1alpha1.Jaeger) S {
+	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
 		return newStreamingStrategy(jaeger)
 	})
 }
 
 func TestEsIndexClenarStreaming(t *testing.T) {
-	testEsIndexCleaner(t, func(jaeger *v1alpha1.Jaeger) S {
+	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
 		return newStreamingStrategy(jaeger)
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
-	j := v1alpha1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreaming")
+	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreaming")
 	c := newStreamingStrategy(j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {

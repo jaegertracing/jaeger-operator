@@ -7,10 +7,10 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -22,8 +22,8 @@ func SupportedStorage(storage string) bool {
 }
 
 // CreateSparkDependencies creates a new cronjob for the Spark Dependencies task
-func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
-	envVars := []v1.EnvVar{
+func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
+	envVars := []corev1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
 		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.SparkDependencies.SparkMaster},
 		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.SparkDependencies.JavaOpts},
@@ -61,9 +61,9 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
-					Template: v1.PodTemplateSpec{
-						Spec: v1.PodSpec{
-							Containers: []v1.Container{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
 								{
 									Image: jaeger.Spec.Storage.SparkDependencies.Image,
 									Name:  name,
@@ -71,7 +71,7 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 									Env: removeEmptyVars(envVars),
 								},
 							},
-							RestartPolicy: v1.RestartPolicyNever,
+							RestartPolicy: corev1.RestartPolicyNever,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
@@ -86,7 +86,7 @@ func CreateSparkDependencies(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 	}
 }
 
-func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
+func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 	sFlags := s.Options.Filter(storage.OptionsPrefix(s.Type))
 	sFlagsMap := sFlags.Map()
 	keyspace := sFlagsMap["cassandra.keyspace"]
@@ -95,7 +95,7 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 	}
 	switch s.Type {
 	case "cassandra":
-		return []v1.EnvVar{
+		return []corev1.EnvVar{
 			{Name: "CASSANDRA_CONTACT_POINTS", Value: sFlagsMap["cassandra.servers"]},
 			{Name: "CASSANDRA_KEYSPACE", Value: keyspace},
 			{Name: "CASSANDRA_USERNAME", Value: sFlagsMap["cassandra.username"]},
@@ -105,7 +105,7 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.SparkDependencies.CassandraClientAuthEnabled)},
 		}
 	case "elasticsearch":
-		return []v1.EnvVar{
+		return []corev1.EnvVar{
 			{Name: "ES_NODES", Value: sFlagsMap["es.server-urls"]},
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
@@ -118,8 +118,8 @@ func getStorageEnvs(s v1alpha1.JaegerStorageSpec) []v1.EnvVar {
 	}
 }
 
-func removeEmptyVars(envVars []v1.EnvVar) []v1.EnvVar {
-	var notEmpty []v1.EnvVar
+func removeEmptyVars(envVars []corev1.EnvVar) []corev1.EnvVar {
+	var notEmpty []corev1.EnvVar
 	for _, v := range envVars {
 		if v.Value != "" || v.ValueFrom != nil {
 			notEmpty = append(notEmpty, v)

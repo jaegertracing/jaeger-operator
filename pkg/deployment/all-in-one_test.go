@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func init() {
@@ -21,12 +21,12 @@ func TestDefaultAllInOneImage(t *testing.T) {
 	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	d := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneDefaultImage")).Get()
+	d := NewAllInOne(v1.NewJaeger("TestAllInOneDefaultImage")).Get()
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
@@ -40,7 +40,7 @@ func TestDefaultAllInOneImage(t *testing.T) {
 }
 
 func TestAllInOneAnnotations(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestAllInOneAnnotations")
+	jaeger := v1.NewJaeger("TestAllInOneAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -61,13 +61,13 @@ func TestAllInOneAnnotations(t *testing.T) {
 
 func TestAllInOneHasOwner(t *testing.T) {
 	name := "TestAllInOneHasOwner"
-	a := NewAllInOne(v1alpha1.NewJaeger(name))
+	a := NewAllInOne(v1.NewJaeger(name))
 	assert.Equal(t, name, a.Get().ObjectMeta.Name)
 }
 
 func TestAllInOneNumberOfServices(t *testing.T) {
 	name := "TestNumberOfServices"
-	services := NewAllInOne(v1alpha1.NewJaeger(name)).Services()
+	services := NewAllInOne(v1.NewJaeger(name)).Services()
 	assert.Len(t, services, 3) // collector, query, agent
 
 	for _, svc := range services {
@@ -79,33 +79,25 @@ func TestAllInOneNumberOfServices(t *testing.T) {
 func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithVolumes"
 
-	globalVolumes := []v1.Volume{
-		{
-			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
-		},
-	}
+	globalVolumes := []corev1.Volume{{
+		Name:         "globalVolume",
+		VolumeSource: corev1.VolumeSource{},
+	}}
 
-	globalVolumeMounts := []v1.VolumeMount{
-		{
-			Name: "globalVolume",
-		},
-	}
+	globalVolumeMounts := []corev1.VolumeMount{{
+		Name: "globalVolume",
+	}}
 
-	allInOneVolumes := []v1.Volume{
-		{
-			Name:         "allInOneVolume",
-			VolumeSource: v1.VolumeSource{},
-		},
-	}
+	allInOneVolumes := []corev1.Volume{{
+		Name:         "allInOneVolume",
+		VolumeSource: corev1.VolumeSource{},
+	}}
 
-	allInOneVolumeMounts := []v1.VolumeMount{
-		{
-			Name: "allInOneVolume",
-		},
-	}
+	allInOneVolumeMounts := []corev1.VolumeMount{{
+		Name: "allInOneVolume",
+	}}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.AllInOne.Volumes = allInOneVolumes
@@ -124,7 +116,7 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 }
 
 func TestAllInOneSecrets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestAllInOneSecrets")
+	jaeger := v1.NewJaeger("TestAllInOneSecrets")
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 
@@ -137,21 +129,17 @@ func TestAllInOneSecrets(t *testing.T) {
 func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	name := "TestAllInOneMountGlobalVolumes"
 
-	globalVolumes := []v1.Volume{
-		{
-			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
-		},
-	}
+	globalVolumes := []corev1.Volume{{
+		Name:         "globalVolume",
+		VolumeSource: corev1.VolumeSource{},
+	}}
 
-	allInOneVolumeMounts := []v1.VolumeMount{
-		{
-			Name:     "globalVolume",
-			ReadOnly: true,
-		},
-	}
+	allInOneVolumeMounts := []corev1.VolumeMount{{
+		Name:     "globalVolume",
+		ReadOnly: true,
+	}}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.AllInOne.VolumeMounts = allInOneVolumeMounts
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
@@ -165,21 +153,17 @@ func TestAllInOneMountGlobalVolumes(t *testing.T) {
 func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithSameName"
 
-	globalVolumeMounts := []v1.VolumeMount{
-		{
-			Name:     "data",
-			ReadOnly: true,
-		},
-	}
+	globalVolumeMounts := []corev1.VolumeMount{{
+		Name:     "data",
+		ReadOnly: true,
+	}}
 
-	allInOneVolumeMounts := []v1.VolumeMount{
-		{
-			Name:     "data",
-			ReadOnly: false,
-		},
-	}
+	allInOneVolumeMounts := []corev1.VolumeMount{{
+		Name:     "data",
+		ReadOnly: false,
+	}}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.AllInOne.VolumeMounts = allInOneVolumeMounts
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
@@ -193,21 +177,17 @@ func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 func TestAllInOneVolumeWithSameName(t *testing.T) {
 	name := "TestAllInOneVolumeWithSameName"
 
-	globalVolumes := []v1.Volume{
-		{
-			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
-		},
-	}
+	globalVolumes := []corev1.Volume{{
+		Name:         "data",
+		VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data1"}},
+	}}
 
-	allInOneVolumes := []v1.Volume{
-		{
-			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
-		},
-	}
+	allInOneVolumes := []corev1.Volume{{
+		Name:         "data",
+		VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data2"}},
+	}}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.AllInOne.Volumes = allInOneVolumes
 	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
@@ -219,41 +199,41 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 }
 
 func TestAllInOneResources(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestAllInOneResources")
-	jaeger.Spec.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+	jaeger := v1.NewJaeger("TestAllInOneResources")
+	jaeger.Spec.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.AllInOne.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+	jaeger.Spec.AllInOne.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
 	}
 
 	allinone := NewAllInOne(jaeger)
 	dep := allinone.Get()
 
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
 func TestAllInOneLabels(t *testing.T) {
-	a := NewAllInOne(v1alpha1.NewJaeger("TestAllInOneLabels"))
+	a := NewAllInOne(v1.NewJaeger("TestAllInOneLabels"))
 	dep := a.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "all-in-one", dep.Spec.Template.Labels["app.kubernetes.io/component"])

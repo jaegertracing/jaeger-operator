@@ -3,16 +3,16 @@ package account
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // OAuthProxy returns a service account representing a client in the context of the OAuth Proxy
-func OAuthProxy(jaeger *v1alpha1.Jaeger) *v1.ServiceAccount {
+func OAuthProxy(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 	trueVar := true
-	return &v1.ServiceAccount{
+	return &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ServiceAccount",
@@ -45,10 +45,10 @@ func OAuthProxy(jaeger *v1alpha1.Jaeger) *v1.ServiceAccount {
 }
 
 // OAuthProxyAccountNameFor returns the service account name for this Jaeger instance in the context of the OAuth Proxy
-func OAuthProxyAccountNameFor(jaeger *v1alpha1.Jaeger) string {
+func OAuthProxyAccountNameFor(jaeger *v1.Jaeger) string {
 	return fmt.Sprintf("%s-ui-proxy", jaeger.Name)
 }
 
-func getOAuthRedirectReference(jaeger *v1alpha1.Jaeger) string {
+func getOAuthRedirectReference(jaeger *v1.Jaeger) string {
 	return fmt.Sprintf(`{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"%s"}}`, jaeger.Name)
 }

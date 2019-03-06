@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestGetEsHostname(t *testing.T) {
@@ -24,7 +24,7 @@ func TestGetEsHostname(t *testing.T) {
 }
 
 func TestCreateEsIndexCleaner(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{Spec: v1alpha1.JaegerSpec{Storage: v1alpha1.JaegerStorageSpec{Options: v1alpha1.NewOptions(
+	jaeger := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(
 		map[string]interface{}{"es.index-prefix": "tenant1", "es.server-urls": "http://nowhere:666,foo"})}}}
 	cronJob := CreateEsIndexCleaner(jaeger)
 	assert.Equal(t, 2, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args))
@@ -36,7 +36,7 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 }
 
 func TestEsIndexCleanerSecrets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestEsIndexCleanerSecrets")
+	jaeger := v1.NewJaeger("TestEsIndexCleanerSecrets")
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 

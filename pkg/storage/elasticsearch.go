@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 // ShouldDeployElasticsearch determines whether a new instance of Elasticsearch should be deployed
-func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
+func ShouldDeployElasticsearch(s v1.JaegerStorageSpec) bool {
 	if !strings.EqualFold(s.Type, "elasticsearch") {
 		return false
 	}
@@ -33,15 +33,15 @@ func ShouldDeployElasticsearch(s v1alpha1.JaegerStorageSpec) bool {
 
 // ElasticsearchDeployment represents an ES deployment for Jaeger
 type ElasticsearchDeployment struct {
-	Jaeger *v1alpha1.Jaeger
+	Jaeger *v1.Jaeger
 }
 
 // InjectStorageConfiguration changes the given spec to include ES-related command line options
-func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
-	p.Volumes = append(p.Volumes, v1.Volume{
+func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec) {
+	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
-		VolumeSource: v1.VolumeSource{
-			Secret: &v1.SecretVolumeSource{
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
 				SecretName: secretName(ed.Jaeger.Name, jaegerSecret.name),
 			},
 		},
@@ -62,7 +62,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
 				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
 		}
-		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
+		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  true,
 			MountPath: volumeMountPath,
@@ -71,11 +71,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *v1.PodSpec) {
 }
 
 // InjectIndexCleanerConfiguration changes the given spec to include the options for the index cleaner
-func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec) {
-	p.Volumes = append(p.Volumes, v1.Volume{
+func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *corev1.PodSpec) {
+	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
-		VolumeSource: v1.VolumeSource{
-			Secret: &v1.SecretVolumeSource{
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
 				SecretName: secretName(ed.Jaeger.Name, curatorSecret.name),
 			},
 		},
@@ -85,12 +85,12 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *v1.PodSpec
 		// the size of arguments array should be always 2
 		p.Containers[0].Args[1] = elasticsearchURL
 		p.Containers[0].Env = append(p.Containers[0].Env,
-			v1.EnvVar{Name: "ES_TLS", Value: "true"},
-			v1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
-			v1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
-			v1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
+			corev1.EnvVar{Name: "ES_TLS", Value: "true"},
+			corev1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
+			corev1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
+			corev1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
 		)
-		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, v1.VolumeMount{
+		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  true,
 			MountPath: volumeMountPath,
@@ -127,7 +127,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 	}
 }
 
-func getNodes(es v1alpha1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
+func getNodes(es v1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
 	if es.NodeCount <= 3 {
 		return []esv1alpha1.ElasticsearchNode{
 			{

@@ -7,24 +7,24 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
-func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
+func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	esUrls := getEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
 
-	var envFromSource []v1.EnvFromSource
+	var envFromSource []corev1.EnvFromSource
 	if len(jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, v1.EnvFromSource{
-			SecretRef: &v1.SecretEnvSource{
-				LocalObjectReference: v1.LocalObjectReference{
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: jaeger.Spec.Storage.SecretName,
 				},
 			},
@@ -58,18 +58,18 @@ func CreateEsIndexCleaner(jaeger *v1alpha1.Jaeger) *batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
-					Template: v1.PodTemplateSpec{
-						Spec: v1.PodSpec{
-							Containers: []v1.Container{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
 								{
 									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Name:    name,
-									Env:     removeEmptyVars([]v1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
+									Env:     removeEmptyVars([]corev1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
 									Args:    []string{strconv.Itoa(jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
 									EnvFrom: envFromSource,
 								},
 							},
-							RestartPolicy: v1.RestartPolicyNever,
+							RestartPolicy: corev1.RestartPolicyNever,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{

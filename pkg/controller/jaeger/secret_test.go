@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -22,7 +22,7 @@ func TestSecretsCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 	}
 
 	req := reconcile.Request{
@@ -30,8 +30,8 @@ func TestSecretsCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		s := strategy.New().WithSecrets([]v1.Secret{{
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithSecrets([]corev1.Secret{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestSecretsCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1.Secret{}
+	persisted := &corev1.Secret{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -62,22 +62,22 @@ func TestSecretsUpdate(t *testing.T) {
 		Name: "TestSecretsUpdate",
 	}
 
-	orig := v1.Secret{}
+	orig := corev1.Secret{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
-		updated := v1.Secret{}
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		updated := corev1.Secret{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithSecrets([]v1.Secret{updated})
+		s := strategy.New().WithSecrets([]corev1.Secret{updated})
 		return s
 	}
 
@@ -86,7 +86,7 @@ func TestSecretsUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.Secret{}
+	persisted := &corev1.Secret{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -102,16 +102,16 @@ func TestSecretsDelete(t *testing.T) {
 		Name: "TestSecretsDelete",
 	}
 
-	orig := v1.Secret{}
+	orig := corev1.Secret{}
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 		&orig,
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -120,7 +120,7 @@ func TestSecretsDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1.Secret{}
+	persisted := &corev1.Secret{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,

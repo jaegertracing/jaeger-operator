@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -110,16 +110,16 @@ func start(cmd *cobra.Command, args []string) {
 	apiList, err := availableAPIs(mgr.GetConfig())
 	if err != nil {
 		log.WithError(err).Info("Failed to determine the platform capabilities. Auto-detected properties will fallback to their default values.")
-		viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
-		viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchFalse)
+		viper.Set("platform", v1.FlagPlatformKubernetes)
+		viper.Set("es-provision", v1.FlagProvisionElasticsearchFalse)
 	} else {
 		// detect the platform
-		if strings.EqualFold(viper.GetString("platform"), v1alpha1.FlagPlatformAutoDetect) {
+		if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
 			log.Debug("Attempting to auto-detect the platform")
 			if isOpenShift(apiList) {
-				viper.Set("platform", v1alpha1.FlagPlatformOpenShift)
+				viper.Set("platform", v1.FlagPlatformOpenShift)
 			} else {
-				viper.Set("platform", v1alpha1.FlagPlatformKubernetes)
+				viper.Set("platform", v1.FlagPlatformKubernetes)
 			}
 
 			log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
@@ -128,12 +128,12 @@ func start(cmd *cobra.Command, args []string) {
 		}
 
 		// detect whether the Elasticsearch operator is available
-		if strings.EqualFold(viper.GetString("es-provision"), v1alpha1.FlagProvisionElasticsearchAuto) {
+		if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchAuto) {
 			log.Debug("Determining whether we should enable the Elasticsearch Operator integration")
 			if isElasticsearchOperatorAvailable(apiList) {
-				viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchTrue)
+				viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
 			} else {
-				viper.Set("es-provision", v1alpha1.FlagProvisionElasticsearchFalse)
+				viper.Set("es-provision", v1.FlagProvisionElasticsearchFalse)
 			}
 
 			log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")

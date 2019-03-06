@@ -28,7 +28,7 @@ check:
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate
-	@git diff -s --exit-code pkg/apis/io/v1alpha1/zz_generated.deepcopy.go || (echo "Build failed: a model has been changed but the deep copy functions aren't up to date. Run 'make generate' and update your PR." && exit 1)
+	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go || (echo "Build failed: a model has been changed but the deep copy functions aren't up to date. Run 'make generate' and update your PR." && exit 1)
 
 .PHONY: format
 format:
@@ -76,7 +76,7 @@ e2e-tests: cassandra es crd build docker push
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
 	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
-	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/io_v1alpha1_jaeger_crd.yaml -root .
+	@go test ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: run
 run: crd
@@ -98,7 +98,7 @@ clean:
 
 .PHONY: crd
 crd:
-	@kubectl create -f deploy/crds/io_v1alpha1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
+	@kubectl create -f deploy/crds/jaegertracing_v1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: ingress
 ingress:

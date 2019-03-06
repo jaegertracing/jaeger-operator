@@ -78,3 +78,9 @@ rules:
   - elasticsearches
   verbs:
   - '*'
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - '*'
+  verbs:
+  - '*'

@@ -6,11 +6,11 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // ESRole returns the role to be created for Elasticsearch
-func ESRole(jaeger *v1alpha1.Jaeger) rbacv1.Role {
+func ESRole(jaeger *v1.Jaeger) rbacv1.Role {
 	return rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{rbacv1.AutoUpdateAnnotationKey: "true"},
@@ -41,7 +41,7 @@ func ESRole(jaeger *v1alpha1.Jaeger) rbacv1.Role {
 }
 
 // ESRoleBinding returns the Elasticsearch role bindings to be created for the given subjects
-func ESRoleBinding(jaeger *v1alpha1.Jaeger, sas ...string) rbacv1.RoleBinding {
+func ESRoleBinding(jaeger *v1.Jaeger, sas ...string) rbacv1.RoleBinding {
 	rb := rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-elasticsearch", jaeger.Name),

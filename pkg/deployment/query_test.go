@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 }
 
 func TestQueryNegativeSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryNegativeSize")
+	jaeger := v1.NewJaeger("TestQueryNegativeSize")
 	jaeger.Spec.Query.Size = -1
 
 	query := NewQuery(jaeger)
@@ -27,7 +27,7 @@ func TestQueryNegativeSize(t *testing.T) {
 }
 
 func TestQueryDefaultSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryDefaultSize")
+	jaeger := v1.NewJaeger("TestQueryDefaultSize")
 	jaeger.Spec.Query.Size = 0
 
 	query := NewQuery(jaeger)
@@ -40,7 +40,7 @@ func TestDefaultQueryImage(t *testing.T) {
 	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	query := NewQuery(v1alpha1.NewJaeger("TestQueryImage"))
+	query := NewQuery(v1.NewJaeger("TestQueryImage"))
 	dep := query.Get()
 	containers := dep.Spec.Template.Spec.Containers
 
@@ -49,7 +49,7 @@ func TestDefaultQueryImage(t *testing.T) {
 }
 
 func TestQueryAnnotations(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryAnnotations")
+	jaeger := v1.NewJaeger("TestQueryAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -69,7 +69,7 @@ func TestQueryAnnotations(t *testing.T) {
 }
 
 func TestQuerySecrets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQuerySecrets")
+	jaeger := v1.NewJaeger("TestQuerySecrets")
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 
@@ -81,14 +81,14 @@ func TestQuerySecrets(t *testing.T) {
 
 func TestQueryPodName(t *testing.T) {
 	name := "TestQueryPodName"
-	query := NewQuery(v1alpha1.NewJaeger(name))
+	query := NewQuery(v1.NewJaeger(name))
 	dep := query.Get()
 
 	assert.Contains(t, dep.ObjectMeta.Name, fmt.Sprintf("%s-query", name))
 }
 
 func TestQueryServices(t *testing.T) {
-	query := NewQuery(v1alpha1.NewJaeger("TestQueryServices"))
+	query := NewQuery(v1.NewJaeger("TestQueryServices"))
 	svcs := query.Services()
 
 	assert.Len(t, svcs, 1)
@@ -97,33 +97,33 @@ func TestQueryServices(t *testing.T) {
 func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestQueryVolumeMountsWithVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "globalVolume",
 		},
 	}
 
-	queryVolumes := []v1.Volume{
+	queryVolumes := []corev1.Volume{
 		{
 			Name:         "queryVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	queryVolumeMounts := []v1.VolumeMount{
+	queryVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "queryVolume",
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.Query.Volumes = queryVolumes
@@ -143,21 +143,21 @@ func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 func TestQueryMountGlobalVolumes(t *testing.T) {
 	name := "TestQueryMountGlobalVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	queryVolumeMounts := []v1.VolumeMount{
+	queryVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.Query.VolumeMounts = queryVolumeMounts
 	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
@@ -170,21 +170,21 @@ func TestQueryMountGlobalVolumes(t *testing.T) {
 func TestQueryVolumeMountsWithSameName(t *testing.T) {
 	name := "TestQueryVolumeMountsWithSameName"
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
-	queryVolumeMounts := []v1.VolumeMount{
+	queryVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: false,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.Query.VolumeMounts = queryVolumeMounts
 	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
@@ -197,21 +197,21 @@ func TestQueryVolumeMountsWithSameName(t *testing.T) {
 func TestQueryVolumeWithSameName(t *testing.T) {
 	name := "TestQueryVolumeWithSameName"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
-	queryVolumes := []v1.Volume{
+	queryVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data2"}},
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.Query.Volumes = queryVolumes
 	podSpec := NewQuery(jaeger).Get().Spec.Template.Spec
@@ -222,41 +222,41 @@ func TestQueryVolumeWithSameName(t *testing.T) {
 }
 
 func TestQueryResources(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryResources")
-	jaeger.Spec.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+	jaeger := v1.NewJaeger("TestQueryResources")
+	jaeger.Spec.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Query.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+	jaeger.Spec.Query.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
 	}
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
 
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
 func TestQueryLabels(t *testing.T) {
-	query := NewQuery(v1alpha1.NewJaeger("TestQueryLabels"))
+	query := NewQuery(v1.NewJaeger("TestQueryLabels"))
 	dep := query.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "query", dep.Spec.Template.Labels["app.kubernetes.io/component"])

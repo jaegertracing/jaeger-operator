@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func init() {
@@ -19,7 +19,7 @@ func init() {
 }
 
 func TestNegativeSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestNegativeSize")
+	jaeger := v1.NewJaeger("TestNegativeSize")
 	jaeger.Spec.Collector.Size = -1
 
 	collector := NewCollector(jaeger)
@@ -28,7 +28,7 @@ func TestNegativeSize(t *testing.T) {
 }
 
 func TestDefaultSize(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestDefaultSize")
+	jaeger := v1.NewJaeger("TestDefaultSize")
 	jaeger.Spec.Collector.Size = 0
 
 	collector := NewCollector(jaeger)
@@ -37,13 +37,13 @@ func TestDefaultSize(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	collector := NewCollector(v1alpha1.NewJaeger("TestName"))
+	collector := NewCollector(v1.NewJaeger("TestName"))
 	dep := collector.Get()
 	assert.Equal(t, "TestName-collector", dep.ObjectMeta.Name)
 }
 
 func TestCollectorServices(t *testing.T) {
-	collector := NewCollector(v1alpha1.NewJaeger("TestName"))
+	collector := NewCollector(v1.NewJaeger("TestName"))
 	svcs := collector.Services()
 	assert.Len(t, svcs, 1)
 }
@@ -53,14 +53,14 @@ func TestDefaultCollectorImage(t *testing.T) {
 	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	collector := NewCollector(v1alpha1.NewJaeger("TestCollectorImage"))
+	collector := NewCollector(v1.NewJaeger("TestCollectorImage"))
 	dep := collector.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
 	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "",
@@ -74,7 +74,7 @@ func TestDefaultCollectorImage(t *testing.T) {
 }
 
 func TestCollectorAnnotations(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorAnnotations")
+	jaeger := v1.NewJaeger("TestCollectorAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -94,7 +94,7 @@ func TestCollectorAnnotations(t *testing.T) {
 }
 
 func TestCollectorSecrets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorSecrets")
+	jaeger := v1.NewJaeger("TestCollectorSecrets")
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 
@@ -107,33 +107,33 @@ func TestCollectorSecrets(t *testing.T) {
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "globalVolume",
 		},
 	}
 
-	collectorVolumes := []v1.Volume{
+	collectorVolumes := []corev1.Volume{
 		{
 			Name:         "collectorVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	collectorVolumeMounts := []corev1.VolumeMount{
 		{
 			Name: "collectorVolume",
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.Collector.Volumes = collectorVolumes
@@ -154,21 +154,21 @@ func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 func TestCollectorMountGlobalVolumes(t *testing.T) {
 	name := "TestCollectorMountGlobalVolumes"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "globalVolume",
-			VolumeSource: v1.VolumeSource{},
+			VolumeSource: corev1.VolumeSource{},
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	collectorVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "globalVolume",
 			ReadOnly: true,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
@@ -182,21 +182,21 @@ func TestCollectorMountGlobalVolumes(t *testing.T) {
 func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeMountsWithSameName"
 
-	globalVolumeMounts := []v1.VolumeMount{
+	globalVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: true,
 		},
 	}
 
-	collectorVolumeMounts := []v1.VolumeMount{
+	collectorVolumeMounts := []corev1.VolumeMount{
 		{
 			Name:     "data",
 			ReadOnly: false,
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.VolumeMounts = globalVolumeMounts
 	jaeger.Spec.Collector.VolumeMounts = collectorVolumeMounts
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
@@ -210,21 +210,21 @@ func TestCollectorVolumeMountsWithSameName(t *testing.T) {
 func TestCollectorVolumeWithSameName(t *testing.T) {
 	name := "TestCollectorVolumeWithSameName"
 
-	globalVolumes := []v1.Volume{
+	globalVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data1"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data1"}},
 		},
 	}
 
-	collectorVolumes := []v1.Volume{
+	collectorVolumes := []corev1.Volume{
 		{
 			Name:         "data",
-			VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/data2"}},
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data2"}},
 		},
 	}
 
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Volumes = globalVolumes
 	jaeger.Spec.Collector.Volumes = collectorVolumes
 	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
@@ -236,41 +236,41 @@ func TestCollectorVolumeWithSameName(t *testing.T) {
 }
 
 func TestCollectorResources(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestCollectorResources")
-	jaeger.Spec.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+	jaeger := v1.NewJaeger("TestCollectorResources")
+	jaeger.Spec.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			v1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Collector.Resources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+	jaeger.Spec.Collector.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
-		Requests: v1.ResourceList{
-			v1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			v1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
 	}
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[v1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[v1.ResourceRequestsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
 func TestCollectorLabels(t *testing.T) {
-	c := NewCollector(v1alpha1.NewJaeger("TestCollectorLabels"))
+	c := NewCollector(v1.NewJaeger("TestCollectorLabels"))
 	dep := c.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "collector", dep.Spec.Template.Labels["app.kubernetes.io/component"])
@@ -279,14 +279,14 @@ func TestCollectorLabels(t *testing.T) {
 }
 
 func TestCollectorWithDirectStorageType(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
+	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "TestCollectorWithDirectStorageType",
 		},
-		Spec: v1alpha1.JaegerSpec{
-			Storage: v1alpha1.JaegerStorageSpec{
+		Spec: v1.JaegerSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://somewhere",
 				}),
 			},
@@ -295,7 +295,7 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "elasticsearch",
@@ -311,20 +311,20 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 }
 
 func TestCollectorWithIngesterStorageType(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
+	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "TestCollectorWithIngesterStorageType",
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Ingester: v1alpha1.JaegerIngesterSpec{
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+			Ingester: v1.JaegerIngesterSpec{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.topic": "mytopic",
 				}),
 			},
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.brokers":  "http://brokers",
 					"es.server-urls": "http://somewhere",
 				}),
@@ -334,7 +334,7 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "kafka",
@@ -351,15 +351,15 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 }
 
 func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
-	jaeger := &v1alpha1.Jaeger{
+	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "TestCollectorWithIngesterNoOptionsStorageType",
 		},
-		Spec: v1alpha1.JaegerSpec{
+		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Storage: v1alpha1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1alpha1.NewOptions(map[string]interface{}{
+				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.brokers":  "http://brokers",
 					"es.server-urls": "http://somewhere",
 				}),
@@ -369,7 +369,7 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
-	envvars := []v1.EnvVar{
+	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
 			Value: "kafka",

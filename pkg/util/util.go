@@ -1,14 +1,14 @@
 package util
 
 import (
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
-func removeDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
-	var results []v1.Volume
+func removeDuplicatedVolumes(volumes []corev1.Volume) []corev1.Volume {
+	var results []corev1.Volume
 	existing := map[string]bool{}
 
 	for _, volume := range volumes {
@@ -23,8 +23,8 @@ func removeDuplicatedVolumes(volumes []v1.Volume) []v1.Volume {
 }
 
 // removeDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
-func removeDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMount {
-	var results []v1.VolumeMount
+func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	var results []corev1.VolumeMount
 	existing := map[string]bool{}
 
 	for _, volumeMount := range volumeMounts {
@@ -39,11 +39,11 @@ func removeDuplicatedVolumeMounts(volumeMounts []v1.VolumeMount) []v1.VolumeMoun
 }
 
 // Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
-func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
+func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	annotations := make(map[string]string)
-	var volumeMounts []v1.VolumeMount
-	var volumes []v1.Volume
-	resources := &v1.ResourceRequirements{}
+	var volumeMounts []corev1.VolumeMount
+	var volumes []corev1.Volume
+	resources := &corev1.ResourceRequirements{}
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -60,7 +60,7 @@ func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
 		mergeResources(resources, commonSpec.Resources)
 	}
 
-	return &v1alpha1.JaegerCommonSpec{
+	return &v1.JaegerCommonSpec{
 		Annotations:  annotations,
 		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:      removeDuplicatedVolumes(volumes),
@@ -68,12 +68,12 @@ func Merge(commonSpecs []v1alpha1.JaegerCommonSpec) *v1alpha1.JaegerCommonSpec {
 	}
 }
 
-func mergeResources(resources *v1.ResourceRequirements, res v1.ResourceRequirements) {
+func mergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceRequirements) {
 
 	for k, v := range res.Limits {
 		if _, ok := resources.Limits[k]; !ok {
 			if resources.Limits == nil {
-				resources.Limits = make(v1.ResourceList)
+				resources.Limits = make(corev1.ResourceList)
 			}
 			resources.Limits[k] = v
 		}
@@ -82,7 +82,7 @@ func mergeResources(resources *v1.ResourceRequirements, res v1.ResourceRequireme
 	for k, v := range res.Requests {
 		if _, ok := resources.Requests[k]; !ok {
 			if resources.Requests == nil {
-				resources.Requests = make(v1.ResourceList)
+				resources.Requests = make(corev1.ResourceList)
 			}
 			resources.Requests[k] = v
 		}

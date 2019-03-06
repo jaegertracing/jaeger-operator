@@ -90,7 +90,7 @@ Similar instructions also work for OpenShift, but the target `run-openshift` can
 
 ==== Model changes
 
-The Operator SDK generates the `pkg/apis/io/v1alpha1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/io/v1alpha1/types.go`)
+The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
 
 ==== Ingress configuration
 
@@ -113,7 +113,7 @@ To verify that it's working, deploy the `simplest.yaml` and check the ingress ro
 [source,bash]
 ----
 $ kubectl apply -f deploy/examples/simplest.yaml 
-jaeger.io.jaegertracing/simplest created
+jaeger.jaegertracing.io/simplest created
 $ kubectl get ingress
 NAME             HOSTS     ADDRESS          PORTS     AGE
 simplest-query   *         192.168.122.69   80        12s

@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestQueryIngress(t *testing.T) {
 	name := "TestQueryIngress"
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	ingress := NewQueryIngress(jaeger)
 
 	dep := ingress.Get()
@@ -22,7 +22,7 @@ func TestQueryIngress(t *testing.T) {
 func TestQueryIngressDisabled(t *testing.T) {
 	enabled := false
 	name := "TestQueryIngressDisabled"
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Ingress.Enabled = &enabled
 	ingress := NewQueryIngress(jaeger)
 
@@ -34,7 +34,7 @@ func TestQueryIngressDisabled(t *testing.T) {
 func TestQueryIngressEnabled(t *testing.T) {
 	enabled := true
 	name := "TestQueryIngressEnabled"
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Ingress.Enabled = &enabled
 	ingress := NewQueryIngress(jaeger)
 
@@ -47,10 +47,10 @@ func TestQueryIngressEnabled(t *testing.T) {
 func TestQueryIngressAllInOneBasePath(t *testing.T) {
 	enabled := true
 	name := "TestQueryIngressAllInOneBasePath"
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Ingress.Enabled = &enabled
 	jaeger.Spec.Strategy = "allInOne"
-	jaeger.Spec.AllInOne.Options = v1alpha1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
 	ingress := NewQueryIngress(jaeger)
 
 	dep := ingress.Get()
@@ -66,10 +66,10 @@ func TestQueryIngressAllInOneBasePath(t *testing.T) {
 func TestQueryIngressQueryBasePath(t *testing.T) {
 	enabled := true
 	name := "TestQueryIngressQueryBasePath"
-	jaeger := v1alpha1.NewJaeger(name)
+	jaeger := v1.NewJaeger(name)
 	jaeger.Spec.Ingress.Enabled = &enabled
 	jaeger.Spec.Strategy = "production"
-	jaeger.Spec.Query.Options = v1alpha1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
+	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
 	ingress := NewQueryIngress(jaeger)
 
 	dep := ingress.Get()
@@ -83,7 +83,7 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 }
 
 func TestQueryIngressAnnotations(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestQueryIngressAnnotations")
+	jaeger := v1.NewJaeger("TestQueryIngressAnnotations")
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",

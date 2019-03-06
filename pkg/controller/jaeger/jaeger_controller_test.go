@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/io/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -25,7 +25,7 @@ func TestNewJaegerInstance(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1alpha1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn.Name),
 	}
 
 	req := reconcile.Request{
@@ -33,7 +33,7 @@ func TestNewJaegerInstance(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1alpha1.Jaeger) strategy.S {
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		jaeger.Spec.Strategy = "custom-strategy"
 		return strategy.S{}
 	}
@@ -45,7 +45,7 @@ func TestNewJaegerInstance(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1alpha1.Jaeger{}
+	persisted := &v1.Jaeger{}
 	err = cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.Equal(t, persisted.Name, nsn.Name)
 	assert.NoError(t, err)
@@ -61,9 +61,9 @@ func TestDeletedInstance(t *testing.T) {
 
 	// we should just not fail, as there won't be anything to do
 	// all our objects should have an OwnerReference, so that when the jaeger object is deleted, the owned objects are deleted as well
-	jaeger := v1alpha1.NewJaeger("TestDeletedInstance")
+	jaeger := v1.NewJaeger("TestDeletedInstance")
 	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
 
 	// no known objects
 	cl := fake.NewFakeClient()
@@ -83,7 +83,7 @@ func TestDeletedInstance(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1alpha1.Jaeger{}
+	persisted := &v1.Jaeger{}
 	err = cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotEmpty(t, jaeger.Name)
 	assert.Empty(t, persisted.Name) // this means that the object wasn't found
@@ -96,10 +96,10 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	osv1.Install(s)
 
 	// Jaeger
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 
 	// Jaeger's Elasticsearch
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &esv1alpha1.Elasticsearch{}, &esv1alpha1.ElasticsearchList{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &esv1alpha1.Elasticsearch{}, &esv1alpha1.ElasticsearchList{})
 
 	cl := fake.NewFakeClient(objs...)
 	return &ReconcileJaeger{client: cl, scheme: s}, cl
