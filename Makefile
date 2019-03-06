@@ -63,10 +63,10 @@ unit-tests:
 
 .PHONY: e2e-tests
 e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es
-	@mkdir -p deploy/test
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: crd build docker push
+	@mkdir -p deploy/test
 	@cp test/role_binding.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
@@ -107,9 +107,10 @@ cassandra:
 
 .PHONY: clean
 clean:
-	@kubectl delete -f ./test/cassandra.yml || true
-	@kubectl delete -f ./test/elasticsearch.yml || true
-	@kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml || true
+	@rm -f deploy/test/*.yaml 
+	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
+	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true || true
+	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true || true
 
 .PHONY: crd
 crd:
