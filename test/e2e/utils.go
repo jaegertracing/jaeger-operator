@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,8 +15,11 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Minute * 1
+	retryInterval        = time.Second * 5
+	timeout              = time.Minute * 1
+	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
+	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
+	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 )
 
 // GetPod returns pod name
