@@ -140,3 +140,7 @@ all: check format lint build test
 
 .PHONY: ci
 ci: ensure-generate-is-noop check format lint build unit-tests
+
+.PHONY: scorecard
+scorecard:
+	@operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger-operator.csv.yaml --init-timeout 30

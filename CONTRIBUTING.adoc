@@ -25,7 +25,7 @@ mkdir -p $GOPATH/src/github.com/operator-framework
 cd $GOPATH/src/github.com/operator-framework
 git clone https://github.com/operator-framework/operator-sdk
 cd operator-sdk
-git checkout v0.1.1
+git checkout v0.5.0
 make dep
 make install
 ----
@@ -34,7 +34,7 @@ Alternatively, a released binary can be used instead:
 
 [source,bash]
 ----
-curl https://github.com/operator-framework/operator-sdk/releases/download/v0.1.1/operator-sdk-v0.1.1-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
+curl https://github.com/operator-framework/operator-sdk/releases/download/v0.5.0/operator-sdk-v0.5.0-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
 chmod +x $GOPATH/bin/operator-sdk
 ----
 
@@ -145,7 +145,7 @@ OLM also enforces some constraints on the components it manages in order to ensu
 
 The Jaeger community provides and mantains a link:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md/[ClusterServiceVersion (CSV) YAML] to integrate with OLM.
 
-With the latest master branch of the operator-sdk one can generate and update CSVs based on the yaml files in the deploy folder.
+Starting from operator-sdk v0.5.0, one can generate and update CSVs based on the yaml files in the deploy folder.
 The Jaeger CSV can be updated to version 1.9.0 with the following command:
 [source,bash]
 ----

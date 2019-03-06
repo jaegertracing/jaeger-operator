@@ -8,38 +8,49 @@ import (
 )
 
 // IngressSecurityType represents the possible values for the security type
+// +k8s:openapi-gen=true
 type IngressSecurityType string
 
 const (
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
+	// +k8s:openapi-gen=true
 	FlagPlatformKubernetes = "kubernetes"
 
 	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
+	// +k8s:openapi-gen=true
 	FlagPlatformOpenShift = "openshift"
 
 	// FlagPlatformAutoDetect represents the "auto-detect" value for the platform flag
+	// +k8s:openapi-gen=true
 	FlagPlatformAutoDetect = "auto-detect"
 
 	// FlagProvisionElasticsearchAuto represents the 'auto' value for the 'es-provision' flag
+	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchAuto = "auto"
 
 	// FlagProvisionElasticsearchTrue represents the value 'true' for the 'es-provision' flag
+	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchTrue = "true"
 
 	// FlagProvisionElasticsearchFalse represents the value 'false' for the 'es-provision' flag
+	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchFalse = "false"
 
 	// IngressSecurityNone disables any form of security for ingress objects (default)
+	// +k8s:openapi-gen=true
 	IngressSecurityNone IngressSecurityType = ""
 
 	// IngressSecurityNoneExplicit used when the user specifically set it to 'none'
+	// +k8s:openapi-gen=true
 	IngressSecurityNoneExplicit IngressSecurityType = "none"
 
 	// IngressSecurityOAuthProxy represents an OAuth Proxy as security type
+	// +k8s:openapi-gen=true
 	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
 )
 
 // JaegerSpec defines the desired state of Jaeger
+// +k8s:openapi-gen=true
 type JaegerSpec struct {
 	Strategy  string              `json:"strategy"`
 	AllInOne  JaegerAllInOneSpec  `json:"allInOne"`
@@ -55,6 +66,7 @@ type JaegerSpec struct {
 }
 
 // JaegerStatus defines the observed state of Jaeger
+// +k8s:openapi-gen=true
 type JaegerStatus struct {
 	// CollectorSpansReceived represents sum of the metric jaeger_collector_spans_received_total across all collectors
 	CollectorSpansReceived int `json:"collectorSpansReceived"`
@@ -66,6 +78,7 @@ type JaegerStatus struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Jaeger is the Schema for the jaegers API
+// +k8s:openapi-gen=true
 type Jaeger struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -75,6 +88,7 @@ type Jaeger struct {
 }
 
 // JaegerCommonSpec defines the common elements used in multiple other spec structs
+// +k8s:openapi-gen=true
 type JaegerCommonSpec struct {
 	Volumes      []v1.Volume             `json:"volumes"`
 	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
@@ -83,6 +97,7 @@ type JaegerCommonSpec struct {
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
+// +k8s:openapi-gen=true
 type JaegerQuerySpec struct {
 	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
 	Size int `json:"size"`
@@ -96,16 +111,19 @@ type JaegerQuerySpec struct {
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
+// +k8s:openapi-gen=true
 type JaegerUISpec struct {
 	Options FreeForm `json:"options"`
 }
 
 // JaegerSamplingSpec defines the options to be used to configure the UI
+// +k8s:openapi-gen=true
 type JaegerSamplingSpec struct {
 	Options FreeForm `json:"options"`
 }
 
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
+// +k8s:openapi-gen=true
 type JaegerIngressSpec struct {
 	Enabled  *bool               `json:"enabled"`
 	Security IngressSecurityType `json:"security"`
@@ -113,6 +131,7 @@ type JaegerIngressSpec struct {
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
+// +k8s:openapi-gen=true
 type JaegerAllInOneSpec struct {
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
@@ -120,6 +139,7 @@ type JaegerAllInOneSpec struct {
 }
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
+// +k8s:openapi-gen=true
 type JaegerCollectorSpec struct {
 	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
 	Size int `json:"size"`
@@ -133,6 +153,7 @@ type JaegerCollectorSpec struct {
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
+// +k8s:openapi-gen=true
 type JaegerIngesterSpec struct {
 	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
 	Size int `json:"size"`
@@ -146,6 +167,7 @@ type JaegerIngesterSpec struct {
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
+// +k8s:openapi-gen=true
 type JaegerAgentSpec struct {
 	Strategy string  `json:"strategy"` // can be either 'DaemonSet' or 'Sidecar' (default)
 	Image    string  `json:"image"`
@@ -154,6 +176,7 @@ type JaegerAgentSpec struct {
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
+// +k8s:openapi-gen=true
 type JaegerStorageSpec struct {
 	Type                  string                          `json:"type"` // can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
 	SecretName            string                          `json:"secretName"`
@@ -166,6 +189,7 @@ type JaegerStorageSpec struct {
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
+// +k8s:openapi-gen=true
 type ElasticsearchSpec struct {
 	Resources        v1.ResourceRequirements           `json:"resources"`
 	NodeCount        int32                             `json:"nodeCount"`
@@ -175,6 +199,7 @@ type ElasticsearchSpec struct {
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
+// +k8s:openapi-gen=true
 type JaegerCassandraCreateSchemaSpec struct {
 	Enabled    *bool  `json:"enabled"`
 	Image      string `json:"image"`
@@ -183,6 +208,7 @@ type JaegerCassandraCreateSchemaSpec struct {
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
+// +k8s:openapi-gen=true
 type JaegerDependenciesSpec struct {
 	Enabled                     *bool  `json:"enabled"`
 	SparkMaster                 string `json:"sparkMaster"`
@@ -197,6 +223,7 @@ type JaegerDependenciesSpec struct {
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
+// +k8s:openapi-gen=true
 type JaegerEsIndexCleanerSpec struct {
 	Enabled      *bool  `json:"enabled"`
 	NumberOfDays int    `json:"numberOfDays"`
