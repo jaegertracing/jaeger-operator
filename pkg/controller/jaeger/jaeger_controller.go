@@ -91,6 +91,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
+	if err := validate(instance); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// workaround for https://github.com/kubernetes-sigs/controller-runtime/issues/202
 	// see also: https://github.com/kubernetes-sigs/controller-runtime/pull/212
 	// once there's a version incorporating the PR above, the manual setting of the GKV can be removed
@@ -119,6 +123,16 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// reconcile in a few seconds, to get the status object updated
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// validate validates CR before processing it
+func validate(jaeger *v1.Jaeger) error {
+	if jaeger.Spec.Storage.Rollover.ReadTTL != "" {
+		if _, err := time.ParseDuration(jaeger.Spec.Storage.Rollover.ReadTTL); err != nil {
+			return errors.Wrap(err, "could not parse esRollover.readTTL")
+		}
+	}
+	return nil
 }
 
 func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger) strategy.S {

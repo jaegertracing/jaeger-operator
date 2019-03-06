@@ -2,7 +2,9 @@ package cronjob
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
+	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -11,6 +13,14 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+)
+
+type durationUnits string
+
+const (
+	seconds durationUnits = "seconds"
+	minutes durationUnits = "minutes"
+	hours   durationUnits = "hours"
 )
 
 // CreateRollover returns objects which are necessary to run rolover actions for indices
@@ -68,11 +78,15 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	name := fmt.Sprintf("%s-es-lookback", jaeger.Name)
 	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
-	if jaeger.Spec.Storage.Rollover.Unit != "" {
-		envs = append(envs, corev1.EnvVar{Name: "UNIT", Value: jaeger.Spec.Storage.Rollover.Unit})
-	}
-	if jaeger.Spec.Storage.Rollover.UnitCount != nil {
-		envs = append(envs, corev1.EnvVar{Name: "UNIT_COUNT", Value: strconv.Itoa(*jaeger.Spec.Storage.Rollover.UnitCount)})
+	if jaeger.Spec.Storage.Rollover.ReadTTL != "" {
+		dur, err := time.ParseDuration(jaeger.Spec.Storage.Rollover.ReadTTL)
+		if err == nil {
+			d := parseToUnits(dur)
+			envs = append(envs, corev1.EnvVar{Name: "UNIT", Value: string(d.units)})
+			envs = append(envs, corev1.EnvVar{Name: "UNIT_COUNT", Value: strconv.Itoa(d.count)})
+		} else {
+			jaeger.Logger().WithError(err).Error("Could not parse esRollover.readTTL")
+		}
 	}
 	ttlHourInSec := int32(60 * 60)
 	return batchv1beta1.CronJob{
@@ -125,4 +139,25 @@ func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 		envs = append(envs, corev1.EnvVar{Name: "ES_PASSWORD", Value: val})
 	}
 	return envs
+}
+
+type pythonUnits struct {
+	units durationUnits
+	count int
+}
+
+func parseToUnits(d time.Duration) pythonUnits {
+	b := big.NewFloat(d.Hours())
+	if big.NewFloat(d.Hours()).IsInt() {
+		i, _ := b.Int64()
+		return pythonUnits{units: hours, count: int(i)}
+	}
+	b = big.NewFloat(d.Minutes())
+	if b.IsInt() {
+		i, _ := b.Int64()
+		return pythonUnits{units: minutes, count: int(i)}
+	}
+	b = big.NewFloat(d.Round(time.Second).Seconds())
+	i, _ := b.Int64()
+	return pythonUnits{units: seconds, count: int(i)}
 }

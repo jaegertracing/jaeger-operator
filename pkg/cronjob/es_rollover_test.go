@@ -2,6 +2,7 @@ package cronjob
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -37,9 +38,7 @@ func TestLookback(t *testing.T) {
 	j := v1.NewJaeger("squirtle")
 	j.Namespace = "kitchen"
 	j.Spec.Storage.Rollover.Image = "wohooo"
-	unitCount := 7
-	j.Spec.Storage.Rollover.UnitCount = &unitCount
-	j.Spec.Storage.Rollover.Unit = "minutes"
+	j.Spec.Storage.Rollover.ReadTTL = "2h"
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})
 
 	cjob := lookback(j)
@@ -49,7 +48,7 @@ func TestLookback(t *testing.T) {
 	assert.Equal(t, 1, len(cjob.Spec.JobTemplate.Spec.Template.Spec.Containers))
 	assert.Equal(t, j.Spec.Storage.Rollover.Image, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"lookback", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
-	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "UNIT", Value: "minutes"}, {Name: "UNIT_COUNT", Value: "7"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
+	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "UNIT", Value: "hours"}, {Name: "UNIT_COUNT", Value: "2"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
 }
 
 func TestEnvVars(t *testing.T) {
@@ -75,5 +74,27 @@ func TestEnvVars(t *testing.T) {
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.expected, esScriptEnvVars(test.opts))
+	}
+}
+
+func TestParseUnits(t *testing.T) {
+	tests := []struct {
+		d     time.Duration
+		units pythonUnits
+	}{
+		{d: time.Second, units: pythonUnits{units: seconds, count: 1}},
+		{d: time.Second * 6, units: pythonUnits{units: seconds, count: 6}},
+		{d: time.Minute, units: pythonUnits{units: minutes, count: 1}},
+		{d: time.Minute * 2, units: pythonUnits{units: minutes, count: 2}},
+		{d: time.Hour, units: pythonUnits{units: hours, count: 1}},
+		{d: time.Hour * 2, units: pythonUnits{units: hours, count: 2}},
+		{d: time.Hour*2 + time.Minute*2, units: pythonUnits{units: minutes, count: 122}},
+		{d: time.Hour*2 + time.Minute*2 + time.Second*2, units: pythonUnits{units: seconds, count: 2*60*60 + 2*60 + 2}},
+		{d: time.Hour*2 + time.Minute*2 + time.Second*2 + time.Millisecond*8, units: pythonUnits{units: seconds, count: 2*60*60 + 2*60 + 2}},
+		{d: time.Millisecond * 8, units: pythonUnits{units: seconds, count: 0}},
+		{d: time.Minute * 60, units: pythonUnits{units: hours, count: 1}},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.units, parseToUnits(test.d))
 	}
 }

@@ -10,4 +10,3 @@ spec:
     options:
       es:
         server-urls: http://elasticsearch:9200
-        use-aliases: true
