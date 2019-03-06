@@ -79,6 +79,10 @@ func newAllInOneStrategy(jaeger *v1.Jaeger) S {
 		}
 	}
 
+	if storage.EnableRollover(jaeger.Spec.Storage) {
+		c.cronJobs = append(c.cronJobs, cronjob.CreateRollover(jaeger)...)
+	}
+
 	c.dependencies = storage.Dependencies(jaeger)
 
 	return c

@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -80,7 +81,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance := &v1.Jaeger{}
 	err := r.client.Get(context.Background(), request.NamespacedName, instance)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -152,8 +153,7 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 
 	// storage dependencies have to be deployed after ES is ready
 	if err := r.handleDependencies(str); err != nil {
-		jaeger.Logger().WithError(err).Error("failed to handle the dependencies")
-		return err
+		return errors.Wrap(err, "failed to handler dependencies")
 	}
 
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {

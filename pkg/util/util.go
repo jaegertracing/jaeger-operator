@@ -123,8 +123,5 @@ func GetEsHostname(opts map[string]string) string {
 		return ""
 	}
 	urlArr := strings.Split(urls, ",")
-	if len(urlArr) == 0 {
-		return ""
-	}
 	return urlArr[0]
 }

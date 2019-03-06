@@ -25,6 +25,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 		envs = append(envs, corev1.EnvVar{Name: "CONDITIONS", Value: jaeger.Spec.Storage.Rollover.Conditions})
 	}
 	one := int32(1)
+	ttlHourInSec := int32(60 * 60)
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -37,7 +38,8 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			Schedule:          jaeger.Spec.Storage.Rollover.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
-					Parallelism: &one,
+					TTLSecondsAfterFinished: &ttlHourInSec,
+					Parallelism:             &one,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
@@ -72,6 +74,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	if jaeger.Spec.Storage.Rollover.UnitCount != nil {
 		envs = append(envs, corev1.EnvVar{Name: "UNIT_COUNT", Value: strconv.Itoa(*jaeger.Spec.Storage.Rollover.UnitCount)})
 	}
+	ttlHourInSec := int32(60 * 60)
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -84,6 +87,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			Schedule:          jaeger.Spec.Storage.Rollover.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &ttlHourInSec,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
