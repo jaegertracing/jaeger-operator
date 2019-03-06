@@ -68,6 +68,9 @@ spec:
       displayName: Jaeger
       kind: Jaeger
       name: jaegers.io.jaegertracing
+      version: v1alpha1
+    - kind: Jaeger
+      name: jaegers.jaegertracing.io
       version: v1
   description: Provides monitoring and troubleshooting microservices-based distributed
     systems
@@ -128,6 +131,31 @@ spec:
           - route.openshift.io
           resources:
           - routes
+          verbs:
+          - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - roles
+          - rolebindings
+          verbs:
+          - '*'
+        - apiGroups:
+          - elasticsearch.jaegertracing.io
+          resources:
+          - jaeger
+          verbs:
+          - get
+        - apiGroups:
+          - logging.openshift.io
+          resources:
+          - elasticsearches
+          verbs:
+          - '*'
+        - apiGroups:
+          - jaegertracing.io
+          resources:
+          - '*'
           verbs:
           - '*'
         serviceAccountName: jaeger-operator
