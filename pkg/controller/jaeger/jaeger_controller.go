@@ -92,6 +92,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	if err := validate(instance); err != nil {
+		instance.Logger().WithError(err).Error("Failed to validate")
 		return reconcile.Result{}, err
 	}
 
@@ -129,7 +130,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 func validate(jaeger *v1.Jaeger) error {
 	if jaeger.Spec.Storage.Rollover.ReadTTL != "" {
 		if _, err := time.ParseDuration(jaeger.Spec.Storage.Rollover.ReadTTL); err != nil {
-			return errors.Wrap(err, "could not parse esRollover.readTTL")
+			return errors.Wrap(err, "failed to parse esRollover.readTTL to time.Duration")
 		}
 	}
 	return nil

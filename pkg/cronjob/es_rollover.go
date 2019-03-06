@@ -85,7 +85,10 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			envs = append(envs, corev1.EnvVar{Name: "UNIT", Value: string(d.units)})
 			envs = append(envs, corev1.EnvVar{Name: "UNIT_COUNT", Value: strconv.Itoa(d.count)})
 		} else {
-			jaeger.Logger().WithError(err).Error("Could not parse esRollover.readTTL")
+			jaeger.Logger().
+				WithError(err).
+				WithField("readTTL", jaeger.Spec.Storage.Rollover.ReadTTL).
+				Error("Failed to parse esRollover.readTTL to time.duration")
 		}
 	}
 	ttlHourInSec := int32(60 * 60)
