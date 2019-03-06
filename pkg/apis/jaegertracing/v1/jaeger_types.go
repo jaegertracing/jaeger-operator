@@ -84,7 +84,12 @@ type JaegerCommonSpec struct {
 
 // JaegerQuerySpec defines the options to be used when deploying the query
 type JaegerQuerySpec struct {
-	Size    int     `json:"size"`
+	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
+	Size int `json:"size"`
+
+	// Replicas represents the number of replicas to create for this service.
+	Replicas *int32 `json:"replicas"`
+
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
@@ -116,7 +121,12 @@ type JaegerAllInOneSpec struct {
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
-	Size    int     `json:"size"`
+	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
+	Size int `json:"size"`
+
+	// Replicas represents the number of replicas to create for this service.
+	Replicas *int32 `json:"replicas"`
+
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec
@@ -124,7 +134,12 @@ type JaegerCollectorSpec struct {
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
 type JaegerIngesterSpec struct {
-	Size    int     `json:"size"`
+	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
+	Size int `json:"size"`
+
+	// Replicas represents the number of replicas to create for this service.
+	Replicas *int32 `json:"replicas"`
+
 	Image   string  `json:"image"`
 	Options Options `json:"options"`
 	JaegerCommonSpec

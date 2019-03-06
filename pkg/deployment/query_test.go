@@ -26,13 +26,52 @@ func TestQueryNegativeSize(t *testing.T) {
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
 }
 
-func TestQueryDefaultSize(t *testing.T) {
-	jaeger := v1.NewJaeger("TestQueryDefaultSize")
-	jaeger.Spec.Query.Size = 0
+func TestQueryNegativeReplicas(t *testing.T) {
+	size := int32(-1)
+	jaeger := v1.NewJaeger("TestQueryNegativeReplicas")
+	jaeger.Spec.Query.Replicas = &size
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestQueryDefaultSize(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryDefaultSize")
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestQueryReplicaSize(t *testing.T) {
+	size := int32(0)
+	jaeger := v1.NewJaeger("TestQueryReplicaSize")
+	jaeger.Spec.Query.Replicas = &size
+
+	ingester := NewQuery(jaeger)
+	dep := ingester.Get()
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
+}
+
+func TestQuerySize(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQuerySize")
+	jaeger.Spec.Query.Size = 2
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, int32(2), *dep.Spec.Replicas)
+}
+
+func TestQueryReplicaWinsOverSize(t *testing.T) {
+	size := int32(3)
+	jaeger := v1.NewJaeger("TestQueryReplicaWinsOverSize")
+	jaeger.Spec.Query.Size = 2
+	jaeger.Spec.Query.Replicas = &size
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, int32(3), *dep.Spec.Replicas)
 }
 
 func TestDefaultQueryImage(t *testing.T) {

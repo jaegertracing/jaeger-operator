@@ -27,13 +27,52 @@ func TestNegativeSize(t *testing.T) {
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
 }
 
-func TestDefaultSize(t *testing.T) {
-	jaeger := v1.NewJaeger("TestDefaultSize")
-	jaeger.Spec.Collector.Size = 0
+func TestNegativeReplicas(t *testing.T) {
+	size := int32(-1)
+	jaeger := v1.NewJaeger("TestNegativeReplicas")
+	jaeger.Spec.Collector.Replicas = &size
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestDefaultSize(t *testing.T) {
+	jaeger := v1.NewJaeger("TestDefaultSize")
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+}
+
+func TestReplicaSize(t *testing.T) {
+	size := int32(0)
+	jaeger := v1.NewJaeger("TestReplicaSize")
+	jaeger.Spec.Collector.Replicas = &size
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+	assert.Equal(t, int32(0), *dep.Spec.Replicas)
+}
+
+func TestSize(t *testing.T) {
+	jaeger := v1.NewJaeger("TestSize")
+	jaeger.Spec.Collector.Size = 2
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+	assert.Equal(t, int32(2), *dep.Spec.Replicas)
+}
+
+func TestReplicaWinsOverSize(t *testing.T) {
+	size := int32(3)
+	jaeger := v1.NewJaeger("TestReplicaWinsOverSize")
+	jaeger.Spec.Collector.Size = 2
+	jaeger.Spec.Collector.Replicas = &size
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+	assert.Equal(t, int32(3), *dep.Spec.Replicas)
 }
 
 func TestName(t *testing.T) {

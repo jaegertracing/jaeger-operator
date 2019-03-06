@@ -25,8 +25,14 @@ type Collector struct {
 
 // NewCollector builds a new Collector struct based on the given spec
 func NewCollector(jaeger *v1.Jaeger) *Collector {
-	if jaeger.Spec.Collector.Size <= 0 {
-		jaeger.Spec.Collector.Size = 1
+	if jaeger.Spec.Collector.Replicas == nil || *jaeger.Spec.Collector.Replicas < 0 {
+		replicaSize := int32(1)
+		if jaeger.Spec.Collector.Size > 0 {
+			jaeger.Logger().Warn("The 'size' property for the collector is deprecated. Use 'replicas' instead.")
+			replicaSize = int32(jaeger.Spec.Collector.Size)
+		}
+
+		jaeger.Spec.Collector.Replicas = &replicaSize
 	}
 
 	if jaeger.Spec.Collector.Image == "" {
@@ -42,7 +48,6 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	labels := c.labels()
 	trueVar := true
-	replicas := int32(c.jaeger.Spec.Collector.Size)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -98,7 +103,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: c.jaeger.Spec.Collector.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

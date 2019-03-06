@@ -24,8 +24,14 @@ type Query struct {
 
 // NewQuery builds a new Query struct based on the given spec
 func NewQuery(jaeger *v1.Jaeger) *Query {
-	if jaeger.Spec.Query.Size <= 0 {
-		jaeger.Spec.Query.Size = 1
+	if jaeger.Spec.Query.Replicas == nil || *jaeger.Spec.Query.Replicas < 0 {
+		replicaSize := int32(1)
+		if jaeger.Spec.Query.Size > 0 {
+			jaeger.Logger().Warn("The 'size' property for the query is deprecated. Use 'replicas' instead.")
+			replicaSize = int32(jaeger.Spec.Query.Size)
+		}
+
+		jaeger.Spec.Query.Replicas = &replicaSize
 	}
 
 	if jaeger.Spec.Query.Image == "" {
@@ -40,7 +46,6 @@ func (q *Query) Get() *appsv1.Deployment {
 	q.jaeger.Logger().Debug("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
-	replicas := int32(q.jaeger.Spec.Query.Size)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -95,7 +100,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: q.jaeger.Spec.Query.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
