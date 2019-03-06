@@ -13,6 +13,8 @@ func Dependencies(jaeger *v1.Jaeger) []batchv1.Job {
 	if strings.EqualFold(jaeger.Spec.Storage.Type, "cassandra") {
 		return cassandraDeps(jaeger)
 	}
-
+	if EnableRollover(jaeger.Spec.Storage) {
+		return elasticsearchDependencies(jaeger)
+	}
 	return nil
 }

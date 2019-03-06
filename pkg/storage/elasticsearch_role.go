@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // ESRole returns the role to be created for Elasticsearch
@@ -24,7 +25,7 @@ func ESRole(jaeger *v1.Jaeger) rbacv1.Role {
 			},
 			Name:            fmt.Sprintf("%s-elasticsearch", jaeger.Name),
 			Namespace:       jaeger.Namespace,
-			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
+			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -54,7 +55,7 @@ func ESRoleBinding(jaeger *v1.Jaeger, sas ...string) rbacv1.RoleBinding {
 				"app.kubernetes.io/part-of":    "jaeger",
 				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
-			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
+			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind: "Role",

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
@@ -70,8 +72,8 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 	}
 }
 
-// InjectIndexCleanerConfiguration changes the given spec to include the options for the index cleaner
-func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *corev1.PodSpec) {
+// InjectSecretsConfiguration changes the given spec to include the options for the index cleaner
+func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec) {
 	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
@@ -89,6 +91,8 @@ func (ed *ElasticsearchDeployment) InjectIndexCleanerConfiguration(p *corev1.Pod
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
 			corev1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
 			corev1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
+			corev1.EnvVar{Name: "SHARDS", Value: strconv.Itoa(int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))},
+			corev1.EnvVar{Name: "REPLICAS", Value: strconv.Itoa(calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))},
 		)
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
@@ -114,7 +118,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 				// to manipulate with objects created by ES operator.
 				//"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
-			OwnerReferences: []metav1.OwnerReference{asOwner(ed.Jaeger)},
+			OwnerReferences: []metav1.OwnerReference{util.AsOwner(ed.Jaeger)},
 		},
 		Spec: esv1alpha1.ElasticsearchSpec{
 			ManagementState:  esv1alpha1.ManagementStateManaged,

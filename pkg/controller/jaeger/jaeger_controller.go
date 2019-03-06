@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -80,13 +81,18 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance := &v1.Jaeger{}
 	err := r.client.Get(context.Background(), request.NamespacedName, instance)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	if err := validate(instance); err != nil {
+		instance.Logger().WithError(err).Error("Failed to validate")
 		return reconcile.Result{}, err
 	}
 
@@ -100,12 +106,6 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	str := r.runStrategyChooser(instance)
 
 	logFields := instance.Logger().WithField("execution", execution)
-
-	// wait for all the dependencies to succeed
-	if err := r.handleDependencies(str); err != nil {
-		logFields.WithError(err).Error("failed to handle the dependencies")
-		return reconcile.Result{}, err
-	}
 
 	if err := r.apply(*instance, str); err != nil {
 		logFields.WithError(err).Error("failed to apply the changes")
@@ -124,6 +124,16 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// reconcile in a few seconds, to get the status object updated
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// validate validates CR before processing it
+func validate(jaeger *v1.Jaeger) error {
+	if jaeger.Spec.Storage.Rollover.ReadTTL != "" {
+		if _, err := time.ParseDuration(jaeger.Spec.Storage.Rollover.ReadTTL); err != nil {
+			return errors.Wrap(err, "failed to parse esRollover.readTTL to time.Duration")
+		}
+	}
+	return nil
 }
 
 func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger) strategy.S {
@@ -154,6 +164,11 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 			"namespace": jaeger.Namespace,
 			"instance":  jaeger.Name,
 		}).Warn("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+	}
+
+	// storage dependencies have to be deployed after ES is ready
+	if err := r.handleDependencies(str); err != nil {
+		return errors.Wrap(err, "failed to handler dependencies")
 	}
 
 	if err := r.applyRoles(jaeger, str.Roles()); err != nil {

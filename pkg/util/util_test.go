@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -163,4 +164,41 @@ func TestMergeResourceRequests(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), merged.Resources.Requests[corev1.ResourceRequestsCPU])
 	assert.Equal(t, *resource.NewQuantity(1024, resource.BinarySI), merged.Resources.Requests[corev1.ResourceRequestsMemory])
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), merged.Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
+}
+
+func TestGetEsHostname(t *testing.T) {
+	tests := []struct {
+		underTest map[string]string
+		hostname  string
+	}{
+		{hostname: ""},
+		{underTest: map[string]string{"": ""}, hostname: ""},
+		{underTest: map[string]string{"es.server-urls": ""}, hostname: ""},
+		{underTest: map[string]string{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
+		{underTest: map[string]string{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
+	}
+	for _, test := range tests {
+		assert.Equal(t, test.hostname, GetEsHostname(test.underTest))
+	}
+}
+
+func TestAsOwner(t *testing.T) {
+	j := v1.NewJaeger("joe")
+	j.Kind = "human"
+	j.APIVersion = "homosapiens"
+	j.UID = "boom!"
+	ow := AsOwner(j)
+	trueVar := true
+	assert.Equal(t, metav1.OwnerReference{Name: "joe", Kind: "human", APIVersion: "homosapiens", UID: "boom!", Controller: &trueVar}, ow)
+}
+
+func TestLabels(t *testing.T) {
+	assert.Equal(t, map[string]string{
+		"app":                          "jaeger",
+		"app.kubernetes.io/name":       "joe",
+		"app.kubernetes.io/instance":   "thatone",
+		"app.kubernetes.io/component":  "leg",
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}, Labels("joe", "leg", *v1.NewJaeger("thatone")))
 }

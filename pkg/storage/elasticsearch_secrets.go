@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
@@ -111,21 +112,10 @@ func createSecret(jaeger *v1.Jaeger, secretName string, data map[string][]byte) 
 				"app.kubernetes.io/part-of":    "jaeger",
 				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
-			OwnerReferences: []metav1.OwnerReference{asOwner(jaeger)},
+			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: data,
-	}
-}
-
-func asOwner(jaeger *v1.Jaeger) metav1.OwnerReference {
-	b := true
-	return metav1.OwnerReference{
-		APIVersion: jaeger.APIVersion,
-		Kind:       jaeger.Kind,
-		Name:       jaeger.Name,
-		UID:        jaeger.UID,
-		Controller: &b,
 	}
 }
 

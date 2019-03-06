@@ -161,6 +161,7 @@ type JaegerStorageSpec struct {
 	CassandraCreateSchema JaegerCassandraCreateSchemaSpec `json:"cassandraCreateSchema"`
 	SparkDependencies     JaegerDependenciesSpec          `json:"dependencies"`
 	EsIndexCleaner        JaegerEsIndexCleanerSpec        `json:"esIndexCleaner"`
+	Rollover              JaegerEsRolloverSpec            `json:"esRollover"`
 	Elasticsearch         ElasticsearchSpec               `json:"elasticsearch"`
 }
 
@@ -201,6 +202,15 @@ type JaegerEsIndexCleanerSpec struct {
 	NumberOfDays int    `json:"numberOfDays"`
 	Schedule     string `json:"schedule"`
 	Image        string `json:"image"`
+}
+
+// JaegerEsRolloverSpec holds the options related to es-rollover
+type JaegerEsRolloverSpec struct {
+	Image      string `json:"image"`
+	Schedule   string `json:"schedule"`
+	Conditions string `json:"conditions"`
+	// we parse it with time.ParseDuration
+	ReadTTL string `json:"readTTL"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

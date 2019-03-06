@@ -107,6 +107,7 @@ func TestOptionsArePassed(t *testing.T) {
 func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger("TestDelegateProductionDependencies")
+	j.Spec.Storage.Type = "cassandra"
 	c := newProductionStrategy(j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }

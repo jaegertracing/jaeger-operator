@@ -1,7 +1,10 @@
 package util
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -87,4 +90,38 @@ func mergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceR
 			resources.Requests[k] = v
 		}
 	}
+}
+
+// AsOwner returns owner reference for jaeger
+func AsOwner(jaeger *v1.Jaeger) metav1.OwnerReference {
+	b := true
+	return metav1.OwnerReference{
+		APIVersion: jaeger.APIVersion,
+		Kind:       jaeger.Kind,
+		Name:       jaeger.Name,
+		UID:        jaeger.UID,
+		Controller: &b,
+	}
+}
+
+// Labels returns recommended labels
+func Labels(name, component string, jaeger v1.Jaeger) map[string]string {
+	return map[string]string{
+		"app":                          "jaeger",
+		"app.kubernetes.io/name":       name,
+		"app.kubernetes.io/instance":   jaeger.Name,
+		"app.kubernetes.io/component":  component,
+		"app.kubernetes.io/part-of":    "jaeger",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+}
+
+// GetEsHostname return first ES hostname from options map
+func GetEsHostname(opts map[string]string) string {
+	urls, ok := opts["es.server-urls"]
+	if !ok {
+		return ""
+	}
+	urlArr := strings.Split(urls, ",")
+	return urlArr[0]
 }

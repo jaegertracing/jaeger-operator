@@ -82,9 +82,16 @@ func newProductionStrategy(jaeger *v1.Jaeger) S {
 		}
 	}
 
+	var esRollover []batchv1beta1.CronJob
+	if storage.EnableRollover(jaeger.Spec.Storage) {
+		esRollover = cronjob.CreateRollover(jaeger)
+		c.cronJobs = append(c.cronJobs, esRollover...)
+	}
+
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))
+	c.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
@@ -110,7 +117,13 @@ func newProductionStrategy(jaeger *v1.Jaeger) S {
 			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
 			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
 			if indexCleaner != nil {
-				es.InjectIndexCleanerConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+				es.InjectSecretsConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+			}
+			for i := range esRollover {
+				es.InjectSecretsConfiguration(&esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+			}
+			for i := range c.dependencies {
+				es.InjectSecretsConfiguration(&c.dependencies[i].Spec.Template.Spec)
 			}
 		}
 	}

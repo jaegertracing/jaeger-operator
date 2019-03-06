@@ -3,7 +3,6 @@ package cronjob
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -11,11 +10,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
+
+// CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
 func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
-	esUrls := getEsHostname(jaeger.Spec.Storage.Options.Map())
+	esUrls := util.GetEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
@@ -62,10 +64,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Name:    name,
-									Env:     removeEmptyVars([]corev1.EnvVar{{Name: "INDEX_PREFIX", Value: jaeger.Spec.Storage.Options.Map()["es.index-prefix"]}}),
+									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Args:    []string{strconv.Itoa(jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Env:     esScriptEnvVars(jaeger.Spec.Storage.Options),
 									EnvFrom: envFromSource,
 								},
 							},
@@ -82,17 +84,4 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			},
 		},
 	}
-}
-
-// return first ES hostname from options map
-func getEsHostname(opts map[string]string) string {
-	urls, ok := opts["es.server-urls"]
-	if !ok {
-		return ""
-	}
-	urlArr := strings.Split(urls, ",")
-	if len(urlArr) == 0 {
-		return ""
-	}
-	return urlArr[0]
 }
