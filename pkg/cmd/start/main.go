@@ -1,10 +1,14 @@
 package start
 
 import (
+	"context"
+	"fmt"
 	"runtime"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -74,6 +78,12 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
 	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 
+	cmd.Flags().String("metrics-host", "0.0.0.0", "The host to bind the metrics port")
+	viper.BindPFlag("metrics-host", cmd.Flags().Lookup("metrics-host"))
+
+	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
+	viper.BindPFlag("metrics-port", cmd.Flags().Lookup("metrics-port"))
+
 	return cmd
 }
 
@@ -93,6 +103,8 @@ func start(cmd *cobra.Command, args []string) {
 		"jaeger-operator": version.Get().Operator,
 	}).Info("Versions")
 
+	ctx := context.Background()
+
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		log.WithError(err).Fatal("failed to get watch namespace")
@@ -104,8 +116,15 @@ func start(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	if err := leader.Become(ctx, "jaeger-operator-lock"); err != nil {
+		log.Fatal(err)
+	}
+
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", viper.GetString("metrics-host"), viper.GetInt32("metrics-port")),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -152,6 +171,11 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
+		log.Fatal(err)
+	}
+
+	// Create Service object to expose the metrics port.
+	if _, err := metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
 		log.Fatal(err)
 	}
 
