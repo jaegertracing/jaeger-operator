@@ -6,7 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/apps/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -61,6 +63,14 @@ func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
 		depList := corev1.DeploymentList{}
 		if err = c.List(context.Background(), client.MatchingLabels(es.Labels).InNamespace(es.Namespace), &depList); err != nil {
+			if k8serrors.IsNotFound(err) {
+				// the object might have not been created yet
+				log.WithFields(log.Fields{
+					"namespace": es.Namespace,
+					"name":      es.Name,
+				}).Debug("Elasticsearch cluster doesn't exist yet.")
+				return false, nil
+			}
 			return false, err
 		}
 		available := int32(0)

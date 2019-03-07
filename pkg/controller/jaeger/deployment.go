@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,6 +73,14 @@ func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
 		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
+			if k8serrors.IsNotFound(err) {
+				// the object might have not been created yet
+				log.WithFields(log.Fields{
+					"namespace": dep.Namespace,
+					"name":      dep.Name,
+				}).Debug("Deployment doesn't exist yet.")
+				return false, nil
+			}
 			return false, err
 		}
 
