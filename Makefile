@@ -13,6 +13,7 @@ OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
+STORAGE_NAMESPACE ?= "storage"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
@@ -86,24 +87,29 @@ e2e-tests-smoke: prepare-e2e-tests
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra
 	@echo Running Cassandra end-to-end tests...
-	@go test -tags=cassandra ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: e2e-tests-es
 e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
-	@go test -tags=elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: run
 run: crd
 	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start'
 
 .PHONY: es
-es:
-	@kubectl create -f ./test/elasticsearch.yml 2>&1 | grep -v "already exists" || true
+es: storage
+	@kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: cassandra
-cassandra:
-	@kubectl create -f ./test/cassandra.yml 2>&1 | grep -v "already exists" || true
+cassandra: storage
+	@kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+
+.PHONY: storage
+storage:
+	@echo Creating namespace $(STORAGE_NAMESPACE)
+	@kubectl create namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: clean
 clean:

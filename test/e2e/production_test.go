@@ -27,7 +27,7 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	err = WaitForStatefulset(t, f.KubeClient, "default", "elasticsearch", retryInterval, timeout)
+	err = WaitForStatefulset(t, f.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{
-					"es.server-urls": "http://elasticsearch.default.svc:9200",
+					"es.server-urls": esServerUrls,
 				}),
 			},
 		},

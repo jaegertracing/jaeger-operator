@@ -43,7 +43,7 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 			Strategy: "allInOne",
 			Storage: v1.JaegerStorageSpec{
 				Type:    "cassandra",
-				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
 				CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{
 					Datacenter: "datacenter1",
 				},

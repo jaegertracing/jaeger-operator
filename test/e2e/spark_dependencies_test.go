@@ -18,7 +18,7 @@ func SparkDependenciesElasticsearch(t *testing.T) {
 	storage := v1.JaegerStorageSpec{
 		Type: "elasticsearch",
 		Options: v1.NewOptions(map[string]interface{}{
-			"es.server-urls": "http://elasticsearch.default.svc:9200",
+			"es.server-urls": esServerUrls,
 		}),
 	}
 	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
@@ -32,7 +32,7 @@ func SparkDependenciesCassandra(t *testing.T) {
 
 	storage := v1.JaegerStorageSpec{
 		Type: "cassandra",
-		Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "cassandra.default.svc", "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+		Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
 		CassandraCreateSchema:v1.JaegerCassandraCreateSchemaSpec{Datacenter:"datacenter1", Mode: "prod"},
 	}
 	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
