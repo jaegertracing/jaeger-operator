@@ -115,8 +115,8 @@ storage:
 clean:
 	@rm -f deploy/test/*.yaml 
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
-	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true || true
-	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true || true
+	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 
 .PHONY: crd
 crd:
