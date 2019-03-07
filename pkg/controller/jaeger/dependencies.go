@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -30,6 +31,14 @@ func (r *ReconcileJaeger) handleDependencies(str strategy.S) error {
 		return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
 			batch := &batchv1.Job{}
 			if err = r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
+				if k8serrors.IsNotFound(err) {
+					// the object might have not been created yet
+					log.WithFields(log.Fields{
+						"namespace": dep.Namespace,
+						"name":      dep.Name,
+					}).Debug("Dependency doesn't exist yet.")
+					return false, nil
+				}
 				return false, err
 			}
 
