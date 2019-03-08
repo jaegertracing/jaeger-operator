@@ -221,6 +221,24 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	}
 }
 
+func TestNormalizeElasticsearch(t *testing.T) {
+	viper.Set("jaeger-elasticsearch-image", "hoo")
+	defer viper.Reset()
+	tests := []struct {
+		underTest v1.ElasticsearchSpec
+		expected  v1.ElasticsearchSpec
+	}{
+		{underTest: v1.ElasticsearchSpec{},
+			expected: v1.ElasticsearchSpec{Image: "hoo", NodeCount: 1}},
+		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150},
+			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150}},
+	}
+	for _, test := range tests {
+		normalizeElasticsearch(&test.underTest)
+		assert.Equal(t, test.expected, test.underTest)
+	}
+}
+
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true

@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -92,7 +91,7 @@ func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string)
 		spec.Enabled = &trueVar
 	}
 	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-spark-dependencies-image"))
+		spec.Image = viper.GetString("jaeger-spark-dependencies-image")
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
@@ -106,7 +105,7 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		spec.Enabled = &trueVar
 	}
 	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-index-cleaner-image"))
+		spec.Image = viper.GetString("jaeger-es-index-cleaner-image")
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
@@ -120,11 +119,14 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 	if spec.NodeCount == 0 {
 		spec.NodeCount = 1
 	}
+	if spec.Image == "" {
+		spec.Image = viper.GetString("jaeger-elasticsearch-image")
+	}
 }
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s", viper.GetString("jaeger-es-rollover-image"))
+		spec.Image = viper.GetString("jaeger-es-rollover-image")
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
