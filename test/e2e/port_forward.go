@@ -31,6 +31,12 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 	if err != nil {
 		return nil, nil, err
 	}
+	wg.Add(1)
+	go func() {
+		if err := forwarder.ForwardPorts(); err != nil {
+			panic(err)
+		}
+	}()
 	go func() {
 		for range readyChan { // Kubernetes will close this channel when it has something to tell us.
 		}
@@ -39,11 +45,7 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 		} else if len(out.String()) != 0 {
 			fmt.Println(out.String())
 		}
-	}()
-	go func() {
-		if err := forwarder.ForwardPorts(); err != nil {
-			panic(err)
-		}
+		wg.Done()
 	}()
 	<- forwarder.Ready
 	return forwarder, stopChan, nil

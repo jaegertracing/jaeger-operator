@@ -75,7 +75,7 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 	if err != nil {
 		return err
 	}
-	//defer portForw.Close()
+	defer portForw.Close()
 	defer close(closeChan)
 	ports, err := portForw.GetPorts()
 	if err != nil {
