@@ -20,13 +20,16 @@ To install the operator, run:
 [source,bash]
 ----
 kubectl create namespace observability # <1>
-kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml # <2>
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
 ----
 <1> This creates the namespace used by default in the deployment files.
+<2> This installs the "Custom Resource Definition" for the `apiVersion: jaegertracing.io/v1`
+
+IMPORTANT: when using a Jaeger Operator up to v1.10.0, install the CRD file `io_v1alpha1_jaeger_crd.yaml` in addition to `jaegertracing_v1_jaeger_crd.yaml`. This is because up to that version, the `apiVersion` in use was `io.jaegertracing/v1alpha1`.
 
 If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
 files to change `observability` to the required value.
@@ -51,13 +54,14 @@ The instructions from the previous section also work on OpenShift. Make sure to 
 oc login -u system:admin
 
 oc new-project observability # <1>
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml # <2>
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
 oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
 ----
 <1> This creates the namespace used by default in the deployment files.
+<2> This installs the "Custom Resource Definition" for the `apiVersion: jaegertracing.io/v1`
 
 If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
 files to change `observability` to the required value.
