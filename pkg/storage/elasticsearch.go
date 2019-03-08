@@ -124,6 +124,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 			ManagementState:  esv1alpha1.ManagementStateManaged,
 			RedundancyPolicy: ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy,
 			Spec: esv1alpha1.ElasticsearchNodeSpec{
+				Image:     ed.Jaeger.Spec.Storage.Elasticsearch.Image,
 				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
 			},
 			Nodes: getNodes(ed.Jaeger.Spec.Storage.Elasticsearch),

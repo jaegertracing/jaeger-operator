@@ -191,6 +191,7 @@ type JaegerStorageSpec struct {
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
 // +k8s:openapi-gen=true
 type ElasticsearchSpec struct {
+	Image            string                            `json:"image"`
 	Resources        v1.ResourceRequirements           `json:"resources"`
 	NodeCount        int32                             `json:"nodeCount"`
 	NodeSelector     map[string]string                 `json:"nodeSelector,omitempty"`
