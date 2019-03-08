@@ -1,7 +1,7 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
-WATCH_NAMESPACE ?= default
+WATCH_NAMESPACE ?= ""
 BIN_DIR ?= "build/_output/bin"
 IMPORT_LOG=import.log
 FMT_LOG=fmt.log
