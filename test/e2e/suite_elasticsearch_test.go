@@ -21,6 +21,12 @@ func TestElasticsearch(t *testing.T) {
 		},
 	}))
 
+	// Don't start tests until elasticsearch is ready
+	err := WaitForStatefulset(t, framework.Global.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Run("elasticsearch", func(t *testing.T) {
 		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
 		t.Run("simple-prod", SimpleProd)

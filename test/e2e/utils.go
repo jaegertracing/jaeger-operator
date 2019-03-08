@@ -56,7 +56,7 @@ func prepare(t *testing.T) *framework.TestCtx {
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, 2 * timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
