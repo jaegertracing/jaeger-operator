@@ -71,11 +71,15 @@ func cassandraTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 	if err != nil {
 		return err
 	}
-	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, f.KubeConfig)
+	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"0:16686", "0:14268"}, f.KubeConfig)
 	if err != nil {
 		return err
 	}
-	defer portForw.Close()
+	//defer portForw.Close()
 	defer close(closeChan)
-	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
+	ports, err := portForw.GetPorts()
+	if err != nil {
+		return err
+	}
+	return SmokeTest(fmt.Sprintf("http://localhost:%d/api/traces", ports[0].Local), fmt.Sprintf("http://localhost:%d/api/traces", ports[1].Local), "foobar", retryInterval, timeout)
 }

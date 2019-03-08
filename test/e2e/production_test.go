@@ -74,17 +74,26 @@ func simpleProd(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) er
 	if err != nil {
 		return err
 	}
-	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"0:16686"}, f.KubeConfig)
 	if err != nil {
 		return err
 	}
 	defer portForw.Close()
 	defer close(closeChan)
-	portForwColl, closeChanColl, err := CreatePortForward(namespace, collectorPod.Name, []string{"14268"}, f.KubeConfig)
+
+	portForwColl, closeChanColl, err := CreatePortForward(namespace, collectorPod.Name, []string{"0:14268"}, f.KubeConfig)
 	if err != nil {
 		return err
 	}
 	defer portForwColl.Close()
 	defer close(closeChanColl)
-	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
+	portsQuery, err := portForw.GetPorts()
+	if err != nil {
+		return err
+	}
+	portsColl, err := portForwColl.GetPorts()
+	if err != nil {
+		return err
+	}
+	return SmokeTest(fmt.Sprintf("http://localhost:%d/api/traces", portsQuery[0].Local), fmt.Sprintf("http://localhost:%d/api/traces", portsColl[1]), "foobar", retryInterval, timeout)
 }
