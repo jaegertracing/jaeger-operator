@@ -11,6 +11,22 @@ IMPORTANT: The Jaeger Operator version is related to the version of the Jaeger c
 
 == Installing the operator
 
+NOTE: The following instructions will deploy a version of the operator that is using the latest `master` version. If
+you want to install a particular stable version of the operator, you will need to edit the `operator.yaml` and specify
+the version as the tag in the container image - and then use the relevant `apiVersion` for the Jaeger operator.
+
+|===
+|Up to version |apiVersion |CRD yaml
+
+|master
+|jaegertracing.io/v1
+|https://github.com/jaegertracing/jaeger-operator/blob/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml[jaegertracing_v1_jaeger_crd.yaml]
+
+|1.10.0
+|io.jaegertracing/v1alpha1
+|https://github.com/jaegertracing/jaeger-operator/blob/master/deploy/crds/io_v1alpha1_jaeger_crd.yaml[io_v1alpha1_jaeger_crd.yaml]
+|===
+
 === Kubernetes
 
 NOTE: Make sure your `kubectl` command is properly configured to talk to a valid Kubernetes cluster. If you don't have one yet, check link:https://kubernetes.io/docs/tasks/tools/install-minikube/[`minikube`] out.
