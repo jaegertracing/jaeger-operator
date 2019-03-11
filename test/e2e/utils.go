@@ -16,7 +16,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Minute * 1
+	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
@@ -56,7 +56,7 @@ func prepare(t *testing.T) *framework.TestCtx {
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, 2 * timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}

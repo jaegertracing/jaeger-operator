@@ -135,7 +135,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return err
 	}
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "vertx-create-span", 1, retryInterval, 2 * timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "vertx-create-span", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
