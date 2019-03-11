@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -107,16 +108,15 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 								Protocol:      corev1.ProtocolUDP,
 							},
 						},
-						// TODO(jpkroehling): enable it back once a version with jaegertracing/jaeger#1178 is released
-						// ReadinessProbe: &corev1.Probe{
-						// 	Handler: corev1.Handler{
-						// 		HTTPGet: &corev1.HTTPGetAction{
-						// 			Path: "/metrics",
-						// 			Port: intstr.FromInt(5778),
-						// 		},
-						// 	},
-						// 	InitialDelaySeconds: 1,
-						// },
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path: "/metrics",
+									Port: intstr.FromInt(5778),
+								},
+							},
+							InitialDelaySeconds: 1,
+						},
 						Resources: commonSpec.Resources,
 					}},
 				},
