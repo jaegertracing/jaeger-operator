@@ -100,8 +100,8 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "CASSANDRA_KEYSPACE", Value: keyspace},
 			{Name: "CASSANDRA_USERNAME", Value: sFlagsMap["cassandra.username"]},
 			{Name: "CASSANDRA_PASSWORD", Value: sFlagsMap["cassandra.password"]},
-			{Name: "CASSANDRA_USE_SSL", Value: strconv.FormatBool(s.SparkDependencies.CassandraUseSsl)},
-			{Name: "CASSANDRA_LOCAL_DC", Value: s.SparkDependencies.CassandraLocalDc},
+			{Name: "CASSANDRA_USE_SSL", Value: sFlagsMap["cassandra.tls"]},
+			{Name: "CASSANDRA_LOCAL_DC", Value: sFlagsMap["cassandra.local-dc"]},
 			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.SparkDependencies.CassandraClientAuthEnabled)},
 		}
 	case "elasticsearch":

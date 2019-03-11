@@ -216,8 +216,6 @@ type JaegerDependenciesSpec struct {
 	Schedule                    string `json:"schedule"`
 	Image                       string `json:"image"`
 	JavaOpts                    string `json:"javaOpts"`
-	CassandraUseSsl             bool   `json:"cassandraUseSsl"`
-	CassandraLocalDc            string `json:"cassandraLocalDc"`
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
