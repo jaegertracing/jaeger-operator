@@ -75,7 +75,7 @@ func Needed(Name string, Annotations map[string]string, Containers []v1.Containe
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(Annotations map[string]string, availableJaegerPods *v1alpha1.JaegerList) *v1alpha1.Jaeger {
+func Select(Annotations map[string]string, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
 	jaegerName := Annotations[Annotation]
 	if strings.EqualFold(jaegerName, "true") && len(availableJaegerPods.Items) == 1 {
 		// if there's only *one* jaeger within this namespace, then that's what

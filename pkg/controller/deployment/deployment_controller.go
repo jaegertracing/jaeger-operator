@@ -88,7 +88,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	if inject.Needed(instance.Name, instance.Annotations, instance.Spec.Template.Spec.Containers) {
-		pods := &v1alpha1.JaegerList{}
+		pods := &v1.JaegerList{}
 		opts := &client.ListOptions{Namespace: instance.Namespace}
 		err := r.client.List(context.Background(), opts, pods)
 		if err != nil {
