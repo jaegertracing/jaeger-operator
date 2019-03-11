@@ -29,7 +29,7 @@ func reset() {
 func TestInjectSidecar(t *testing.T) {
 	jaeger := v1.NewJaeger("TestInjectSidecar")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
@@ -38,16 +38,16 @@ func TestInjectSidecar(t *testing.T) {
 func TestInjectSidecarWithLegacyAnnotation(t *testing.T) {
 	jaeger := v1.NewJaeger("TestInjectSidecarWithLegacyAnnotation")
 	dep := dep(map[string]string{AnnotationLegacy: jaeger.Name}, map[string]string{})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
 }
 
 func TestInjectSidecarInStatefulSets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarInStatefulSets")
+	jaeger := v1.NewJaeger("TestInjectSidecarInStatefulSets")
 	sset := sset(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, sset.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, sset.Spec.Template.Spec.Containers[0].Env, 0)
@@ -56,7 +56,7 @@ func TestInjectSidecarInStatefulSets(t *testing.T) {
 func TestInjectSidecarWithEnvVars(t *testing.T) {
 	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVars")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
@@ -67,9 +67,9 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsInStatefulSets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsInStatefulSets")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsInStatefulSets")
 	sset := sset(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, sset.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, sset.Spec.Template.Spec.Containers[0].Env, 2)
@@ -83,7 +83,7 @@ func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespace")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Namespace = "mynamespace"
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
@@ -94,10 +94,10 @@ func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsWithNamespaceInStatefulSets(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespaceInStatefulSets")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespaceInStatefulSets")
 	sset := sset(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	sset.Namespace = "mynamespace"
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, sset.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, sset.Spec.Template.Spec.Containers[0].Env, 2)
@@ -114,7 +114,7 @@ func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 		Name:  envVarServiceName,
 		Value: "otherapp",
 	})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
@@ -126,13 +126,13 @@ func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverrideNameInStatefulSet(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideNameInStatefulSet")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideNameInStatefulSet")
 	sset := sset(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	sset.Spec.Template.Spec.Containers[0].Env = append(sset.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
 		Name:  envVarServiceName,
 		Value: "otherapp",
 	})
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, sset.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, sset.Spec.Template.Spec.Containers[0].Env, 2)
@@ -150,7 +150,7 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 		Name:  envVarPropagation,
 		Value: "tracecontext",
 	})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
@@ -162,13 +162,13 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverridePropagationInStatefulSet(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagationInStatefulSet")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagationInStatefulSet")
 	sset := sset(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	sset.Spec.Template.Spec.Containers[0].Env = append(sset.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
 		Name:  envVarPropagation,
 		Value: "tracecontext",
 	})
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, sset.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, sset.Spec.Template.Spec.Containers[0].Env, 2)
@@ -182,15 +182,15 @@ func TestInjectSidecarWithEnvVarsOverridePropagationInStatefulSet(t *testing.T) 
 func TestSkipInjectSidecar(t *testing.T) {
 	jaeger := v1.NewJaeger("TestSkipInjectSidecar")
 	dep := dep(map[string]string{Annotation: "non-existing-operator"}, map[string]string{})
-	dep = Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.NotContains(t, dep.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
 }
 
 func TestSkipInjectSidecarInStatefulSet(t *testing.T) {
-	jaeger := v1alpha1.NewJaeger("TestSkipInjectSidecarInStatefulSet")
+	jaeger := v1.NewJaeger("TestSkipInjectSidecarInStatefulSet")
 	sset := sset(map[string]string{Annotation: "non-existing-operator"}, map[string]string{})
-	Sidecar(sset, jaeger)
+	Sidecar(jaeger, sset)
 	assert.Len(t, sset.Spec.Template.Spec.Containers, 1)
 	assert.NotContains(t, sset.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
 }
@@ -240,7 +240,7 @@ func TestSidecarNeededInStatefulSet(t *testing.T) {
 func TestHasSidecarAlready(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
 	assert.True(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
-	jaeger := v1alpha1.NewJaeger("TestHasSidecarAlready")
+	jaeger := v1.NewJaeger("TestHasSidecarAlready")
 	Sidecar(dep, jaeger)
 	assert.False(t, Needed(dep.Name, dep.Annotations, dep.Spec.Template.Spec.Containers))
 }
@@ -248,8 +248,8 @@ func TestHasSidecarAlready(t *testing.T) {
 func TestStatefulSetHasSidecarAlready(t *testing.T) {
 	sset := sset(map[string]string{Annotation: "TestStatefulSetHasSidecarAlready"}, map[string]string{})
 	assert.True(t, Needed(sset.Name, sset.Annotations, sset.Spec.Template.Spec.Containers))
-	jaeger := v1alpha1.NewJaeger("TestStatefulSetHasSidecarAlready")
-	Sidecar(sset, jaeger)
+	jaeger := v1.NewJaeger("TestStatefulSetHasSidecarAlready")
+	Sidecar(jaeger, sset)
 	assert.False(t, Needed(sset.Name, sset.Annotations, sset.Spec.Template.Spec.Containers))
 }
 
@@ -272,9 +272,9 @@ func TestSelectSingleJaegerPod(t *testing.T) {
 
 func TestSelectSingleJaegerPodInStatefulSet(t *testing.T) {
 	sset := sset(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-only-jaeger-instance-available",
 				},
@@ -310,14 +310,14 @@ func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
 
 func TestCannotSelectFromMultipleJaegerPodsInStatefulSet(t *testing.T) {
 	sset := sset(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1alpha1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -331,13 +331,13 @@ func TestCannotSelectFromMultipleJaegerPodsInStatefulSet(t *testing.T) {
 
 func TestNoAvailableJaegerPods(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaeger := Select(dep.Annotations, &v1alpha1.JaegerList{})
+	jaeger := Select(dep.Annotations, &v1.JaegerList{})
 	assert.Nil(t, jaeger)
 }
 
 func TestNoAvailableJaegerPodsInStatefulSet(t *testing.T) {
 	sset := sset(map[string]string{Annotation: "true"}, map[string]string{})
-	jaeger := Select(sset.Annotations, &v1alpha1.JaegerList{})
+	jaeger := Select(sset.Annotations, &v1.JaegerList{})
 	assert.Nil(t, jaeger)
 }
 
@@ -367,14 +367,14 @@ func TestSelectBasedOnName(t *testing.T) {
 func TestSelectBasedOnNameInStatefulSet(t *testing.T) {
 	sset := sset(map[string]string{Annotation: "the-second-jaeger-instance-available"}, map[string]string{})
 
-	jaegerPods := &v1alpha1.JaegerList{
-		Items: []v1alpha1.Jaeger{
-			v1alpha1.Jaeger{
+	jaegerPods := &v1.JaegerList{
+		Items: []v1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1alpha1.Jaeger{
+			v1.Jaeger{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},

@@ -28,44 +28,31 @@ const (
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(obj runtime.Object, jaeger *v1.Jaeger) {
+func Sidecar(jaeger *v1.Jaeger, namespace string, annotations map[string]string, podSpecTemplate *corev1.PodTemplateSpec) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := jaeger.Logger().WithField("deployment", dep.Name)
+	// logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
-	switch o := obj.(type) {
-	case *appsv1.Deployment:
-		if jaeger == nil || o.Annotations[Annotation] != jaeger.Name {
-			logrus.Debugf("Skipping sidecar injection for instance %v", o.Name)
-		} else {
-			decorate(o)
-			logrus.Debugf("Injecting sidecar for pod %v", o.Name)
-			o.Spec.Template.Spec.Containers = append(o.Spec.Template.Spec.Containers, container(jaeger))
-		}
-	case *appsv1.StatefulSet:
-		if jaeger == nil || o.Annotations[Annotation] != jaeger.Name {
-			logrus.Debugf("Skipping sidecar injection for instance %v", o.Name)
-		} else {
-			decorate(o)
-			logrus.Debugf("Injecting sidecar for pod %v", o.Name)
-			o.Spec.Template.Spec.Containers = append(o.Spec.Template.Spec.Containers, container(jaeger))
-		}
+	if jaeger == nil || annotations[Annotation] != jaeger.Name {
+		jaeger.Logger().WithField("Skipping sidecar injection for instance %v", name)
+	} else {
+		decorate(podSpecTemplate, namespace)
+		jaeger.Logger().WithField("Injecting sidecar for pod %v", name)
+		podSpecTemplate.Spec.Containers = append(podSpecTemplate.Spec.Containers, container(jaeger))
 	}
-
-	return dep
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(Name string, Annotations map[string]string, Containers []v1.Container) bool {
-	if Annotations[Annotation] == "" {
+func Needed(namespace string, name string, annotations map[string]string, containers []corev1.Container) bool {
+	if annotations[Annotation] == "" {
 		log.WithFields(log.Fields{
-			"namespace":  dep.Namespace,
-			"deployment": dep.Name,
+			"namespace":  namespace,
+			"deployment": name,
 		}).Debug("annotation not present, not injecting")
 	}
 
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	for _, container := range Containers {
+	for _, container := range containers {
 		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
 			return false
 		}
@@ -123,54 +110,27 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 	}
 }
 
-func decorate(obj runtime.Object) {
-	switch o := obj.(type) {
-	case *appsv1.Deployment:
-		if app, found := o.Spec.Template.Labels["app"]; found {
-			// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
-			// which also matches with the style used in Istio.
-			if len(o.Namespace) > 0 {
-				app += "." + o.Namespace
-			} else {
-				app += ".default"
-			}
-			for i := 0; i < len(o.Spec.Template.Spec.Containers); i++ {
-				if !hasEnv(envVarServiceName, o.Spec.Template.Spec.Containers[i].Env) {
-					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
-						Name:  envVarServiceName,
-						Value: app,
-					})
-				}
-				if !hasEnv(envVarPropagation, o.Spec.Template.Spec.Containers[i].Env) {
-					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
-						Name:  envVarPropagation,
-						Value: "jaeger,b3",
-					})
-				}
-			}
+func decorate(podTemplateSpec *corev1.PodTemplateSpec, namespace string) {
+	if app, found := podTemplateSpec.Labels["app"]; found {
+		// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
+		// which also matches with the style used in Istio.
+		if len(namespace) > 0 {
+			app += "." + namespace
+		} else {
+			app += ".default"
 		}
-	case *appsv1.StatefulSet:
-		if app, found := o.Spec.Template.Labels["app"]; found {
-			// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
-			// which also matches with the style used in Istio.
-			if len(o.Namespace) > 0 {
-				app += "." + o.Namespace
-			} else {
-				app += ".default"
+		for i := 0; i < len(podTemplateSpec.Spec.Containers); i++ {
+			if !hasEnv(envVarServiceName, podTemplateSpec.Spec.Containers[i].Env) {
+				podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  envVarServiceName,
+					Value: app,
+				})
 			}
-			for i := 0; i < len(o.Spec.Template.Spec.Containers); i++ {
-				if !hasEnv(envVarServiceName, o.Spec.Template.Spec.Containers[i].Env) {
-					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
-						Name:  envVarServiceName,
-						Value: app,
-					})
-				}
-				if !hasEnv(envVarPropagation, o.Spec.Template.Spec.Containers[i].Env) {
-					o.Spec.Template.Spec.Containers[i].Env = append(o.Spec.Template.Spec.Containers[i].Env, v1.EnvVar{
-						Name:  envVarPropagation,
-						Value: "jaeger,b3",
-					})
-				}
+			if !hasEnv(envVarPropagation, podTemplateSpec.Spec.Containers[i].Env) {
+				podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  envVarPropagation,
+					Value: "jaeger,b3",
+				})
 			}
 		}
 	}
