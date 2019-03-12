@@ -2,3 +2,12 @@ apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
+spec:
+  ui:
+    options:
+      archiveEnabled: true
+      dependencies:
+        menuEnabled:
+          foo: true
+          aaa: "yes"
+
