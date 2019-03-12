@@ -133,13 +133,6 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	}
 }
 
-//func normalizeUI(spec *v1.JaegerSpec) {
-//	if strings.EqualFold(spec.Storage.Options.Map()["es-archive.enabled"], "true") ||
-//		strings.EqualFold(spec.Storage.Options.Map()["cassandra-archive.enabled"], "true") {
-//		spec.UI.Options
-//	}
-//}
-
 func unknownStorage(typ string) bool {
 	for _, k := range storage.ValidTypes() {
 		if strings.EqualFold(typ, k) {
