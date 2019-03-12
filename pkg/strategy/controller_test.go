@@ -122,14 +122,14 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 func TestSetSecurityToNoneByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestSetSecurityToNoneByDefault")
 	normalize(jaeger)
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
 	jaeger := v1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	normalize(jaeger)
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
@@ -148,7 +148,7 @@ func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
@@ -160,7 +160,7 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestNormalizeIndexCleaner(t *testing.T) {
