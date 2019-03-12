@@ -75,7 +75,7 @@ func normalize(jaeger *v1.Jaeger) {
 		// cases:
 		// - omitted on Kubernetes
 		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
+		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
@@ -132,6 +132,13 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 		spec.Schedule = "*/30 * * * *"
 	}
 }
+
+//func normalizeUI(spec *v1.JaegerSpec) {
+//	if strings.EqualFold(spec.Storage.Options.Map()["es-archive.enabled"], "true") ||
+//		strings.EqualFold(spec.Storage.Options.Map()["cassandra-archive.enabled"], "true") {
+//		spec.UI.Options
+//	}
+//}
 
 func unknownStorage(typ string) bool {
 	for _, k := range storage.ValidTypes() {
