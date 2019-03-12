@@ -75,7 +75,7 @@ func normalize(jaeger *v1.Jaeger) {
 		// cases:
 		// - omitted on Kubernetes
 		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
+		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
