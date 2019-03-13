@@ -48,6 +48,10 @@ func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.
 					Port: 9411,
 				},
 				{
+					Name: "grpc",
+					Port: 14250,
+				},
+				{
 					Name: "c-tchan-trft",
 					Port: 14267,
 				},

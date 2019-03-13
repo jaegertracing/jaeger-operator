@@ -19,6 +19,7 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 
 	ports := map[int32]bool{
 		9411:  false,
+		14250: false,
 		14267: false,
 		14268: false,
 	}
