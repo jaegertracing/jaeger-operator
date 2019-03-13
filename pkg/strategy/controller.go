@@ -135,21 +135,25 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 }
 
 func normalizeUI(spec *v1.JaegerSpec) {
-	sOpts := spec.Storage.Options.Map()
 	uiOpts := map[string]interface{}{}
 	if !spec.UI.Options.IsEmpty() {
 		if m, err := spec.UI.Options.GetMap(); err == nil {
 			uiOpts = m
 		}
 	}
+	sOpts := spec.Storage.Options.Map()
 	// we respect explicit UI config
-	if _, ok := uiOpts["archiveEnabled"]; ok {
-		return
+	if _, ok := uiOpts["archiveEnabled"]; !ok {
+		if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
+			strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
+			uiOpts["archiveEnabled"] = true
+		}
 	}
-	if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
-		strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
-		uiOpts["archiveEnabled"] = true
+
+	if _, ok := uiOpts["dependencies"]; !ok {
+		
 	}
+
 	if len(uiOpts) > 0 {
 		spec.UI.Options = v1.NewFreeForm(uiOpts)
 	}
