@@ -64,6 +64,34 @@ func TestMultipleSubValues(t *testing.T) {
 	assert.Len(t, args, 3)
 }
 
+func TestUnmarshalToArgs(t *testing.T) {
+	tests := []struct {
+		in   string
+		args []string
+		err  string
+	}{
+		{in: `^`, err: "invalid character '^' looking for beginning of value"},
+		{
+			in:   `{"a": 5000000000, "b": 15.222, "c":true, "d": "foo"}`,
+			args: []string{"--a=5000000000", "--b=15.222", "--c=true", "--d=foo"},
+		},
+	}
+	for _, test := range tests {
+		opts := Options{}
+		err := opts.UnmarshalJSON([]byte(test.in))
+		if test.err != "" {
+			assert.EqualError(t, err, test.err)
+		} else {
+			assert.NoError(t, err)
+			args := opts.ToArgs()
+			sort.SliceStable(args, func(i, j int) bool {
+				return args[i] < args[j]
+			})
+			assert.Equal(t, test.args, args)
+		}
+	}
+}
+
 func TestMultipleSubValuesWithFilter(t *testing.T) {
 	o := NewOptions(nil)
 	o.UnmarshalJSON([]byte(`{"memory": {"max-traces": "50000"}, "es": {"server-urls": "http://elasticsearch:9200", "username": "elastic", "password": "changeme"}}`))
