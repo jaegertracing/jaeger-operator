@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -42,11 +41,6 @@ func normalize(jaeger *v1.Jaeger) {
 		jaeger.Logger().Info("This Jaeger instance was created without a name. Applying a default name.")
 		jaeger.Name = "my-jaeger"
 	}
-
-	m, err := jaeger.Spec.UI.Options.GetMap()
-	fmt.Println(err)
-	fmt.Println(m)
-	fmt.Println(jaeger.Spec.UI.Options)
 
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
@@ -88,6 +82,7 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.Rollover)
+	normalizeUI(&jaeger.Spec)
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string) {
@@ -136,6 +131,27 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
+	}
+}
+
+func normalizeUI(spec *v1.JaegerSpec) {
+	sOpts := spec.Storage.Options.Map()
+	uiOpts := map[string]interface{}{}
+	if !spec.UI.Options.IsEmpty() {
+		if m, err := spec.UI.Options.GetMap(); err == nil {
+			uiOpts = m
+		}
+	}
+	// we respect explicit UI config
+	if _, ok := uiOpts["archiveEnabled"]; ok {
+		return
+	}
+	if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
+		strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
+		uiOpts["archiveEnabled"] = true
+	}
+	if len(uiOpts) > 0 {
+		spec.UI.Options = v1.NewFreeForm(uiOpts)
 	}
 }
 

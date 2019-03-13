@@ -239,6 +239,48 @@ func TestNormalizeElasticsearch(t *testing.T) {
 	}
 }
 
+func TestNormalizeUI(t *testing.T) {
+	tests := []struct {
+		j        *v1.JaegerSpec
+		expected *v1.JaegerSpec
+	}{
+		{
+			j:        &v1.JaegerSpec{},
+			expected: &v1.JaegerSpec{},
+		},
+		{
+			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es.archive.enabled": "false"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es.archive.enabled": "false"})}},
+		},
+		{
+			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true})}},
+		},
+		{
+			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"cassandra-archive.enabled": "true"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"cassandra-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true})}},
+		},
+		{
+			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"other": "foo"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"other": "foo", "archiveEnabled": true})}},
+		},
+		{
+			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": "respectThis"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": "respectThis"})}},
+		},
+	}
+	for _, test := range tests {
+		normalizeUI(test.j)
+		assert.Equal(t, test.expected, test.j)
+	}
+}
+
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true

@@ -40,7 +40,7 @@ func (o FreeForm) IsEmpty() bool {
 	return len(o.json) == 0 || string(o.json) == "{}"
 }
 
-// GetMap return
+// GetMap returns a map created from json
 func (o FreeForm) GetMap() (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	if err := json.Unmarshal(o.json, &m); err != nil {
