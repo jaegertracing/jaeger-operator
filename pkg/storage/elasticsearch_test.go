@@ -169,6 +169,33 @@ func TestInject(t *testing.T) {
 						SecretName: "hoo-jaeger-elasticsearch"}}},
 				}},
 		},
+		{
+			pod: &corev1.PodSpec{Containers: []corev1.Container{{Args: []string{"--es-archive.enabled=true"}}}},
+			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			expected: &corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Args: []string{
+						"--es-archive.enabled=true",
+						"--es.server-urls=" + elasticsearchURL,
+						"--es.token-file=" + k8sTokenFile,
+						"--es.tls.ca=" + caPath,
+						"--es.num-shards=12",
+						"--es.num-replicas=11",
+						"--es-archive.server-urls=" + elasticsearchURL,
+						"--es-archive.token-file=" + k8sTokenFile,
+						"--es-archive.tls.ca=" + caPath,
+						"--es-archive.num-shards=12",
+						"--es-archive.num-replicas=11",
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
+					},
+				}},
+				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: "hoo-jaeger-elasticsearch"}}},
+				}},
+		},
 	}
 
 	for _, test := range tests {
