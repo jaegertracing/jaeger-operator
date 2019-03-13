@@ -141,21 +141,42 @@ func normalizeUI(spec *v1.JaegerSpec) {
 			uiOpts = m
 		}
 	}
-	sOpts := spec.Storage.Options.Map()
-	// we respect explicit UI config
+	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.SparkDependencies.Enabled)
+	if len(uiOpts) > 0 {
+		spec.UI.Options = v1.NewFreeForm(uiOpts)
+	}
+}
+
+func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string) {
+	// respect explicit settings
 	if _, ok := uiOpts["archiveEnabled"]; !ok {
+		// archive tab is by default disabled
 		if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
 			strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
 			uiOpts["archiveEnabled"] = true
 		}
 	}
+}
 
-	if _, ok := uiOpts["dependencies"]; !ok {
-		
+func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
+	// dependency tab is by default enabled and memory storage support it
+	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == false) {
+		return
 	}
-
-	if len(uiOpts) > 0 {
-		spec.UI.Options = v1.NewFreeForm(uiOpts)
+	deps := map[string]interface{}{}
+	if val, ok := uiOpts["dependencies"]; ok {
+		if val, ok := val.(map[string]interface{}); ok {
+			deps = val
+		} else {
+			// we return as the type does not match
+			return
+		}
+	}
+	// respect explicit settings
+	if _, ok := deps["menuEnabled"]; !ok {
+		deps["menuEnabled"] = false
+		uiOpts["dependencies"] = deps
 	}
 }
 
