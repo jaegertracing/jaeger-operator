@@ -50,19 +50,33 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
-		// TODO add to archive storage if it is enabled?
 		p.Containers[0].Args = append(p.Containers[0].Args,
 			"--es.server-urls="+elasticsearchURL,
 			"--es.token-file="+k8sTokenFile,
 			"--es.tls.ca="+caPath)
-		if !containsPrefix("--es.num-shards", p.Containers[0].Args) {
+		if findItem("--es.num-shards", p.Containers[0].Args) == "" {
 			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 			// every ES node is a data node
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
 		}
-		if !containsPrefix("--es.num-replicas", p.Containers[0].Args) {
+		if findItem("--es.num-replicas", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
 				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
+		}
+		if strings.EqualFold(findItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
+			p.Containers[0].Args = append(p.Containers[0].Args,
+				"--es-archive.server-urls="+elasticsearchURL,
+				"--es-archive.token-file="+k8sTokenFile,
+				"--es-archive.tls.ca="+caPath)
+			if findItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
+				// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
+				// every ES node is a data node
+				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
+			}
+			if findItem("--es-archive.num-replicas", p.Containers[0].Args) == "" {
+				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-replicas=%d",
+					calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
+			}
 		}
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
@@ -182,11 +196,11 @@ func calculateReplicaShards(policyType esv1alpha1.RedundancyPolicyType, dataNode
 	}
 }
 
-func containsPrefix(prefix string, arr []string) bool {
+func findItem(prefix string, arr []string) string {
 	for _, a := range arr {
 		if strings.HasPrefix(a, prefix) {
-			return true
+			return a
 		}
 	}
-	return false
+	return ""
 }
