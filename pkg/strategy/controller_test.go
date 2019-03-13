@@ -319,7 +319,7 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 		{
 			uiOpts:   map[string]interface{}{},
 			storage:  "whateverStorage",
-			enabled: &falseVar,
+			enabled:  &falseVar,
 			expected: map[string]interface{}{},
 		},
 		{
