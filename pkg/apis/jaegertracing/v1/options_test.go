@@ -78,7 +78,7 @@ func TestUnmarshalToArgs(t *testing.T) {
 	}
 	for _, test := range tests {
 		opts := Options{}
-		err := json.Unmarshal([]byte(test.in), &opts)
+		err := opts.UnmarshalJSON([]byte(test.in))
 		if test.err != "" {
 			assert.EqualError(t, err, test.err)
 		} else {
