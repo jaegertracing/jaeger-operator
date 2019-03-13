@@ -299,6 +299,7 @@ func TestNormalizeUIArchiveButton(t *testing.T) {
 }
 
 func TestNormalizeUIDependenciesTab(t *testing.T) {
+	falseVar := false
 	tests := []struct {
 		uiOpts   map[string]interface{}
 		storage  string
@@ -314,6 +315,12 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 			uiOpts:   map[string]interface{}{},
 			storage:  "whateverStorage",
 			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "whateverStorage",
+			enabled: &falseVar,
+			expected: map[string]interface{}{},
 		},
 		{
 			uiOpts:   map[string]interface{}{"dependencies": "respectThis"},
