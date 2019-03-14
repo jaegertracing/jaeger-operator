@@ -45,7 +45,8 @@ func (o *Options) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	return o.parse(entries)
+	o.parse(entries)
+	return nil
 }
 
 // MarshalJSON specifies how to convert this object into JSON
@@ -54,14 +55,11 @@ func (o Options) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (o *Options) parse(entries map[string]interface{}) error {
+func (o *Options) parse(entries map[string]interface{}) {
 	o.opts = make(map[string]string)
-
 	for k, v := range entries {
 		o.opts = entry(o.opts, k, v)
 	}
-
-	return nil
 }
 
 func entry(entries map[string]string, key string, value interface{}) map[string]string {
