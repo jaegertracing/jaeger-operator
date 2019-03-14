@@ -112,6 +112,7 @@ func TestInject(t *testing.T) {
 						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
+						"--es.timeout=15s",
 						"--es.num-shards=0",
 						"--es.num-replicas=1",
 					},
@@ -127,17 +128,18 @@ func TestInject(t *testing.T) {
 		},
 		{pod: &corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Args: []string{"--es.num-shards=15"},
+				Args: []string{"--es.num-shards=15", "--es.num-replicas=55", "--es.timeout=99s"},
 			}},
 		},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
+						"--es.num-replicas=55",
+						"--es.timeout=99s",
 						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
-						"--es.num-replicas=1",
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
@@ -157,6 +159,7 @@ func TestInject(t *testing.T) {
 						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
+						"--es.timeout=15s",
 						"--es.num-shards=12",
 						"--es.num-replicas=11",
 					},
@@ -179,11 +182,13 @@ func TestInject(t *testing.T) {
 						"--es.server-urls=" + elasticsearchURL,
 						"--es.token-file=" + k8sTokenFile,
 						"--es.tls.ca=" + caPath,
+						"--es.timeout=15s",
 						"--es.num-shards=12",
 						"--es.num-replicas=11",
 						"--es-archive.server-urls=" + elasticsearchURL,
 						"--es-archive.token-file=" + k8sTokenFile,
 						"--es-archive.tls.ca=" + caPath,
+						"--es-archive.timeout=15s",
 						"--es-archive.num-shards=12",
 						"--es-archive.num-replicas=11",
 					},
