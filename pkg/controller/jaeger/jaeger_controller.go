@@ -20,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/controller/jaeger/status"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -112,18 +111,21 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	withStatus := status.Scrape(r.client, *instance)
-
-	if !reflect.DeepEqual(originalInstance, withStatus) {
+	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
-		if err := r.client.Update(context.Background(), &withStatus); err != nil {
+		if err := r.client.Update(context.Background(), instance); err != nil {
 			logFields.WithError(err).Error("failed to store back the current CustomResource")
 			return reconcile.Result{}, err
 		}
 	}
 
-	// reconcile in a few seconds, to get the status object updated
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	log.WithFields(log.Fields{
+		"namespace": request.Namespace,
+		"instance":  request.Name,
+		"execution": execution,
+	}).Debug("Reconciling Jaeger completed - reschedule in 5 seconds")
+
+	return reconcile.Result{}, nil
 }
 
 // validate validates CR before processing it
