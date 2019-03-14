@@ -111,8 +111,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 
 		} else {
 			// Including parameters for ES only
-			// including UI config
-			assert.Len(t, args, 4)
+			assert.Len(t, args, 3)
 			assert.Equal(t, 3, escount)
 		}
 	}

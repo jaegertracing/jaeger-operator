@@ -92,8 +92,7 @@ func TestOptionsArePassed(t *testing.T) {
 			// Including parameter for sampling config
 			assert.Len(t, args, 4)
 		} else {
-			// including UI config
-			assert.Len(t, args, 4)
+			assert.Len(t, args, 3)
 		}
 		var escount int
 		for _, arg := range args {
