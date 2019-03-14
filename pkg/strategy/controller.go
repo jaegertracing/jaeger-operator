@@ -161,7 +161,7 @@ func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string)
 
 func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
 	// dependency tab is by default enabled and memory storage support it
-	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == false) {
+	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == true) {
 		return
 	}
 	deps := map[string]interface{}{}
