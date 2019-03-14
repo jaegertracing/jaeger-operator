@@ -246,38 +246,107 @@ func TestNormalizeUI(t *testing.T) {
 	}{
 		{
 			j:        &v1.JaegerSpec{},
-			expected: &v1.JaegerSpec{},
+			expected: &v1.JaegerSpec{UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}})}},
 		},
 		{
-			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es.archive.enabled": "false"})}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es.archive.enabled": "false"})}},
+			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
 		},
 		{
 			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})}},
 			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true})}},
-		},
-		{
-			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"cassandra-archive.enabled": "true"})}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"cassandra-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true})}},
-		},
-		{
-			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"other": "foo"})}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"other": "foo", "archiveEnabled": true})}},
-		},
-		{
-			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": "respectThis"})}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": "respectThis"})}},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true, "dependencies": map[string]interface{}{"menuEnabled": false}})}},
 		},
 	}
 	for _, test := range tests {
 		normalizeUI(test.j)
 		assert.Equal(t, test.expected, test.j)
+	}
+}
+
+func TestNormalizeUIArchiveButton(t *testing.T) {
+	tests := []struct {
+		uiOpts   map[string]interface{}
+		sOpts    map[string]string
+		expected map[string]interface{}
+	}{
+		{},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"es-archive.enabled": "false"},
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"es-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": true},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"cassandra-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": true},
+		},
+		{
+			uiOpts:   map[string]interface{}{"archiveEnabled": "respectThis"},
+			sOpts:    map[string]string{"es-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": "respectThis"},
+		},
+	}
+	for _, test := range tests {
+		enableArchiveButton(test.uiOpts, test.sOpts)
+		assert.Equal(t, test.expected, test.uiOpts)
+	}
+}
+
+func TestNormalizeUIDependenciesTab(t *testing.T) {
+	falseVar := false
+	tests := []struct {
+		uiOpts   map[string]interface{}
+		storage  string
+		enabled  *bool
+		expected map[string]interface{}
+	}{
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "memory",
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "memory",
+			enabled:  &falseVar,
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "whateverStorage",
+			enabled:  &falseVar,
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": "respectThis"},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": "respectThis"},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": "respectThis"}},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": "respectThis"}},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": map[string]interface{}{"foo": "bar"}},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"foo": "bar", "menuEnabled": false}},
+		},
+	}
+	for _, test := range tests {
+		disableDependenciesTab(test.uiOpts, test.storage, test.enabled)
+		assert.Equal(t, test.expected, test.uiOpts)
 	}
 }
 

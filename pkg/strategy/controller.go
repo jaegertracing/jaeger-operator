@@ -78,6 +78,7 @@ func normalize(jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
+	// note that the order normalization matters - UI norm expects all normalized properties
 	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
@@ -135,23 +136,48 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 }
 
 func normalizeUI(spec *v1.JaegerSpec) {
-	sOpts := spec.Storage.Options.Map()
 	uiOpts := map[string]interface{}{}
 	if !spec.UI.Options.IsEmpty() {
 		if m, err := spec.UI.Options.GetMap(); err == nil {
 			uiOpts = m
 		}
 	}
-	// we respect explicit UI config
-	if _, ok := uiOpts["archiveEnabled"]; ok {
-		return
-	}
-	if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
-		strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
-		uiOpts["archiveEnabled"] = true
-	}
+	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.SparkDependencies.Enabled)
 	if len(uiOpts) > 0 {
 		spec.UI.Options = v1.NewFreeForm(uiOpts)
+	}
+}
+
+func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string) {
+	// respect explicit settings
+	if _, ok := uiOpts["archiveEnabled"]; !ok {
+		// archive tab is by default disabled
+		if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
+			strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
+			uiOpts["archiveEnabled"] = true
+		}
+	}
+}
+
+func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
+	// dependency tab is by default enabled and memory storage support it
+	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == true) {
+		return
+	}
+	deps := map[string]interface{}{}
+	if val, ok := uiOpts["dependencies"]; ok {
+		if val, ok := val.(map[string]interface{}); ok {
+			deps = val
+		} else {
+			// we return as the type does not match
+			return
+		}
+	}
+	// respect explicit settings
+	if _, ok := deps["menuEnabled"]; !ok {
+		deps["menuEnabled"] = false
+		uiOpts["dependencies"] = deps
 	}
 }
 
