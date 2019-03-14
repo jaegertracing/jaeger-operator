@@ -90,10 +90,16 @@ func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 				"name":      dep.Name,
 				"ready":     d.Status.ReadyReplicas,
 				"desired":   d.Status.Replicas,
-			}).Debug("Waiting for deployment to estabilize")
+			}).Debug("Waiting for deployment to stabilize")
 			return false, nil
 		}
 
+		log.WithFields(log.Fields{
+			"namespace": dep.Namespace,
+			"name":      dep.Name,
+			"ready":     d.Status.ReadyReplicas,
+			"desired":   d.Status.Replicas,
+		}).Debug("Deployment has stabilized")
 		return true, nil
 	})
 }
