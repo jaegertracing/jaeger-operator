@@ -207,16 +207,25 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	trueVar := true
 	falseVar := false
 	tests := []struct {
-		underTest v1.JaegerDependenciesSpec
-		expected  v1.JaegerDependenciesSpec
+		underTest v1.JaegerStorageSpec
+		expected  v1.JaegerStorageSpec
 	}{
-		{underTest: v1.JaegerDependenciesSpec{},
-			expected: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
-		{underTest: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar},
-			expected: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
+			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
+				SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch"},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo"}},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+		},
 	}
 	for _, test := range tests {
-		normalizeSparkDependencies(&test.underTest, "elasticsearch")
+		normalizeSparkDependencies(&test.underTest)
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }
