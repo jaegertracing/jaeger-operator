@@ -54,6 +54,9 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 			"--es.server-urls="+elasticsearchURL,
 			"--es.token-file="+k8sTokenFile,
 			"--es.tls.ca="+caPath)
+		if findItem("--es.timeout", p.Containers[0].Args) == "" {
+			p.Containers[0].Args = append(p.Containers[0].Args, "--es.timeout=15s")
+		}
 		if findItem("--es.num-shards", p.Containers[0].Args) == "" {
 			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 			// every ES node is a data node
@@ -68,6 +71,9 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 				"--es-archive.server-urls="+elasticsearchURL,
 				"--es-archive.token-file="+k8sTokenFile,
 				"--es-archive.tls.ca="+caPath)
+			if findItem("--es-archive.timeout", p.Containers[0].Args) == "" {
+				p.Containers[0].Args = append(p.Containers[0].Args, "--es-archive.timeout=15s")
+			}
 			if findItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
 				// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 				// every ES node is a data node
