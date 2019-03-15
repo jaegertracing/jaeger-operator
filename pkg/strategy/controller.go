@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
@@ -13,7 +14,7 @@ import (
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
-func For(ctx context.Context, jaeger *v1.Jaeger) S {
+func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
 		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
@@ -30,7 +31,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 		return newStreamingStrategy(jaeger)
 	}
 
-	return newProductionStrategy(jaeger)
+	return newProductionStrategy(jaeger, secrets)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when

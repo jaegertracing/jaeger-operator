@@ -1,47 +1,37 @@
 package storage
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestCreateCerts_ErrNoNamespace(t *testing.T) {
-	err := CreateESCerts()
-	assert.EqualError(t, err, "failed to get watch namespace: WATCH_NAMESPACE must be set")
-}
-
 func TestCreateCerts_ErrNoScript(t *testing.T) {
-	os.Setenv("WATCH_NAMESPACE", "invalid.&*)(")
-	defer os.Unsetenv("WATCH_NAMESPACE")
-	err := createESCerts("invalid")
+	err := createESCerts("invalid", "", "")
 	assert.EqualError(t, err, "error running script invalid: exit status 127")
 }
 
 func TestCreateESSecrets(t *testing.T) {
-	defer os.RemoveAll(workingDir)
+	defer os.RemoveAll(tmpWorkingDir + "/foo")
 	j := v1.NewJaeger("foo")
-	os.Setenv("WATCH_NAMESPACE", "invalid.&*)(")
-	defer os.Unsetenv("WATCH_NAMESPACE")
-	fmt.Println(os.Getwd())
-	err := createESCerts("../../scripts/cert_generation.sh")
+	err := createESCerts("../../scripts/cert_generation.sh", tmpWorkingDir+"/foo", "")
 	assert.NoError(t, err)
 	sec := ESSecrets(j)
-	assert.Equal(t, 3, len(sec))
 	assert.Equal(t, []string{
+		masterSecret.instanceName(j),
 		"elasticsearch",
-		fmt.Sprintf("%s-%s", j.Name, jaegerSecret.name),
-		fmt.Sprintf("%s-%s", j.Name, curatorSecret.name)},
-		[]string{sec[0].Name, sec[1].Name, sec[2].Name})
+		jaegerSecret.instanceName(j),
+		curatorSecret.instanceName(j)},
+		[]string{sec[0].Name, sec[1].Name, sec[2].Name, sec[3].Name})
 	for _, s := range sec {
-		if s.Name == fmt.Sprintf("%s-%s", j.Name, jaegerSecret.name) {
-			ca, err := ioutil.ReadFile(workingDir + "/ca.crt")
+		if s.Name == jaegerSecret.instanceName(j) {
+			ca, err := ioutil.ReadFile(tmpWorkingDir + "/foo/ca.crt")
 			assert.NoError(t, err)
 			assert.Equal(t, map[string][]byte{"ca": ca}, s.Data)
 		}
@@ -49,7 +39,6 @@ func TestCreateESSecrets(t *testing.T) {
 }
 
 func TestCreteSecret(t *testing.T) {
-	defer os.RemoveAll(workingDir)
 	j := v1.NewJaeger("foo")
 	j.Namespace = "myproject"
 	s := createSecret(j, "bar", map[string][]byte{"foo": {}})
@@ -62,26 +51,63 @@ func TestCreteSecret(t *testing.T) {
 }
 
 func TestGetWorkingFileDirContent(t *testing.T) {
-	defer os.RemoveAll(workingDir)
-	err := os.MkdirAll(workingDir, os.ModePerm)
+	defer os.RemoveAll(tmpWorkingDir)
+	err := os.MkdirAll(tmpWorkingDir, os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(workingDir+"/foobar", []byte("foo"), 0644)
+	err = ioutil.WriteFile(tmpWorkingDir+"/foobar", []byte("foo"), 0644)
 	assert.NoError(t, err)
-	b := getWorkingDirFileContents("foobar")
+	b := getDirFileContents(tmpWorkingDir, "foobar")
 	assert.Equal(t, "foo", string(b))
 }
 
 func TestGetWorkingFileDirContent_EmptyPath(t *testing.T) {
-	b := getWorkingDirFileContents("")
+	b := getDirFileContents("", "")
 	assert.Nil(t, b)
 }
 
 func TestGetWorkingFileDirContent_FileDoesNotExists(t *testing.T) {
-	b := getWorkingDirFileContents("jungle")
+	b := getDirFileContents("", "jungle")
 	assert.Nil(t, b)
 }
 
 func TestGetFileContet_EmptyPath(t *testing.T) {
 	b := getFileContents("")
 	assert.Nil(t, b)
+}
+
+func TestExtractSecretsToFile(t *testing.T) {
+	defer os.RemoveAll(tmpWorkingDir)
+	j := v1.NewJaeger("houdy")
+	j.Namespace = "bar"
+	content := "115dasrez"
+	err := extractSecretsToFile(
+		j,
+		[]corev1.Secret{{ObjectMeta: metav1.ObjectMeta{Name: "houdy-sec"}, Data: map[string][]byte{"ca": []byte(content)}}},
+		secret{name: "sec", keyFileNameMap: map[string]string{"ca": "ca.crt"}},
+	)
+	assert.NoError(t, err)
+	ca, err := ioutil.ReadFile(tmpWorkingDir + "/bar/houdy/ca.crt")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte(content), ca)
+}
+
+func TestExtractSecretsToFile_FileExists(t *testing.T) {
+	defer os.RemoveAll(tmpWorkingDir)
+	content := "115dasrez"
+	err := os.MkdirAll(tmpWorkingDir+"/bar/houdy", os.ModePerm)
+	assert.NoError(t, err)
+	err = ioutil.WriteFile(tmpWorkingDir+"/bar/houdy/ca.crt", []byte(content), os.ModePerm)
+	assert.NoError(t, err)
+
+	j := v1.NewJaeger("houdy")
+	j.Namespace = "bar"
+	err = extractSecretsToFile(
+		j,
+		[]corev1.Secret{{ObjectMeta: metav1.ObjectMeta{Name: "houdy-sec"}, Data: map[string][]byte{"ca": []byte("should not be there")}}},
+		secret{name: "sec", keyFileNameMap: map[string]string{"ca": "ca.crt"}},
+	)
+	assert.NoError(t, err)
+	ca, err := ioutil.ReadFile(tmpWorkingDir + "/bar/houdy/ca.crt")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte(content), ca)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -13,7 +14,7 @@ import (
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsDefault")
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
@@ -21,7 +22,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
@@ -30,7 +31,7 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), Production)
 }
 
@@ -49,7 +50,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	deps := ctrl.Deployments()
 	assert.Len(t, deps, 2) // query and collector, for a production setup
 	counter := 0
@@ -102,7 +103,7 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 			Strategy: "all-in-one",
 		},
 	}
-	For(context.TODO(), jaeger)
+	For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
@@ -115,7 +116,7 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 			},
 		},
 	}
-	For(context.TODO(), jaeger)
+	For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 

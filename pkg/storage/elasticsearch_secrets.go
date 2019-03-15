@@ -8,7 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,18 +18,36 @@ import (
 )
 
 const (
-	workingDir = "/tmp/_working_dir"
-	certScript = "./scripts/cert_generation.sh"
+	tmpWorkingDir = "/tmp/_certs"
+	certScript    = "./scripts/cert_generation.sh"
 )
 
 type secret struct {
-	name    string
-	content map[string]string
+	name           string
+	keyFileNameMap map[string]string
 }
 
+func (s secret) instanceName(jaeger *v1.Jaeger) string {
+	// elasticsearch secret is hardcoded in es-operator https://jira.coreos.com/browse/LOG-326
+	if s.name == esSecret.name {
+		return esSecret.name
+	}
+	return fmt.Sprintf("%s-%s", jaeger.Name, s.name)
+}
+
+// master secret is used to generate other certs
+var masterSecret = secret{
+	name: "master-certs",
+	keyFileNameMap: map[string]string{
+		"ca":     "ca.crt",
+		"ca-key": "ca.key",
+	},
+}
+
+// es secret is used by Elasticsearch nodes
 var esSecret = secret{
 	name: "elasticsearch",
-	content: map[string]string{
+	keyFileNameMap: map[string]string{
 		"elasticsearch.key": "elasticsearch.key",
 		"elasticsearch.crt": "elasticsearch.crt",
 		"logging-es.key":    "logging-es.key",
@@ -40,54 +58,81 @@ var esSecret = secret{
 	},
 }
 
+// jaeger secret is used by jaeger components to talk to Elasticsearch
 var jaegerSecret = secret{
 	name: "jaeger-elasticsearch",
-	content: map[string]string{
+	keyFileNameMap: map[string]string{
 		"ca": "ca.crt",
 	},
 }
 
+// curator secret is used for index cleaner and rollover
 var curatorSecret = secret{
 	name: "curator",
-	content: map[string]string{
+	keyFileNameMap: map[string]string{
 		"ca":   "ca.crt",
 		"key":  "system.logging.curator.key",
 		"cert": "system.logging.curator.crt",
 	},
 }
 
-func secretName(jaeger, secret string) string {
-	return fmt.Sprintf("%s-%s", jaeger, secret)
-}
-
 // ESSecrets assembles a set of secrets related to Elasticsearch
 func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
 	return []corev1.Secret{
-		// master and ES secrets use hardcoded name - e.g. do not use instance name in it
-		// the other problem for us is that sg_config.yml defines a role which depends on namespace
-		// we could make the "resource" configurable once ES image and es-operator-are refactored
-		// https://jira.coreos.com/browse/LOG-326
-		createSecret(jaeger, esSecret.name, getWorkingDirContents(esSecret.content)),
-		createSecret(jaeger, secretName(jaeger.Name, jaegerSecret.name), getWorkingDirContents(jaegerSecret.content)),
-		createSecret(jaeger, secretName(jaeger.Name, curatorSecret.name), getWorkingDirContents(curatorSecret.content)),
+		createSecret(jaeger, masterSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), masterSecret.keyFileNameMap)),
+		createSecret(jaeger, esSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), esSecret.keyFileNameMap)),
+		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecret.keyFileNameMap)),
+		createSecret(jaeger, curatorSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), curatorSecret.keyFileNameMap)),
 	}
 }
 
 // CreateESCerts runs bash scripts which generates certificates
-func CreateESCerts() error {
-	return createESCerts(certScript)
+// The secrets are pulled back to FS in case of operator restart
+// The scrip checks if secrets are expired or need to be regenerated
+func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {
+	err := extractSecretsToFile(jaeger, existingSecrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
+	if err != nil {
+		return errors.Wrap(err, "failed to extract certificates from secrets to file")
+	}
+	return createESCerts(certScript, getWorkingDir(jaeger), jaeger.Namespace)
+}
+
+func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secret) error {
+	secretMap := map[string]corev1.Secret{}
+	for _, sec := range secrets {
+		secretMap[sec.Name] = sec
+	}
+	for _, sec := range s {
+		if secret, ok := secretMap[sec.instanceName(jaeger)]; ok {
+			if err := extractSecretToFile(jaeger, secret.Data, sec); err != nil {
+				return errors.Wrap(err, fmt.Sprintf("failed to extract secret %s", secret.Name))
+			}
+		}
+	}
+	return nil
+}
+
+func extractSecretToFile(jaeger *v1.Jaeger, data map[string][]byte, secret secret) error {
+	for k, v := range secret.keyFileNameMap {
+		if err := writeToWorkingDirFile(getWorkingDir(jaeger), v, data[k]); err != nil {
+			return err
+
+		}
+	}
+	return nil
+}
+
+func getWorkingDir(jaeger *v1.Jaeger) string {
+	return filepath.Clean(fmt.Sprintf("%s/%s/%s/%s", tmpWorkingDir, jaeger.Namespace, jaeger.Name, jaeger.UID))
 }
 
 // createESCerts runs bash scripts which generates certificates
-func createESCerts(script string) error {
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		return fmt.Errorf("failed to get watch namespace: %v", err)
-	}
+func createESCerts(script, workDir, namespace string) error {
 	// #nosec   G204: Subprocess launching should be audited
 	cmd := exec.Command("bash", script)
 	cmd.Env = append(os.Environ(),
 		"NAMESPACE="+namespace,
+		"WORKING_DIR="+workDir,
 	)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.WithFields(log.Fields{
@@ -119,20 +164,20 @@ func createSecret(jaeger *v1.Jaeger, secretName string, data map[string][]byte) 
 	}
 }
 
-func getWorkingDirContents(content map[string]string) map[string][]byte {
+func getWorkingDirContents(dir string, content map[string]string) map[string][]byte {
 	c := map[string][]byte{}
 	for secretKey, certName := range content {
-		c[secretKey] = getWorkingDirFileContents(certName)
+		c[secretKey] = getDirFileContents(dir, certName)
 	}
 	return c
 }
 
-func getWorkingDirFileContents(filePath string) []byte {
-	return getFileContents(getWorkingDirFilePath(filePath))
+func getDirFileContents(dir, filePath string) []byte {
+	return getFileContents(getFilePath(dir, filePath))
 }
 
-func getWorkingDirFilePath(toFile string) string {
-	return path.Join(workingDir, toFile)
+func getFilePath(dir, toFile string) string {
+	return path.Join(dir, toFile)
 }
 
 func getFileContents(path string) []byte {
@@ -144,4 +189,25 @@ func getFileContents(path string) []byte {
 		return nil
 	}
 	return contents
+}
+
+func writeToWorkingDirFile(dir, toFile string, value []byte) error {
+	// first check if file exists - we prefer what is on FS to revert users editing secrets
+	path := getFilePath(dir, toFile)
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	}
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
+	}
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(value)
+	if err != nil {
+		return err
+	}
+	return nil
 }
