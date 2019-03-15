@@ -113,22 +113,26 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 		return err
 	}
 
-	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-ui-config-query", retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-ui-config-query", metav1.GetOptions{})
+	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", f.KubeClient)
 	if err != nil {
 		return err
 	}
 
-	if len(i.Status.LoadBalancer.Ingress) != 1 {
-		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(i.Status.LoadBalancer.Ingress))
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	if err != nil {
+		return err
 	}
+	defer portForward.Close()
+	defer close(closeChan)
 
-	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s%s/search", address, basePath)
+
+
+	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
