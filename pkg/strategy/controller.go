@@ -79,24 +79,26 @@ func normalize(jaeger *v1.Jaeger) {
 	}
 
 	// note that the order normalization matters - UI norm expects all normalized properties
-	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
+	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.Rollover)
 	normalizeUI(&jaeger.Spec)
 }
 
-func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string) {
+func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
-	if cronjob.SupportedStorage(storage) && spec.Enabled == nil {
+	if cronjob.SupportedStorage(spec.Type) &&
+		spec.SparkDependencies.Enabled == nil &&
+		!storage.ShouldDeployElasticsearch(*spec) {
 		trueVar := true
-		spec.Enabled = &trueVar
+		spec.SparkDependencies.Enabled = &trueVar
 	}
-	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-spark-dependencies-image")
+	if spec.SparkDependencies.Image == "" {
+		spec.SparkDependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
 	}
-	if spec.Schedule == "" {
-		spec.Schedule = "55 23 * * *"
+	if spec.SparkDependencies.Schedule == "" {
+		spec.SparkDependencies.Schedule = "55 23 * * *"
 	}
 }
 

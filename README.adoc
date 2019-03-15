@@ -260,7 +260,7 @@ spec:
 
 Under some circumstances, the Jaeger Operator can make use of the link:https://github.com/openshift/elasticsearch-operator[Elasticsearch Operator] to provision a suitable Elasticsearch cluster.
 
-IMPORTANT: this feature is experimental and has been tested only on OpenShift clusters. Elasticsearch also requires the memory setting to be configured like `minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144'`
+IMPORTANT: this feature is experimental and has been tested only on OpenShift clusters. Elasticsearch also requires the memory setting to be configured like `minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144'`. Spark dependencies are not supported with this feature link:https://github.com/jaegertracing/jaeger-operator/issues/294[#294].
 
 When there are no `es.server-urls` options as part of a Jaeger `production` instance and `elasticsearch` is set as the storage type, the Jaeger Operator creates an Elasticsearch cluster via the Elasticsearch Operator by creating a Custom Resource based on the configuration provided in storage section. The Elasticsearch cluster is meant to be dedicated for a single Jaeger instance.
 
