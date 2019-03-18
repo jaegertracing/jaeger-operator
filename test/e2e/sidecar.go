@@ -124,22 +124,19 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) e
 		return err
 	}
 
-	err = WaitForIngress(t, f.KubeClient, namespace, "agent-as-sidecar-query", retryInterval, timeout)
+	queryPod, err := GetPod(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", f.KubeClient)
 	if err != nil {
 		return err
 	}
 
-	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("agent-as-sidecar-query", metav1.GetOptions{})
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
 	if err != nil {
 		return err
 	}
+	defer portForward.Close()
+	defer close(closeChan)
 
-	if len(i.Status.LoadBalancer.Ingress) != 1 {
-		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(i.Status.LoadBalancer.Ingress))
-	}
-
-	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s/api/traces?service=order", address)
+	url := "http://localhost:16686/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

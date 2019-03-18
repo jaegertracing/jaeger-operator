@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/api/extensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -64,9 +65,10 @@ func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 
 // WaitForIngress checks to see if a given ingress' load balancer is ready after a specified amount of time
 // See #WaitForDeployment for the full semantics
-func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
+func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) (*v1beta1.Ingress, error) {
+	var ingress *v1beta1.Ingress
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		ingress, err := kubeclient.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		ingress, err = kubeclient.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s ingress\n", name)
@@ -82,10 +84,10 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 		return false, nil
 	})
 	if err != nil {
-		return err
+		return ingress, err
 	}
 	t.Logf("Ingress available\n")
-	return nil
+	return ingress, nil
 }
 
 // WaitForJob checks to see if a given job has completed successfuly

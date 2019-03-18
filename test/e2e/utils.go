@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	corev1 "k8s.io/api/core/v1"
@@ -64,6 +66,35 @@ func prepare(t *testing.T) *framework.TestCtx {
 	return ctx
 }
 
+func isOpenShift(t *testing.T, f *framework.Framework) bool {
+	apiList, err := availableAPIs(f.KubeConfig)
+	if err != nil {
+		t.Logf("Error trying to find APIs: %v\n", err)
+	}
+
+	apiGroups := apiList.Groups
+	for _, group := range apiGroups {
+		if group.Name == "route.openshift.io" {
+			return true
+		}
+	}
+	return false
+}
+
+func availableAPIs(kubeconfig *rest.Config) (*metav1.APIGroupList, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	apiList, err := discoveryClient.ServerGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	return apiList, nil
+}
+
 type resp struct {
 	Data []trace `json:"data"`
 }
@@ -77,3 +108,12 @@ type span struct {
 	TraceID string `json:"traceID"`
 	SpanID  string `json:"spanID"`
 }
+
+type services struct {
+	Data []string `json:"data"`
+	total int `json:"total"`
+	limit int `json:"limit"`
+	offset int `json:offset`
+	errors interface{} `json:"errors"`
+}
+
