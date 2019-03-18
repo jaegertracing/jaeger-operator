@@ -30,6 +30,6 @@ func TestElasticsearch(t *testing.T) {
 	t.Run("elasticsearch", func(t *testing.T) {
 		t.Run("spark-dependencies-es", SparkDependenciesElasticsearch)
 		t.Run("simple-prod", SimpleProd)
-		// t.Run("es-index-cleaner", EsIndexCleaner)
+		t.Run("es-index-cleaner", EsIndexCleaner)
 	})
 }
