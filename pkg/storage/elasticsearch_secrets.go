@@ -62,7 +62,9 @@ var esSecret = secret{
 var jaegerSecret = secret{
 	name: "jaeger-elasticsearch",
 	keyFileNameMap: map[string]string{
-		"ca": "ca.crt",
+		"ca":   "ca.crt",
+		"key":  "user.jaeger.key",
+		"cert": "user.jaeger.crt",
 	},
 }
 
@@ -78,15 +80,19 @@ var curatorSecret = secret{
 
 // ESSecrets assembles a set of secrets related to Elasticsearch
 func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
+	jaegerSecretContet := map[string]string{
+		"ca":   "ca.crt",
+		"key":  fmt.Sprintf("user.%s.jaeger.key", jaeger.Namespace),
+		"cert": fmt.Sprintf("user.%s.jaeger.crt", jaeger.Namespace),
+	}
 	return []corev1.Secret{
 		createSecret(jaeger, masterSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), masterSecret.keyFileNameMap)),
 		createSecret(jaeger, esSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), esSecret.keyFileNameMap)),
-		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecret.keyFileNameMap)),
+		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecretContet)),
 		createSecret(jaeger, curatorSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), curatorSecret.keyFileNameMap)),
 	}
 }
 
-// CreateESCerts runs bash scripts which generates certificates
 // The secrets are pulled back to FS in case of operator restart
 // The script checks if secrets are expired or need to be regenerated
 func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {

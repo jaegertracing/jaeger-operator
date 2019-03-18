@@ -258,6 +258,7 @@ create_signing_conf
 
 generate_certs 'system.admin'
 generate_certs 'system.logging.curator'
+generate_certs 'user.'"${NAMESPACE}"'.jaeger'
 
 # TODO: get es SAN DNS, IP values from es service names
 generate_certs 'elasticsearch' "$(generate_extensions true true elasticsearch elasticsearch-infra elasticsearch-apps)"

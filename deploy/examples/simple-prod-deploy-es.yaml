@@ -8,5 +8,6 @@ spec:
   storage:
     type: elasticsearch
     elasticsearch:
+      image: pavolloffay/es-client-certs
       nodeCount: 1
       resources:
