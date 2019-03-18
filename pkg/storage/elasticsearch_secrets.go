@@ -200,7 +200,6 @@ func writeToWorkingDirFile(dir, toFile string, value []byte) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
 	}
-	//#nosec G302 Expect file permissions to be 0600 or less (Confidence: HIGH, Severity: MEDIUM)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return err
