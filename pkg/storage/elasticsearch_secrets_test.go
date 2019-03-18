@@ -38,7 +38,7 @@ func TestCreateESSecrets(t *testing.T) {
 	}
 }
 
-func TestCreteSecret(t *testing.T) {
+func TestCreateSecret(t *testing.T) {
 	j := v1.NewJaeger("foo")
 	j.Namespace = "myproject"
 	s := createSecret(j, "bar", map[string][]byte{"foo": {}})
@@ -70,7 +70,7 @@ func TestGetWorkingFileDirContent_FileDoesNotExists(t *testing.T) {
 	assert.Nil(t, b)
 }
 
-func TestGetFileContet_EmptyPath(t *testing.T) {
+func TestGetFileContent_EmptyPath(t *testing.T) {
 	b := getFileContents("")
 	assert.Nil(t, b)
 }

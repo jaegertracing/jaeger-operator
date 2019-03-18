@@ -88,7 +88,7 @@ func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
 
 // CreateESCerts runs bash scripts which generates certificates
 // The secrets are pulled back to FS in case of operator restart
-// The scrip checks if secrets are expired or need to be regenerated
+// The script checks if secrets are expired or need to be regenerated
 func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {
 	err := extractSecretsToFile(jaeger, existingSecrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
 	if err != nil {
@@ -201,7 +201,7 @@ func writeToWorkingDirFile(dir, toFile string, value []byte) error {
 		return err
 	}
 	//#nosec G302 Expect file permissions to be 0600 or less (Confidence: HIGH, Severity: MEDIUM)
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}
