@@ -10,10 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
+	"context"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	osv1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -25,17 +29,17 @@ func JaegerAllInOne(t *testing.T) {
 	ctx := prepare(t)
 	defer ctx.Cleanup()
 
-	if err := allInOneTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
+	//if err := allInOneTest(t, framework.Global, ctx); err != nil {
+	//	t.Fatal(err)
+	//}
 
 	if err := allInOneWithIngressTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
+	//if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
+	//	t.Fatal(err)
+	//}
 }
 
 func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
@@ -79,9 +83,10 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 	// in WaitForIngress doesn't find that.  We either need to figure out how to get kubeclient
 	// to find routes (at the command line "kubectl get route.route.openshift.io" works) or use
 	// the openshift client to find the route.
-	if isOpenShift(t, f) {
-		t.Skipf("Test %s is not currently supported on OpenShift\n", t.Name())
-	}
+	//if isOpenShift(t, f) {
+	//	t.Skipf("Test %s is not currently supported on OpenShift\n", t.Name())
+	//}
+
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -106,9 +111,9 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 					"memory.max-traces": 10000,
 				}),
 			},
-			Ingress: v1.JaegerIngressSpec {
-				Enabled: &ingressEnagled,
-				Security:v1.IngressSecurityNoneExplicit,
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnagled,
+				Security: v1.IngressSecurityNoneExplicit,
 			},
 		},
 	}
@@ -119,16 +124,38 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 		return err
 	}
 
-	ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
-	if err != nil {
-		return err
+	var address string
+	if isOpenShift(t, f) {
+		opts := client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   "Jaeger",    // FIXME what should this be?
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		})
+
+		// TODO setup a wait loop instead of sleeping
+		fmt.Println(">>>>> Sleeping for 1 minute to let route get setup")
+		time.Sleep(1 * time.Minute)
+		fmt.Println(">>>> Waking up")
+		routeList := &osv1.RouteList{}
+		if err := f.Client.List(context.Background(), opts, routeList); err != nil {
+			fmt.Printf("Error is %v\n", err)
+			return err
+		}
+
+		fmt.Printf("Routes? %v\n", routeList.Items)
+		return errors.New("NYI")
+	} else {
+		ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
+		if err != nil {
+			return err
+		}
+
+		if len(ingress.Status.LoadBalancer.Ingress) != 1 {
+			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(ingress.Status.LoadBalancer.Ingress))
+		}
+
+		address = ingress.Status.LoadBalancer.Ingress[0].IP
 	}
 
-	if len(ingress.Status.LoadBalancer.Ingress) != 1 {
-		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(ingress.Status.LoadBalancer.Ingress))
-	}
-
-	address := ingress.Status.LoadBalancer.Ingress[0].IP
 	url := fmt.Sprintf("http://%s/api/services", address)
 	c := http.Client{Timeout: time.Second}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
