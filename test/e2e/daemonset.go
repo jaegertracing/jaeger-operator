@@ -42,7 +42,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	j := getJaegerDefinition(namespace, "agent-as-daemonset")
+	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 
 	log.Infof("passing %v", j)
 	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
@@ -112,8 +112,6 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 	})
 }
 
-
-
 func getVertxDeployment(namespace string, selector map[string]string) *appsv1.Deployment {
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -177,7 +175,7 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 	return dep
 }
 
-func getJaegerDefinition(namespace string, name string) *v1.Jaeger {
+func jaegerAgentAsDaemonsetDefinition(namespace string, name string) *v1.Jaeger {
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",

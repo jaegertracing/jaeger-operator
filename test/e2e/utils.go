@@ -108,3 +108,12 @@ type span struct {
 	TraceID string `json:"traceID"`
 	SpanID  string `json:"spanID"`
 }
+
+type services struct {
+	Data []string `json:"data"`
+	total int `json:"total"`
+	limit int `json:"limit"`
+	offset int `json:offset`
+	errors interface{} `json:"errors"`
+}
+

@@ -24,7 +24,6 @@ func TestSmoke(t *testing.T) {
 	t.Run("smoke", func(t *testing.T) {
 		t.Run("my-jaeger", JaegerAllInOne)
 		t.Run("daemonset", DaemonSet)
-		t.Run("daemonset-with-ingress", DaemonSetWithIngress)
 		t.Run("sidecar", Sidecar)
 	})
 }
