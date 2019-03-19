@@ -39,7 +39,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 	args := append(a.jaeger.Spec.Agent.Options.ToArgs(),
 		"--reporter.type=grpc",
-		fmt.Sprintf("--reporter.grpc.host-port=%s:14250", service.GetNameForCollectorService(a.jaeger)))
+		fmt.Sprintf("--reporter.grpc.host-port=dns:///%s:14250", service.GetNameForCollectorService(a.jaeger)))
 	trueVar := true
 	labels := a.labels()
 
