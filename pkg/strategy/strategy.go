@@ -7,7 +7,6 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	rbacv1 "k8s.io/api/rbac/v1"
 
 	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
 )
@@ -24,8 +23,6 @@ type S struct {
 	elasticsearches []esv1alpha1.Elasticsearch
 	ingresses       []v1beta1.Ingress
 	routes          []osv1.Route
-	roles           []rbacv1.Role
-	roleBindings    []rbacv1.RoleBinding
 	services        []v1.Service
 	secrets         []v1.Secret
 }
@@ -103,18 +100,6 @@ func (s S) WithIngresses(i []v1beta1.Ingress) S {
 	return s
 }
 
-// WithRoles returns the strategy with the given list of roles
-func (s S) WithRoles(roles []rbacv1.Role) S {
-	s.roles = roles
-	return s
-}
-
-// WithRoleBindings returns the strategy with the given list of role bindings
-func (s S) WithRoleBindings(roleBindings []rbacv1.RoleBinding) S {
-	s.roleBindings = roleBindings
-	return s
-}
-
 // WithRoutes returns the strategy with the given list of routes
 func (s S) WithRoutes(r []osv1.Route) S {
 	s.routes = r
@@ -166,16 +151,6 @@ func (s S) Elasticsearches() []esv1alpha1.Elasticsearch {
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent
 func (s S) Ingresses() []v1beta1.Ingress {
 	return s.ingresses
-}
-
-// Roles returns the list of roles to be created for this strategy.
-func (s S) Roles() []rbacv1.Role {
-	return s.roles
-}
-
-// RoleBindings returns the list of role bindings to be created for this strategy.
-func (s S) RoleBindings() []rbacv1.RoleBinding {
-	return s.roleBindings
 }
 
 // Routes returns the list of routes for this strategy. This might be platform-dependent

@@ -183,15 +183,7 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 		return errors.Wrap(err, "failed to handler dependencies")
 	}
 
-	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
-		return err
-	}
-
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
-		return err
-	}
-
-	if err := r.applyRoleBindings(jaeger, str.RoleBindings()); err != nil {
 		return err
 	}
 
