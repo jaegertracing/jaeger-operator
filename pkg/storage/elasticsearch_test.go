@@ -189,7 +189,7 @@ func TestInject(t *testing.T) {
 						"--es.tls=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
-						"--es.tls.path=" + keyPath,
+						"--es.tls.key=" + keyPath,
 						"--es.timeout=15s",
 						"--es.num-shards=12",
 						"--es.num-replicas=11",

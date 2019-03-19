@@ -100,7 +100,7 @@ func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to extract certificates from secrets to file")
 	}
-	return createESCerts(certScript, getWorkingDir(jaeger), jaeger.Namespace)
+	return createESCerts(certScript, jaeger)
 }
 
 func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secret) error {
@@ -133,12 +133,12 @@ func getWorkingDir(jaeger *v1.Jaeger) string {
 }
 
 // createESCerts runs bash scripts which generates certificates
-func createESCerts(script, workDir, namespace string) error {
+func createESCerts(script string, jaeger *v1.Jaeger) error {
 	// #nosec   G204: Subprocess launching should be audited
 	cmd := exec.Command("bash", script)
 	cmd.Env = append(os.Environ(),
-		"NAMESPACE="+namespace,
-		"WORKING_DIR="+workDir,
+		"NAMESPACE="+jaeger.Namespace,
+		"WORKING_DIR="+getWorkingDir(jaeger),
 	)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.WithFields(log.Fields{
