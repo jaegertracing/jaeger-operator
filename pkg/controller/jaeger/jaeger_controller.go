@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -102,7 +103,16 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.Kind = "Jaeger"
 
 	originalInstance := *instance
-	str := r.runStrategyChooser(instance)
+
+	opts := client.MatchingLabels(map[string]string{
+		"app.kubernetes.io/instance":   instance.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	})
+	list := &corev1.SecretList{}
+	if err := r.client.List(context.Background(), opts, list); err != nil {
+		return reconcile.Result{}, err
+	}
+	str := r.runStrategyChooser(instance, list.Items)
 
 	logFields := instance.Logger().WithField("execution", execution)
 
@@ -138,16 +148,16 @@ func validate(jaeger *v1.Jaeger) error {
 	return nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger) strategy.S {
+func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
 	if nil == r.strategyChooser {
-		return defaultStrategyChooser(instance)
+		return defaultStrategyChooser(instance, secrets)
 	}
 
 	return r.strategyChooser(instance)
 }
 
-func defaultStrategyChooser(instance *v1.Jaeger) strategy.S {
-	return strategy.For(context.Background(), instance)
+func defaultStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
+	return strategy.For(context.Background(), instance, secrets)
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {

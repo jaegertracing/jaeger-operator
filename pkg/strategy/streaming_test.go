@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -89,7 +90,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args

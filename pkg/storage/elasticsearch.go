@@ -44,7 +44,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: secretName(ed.Jaeger.Name, jaegerSecret.name),
+				SecretName: jaegerSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})
@@ -98,7 +98,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: secretName(ed.Jaeger.Name, curatorSecret.name),
+				SecretName: curatorSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})

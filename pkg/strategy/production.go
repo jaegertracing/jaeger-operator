@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -19,7 +20,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newProductionStrategy(jaeger *v1.Jaeger) S {
+func newProductionStrategy(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) S {
 	c := S{typ: Production}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
@@ -99,7 +100,7 @@ func newProductionStrategy(jaeger *v1.Jaeger) S {
 			Jaeger: jaeger,
 		}
 
-		err := storage.CreateESCerts()
+		err := storage.CreateESCerts(jaeger, existingSecrets)
 		if err != nil {
 			jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
 		} else {
