@@ -21,7 +21,7 @@ func TestCreateESSecrets(t *testing.T) {
 }
 
 func TestCreateESSecrets_internal(t *testing.T) {
-	//defer os.RemoveAll(tmpWorkingDir)
+	defer os.RemoveAll(tmpWorkingDir)
 	j := v1.NewJaeger("foo")
 	j.Namespace = "myproject"
 	err := createESCerts("../../scripts/cert_generation.sh", j)
