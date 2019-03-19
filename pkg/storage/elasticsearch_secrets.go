@@ -114,7 +114,7 @@ func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secre
 
 func extractSecretToFile(jaeger *v1.Jaeger, data map[string][]byte, secret secret) error {
 	for k, v := range secret.keyFileNameMap {
-		if err := writeToWorkingDirFile(getWorkingDir(jaeger), v, data[k]); err != nil {
+		if err := writeToFile(getWorkingDir(jaeger), v, data[k]); err != nil {
 			return err
 
 		}
@@ -191,9 +191,9 @@ func getFileContents(path string) []byte {
 	return contents
 }
 
-func writeToWorkingDirFile(dir, toFile string, value []byte) error {
+func writeToFile(dir, file string, value []byte) error {
 	// first check if file exists - we prefer what is on FS to revert users editing secrets
-	path := getFilePath(dir, toFile)
+	path := getFilePath(dir, file)
 	if _, err := os.Stat(path); err == nil {
 		return nil
 	}
@@ -207,6 +207,8 @@ func writeToWorkingDirFile(dir, toFile string, value []byte) error {
 	defer f.Close()
 	_, err = f.Write(value)
 	if err != nil {
+		// remove the file on failure - so it can be correctly created on the next iteration
+		os.RemoveAll(path)
 		return err
 	}
 	return nil

@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,12 +15,12 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestCreateCerts_ErrNoScript(t *testing.T) {
-	err := createESCerts("invalid", "", "")
-	assert.EqualError(t, err, "error running script invalid: exit status 127")
+func TestCreateESSecrets(t *testing.T) {
+	err := CreateESCerts(v1.NewJaeger("foo"), []corev1.Secret{})
+	assert.EqualError(t, err, "error running script ./scripts/cert_generation.sh: exit status 127")
 }
 
-func TestCreateESSecrets(t *testing.T) {
+func TestCreateESSecrets_internal(t *testing.T) {
 	defer os.RemoveAll(tmpWorkingDir + "/foo")
 	j := v1.NewJaeger("foo")
 	err := createESCerts("../../scripts/cert_generation.sh", tmpWorkingDir+"/foo", "")
@@ -110,4 +113,40 @@ func TestExtractSecretsToFile_FileExists(t *testing.T) {
 	ca, err := ioutil.ReadFile(tmpWorkingDir + "/bar/houdy/ca.crt")
 	assert.NoError(t, err)
 	assert.Equal(t, []byte(content), ca)
+}
+
+func TestWriteToWorkingDir(t *testing.T) {
+	_, testFile, _, _ := runtime.Caller(0)
+	defer os.RemoveAll(os.TempDir() + "/foo")
+	tests := []struct {
+		dir  string
+		file string
+		err  string
+	}{
+		{
+			dir: "/foo", file: "", err: "mkdir /foo: permission denied",
+		},
+		{
+			dir: "/root", file: "bla", err: "open /root/bla: permission denied",
+		},
+		{
+			// file exists
+			dir: path.Dir(testFile), file: path.Base(testFile),
+		},
+		{
+			// write to file
+			dir: os.TempDir(), file: "foo",
+		},
+	}
+	for _, test := range tests {
+		err := writeToFile(test.dir, test.file, []byte("random"))
+		if test.err != "" {
+			assert.EqualError(t, err, test.err)
+		} else {
+			assert.NoError(t, err)
+			stat, err := os.Stat(fmt.Sprintf("%s/%s", test.dir, test.file))
+			assert.NoError(t, err)
+			assert.Equal(t, test.file, stat.Name())
+		}
+	}
 }
