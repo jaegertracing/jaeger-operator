@@ -80,15 +80,10 @@ var curatorSecret = secret{
 
 // ESSecrets assembles a set of secrets related to Elasticsearch
 func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
-	jaegerSecretContent := map[string]string{
-		"ca":   "ca.crt",
-		"key":  fmt.Sprintf("user.%s.jaeger.key", jaeger.Namespace),
-		"cert": fmt.Sprintf("user.%s.jaeger.crt", jaeger.Namespace),
-	}
 	return []corev1.Secret{
 		createSecret(jaeger, masterSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), masterSecret.keyFileNameMap)),
 		createSecret(jaeger, esSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), esSecret.keyFileNameMap)),
-		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecretContent)),
+		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecret.keyFileNameMap)),
 		createSecret(jaeger, curatorSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), curatorSecret.keyFileNameMap)),
 	}
 }

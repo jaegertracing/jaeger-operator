@@ -37,9 +37,9 @@ func TestCreateESSecrets_internal(t *testing.T) {
 		if s.Name == jaegerSecret.instanceName(j) {
 			ca, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/ca.crt")
 			assert.NoError(t, err)
-			key, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.myproject.jaeger.key")
+			key, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.key")
 			assert.NoError(t, err)
-			cert, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.myproject.jaeger.crt")
+			cert, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.crt")
 			assert.NoError(t, err)
 			assert.Equal(t, map[string][]byte{"ca": ca, "key": key, "cert": cert}, s.Data)
 		}
