@@ -94,6 +94,11 @@ func TestExtractSecretsToFile(t *testing.T) {
 	assert.Equal(t, []byte(content), ca)
 }
 
+func TestExtractSecretsToFile_Err(t *testing.T) {
+	err := extractSecretToFile("/root", map[string][]byte{"foo": {}}, secret{keyFileNameMap: map[string]string{"foo": "foo"}})
+	assert.EqualError(t, err, "open /root/foo: permission denied")
+}
+
 func TestExtractSecretsToFile_FileExists(t *testing.T) {
 	defer os.RemoveAll(tmpWorkingDir)
 	content := "115dasrez"

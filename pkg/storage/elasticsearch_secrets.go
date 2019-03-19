@@ -104,7 +104,7 @@ func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secre
 	}
 	for _, sec := range s {
 		if secret, ok := secretMap[sec.instanceName(jaeger)]; ok {
-			if err := extractSecretToFile(jaeger, secret.Data, sec); err != nil {
+			if err := extractSecretToFile(getWorkingDir(jaeger), secret.Data, sec); err != nil {
 				return errors.Wrap(err, fmt.Sprintf("failed to extract secret %s", secret.Name))
 			}
 		}
@@ -112,9 +112,9 @@ func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secre
 	return nil
 }
 
-func extractSecretToFile(jaeger *v1.Jaeger, data map[string][]byte, secret secret) error {
+func extractSecretToFile(workingDir string, data map[string][]byte, secret secret) error {
 	for k, v := range secret.keyFileNameMap {
-		if err := writeToFile(getWorkingDir(jaeger), v, data[k]); err != nil {
+		if err := writeToFile(workingDir, v, data[k]); err != nil {
 			return err
 
 		}
@@ -207,7 +207,7 @@ func writeToFile(dir, file string, value []byte) error {
 	defer f.Close()
 	_, err = f.Write(value)
 	if err != nil {
-		// remove the file on failure - so it can be correctly created on the next iteration
+		// remove the file on failure - it can be correctly created in the next iteration
 		os.RemoveAll(path)
 		return err
 	}
