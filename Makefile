@@ -14,6 +14,7 @@ VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
+ES_OPERATOR_NAMESPACE = openshift-logging
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...)
@@ -94,10 +95,30 @@ e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
+.PHONY: e2e-tests-self-provisioned-es
+e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
+	@echo Running Self provisioned Elasticsearch end-to-end tests...
+	@go test -tags=self_provisioned_elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
 	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start'
+
+.PHONY: set-max-map-count
+set-max-map-count:
+	@minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
+
+.PHONY: deploy-es-operator
+deploy-es-operator: set-max-map-count
+	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/02-role.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/03-role-bindings.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
 
 .PHONY: es
 es: storage
@@ -118,6 +139,7 @@ clean:
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} || true
 
 .PHONY: crd
 crd:
