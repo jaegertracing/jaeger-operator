@@ -202,3 +202,13 @@ func TestLabels(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}, Labels("joe", "leg", *v1.NewJaeger("thatone")))
 }
+
+func TestHasArgs(t *testing.T) {
+	args := []string{
+		"--a-option=a-value",
+		"--b-option=b-value",
+	}
+
+	assert.True(t, HasArg("--a-option", args))
+	assert.False(t, HasArg("--c-option", args))
+}

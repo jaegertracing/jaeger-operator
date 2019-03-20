@@ -12,6 +12,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 var (
@@ -87,10 +88,16 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 }
 
 func container(jaeger *v1.Jaeger) corev1.Container {
-	args := append(jaeger.Spec.Agent.Options.ToArgs(),
-		"--reporter.type=grpc",
-		fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForCollectorService(jaeger), jaeger.Namespace),
-	)
+	args := append(jaeger.Spec.Agent.Options.ToArgs())
+
+	if !util.HasArg("--reporter-type", args) {
+		args = append(args, "--reporter.type=grpc")
+
+		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
+		if !util.HasArg("--reporter.grpc.host-port", args) {
+			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
+		}
+	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
