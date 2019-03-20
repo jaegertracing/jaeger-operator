@@ -109,10 +109,12 @@ run: crd
 deploy-es-operator:
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/02-role.yaml -n ${ES_OPERATOR_NAMESPACE}
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/03-role-bindings.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/02-role.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/03-role-bindings.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
 
 .PHONY: es
 es: storage
