@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -87,6 +88,11 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 
 func container(jaeger *v1.Jaeger) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs(), fmt.Sprintf("--collector.host-port=%s.%s:14267", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(args)
+
 	return corev1.Container{
 		Image: jaeger.Spec.Agent.Image,
 		Name:  "jaeger-agent",

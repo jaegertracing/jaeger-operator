@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -301,4 +302,22 @@ func TestQueryLabels(t *testing.T) {
 	assert.Equal(t, "query", dep.Spec.Template.Labels["app.kubernetes.io/component"])
 	assert.Equal(t, query.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
 	assert.Equal(t, fmt.Sprintf("%s-query", query.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}
+
+func TestQueryOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryOrderOfArguments")
+	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewQuery(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 }

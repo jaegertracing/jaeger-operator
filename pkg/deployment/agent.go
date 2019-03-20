@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -51,6 +52,10 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(args)
 
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
