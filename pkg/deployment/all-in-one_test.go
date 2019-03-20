@@ -69,7 +69,7 @@ func TestAllInOneHasOwner(t *testing.T) {
 func TestAllInOneNumberOfServices(t *testing.T) {
 	name := "TestNumberOfServices"
 	services := NewAllInOne(v1.NewJaeger(name)).Services()
-	assert.Len(t, services, 3) // collector, query, agent
+	assert.Len(t, services, 4) // collector (headless and cluster IP), query, agent
 
 	for _, svc := range services {
 		owners := svc.ObjectMeta.OwnerReferences

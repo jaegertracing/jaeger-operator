@@ -21,6 +21,7 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
+	assert.Len(t, svc.Spec.ClusterIP, 0) // make sure we get a cluster IP
 }
 
 func TestQueryServiceNameAndPortsWithOAuthProxy(t *testing.T) {

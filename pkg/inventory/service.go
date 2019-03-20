@@ -21,6 +21,11 @@ func ForServices(existing []v1.Service, desired []v1.Service) Service {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
 
+			// we keep the ClusterIP that got assigned by the cluster, if it's empty in the "desired" and not empty on the "current"
+			if v.Spec.ClusterIP == "" && len(tp.Spec.ClusterIP) > 0 {
+				v.Spec.ClusterIP = tp.Spec.ClusterIP
+			}
+
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences

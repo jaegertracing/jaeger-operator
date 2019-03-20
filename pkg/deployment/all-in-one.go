@@ -175,11 +175,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
 	labels := a.labels()
-	return []*corev1.Service{
-		service.NewCollectorService(a.jaeger, labels),
+	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),
-	}
+	)
 }
 
 func (a *AllInOne) labels() map[string]string {
