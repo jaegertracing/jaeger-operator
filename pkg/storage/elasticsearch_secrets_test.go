@@ -21,22 +21,27 @@ func TestCreateESSecrets(t *testing.T) {
 }
 
 func TestCreateESSecrets_internal(t *testing.T) {
-	defer os.RemoveAll(tmpWorkingDir + "/foo")
+	defer os.RemoveAll(tmpWorkingDir)
 	j := v1.NewJaeger("foo")
-	err := createESCerts("../../scripts/cert_generation.sh", tmpWorkingDir+"/foo", "")
+	j.Namespace = "myproject"
+	err := createESCerts("../../scripts/cert_generation.sh", j)
 	assert.NoError(t, err)
 	sec := ESSecrets(j)
 	assert.Equal(t, []string{
 		masterSecret.instanceName(j),
-		"elasticsearch",
+		esSecret.instanceName(j),
 		jaegerSecret.instanceName(j),
 		curatorSecret.instanceName(j)},
 		[]string{sec[0].Name, sec[1].Name, sec[2].Name, sec[3].Name})
 	for _, s := range sec {
 		if s.Name == jaegerSecret.instanceName(j) {
-			ca, err := ioutil.ReadFile(tmpWorkingDir + "/foo/ca.crt")
+			ca, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/ca.crt")
 			assert.NoError(t, err)
-			assert.Equal(t, map[string][]byte{"ca": ca}, s.Data)
+			key, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.key")
+			assert.NoError(t, err)
+			cert, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.crt")
+			assert.NoError(t, err)
+			assert.Equal(t, map[string][]byte{"ca": ca, "key": key, "cert": cert}, s.Data)
 		}
 	}
 }

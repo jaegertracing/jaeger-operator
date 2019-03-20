@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	// #nosec   G101: Potential hardcoded credentials (Confidence: LOW, Severity: HIGH)
-	k8sTokenFile     = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	volumeName       = "certs"
 	volumeMountPath  = "/certs"
 	caPath           = volumeMountPath + "/ca"
@@ -52,8 +50,10 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 	if len(p.Containers) > 0 {
 		p.Containers[0].Args = append(p.Containers[0].Args,
 			"--es.server-urls="+elasticsearchURL,
-			"--es.token-file="+k8sTokenFile,
-			"--es.tls.ca="+caPath)
+			"--es.tls=true",
+			"--es.tls.ca="+caPath,
+			"--es.tls.cert="+certPath,
+			"--es.tls.key="+keyPath)
 		if findItem("--es.timeout", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, "--es.timeout=15s")
 		}
@@ -69,8 +69,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 		if strings.EqualFold(findItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
 			p.Containers[0].Args = append(p.Containers[0].Args,
 				"--es-archive.server-urls="+elasticsearchURL,
-				"--es-archive.token-file="+k8sTokenFile,
-				"--es-archive.tls.ca="+caPath)
+				"--es-archive.tls=true",
+				"--es-archive.tls.ca="+caPath,
+				"--es-archive.tls.cert="+certPath,
+				"--es-archive.tls.key="+keyPath,
+			)
 			if findItem("--es-archive.timeout", p.Containers[0].Args) == "" {
 				p.Containers[0].Args = append(p.Containers[0].Args, "--es-archive.timeout=15s")
 			}
