@@ -126,13 +126,13 @@ func GetEsHostname(opts map[string]string) string {
 	return urlArr[0]
 }
 
-// HasArg returns whether the slice has an entry prefixed by the given name
-func HasArg(name string, args []string) bool {
+// FindItem returns the first item matching the given prefix
+func FindItem(prefix string, args []string) string {
 	for _, v := range args {
-		if strings.HasPrefix(v, name) {
-			return true
+		if strings.HasPrefix(v, prefix) {
+			return v
 		}
 	}
 
-	return false
+	return ""
 }
