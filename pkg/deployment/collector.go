@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -81,6 +82,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 		c.jaeger.Spec.Ingester.Options.Filter(storage.OptionsPrefix(storageType)))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(options)
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

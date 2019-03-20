@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -209,6 +210,25 @@ func TestSelectBasedOnName(t *testing.T) {
 	jaeger := Select(dep, jaegerPods)
 	assert.NotNil(t, jaeger)
 	assert.Equal(t, "the-second-jaeger-instance-available", jaeger.Name)
+}
+
+func TestSidecarOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryOrderOfArguments")
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 4)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[2], "--c-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[3], "--collector.host-port"))
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {

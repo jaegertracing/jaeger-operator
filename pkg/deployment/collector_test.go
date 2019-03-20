@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -421,4 +422,25 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
 	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
+}
+
+func TestCollectorOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestCollectorOrderOfArguments")
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewCollector(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+
+	// the following are added automatically
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
 }
