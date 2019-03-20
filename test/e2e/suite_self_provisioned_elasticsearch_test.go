@@ -20,6 +20,12 @@ func TestSelfProvisionedElasticsearch(t *testing.T) {
 			APIVersion: "jaegertracing.io/v1",
 		},
 	}))
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Elasticsearch",
+			APIVersion: "logging.openshift.io/v1alpha1",
+		},
+	}))
 
 	t.Run("elasticsearch", func(t *testing.T) {
 		t.Run("self-provisioned-elasticsearch-smoke-test", SelfProvisionedElasticsearchSmokeTest)

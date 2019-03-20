@@ -97,8 +97,8 @@ e2e-tests-es: prepare-e2e-tests es
 
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
-	@echo Running Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=self-provisioned-elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@echo Running Self provisioned Elasticsearch end-to-end tests...
+	@go test -tags=self-provisioned-elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: run
 run: crd
