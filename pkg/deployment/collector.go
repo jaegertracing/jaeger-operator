@@ -169,9 +169,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (c *Collector) Services() []*corev1.Service {
-	return []*corev1.Service{
-		service.NewCollectorService(c.jaeger, c.labels()),
-	}
+	return service.NewCollectorServices(c.jaeger, c.labels())
 }
 
 func (c *Collector) labels() map[string]string {

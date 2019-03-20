@@ -9,10 +9,27 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-// NewCollectorService returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
-func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	trueVar := true
+// NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
+func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
+	return []*corev1.Service{
+		headlessCollectorService(jaeger, selector),
+		clusteripCollectorService(jaeger, selector),
+	}
+}
 
+func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	svc := collectorService(jaeger, selector)
+	svc.Name = GetNameForHeadlessCollectorService(jaeger)
+	svc.Spec.ClusterIP = "None"
+	return svc
+}
+
+func clusteripCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	return collectorService(jaeger, selector)
+}
+
+func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	trueVar := true
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -41,7 +58,7 @@ func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:  selector,
-			ClusterIP: "None",
+			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
 					Name: "zipkin",
@@ -62,9 +79,15 @@ func NewCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.
 			},
 		},
 	}
+
 }
 
 // GetNameForCollectorService returns the service name for the collector in this Jaeger instance
 func GetNameForCollectorService(jaeger *v1.Jaeger) string {
 	return fmt.Sprintf("%s-collector", jaeger.Name)
+}
+
+// GetNameForHeadlessCollectorService returns the headless service name for the collector in this Jaeger instance
+func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
+	return fmt.Sprintf("%s-collector-headless", jaeger.Name)
 }
