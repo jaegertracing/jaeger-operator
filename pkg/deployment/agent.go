@@ -37,9 +37,17 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		return nil
 	}
 
-	args := append(a.jaeger.Spec.Agent.Options.ToArgs(),
-		"--reporter.type=grpc",
-		fmt.Sprintf("--reporter.grpc.host-port=%s:14250", service.GetNameForCollectorService(a.jaeger)))
+	args := append(a.jaeger.Spec.Agent.Options.ToArgs())
+
+	if len(util.FindItem("--reporter.type=", args)) == 0 {
+		args = append(args, "--reporter.type=grpc")
+
+		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
+		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
+			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForCollectorService(a.jaeger), a.jaeger.Namespace))
+		}
+	}
+
 	trueVar := true
 	labels := a.labels()
 

@@ -224,11 +224,28 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 4)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[0], "--a-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[1], "--b-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[2], "--c-option"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[3], "--collector.host-port"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[3], "--reporter.grpc.host-port"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[1].Args[4], "--reporter.type"))
+}
+
+func TestSidecarOverrideReporter(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryOrderOfArguments")
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"reporter.type":             "thrift",
+		"reporter.thrift.host-port": "collector:14267",
+	})
+
+	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 2)
+	assert.Equal(t, "--reporter.thrift.host-port=collector:14267", dep.Spec.Template.Spec.Containers[1].Args[0])
+	assert.Equal(t, "--reporter.type=thrift", dep.Spec.Template.Spec.Containers[1].Args[1])
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {

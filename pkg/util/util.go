@@ -125,3 +125,14 @@ func GetEsHostname(opts map[string]string) string {
 	urlArr := strings.Split(urls, ",")
 	return urlArr[0]
 }
+
+// FindItem returns the first item matching the given prefix
+func FindItem(prefix string, args []string) string {
+	for _, v := range args {
+		if strings.HasPrefix(v, prefix) {
+			return v
+		}
+	}
+
+	return ""
+}

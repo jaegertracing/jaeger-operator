@@ -54,19 +54,19 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 			"--es.tls.ca="+caPath,
 			"--es.tls.cert="+certPath,
 			"--es.tls.key="+keyPath)
-		if findItem("--es.timeout", p.Containers[0].Args) == "" {
+		if util.FindItem("--es.timeout", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, "--es.timeout=15s")
 		}
-		if findItem("--es.num-shards", p.Containers[0].Args) == "" {
+		if util.FindItem("--es.num-shards", p.Containers[0].Args) == "" {
 			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 			// every ES node is a data node
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
 		}
-		if findItem("--es.num-replicas", p.Containers[0].Args) == "" {
+		if util.FindItem("--es.num-replicas", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
 				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
 		}
-		if strings.EqualFold(findItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
+		if strings.EqualFold(util.FindItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
 			p.Containers[0].Args = append(p.Containers[0].Args,
 				"--es-archive.server-urls="+elasticsearchURL,
 				"--es-archive.tls=true",
@@ -74,15 +74,15 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 				"--es-archive.tls.cert="+certPath,
 				"--es-archive.tls.key="+keyPath,
 			)
-			if findItem("--es-archive.timeout", p.Containers[0].Args) == "" {
+			if util.FindItem("--es-archive.timeout", p.Containers[0].Args) == "" {
 				p.Containers[0].Args = append(p.Containers[0].Args, "--es-archive.timeout=15s")
 			}
-			if findItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
+			if util.FindItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
 				// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 				// every ES node is a data node
 				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
 			}
-			if findItem("--es-archive.num-replicas", p.Containers[0].Args) == "" {
+			if util.FindItem("--es-archive.num-replicas", p.Containers[0].Args) == "" {
 				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-replicas=%d",
 					calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
 			}
@@ -203,13 +203,4 @@ func calculateReplicaShards(policyType esv1alpha1.RedundancyPolicyType, dataNode
 	default:
 		return 1
 	}
-}
-
-func findItem(prefix string, arr []string) string {
-	for _, a := range arr {
-		if strings.HasPrefix(a, prefix) {
-			return a
-		}
-	}
-	return ""
 }

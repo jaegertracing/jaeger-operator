@@ -202,3 +202,15 @@ func TestLabels(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}, Labels("joe", "leg", *v1.NewJaeger("thatone")))
 }
+
+func TestFindItem(t *testing.T) {
+	opts := v1.NewOptions(map[string]interface{}{
+		"reporter.type":             "thrift",
+		"reporter.thrift.host-port": "collector:14267",
+	})
+
+	args := opts.ToArgs()
+
+	assert.Equal(t, "--reporter.type=thrift", FindItem("--reporter.type=", args))
+	assert.Len(t, FindItem("--c-option", args), 0)
+}

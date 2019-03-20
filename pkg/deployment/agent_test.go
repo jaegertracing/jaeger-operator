@@ -154,3 +154,18 @@ func TestAgentOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--reporter.grpc.host-port"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[4], "--reporter.type"))
 }
+
+func TestAgentOverrideReporterType(t *testing.T) {
+	jaeger := v1.NewJaeger("TestAgentOrderOfArguments")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"reporter.type":             "thrift",
+		"reporter.thrift.host-port": "collector:14267",
+	})
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, "--reporter.thrift.host-port=collector:14267", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--reporter.type=thrift", dep.Spec.Template.Spec.Containers[0].Args[1])
+}
