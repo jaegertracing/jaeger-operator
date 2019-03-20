@@ -1,4 +1,4 @@
-// +build self-provisioned-elasticsearch
+// +build self_provisioned_elasticsearch
 
 package e2e
 
@@ -13,7 +13,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestSelfProvisionedElasticsearch(t *testing.T) {
+func TestSelfProvisionedES(t *testing.T) {
 	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -27,7 +27,5 @@ func TestSelfProvisionedElasticsearch(t *testing.T) {
 		},
 	}))
 
-	t.Run("elasticsearch", func(t *testing.T) {
-		t.Run("self-provisioned-elasticsearch-smoke-test", SelfProvisionedElasticsearchSmokeTest)
-	})
+	t.Run("smoke-test", SelfProvisionedESSmokeTest)
 }

@@ -13,16 +13,16 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func SelfProvisionedElasticsearchSmokeTest(t *testing.T) {
+func SelfProvisionedESSmokeTest(t *testing.T) {
 	ctx := prepare(t)
 	defer ctx.Cleanup()
 
-	if err := selfProvisionedElasticsearchSmokeTest(t, framework.Global, ctx); err != nil {
+	if err := selfProvisionedESSmokeTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func selfProvisionedElasticsearchSmokeTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func selfProvisionedESSmokeTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
