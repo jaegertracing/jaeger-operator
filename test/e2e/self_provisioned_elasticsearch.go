@@ -28,11 +28,6 @@ func selfProvisionedESSmokeTest(t *testing.T, f *framework.Framework, ctx *frame
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	err = WaitForStatefulset(t, f.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
-	if err != nil {
-		return err
-	}
-
 	// create jaeger custom resource
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
