@@ -105,8 +105,12 @@ run: crd
 	@rm -rf /tmp/_cert*
 	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start'
 
+.PHONY: set-max-map-count
+set-max-map-count:
+	@minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
+
 .PHONY: deploy-es-operator
-deploy-es-operator:
+deploy-es-operator: set-max-map-count
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/02-role.yaml
