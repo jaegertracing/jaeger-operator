@@ -14,6 +14,10 @@ import (
 )
 
 func TestSelfProvisionedES(t *testing.T) {
+	if !isOpenShift(t, framework.Global) {
+		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
+	}
+
 	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
