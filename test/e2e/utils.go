@@ -66,8 +66,8 @@ func prepare(t *testing.T) *framework.TestCtx {
 	return ctx
 }
 
-func isOpenShift(t *testing.T, f *framework.Framework) bool {
-	apiList, err := availableAPIs(f.KubeConfig)
+func isOpenShift(t *testing.T) bool {
+	apiList, err := availableAPIs(framework.Global.KubeConfig)
 	if err != nil {
 		t.Logf("Error trying to find APIs: %v\n", err)
 	}
