@@ -4,7 +4,6 @@ import (
 	goctx "context"
 	"fmt"
 	"testing"
-	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -50,8 +49,7 @@ func selfProvisionedESSmokeTest(t *testing.T, f *framework.Framework, ctx *frame
 		return err
 	}
 
-	// wait longer because jaeger-operator does not create objects immediately after ES is deployed
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, time.Minute*5)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}

@@ -62,7 +62,11 @@ func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error
 	}
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
 		depList := corev1.DeploymentList{}
-		if err = c.List(context.Background(), client.MatchingLabels(es.Labels).InNamespace(es.Namespace), &depList); err != nil {
+		labels := map[string]string{
+			"cluster-name": es.Name,
+			"component":    "elasticsearch",
+		}
+		if err = c.List(context.Background(), client.MatchingLabels(labels).InNamespace(es.Namespace), &depList); err != nil {
 			if k8serrors.IsNotFound(err) {
 				// the object might have not been created yet
 				log.WithFields(log.Fields{
