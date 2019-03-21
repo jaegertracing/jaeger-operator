@@ -95,7 +95,7 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 
 		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
-			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForCollectorService(jaeger), jaeger.Namespace))
+			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
 		}
 	}
 

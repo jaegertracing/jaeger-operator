@@ -20,6 +20,7 @@ func TestServiceInventory(t *testing.T) {
 		},
 		Spec: v1.ServiceSpec{
 			ExternalName: "v1.example.com",
+			ClusterIP:    "10.97.132.43", // got assigned by Kubernetes
 		},
 	}
 	updated := v1.Service{
@@ -28,6 +29,7 @@ func TestServiceInventory(t *testing.T) {
 		},
 		Spec: v1.ServiceSpec{
 			ExternalName: "v2.example.com",
+			ClusterIP:    "", // will get assigned by Kubernetes
 		},
 	}
 	toDelete := v1.Service{
@@ -49,4 +51,6 @@ func TestServiceInventory(t *testing.T) {
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)
+
+	assert.Equal(t, toUpdate.Spec.ClusterIP, inv.Update[0].Spec.ClusterIP)
 }

@@ -85,7 +85,7 @@ func TestName(t *testing.T) {
 func TestCollectorServices(t *testing.T) {
 	collector := NewCollector(v1.NewJaeger("TestName"))
 	svcs := collector.Services()
-	assert.Len(t, svcs, 1)
+	assert.Len(t, svcs, 2) // headless and cluster IP
 }
 
 func TestDefaultCollectorImage(t *testing.T) {
