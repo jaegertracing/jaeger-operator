@@ -33,7 +33,7 @@ func DaemonSet(t *testing.T) {
 
 func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	// TODO restore this after fix of https://github.com/jaegertracing/jaeger-operator/issues/322
-	if isOpenShift(t, f) {
+	if isOpenShift(t) {
 		t.Skipf("Test %s is not currently supported on OpenShift because of issue 322\n", t.Name())
 	}
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}

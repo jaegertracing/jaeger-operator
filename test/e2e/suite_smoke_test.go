@@ -8,6 +8,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	osv1 "github.com/openshift/api/route/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -20,6 +21,10 @@ func TestSmoke(t *testing.T) {
 			APIVersion: "jaegertracing.io/v1",
 		},
 	}))
+
+	if isOpenShift(t) {
+		assert.NoError(t, framework.AddToFrameworkScheme(osv1.AddToScheme, &osv1.Route{}))
+	}
 
 	t.Run("smoke", func(t *testing.T) {
 		t.Run("my-jaeger", JaegerAllInOne)
