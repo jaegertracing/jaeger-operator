@@ -14,7 +14,7 @@ import (
 )
 
 func TestSelfProvisionedES(t *testing.T) {
-	if !isOpenShift(t, framework.Global) {
+	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
 	}
 
