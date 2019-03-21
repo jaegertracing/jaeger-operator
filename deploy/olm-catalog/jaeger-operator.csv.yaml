@@ -59,6 +59,7 @@ metadata:
     support: Jaeger
   creationTimestamp: null
   name: jaeger-operator.v1.10.0
+  replaces: jaeger-operator.v1.9.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
