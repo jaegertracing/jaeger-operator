@@ -50,7 +50,7 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	}
 
 	// create jaeger custom resource
-	exampleJaeger := getJaegerDefinition(namespace, "my-jaeger")
+	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
 
 	log.Infof("passing %v", exampleJaeger)
 	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
@@ -61,8 +61,6 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
 }
 
-
-
 func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -72,10 +70,10 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
-	exampleJaeger := getJaegerDefinition(namespace, name)
-	exampleJaeger.Spec.Ingress=v1.JaegerIngressSpec{
-		Enabled: &ingressEnabled,
-		Security:v1.IngressSecurityNoneExplicit,
+	exampleJaeger := getJaegerAllInOneDefinition(namespace, name)
+	exampleJaeger.Spec.Ingress = v1.JaegerIngressSpec{
+		Enabled:  &ingressEnabled,
+		Security: v1.IngressSecurityNoneExplicit,
 	}
 
 	log.Infof("passing %v", exampleJaeger)
@@ -84,25 +82,29 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 		return err
 	}
 
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
+	if err != nil {
+		t.Errorf("Error waiting for deployment of %s: %v\n", name, err)
+		return err
+	}
+
 	var url string
 	var httpClient http.Client
 	if isOpenShift(t) {
-		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, 3 * timeout)
-		if err != nil {
-			t.Errorf("Error waiting for deployment of %s: %v\n", name, err)
-			return err
-		}
-
-		routeUrl, err := findRouteUrl(t, f, name)
+		route, err := findRoute(t, f, name)
 		if err != nil {
 			return err
 		}
 
-		url = fmt.Sprintf("https://%s/api/services", routeUrl)
+		if len(route.Status.Ingress) != 1 {
+			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
+		}
+
+		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		httpClient= http.Client{Timeout: 30 * time.Second, Transport: transport}
+		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
 	} else {
 		ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
 		if err != nil {
@@ -249,7 +251,7 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 	})
 }
 
-func getJaegerDefinition(namespace string, name string) *v1.Jaeger {
+func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -272,7 +274,7 @@ func getJaegerDefinition(namespace string, name string) *v1.Jaeger {
 	return exampleJaeger
 }
 
-func findRouteUrl(t *testing.T, f *framework.Framework, name string) (string, error) {
+func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route, error) {
 	routeList := &osv1.RouteList{}
 	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
 		opts := &client.ListOptions{}
@@ -288,13 +290,13 @@ func findRouteUrl(t *testing.T, f *framework.Framework, name string) (string, er
 
 	if err != nil {
 		t.Errorf("Failed waiting for route: %v", err)
-		return "", err
+		return nil, err
 	}
 
 	for _, r := range routeList.Items {
 		if strings.HasPrefix(r.Spec.Host, name) {
-			return r.Spec.Host, nil
+			return &r, nil
 		}
 	}
-	return "", errors.New("Could not find route")
+	return nil, errors.New("Could not find route")
 }
