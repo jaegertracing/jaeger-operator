@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -147,6 +148,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 	}
 	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.SparkDependencies.Enabled)
+	enableLogOut(uiOpts, spec)
 	if len(uiOpts) > 0 {
 		spec.UI.Options = v1.NewFreeForm(uiOpts)
 	}
@@ -182,6 +184,39 @@ func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsE
 		deps["menuEnabled"] = false
 		uiOpts["dependencies"] = deps
 	}
+}
+
+func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
+	if (spec.Ingress.Enabled != nil && *spec.Ingress.Enabled == false) ||
+		spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
+		return
+	}
+
+	if _, ok := uiOpts["menu"]; ok {
+		return
+	}
+
+	menuStr := `[
+		{
+		  "label": "About",
+		  "items": [
+			{
+			  "label": "Documentation",
+			  "url": "https://www.jaegertracing.io/docs/latest"
+			}
+		  ]
+		},
+		{
+		  "label": "Log Out",
+		  "url": "/oauth/sign_in"
+		}
+	  ]`
+
+	menuArray := make([]interface{}, 2)
+
+	json.Unmarshal([]byte(menuStr), &menuArray)
+
+	uiOpts["menu"] = menuArray
 }
 
 func unknownStorage(typ string) bool {
