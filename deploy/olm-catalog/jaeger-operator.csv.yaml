@@ -59,6 +59,7 @@ metadata:
     support: Jaeger
   creationTimestamp: null
   name: jaeger-operator.v1.10.0
+  replaces: jaeger-operator.v1.9.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -253,7 +254,7 @@ spec:
   - email: jaeger-tracing@googlegroups.com
     name: Jaeger Google Group
   provider:
-    name: Jaeger
+    name: CNCF
   selector:
     matchLabels:
       name: jaeger-operator
