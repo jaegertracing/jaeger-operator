@@ -360,6 +360,45 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 	}
 }
 
+func TestMenuWithSignOut(t *testing.T) {
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   "https://www.jaegertracing.io/docs/latest",
+				},
+			},
+		},
+		map[string]interface{}{
+			"label":        "Log Out",
+			"url":          "/oauth/sign_in",
+			"anchorTarget": "_self",
+		},
+	}
+	assert.Equal(t, uiOpts["menu"], expected)
+}
+
+func TestMenuNoSignOutIngressSecurityNone(t *testing.T) {
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}})
+	assert.NotContains(t, uiOpts, "menu")
+}
+
+func TestMenuNoSignOutExistingMenu(t *testing.T) {
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{},
+	}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+	assert.Len(t, uiOpts["menu"], 0)
+}
+
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true
