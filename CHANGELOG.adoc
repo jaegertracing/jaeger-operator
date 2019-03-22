@@ -4,6 +4,14 @@
 
 == v1.11.0 (2019-03-22)
 
+=== Breaking changes
+
+* Moved from v1alpha1 to v1 (https://github.com/jaegertracing/jaeger-operator/pull/265[#265])
+* Use storage flags instead of CR properties for spark job (https://github.com/jaegertracing/jaeger-operator/pull/295[#295])
+* Changed from 'size' to 'replicas' (https://github.com/jaegertracing/jaeger-operator/pull/271[#271]). "Size" will still work for the next couple of releases.
+
+=== Other changes
+
 * Initialise menu to include Log Out option when using OAuth Proxy (https://github.com/jaegertracing/jaeger-operator/pull/344[#344])
 * Change Operator provider to CNCF (https://github.com/jaegertracing/jaeger-operator/pull/263[#263])
 * Added note about the apiVersion used up to 1.10.0 (https://github.com/jaegertracing/jaeger-operator/pull/283[#283])
@@ -31,8 +39,6 @@
 * Block until objects have been created and are ready (https://github.com/jaegertracing/jaeger-operator/pull/279[#279])
 * Add rollover support (https://github.com/jaegertracing/jaeger-operator/pull/267[#267])
 * Added publishing of major.minor image for the operator (https://github.com/jaegertracing/jaeger-operator/pull/274[#274])
-* Changed from 'size' to 'replicas' (https://github.com/jaegertracing/jaeger-operator/pull/271[#271])
-* Moved from v1alpha1 to v1 (https://github.com/jaegertracing/jaeger-operator/pull/265[#265])
 * Use only ES data nodes to calculate shards (https://github.com/jaegertracing/jaeger-operator/pull/257[#257])
 * Reinstated sidecar for query, plus small refactoring of sidecar (https://github.com/jaegertracing/jaeger-operator/pull/246[#246])
 * Remove ES master certs (https://github.com/jaegertracing/jaeger-operator/pull/256[#256])
