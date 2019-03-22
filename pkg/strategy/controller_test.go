@@ -376,8 +376,9 @@ func TestMenuWithSignOut(t *testing.T) {
 			},
 		},
 		map[string]interface{}{
-			"label": "Log Out",
-			"url":   "/oauth/sign_in",
+			"label":        "Log Out",
+			"url":          "/oauth/sign_in",
+			"anchorTarget": "_self",
 		},
 	}
 	assert.Equal(t, uiOpts["menu"], expected)
@@ -393,7 +394,7 @@ func TestMenuNoSignOutExistingMenu(t *testing.T) {
 	uiOpts := map[string]interface{}{
 		"menu": []interface{}{},
 	}
-	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}})
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
 	assert.Contains(t, uiOpts, "menu")
 	assert.Len(t, uiOpts["menu"], 0)
 }

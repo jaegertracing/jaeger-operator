@@ -208,7 +208,8 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 		},
 		{
 		  "label": "Log Out",
-		  "url": "/oauth/sign_in"
+		  "url": "/oauth/sign_in",
+		  "anchorTarget": "_self"
 		}
 	  ]`
 
