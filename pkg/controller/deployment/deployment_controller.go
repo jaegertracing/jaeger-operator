@@ -75,7 +75,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 	}).Debug("Reconciling the object")
 
 	// Fetch the object instance
-	var obj metav1.Object
+	var obj runtime.Object
 	err := r.client.Get(context.Background(), request.NamespacedName, obj)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -88,7 +88,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	switch o := *obj.(type) {
+	switch o := obj.(type) {
 	case *appsv1.Deployment:
 		if inject.Needed(o.Namespace, o.Name, o.Annotations, o.Spec.Template.Spec.Containers) {
 			pods := &v1.JaegerList{}
@@ -108,7 +108,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 					"jaeger":           jaeger.Name,
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
-				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, o.Spec.Template)
+				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, &o.Spec.Template)
 				if err := r.client.Update(context.Background(), o); err != nil {
 					log.WithField("deployment", o).WithError(err).Error("failed to update")
 					return reconcile.Result{}, err
@@ -134,7 +134,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 					"jaeger":           jaeger.Name,
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
-				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, o.Spec.Template)
+				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, &o.Spec.Template)
 				if err := r.client.Update(context.Background(), o); err != nil {
 					log.WithField("deployment", o).WithError(err).Error("failed to update")
 					return reconcile.Result{}, err
