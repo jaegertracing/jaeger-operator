@@ -45,7 +45,7 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	} else {
 		decorate(dep)
 		logFields.Debug("injecting sidecar")
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 	}
 
 	return dep
@@ -94,7 +94,7 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 	return nil
 }
 
-func container(jaeger *v1.Jaeger) corev1.Container {
+func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
 	if len(util.FindItem("--reporter.type=", args)) == 0 {
@@ -126,12 +126,12 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 
 	CPULimit, err := resource.ParseQuantity(limitCPU)
 	if err != nil {
-		logrus.Debugf("Could not parse quantity for CPU limits: %v, using defaults.", limitCPU)
+		jaeger.Logger().Debugf("Could not parse quantity for CPU limits: %v, using defaults.", limitCPU)
 		CPULimit = CPULimitDefault
 	}
 	MemLimit, err := resource.ParseQuantity(limitMem)
 	if err != nil {
-		logrus.Debugf("Could not parse quantity for Memory limits: %v, using defaults.", limitMem)
+		jaeger.Logger().Debugf("Could not parse quantity for Memory limits: %v, using defaults.", limitMem)
 		MemLimit = MemLimitDefault
 	}
 	
@@ -157,14 +157,14 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 				Name:          "jg-binary-trft",
 			},
 		},
-		Resources: v1.ResourceRequirements{
-			Limits: v1.ResourceList{
-				v1.ResourceLimitsCPU:    CPULimit,
-				v1.ResourceLimitsMemory: MemLimit,
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceLimitsCPU:    CPULimit,
+				corev1.ResourceLimitsMemory: MemLimit,
 			},
-			Requests: v1.ResourceList{
-				v1.ResourceRequestsCPU:    CPULimit,
-				v1.ResourceRequestsMemory: MemLimit,
+			Requests: corev1.ResourceList{
+				corev1.ResourceRequestsCPU:    CPULimit,
+				corev1.ResourceRequestsMemory: MemLimit,
 			},
 		},
 	}
