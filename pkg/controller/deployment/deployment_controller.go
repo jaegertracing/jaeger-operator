@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -74,7 +75,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 	}).Debug("Reconciling the object")
 
 	// Fetch the object instance
-	var obj runtime.Object
+	var obj metav1.Object
 	err := r.client.Get(context.Background(), request.NamespacedName, obj)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -107,7 +108,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 					"jaeger":           jaeger.Name,
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
-				inject.Sidecar(jaeger, o)
+				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, o.Spec.Template)
 				if err := r.client.Update(context.Background(), o); err != nil {
 					log.WithField("deployment", o).WithError(err).Error("failed to update")
 					return reconcile.Result{}, err
@@ -133,7 +134,7 @@ func (r *ReconcileObject) Reconcile(request reconcile.Request) (reconcile.Result
 					"jaeger":           jaeger.Name,
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
-				inject.Sidecar(jaeger, o)
+				inject.Sidecar(jaeger, o.Name, o.Namespace, o.Annotations, o.Spec.Template)
 				if err := r.client.Update(context.Background(), o); err != nil {
 					log.WithField("deployment", o).WithError(err).Error("failed to update")
 					return reconcile.Result{}, err

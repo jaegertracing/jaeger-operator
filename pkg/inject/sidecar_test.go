@@ -29,7 +29,7 @@ func reset() {
 func TestInjectSidecar(t *testing.T) {
 	jaeger := v1.NewJaeger("TestInjectSidecar")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-	Sidecar(jaeger, dep)
+	Sidecar(jaeger, dep.Name, dep.Namespace, dep.Annotations, dep.Spec.Template)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)

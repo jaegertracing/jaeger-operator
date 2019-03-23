@@ -5,9 +5,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
@@ -28,7 +26,7 @@ const (
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(jaeger *v1.Jaeger, namespace string, annotations map[string]string, podSpecTemplate *corev1.PodTemplateSpec) {
+func Sidecar(jaeger *v1.Jaeger, name string, namespace string, annotations map[string]string, podSpecTemplate *corev1.PodTemplateSpec) {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	// logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
