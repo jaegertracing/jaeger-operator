@@ -134,7 +134,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		jaeger.Logger().Debugf("Could not parse quantity for Memory limits: %v, using defaults.", limitMem)
 		MemLimit = MemLimitDefault
 	}
-	
+
 	return corev1.Container{
 		Image: jaeger.Spec.Agent.Image,
 		Name:  "jaeger-agent",

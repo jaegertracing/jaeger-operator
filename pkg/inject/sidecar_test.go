@@ -123,7 +123,7 @@ func TestSidecarNotNeeded(t *testing.T) {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{},
+						{},
 					},
 				},
 			},
@@ -150,7 +150,7 @@ func TestSelectSingleJaegerPod(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
 	jaegerPods := &v1.JaegerList{
 		Items: []v1.Jaeger{
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-only-jaeger-instance-available",
 				},
@@ -167,12 +167,12 @@ func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
 	jaegerPods := &v1.JaegerList{
 		Items: []v1.Jaeger{
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -195,12 +195,12 @@ func TestSelectBasedOnName(t *testing.T) {
 
 	jaegerPods := &v1.JaegerList{
 		Items: []v1.Jaeger{
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-first-jaeger-instance-available",
 				},
 			},
-			v1.Jaeger{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "the-second-jaeger-instance-available",
 				},
@@ -315,7 +315,7 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{},
+						{},
 					},
 				},
 			},
