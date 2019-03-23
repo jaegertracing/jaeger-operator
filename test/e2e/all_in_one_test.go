@@ -2,6 +2,9 @@ package e2e
 
 import (
 	goctx "context"
+	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,11 +12,14 @@ import (
 	"testing"
 	"time"
 
+	osv1 "github.com/openshift/api/route/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -25,6 +31,10 @@ func JaegerAllInOne(t *testing.T) {
 	defer ctx.Cleanup()
 
 	if err := allInOneTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := allInOneWithIngressTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 
@@ -40,25 +50,7 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	}
 
 	// create jaeger custom resource
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-jaeger",
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
-			AllInOne: v1.JaegerAllInOneSpec{
-				Options: v1.NewOptions(map[string]interface{}{
-					"log-level":         "debug",
-					"memory.max-traces": 10000,
-				}),
-			},
-		},
-	}
+	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
 
 	log.Infof("passing %v", exampleJaeger)
 	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
@@ -67,6 +59,100 @@ func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) 
 	}
 
 	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+}
+
+func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return fmt.Errorf("could not get namespace: %v", err)
+	}
+
+	// create jaeger custom resource
+	ingressEnabled := true
+	name := "my-jaeger-with-ingress"
+	exampleJaeger := getJaegerAllInOneDefinition(namespace, name)
+	exampleJaeger.Spec.Ingress = v1.JaegerIngressSpec{
+		Enabled:  &ingressEnabled,
+		Security: v1.IngressSecurityNoneExplicit,
+	}
+
+	log.Infof("passing %v", exampleJaeger)
+	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	if err != nil {
+		return err
+	}
+
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
+	if err != nil {
+		t.Errorf("Error waiting for deployment of %s: %v\n", name, err)
+		return err
+	}
+
+	var url string
+	var httpClient http.Client
+	if isOpenShift(t) {
+		route, err := findRoute(t, f, name)
+		if err != nil {
+			return err
+		}
+
+		if len(route.Status.Ingress) != 1 {
+			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
+		}
+
+		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
+	} else {
+		ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
+		if err != nil {
+			return err
+		}
+
+		if len(ingress.Status.LoadBalancer.Ingress) != 1 {
+			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(ingress.Status.LoadBalancer.Ingress))
+		}
+
+		address := ingress.Status.LoadBalancer.Ingress[0].IP
+		url = fmt.Sprintf("http://%s/api/services", address)
+		httpClient = http.Client{Timeout: time.Second}
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
+	httpClient.Do(req)
+
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		res, err := httpClient.Do(req)
+		if err != nil {
+			return false, err
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return false, err
+		}
+
+		resp := &services{}
+		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			return false, nil
+		}
+
+		for _, v := range resp.Data {
+			if v == "jaeger-query" {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
 }
 
 func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
@@ -113,22 +199,24 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 		return err
 	}
 
-	err = WaitForIngress(t, f.KubeClient, namespace, "all-in-one-with-ui-config-query", retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	i, err := f.KubeClient.ExtensionsV1beta1().Ingresses(namespace).Get("all-in-one-with-ui-config-query", metav1.GetOptions{})
+	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", f.KubeClient)
 	if err != nil {
 		return err
 	}
 
-	if len(i.Status.LoadBalancer.Ingress) != 1 {
-		return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(i.Status.LoadBalancer.Ingress))
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	if err != nil {
+		return err
 	}
+	defer portForward.Close()
+	defer close(closeChan)
 
-	address := i.Status.LoadBalancer.Ingress[0].IP
-	url := fmt.Sprintf("http://%s%s/search", address, basePath)
+	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -161,4 +249,54 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 
 		return true, nil
 	})
+}
+
+func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
+	exampleJaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "allInOne",
+			AllInOne: v1.JaegerAllInOneSpec{
+				Options: v1.NewOptions(map[string]interface{}{
+					"log-level":         "debug",
+					"memory.max-traces": 10000,
+				}),
+			},
+		},
+	}
+	return exampleJaeger
+}
+
+func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route, error) {
+	routeList := &osv1.RouteList{}
+	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
+		opts := &client.ListOptions{}
+		if err := f.Client.List(context.Background(), opts, routeList); err != nil {
+			return false, err
+		}
+		if len(routeList.Items) >= 1 {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	})
+
+	if err != nil {
+		t.Errorf("Failed waiting for route: %v", err)
+		return nil, err
+	}
+
+	for _, r := range routeList.Items {
+		if strings.HasPrefix(r.Spec.Host, name) {
+			return &r, nil
+		}
+	}
+	return nil, errors.New("Could not find route")
 }

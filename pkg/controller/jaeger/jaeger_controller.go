@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/controller/jaeger/status"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -103,7 +103,16 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	instance.Kind = "Jaeger"
 
 	originalInstance := *instance
-	str := r.runStrategyChooser(instance)
+
+	opts := client.MatchingLabels(map[string]string{
+		"app.kubernetes.io/instance":   instance.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	})
+	list := &corev1.SecretList{}
+	if err := r.client.List(context.Background(), opts, list); err != nil {
+		return reconcile.Result{}, err
+	}
+	str := r.runStrategyChooser(instance, list.Items)
 
 	logFields := instance.Logger().WithField("execution", execution)
 
@@ -112,18 +121,21 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	withStatus := status.Scrape(r.client, *instance)
-
-	if !reflect.DeepEqual(originalInstance, withStatus) {
+	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
-		if err := r.client.Update(context.Background(), &withStatus); err != nil {
+		if err := r.client.Update(context.Background(), instance); err != nil {
 			logFields.WithError(err).Error("failed to store back the current CustomResource")
 			return reconcile.Result{}, err
 		}
 	}
 
-	// reconcile in a few seconds, to get the status object updated
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	log.WithFields(log.Fields{
+		"namespace": request.Namespace,
+		"instance":  request.Name,
+		"execution": execution,
+	}).Debug("Reconciling Jaeger completed - reschedule in 5 seconds")
+
+	return reconcile.Result{}, nil
 }
 
 // validate validates CR before processing it
@@ -136,16 +148,16 @@ func validate(jaeger *v1.Jaeger) error {
 	return nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger) strategy.S {
+func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
 	if nil == r.strategyChooser {
-		return defaultStrategyChooser(instance)
+		return defaultStrategyChooser(instance, secrets)
 	}
 
 	return r.strategyChooser(instance)
 }
 
-func defaultStrategyChooser(instance *v1.Jaeger) strategy.S {
-	return strategy.For(context.Background(), instance)
+func defaultStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
+	return strategy.For(context.Background(), instance, secrets)
 }
 
 func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
@@ -171,15 +183,7 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 		return errors.Wrap(err, "failed to handler dependencies")
 	}
 
-	if err := r.applyRoles(jaeger, str.Roles()); err != nil {
-		return err
-	}
-
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
-		return err
-	}
-
-	if err := r.applyRoleBindings(jaeger, str.RoleBindings()); err != nil {
 		return err
 	}
 

@@ -68,11 +68,7 @@ type JaegerSpec struct {
 // JaegerStatus defines the observed state of Jaeger
 // +k8s:openapi-gen=true
 type JaegerStatus struct {
-	// CollectorSpansReceived represents sum of the metric jaeger_collector_spans_received_total across all collectors
-	CollectorSpansReceived int `json:"collectorSpansReceived"`
-
-	// CollectorSpansDropped represents sum of the metric jaeger_collector_spans_dropped_total across all collectors
-	CollectorSpansDropped int `json:"collectorSpansDropped"`
+	// Fill me
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

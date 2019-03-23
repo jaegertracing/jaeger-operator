@@ -2,10 +2,12 @@ package strategy
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
@@ -13,7 +15,7 @@ import (
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
-func For(ctx context.Context, jaeger *v1.Jaeger) S {
+func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
 		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = "allInOne"
@@ -30,7 +32,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 		return newStreamingStrategy(jaeger)
 	}
 
-	return newProductionStrategy(jaeger)
+	return newProductionStrategy(jaeger, secrets)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when
@@ -75,26 +77,30 @@ func normalize(jaeger *v1.Jaeger) {
 		// cases:
 		// - omitted on Kubernetes
 		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
+		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
-	normalizeSparkDependencies(&jaeger.Spec.Storage.SparkDependencies, jaeger.Spec.Storage.Type)
+	// note that the order normalization matters - UI norm expects all normalized properties
+	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.Rollover)
+	normalizeUI(&jaeger.Spec)
 }
 
-func normalizeSparkDependencies(spec *v1.JaegerDependenciesSpec, storage string) {
+func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
-	if cronjob.SupportedStorage(storage) && spec.Enabled == nil {
+	if cronjob.SupportedStorage(spec.Type) &&
+		spec.SparkDependencies.Enabled == nil &&
+		!storage.ShouldDeployElasticsearch(*spec) {
 		trueVar := true
-		spec.Enabled = &trueVar
+		spec.SparkDependencies.Enabled = &trueVar
 	}
-	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-spark-dependencies-image")
+	if spec.SparkDependencies.Image == "" {
+		spec.SparkDependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
 	}
-	if spec.Schedule == "" {
-		spec.Schedule = "55 23 * * *"
+	if spec.SparkDependencies.Schedule == "" {
+		spec.SparkDependencies.Schedule = "55 23 * * *"
 	}
 }
 
@@ -131,6 +137,87 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
 	}
+}
+
+func normalizeUI(spec *v1.JaegerSpec) {
+	uiOpts := map[string]interface{}{}
+	if !spec.UI.Options.IsEmpty() {
+		if m, err := spec.UI.Options.GetMap(); err == nil {
+			uiOpts = m
+		}
+	}
+	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.SparkDependencies.Enabled)
+	enableLogOut(uiOpts, spec)
+	if len(uiOpts) > 0 {
+		spec.UI.Options = v1.NewFreeForm(uiOpts)
+	}
+}
+
+func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string) {
+	// respect explicit settings
+	if _, ok := uiOpts["archiveEnabled"]; !ok {
+		// archive tab is by default disabled
+		if strings.EqualFold(sOpts["es-archive.enabled"], "true") ||
+			strings.EqualFold(sOpts["cassandra-archive.enabled"], "true") {
+			uiOpts["archiveEnabled"] = true
+		}
+	}
+}
+
+func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
+	// dependency tab is by default enabled and memory storage support it
+	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == true) {
+		return
+	}
+	deps := map[string]interface{}{}
+	if val, ok := uiOpts["dependencies"]; ok {
+		if val, ok := val.(map[string]interface{}); ok {
+			deps = val
+		} else {
+			// we return as the type does not match
+			return
+		}
+	}
+	// respect explicit settings
+	if _, ok := deps["menuEnabled"]; !ok {
+		deps["menuEnabled"] = false
+		uiOpts["dependencies"] = deps
+	}
+}
+
+func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
+	if (spec.Ingress.Enabled != nil && *spec.Ingress.Enabled == false) ||
+		spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
+		return
+	}
+
+	if _, ok := uiOpts["menu"]; ok {
+		return
+	}
+
+	menuStr := `[
+		{
+		  "label": "About",
+		  "items": [
+			{
+			  "label": "Documentation",
+			  "url": "https://www.jaegertracing.io/docs/latest"
+			}
+		  ]
+		},
+		{
+		  "label": "Log Out",
+		  "url": "/oauth/sign_in",
+		  "anchorTarget": "_self"
+		}
+	  ]`
+
+	menuArray := make([]interface{}, 2)
+
+	json.Unmarshal([]byte(menuStr), &menuArray)
+
+	uiOpts["menu"] = menuArray
 }
 
 func unknownStorage(typ string) bool {

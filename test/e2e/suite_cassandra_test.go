@@ -21,6 +21,12 @@ func TestCassandra(t *testing.T) {
 		},
 	}))
 
+	// Don't start tests until cassandra is ready
+	err := WaitForStatefulset(t, framework.Global.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Run("cassandra", func(t *testing.T) {
 		t.Run("cassandra", Cassandra)
 		t.Run("spark-dependencies-cass", SparkDependenciesCassandra)

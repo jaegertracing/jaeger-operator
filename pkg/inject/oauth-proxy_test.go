@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,4 +54,18 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 		}
 	}
 	assert.True(t, found)
+}
+
+func TestOAuthProxyOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	sortedArgs := make([]string, len(dep.Spec.Template.Spec.Containers[1].Args))
+	copy(sortedArgs, dep.Spec.Template.Spec.Containers[1].Args)
+	sort.Strings(sortedArgs)
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 7)
+	assert.Equal(t, sortedArgs, dep.Spec.Template.Spec.Containers[1].Args)
 }

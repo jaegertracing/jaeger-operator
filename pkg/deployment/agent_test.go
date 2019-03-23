@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -129,4 +130,42 @@ func TestAgentLabels(t *testing.T) {
 	assert.Equal(t, "agent", dep.Spec.Template.Labels["app.kubernetes.io/component"])
 	assert.Equal(t, a.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
 	assert.Equal(t, fmt.Sprintf("%s-agent", a.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}
+
+func TestAgentOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestAgentOrderOfArguments")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+
+	// the following are added automatically
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--reporter.grpc.host-port"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[4], "--reporter.type"))
+}
+
+func TestAgentOverrideReporterType(t *testing.T) {
+	jaeger := v1.NewJaeger("TestAgentOrderOfArguments")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"reporter.type":             "thrift",
+		"reporter.thrift.host-port": "collector:14267",
+	})
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, "--reporter.thrift.host-port=collector:14267", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--reporter.type=thrift", dep.Spec.Template.Spec.Containers[0].Args[1])
 }

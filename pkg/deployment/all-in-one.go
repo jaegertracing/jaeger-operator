@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -53,6 +54,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(options)
 
 	var envFromSource []corev1.EnvFromSource
 	if len(a.jaeger.Spec.Storage.SecretName) > 0 {
@@ -170,11 +175,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
 	labels := a.labels()
-	return []*corev1.Service{
-		service.NewCollectorService(a.jaeger, labels),
+	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),
-	}
+	)
 }
 
 func (a *AllInOne) labels() map[string]string {

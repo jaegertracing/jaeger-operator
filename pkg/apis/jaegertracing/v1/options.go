@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -38,9 +39,14 @@ func (o *Options) Filter(prefix string) Options {
 // UnmarshalJSON implements an alternative parser for this field
 func (o *Options) UnmarshalJSON(b []byte) error {
 	var entries map[string]interface{}
-	json.Unmarshal(b, &entries)
+	d := json.NewDecoder(bytes.NewReader(b))
+	d.UseNumber()
+	if err := d.Decode(&entries); err != nil {
+		return err
+	}
 
-	return o.parse(entries)
+	o.parse(entries)
+	return nil
 }
 
 // MarshalJSON specifies how to convert this object into JSON
@@ -49,14 +55,11 @@ func (o Options) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (o *Options) parse(entries map[string]interface{}) error {
+func (o *Options) parse(entries map[string]interface{}) {
 	o.opts = make(map[string]string)
-
 	for k, v := range entries {
 		o.opts = entry(o.opts, k, v)
 	}
-
-	return nil
 }
 
 func entry(entries map[string]string, key string, value interface{}) map[string]string {

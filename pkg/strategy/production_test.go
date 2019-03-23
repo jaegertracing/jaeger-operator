@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -21,7 +22,7 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(v1.NewJaeger(name))
+	c := newProductionStrategy(v1.NewJaeger(name), []corev1.Secret{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
 }
 
@@ -33,7 +34,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newProductionStrategy(jaeger)
+	c := newProductionStrategy(jaeger, []corev1.Secret{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, true, false)
 }
 
@@ -43,7 +44,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newProductionStrategy(j)
+	c := newProductionStrategy(j, []corev1.Secret{})
 	assertDeploymentsAndServicesForProduction(t, name, c, true, false, false)
 }
 
@@ -57,7 +58,7 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newProductionStrategy(j)
+	c := newProductionStrategy(j, []corev1.Secret{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, true)
 }
 
@@ -84,7 +85,7 @@ func TestOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
@@ -108,7 +109,7 @@ func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger("TestDelegateProductionDependencies")
 	j.Spec.Storage.Type = "cassandra"
-	c := newProductionStrategy(j)
+	c := newProductionStrategy(j, []corev1.Secret{})
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -163,19 +164,19 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 
 func TestSparkDependenciesProduction(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(jaeger)
+		return newProductionStrategy(jaeger, []corev1.Secret{})
 	})
 }
 
 func TestEsIndexCleanerProduction(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(jaeger)
+		return newProductionStrategy(jaeger, []corev1.Secret{})
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) {
 	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
-	c := newProductionStrategy(j)
+	c := newProductionStrategy(j, []corev1.Secret{})
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))

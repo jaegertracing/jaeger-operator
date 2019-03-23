@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -75,6 +76,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	options := allArgs(i.jaeger.Spec.Ingester.Options,
 		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)),
 		i.jaeger.Spec.Storage.Options.Filter("kafka"))
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(options)
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{

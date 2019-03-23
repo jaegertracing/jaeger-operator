@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -13,7 +14,7 @@ import (
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsDefault")
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
@@ -21,7 +22,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
@@ -30,7 +31,7 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), Production)
 }
 
@@ -49,7 +50,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
 
-	ctrl := For(context.TODO(), jaeger)
+	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	deps := ctrl.Deployments()
 	assert.Len(t, deps, 2) // query and collector, for a production setup
 	counter := 0
@@ -102,7 +103,7 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 			Strategy: "all-in-one",
 		},
 	}
-	For(context.TODO(), jaeger)
+	For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
@@ -115,21 +116,21 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 			},
 		},
 	}
-	For(context.TODO(), jaeger)
+	For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
 }
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestSetSecurityToNoneByDefault")
 	normalize(jaeger)
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
 	jaeger := v1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	normalize(jaeger)
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
@@ -148,7 +149,7 @@ func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
@@ -160,7 +161,7 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 
 	normalize(jaeger)
 
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestNormalizeIndexCleaner(t *testing.T) {
@@ -207,16 +208,25 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	trueVar := true
 	falseVar := false
 	tests := []struct {
-		underTest v1.JaegerDependenciesSpec
-		expected  v1.JaegerDependenciesSpec
+		underTest v1.JaegerStorageSpec
+		expected  v1.JaegerStorageSpec
 	}{
-		{underTest: v1.JaegerDependenciesSpec{},
-			expected: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
-		{underTest: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar},
-			expected: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
+			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
+				SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar}},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch"},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo"}},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+		},
 	}
 	for _, test := range tests {
-		normalizeSparkDependencies(&test.underTest, "elasticsearch")
+		normalizeSparkDependencies(&test.underTest)
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }
@@ -237,6 +247,156 @@ func TestNormalizeElasticsearch(t *testing.T) {
 		normalizeElasticsearch(&test.underTest)
 		assert.Equal(t, test.expected, test.underTest)
 	}
+}
+
+func TestNormalizeUI(t *testing.T) {
+	tests := []struct {
+		j        *v1.JaegerSpec
+		expected *v1.JaegerSpec
+	}{
+		{
+			j:        &v1.JaegerSpec{},
+			expected: &v1.JaegerSpec{UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}})}},
+		},
+		{
+			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
+		},
+		{
+			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true, "dependencies": map[string]interface{}{"menuEnabled": false}})}},
+		},
+	}
+	for _, test := range tests {
+		normalizeUI(test.j)
+		assert.Equal(t, test.expected, test.j)
+	}
+}
+
+func TestNormalizeUIArchiveButton(t *testing.T) {
+	tests := []struct {
+		uiOpts   map[string]interface{}
+		sOpts    map[string]string
+		expected map[string]interface{}
+	}{
+		{},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"es-archive.enabled": "false"},
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"es-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": true},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			sOpts:    map[string]string{"cassandra-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": true},
+		},
+		{
+			uiOpts:   map[string]interface{}{"archiveEnabled": "respectThis"},
+			sOpts:    map[string]string{"es-archive.enabled": "true"},
+			expected: map[string]interface{}{"archiveEnabled": "respectThis"},
+		},
+	}
+	for _, test := range tests {
+		enableArchiveButton(test.uiOpts, test.sOpts)
+		assert.Equal(t, test.expected, test.uiOpts)
+	}
+}
+
+func TestNormalizeUIDependenciesTab(t *testing.T) {
+	falseVar := false
+	tests := []struct {
+		uiOpts   map[string]interface{}
+		storage  string
+		enabled  *bool
+		expected map[string]interface{}
+	}{
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "memory",
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "memory",
+			enabled:  &falseVar,
+			expected: map[string]interface{}{},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}},
+		},
+		{
+			uiOpts:   map[string]interface{}{},
+			storage:  "whateverStorage",
+			enabled:  &falseVar,
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": "respectThis"},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": "respectThis"},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": "respectThis"}},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": "respectThis"}},
+		},
+		{
+			uiOpts:   map[string]interface{}{"dependencies": map[string]interface{}{"foo": "bar"}},
+			storage:  "whateverStorage",
+			expected: map[string]interface{}{"dependencies": map[string]interface{}{"foo": "bar", "menuEnabled": false}},
+		},
+	}
+	for _, test := range tests {
+		disableDependenciesTab(test.uiOpts, test.storage, test.enabled)
+		assert.Equal(t, test.expected, test.uiOpts)
+	}
+}
+
+func TestMenuWithSignOut(t *testing.T) {
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   "https://www.jaegertracing.io/docs/latest",
+				},
+			},
+		},
+		map[string]interface{}{
+			"label":        "Log Out",
+			"url":          "/oauth/sign_in",
+			"anchorTarget": "_self",
+		},
+	}
+	assert.Equal(t, uiOpts["menu"], expected)
+}
+
+func TestMenuNoSignOutIngressSecurityNone(t *testing.T) {
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}})
+	assert.NotContains(t, uiOpts, "menu")
+}
+
+func TestMenuNoSignOutExistingMenu(t *testing.T) {
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{},
+	}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+	assert.Len(t, uiOpts["menu"], 0)
 }
 
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {

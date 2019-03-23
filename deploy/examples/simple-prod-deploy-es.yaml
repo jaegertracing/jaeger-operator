@@ -10,7 +10,3 @@ spec:
     elasticsearch:
       nodeCount: 1
       resources:
-    esIndexCleaner:
-      enabled: true
-      schedule: "*/30 * * * *"
-      numberOfDays: 1

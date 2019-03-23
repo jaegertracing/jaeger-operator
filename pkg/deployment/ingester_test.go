@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -334,9 +335,9 @@ func TestIngesterWithStorageType(t *testing.T) {
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
-	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[0])
-	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[1])
-	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[2])
+	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[2])
 }
 
 func TestIngesterLabels(t *testing.T) {
@@ -346,6 +347,24 @@ func TestIngesterLabels(t *testing.T) {
 	assert.Equal(t, "ingester", dep.Spec.Template.Labels["app.kubernetes.io/component"])
 	assert.Equal(t, ingester.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
 	assert.Equal(t, fmt.Sprintf("%s-ingester", ingester.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}
+
+func TestIngesterOrderOfArguments(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterOrderOfArguments")
+	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewIngester(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 }
 
 func newIngesterJaeger(name string) *v1.Jaeger {

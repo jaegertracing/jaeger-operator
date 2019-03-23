@@ -110,8 +110,11 @@ func TestInject(t *testing.T) {
 					Args: []string{
 						"foo",
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.token-file=" + k8sTokenFile,
+						"--es.tls=true",
 						"--es.tls.ca=" + caPath,
+						"--es.tls.cert=" + certPath,
+						"--es.tls.key=" + keyPath,
+						"--es.timeout=15s",
 						"--es.num-shards=0",
 						"--es.num-replicas=1",
 					},
@@ -127,17 +130,20 @@ func TestInject(t *testing.T) {
 		},
 		{pod: &corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Args: []string{"--es.num-shards=15"},
+				Args: []string{"--es.num-shards=15", "--es.num-replicas=55", "--es.timeout=99s"},
 			}},
 		},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
+						"--es.num-replicas=55",
+						"--es.timeout=99s",
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.token-file=" + k8sTokenFile,
+						"--es.tls=true",
 						"--es.tls.ca=" + caPath,
-						"--es.num-replicas=1",
+						"--es.tls.cert=" + certPath,
+						"--es.tls.key=" + keyPath,
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
@@ -155,10 +161,46 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.token-file=" + k8sTokenFile,
+						"--es.tls=true",
 						"--es.tls.ca=" + caPath,
+						"--es.tls.cert=" + certPath,
+						"--es.tls.key=" + keyPath,
+						"--es.timeout=15s",
 						"--es.num-shards=12",
 						"--es.num-replicas=11",
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
+					},
+				}},
+				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: "hoo-jaeger-elasticsearch"}}},
+				}},
+		},
+		{
+			pod: &corev1.PodSpec{Containers: []corev1.Container{{Args: []string{"--es-archive.enabled=true"}}}},
+			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			expected: &corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Args: []string{
+						"--es-archive.enabled=true",
+						"--es.server-urls=" + elasticsearchURL,
+						"--es.tls=true",
+						"--es.tls.ca=" + caPath,
+						"--es.tls.cert=" + certPath,
+						"--es.tls.key=" + keyPath,
+						"--es.timeout=15s",
+						"--es.num-shards=12",
+						"--es.num-replicas=11",
+						"--es-archive.server-urls=" + elasticsearchURL,
+						"--es-archive.tls=true",
+						"--es-archive.tls.ca=" + caPath,
+						"--es-archive.tls.cert=" + certPath,
+						"--es-archive.tls.key=" + keyPath,
+						"--es-archive.timeout=15s",
+						"--es-archive.num-shards=12",
+						"--es-archive.num-replicas=11",
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},

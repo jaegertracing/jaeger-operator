@@ -1,6 +1,7 @@
 package deployment
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -68,7 +69,7 @@ func TestAllInOneHasOwner(t *testing.T) {
 func TestAllInOneNumberOfServices(t *testing.T) {
 	name := "TestNumberOfServices"
 	services := NewAllInOne(v1.NewJaeger(name)).Services()
-	assert.Len(t, services, 3) // collector, query, agent
+	assert.Len(t, services, 4) // collector (headless and cluster IP), query, agent
 
 	for _, svc := range services {
 		owners := svc.ObjectMeta.OwnerReferences
@@ -239,4 +240,25 @@ func TestAllInOneLabels(t *testing.T) {
 	assert.Equal(t, "all-in-one", dep.Spec.Template.Labels["app.kubernetes.io/component"])
 	assert.Equal(t, a.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/instance"])
 	assert.Equal(t, a.jaeger.Name, dep.Spec.Template.Labels["app.kubernetes.io/name"])
+}
+
+func TestAllInOneOrderOfArguments(t *testing.T) {
+	jaeger := v1.NewJaeger("TestAllInOneOrderOfArguments")
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+
+	// the following are added automatically
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
 }

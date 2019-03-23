@@ -16,5 +16,3 @@ spec:
       containers:
       - name: myapp
         image: jaegertracing/vertx-create-span:operator-e2e-tests
-
-
