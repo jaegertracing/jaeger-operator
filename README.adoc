@@ -11,9 +11,7 @@ IMPORTANT: The Jaeger Operator version is related to the version of the Jaeger c
 
 == Installing the operator
 
-NOTE: The following instructions will deploy a version of the operator that is using the latest `master` version. If
-you want to install a particular stable version of the operator, you will need to edit the `operator.yaml` and specify
-the version as the tag in the container image - and then use the relevant `apiVersion` for the Jaeger operator.
+NOTE: The following instructions will deploy a version of the operator that is using the latest `master` version. If you want to install a particular stable version of the operator, you will need to edit the `operator.yaml` and specify the version as the tag in the container image - and then use the relevant `apiVersion` for the Jaeger operator.
 
 |===
 |Up to version |apiVersion |CRD yaml
@@ -47,8 +45,7 @@ kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operato
 
 IMPORTANT: when using a Jaeger Operator up to v1.10.0, install the CRD file `io_v1alpha1_jaeger_crd.yaml` in addition to `jaegertracing_v1_jaeger_crd.yaml`. This is because up to that version, the `apiVersion` in use was `io.jaegertracing/v1alpha1`.
 
-If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
-files to change `observability` to the required value.
+If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment files to change `observability` to the required value.
 
 At this point, there should be a `jaeger-operator` deployment available:
 
@@ -81,8 +78,7 @@ oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/mas
 
 IMPORTANT: when using a Jaeger Operator up to v1.10.0, install the CRD file `io_v1alpha1_jaeger_crd.yaml` in addition to `jaegertracing_v1_jaeger_crd.yaml`. This is because up to that version, the `apiVersion` in use was `io.jaegertracing/v1alpha1`.
 
-If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment
-files to change `observability` to the required value.
+If you want to install the Jaeger operator in a different namespace, you will need to edit the deployment files to change `observability` to the required value.
 
 Once the operator is installed, grant the role `jaeger-operator` to users who should be able to install individual Jaeger instances. The following example creates a role binding allowing the user `developer` to create Jaeger instances:
 
@@ -95,6 +91,36 @@ oc create \
 ----
 
 After the role is granted, switch back to a non-privileged user.
+
+Jaeger Agent can be configured to be deployed as a `DaemonSet` using a `HostPort` to allow Jaeger clients in the same node to discover the agent. In OpenShift, a `HostPort` can only be set when a special security context is set. A security context constraint allowing `DaemonSet` components to bind to a `HostPort` can be specified as follows:
+
+[source,yaml]
+----
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: daemonset-with-hostport
+  annotations:
+    kubernetes.io/description: 'Allows DaemonSets to bind to a well-known host port'
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+allowHostPorts: true
+----
+
+Then, install this constraint and assign it to a user. In the example below, we are assigning this policy to all users in the current namespace:
+
+[source,bash]
+----
+oc apply -f hostport-scc-daemonset.yaml
+oc adm policy add-scc-to-user daemonset-with-hostport -z default
+----
+
+With this policy in place, the Jaeger Agent can be deployed as a `DaemonSet` in OpenShift.
+
+WARNING: without such a policy, errors like the following will prevent a `DaemonSet` to be created: `Warning FailedCreate 4s (x14 over 45s) daemonset-controller Error creating: pods "agent-as-daemonset-agent-daemonset-" is forbidden: unable to validate against any security context constraint: [spec.containers[0].securityContext.containers[0].hostPort: Invalid value: 5775: Host ports are not allowed to be used`
+
 
 == Creating a new Jaeger instance
 
@@ -416,8 +442,7 @@ The secret itself would be managed outside of the `jaeger-operator` CR.
 
 == Define sampling strategies
 
-The operator can be used to define sampling strategies that will be supplied to tracers that have been configured
-to use a remote sampler:
+The operator can be used to define sampling strategies that will be supplied to tracers that have been configured to use a remote sampler:
 
 [source,yaml]
 ----
@@ -434,8 +459,7 @@ spec:
         param: 50
 ----
 
-This example defines a default sampling strategy that is probabilistic, with a 50% chance of the trace instances being
-sampled.
+This example defines a default sampling strategy that is probabilistic, with a 50% chance of the trace instances being sampled.
 
 Refer to the Jaeger documentation on link:https://www.jaegertracing.io/docs/latest/sampling/#collector-sampling-configuration[Collector Sampling Configuration] to see how service and endpoint sampling can be configured. The JSON representation described in that documentation can be used in the operator by converting to YAML.
 
