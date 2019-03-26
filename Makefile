@@ -7,12 +7,13 @@ IMPORT_LOG=import.log
 FMT_LOG=fmt.log
 
 OPERATOR_NAME ?= jaeger-operator
+OPERATOR_VERSION ?= "$(shell git describe --tags)"
+
 NAMESPACE ?= "$(USER)"
-BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):$(OPERATOR_VERSION)"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
-OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 ES_OPERATOR_NAMESPACE = openshift-logging
 
@@ -51,7 +52,7 @@ build: format
 
 .PHONY: docker
 docker:
-	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" . > /dev/null
 
 .PHONY: push
 push:
@@ -67,7 +68,10 @@ unit-tests:
 e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: crd build docker push
+prepare-e2e-tests: crd prepare-manifests
+
+.PHONY: prepare-manifests
+prepare-manifests: build docker push
 	@mkdir -p deploy/test
 	@cp test/role_binding.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
@@ -164,6 +168,16 @@ all: check format lint build test
 .PHONY: ci
 ci: ensure-generate-is-noop check format lint build unit-tests
 
+.PHONY: observability
+observability:
+	@kubectl create namespace observability 2>&1 | grep -v "already exists" || true
+	@kubectl config set-context $(shell kubectl config current-context) --namespace=observability
+
 .PHONY: scorecard
-scorecard:
-	@operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger-operator.csv.yaml --init-timeout 30
+scorecard: observability prepare-manifests
+	@git diff -s --exit-code || echo "WARNING: Scorecard only works for the committed changes."
+	@cp deploy/olm-catalog/jaeger-operator.csv.yaml deploy/test/jaeger-operator.csv.yaml
+	@sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/$(BUILD_IMAGE)~gi" -i deploy/test/jaeger-operator.csv.yaml
+	@sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.$(OPERATOR_VERSION)/gi" -i deploy/test/jaeger-operator.csv.yaml
+	@sed "s~image: jaegertracing/jaeger-operator.*~image: $(BUILD_IMAGE)~gi" -i deploy/test/jaeger-operator.csv.yaml
+	@operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --namespace-manifest deploy/test/namespace-manifests.yaml --csv-path deploy/test/jaeger-operator.csv.yaml --namespace observability --init-timeout 30

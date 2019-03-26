@@ -13,7 +13,7 @@ metadata:
           "spec": {
             "strategy": "allInOne",
             "allInOne": {
-              "image": "jaegertracing/all-in-one:1.10",
+              "image": "jaegertracing/all-in-one:1.11",
               "options": {
                 "log-level": "debug",
                 "query": {
@@ -66,13 +66,34 @@ spec:
   customresourcedefinitions:
     owned:
     - description: A configuration file for a Jaeger custom resource.
-      displayName: Jaeger
+      kind: Jaeger
+      name: jaegers.jaegertracing.io
+      version: v1
+      resources:
+        - kind: Deployment
+          name: ''
+          version: v1
+        - kind: Service
+          name: ''
+          version: v1
+        - kind: Pod
+          name: ''
+          version: v1
+    - description: (DEPRECATED) A configuration file for a Jaeger custom resource.
+      displayName: (DEPRECATED) Jaeger
       kind: Jaeger
       name: jaegers.io.jaegertracing
       version: v1alpha1
-    - kind: Jaeger
-      name: jaegers.jaegertracing.io
-      version: v1
+      resources:
+        - kind: Deployment
+          name: ''
+          version: v1
+        - kind: Service
+          name: ''
+          version: v1
+        - kind: Pod
+          name: ''
+          version: v1
   description: Provides monitoring and troubleshooting microservices-based distributed
     systems
   displayName: jaeger-operator
