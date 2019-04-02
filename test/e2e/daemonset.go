@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
+	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
@@ -32,18 +35,27 @@ func DaemonSet(t *testing.T) {
 }
 
 func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	// TODO restore this after fix of https://github.com/jaegertracing/jaeger-operator/issues/322
-	if isOpenShift(t) {
-		t.Skipf("Test %s is not currently supported on OpenShift because of issue 322\n", t.Name())
-	}
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
+	if isOpenShift(t) {
+		err = f.Client.Create(goctx.TODO(), hostportSccDaemonset(), cleanupOptions)
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			return err
+		}
 
+		cmd := exec.Command("oc", "adm", "--namespace", namespace, "policy",  "add-scc-to-user", "daemonset-with-hostport", "-z", "default")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Printf("Failed creating hostport scc with error [%v] OUTPUT: [%v]\n", err, string(output))
+			return err;
+		}
+	}
+
+	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 	log.Infof("passing %v", j)
 	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
 	if err != nil {
@@ -197,4 +209,28 @@ func jaegerAgentAsDaemonsetDefinition(namespace string, name string) *v1.Jaeger 
 		},
 	}
 	return j
+}
+
+func hostportSccDaemonset() (*osv1sec.SecurityContextConstraints) {
+	annotations := make(map[string]string)
+	annotations["kubernetes.io/description"] = "Allows DaemonSets to bind to a well-known host port"
+
+	scc := &osv1sec.SecurityContextConstraints{
+		TypeMeta: metav1.TypeMeta {
+			Kind: "SecurityContextConstraints",
+			APIVersion:"security.openshift.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta {
+			Name: "daemonset-with-hostport",
+			Annotations:annotations,
+		},
+		RunAsUser: osv1sec.RunAsUserStrategyOptions{
+			Type: osv1sec.RunAsUserStrategyRunAsAny,
+		},
+		SELinuxContext: osv1sec.SELinuxContextStrategyOptions{
+			Type:"RunAsAny",
+		},
+		AllowHostPorts: true,
+	}
+	return scc
 }
