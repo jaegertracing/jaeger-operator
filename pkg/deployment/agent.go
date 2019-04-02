@@ -3,6 +3,7 @@ package deployment
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -48,13 +49,18 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		}
 	}
 
+	zkCompactTrft := util.GetPort("--processor.zipkin-compact.server-host-port=", args, 5775)
+	configRest := util.GetPort("--http-server.host-port=", args, 5778)
+	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
+	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+
 	trueVar := true
 	labels := a.labels()
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      "5778",
+			"prometheus.io/port":      strconv.Itoa(int(configRest)),
 			"sidecar.istio.io/inject": "false",
 		},
 	}
@@ -100,25 +106,25 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Args:  args,
 						Ports: []corev1.ContainerPort{
 							{
-								ContainerPort: 5775,
-								HostPort:      5775,
+								ContainerPort: zkCompactTrft,
+								HostPort:      zkCompactTrft,
 								Name:          "zk-compact-trft",
 								Protocol:      corev1.ProtocolUDP,
 							},
 							{
-								ContainerPort: 5778,
-								HostPort:      5778,
+								ContainerPort: configRest,
+								HostPort:      configRest,
 								Name:          "config-rest",
 							},
 							{
-								ContainerPort: 6831,
-								HostPort:      6831,
+								ContainerPort: jgCompactTrft,
+								HostPort:      jgCompactTrft,
 								Name:          "jg-compact-trft",
 								Protocol:      corev1.ProtocolUDP,
 							},
 							{
-								ContainerPort: 6832,
-								HostPort:      6832,
+								ContainerPort: jgBinaryTrft,
+								HostPort:      jgBinaryTrft,
 								Name:          "jg-binary-trft",
 								Protocol:      corev1.ProtocolUDP,
 							},
@@ -127,7 +133,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/metrics",
-									Port: intstr.FromInt(5778),
+									Port: intstr.FromInt(int(configRest)),
 								},
 							},
 							InitialDelaySeconds: 1,
