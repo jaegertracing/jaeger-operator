@@ -155,11 +155,14 @@ INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml
 INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml 
 ----
 
-The CSV YAML can then be tested with this command:
+The generated CSV yaml should then be compared and used to update the deploy/olm-catalog/jaeger.clusterserviceversion.yaml file which represents the stable version copied to the operatorhub following each jaeger operator release. Once merged,
+the jaeger-operator.csv.yaml file should be removed.
+
+The jaeger.clusterserviceversion.yaml file can then be tested with this command:
 
 [source,bash]
 ----
-$ operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger-operator.csv.yaml --init-timeout 30
+$ operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
 Checking that writing into CRs has an effect
