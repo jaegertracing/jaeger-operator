@@ -42,11 +42,12 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 	}
 
 	if isOpenShift(t) {
-		err = f.Client.Create(goctx.TODO(), hostportSccDaemonset(), cleanupOptions)
+		err = f.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
 			return err
 		}
 
+		// ideally, we would use the REST API, but for a single-usage within the project, this is the simplest solution that works
 		cmd := exec.Command("oc", "adm", "--namespace", namespace, "policy",  "add-scc-to-user", "daemonset-with-hostport", "-z", "default")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
@@ -211,7 +212,7 @@ func jaegerAgentAsDaemonsetDefinition(namespace string, name string) *v1.Jaeger 
 	return j
 }
 
-func hostportSccDaemonset() (*osv1sec.SecurityContextConstraints) {
+func hostPortSccDaemonset() (*osv1sec.SecurityContextConstraints) {
 	annotations := make(map[string]string)
 	annotations["kubernetes.io/description"] = "Allows DaemonSets to bind to a well-known host port"
 
