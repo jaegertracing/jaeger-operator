@@ -214,3 +214,21 @@ func TestFindItem(t *testing.T) {
 	assert.Equal(t, "--reporter.type=thrift", FindItem("--reporter.type=", args))
 	assert.Len(t, FindItem("--c-option", args), 0)
 }
+
+func TestGetPortDefault(t *testing.T) {
+	opts := v1.NewOptions(map[string]interface{}{})
+
+	args := opts.ToArgs()
+
+	assert.Equal(t, int32(1234), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
+}
+
+func TestGetPortSpecified(t *testing.T) {
+	opts := v1.NewOptions(map[string]interface{}{
+		"processor.jaeger-compact.server-host-port": ":6831",
+	})
+
+	args := opts.ToArgs()
+
+	assert.Equal(t, int32(6831), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
+}

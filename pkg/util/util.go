@@ -1,6 +1,7 @@
 package util
 
 import (
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -135,4 +136,20 @@ func FindItem(prefix string, args []string) string {
 	}
 
 	return ""
+}
+
+// GetPort returns a port, either from supplied default port, or extracted from supplied arg value
+func GetPort(arg string, args []string, port int32) int32 {
+	portArg := FindItem(arg, args)
+	if len(portArg) > 0 {
+		i := strings.Index(portArg, ":")
+		if i > -1 {
+			newPort, err := strconv.ParseInt(portArg[i+1:], 10, 32)
+			if err == nil {
+				port = int32(newPort)
+			}
+		}
+	}
+
+	return port
 }

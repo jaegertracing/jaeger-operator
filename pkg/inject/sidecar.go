@@ -99,6 +99,11 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 		}
 	}
 
+	zkCompactTrft := util.GetPort("--processor.zipkin-compact.server-host-port=", args, 5775)
+	configRest := util.GetPort("--http-server.host-port=", args, 5778)
+	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
+	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
@@ -109,19 +114,19 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 		Args:  args,
 		Ports: []corev1.ContainerPort{
 			{
-				ContainerPort: 5775,
+				ContainerPort: zkCompactTrft,
 				Name:          "zk-compact-trft",
 			},
 			{
-				ContainerPort: 5778,
+				ContainerPort: configRest,
 				Name:          "config-rest",
 			},
 			{
-				ContainerPort: 6831,
+				ContainerPort: jgCompactTrft,
 				Name:          "jg-compact-trft",
 			},
 			{
-				ContainerPort: 6832,
+				ContainerPort: jgBinaryTrft,
 				Name:          "jg-binary-trft",
 			},
 		},
