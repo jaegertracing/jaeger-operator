@@ -20,6 +20,9 @@ func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*core
 func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	svc := collectorService(jaeger, selector)
 	svc.Name = GetNameForHeadlessCollectorService(jaeger)
+	svc.Annotations = map[string]string{
+		"prometheus.io/scrape": "false",
+	}
 	svc.Spec.ClusterIP = "None"
 	return svc
 }
