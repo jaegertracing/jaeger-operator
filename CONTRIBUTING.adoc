@@ -155,8 +155,7 @@ INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml
 INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml 
 ----
 
-The generated CSV yaml should then be compared and used to update the deploy/olm-catalog/jaeger.clusterserviceversion.yaml file which represents the stable version copied to the operatorhub following each jaeger operator release. Once merged,
-the jaeger-operator.csv.yaml file should be removed.
+The generated CSV yaml should then be compared and used to update the deploy/olm-catalog/jaeger.clusterserviceversion.yaml file which represents the stable version copied to the operatorhub following each jaeger operator release. Once merged, the jaeger-operator.csv.yaml file should be removed.
 
 The jaeger.clusterserviceversion.yaml file can then be tested with this command:
 
