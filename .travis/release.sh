@@ -9,8 +9,10 @@ fi
 BASE_BUILD_IMAGE=${BASE_BUILD_IMAGE:-"jaegertracing/jaeger-operator"}
 OPERATOR_VERSION=${OPERATOR_VERSION:-$(git describe --tags)}
 OPERATOR_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d\.]+)")
+JAEGER_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d]+\.[\d]+)")
 TAG=${TAG:-"v${OPERATOR_VERSION}"}
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
+CREATED_AT=$(date +%FT%TZ)
 
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
@@ -22,6 +24,10 @@ sed "s/currentCSV: jaeger-operator.*/currentCSV: jaeger-operator.v${OPERATOR_VER
 sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
+
+sed "s/all-in-one:.*\"/all-in-one:${JAEGER_VERSION}\"/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
+
+sed "s/createdAt: .*/createdAt: \"${CREATED_AT}\"/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 
 export PREVIOUS_OPERATOR_VERSION=`grep "version: [0-9]" deploy/olm-catalog/jaeger.clusterserviceversion.yaml | cut -f4 -d' '`
 sed "s/replaces: jaeger-operator\.v.*/replaces: jaeger-operator.v${PREVIOUS_OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
