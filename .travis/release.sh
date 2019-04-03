@@ -18,16 +18,16 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deplo
 # changes to deploy/olm-catalog/jaeger.package.yaml
 sed "s/currentCSV: jaeger-operator.*/currentCSV: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.package.yaml
 
-# changes to deploy/olm-catalog/jaeger-operator.csv.yaml
-sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
-sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
-sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
+# changes to deploy/olm-catalog/jaeger.clusterserviceversion.yaml
+sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
+sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
+sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 
-export PREVIOUS_OPERATOR_VERSION=`grep "version: [0-9]" deploy/olm-catalog/jaeger-operator.csv.yaml | cut -f4 -d' '`
-sed "s/replaces: jaeger-operator\.v.*/replaces: jaeger-operator.v${PREVIOUS_OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
+export PREVIOUS_OPERATOR_VERSION=`grep "version: [0-9]" deploy/olm-catalog/jaeger.clusterserviceversion.yaml | cut -f4 -d' '`
+sed "s/replaces: jaeger-operator\.v.*/replaces: jaeger-operator.v${PREVIOUS_OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 
 ## there's a "version: v1" there somewhere that we want to avoid
-sed -E "s/version: ([0-9\.]+).*/version: ${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger-operator.csv.yaml
+sed -E "s/version: ([0-9\.]+).*/version: ${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
 
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
@@ -39,7 +39,7 @@ else
     git add \
       deploy/operator.yaml \
       deploy/olm-catalog/jaeger.package.yaml \
-      deploy/olm-catalog/jaeger-operator.csv.yaml \
+      deploy/olm-catalog/jaeger.clusterserviceversion.yaml \
       test/operator.yaml
 
     git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
