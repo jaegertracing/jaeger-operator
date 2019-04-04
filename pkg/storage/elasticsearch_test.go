@@ -27,6 +27,7 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 }
 
 func TestCreateElasticsearchCR(t *testing.T) {
+	storageClassName := "floppydisk"
 	tests := []struct {
 		jEsSpec v1.ElasticsearchSpec
 		esSpec  esv1.ElasticsearchSpec
@@ -36,7 +37,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 				NodeCount:        2,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Storage: esv1.ElasticsearchStorageSpec{
-					StorageClassName: "floppydisk",
+					StorageClassName: &storageClassName,
 				},
 			},
 			esSpec: esv1.ElasticsearchSpec{
@@ -46,7 +47,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 				Nodes: []esv1.ElasticsearchNode{
 					{
 						NodeCount: 2,
-						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
 					},
 				},
@@ -57,7 +58,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 				NodeCount:        5,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Storage: esv1.ElasticsearchStorageSpec{
-					StorageClassName: "floppydisk",
+					StorageClassName: &storageClassName,
 				},
 			},
 			esSpec: esv1.ElasticsearchSpec{
@@ -67,12 +68,12 @@ func TestCreateElasticsearchCR(t *testing.T) {
 				Nodes: []esv1.ElasticsearchNode{
 					{
 						NodeCount: 3,
-						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
 					},
 					{
 						NodeCount: 2,
-						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 					},
 				},
