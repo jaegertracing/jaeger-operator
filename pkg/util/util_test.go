@@ -166,6 +166,57 @@ func TestMergeResourceRequests(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), merged.Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
+func TestAffinityDefault(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{}
+	specificSpec := v1.JaegerCommonSpec{}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Nil(t, merged.Affinity)
+}
+
+func TestAffinityOverride(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		Affinity: &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{},
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		Affinity: &corev1.Affinity{
+			PodAffinity: &corev1.PodAffinity{},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.NotNil(t, merged.Affinity)
+	assert.NotNil(t, merged.Affinity.PodAffinity)
+	assert.Nil(t, merged.Affinity.NodeAffinity)
+}
+
+func TestMergeTolerations(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		Tolerations: []corev1.Toleration{{
+			Key: "toleration1",
+		}},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		Tolerations: []corev1.Toleration{{
+			Key: "toleration1",
+		}, {
+			Key: "toleration2",
+		}},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	// Keys are not unique, so should be aggregation of all tolerations
+	assert.Len(t, merged.Tolerations, 3)
+	assert.Equal(t, "toleration1", merged.Tolerations[0].Key)
+	assert.Equal(t, "toleration2", merged.Tolerations[1].Key)
+	assert.Equal(t, "toleration1", merged.Tolerations[2].Key)
+}
+
 func TestGetEsHostname(t *testing.T) {
 	tests := []struct {
 		underTest map[string]string

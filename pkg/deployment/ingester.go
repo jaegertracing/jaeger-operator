@@ -146,6 +146,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger),
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
 				},
 			},
 		},

@@ -146,6 +146,8 @@ func (q *Query) Get() *appsv1.Deployment {
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger),
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
 				},
 			},
 		},
