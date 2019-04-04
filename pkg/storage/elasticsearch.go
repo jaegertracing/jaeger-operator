@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -126,8 +126,8 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 }
 
 // Elasticsearch returns an ES CR for the deployment
-func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
-	return &esv1alpha1.Elasticsearch{
+func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
+	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ed.Jaeger.Namespace,
 			Name:      esSecret.name,
@@ -143,10 +143,10 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 			},
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(ed.Jaeger)},
 		},
-		Spec: esv1alpha1.ElasticsearchSpec{
-			ManagementState:  esv1alpha1.ManagementStateManaged,
+		Spec: esv1.ElasticsearchSpec{
+			ManagementState:  esv1.ManagementStateManaged,
 			RedundancyPolicy: ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy,
-			Spec: esv1alpha1.ElasticsearchNodeSpec{
+			Spec: esv1.ElasticsearchNodeSpec{
 				Image:     ed.Jaeger.Spec.Storage.Elasticsearch.Image,
 				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
 			},
@@ -155,29 +155,29 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1alpha1.Elasticsearch {
 	}
 }
 
-func getNodes(es v1.ElasticsearchSpec) []esv1alpha1.ElasticsearchNode {
+func getNodes(es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 	if es.NodeCount <= 3 {
-		return []esv1alpha1.ElasticsearchNode{
+		return []esv1.ElasticsearchNode{
 			{
 				NodeCount:    es.NodeCount,
 				Storage:      es.Storage,
 				NodeSelector: es.NodeSelector,
-				Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
+				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
 			},
 		}
 	}
-	return []esv1alpha1.ElasticsearchNode{
+	return []esv1.ElasticsearchNode{
 		{
 			NodeCount:    3,
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
-			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
+			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
 		},
 		{
 			NodeCount:    dataNodesCount(es.NodeCount),
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
-			Roles:        []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
+			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 		},
 	}
 }
@@ -190,15 +190,15 @@ func dataNodesCount(nodesCount int32) int32 {
 }
 
 // taken from https://github.com/openshift/cluster-logging-operator/blob/1ead6701c7c7af9c0578aa66597261079b2781d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/defaults.go#L33
-func calculateReplicaShards(policyType esv1alpha1.RedundancyPolicyType, dataNodes int) int {
+func calculateReplicaShards(policyType esv1.RedundancyPolicyType, dataNodes int) int {
 	switch policyType {
-	case esv1alpha1.FullRedundancy:
+	case esv1.FullRedundancy:
 		return dataNodes - 1
-	case esv1alpha1.MultipleRedundancy:
+	case esv1.MultipleRedundancy:
 		return (dataNodes - 1) / 2
-	case esv1alpha1.SingleRedundancy:
+	case esv1.SingleRedundancy:
 		return 1
-	case esv1alpha1.ZeroRedundancy:
+	case esv1.ZeroRedundancy:
 		return 0
 	default:
 		return 1

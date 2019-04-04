@@ -14,15 +14,15 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
-func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1alpha1.Elasticsearch) error {
+func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance": jaeger.Name,
 		"app.kubernetes.io/part-of":  "jaeger",
 	})
-	list := &esv1alpha1.ElasticsearchList{}
+	list := &esv1.ElasticsearchList{}
 	if err := r.client.List(context.Background(), opts, list); err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1a
 	return nil
 }
 
-func waitForAvailableElastic(c client.Client, es esv1alpha1.Elasticsearch) error {
+func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 	var expectedSize int32
 	for _, n := range es.Spec.Nodes {
 		expectedSize += n.NodeCount

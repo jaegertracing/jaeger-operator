@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -99,7 +99,7 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 
 	// Jaeger's Elasticsearch
-	s.AddKnownTypes(v1.SchemeGroupVersion, &esv1alpha1.Elasticsearch{}, &esv1alpha1.ElasticsearchList{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &esv1.Elasticsearch{}, &esv1.ElasticsearchList{})
 
 	cl := fake.NewFakeClient(objs...)
 	return &ReconcileJaeger{client: cl, scheme: s}, cl

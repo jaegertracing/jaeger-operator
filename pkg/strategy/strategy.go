@@ -8,7 +8,7 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // S knows what type of deployments to build based on a given spec
@@ -20,7 +20,7 @@ type S struct {
 	daemonSets      []appsv1.DaemonSet
 	dependencies    []batchv1.Job
 	deployments     []appsv1.Deployment
-	elasticsearches []esv1alpha1.Elasticsearch
+	elasticsearches []esv1.Elasticsearch
 	ingresses       []v1beta1.Ingress
 	routes          []osv1.Route
 	services        []v1.Service
@@ -89,7 +89,7 @@ func (s S) WithDependencies(deps []batchv1.Job) S {
 }
 
 // WithElasticsearches returns the strategy with the given list of elastic search instances
-func (s S) WithElasticsearches(es []esv1alpha1.Elasticsearch) S {
+func (s S) WithElasticsearches(es []esv1.Elasticsearch) S {
 	s.elasticsearches = es
 	return s
 }
@@ -144,7 +144,7 @@ func (s S) Deployments() []appsv1.Deployment {
 }
 
 // Elasticsearches returns the list of elastic search instances for this strategy
-func (s S) Elasticsearches() []esv1alpha1.Elasticsearch {
+func (s S) Elasticsearches() []esv1.Elasticsearch {
 	return s.elasticsearches
 }
 
