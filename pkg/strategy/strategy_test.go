@@ -11,7 +11,7 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 func TestWithAccounts(t *testing.T) {
@@ -45,7 +45,7 @@ func TestWithDeployments(t *testing.T) {
 }
 
 func TestWithElasticsearches(t *testing.T) {
-	c := New().WithElasticsearches([]esv1alpha1.Elasticsearch{{}})
+	c := New().WithElasticsearches([]esv1.Elasticsearch{{}})
 	assert.Len(t, c.Elasticsearches(), 1)
 }
 

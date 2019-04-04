@@ -410,7 +410,10 @@
   branch = "release-3.11"
   digest = "1:66dec43174af7bc882f832dbc67257f31c724245565cc059d188fb7ae08b9e7f"
   name = "github.com/openshift/api"
-  packages = ["route/v1"]
+  packages = [
+    "route/v1",
+    "security/v1",
+  ]
   pruneopts = "NT"
   revision = "5ad8479f64f1b60ee9c62ce8ef1fe6638838725e"
 
@@ -1134,6 +1137,7 @@
   input-imports = [
     "github.com/mitchellh/go-homedir",
     "github.com/openshift/api/route/v1",
+    "github.com/openshift/api/security/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
@@ -1146,12 +1150,12 @@
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "github.com/uber/jaeger-client-go/config",
+    "golang.org/x/net/context",
     "k8s.io/api/apps/v1",
     "k8s.io/api/batch/v1",
     "k8s.io/api/batch/v1beta1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
-    "k8s.io/api/rbac/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",

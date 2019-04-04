@@ -4,8 +4,7 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // IngressSecurityType represents the possible values for the security type
@@ -160,11 +159,11 @@ type JaegerStorageSpec struct {
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
 type ElasticsearchSpec struct {
-	Resources        v1.ResourceRequirements             `json:"resources"`
-	NodeCount        int32                               `json:"nodeCount"`
-	NodeSelector     map[string]string                   `json:"nodeSelector,omitempty"`
-	Storage          esv1alpha1.ElasticsearchStorageSpec `json:"storage"`
-	RedundancyPolicy v1alpha1.RedundancyPolicyType       `json:"redundancyPolicy"`
+	Resources        v1.ResourceRequirements       `json:"resources"`
+	NodeCount        int32                         `json:"nodeCount"`
+	NodeSelector     map[string]string             `json:"nodeSelector,omitempty"`
+	Storage          esv1.ElasticsearchStorageSpec `json:"storage"`
+	RedundancyPolicy esv1.RedundancyPolicyType     `json:"redundancyPolicy"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

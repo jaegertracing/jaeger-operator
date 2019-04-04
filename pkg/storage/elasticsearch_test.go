@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 func TestShouldDeployElasticsearch(t *testing.T) {
@@ -29,25 +29,25 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 func TestCreateElasticsearchCR(t *testing.T) {
 	tests := []struct {
 		jEsSpec v1.ElasticsearchSpec
-		esSpec  esv1alpha1.ElasticsearchSpec
+		esSpec  esv1.ElasticsearchSpec
 	}{
 		{
 			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        2,
-				RedundancyPolicy: esv1alpha1.FullRedundancy,
-				Storage: esv1alpha1.ElasticsearchStorageSpec{
+				RedundancyPolicy: esv1.FullRedundancy,
+				Storage: esv1.ElasticsearchStorageSpec{
 					StorageClassName: "floppydisk",
 				},
 			},
-			esSpec: esv1alpha1.ElasticsearchSpec{
-				ManagementState:  esv1alpha1.ManagementStateManaged,
-				RedundancyPolicy: esv1alpha1.FullRedundancy,
-				Spec:             esv1alpha1.ElasticsearchNodeSpec{},
-				Nodes: []esv1alpha1.ElasticsearchNode{
+			esSpec: esv1.ElasticsearchSpec{
+				ManagementState:  esv1.ManagementStateManaged,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Spec:             esv1.ElasticsearchNodeSpec{},
+				Nodes: []esv1.ElasticsearchNode{
 					{
 						NodeCount: 2,
-						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
-						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData, esv1alpha1.ElasticsearchRoleMaster},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
 					},
 				},
 			},
@@ -55,25 +55,25 @@ func TestCreateElasticsearchCR(t *testing.T) {
 		{
 			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        5,
-				RedundancyPolicy: esv1alpha1.FullRedundancy,
-				Storage: esv1alpha1.ElasticsearchStorageSpec{
+				RedundancyPolicy: esv1.FullRedundancy,
+				Storage: esv1.ElasticsearchStorageSpec{
 					StorageClassName: "floppydisk",
 				},
 			},
-			esSpec: esv1alpha1.ElasticsearchSpec{
-				ManagementState:  esv1alpha1.ManagementStateManaged,
-				RedundancyPolicy: esv1alpha1.FullRedundancy,
-				Spec:             esv1alpha1.ElasticsearchNodeSpec{},
-				Nodes: []esv1alpha1.ElasticsearchNode{
+			esSpec: esv1.ElasticsearchSpec{
+				ManagementState:  esv1.ManagementStateManaged,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Spec:             esv1.ElasticsearchNodeSpec{},
+				Nodes: []esv1.ElasticsearchNode{
 					{
 						NodeCount: 3,
-						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
-						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleMaster},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
 					},
 					{
 						NodeCount: 2,
-						Storage:   esv1alpha1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
-						Roles:     []esv1alpha1.ElasticsearchNodeRole{esv1alpha1.ElasticsearchRoleClient, esv1alpha1.ElasticsearchRoleData},
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: "floppydisk"},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 					},
 				},
 			},
@@ -156,7 +156,7 @@ func TestInject(t *testing.T) {
 		},
 		{
 			pod: &corev1.PodSpec{Containers: []corev1.Container{{}}},
-			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1.FullRedundancy},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
@@ -180,7 +180,7 @@ func TestInject(t *testing.T) {
 		},
 		{
 			pod: &corev1.PodSpec{Containers: []corev1.Container{{Args: []string{"--es-archive.enabled=true"}}}},
-			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1alpha1.FullRedundancy},
+			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1.FullRedundancy},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
@@ -225,17 +225,17 @@ func TestInject(t *testing.T) {
 func TestCalculateReplicaShards(t *testing.T) {
 	tests := []struct {
 		dataNodes int
-		redType   esv1alpha1.RedundancyPolicyType
+		redType   esv1.RedundancyPolicyType
 		shards    int
 	}{
-		{redType: esv1alpha1.ZeroRedundancy, dataNodes: 1, shards: 0},
-		{redType: esv1alpha1.ZeroRedundancy, dataNodes: 1, shards: 0},
-		{redType: esv1alpha1.SingleRedundancy, dataNodes: 1, shards: 1},
-		{redType: esv1alpha1.SingleRedundancy, dataNodes: 20, shards: 1},
-		{redType: esv1alpha1.MultipleRedundancy, dataNodes: 1, shards: 0},
-		{redType: esv1alpha1.MultipleRedundancy, dataNodes: 20, shards: 9},
-		{redType: esv1alpha1.FullRedundancy, dataNodes: 1, shards: 0},
-		{redType: esv1alpha1.FullRedundancy, dataNodes: 20, shards: 19},
+		{redType: esv1.ZeroRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1.ZeroRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1.SingleRedundancy, dataNodes: 1, shards: 1},
+		{redType: esv1.SingleRedundancy, dataNodes: 20, shards: 1},
+		{redType: esv1.MultipleRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1.MultipleRedundancy, dataNodes: 20, shards: 9},
+		{redType: esv1.FullRedundancy, dataNodes: 1, shards: 0},
+		{redType: esv1.FullRedundancy, dataNodes: 20, shards: 19},
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.shards, calculateReplicaShards(test.redType, test.dataNodes))

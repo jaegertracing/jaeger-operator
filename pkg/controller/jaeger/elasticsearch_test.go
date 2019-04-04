@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1alpha1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1alpha1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -35,7 +35,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithElasticsearches([]esv1alpha1.Elasticsearch{{
+		s := strategy.New().WithElasticsearches([]esv1.Elasticsearch{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -50,7 +50,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &esv1alpha1.Elasticsearch{}
+	persisted := &esv1.Elasticsearch{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -69,7 +69,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 		Name: "TestElasticsearchesUpdate",
 	}
 
-	orig := esv1alpha1.Elasticsearch{}
+	orig := esv1.Elasticsearch{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 
@@ -80,11 +80,11 @@ func TestElasticsearchesUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
-		updated := esv1alpha1.Elasticsearch{}
+		updated := esv1.Elasticsearch{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithElasticsearches([]esv1alpha1.Elasticsearch{updated})
+		s := strategy.New().WithElasticsearches([]esv1.Elasticsearch{updated})
 		return s
 	}
 
@@ -93,7 +93,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &esv1alpha1.Elasticsearch{}
+	persisted := &esv1.Elasticsearch{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -112,7 +112,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 		Name: "TestElasticsearchesDelete",
 	}
 
-	orig := esv1alpha1.Elasticsearch{}
+	orig := esv1.Elasticsearch{}
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
@@ -130,7 +130,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &esv1alpha1.Elasticsearch{}
+	persisted := &esv1.Elasticsearch{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
