@@ -210,7 +210,8 @@ func TestMergeTolerations(t *testing.T) {
 
 	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
 
-	// Keys are not unique, so should be aggregation of all tolerations
+	// Keys do not need to be unique, so should be aggregation of all tolerations
+	// See https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ for more details
 	assert.Len(t, merged.Tolerations, 3)
 	assert.Equal(t, "toleration1", merged.Tolerations[0].Key)
 	assert.Equal(t, "toleration2", merged.Tolerations[1].Key)
