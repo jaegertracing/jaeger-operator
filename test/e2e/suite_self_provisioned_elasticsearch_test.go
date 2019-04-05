@@ -11,6 +11,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 func TestSelfProvisionedES(t *testing.T) {
@@ -24,10 +25,10 @@ func TestSelfProvisionedES(t *testing.T) {
 			APIVersion: "jaegertracing.io/v1",
 		},
 	}))
-	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &esv1.ElasticsearchList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Elasticsearch",
-			APIVersion: "logging.openshift.io/v1alpha1",
+			APIVersion: "logging.openshift.io/v1",
 		},
 	}))
 
