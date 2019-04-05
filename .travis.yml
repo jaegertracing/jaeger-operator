@@ -28,18 +28,19 @@ jobs:
       - "./.travis/after_success.sh"
 
     - stage: e2e
-        env:
-          global:
-            - CHANGE_MINIKUBE_NONE_USER=true
-            - MINIKUBE_WANTUPDATENOTIFICATION=false
-            - MINIKUBE_WANTREPORTERRORPROMPT=false
-            - MINIKUBE_HOME=$HOME
-            - CHANGE_MINIKUBE_NONE_USER=true
-            - KUBECONFIG=$HOME/.kube/config
-        install:
-          - "./.travis/setupMinikube.sh"
-        script:
-          - "./.travis/rune2eTests.sh"
+      name: "Run e2e tests"
+      env:
+        global:
+          - CHANGE_MINIKUBE_NONE_USER=true
+          - MINIKUBE_WANTUPDATENOTIFICATION=false
+          - MINIKUBE_WANTREPORTERRORPROMPT=false
+          - MINIKUBE_HOME=$HOME
+          - CHANGE_MINIKUBE_NONE_USER=true
+          - KUBECONFIG=$HOME/.kube/config
+      install:
+        - "./.travis/setupMinikube.sh"
+      script:
+        - "./.travis/rune2eTests.sh"
 
     - stage: deploy
       name: "Publish latest image"
