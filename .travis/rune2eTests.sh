@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-
+set -x
 # Confirm we're working
 kubectl get all --all-namespaces
 kubectl get ingress --all-namespaces
 minikube ip
+
+echo "Docker username is ${DOCKER_USERNAME}"
 
 if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
     echo "Performing a 'docker login'"
