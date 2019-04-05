@@ -59,23 +59,20 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVars")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsK8sAppName")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{
 		"app":                    "noapp",
 		"app.kubernetes.io/name": "testapp",
 	})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
 	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "testapp.default", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
-	assert.Equal(t, "jaeger,b3", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
 func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVars")
+	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsK8sAppInstance")
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{
 		"app":                        "noapp",
 		"app.kubernetes.io/name":     "noname",
@@ -83,12 +80,9 @@ func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
 	})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
 	assert.Equal(t, envVarServiceName, dep.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "testapp.default", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
-	assert.Equal(t, envVarPropagation, dep.Spec.Template.Spec.Containers[0].Env[1].Name)
-	assert.Equal(t, "jaeger,b3", dep.Spec.Template.Spec.Containers[0].Env[1].Value)
 }
 
 func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
