@@ -134,7 +134,14 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 }
 
 func decorate(dep *appsv1.Deployment) {
-	if app, found := dep.Spec.Template.Labels["app"]; found {
+	app, found := dep.Spec.Template.Labels["app.kubernetes.io/instance"]
+	if !found {
+		app, found = dep.Spec.Template.Labels["app.kubernetes.io/name"]
+	}
+	if !found {
+		app, found = dep.Spec.Template.Labels["app"]
+	}
+	if found {
 		// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
 		// which also matches with the style used in Istio.
 		if len(dep.Namespace) > 0 {
