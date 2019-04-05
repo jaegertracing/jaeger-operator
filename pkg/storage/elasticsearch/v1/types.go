@@ -208,3 +208,7 @@ const (
 	UpdateClusterSettings ClusterEvent = "UpdateClusterSettings"
 	NoEvent               ClusterEvent = "NoEvent"
 )
+
+func init() {
+	SchemeBuilder.Register(&Elasticsearch{}, &ElasticsearchList{})
+}
