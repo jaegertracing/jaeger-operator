@@ -48,6 +48,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
 	resources := &corev1.ResourceRequirements{}
+	var affinity *corev1.Affinity
+	var tolerations []corev1.Toleration
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -62,6 +64,13 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 
 		// Merge resources
 		mergeResources(resources, commonSpec.Resources)
+
+		// Set the affinity based on the most specific definition available
+		if affinity == nil {
+			affinity = commonSpec.Affinity
+		}
+
+		tolerations = append(tolerations, commonSpec.Tolerations...)
 	}
 
 	return &v1.JaegerCommonSpec{
@@ -69,6 +78,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:      removeDuplicatedVolumes(volumes),
 		Resources:    *resources,
+		Affinity:     affinity,
+		Tolerations:  tolerations,
 	}
 }
 

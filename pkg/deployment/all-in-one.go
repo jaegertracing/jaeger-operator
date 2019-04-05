@@ -166,6 +166,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger),
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
 				},
 			},
 		},

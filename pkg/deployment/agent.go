@@ -140,6 +140,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					Affinity:    commonSpec.Affinity,
+					Tolerations: commonSpec.Tolerations,
 				},
 			},
 		},

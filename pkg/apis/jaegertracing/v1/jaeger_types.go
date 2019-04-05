@@ -90,6 +90,8 @@ type JaegerCommonSpec struct {
 	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
 	Annotations  map[string]string       `json:"annotations,omitempty"`
 	Resources    v1.ResourceRequirements `json:"resources,omitempty"`
+	Affinity     *v1.Affinity            `json:"affinity,omitempty"`
+	Tolerations  []v1.Toleration         `json:"tolerations,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
