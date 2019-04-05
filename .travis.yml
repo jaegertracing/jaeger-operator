@@ -6,6 +6,7 @@ go:
 
 stages:
   - name: build
+  - name: e2e
   - name: deploy
     # only deploy if:
     ## we are not in a PR
@@ -25,6 +26,20 @@ jobs:
       - "./.travis/script.sh"
       after_success:
       - "./.travis/after_success.sh"
+
+    - stage: e2e
+        env:
+          global:
+            - CHANGE_MINIKUBE_NONE_USER=true
+            - MINIKUBE_WANTUPDATENOTIFICATION=false
+            - MINIKUBE_WANTREPORTERRORPROMPT=false
+            - MINIKUBE_HOME=$HOME
+            - CHANGE_MINIKUBE_NONE_USER=true
+            - KUBECONFIG=$HOME/.kube/config
+        install:
+          - "./.travis/setupMinikube.sh"
+        script:
+          - "./.travis/rune2eTests.sh"
 
     - stage: deploy
       name: "Publish latest image"
