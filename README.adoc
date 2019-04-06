@@ -486,6 +486,24 @@ spec:
 
 NOTE: the default create-schema job uses `MODE=prod`, which implies a replication factor of `2`, using `NetworkTopologyStrategy` as the class, effectively meaning that at least 3 nodes are required in the Cassandra cluster. If a `SimpleStrategy` is desired, set the mode to `test`, which then sets the replication factor of `1`. Refer to the link:https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/schema/create.sh[create-schema script] for more details.
 
+== Finer grained configuration
+
+The custom resource can be used to define finer grained kubernetes configuration applied to all Jaeger components or at the individual component level.
+
+When a common definition (for all Jaeger components) is required, it is defined under the `spec` node. When the definition relates to an individual component, it is placed under the `spec/<component>` node.
+
+The types of configuration supported include:
+
+* link:https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/[annotations]
+
+* link:https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container[resources] to limit cpu and memory
+
+* link:https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity[affinity] to determine which nodes a pod can be allocated to
+
+* link:https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[tolerations] in conjunction with `taints` to enable pods to avoid being repelled from a node
+
+* link:https://kubernetes.io/docs/concepts/storage/volumes/[volumes] and volume mounts
+
 == Removing an instance
 
 To remove an instance, just use the `delete` command with the file used for the instance creation:
