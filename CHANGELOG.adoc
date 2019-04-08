@@ -2,6 +2,19 @@
 
 = Changelog
 
+== v1.11.1 (2019-04-10)
+
+* Include docs for common config (https://github.com/jaegertracing/jaeger-operator/pull/367[#367])
+* Reinstated the registration of ES types (https://github.com/jaegertracing/jaeger-operator/pull/366[#366])
+* Add support for affinity and tolerations (https://github.com/jaegertracing/jaeger-operator/pull/361[#361])
+* Support injection of JAEGER_SERVICE_NAME based on app or k8s recommended labels (https://github.com/jaegertracing/jaeger-operator/pull/362[#362])
+* Change ES operator apiversion (https://github.com/jaegertracing/jaeger-operator/pull/360[#360])
+* Update test to run on OpenShift (https://github.com/jaegertracing/jaeger-operator/pull/350[#350])
+* Update references to the changed CSV filename (https://github.com/jaegertracing/jaeger-operator/pull/356[#356])
+* Backport changes to csv from upstream operator-framework/community-op… (https://github.com/jaegertracing/jaeger-operator/pull/354[#354])
+* Add prometheus scrape 'false' annotation to headless collector service (https://github.com/jaegertracing/jaeger-operator/pull/348[#348])
+* Derive agent container/host ports from options if specified (https://github.com/jaegertracing/jaeger-operator/pull/353[#353])
+
 == v1.11.0 (2019-03-22)
 
 === Breaking changes
