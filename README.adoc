@@ -488,7 +488,7 @@ NOTE: the default create-schema job uses `MODE=prod`, which implies a replicatio
 
 == Finer grained configuration
 
-The custom resource can be used to define finer grained kubernetes configuration applied to all Jaeger components or at the individual component level.
+The custom resource can be used to define finer grained Kubernetes configuration applied to all Jaeger components or at the individual component level.
 
 When a common definition (for all Jaeger components) is required, it is defined under the `spec` node. When the definition relates to an individual component, it is placed under the `spec/<component>` node.
 
@@ -503,6 +503,67 @@ The types of configuration supported include:
 * link:https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/[tolerations] in conjunction with `taints` to enable pods to avoid being repelled from a node
 
 * link:https://kubernetes.io/docs/concepts/storage/volumes/[volumes] and volume mounts
+
+[source,yaml]
+----
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: simple-prod
+spec:
+  strategy: production
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+  annotations:
+    key1: value1
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+    limits:
+      memory: "128Mi"
+      cpu: "500m"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/e2e-az-name
+            operator: In
+            values:
+            - e2e-az1
+            - e2e-az2
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: another-node-label-key
+            operator: In
+            values:
+            - another-node-label-value
+  tolerations:
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoSchedule"
+    - key: "key1"
+      operator: "Equal"
+      value: "value1"
+      effect: "NoExecute"
+  volumeMounts:
+    - name: config-vol
+      mountPath: /etc/config
+  volumes:
+    - name: config-vol
+      configMap:
+        name: log-config
+        items:
+          - key: log_level
+            path: log_level
+----
 
 == Removing an instance
 
