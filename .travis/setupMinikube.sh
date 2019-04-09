@@ -58,3 +58,6 @@ JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.ty
 
 # TODO Do we need this?
 #kubectl apply -f scripts/minikube-rbac.yaml
+
+minikube addons enable ingress
+
