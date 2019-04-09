@@ -2,7 +2,7 @@
 
 = Changelog
 
-== v1.11.1 (2019-04-10)
+== v1.11.1 (2019-04-09)
 
 * Include docs for common config (https://github.com/jaegertracing/jaeger-operator/pull/367[#367])
 * Reinstated the registration of ES types (https://github.com/jaegertracing/jaeger-operator/pull/366[#366])
