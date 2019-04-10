@@ -17,7 +17,7 @@ STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.nam
 ES_OPERATOR_NAMESPACE = openshift-logging
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
-PACKAGES := $(shell go list ./cmd/... ./pkg/...)
+PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1)
 
 .DEFAULT_GOAL := build
 
@@ -41,7 +41,7 @@ format:
 .PHONY: lint
 lint:
 	@echo Linting...
-	@golint $(PACKAGES)
+	@golint -set_exit_status=1 $(PACKAGES)
 	@gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
 
 .PHONY: build
