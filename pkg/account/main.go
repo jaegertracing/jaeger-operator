@@ -45,6 +45,7 @@ func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 	}
 }
 
+// JaegerServiceAccountFor prints service name for Jaeger instance
 func JaegerServiceAccountFor(jaeger *v1.Jaeger) string {
 	return fmt.Sprintf("%s", jaeger.Name)
 }

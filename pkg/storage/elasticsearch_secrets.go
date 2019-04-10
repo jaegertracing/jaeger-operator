@@ -88,8 +88,10 @@ func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
 	}
 }
 
-// The secrets are pulled back to FS in case of operator restart
-// The script checks if secrets are expired or need to be regenerated
+// CreateESCerts creates certificates for elasticsearch, jaeger and curator
+// The cert generation is done by shell script. If the certificates are not present
+// on the filesystem the operator injects them from secrets - this allows operator restarts.
+// The script also re-generates expired certificates.
 func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {
 	err := extractSecretsToFile(jaeger, existingSecrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
 	if err != nil {
