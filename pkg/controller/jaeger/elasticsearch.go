@@ -83,6 +83,21 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 				available++
 			}
 		}
+		ssList := corev1.StatefulSetList{}
+		if err = c.List(context.Background(), client.MatchingLabels(labels).InNamespace(es.Namespace), &ssList); err != nil {
+			if k8serrors.IsNotFound(err) {
+				// the object might have not been created yet
+				log.WithFields(log.Fields{
+					"namespace": es.Namespace,
+					"name":      es.Name,
+				}).Debug("Elasticsearch cluster doesn't exist yet.")
+				return false, nil
+			}
+			return false, err
+		}
+		for _, d := range ssList.Items {
+			available += d.Status.ReadyReplicas
+		}
 		logrus.WithFields(logrus.Fields{
 			"namespace":      es.Namespace,
 			"name":           es.Name,
