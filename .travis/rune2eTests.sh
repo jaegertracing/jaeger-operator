@@ -9,5 +9,5 @@ minikube ip
 sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' test/operator.yaml
 sed -i 's/@docker push/#@docker push/g' Makefile
 #eval $(minikube docker-env)
-
+export KUBERNETES_HOST=$(minikube ip)
 make e2e-tests-smoke

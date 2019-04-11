@@ -71,7 +71,7 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	}
 	defer portForw.Close()
 	defer close(closeChan)
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
+	err = SmokeTest("http://" + kubernetesHost + ":16686/api/traces", "http://" + kubernetesHost + ":14268/api/traces", "foo-bar", retryInterval, timeout)
 	if err != nil {
 		return err
 	}

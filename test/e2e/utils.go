@@ -20,9 +20,17 @@ var (
 	retryInterval        = time.Second * 5
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
+	kubernetesHost 		 = os.Getenv("KUBERNETES_HOST")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 )
+
+func init() {
+	if kubernetesHost = "" {
+		fmt.Println(">>>>>>>>>>>>>>>>>>>> Fixme remove this....setting kubernetesHost to localhost")
+		kubernetesHost = "localhost"
+	}
+}
 
 // GetPod returns pod name
 func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) (corev1.Pod, error) {
