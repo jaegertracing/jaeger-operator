@@ -25,13 +25,6 @@ var (
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 )
 
-func init() {
-	if kubernetesHost = "" {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>> Fixme remove this....setting kubernetesHost to localhost")
-		kubernetesHost = "localhost"
-	}
-}
-
 // GetPod returns pod name
 func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) (corev1.Pod, error) {
 	pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
