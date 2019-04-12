@@ -11,4 +11,13 @@ sed -i 's/@docker push/#@docker push/g' Makefile
 #eval $(minikube docker-env)
 #export KUBERNETES_HOST=$(minikube ip)
 export KUBERNETES_HOST=localhost
+
+# Do these first to avoid race conditions
+make cassandra
+make es
+until kubectl --namespace default get statefulset elasticsearch --output=jsonpath='{.status.readyReplicas}' | grep --quiet 1; do sleep 1;echo "waiting for elasticsearch to be available"; kubectl get statefulsets --namespace default; done
+until kubectl --namespace default get statefulset cassandra --output=jsonpath='{.status.readyReplicas}' | grep --quiet 3; do sleep 1;echo "waiting for cassandra to be available"; kubectl get statefulsets --namespace default; done
+
+make e2e-tests-cassandra
+make e2e-tests-smoke
 make e2e-tests-smoke
