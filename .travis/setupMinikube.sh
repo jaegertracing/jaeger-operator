@@ -8,12 +8,15 @@ set -u
 # print each command before executing it
 set -x
 
+# Needed for port forwarding
+sudo apt-get update && sudo apt-get install socat
+
 #TODO Update these versions
 export MINIKUBE_VERSION=v0.35.0
 export KUBERNETES_VERSION=v1.13.4
 
 ls -alF
-
+# TODO Do we need these
 sudo mount --make-rshared /
 sudo mount --make-rshared /proc
 sudo mount --make-rshared /sys
