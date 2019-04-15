@@ -16,12 +16,11 @@ set -x
 # Needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-#TODO Update these versions
 export MINIKUBE_VERSION=v1.0.0
 export KUBERNETES_VERSION=v1.14.0
 
 ls -alF
-# TODO Do we need these
+# TODO Do we need these?
 sudo mount --make-rshared /
 sudo mount --make-rshared /proc
 sudo mount --make-rshared /sys
@@ -34,18 +33,10 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/${MINIKUBE_VE
     chmod +x minikube &&  \
     sudo mv minikube /usr/local/bin/minikube
 
-env | sort
-
-export MINIKUBE_HOME=$HOME
-export CHANGE_MINIKUBE_NONE_USER=true
 mkdir "${HOME}"/.kube || true
 touch "${HOME}"/.kube/config
 
-export KUBECONFIG=$HOME/.kube/config
-
 # minikube config
-minikube config set WantUpdateNotification false
-minikube config set WantReportErrorPrompt false
 minikube config set WantNoneDriverWarning false
 minikube config set vm-driver none
 
