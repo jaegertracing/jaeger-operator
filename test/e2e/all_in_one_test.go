@@ -216,7 +216,7 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 	defer portForward.Close()
 	defer close(closeChan)
 
-	url := fmt.Sprintf("http://%s:16686/%s/search", kubernetesHost, basePath)
+	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

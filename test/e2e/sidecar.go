@@ -136,7 +136,7 @@ func sidecarTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) e
 	defer portForward.Close()
 	defer close(closeChan)
 
-	url := "http://" + kubernetesHost + ":16686/api/traces?service=order"
+	url := "http://localhost:16686/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

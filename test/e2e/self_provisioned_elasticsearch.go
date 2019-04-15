@@ -79,5 +79,5 @@ func selfProvisionedESSmokeTest(t *testing.T, f *framework.Framework, ctx *frame
 	}
 	defer portForwColl.Close()
 	defer close(closeChanColl)
-	return SmokeTest("http://" + kubernetesHost + ":16686/api/traces", "http://" + kubernetesHost + ":14268/api/traces", "foobar", retryInterval, timeout)
+	return SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 }

@@ -8,9 +8,6 @@ minikube ip
 ## FIXME hack to workaround docker credentials issue - deploy image directly to minikube
 sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' test/operator.yaml
 sed -i 's/@docker push/#@docker push/g' Makefile
-#eval $(minikube docker-env)
-#export KUBERNETES_HOST=$(minikube ip)
-export KUBERNETES_HOST=localhost
 
 # Do these first to avoid race conditions
 make cassandra
@@ -23,3 +20,4 @@ until kubectl --namespace default get statefulset cassandra --output=jsonpath='{
 #make e2e-tests-smoke
 #make e2e-tests-self-provisioned-es
 make e2e-tests
+

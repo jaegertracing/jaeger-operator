@@ -83,18 +83,12 @@ prepare-e2e-tests: crd build docker push
 .PHONY: e2e-tests-smoke
 e2e-tests-smoke: prepare-e2e-tests
 	@echo Running Smoke end-to-end tests...
-	@go test -tags=smoke ./test/e2e/... -v -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
-
-.PHONY: e2e-tests-smoke-debug
-e2e-tests-smoke-debug: 
-	@echo Running Smoke end-to-end tests...
-	@go test -tags=smoke ./test/e2e/... -v -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
-
+	@go test -tags=smoke ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra
 	@echo Running Cassandra end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... -v -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: e2e-tests-es
 e2e-tests-es: prepare-e2e-tests es

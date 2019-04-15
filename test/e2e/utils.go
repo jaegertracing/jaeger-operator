@@ -20,7 +20,6 @@ var (
 	retryInterval        = time.Second * 5
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
-	kubernetesHost 		 = os.Getenv("KUBERNETES_HOST")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 )
