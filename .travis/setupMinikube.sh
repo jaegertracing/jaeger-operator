@@ -9,18 +9,15 @@ set -u
 set -x
 
 #
-# NOTE: This script was riginally copied from the CoreOs Prometheus Operator build
+# NOTE: This script was originally copied from the CoreOs Prometheus Operator build
 # https://github.com/coreos/prometheus-operator/blob/master/scripts/create-minikube.sh
-# I'm not sure we need everying in it
 
-# Needed for port forwarding
+# socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
 export MINIKUBE_VERSION=v1.0.0
 export KUBERNETES_VERSION=v1.14.0
 
-ls -alF
-# TODO Do we need these?
 sudo mount --make-rshared /
 sudo mount --make-rshared /proc
 sudo mount --make-rshared /sys
