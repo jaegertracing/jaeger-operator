@@ -3,9 +3,8 @@ set -x
 # Confirm we're working
 kubectl get all --all-namespaces
 
-## FIXME hack to workaround docker credentials issue - deploy image directly to minikube
+## Since we're running MiniKube with --vm-driver none, change imagePullPolicy to get the image locally
 sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' test/operator.yaml
-sed -i 's/@docker push/#@docker push/g' Makefile
 
 # Do these first to avoid race conditions
 make cassandra
