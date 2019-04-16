@@ -56,7 +56,7 @@ docker:
 .PHONY: push
 push:
 	@echo Pushing image $(BUILD_IMAGE)...
-	@[ ! -z "$(TRAVIS)" ] || docker push $(BUILD_IMAGE) > /dev/null
+	@docker push $(BUILD_IMAGE) > /dev/null
 
 .PHONY: unit-tests
 unit-tests:
