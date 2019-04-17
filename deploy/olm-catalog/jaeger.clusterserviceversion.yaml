@@ -89,7 +89,7 @@ spec:
 
     * **Agent** - can be deployed as sidecar and/or daemonset.
 
-    * **UI** - Optionally setup ingress (kubernetes) or secure route (openshift) to provide [access to the Jaeger UI](https://github.com/jaegertracing/jaeger-operator#accessing-the-ui).
+    * **UI** - Optionally setup ingress (Kubernetes) or secure route (OpenShift) to provide [access to the Jaeger UI](https://github.com/jaegertracing/jaeger-operator#accessing-the-ui).
 
     ### Before you start
 
