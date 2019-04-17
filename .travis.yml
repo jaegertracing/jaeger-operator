@@ -15,6 +15,15 @@ stages:
     ## tag is a release tag (release/v1.6.1, which is the release build)
     if: (type != pull_request) AND ((tag IS blank) OR (tag =~ /^release\/v.[\d\.]+(\-.*)?$/))
 
+env:
+  global:
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
+    - MINIKUBE_WANTREPORTERRORPROMPT=false
+    - MINIKUBE_HOME=$HOME
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - KUBECONFIG=$HOME/.kube/config
+
 jobs:
   include:
     - stage: build
@@ -29,19 +38,22 @@ jobs:
       - "./.travis/after_success.sh"
 
     - stage: e2e
-      name: "Run e2e tests"
-      env:
-        global:
-          - CHANGE_MINIKUBE_NONE_USER=true
-          - MINIKUBE_WANTUPDATENOTIFICATION=false
-          - MINIKUBE_WANTREPORTERRORPROMPT=false
-          - MINIKUBE_HOME=$HOME
-          - CHANGE_MINIKUBE_NONE_USER=true
-          - KUBECONFIG=$HOME/.kube/config
-      install:
-        - "./.travis/setupMinikube.sh"
-      script:
-        - "./.travis/rune2eTests.sh"
+      name: "Run e2e elasticsearch tests"
+      install: "./.travis/setupMinikube.sh"
+      script: "./.travis/rune2eTests.sh"
+      env: TEST_GROUP=es
+
+    - stage: e2e
+      name: "Run e2e smoke tests"
+      install: "./.travis/setupMinikube.sh"
+      script: "./.travis/rune2eTests.sh"
+      env: TEST_GROUP=smoke
+
+    - stage: e2e
+      name: "Run e2e cassandra tests"
+      install: "./.travis/setupMinikube.sh"
+      script: "./.travis/rune2eTests.sh"
+      env: TEST_GROUP=cassandra
 
     - stage: deploy
       name: "Publish latest image"
