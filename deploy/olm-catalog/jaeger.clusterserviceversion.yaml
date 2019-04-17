@@ -85,16 +85,16 @@ spec:
 
     * **Configuration** - Directly pass down all supported Jaeger configuration through the Operator.
 
-    * **Storage** - Configure storage used by Jaeger. By default, `memory` is used. Other options include `elasticsearch` or `cassandra`. On openshift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
+    * **Storage** - Configure storage used by Jaeger. By default, `memory` is used. Other options include `elasticsearch` or `cassandra`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
 
-    * **Agent** - can be deployed as sidecar and/or daemonset
+    * **Agent** - can be deployed as sidecar and/or daemonset.
 
     * **UI** - Optionally setup ingress (kubernetes) or secure route (openshift) to provide [access to the Jaeger UI](https://github.com/jaegertracing/jaeger-operator#accessing-the-ui).
 
     ### Before you start
 
-    1. Ensure that the appropriate storage solution, that will be used by the Jaeger instance, is available and configured
-    1. If intending to deploy an Elasticsearch cluster via the Jaeger custom resource, then the Elasticsearch Operator must first be installed.
+    1. Ensure that the appropriate storage solution, that will be used by the Jaeger instance, is available and configured.
+    2. If intending to deploy an Elasticsearch cluster via the Jaeger custom resource, then the Elasticsearch Operator must first be installed.
 
     ### Troubleshooting
 
