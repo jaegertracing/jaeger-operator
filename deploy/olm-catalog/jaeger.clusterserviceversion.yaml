@@ -63,21 +63,42 @@ metadata:
         }
       ]
 spec:
-  displayName: jaeger-operator
+  displayName: Community Jaeger Operator
   description: |-
     Jaeger, inspired by [Dapper](https://research.google.com/pubs/pub36356.html) and [OpenZipkin](http://zipkin.io/), is a distributed tracing system released as open source by Uber Technologies. It is used for monitoring and troubleshooting microservices-based distributed systems.
 
-    ### Supported Features
+    ### Core capabilities
+
+    Jaeger is used for monitoring and troubleshooting microservices-based distributed systems, including:
+
+    * Distributed context propagation
+    * Distributed transaction monitoring
+    * Root cause analysis
+    * Service dependency analysis
+    * Performance / latency optimization
+    * OpenTracing compatible data model
+    * Multiple storage backends: Cassandra, Elasticsearch, memory.
+
+    ### Operator features
 
     * **Multiple modes** - Supports `allInOne`, `production`, and `streaming` [modes of deployment](https://github.com/jaegertracing/jaeger-operator#strategies).
 
     * **Configuration** - Directly pass down all supported Jaeger configuration through the Operator.
 
-    * **Storage** - Configure storage used by Jaeger. By default, `memory` is used.
+    * **Storage** - Configure storage used by Jaeger. By default, `memory` is used. Other options include `elasticsearch` or `cassandra`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
 
-    ### Accessing the UI
+    * **Agent** - can be deployed as sidecar and/or daemonset.
 
-    By default, the Operator exposes the Jaeger UI as an Ingress. This can be disabled via configuration. See [Accessing the UI](https://github.com/jaegertracing/jaeger-operator#accessing-the-ui) in the documentation for more details.
+    * **UI** - Optionally setup ingress (Kubernetes) or secure route (OpenShift) to provide [access to the Jaeger UI](https://github.com/jaegertracing/jaeger-operator#accessing-the-ui).
+
+    ### Before you start
+
+    1. Ensure that the appropriate storage solution, that will be used by the Jaeger instance, is available and configured.
+    2. If intending to deploy an Elasticsearch cluster via the Jaeger custom resource, then the Elasticsearch Operator must first be installed.
+
+    ### Troubleshooting
+
+    * https://www.jaegertracing.io/docs/latest/troubleshooting/
 
     ### Example Configuration
 
