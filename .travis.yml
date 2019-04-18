@@ -6,8 +6,8 @@ go:
 - 1.11.1
 
 stages:
+  #- name: build
   - name: build
-  - name: e2e
   - name: deploy
     # only deploy if:
     ## we are not in a PR
@@ -29,7 +29,7 @@ jobs:
     - stage: build
       env:
       - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
-      name: "Build"
+      name: "Build and unit test"
       install:
       - "./.travis/install.sh"
       script:
@@ -37,19 +37,19 @@ jobs:
       after_success:
       - "./.travis/after_success.sh"
 
-    - stage: e2e
+    - stage: build
       name: "Run e2e elasticsearch tests"
       install: "./.travis/setupMinikube.sh"
       script: "./.travis/rune2eTests.sh"
       env: TEST_GROUP=es
 
-    - stage: e2e
+    - stage: build
       name: "Run e2e smoke tests"
       install: "./.travis/setupMinikube.sh"
       script: "./.travis/rune2eTests.sh"
       env: TEST_GROUP=smoke
 
-    - stage: e2e
+    - stage: build
       name: "Run e2e cassandra tests"
       install: "./.travis/setupMinikube.sh"
       script: "./.travis/rune2eTests.sh"
