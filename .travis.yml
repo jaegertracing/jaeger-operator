@@ -6,7 +6,6 @@ go:
 - 1.11.1
 
 stages:
-  #- name: build
   - name: build
   - name: deploy
     # only deploy if:
@@ -39,21 +38,30 @@ jobs:
 
     - stage: build
       name: "Run e2e elasticsearch tests"
-      install: "./.travis/setupMinikube.sh"
-      script: "./.travis/rune2eTests.sh"
-      env: TEST_GROUP=es
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=es
 
     - stage: build
       name: "Run e2e smoke tests"
-      install: "./.travis/setupMinikube.sh"
-      script: "./.travis/rune2eTests.sh"
-      env: TEST_GROUP=smoke
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=smoke
 
     - stage: build
       name: "Run e2e cassandra tests"
-      install: "./.travis/setupMinikube.sh"
-      script: "./.travis/rune2eTests.sh"
-      env: TEST_GROUP=cassandra
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=cassandra
 
     - stage: deploy
       name: "Publish latest image"
