@@ -18,7 +18,7 @@ elif [ "${TEST_GROUP}" = "cassandra" ]
 then
     echo "Running Cassandra Tests"
     make cassandra
-     make e2e-tests-cassandra
+    make e2e-tests-cassandra
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
