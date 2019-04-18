@@ -1,5 +1,6 @@
 language: go
 sudo: required
+dist: xenial
 
 go:
 - 1.11.1
@@ -13,18 +14,54 @@ stages:
     ## tag is a release tag (release/v1.6.1, which is the release build)
     if: (type != pull_request) AND ((tag IS blank) OR (tag =~ /^release\/v.[\d\.]+(\-.*)?$/))
 
+env:
+  global:
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
+    - MINIKUBE_WANTREPORTERRORPROMPT=false
+    - MINIKUBE_HOME=$HOME
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - KUBECONFIG=$HOME/.kube/config
+
 jobs:
   include:
     - stage: build
       env:
       - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
-      name: "Build"
+      name: "Build and unit test"
       install:
       - "./.travis/install.sh"
       script:
       - "./.travis/script.sh"
       after_success:
       - "./.travis/after_success.sh"
+
+    - stage: build
+      name: "Run e2e elasticsearch tests"
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=es
+
+    - stage: build
+      name: "Run e2e smoke tests"
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=smoke
+
+    - stage: build
+      name: "Run e2e cassandra tests"
+      install:
+      - "./.travis/setupMinikube.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=cassandra
 
     - stage: deploy
       name: "Publish latest image"
