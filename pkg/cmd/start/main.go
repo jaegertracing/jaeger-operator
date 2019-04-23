@@ -12,9 +12,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -178,7 +182,10 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	// Create Service object to expose the metrics port.
-	if _, err := metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
+	var operatorService *corev1.Service
+	if operatorService, err = metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
+		log.Fatal(err)
+	} else if err = setOwnerReference(operatorService); err != nil {
 		log.Fatal(err)
 	}
 
@@ -218,4 +225,40 @@ func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
 		}
 	}
 	return false
+}
+
+func setOwnerReference(operatorService *corev1.Service) error {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+
+	client, err := client.New(config, client.Options{})
+	if err != nil {
+		return err
+	}
+
+	deployment := &appsv1.Deployment{}
+	err = client.Get(context.Background(), types.NamespacedName{
+		Name:      operatorService.Name,
+		Namespace: operatorService.Namespace,
+	}, deployment)
+	if err != nil {
+		return err
+	}
+
+	flag := true
+	operatorService.OwnerReferences = []metav1.OwnerReference{
+		metav1.OwnerReference{
+			APIVersion:         "apps/v1",
+			Kind:               "Deployment",
+			Name:               deployment.Name,
+			UID:                deployment.UID,
+			Controller:         &flag,
+			BlockOwnerDeletion: &flag,
+		},
+	}
+
+	// Update the service object with the owner reference
+	return client.Update(context.Background(), operatorService)
 }
