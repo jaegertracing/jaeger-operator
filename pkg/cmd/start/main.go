@@ -260,9 +260,5 @@ func setOwnerReference(operatorService *corev1.Service) error {
 	}
 
 	// Update the service object with the owner reference
-	if err = client.Update(context.Background(), operatorService); err != nil {
-		return err
-	}
-
-	return nil
+	return client.Update(context.Background(), operatorService)
 }
