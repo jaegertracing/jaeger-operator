@@ -3,11 +3,15 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -27,6 +31,7 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	}
 
 	name := "test-es-index-cleaner"
+	numberOfDays := 0
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -38,13 +43,14 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 		},
 		Spec: v1.JaegerSpec{
 			Strategy: "allInOne",
-			Storage:  v1.JaegerStorageSpec{
+			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),
-				EsIndexCleaner:v1.JaegerEsIndexCleanerSpec{
-					Schedule: "*/1 * * * *",
+				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
+					Schedule:     "*/1 * * * *",
+					NumberOfDays: &numberOfDays,
 				},
 			},
 		},
@@ -71,19 +77,47 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	}
 	defer portForw.Close()
 	defer close(closeChan)
+
+	esPod, err := GetPod("default", "elasticsearch", "elasticsearch", f.KubeClient)
+	if err != nil {
+		return err
+	}
+	portForwES, closeChanES, err := CreatePortForward(esPod.Namespace, esPod.Name, []string{"9200"}, f.KubeConfig)
+	if err != nil {
+		return err
+	}
+	defer portForwES.Close()
+	defer close(closeChanES)
+
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
-	if err != nil {
-		return err
+	if flag, err := hasIndex(t); !flag || err != nil {
+		return fmt.Errorf("jaeger-span index not found prior to es-index-cleaner: err = %v", err)
 	}
 
-	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		flag, err := hasIndex(t)
+		return !flag, err
+	})
+}
+
+func hasIndex(t *testing.T) (bool, error) {
+	c := http.Client{}
+	req, err := http.NewRequest(http.MethodGet, "http://localhost:9200/_cat/indices", nil)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	resp, err := c.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyString := string(bodyBytes)
+
+	return strings.Contains(bodyString, "jaeger-span-"), nil
 }
