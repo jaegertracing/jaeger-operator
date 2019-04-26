@@ -41,8 +41,8 @@ format:
 .PHONY: lint
 lint:
 	@echo Linting...
-	@golint -set_exit_status=1 $(PACKAGES)
-	@gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
+	golint -set_exit_status=1 $(PACKAGES)
+	gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
 
 .PHONY: build
 build: format
