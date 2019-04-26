@@ -78,6 +78,11 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	defer portForw.Close()
 	defer close(closeChan)
 
+	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
 	esPod, err := GetPod("default", "elasticsearch", "elasticsearch", f.KubeClient)
 	if err != nil {
 		return err
@@ -89,13 +94,8 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	defer portForwES.Close()
 	defer close(closeChanES)
 
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
-	if err != nil {
-		return err
-	}
-
-	if flag, err := hasIndex(t); !flag || err != nil {
-		return fmt.Errorf("jaeger-span index not found prior to es-index-cleaner: err = %v", err)
+	if flag, err := hasIndexWithPrefix("jaeger-"); !flag || err != nil {
+		return fmt.Errorf("jaeger-* index not found prior to es-index-cleaner: err = %v", err)
 	}
 
 	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
@@ -109,12 +109,12 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 	}
 
 	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		flag, err := hasIndex(t)
+		flag, err := hasIndexWithPrefix("jaeger-")
 		return !flag, err
 	})
 }
 
-func hasIndex(t *testing.T) (bool, error) {
+func hasIndexWithPrefix(prefix string) (bool, error) {
 	c := http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "http://localhost:9200/_cat/indices", nil)
 	if err != nil {
@@ -129,5 +129,5 @@ func hasIndex(t *testing.T) (bool, error) {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(bodyBytes)
 
-	return strings.Contains(bodyString, "jaeger-span-"), nil
+	return strings.Contains(bodyString, prefix), nil
 }
