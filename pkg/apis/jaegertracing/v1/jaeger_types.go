@@ -223,7 +223,7 @@ type JaegerDependenciesSpec struct {
 // +k8s:openapi-gen=true
 type JaegerEsIndexCleanerSpec struct {
 	Enabled      *bool  `json:"enabled"`
-	NumberOfDays int    `json:"numberOfDays"`
+	NumberOfDays *int   `json:"numberOfDays"`
 	Schedule     string `json:"schedule"`
 	Image        string `json:"image"`
 }

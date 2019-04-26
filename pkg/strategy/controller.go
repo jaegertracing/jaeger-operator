@@ -116,8 +116,9 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
 	}
-	if spec.NumberOfDays == 0 {
-		spec.NumberOfDays = 7
+	if spec.NumberOfDays == nil {
+		defDays := 7
+		spec.NumberOfDays = &defDays
 	}
 }
 

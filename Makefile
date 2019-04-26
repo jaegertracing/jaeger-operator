@@ -42,7 +42,12 @@ format:
 lint:
 	@echo Linting...
 	@golint -set_exit_status=1 $(PACKAGES)
-	@gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
+
+.PHONY: security
+security:
+	@echo Security...
+	@echo NOTE: Currently disabled due to https://github.com/jaegertracing/jaeger-operator/issues/379
+	@#gosec -exclude=G104 $(PACKAGES)
 
 .PHONY: build
 build: format
@@ -159,10 +164,10 @@ generate:
 test: unit-tests e2e-tests
 
 .PHONY: all
-all: check format lint build test
+all: check format lint security build test
 
 .PHONY: ci
-ci: ensure-generate-is-noop check format lint build unit-tests
+ci: ensure-generate-is-noop check format lint security build unit-tests
 
 .PHONY: scorecard
 scorecard:

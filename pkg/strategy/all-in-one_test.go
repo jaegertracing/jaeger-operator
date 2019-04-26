@@ -166,21 +166,22 @@ func TestEsIndexCleanerAllInOne(t *testing.T) {
 
 func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 	trueVar := true
+	days := 0
 	tests := []struct {
 		jaeger              *v1.Jaeger
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "elasticsearch",
-				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
+				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "cassandra",
-				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
+				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "kafka",
-				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar}},
+				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},

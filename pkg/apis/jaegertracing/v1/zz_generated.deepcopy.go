@@ -258,6 +258,11 @@ func (in *JaegerEsIndexCleanerSpec) DeepCopyInto(out *JaegerEsIndexCleanerSpec) 
 		*out = new(bool)
 		**out = **in
 	}
+	if in.NumberOfDays != nil {
+		in, out := &in.NumberOfDays, &out.NumberOfDays
+		*out = new(int)
+		**out = **in
+	}
 	return
 }
 
