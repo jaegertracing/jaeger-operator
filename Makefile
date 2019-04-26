@@ -46,7 +46,8 @@ lint:
 .PHONY: security
 security:
 	@echo Security...
-	@gosec -exclude=G104 $(PACKAGES)
+	@echo NOTE: Currently disabled due to https://github.com/jaegertracing/jaeger-operator/issues/379
+	@#gosec -exclude=G104 $(PACKAGES)
 
 .PHONY: build
 build: format
