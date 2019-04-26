@@ -46,7 +46,7 @@ lint:
 .PHONY: security
 security:
 	@echo Security...
-	@gosec -exclude=G104 ./...
+	@gosec -exclude=G104 $(PACKAGES)
 
 .PHONY: build
 build: format
