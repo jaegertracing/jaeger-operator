@@ -169,14 +169,16 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 	defer viper.Reset()
 	trueVar := true
 	falseVar := false
+	days7 := 7
+	days55 := 55
 	tests := []struct {
 		underTest v1.JaegerEsIndexCleanerSpec
 		expected  v1.JaegerEsIndexCleanerSpec
 	}{
 		{underTest: v1.JaegerEsIndexCleanerSpec{},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: 7, Enabled: &trueVar}},
-		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: 55, Enabled: &falseVar}},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
+		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar}},
 	}
 	for _, test := range tests {
 		normalizeIndexCleaner(&test.underTest, "elasticsearch")
