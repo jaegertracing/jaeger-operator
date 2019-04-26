@@ -98,6 +98,16 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 		return fmt.Errorf("jaeger-span index not found prior to es-index-cleaner: err = %v", err)
 	}
 
+	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
 	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		flag, err := hasIndex(t)
 		return !flag, err
