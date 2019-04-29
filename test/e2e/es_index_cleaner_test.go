@@ -83,7 +83,7 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 		return err
 	}
 
-	esPod, err := GetPod("default", "elasticsearch", "elasticsearch", f.KubeClient)
+	esPod, err := GetPod(storageNamespace, "elasticsearch", "elasticsearch", f.KubeClient)
 	if err != nil {
 		return err
 	}
