@@ -101,7 +101,7 @@ func availableAPIs(kubeconfig *rest.Config) (*metav1.APIGroupList, error) {
 	return apiList, nil
 }
 
-func addToFramewokSchemeForSmokeTests(t *testing.T) {
+func addToFrameworkSchemeForSmokeTests(t *testing.T) {
 	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",

@@ -36,10 +36,11 @@ type AllInOneTestSuite struct {
 func(suite *AllInOneTestSuite) SetupSuite() {
 	t = suite.T()
 	ctx = prepare(t)
+	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")
 
-	addToFramewokSchemeForSmokeTests(t)
+	addToFrameworkSchemeForSmokeTests(t)
 }
 
 func (suite *AllInOneTestSuite) TearDownSuite() {
@@ -51,22 +52,18 @@ func TestAllInOneSuite(t *testing.T) {
 }
 
 func (suite *AllInOneTestSuite) TestAllInOne() {
-	f := framework.Global  //FIXME how do we make this global?
-
 	// create jaeger custom resource
 	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
 
 	log.Infof("passing %v", exampleJaeger)
-	err := f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.Nil(t, err, "Error deploying example Jaeger")
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
 	require.Nil(t, err, "Error waiting for deployment")
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
-	f := framework.Global  //FIXME how do we make this global?
-
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
@@ -77,16 +74,16 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 	}
 
 	log.Infof("passing %v", exampleJaeger)
-	err := f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.Nil(t, err, "Failed to create jaeger-operator instance")
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
 	require.Nil(t, err, "Error waiting for operator deployment")
 
 	var url string
 	var httpClient http.Client
 	if isOpenShift(t) {
-		route := findRoute(t, f, name)
+		route := findRoute(t, fw, name)
 		require.Equalf(t, route.Status.Ingress, 1, "Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
 
 		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
@@ -95,7 +92,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 		}
 		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
 	} else {
-		ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
+		ingress, err := WaitForIngress(t, fw.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
 		require.Nil(t, err, "Failed waiting for ingress")
 		ingressCount := len(ingress.Status.LoadBalancer.Ingress)
 		require.Equalf(t, ingressCount, 1, "Wrong number of ingresses. Expected 1, was %d", ingressCount)
@@ -140,20 +137,19 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 }
 
 func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
-	f := framework.Global  //FIXME how do we make this global?
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 
 	j := getJaegerAllInOneWithUiDefinition(basePath)
-	err := f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.Nil(t, err, "Error creating jaeger-operator instance")
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
 	require.Nil(t, err, "Error waiting for operator deployment")
 
-	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", f.KubeClient)
+	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", fw.KubeClient)
 	require.Nil(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
 
-	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
 	require.Nil(t, err, "Failed to create PortForward")
 	defer portForward.Close()
 	defer close(closeChan)

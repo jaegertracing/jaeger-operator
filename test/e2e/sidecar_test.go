@@ -24,10 +24,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
-//var t *testing.T
-//var ctx *framework.TestCtx
-//var namespace string
-
 type SidecarTestSuite struct {
 	suite.Suite
 }
@@ -35,10 +31,11 @@ type SidecarTestSuite struct {
 func(suite *SidecarTestSuite) SetupSuite() {
 	t = suite.T()
 	ctx = prepare(t)
+	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")
 
-	addToFramewokSchemeForSmokeTests(t)
+	addToFrameworkSchemeForSmokeTests(t)
 }
 
 func (suite *SidecarTestSuite) TearDownSuite() {
@@ -51,24 +48,23 @@ func TestSidecarSuite(t *testing.T) {
 
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
-	f := framework.Global  //FIXME how do we make this global?
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	j := getJaegerDefinition(namespace)
-	err := f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.Nil(t, err, "Failed to create jaeger-operator instance")
 
 	dep := getVertxDefinition(namespace)
-	err = f.Client.Create(goctx.TODO(), dep, cleanupOptions)
+	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.Nil(t, err, "Failed to create vertx instance")
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
 	require.Nil(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
-	queryPod, err := GetPod(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", f.KubeClient)
+	queryPod, err := GetPod(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", fw.KubeClient)
 	require.Nil(t, err, "Failed to find pod starting with agent-as-sidecar with image jaegertracing/all-in-one")
 
-	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
 	require.Nil(t, err, "Failed to create PortForward")
 	defer portForward.Close()
 	defer close(closeChan)

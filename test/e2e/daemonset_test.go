@@ -27,9 +27,10 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-var t *testing.T
 var ctx *framework.TestCtx
+var fw *framework.Framework
 var namespace string
+var t *testing.T
 
 type DaemonSetTestSuite struct {
 	suite.Suite
@@ -38,10 +39,11 @@ type DaemonSetTestSuite struct {
 func(suite *DaemonSetTestSuite) SetupSuite() {
 	t = suite.T()
 	ctx = prepare(t)
+	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")
 
-	addToFramewokSchemeForSmokeTests(t)
+	addToFrameworkSchemeForSmokeTests(t)
 }
 
 func (suite *DaemonSetTestSuite) TearDownSuite() {
@@ -54,11 +56,10 @@ func TestDaemonSetSuite(t *testing.T) {
 
 // DaemonSet runs a test with the agent as DaemonSet
 func (suite *DaemonSetTestSuite) TestDaemonSet()  {
-	f := framework.Global  //FIXME how do we make this global?
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	if isOpenShift(t) {
-		err := f.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
+		err := fw.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
 			t.Fatalf("Failed creating hostPortSccDaemonset %v\n", err)
 		}
@@ -71,24 +72,24 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 
 	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 	log.Infof("passing %v", j)
-	err := f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.Nil(t, err, "Error deploying jaeger")
 
-	err = WaitForDaemonSet(t, f.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
+	err = WaitForDaemonSet(t, fw.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
 	require.Nil(t, err, "Error waiting for daemonset to startup")
 
 	selector := map[string]string{"app": "vertx-create-span"}
 	dep := getVertxDeployment(namespace, selector)
-	err = f.Client.Create(goctx.TODO(), dep, cleanupOptions)
+	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.Nil(t, err, "Error creating VertX app")
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "vertx-create-span", 1, retryInterval, 3 * timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, 3 * timeout)
 	require.Nil(t, err, "Error waiting for VertX app to start")
 
-	queryPod, err := GetPod(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", f.KubeClient)
+	queryPod, err := GetPod(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", fw.KubeClient)
 	require.Nilf(t, err, "Error trying to find pod with prefix agent-as-daemonset and image jaegertracing/all-in-one in namespace [%s]: %s\n", namespace)
 
-	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
 	require.Nil(t, err, "Error creating portforward")
 	defer portForw.Close()
 	defer close(closeChan)
