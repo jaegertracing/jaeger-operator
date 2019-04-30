@@ -1,9 +1,10 @@
+// +build smoke
+
 package e2e
 
 import (
 	goctx "context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
@@ -11,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -24,74 +27,69 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-// DaemonSet runs a test with the agent as DaemonSet
-func DaemonSet(t *testing.T) {
-	ctx := prepare(t)
-	defer ctx.Cleanup()
+var t *testing.T
+var ctx *framework.TestCtx
+var namespace string
 
-	if err := daemonsetTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
+type DaemonSetTestSuite struct {
+	suite.Suite
 }
 
-func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func(suite *DaemonSetTestSuite) SetupSuite() {
+	t = suite.T()
+	ctx = prepare(t)
+	namespace, _ = ctx.GetNamespace()
+	require.NotNil(t, namespace, "GetNamespace failed")
+
+	addToFramewokSchemeForSmokeTests(t)
+}
+
+func (suite *DaemonSetTestSuite) TearDownSuite() {
+	ctx.Cleanup()
+}
+
+func TestDaemonSetSuite(t *testing.T) {
+	suite.Run(t, new(DaemonSetTestSuite))
+}
+
+// DaemonSet runs a test with the agent as DaemonSet
+func (suite *DaemonSetTestSuite) TestDaemonSet()  {
+	f := framework.Global  //FIXME how do we make this global?
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
 
 	if isOpenShift(t) {
-		err = f.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
+		err := f.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
-			return err
+			t.Fatalf("Failed creating hostPortSccDaemonset %v\n", err)
 		}
 
 		// ideally, we would use the REST API, but for a single-usage within the project, this is the simplest solution that works
 		cmd := exec.Command("oc", "adm", "--namespace", namespace, "policy",  "add-scc-to-user", "daemonset-with-hostport", "-z", "default")
 		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Failed creating hostport scc with error [%v] OUTPUT: [%v]\n", err, string(output))
-			return err;
-		}
+		require.Nil(t, err,"Failed creating hostport scc with OUTPUT: [%s]\n", string(output) )
 	}
 
 	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 	log.Infof("passing %v", j)
-	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
-	if err != nil {
-		return err
-	}
+	err := f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	require.Nil(t, err, "Error deploying jaeger")
 
 	err = WaitForDaemonSet(t, f.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
-	if err != nil {
-		return err
-	}
+	require.Nil(t, err, "Error waiting for daemonset to startup")
 
 	selector := map[string]string{"app": "vertx-create-span"}
 	dep := getVertxDeployment(namespace, selector)
 	err = f.Client.Create(goctx.TODO(), dep, cleanupOptions)
-	if err != nil {
-		return err
-	}
+	require.Nil(t, err, "Error creating VertX app")
 
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "vertx-create-span", 1, retryInterval, 3 * timeout)
-	if err != nil {
-		fmt.Println("Failed waiting for vertx deployment")
-		return err
-	}
+	require.Nil(t, err, "Error waiting for VertX app to start")
 
 	queryPod, err := GetPod(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", f.KubeClient)
-	if err != nil {
-		fmt.Println("Failed waiting for pod agent-as-daemonset")
-		return err
-	}
+	require.Nilf(t, err, "Error trying to find pod with prefix agent-as-daemonset and image jaegertracing/all-in-one in namespace [%s]: %s\n", namespace)
 
 	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
-	if err != nil {
-		fmt.Println("Failed waiting for port forward")
-		return err
-	}
+	require.Nil(t, err, "Error creating portforward")
 	defer portForw.Close()
 	defer close(closeChan)
 
@@ -99,12 +97,9 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		fmt.Println("Failed waiting for get on " + url)
-		return err
-	}
+	require.Nil(t, err, "Failed to create httpRequest")
 
-	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err =  wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
 		if err != nil {
 			return false, err
@@ -123,6 +118,7 @@ func daemonsetTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx)
 
 		return len(resp.Data) > 0, nil
 	})
+	require.Nil(t, err, "Failed waiting for expected content")
 }
 
 func getVertxDeployment(namespace string, selector map[string]string) *appsv1.Deployment {

@@ -1,10 +1,11 @@
+// +build smoke
+
 package e2e
 
 import (
 	goctx "context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	osv1 "github.com/openshift/api/route/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -26,46 +29,43 @@ import (
 
 const TrackingID = "MyTrackingId"
 
-func JaegerAllInOne(t *testing.T) {
-	ctx := prepare(t)
-	defer ctx.Cleanup()
-
-	if err := allInOneTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := allInOneWithIngressTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := allInOneWithUIConfigTest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
+type AllInOneTestSuite struct {
+	suite.Suite
 }
 
-func allInOneTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
+func(suite *AllInOneTestSuite) SetupSuite() {
+	t = suite.T()
+	ctx = prepare(t)
+	namespace, _ = ctx.GetNamespace()
+	require.NotNil(t, namespace, "GetNamespace failed")
+
+	addToFramewokSchemeForSmokeTests(t)
+}
+
+func (suite *AllInOneTestSuite) TearDownSuite() {
+	ctx.Cleanup()
+}
+
+func TestAllInOneSuite(t *testing.T) {
+	suite.Run(t, new(AllInOneTestSuite))
+}
+
+func (suite *AllInOneTestSuite) TestAllInOne() {
+	f := framework.Global  //FIXME how do we make this global?
 
 	// create jaeger custom resource
 	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
 
 	log.Infof("passing %v", exampleJaeger)
-	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	if err != nil {
-		return err
-	}
+	err := f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.Nil(t, err, "Error deploying example Jaeger")
 
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	require.Nil(t, err, "Error waiting for deployment")
 }
 
-func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
+func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
+	f := framework.Global  //FIXME how do we make this global?
 
 	// create jaeger custom resource
 	ingressEnabled := true
@@ -77,28 +77,17 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 	}
 
 	log.Infof("passing %v", exampleJaeger)
-	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	if err != nil {
-		return err
-	}
+	err := f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.Nil(t, err, "Failed to create jaeger-operator instance")
 
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
-	if err != nil {
-		t.Errorf("Error waiting for deployment of %s: %v\n", name, err)
-		return err
-	}
+	require.Nil(t, err, "Error waiting for operator deployment")
 
 	var url string
 	var httpClient http.Client
 	if isOpenShift(t) {
-		route, err := findRoute(t, f, name)
-		if err != nil {
-			return err
-		}
-
-		if len(route.Status.Ingress) != 1 {
-			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
-		}
+		route := findRoute(t, f, name)
+		require.Equalf(t, route.Status.Ingress, 1, "Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
 
 		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
 		transport := &http.Transport{
@@ -107,13 +96,9 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
 	} else {
 		ingress, err := WaitForIngress(t, f.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
-		if err != nil {
-			return err
-		}
-
-		if len(ingress.Status.LoadBalancer.Ingress) != 1 {
-			return fmt.Errorf("Wrong number of ingresses. Expected 1, was %v", len(ingress.Status.LoadBalancer.Ingress))
-		}
+		require.Nil(t, err, "Failed waiting for ingress")
+		ingressCount := len(ingress.Status.LoadBalancer.Ingress)
+		require.Equalf(t, ingressCount, 1, "Wrong number of ingresses. Expected 1, was %d", ingressCount)
 
 		address := ingress.Status.LoadBalancer.Ingress[0].IP
 		url = fmt.Sprintf("http://%s/api/services", address)
@@ -121,14 +106,12 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
+	require.Nil(t, err, "Failed to create httpRequest")
 
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
 	httpClient.Do(req)
 
-	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
 		if err != nil {
 			return false, err
@@ -153,17 +136,63 @@ func allInOneWithIngressTest(t *testing.T, f *framework.Framework, ctx *framewor
 
 		return false, nil
 	})
+	require.Nil(t, err, "Failed waiting for expected content")
 }
 
-func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
+	f := framework.Global  //FIXME how do we make this global?
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
-
 	basePath := "/jaeger"
 
+	j := getJaegerAllInOneWithUiDefinition(basePath)
+	err := f.Client.Create(goctx.TODO(), j, cleanupOptions)
+	require.Nil(t, err, "Error creating jaeger-operator instance")
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
+	require.Nil(t, err, "Error waiting for operator deployment")
+
+	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", f.KubeClient)
+	require.Nil(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
+
+	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
+	require.Nil(t, err, "Failed to create PortForward")
+	defer portForward.Close()
+	defer close(closeChan)
+
+	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
+	c := http.Client{Timeout: time.Second}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	require.Nil(t, err, "Failed to create httpRequest")
+
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		res, err := c.Do(req)
+		if err != nil {
+			return false, err
+		}
+
+		if res.StatusCode != 200 {
+			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return false, err
+		}
+
+		if len(body) == 0 {
+			return false, fmt.Errorf("empty body")
+		}
+
+		if !strings.Contains(string(body), TrackingID) {
+			return false, fmt.Errorf("body does not include tracking id: %s", TrackingID)
+		}
+
+		return true, nil
+	})
+	require.Nil(t, err, "Failed waiting for expected content")
+}
+
+func getJaegerAllInOneWithUiDefinition(basePath string) *v1.Jaeger {
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -189,66 +218,10 @@ func allInOneWithUIConfigTest(t *testing.T, f *framework.Framework, ctx *framewo
 			},
 		},
 	}
-
 	j.Spec.Annotations = map[string]string{
 		"nginx.ingress.kubernetes.io/ssl-redirect": "false",
 	}
-
-	err = f.Client.Create(goctx.TODO(), j, cleanupOptions)
-	if err != nil {
-		return err
-	}
-
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
-	if err != nil {
-		return err
-	}
-
-	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", f.KubeClient)
-	if err != nil {
-		return err
-	}
-
-	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, f.KubeConfig)
-	if err != nil {
-		return err
-	}
-	defer portForward.Close()
-	defer close(closeChan)
-
-	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
-	c := http.Client{Timeout: time.Second}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil {
-			return false, err
-		}
-
-		if res.StatusCode != 200 {
-			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
-
-		if len(body) == 0 {
-			return false, fmt.Errorf("empty body")
-		}
-
-		if !strings.Contains(string(body), TrackingID) {
-			return false, fmt.Errorf("body does not include tracking id: %s", TrackingID)
-		}
-
-		return true, nil
-	})
+	return j
 }
 
 func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
@@ -274,7 +247,7 @@ func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 	return exampleJaeger
 }
 
-func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route, error) {
+func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route) {
 	routeList := &osv1.RouteList{}
 	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
 		opts := &client.ListOptions{}
@@ -289,14 +262,15 @@ func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route, 
 	})
 
 	if err != nil {
-		t.Errorf("Failed waiting for route: %v", err)
-		return nil, err
+		t.Fatalf("Failed waiting for route: %v", err)
 	}
 
 	for _, r := range routeList.Items {
 		if strings.HasPrefix(r.Spec.Host, name) {
-			return &r, nil
+			return &r
 		}
 	}
-	return nil, errors.New("Could not find route")
+
+	t.Fatal("Could not find route")
+	return nil;
 }
