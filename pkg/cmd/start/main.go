@@ -250,12 +250,11 @@ func setOwnerReference(operatorService *corev1.Service) error {
 	flag := true
 	operatorService.OwnerReferences = []metav1.OwnerReference{
 		metav1.OwnerReference{
-			APIVersion:         "apps/v1",
-			Kind:               "Deployment",
-			Name:               deployment.Name,
-			UID:                deployment.UID,
-			Controller:         &flag,
-			BlockOwnerDeletion: &flag,
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       deployment.Name,
+			UID:        deployment.UID,
+			Controller: &flag,
 		},
 	}
 
