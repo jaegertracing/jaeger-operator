@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +40,7 @@ func(suite *SidecarTestSuite) SetupSuite() {
 }
 
 func (suite *SidecarTestSuite) TearDownSuite() {
+	log.Info("Entering TearDownSuite()")
 	ctx.Cleanup()
 }
 
@@ -50,22 +52,22 @@ func TestSidecarSuite(t *testing.T) {
 func (suite *SidecarTestSuite) TestSidecar() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	j := getJaegerDefinition(namespace)
+	j := getJaegerAgentAsSidecarDefinition(namespace)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.Nil(t, err, "Failed to create jaeger-operator instance")
+	require.NoError(t, err, "Failed to create jaeger instance")
 
 	dep := getVertxDefinition(namespace)
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
-	require.Nil(t, err, "Failed to create vertx instance")
+	require.NoError(t, err, "Failed to create vertx instance")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
-	require.Nil(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
+	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
 	queryPod, err := GetPod(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", fw.KubeClient)
-	require.Nil(t, err, "Failed to find pod starting with agent-as-sidecar with image jaegertracing/all-in-one")
+	require.NoError(t, err, "Failed to find pod starting with agent-as-sidecar with image jaegertracing/all-in-one")
 
 	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.Nil(t, err, "Failed to create PortForward")
+	require.NoError(t, err, "Failed to create PortForward")
 	defer portForward.Close()
 	defer close(closeChan)
 
@@ -73,7 +75,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.Nil(t, err, "Failed to create httpRequest")
+	require.NoError(t, err, "Failed to create httpRequest")
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
@@ -94,7 +96,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 		return len(resp.Data) > 0, nil
 	})
-	require.Nil(t, err, "Failed waiting for expected content")
+	require.NoError(t, err, "Failed waiting for expected content")
 }
 
 func getVertxDefinition(s string) *appsv1.Deployment {
@@ -152,7 +154,7 @@ func getVertxDefinition(s string) *appsv1.Deployment {
 	return dep
 }
 
-func getJaegerDefinition(namespace string) *v1.Jaeger {
+func getJaegerAgentAsSidecarDefinition(namespace string) *v1.Jaeger {
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",

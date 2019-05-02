@@ -44,6 +44,7 @@ func(suite *AllInOneTestSuite) SetupSuite() {
 }
 
 func (suite *AllInOneTestSuite) TearDownSuite() {
+	log.Info("Entering TearDownSuite()")
 	ctx.Cleanup()
 }
 
@@ -57,10 +58,10 @@ func (suite *AllInOneTestSuite) TestAllInOne() {
 
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.Nil(t, err, "Error deploying example Jaeger")
+	require.NoError(t, err, "Error deploying example Jaeger")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
-	require.Nil(t, err, "Error waiting for deployment")
+	require.NoError(t, err, "Error waiting for deployment")
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
@@ -75,16 +76,16 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.Nil(t, err, "Failed to create jaeger-operator instance")
+	require.NoError(t, err, "Failed to create Jaeger instance")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
-	require.Nil(t, err, "Error waiting for operator deployment")
+	require.NoError(t, err, "Error waiting for Jaeger deployment")
 
 	var url string
 	var httpClient http.Client
 	if isOpenShift(t) {
 		route := findRoute(t, fw, name)
-		require.Equalf(t, route.Status.Ingress, 1, "Wrong number of ingresses. Expected 1, was %v", len(route.Status.Ingress))
+		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
 
 		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
 		transport := &http.Transport{
@@ -93,9 +94,8 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
 	} else {
 		ingress, err := WaitForIngress(t, fw.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
-		require.Nil(t, err, "Failed waiting for ingress")
-		ingressCount := len(ingress.Status.LoadBalancer.Ingress)
-		require.Equalf(t, ingressCount, 1, "Wrong number of ingresses. Expected 1, was %d", ingressCount)
+		require.NoError(t, err, "Failed waiting for ingress")
+		require.Len(t, ingress.Status.LoadBalancer.Ingress, 1, "Wrong number of ingresses.")
 
 		address := ingress.Status.LoadBalancer.Ingress[0].IP
 		url = fmt.Sprintf("http://%s/api/services", address)
@@ -103,7 +103,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.Nil(t, err, "Failed to create httpRequest")
+	require.NoError(t, err, "Failed to create httpRequest")
 
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
 	httpClient.Do(req)
@@ -133,7 +133,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 
 		return false, nil
 	})
-	require.Nil(t, err, "Failed waiting for expected content")
+	require.NoError(t, err, "Failed waiting for expected content")
 }
 
 func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
@@ -142,15 +142,15 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 
 	j := getJaegerAllInOneWithUiDefinition(basePath)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.Nil(t, err, "Error creating jaeger-operator instance")
+	require.NoError(t, err, "Error creating jaeger-operator instance")
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
-	require.Nil(t, err, "Error waiting for operator deployment")
+	require.NoError(t, err, "Error waiting for operator deployment")
 
 	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", fw.KubeClient)
-	require.Nil(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
+	require.NoError(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
 
 	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.Nil(t, err, "Failed to create PortForward")
+	require.NoError(t, err, "Failed to create PortForward")
 	defer portForward.Close()
 	defer close(closeChan)
 
@@ -158,7 +158,7 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.Nil(t, err, "Failed to create httpRequest")
+	require.NoError(t, err, "Failed to create httpRequest")
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
@@ -185,7 +185,7 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 
 		return true, nil
 	})
-	require.Nil(t, err, "Failed waiting for expected content")
+	require.NoError(t, err, "Failed waiting for expected content")
 }
 
 func getJaegerAllInOneWithUiDefinition(basePath string) *v1.Jaeger {

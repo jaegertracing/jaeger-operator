@@ -27,10 +27,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-var ctx *framework.TestCtx
-var fw *framework.Framework
-var namespace string
-var t *testing.T
+
 
 type DaemonSetTestSuite struct {
 	suite.Suite
@@ -47,6 +44,7 @@ func(suite *DaemonSetTestSuite) SetupSuite() {
 }
 
 func (suite *DaemonSetTestSuite) TearDownSuite() {
+	log.Info("Entering TearDownSuite()")
 	ctx.Cleanup()
 }
 
@@ -67,30 +65,30 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 		// ideally, we would use the REST API, but for a single-usage within the project, this is the simplest solution that works
 		cmd := exec.Command("oc", "adm", "--namespace", namespace, "policy",  "add-scc-to-user", "daemonset-with-hostport", "-z", "default")
 		output, err := cmd.CombinedOutput()
-		require.Nil(t, err,"Failed creating hostport scc with OUTPUT: [%s]\n", string(output) )
+		require.NoError(t, err,"Failed creating hostport scc with OUTPUT: [%s]\n", string(output) )
 	}
 
 	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 	log.Infof("passing %v", j)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.Nil(t, err, "Error deploying jaeger")
+	require.NoError(t, err, "Error deploying jaeger")
 
 	err = WaitForDaemonSet(t, fw.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
-	require.Nil(t, err, "Error waiting for daemonset to startup")
+	require.NoError(t, err, "Error waiting for daemonset to startup")
 
 	selector := map[string]string{"app": "vertx-create-span"}
 	dep := getVertxDeployment(namespace, selector)
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
-	require.Nil(t, err, "Error creating VertX app")
+	require.NoError(t, err, "Error creating VertX app")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, 3 * timeout)
-	require.Nil(t, err, "Error waiting for VertX app to start")
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for VertX app to start")
 
 	queryPod, err := GetPod(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", fw.KubeClient)
-	require.Nilf(t, err, "Error trying to find pod with prefix agent-as-daemonset and image jaegertracing/all-in-one in namespace [%s]: %s\n", namespace)
+	require.NoErrorf(t, err, "Error trying to find pod with prefix agent-as-daemonset and image jaegertracing/all-in-one in namespace [%s]: %s\n", namespace)
 
 	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.Nil(t, err, "Error creating portforward")
+	require.NoError(t, err, "Error creating portforward")
 	defer portForw.Close()
 	defer close(closeChan)
 
@@ -98,7 +96,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.Nil(t, err, "Failed to create httpRequest")
+	require.NoError(t, err, "Failed to create httpRequest")
 
 	err =  wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
@@ -119,7 +117,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 
 		return len(resp.Data) > 0, nil
 	})
-	require.Nil(t, err, "Failed waiting for expected content")
+	require.NoError(t, err, "Failed waiting for expected content")
 }
 
 func getVertxDeployment(namespace string, selector map[string]string) *appsv1.Deployment {

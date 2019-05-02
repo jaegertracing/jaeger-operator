@@ -28,6 +28,10 @@ var (
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
+    ctx 					*framework.TestCtx
+    fw 						*framework.Framework
+    namespace 				string
+    t 						*testing.T
 )
 
 // GetPod returns pod name
