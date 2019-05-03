@@ -7,31 +7,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 var (
 	retryInterval        = time.Second * 5
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
+	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
-	ctx		     *framework.TestCtx
-	fw		     *framework.Framework
-	namespace	     string
-	t		     *testing.T
+	ctx                  *framework.TestCtx
+	fw                   *framework.Framework
+	namespace            string
+	t                    *testing.T
 )
 
 // GetPod returns pod name
@@ -118,7 +119,6 @@ func addToFrameworkSchemeForSmokeTests(t *testing.T) {
 	}
 }
 
-
 type resp struct {
 	Data []trace `json:"data"`
 }
@@ -134,10 +134,9 @@ type span struct {
 }
 
 type services struct {
-	Data []string `json:"data"`
-	total int `json:"total"`
-	limit int `json:"limit"`
-	offset int `json:offset`
+	Data   []string    `json:"data"`
+	total  int         `json:"total"`
+	limit  int         `json:"limit"`
+	offset int         `json:offset`
 	errors interface{} `json:"errors"`
 }
-
