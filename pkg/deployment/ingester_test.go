@@ -312,13 +312,13 @@ func TestIngesterWithStorageType(t *testing.T) {
 			Strategy: "streaming",
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.topic": "mytopic",
+					"kafka.consumer.topic":   "mytopic",
+					"kafka.consumer.brokers": "http://brokers",
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.brokers":  "http://brokers",
 					"es.server-urls": "http://somewhere",
 				}),
 			},
@@ -336,8 +336,8 @@ func TestIngesterWithStorageType(t *testing.T) {
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
 	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[0])
-	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[1])
-	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[2])
+	assert.Equal(t, "--kafka.consumer.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Equal(t, "--kafka.consumer.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[2])
 }
 
 func TestIngesterLabels(t *testing.T) {

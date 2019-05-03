@@ -74,8 +74,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	}
 
 	options := allArgs(i.jaeger.Spec.Ingester.Options,
-		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)),
-		i.jaeger.Spec.Storage.Options.Filter("kafka"))
+		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)))
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

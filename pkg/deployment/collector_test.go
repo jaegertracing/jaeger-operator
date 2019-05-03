@@ -350,23 +350,23 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 	assert.Equal(t, "--es.server-urls=http://somewhere", dep.Spec.Template.Spec.Containers[0].Args[0])
 }
 
-func TestCollectorWithIngesterStorageType(t *testing.T) {
+func TestCollectorWithKafkaStorageType(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "TestCollectorWithIngesterStorageType",
 		},
 		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
-			Ingester: v1.JaegerIngesterSpec{
+			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.topic": "mytopic",
+					"kafka.producer.topic": "mytopic",
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.brokers":  "http://brokers",
-					"es.server-urls": "http://somewhere",
+					"kafka.producer.brokers": "http://brokers",
+					"es.server-urls":         "http://somewhere",
 				}),
 			},
 		},
@@ -386,8 +386,8 @@ func TestCollectorWithIngesterStorageType(t *testing.T) {
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
-	assert.Equal(t, "--kafka.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
-	assert.Equal(t, "--kafka.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Equal(t, "--kafka.producer.brokers=http://brokers", dep.Spec.Template.Spec.Containers[0].Args[0])
+	assert.Equal(t, "--kafka.producer.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
 }
 
 func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
