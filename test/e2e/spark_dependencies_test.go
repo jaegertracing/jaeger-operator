@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,11 @@ import (
 )
 
 func SparkDependenciesElasticsearch(t *testing.T) {
-	testCtx := prepare(t)
+	testCtx, err := prepare(t)
+	if (err != nil) {
+		testCtx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	defer testCtx.Cleanup()
 	storage := v1.JaegerStorageSpec{
 		Type: "elasticsearch",
@@ -27,7 +32,11 @@ func SparkDependenciesElasticsearch(t *testing.T) {
 }
 
 func SparkDependenciesCassandra(t *testing.T) {
-	testCtx := prepare(t)
+	testCtx, err := prepare(t)
+	if (err != nil) {
+		testCtx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	defer testCtx.Cleanup()
 
 	storage := v1.JaegerStorageSpec{

@@ -35,7 +35,12 @@ type DaemonSetTestSuite struct {
 
 func(suite *DaemonSetTestSuite) SetupSuite() {
 	t = suite.T()
-	ctx = prepare(t)
+	var err error
+	ctx, err = prepare(t)
+	if (err != nil) {
+		ctx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")

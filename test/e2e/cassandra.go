@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +16,11 @@ import (
 
 // Cassandra runs a test with Cassandra as the backing storage
 func Cassandra(t *testing.T) {
-	ctx := prepare(t)
+	ctx, err := prepare(t)
+	if (err != nil) {
+		ctx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	defer ctx.Cleanup()
 
 	if err := cassandraTest(t, framework.Global, ctx); err != nil {

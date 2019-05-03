@@ -7,19 +7,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 var (
@@ -52,7 +52,7 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 	return corev1.Pod{}, fmt.Errorf("could not find pod with image %s", containsImage)
 }
 
-func prepare(t *testing.T) *framework.TestCtx {
+func prepare(t *testing.T) (*framework.TestCtx, error) {
 	ctx := framework.NewTestCtx(t)
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
@@ -70,10 +70,10 @@ func prepare(t *testing.T) *framework.TestCtx {
 	// wait for the operator to be ready
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
 
-	return ctx
+	return ctx, nil
 }
 
 func isOpenShift(t *testing.T) bool {
