@@ -26,12 +26,13 @@ var (
 	retryInterval        = time.Second * 5
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
+	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
-	ctx		     *framework.TestCtx
-	fw		     *framework.Framework
-	namespace	     string
-	t		     *testing.T
+	ctx                  *framework.TestCtx
+	fw                   *framework.Framework
+	namespace            string
+	t                    *testing.T
 )
 
 // GetPod returns pod name
@@ -118,7 +119,6 @@ func addToFrameworkSchemeForSmokeTests(t *testing.T) {
 	}
 }
 
-
 type resp struct {
 	Data []trace `json:"data"`
 }
@@ -134,10 +134,9 @@ type span struct {
 }
 
 type services struct {
-	Data []string `json:"data"`
-	total int `json:"total"`
-	limit int `json:"limit"`
-	offset int `json:offset`
+	Data   []string    `json:"data"`
+	total  int         `json:"total"`
+	limit  int         `json:"limit"`
+	offset int         `json:offset`
 	errors interface{} `json:"errors"`
 }
-
