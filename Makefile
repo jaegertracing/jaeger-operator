@@ -14,6 +14,7 @@ VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
+KAFKA_NAMESPACE ?= "kafka"
 ES_OPERATOR_NAMESPACE = openshift-logging
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -104,6 +105,11 @@ e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
 	@go test -tags=self_provisioned_elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
+.PHONY: e2e-tests-streaming
+e2e-tests-streaming: prepare-e2e-tests es kafka
+	@echo Running Streaming end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
@@ -136,6 +142,13 @@ cassandra: storage
 storage:
 	@echo Creating namespace $(STORAGE_NAMESPACE)
 	@kubectl create namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+
+.PHONY: kafka
+kafka:
+	@echo Creating namespace $(KAFKA_NAMESPACE)
+	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: clean
 clean:
