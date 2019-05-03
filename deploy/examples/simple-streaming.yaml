@@ -6,11 +6,18 @@ metadata:
   name: simple-streaming
 spec:
   strategy: streaming
+  collector:
+    options:
+      kafka:
+        producer:
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-brokers.kafka:9092
   ingester:
     options:
       kafka:
-        topic: jaeger-spans
-        brokers: my-cluster-kafka-brokers.kafka:9092
+        consumer:
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-brokers.kafka:9092
       ingester:
         deadlockInterval: 0
   storage:

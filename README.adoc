@@ -246,11 +246,18 @@ metadata:
   name: simple-streaming
 spec:
   strategy: streaming
+  collector:
+    options:
+      kafka: # <1>
+        producer:
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-brokers.kafka:9092
   ingester:
     options:
       kafka: # <1>
-        topic: jaeger-spans
-        brokers: my-cluster-kafka-brokers.kafka:9092
+        consumer:
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-brokers.kafka:9092
       ingester:
         deadlockInterval: 0 # <2>
   storage:
@@ -261,6 +268,8 @@ spec:
 ----
 <1> Identifies the kafka configuration used by the collector, to produce the messages, and the ingester to consume the messages
 <2> The deadlock interval can be disabled to avoid the ingester being terminated when no messages arrive within the default 1 minute period
+
+NOTE: A Kafka environment can be configured using link:https://strimzi.io/[Strimzi's Kafka operator].
 
 == Elasticsearch storage
 

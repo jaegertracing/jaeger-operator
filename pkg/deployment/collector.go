@@ -78,8 +78,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 		storageType = "kafka"
 	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,
-		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(storageType)),
-		c.jaeger.Spec.Ingester.Options.Filter(storage.OptionsPrefix(storageType)))
+		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(storageType)))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
 
