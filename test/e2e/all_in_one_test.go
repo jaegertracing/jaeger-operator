@@ -142,9 +142,9 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 
 	j := getJaegerAllInOneWithUiDefinition(basePath)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.NoError(t, err, "Error creating jaeger-operator instance")
+	require.NoError(t, err, "Error creating jaeger instance")
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for operator deployment")
+	require.NoError(t, err, "Error waiting for jaeger deployment")
 
 	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", fw.KubeClient)
 	require.NoError(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
