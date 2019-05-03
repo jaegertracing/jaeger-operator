@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,11 @@ import (
 )
 
 func EsIndexCleaner(t *testing.T) {
-	testCtx := prepare(t)
+	testCtx, err := prepare(t)
+	if (err != nil) {
+		ctx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	defer testCtx.Cleanup()
 	if err := esIndexCleanerTest(t, framework.Global, testCtx); err != nil {
 		t.Fatal(err)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,11 @@ import (
 )
 
 func SimplestJaeger(t *testing.T) {
-	ctx := prepare(t)
+	ctx, err := prepare(t)
+	if (err != nil) {
+		ctx.Cleanup()
+		require.FailNow(t, "Failed in prepare")
+	}
 	defer ctx.Cleanup()
 
 	if err := simplest(t, framework.Global, ctx); err != nil {
