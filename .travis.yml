@@ -63,15 +63,6 @@ jobs:
       env:
       - TEST_GROUP=cassandra
 
-    - stage: build
-      name: "Run e2e streaming tests"
-      install:
-      - "./.travis/setupMinikube.sh"
-      script:
-      - "./.travis/rune2eTests.sh"
-      env:
-      - TEST_GROUP=streaming
-
     - stage: deploy
       name: "Publish latest image"
       env:

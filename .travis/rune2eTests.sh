@@ -19,10 +19,6 @@ then
     echo "Running Cassandra Tests"
     make cassandra
     make e2e-tests-cassandra
-elif [ "${TEST_GROUP}" = "streaming" ]
-then
-    echo "Running Streaming Tests"
-    make e2e-tests-streaming
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
