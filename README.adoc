@@ -269,7 +269,7 @@ spec:
 <1> Identifies the kafka configuration used by the collector, to produce the messages, and the ingester to consume the messages
 <2> The deadlock interval can be disabled to avoid the ingester being terminated when no messages arrive within the default 1 minute period
 
-NOTE: A Kafka environment can be configured using link:https://strimzi.io/[Strimzi's Kafka operator].
+TIP: A Kafka environment can be configured using link:https://strimzi.io/[Strimzi's Kafka operator].
 
 == Elasticsearch storage
 

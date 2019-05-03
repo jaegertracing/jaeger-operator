@@ -74,9 +74,15 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 		},
 		Spec: v1.JaegerSpec{
 			Strategy: "streaming",
+			Collector: v1.JaegerCollectorSpec{
+				Options: v1.NewOptions(map[string]interface{}{
+					"kafka.producer.topic": "mytopic",
+				}),
+			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.topic": "mytopic",
+					"kafka.consumer.topic":    "mytopic",
+					"kafka.consumer.group-id": "mygroup",
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
@@ -107,7 +113,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 			assert.Equal(t, 0, escount)
 		} else if strings.Contains(dep.Name, "ingester") {
 			// Including parameters for ES and kafka topic
-			assert.Len(t, args, 4)
+			assert.Len(t, args, 5)
 			assert.Equal(t, 3, escount)
 
 		} else {
