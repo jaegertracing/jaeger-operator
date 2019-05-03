@@ -43,12 +43,10 @@ func SmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interva
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
 
+
 		if !strings.Contains(bodyString, "errors\":null") {
 			return false, errors.New("query service returns errors")
 		}
-		if !strings.Contains(bodyString, tStr) {
-			return false, errors.New("query service does not return spans")
-		}
-		return true, nil
+		return strings.Contains(bodyString, tStr), nil
 	})
 }
