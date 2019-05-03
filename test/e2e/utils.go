@@ -7,13 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	osv1 "github.com/openshift/api/route/v1"
+	osv1sec "github.com/openshift/api/security/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 )
 
 var (
@@ -22,6 +28,10 @@ var (
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
+	ctx		     *framework.TestCtx
+	fw		     *framework.Framework
+	namespace	     string
+	t		     *testing.T
 )
 
 // GetPod returns pod name
@@ -94,6 +104,20 @@ func availableAPIs(kubeconfig *rest.Config) (*metav1.APIGroupList, error) {
 
 	return apiList, nil
 }
+
+func addToFrameworkSchemeForSmokeTests(t *testing.T) {
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+	}))
+	if isOpenShift(t) {
+		assert.NoError(t, framework.AddToFrameworkScheme(osv1.AddToScheme, &osv1.Route{}))
+		assert.NoError(t, framework.AddToFrameworkScheme(osv1sec.AddToScheme, &osv1sec.SecurityContextConstraints{}))
+	}
+}
+
 
 type resp struct {
 	Data []trace `json:"data"`
