@@ -1,3 +1,5 @@
+// +build elasticsearch
+
 package e2e
 
 import (
@@ -8,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/require"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -17,24 +20,35 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func EsIndexCleaner(t *testing.T) {
-	testCtx, err := prepare(t)
+type EsIndexCleanerTestSuite struct {
+	suite.Suite
+}
+
+func(suite *EsIndexCleanerTestSuite) SetupSuite() {
+	t = suite.T()
+	var err error
+	ctx, err = prepare(t)
 	if (err != nil) {
 		ctx.Cleanup()
 		require.FailNow(t, "Failed in prepare")
 	}
-	defer testCtx.Cleanup()
-	if err := esIndexCleanerTest(t, framework.Global, testCtx); err != nil {
-		t.Fatal(err)
-	}
+	fw = framework.Global
+	namespace, _ = ctx.GetNamespace()
+	require.NotNil(t, namespace, "GetNamespace failed")
+
+	addToFrameworkSchemeForSmokeTests(t)
 }
 
-func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx) error {
-	namespace, err := testCtx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
+func (suite *EsIndexCleanerTestSuite) TearDownSuite() {
+	ctx.Cleanup()
+}
 
+func TestEsIndexCleanerSuite(t *testing.T) {
+	suite.Run(t, new(EsIndexCleanerTestSuite))
+}
+
+
+func (suite *EsIndexCleanerTestSuite) TestEsIndexCleaner()  {
 	name := "test-es-index-cleaner"
 	numberOfDays := 0
 	j := &v1.Jaeger{
@@ -61,62 +75,49 @@ func esIndexCleanerTest(t *testing.T, f *framework.Framework, testCtx *framework
 		},
 	}
 
-	err = f.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: testCtx, Timeout: timeout, RetryInterval: retryInterval})
-	if err != nil {
-		return err
-	}
+	err := fw.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying Jaeger")
 
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
-	if err != nil {
-		return nil
-	}
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	jaegerPod, err := GetPod(namespace, name, "jaegertracing/all-in-one", f.KubeClient)
-	if err != nil {
-		return err
-	}
-	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, f.KubeConfig)
-	if err != nil {
-		return err
-	}
+	jaegerPod, err := GetPod(namespace, name, "jaegertracing/all-in-one", fw.KubeClient)
+	require.NoError(t, err, "Error getting Pod")
+
+	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, fw.KubeConfig)
+	require.NoError(t, err, "Error creating port forward")
+
 	defer portForw.Close()
 	defer close(closeChan)
 
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err, "Error running smoketest")
 
-	esPod, err := GetPod(storageNamespace, "elasticsearch", "elasticsearch", f.KubeClient)
-	if err != nil {
-		return err
-	}
-	portForwES, closeChanES, err := CreatePortForward(esPod.Namespace, esPod.Name, []string{"9200"}, f.KubeConfig)
-	if err != nil {
-		return err
-	}
+	esPod, err := GetPod(storageNamespace, "elasticsearch", "elasticsearch", fw.KubeClient)
+	require.NoError(t, err, "Error getting Pod")
+
+	portForwES, closeChanES, err := CreatePortForward(esPod.Namespace, esPod.Name, []string{"9200"}, fw.KubeConfig)
+	require.NoError(t, err, "Error creating port forward")
+
 	defer portForwES.Close()
 	defer close(closeChanES)
 
-	if flag, err := hasIndexWithPrefix("jaeger-"); !flag || err != nil {
-		return fmt.Errorf("jaeger-* index not found prior to es-index-cleaner: err = %v", err)
-	}
+	flag, err := hasIndexWithPrefix("jaeger-")
+	require.NoError(t, err, "Error searching for index")
+	require.True(t, flag, "HasIndexWithPrefix returned false")
 
-	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
-	if err != nil {
-		return err
-	}
+	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
 
-	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
-	if err != nil {
-		return err
-	}
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
 
-	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err =  wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		flag, err := hasIndexWithPrefix("jaeger-")
 		return !flag, err
 	})
+	require.NoError(t, err, "TODO")
 }
 
 func hasIndexWithPrefix(prefix string) (bool, error) {
