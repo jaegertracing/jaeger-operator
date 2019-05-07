@@ -66,7 +66,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
 	// create jaeger custom resource
-	exampleJaeger := getJaegerSimpleProdWitServerUrls()
+	exampleJaeger := getJaegerSimpleProdWithServerUrls()
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 
@@ -145,7 +145,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "TODO")
 }
 
-func getJaegerSimpleProdWitServerUrls() *v1.Jaeger {
+func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
