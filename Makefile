@@ -97,7 +97,7 @@ e2e-tests-cassandra: prepare-e2e-tests cassandra
 .PHONY: e2e-tests-es
 e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... -v -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
