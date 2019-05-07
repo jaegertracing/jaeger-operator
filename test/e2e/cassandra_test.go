@@ -68,7 +68,7 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 	defer close(closeChan)
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 	require.NoError(t, err, "SmokeTest Failed")
-	}
+}
 
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {
 	storage := v1.JaegerStorageSpec{
@@ -78,7 +78,6 @@ func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {
 	}
 	err := sparkTest(t, framework.Global, ctx, storage)
 	require.NoError(t, err, "SparkTest failed")
-
 }
 
 func getJaegerWithCassandra(s string) *v1.Jaeger {

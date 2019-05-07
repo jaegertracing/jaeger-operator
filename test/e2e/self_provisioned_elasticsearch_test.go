@@ -4,15 +4,13 @@ package e2e
 
 import (
 	goctx "context"
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
@@ -66,30 +64,11 @@ func TestSelfProvisionedSuite(t *testing.T) {
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple-prod",
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Strategy: "production",
-			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
-			},
-		},
-	}
+	exampleJaeger := getJaegerSimpleProd()
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
-	if err != nil {
-		fmt.Printf(">>>>>>>>>>>>>>>> Error %v\n", err)
-		time.Sleep(4 * time.Minute)
-	}
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
@@ -111,6 +90,26 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 
 	defer portForwColl.Close()
 	defer close(closeChanColl)
-	err =  SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
+	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
+}
+
+func getJaegerSimpleProd() *v1.Jaeger {
+	exampleJaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "simple-prod",
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1.JaegerStorageSpec{
+				Type: "elasticsearch",
+			},
+		},
+	}
+	return exampleJaeger
 }
