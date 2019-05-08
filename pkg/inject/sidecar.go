@@ -104,6 +104,8 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
 
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
+
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
@@ -130,6 +132,7 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 				Name:          "jg-binary-trft",
 			},
 		},
+		Resources: commonSpec.Resources,
 	}
 }
 
