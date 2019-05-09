@@ -19,6 +19,7 @@ ES_OPERATOR_NAMESPACE = openshift-logging
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1)
+TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
 
 .DEFAULT_GOAL := build
 
@@ -88,27 +89,27 @@ prepare-e2e-tests: crd build docker push
 .PHONY: e2e-tests-smoke
 e2e-tests-smoke: prepare-e2e-tests
 	@echo Running Smoke end-to-end tests...
-	@go test -tags=smoke ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra
 	@echo Running Cassandra end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-es
 e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... -v -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
-	@go test -tags=self_provisioned_elasticsearch ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
