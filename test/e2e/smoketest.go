@@ -45,7 +45,7 @@ func SmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interva
 
 
 		if !strings.Contains(bodyString, "errors\":null") {
-			return false, errors.New("query service returns errors")
+			return false, errors.New("query service returns errors: " + bodyString)
 		}
 		return strings.Contains(bodyString, tStr), nil
 	})
