@@ -201,10 +201,11 @@ type ElasticsearchSpec struct {
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
 // +k8s:openapi-gen=true
 type JaegerCassandraCreateSchemaSpec struct {
-	Enabled    *bool  `json:"enabled"`
-	Image      string `json:"image"`
-	Datacenter string `json:"datacenter"`
-	Mode       string `json:"mode"`
+	Enabled      *bool  `json:"enabled"`
+	Image        string `json:"image"`
+	Datacenter   string `json:"datacenter"`
+	Mode         string `json:"mode"`
+	CompletedTTL *int32 `json:"completedTTL"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -218,6 +219,7 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
+	CompletedTTL                *int32 `json:"completedTTL"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
@@ -227,13 +229,15 @@ type JaegerEsIndexCleanerSpec struct {
 	NumberOfDays *int   `json:"numberOfDays"`
 	Schedule     string `json:"schedule"`
 	Image        string `json:"image"`
+	CompletedTTL *int32 `json:"completedTTL"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
 type JaegerEsRolloverSpec struct {
-	Image      string `json:"image"`
-	Schedule   string `json:"schedule"`
-	Conditions string `json:"conditions"`
+	Image        string `json:"image"`
+	Schedule     string `json:"schedule"`
+	Conditions   string `json:"conditions"`
+	CompletedTTL *int32 `json:"completedTTL"`
 	// we parse it with time.ParseDuration
 	ReadTTL string `json:"readTTL"`
 }

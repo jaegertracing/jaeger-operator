@@ -23,6 +23,8 @@ func TestRollover(t *testing.T) {
 	j.Spec.Storage.Rollover.Image = "wohooo"
 	j.Spec.Storage.Rollover.Conditions = "weheee"
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})
+	completedTTL := int32(100)
+	j.Spec.Storage.Rollover.CompletedTTL = &completedTTL
 
 	cjob := rollover(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
@@ -32,6 +34,7 @@ func TestRollover(t *testing.T) {
 	assert.Equal(t, j.Spec.Storage.Rollover.Image, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"rollover", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "CONDITIONS", Value: "weheee"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
+	assert.Equal(t, completedTTL, *cjob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
 }
 
 func TestLookback(t *testing.T) {
@@ -40,6 +43,8 @@ func TestLookback(t *testing.T) {
 	j.Spec.Storage.Rollover.Image = "wohooo"
 	j.Spec.Storage.Rollover.ReadTTL = "2h"
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})
+	completedTTL := int32(100)
+	j.Spec.Storage.Rollover.CompletedTTL = &completedTTL
 
 	cjob := lookback(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
@@ -49,6 +54,7 @@ func TestLookback(t *testing.T) {
 	assert.Equal(t, j.Spec.Storage.Rollover.Image, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"lookback", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "UNIT", Value: "hours"}, {Name: "UNIT_COUNT", Value: "2"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
+	assert.Equal(t, completedTTL, *cjob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
 }
 
 func TestEnvVars(t *testing.T) {
