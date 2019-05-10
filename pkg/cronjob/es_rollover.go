@@ -50,23 +50,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &ttlHourInSec,
 					Parallelism:             &one,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Annotations: util.GetAnnotations(""),
-						},
-						Spec: corev1.PodSpec{
-							RestartPolicy: corev1.RestartPolicyOnFailure,
-							Containers: []corev1.Container{
-								{
-									Name:  name,
-									Image: jaeger.Spec.Storage.Rollover.Image,
-									Args:  []string{"rollover", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-									Env:   envs,
-								},
-							},
-							ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
-						},
-					},
+					Template:                getPodTemplateSpec(jaeger, name, envs, "rollover"),
 				},
 			},
 		},
@@ -103,25 +87,29 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &ttlHourInSec,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Annotations: util.GetAnnotations(""),
-						},
-						Spec: corev1.PodSpec{
-							RestartPolicy: corev1.RestartPolicyOnFailure,
-							Containers: []corev1.Container{
-								{
-									Name:  name,
-									Image: jaeger.Spec.Storage.Rollover.Image,
-									Args:  []string{"lookback", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-									Env:   envs,
-								},
-							},
-							ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
-						},
-					},
+					Template:                getPodTemplateSpec(jaeger, name, envs, "lookback"),
 				},
 			},
+		},
+	}
+}
+
+func getPodTemplateSpec(jaeger *v1.Jaeger, name string, envs []corev1.EnvVar, command string) corev1.PodTemplateSpec {
+	return corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: util.GetAnnotations(""),
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyOnFailure,
+			Containers: []corev1.Container{
+				{
+					Name:  name,
+					Image: jaeger.Spec.Storage.Rollover.Image,
+					Args:  []string{command, util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
+					Env:   envs,
+				},
+			},
+			ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
 		},
 	}
 }
