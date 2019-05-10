@@ -95,3 +95,13 @@ func TestEnvVars(t *testing.T) {
 		assert.Equal(t, test.expected, envVars(test.opts))
 	}
 }
+
+func TestElasticsearchDependenciesImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger("TestElasticsearchDependenciesImagePullSecrets")
+	secret1 := "mysecret1"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret1},
+	}
+
+	assert.Equal(t, secret1, elasticsearchDependencies(jaeger)[0].Spec.Template.Spec.ImagePullSecrets[0].Name)
+}

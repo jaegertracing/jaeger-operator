@@ -50,6 +50,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	resources := &corev1.ResourceRequirements{}
 	var affinity *corev1.Affinity
 	var tolerations []corev1.Toleration
+	var imagePullSecrets []corev1.LocalObjectReference
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -71,15 +72,18 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		}
 
 		tolerations = append(tolerations, commonSpec.Tolerations...)
+
+		imagePullSecrets = append(imagePullSecrets, commonSpec.ImagePullSecrets...)
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:  annotations,
-		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
-		Volumes:      removeDuplicatedVolumes(volumes),
-		Resources:    *resources,
-		Affinity:     affinity,
-		Tolerations:  tolerations,
+		Annotations:      annotations,
+		VolumeMounts:     removeDuplicatedVolumeMounts(volumeMounts),
+		Volumes:          removeDuplicatedVolumes(volumes),
+		Resources:        *resources,
+		Affinity:         affinity,
+		Tolerations:      tolerations,
+		ImagePullSecrets: imagePullSecrets,
 	}
 }
 

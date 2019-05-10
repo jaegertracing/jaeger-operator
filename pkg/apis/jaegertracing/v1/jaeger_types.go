@@ -86,12 +86,13 @@ type Jaeger struct {
 // JaegerCommonSpec defines the common elements used in multiple other spec structs
 // +k8s:openapi-gen=true
 type JaegerCommonSpec struct {
-	Volumes      []v1.Volume             `json:"volumes"`
-	VolumeMounts []v1.VolumeMount        `json:"volumeMounts"`
-	Annotations  map[string]string       `json:"annotations,omitempty"`
-	Resources    v1.ResourceRequirements `json:"resources,omitempty"`
-	Affinity     *v1.Affinity            `json:"affinity,omitempty"`
-	Tolerations  []v1.Toleration         `json:"tolerations,omitempty"`
+	Volumes          []v1.Volume               `json:"volumes"`
+	VolumeMounts     []v1.VolumeMount          `json:"volumeMounts"`
+	Annotations      map[string]string         `json:"annotations,omitempty"`
+	Resources        v1.ResourceRequirements   `json:"resources,omitempty"`
+	Affinity         *v1.Affinity              `json:"affinity,omitempty"`
+	Tolerations      []v1.Toleration           `json:"tolerations,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query

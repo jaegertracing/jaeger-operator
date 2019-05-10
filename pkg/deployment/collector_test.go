@@ -444,3 +444,22 @@ func TestCollectorOrderOfArguments(t *testing.T) {
 	// the following are added automatically
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
 }
+
+func TestCollectorImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger("TestCollectorImagePullSecrets")
+	secret1 := "mysecret1"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret1},
+	}
+	secret2 := "mysecret2"
+	jaeger.Spec.Collector.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret2},
+	}
+
+	a := NewCollector(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, secret2, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+	assert.Equal(t, secret1, dep.Spec.Template.Spec.ImagePullSecrets[1].Name)
+}

@@ -76,3 +76,14 @@ func TestStorageEnvs(t *testing.T) {
 func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }
+
+func TestSparkDependenciesImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger("TestSparkDependenciesImagePullSecrets")
+	secret := "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret},
+	}
+
+	dependencies := CreateSparkDependencies(jaeger)
+	assert.Equal(t, secret, dependencies.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}

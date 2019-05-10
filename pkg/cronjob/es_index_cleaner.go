@@ -71,7 +71,8 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									EnvFrom: envFromSource,
 								},
 							},
-							RestartPolicy: corev1.RestartPolicyNever,
+							RestartPolicy:    corev1.RestartPolicyNever,
+							ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{

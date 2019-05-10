@@ -45,6 +45,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 							Env:   envVars(jaeger.Spec.Storage.Options),
 						},
 					},
+					ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
 				},
 			},
 		},

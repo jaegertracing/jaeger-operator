@@ -147,6 +147,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 				},
 			},
 		},

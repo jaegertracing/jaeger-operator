@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -31,4 +32,17 @@ func TestEsIndexCleanerSecrets(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 	cronJob := CreateEsIndexCleaner(jaeger)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestEsIndexCleanerImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger("TestEsIndexCleanerImagePullSecrets")
+	secret := "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret},
+	}
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	cronJob := CreateEsIndexCleaner(jaeger)
+	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }

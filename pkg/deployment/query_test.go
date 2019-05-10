@@ -321,3 +321,22 @@ func TestQueryOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 }
+
+func TestQueryImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryImagePullSecrets")
+	secret1 := "mysecret1"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret1},
+	}
+	secret2 := "mysecret2"
+	jaeger.Spec.Query.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret2},
+	}
+
+	a := NewQuery(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, secret2, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+	assert.Equal(t, secret1, dep.Spec.Template.Spec.ImagePullSecrets[1].Name)
+}

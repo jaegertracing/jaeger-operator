@@ -148,6 +148,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 				},
 			},
 		},

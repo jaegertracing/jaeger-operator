@@ -168,6 +168,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 				},
 			},
 		},

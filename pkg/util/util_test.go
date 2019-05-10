@@ -284,3 +284,24 @@ func TestGetPortSpecified(t *testing.T) {
 
 	assert.Equal(t, int32(6831), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
 }
+
+func TestMergeImagePullSecrets(t *testing.T) {
+	secret1 := "mysecret1"
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{Name: secret1},
+		},
+	}
+	secret2 := "mysecret2"
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{Name: secret2},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Len(t, merged.ImagePullSecrets, 2)
+	assert.Equal(t, secret2, merged.ImagePullSecrets[0].Name)
+	assert.Equal(t, secret1, merged.ImagePullSecrets[1].Name)
+}

@@ -382,3 +382,22 @@ func newIngesterJaeger(name string) *v1.Jaeger {
 		},
 	}
 }
+
+func TestIngesterImagePullSecrets(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterImagePullSecrets")
+	secret1 := "mysecret1"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret1},
+	}
+	secret2 := "mysecret2"
+	jaeger.Spec.Ingester.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: secret2},
+	}
+
+	a := NewIngester(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, secret2, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+	assert.Equal(t, secret1, dep.Spec.Template.Spec.ImagePullSecrets[1].Name)
+}

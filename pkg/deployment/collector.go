@@ -162,6 +162,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 				},
 			},
 		},

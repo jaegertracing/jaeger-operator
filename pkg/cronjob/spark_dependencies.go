@@ -71,7 +71,8 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Env: removeEmptyVars(envVars),
 								},
 							},
-							RestartPolicy: corev1.RestartPolicyNever,
+							RestartPolicy:    corev1.RestartPolicyNever,
+							ImagePullSecrets: jaeger.Spec.ImagePullSecrets,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
