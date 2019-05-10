@@ -305,3 +305,16 @@ func TestMergeImagePullSecrets(t *testing.T) {
 	assert.Equal(t, secret2, merged.ImagePullSecrets[0].Name)
 	assert.Equal(t, secret1, merged.ImagePullSecrets[1].Name)
 }
+
+func TestGetAnnotationsScrapeDisabled(t *testing.T) {
+	annotations := GetAnnotations("")
+	assert.Len(t, annotations, 2)
+	assert.Equal(t, "false", annotations["prometheus.io/scrape"])
+}
+
+func TestGetAnnotationsScrapeEnabled(t *testing.T) {
+	annotations := GetAnnotations("1234")
+	assert.Len(t, annotations, 3)
+	assert.Equal(t, "true", annotations["prometheus.io/scrape"])
+	assert.Equal(t, "1234", annotations["prometheus.io/port"])
+}

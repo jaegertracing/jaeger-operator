@@ -168,3 +168,18 @@ func GetPort(arg string, args []string, port int32) int32 {
 
 	return port
 }
+
+// GetAnnotations returns a common map of annotations. If a blank scrape port is supplied, scraping will be disabled.
+func GetAnnotations(scrapePort string) map[string]string {
+	annotations := map[string]string{
+		"sidecar.istio.io/inject": "false",
+	}
+	if scrapePort == "" {
+		annotations["prometheus.io/scrape"] = "false"
+	} else {
+		annotations["prometheus.io/scrape"] = "true"
+		annotations["prometheus.io/port"] = scrapePort
+	}
+
+	return annotations
+}

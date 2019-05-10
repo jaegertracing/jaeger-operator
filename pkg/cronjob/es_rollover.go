@@ -52,10 +52,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 					Parallelism:             &one,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-							},
+							Annotations: util.GetAnnotations(""),
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyOnFailure,
@@ -108,10 +105,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 					TTLSecondsAfterFinished: &ttlHourInSec,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-							},
+							Annotations: util.GetAnnotations(""),
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyOnFailure,
