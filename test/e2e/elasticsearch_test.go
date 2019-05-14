@@ -96,7 +96,9 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	require.NoError(t, err, "Error running smoketest")
 }
 
+
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
+	suite.T().Skip("Skipping because of https://github.com/jaegertracing/jaeger-operator/issues/397")
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 
@@ -144,6 +146,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	})
 	require.NoError(t, err, "TODO")
 }
+
 
 func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 	exampleJaeger := &v1.Jaeger{
