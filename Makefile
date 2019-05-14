@@ -57,7 +57,7 @@ build: format
 
 .PHONY: docker
 docker:
-	@docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+	@[ ! -z "$(PIPELINE)" ] || docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
 
 .PHONY: push
 push:
