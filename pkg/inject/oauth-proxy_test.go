@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
@@ -68,4 +70,36 @@ func TestOAuthProxyOrderOfArguments(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 7)
 	assert.Equal(t, sortedArgs, dep.Spec.Template.Spec.Containers[1].Args)
+}
+
+func TestOAuthProxyResourceLimits(t *testing.T) {
+	jaeger := v1.NewJaeger("TestOAuthProxyResourceLimits")
+	jaeger.Spec.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+	jaeger.Spec.Ingress.Resources = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+		},
+	}
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }

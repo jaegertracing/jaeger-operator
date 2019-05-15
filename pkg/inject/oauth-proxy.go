@@ -10,6 +10,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // OAuthProxy injects an appropriate proxy into the given deployment
@@ -43,6 +44,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		"--tls-key=/etc/tls/private/tls.key",
 		"--upstream=http://localhost:16686",
 	}
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	return corev1.Container{
 		Image: viper.GetString("openshift-oauth-proxy-image"),
@@ -58,5 +60,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 				Name:          "public",
 			},
 		},
+		Resources: commonSpec.Resources,
 	}
 }
