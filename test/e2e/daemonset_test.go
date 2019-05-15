@@ -38,7 +38,9 @@ func(suite *DaemonSetTestSuite) SetupSuite() {
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
-		ctx.Cleanup()
+		if ctx != nil {
+			ctx.Cleanup()
+		}
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global

@@ -16,7 +16,9 @@ import (
 func SparkDependenciesElasticsearch(t *testing.T) {
 	testCtx, err := prepare(t)
 	if (err != nil) {
-		testCtx.Cleanup()
+		if testCtx != nil {
+			testCtx.Cleanup()
+		}
 		require.FailNow(t, "Failed in prepare")
 	}
 	defer testCtx.Cleanup()
