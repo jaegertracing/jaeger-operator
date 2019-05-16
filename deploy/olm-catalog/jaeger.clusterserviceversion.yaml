@@ -104,7 +104,7 @@ spec:
 
     A more complex Jaeger instance taken from the [documentation](https://github.com/jaegertracing/jaeger-operator#creating-a-new-jaeger-instance):
 
-        apiVersion: io.jaegertracing/v1alpha1
+        apiVersion: jaegertracing.io/v1
         kind: Jaeger
         metadata:
           name: my-jaeger
@@ -133,6 +133,7 @@ spec:
   keywords: ['tracing', 'monitoring', 'troubleshooting']
   version: 1.11.1
   replaces: jaeger-operator.v1.11.0
+  maturity: alpha
   maintainers:
   - email: jaeger-tracing@googlegroups.com
     name: Jaeger Google Group
