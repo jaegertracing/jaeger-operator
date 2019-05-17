@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	// Default to 10 minutes
-	defCompletedTTL = int32(600)
+	// Default to 1 hour
+	defCompletedTTL = int32(3600)
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
