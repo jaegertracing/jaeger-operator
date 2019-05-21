@@ -27,7 +27,7 @@ type ElasticSearchTestSuite struct {
 }
 
 func(suite *ElasticSearchTestSuite) SetupSuite() {
-	t = suite.T()
+	t := suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
@@ -53,6 +53,7 @@ func TestElasticSearchSuite(t *testing.T) {
 }
 
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
+	t := suite.T()
 	storage := v1.JaegerStorageSpec{
 		Type: "elasticsearch",
 		Options: v1.NewOptions(map[string]interface{}{
@@ -64,6 +65,7 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 }
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
+	t := suite.T()
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
@@ -99,6 +101,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
+	t := suite.T()
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 

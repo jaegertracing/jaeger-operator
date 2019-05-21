@@ -21,7 +21,7 @@ type StreamingTestSuite struct {
 }
 
 func (suite *StreamingTestSuite) SetupSuite() {
-	t = suite.T()
+	t := suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if err != nil {
@@ -47,6 +47,7 @@ func TestStreamingSuite(t *testing.T) {
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {
+	t := suite.T()
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 

@@ -32,7 +32,6 @@ var (
 	ctx                  *framework.TestCtx
 	fw                   *framework.Framework
 	namespace            string
-	t                    *testing.T
 )
 
 // GetPod returns pod name

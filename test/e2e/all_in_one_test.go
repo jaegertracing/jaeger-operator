@@ -34,7 +34,7 @@ type AllInOneTestSuite struct {
 }
 
 func(suite *AllInOneTestSuite) SetupSuite() {
-	t = suite.T()
+	t := suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
@@ -60,6 +60,7 @@ func TestAllInOneSuite(t *testing.T) {
 }
 
 func (suite *AllInOneTestSuite) TestAllInOne() {
+	t := suite.T()
 	// create jaeger custom resource
 	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
 
@@ -72,6 +73,7 @@ func (suite *AllInOneTestSuite) TestAllInOne() {
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
+	t := suite.T()
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
@@ -144,6 +146,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 }
 
 func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
+	t := suite.T()
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 

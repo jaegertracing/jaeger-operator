@@ -23,7 +23,7 @@ type SelfProvisionedTestSuite struct {
 }
 
 func(suite *SelfProvisionedTestSuite) SetupSuite() {
-	t = suite.T()
+	t := suite.T()
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
 	}
@@ -63,6 +63,7 @@ func TestSelfProvisionedSuite(t *testing.T) {
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
+	t := suite.T()
 	// create jaeger custom resource
 	exampleJaeger := getJaegerSimpleProd()
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
