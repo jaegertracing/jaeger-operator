@@ -27,7 +27,7 @@ type ElasticSearchTestSuite struct {
 }
 
 func(suite *ElasticSearchTestSuite) SetupSuite() {
-	t := suite.T()
+	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
@@ -52,8 +52,11 @@ func TestElasticSearchSuite(t *testing.T) {
 	suite.Run(t, new(ElasticSearchTestSuite))
 }
 
+func (suite *ElasticSearchTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
-	t := suite.T()
 	storage := v1.JaegerStorageSpec{
 		Type: "elasticsearch",
 		Options: v1.NewOptions(map[string]interface{}{
@@ -65,7 +68,6 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 }
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
-	t := suite.T()
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 

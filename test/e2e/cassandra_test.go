@@ -21,7 +21,7 @@ type CassandraTestSuite struct {
 }
 
 func(suite *CassandraTestSuite) SetupSuite() {
-	t := suite.T()
+	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
@@ -46,9 +46,12 @@ func TestCassandraSuite(t *testing.T) {
 	suite.Run(t, new(CassandraTestSuite))
 }
 
+func (suite *CassandraTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 // Cassandra runs a test with Cassandra as the backing storage
 func (suite *CassandraTestSuite) TestCassandra()  {
-	t := suite.T()
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	j := getJaegerWithCassandra(namespace)
 
@@ -74,7 +77,6 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 }
 
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {
-	t := suite.T()
 	storage := v1.JaegerStorageSpec{
 		Type: "cassandra",
 		Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),

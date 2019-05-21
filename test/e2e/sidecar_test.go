@@ -30,7 +30,7 @@ type SidecarTestSuite struct {
 }
 
 func(suite *SidecarTestSuite) SetupSuite() {
-	t := suite.T()
+	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
 	if (err != nil) {
@@ -55,9 +55,12 @@ func TestSidecarSuite(t *testing.T) {
 	suite.Run(t, new(SidecarTestSuite))
 }
 
+func (suite *SidecarTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
-	t := suite.T()
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	j := getJaegerAgentAsSidecarDefinition(namespace)
