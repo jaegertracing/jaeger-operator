@@ -46,6 +46,10 @@ func TestCassandraSuite(t *testing.T) {
 	suite.Run(t, new(CassandraTestSuite))
 }
 
+func (suite *CassandraTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 // Cassandra runs a test with Cassandra as the backing storage
 func (suite *CassandraTestSuite) TestCassandra()  {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}

@@ -59,6 +59,10 @@ func TestDaemonSetSuite(t *testing.T) {
 	suite.Run(t, new(DaemonSetTestSuite))
 }
 
+func (suite *DaemonSetTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 // DaemonSet runs a test with the agent as DaemonSet
 func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}

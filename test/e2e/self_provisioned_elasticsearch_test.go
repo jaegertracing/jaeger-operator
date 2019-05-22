@@ -62,6 +62,10 @@ func TestSelfProvisionedSuite(t *testing.T) {
 	suite.Run(t, new(SelfProvisionedTestSuite))
 }
 
+func (suite *SelfProvisionedTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
 	exampleJaeger := getJaegerSimpleProd()

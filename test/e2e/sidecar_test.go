@@ -55,6 +55,10 @@ func TestSidecarSuite(t *testing.T) {
 	suite.Run(t, new(SidecarTestSuite))
 }
 
+func (suite *SidecarTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}

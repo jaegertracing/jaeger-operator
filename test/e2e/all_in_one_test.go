@@ -59,6 +59,10 @@ func TestAllInOneSuite(t *testing.T) {
 	suite.Run(t, new(AllInOneTestSuite))
 }
 
+func (suite *AllInOneTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 func (suite *AllInOneTestSuite) TestAllInOne() {
 	// create jaeger custom resource
 	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")

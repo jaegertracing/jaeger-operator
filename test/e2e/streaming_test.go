@@ -46,6 +46,10 @@ func TestStreamingSuite(t *testing.T) {
 	suite.Run(t, new(StreamingTestSuite))
 }
 
+func (suite *StreamingTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 func (suite *StreamingTestSuite) TestStreaming() {
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")

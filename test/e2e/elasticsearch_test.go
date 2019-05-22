@@ -52,6 +52,10 @@ func TestElasticSearchSuite(t *testing.T) {
 	suite.Run(t, new(ElasticSearchTestSuite))
 }
 
+func (suite *ElasticSearchTestSuite) SetupTest() {
+	t = suite.T()
+}
+
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 	storage := v1.JaegerStorageSpec{
 		Type: "elasticsearch",
