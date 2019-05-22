@@ -4,6 +4,7 @@
 
 == v1.12.0 (2019-05-22)
 
+* Update to 1.12 and use new admin ports (https://github.com/jaegertracing/jaeger-operator/pull/425[#425])
 * Use ephemeral storage for Kafka tests (https://github.com/jaegertracing/jaeger-operator/pull/419[#419])
 * Fix csv example and add spec.maturity (https://github.com/jaegertracing/jaeger-operator/pull/416[#416])
 * Add resources requests/limits to oauth_proxy (https://github.com/jaegertracing/jaeger-operator/pull/410[#410])
