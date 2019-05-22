@@ -3,6 +3,7 @@ package deployment
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -48,10 +49,14 @@ func (q *Query) Get() *appsv1.Deployment {
 	labels := q.labels()
 	trueVar := true
 
+	args := append(q.jaeger.Spec.Query.Options.ToArgs())
+
+	adminPort := util.GetPort("--admin-http-port=", args, 16687)
+
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      "16686",
+			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 
 			// note that we are explicitly using a string here, not the value from `inject.Annotation`
@@ -132,12 +137,16 @@ func (q *Query) Get() *appsv1.Deployment {
 								ContainerPort: 16686,
 								Name:          "query",
 							},
+							{
+								ContainerPort: adminPort,
+								Name:          "admin-http",
+							},
 						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
-									Port: intstr.FromInt(16687),
+									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
 							InitialDelaySeconds: 1,

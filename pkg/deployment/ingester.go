@@ -3,6 +3,7 @@ package deployment
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -52,10 +53,14 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	labels := i.labels()
 	trueVar := true
 
+	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
+
+	adminPort := util.GetPort("--admin-http-port=", args, 14270)
+
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      "14271",
+			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 		},
 	}
@@ -124,19 +129,15 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{
 							{
-								ContainerPort: 14270,
-								Name:          "hc-http",
-							},
-							{
-								ContainerPort: 14271,
-								Name:          "metrics-http",
+								ContainerPort: adminPort,
+								Name:          "admin-http",
 							},
 						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
-									Port: intstr.FromInt(14270),
+									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
 							InitialDelaySeconds: 1,
