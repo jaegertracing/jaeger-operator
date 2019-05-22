@@ -103,7 +103,6 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
-	t := suite.T()
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 
