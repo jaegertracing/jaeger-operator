@@ -53,6 +53,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+	adminPort := util.GetPort("--admin-http-port=", args, 14271)
 
 	trueVar := true
 	labels := a.labels()
@@ -60,7 +61,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(configRest)),
+			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 		},
 	}
@@ -128,12 +129,17 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 								Name:          "jg-binary-trft",
 								Protocol:      corev1.ProtocolUDP,
 							},
+							{
+								ContainerPort: adminPort,
+								HostPort:      adminPort,
+								Name:          "admin-http",
+							},
 						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/metrics",
-									Port: intstr.FromInt(int(configRest)),
+									Path: "/",
+									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
 							InitialDelaySeconds: 1,
