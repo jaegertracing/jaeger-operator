@@ -2,6 +2,26 @@
 
 = Changelog
 
+== v1.12.0 (2019-05-22)
+
+* Use ephemeral storage for Kafka tests (https://github.com/jaegertracing/jaeger-operator/pull/419[#419])
+* Fix csv example and add spec.maturity (https://github.com/jaegertracing/jaeger-operator/pull/416[#416])
+* Add resources requests/limits to oauth_proxy (https://github.com/jaegertracing/jaeger-operator/pull/410[#410])
+* Check that context is not nil before calling cleanup (https://github.com/jaegertracing/jaeger-operator/pull/413[#413])
+* Improve error message when queries fail (https://github.com/jaegertracing/jaeger-operator/pull/402[#402])
+* Add resource requirements to sidecar agent (https://github.com/jaegertracing/jaeger-operator/pull/401[#401])
+* Add streaming e2e tests (https://github.com/jaegertracing/jaeger-operator/pull/400[#400])
+* Make sure to call ctx.cleanup if perpare() fails (https://github.com/jaegertracing/jaeger-operator/pull/389[#389])
+* Change how Kafka is configured for collector and ingester (https://github.com/jaegertracing/jaeger-operator/pull/390[#390])
+* Use storage namespace in index cleaner test (https://github.com/jaegertracing/jaeger-operator/pull/382[#382])
+* Fix rbac policy issue with blockOwnerDeletion (https://github.com/jaegertracing/jaeger-operator/pull/384[#384])
+* Reinstate gosec with fix for OOM error (https://github.com/jaegertracing/jaeger-operator/pull/381[#381])
+* Enhance ES index cleaner e2e test to verify indices have been removed (https://github.com/jaegertracing/jaeger-operator/pull/378[#378])
+* Add owner ref on operator's service to ensure it gets deleted when op… (https://github.com/jaegertracing/jaeger-operator/pull/377[#377])
+* Update CSV description to comply with guidelines (https://github.com/jaegertracing/jaeger-operator/pull/374[#374])
+* Include elasticsearch statefulset nodes in availability check (https://github.com/jaegertracing/jaeger-operator/pull/371[#371])
+* Fail lint goal if not empty (https://github.com/jaegertracing/jaeger-operator/pull/372[#372])
+
 == v1.11.1 (2019-04-09)
 
 * Include docs for common config (https://github.com/jaegertracing/jaeger-operator/pull/367[#367])
