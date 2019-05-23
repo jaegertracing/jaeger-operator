@@ -20,6 +20,7 @@ func ForServices(existing []v1.Service, desired []v1.Service) Service {
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			initK8sObjectMeta(tp)
 
 			// we keep the ClusterIP that got assigned by the cluster, if it's empty in the "desired" and not empty on the "current"
 			if v.Spec.ClusterIP == "" && len(tp.Spec.ClusterIP) > 0 {

@@ -24,7 +24,9 @@ func TestSecretInventory(t *testing.T) {
 	}
 	updated := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		StringData: map[string]string{
 			"field": "bar",

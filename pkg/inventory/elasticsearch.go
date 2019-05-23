@@ -20,6 +20,7 @@ func ForElasticsearches(existing []esv1.Elasticsearch, desired []esv1.Elasticsea
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			initK8sObjectMeta(tp)
 
 			tp.Spec = v.Spec
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences

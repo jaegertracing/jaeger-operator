@@ -24,7 +24,9 @@ func TestRouteInventory(t *testing.T) {
 	}
 	updated := osv1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: osv1.RouteSpec{
 			Host: "v2.example.com",

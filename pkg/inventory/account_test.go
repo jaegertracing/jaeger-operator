@@ -24,7 +24,9 @@ func TestAccountInventory(t *testing.T) {
 	}
 	updated := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		AutomountServiceAccountToken: &falseVar,
 	}

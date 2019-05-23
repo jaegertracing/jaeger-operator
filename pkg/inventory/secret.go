@@ -20,6 +20,7 @@ func ForSecrets(existing []v1.Secret, desired []v1.Secret) Secret {
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			initK8sObjectMeta(tp)
 
 			tp.Data = v.Data
 			tp.StringData = v.StringData

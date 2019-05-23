@@ -20,6 +20,7 @@ func ForConfigMaps(existing []v1.ConfigMap, desired []v1.ConfigMap) ConfigMap {
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			initK8sObjectMeta(tp)
 
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Data = v.Data

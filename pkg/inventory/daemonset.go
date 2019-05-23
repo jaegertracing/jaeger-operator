@@ -20,6 +20,7 @@ func ForDaemonSets(existing []appsv1.DaemonSet, desired []appsv1.DaemonSet) Daem
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			initK8sObjectMeta(tp)
 
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec
