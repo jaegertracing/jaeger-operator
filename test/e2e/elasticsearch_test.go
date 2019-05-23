@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -121,6 +122,28 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 
 	defer portForw.Close()
 	defer close(closeChan)
+
+	// WORKAROUND for https://github.com/jaegertracing/jaeger/issues/1468
+	request, err := http.NewRequest(http.MethodGet, "http://localhost:16686/api/services", nil)
+	require.NoError(t, err, "Failed to create httpRequest")
+	httpClient := http.Client{Timeout: time.Second}
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		response, err := httpClient.Do(request)
+		if err != nil {
+			return false, err
+		}
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return false, err
+		}
+		if strings.Contains(string(body), "jaeger-query") {
+			fmt.Printf("GOT: %s\n", string(body))
+			return true, nil
+		}
+		return false, nil
+	})
+	require.NoError(t, err, "Error waiting for api/services")
+	// End of WORKAROUND
 
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
