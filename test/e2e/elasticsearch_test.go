@@ -103,6 +103,10 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
+	// Skip until https://github.com/jaegertracing/jaeger/issues/1468 is fixed
+	if isOpenShift(t) {
+		t.Skip()
+	}
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 
