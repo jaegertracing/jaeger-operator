@@ -25,7 +25,9 @@ func TestElasticsearchInventory(t *testing.T) {
 	}
 	updated := esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: esv1.ElasticsearchSpec{
 			ManagementState: esv1.ManagementStateUnmanaged,

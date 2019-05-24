@@ -24,7 +24,9 @@ func TestCronJobInventory(t *testing.T) {
 	}
 	updated := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			Schedule: "0 2 * * *",

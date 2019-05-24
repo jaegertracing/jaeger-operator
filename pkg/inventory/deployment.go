@@ -2,6 +2,8 @@ package inventory
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Deployment represents the deployment inventory based on the current and desired states
@@ -20,6 +22,7 @@ func ForDeployments(existing []appsv1.Deployment, desired []appsv1.Deployment) D
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			util.InitObjectMeta(tp)
 
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec

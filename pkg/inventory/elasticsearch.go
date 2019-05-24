@@ -2,6 +2,7 @@ package inventory
 
 import (
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Elasticsearch represents the elastic search inventory based on the current and desired states
@@ -20,6 +21,7 @@ func ForElasticsearches(existing []esv1.Elasticsearch, desired []esv1.Elasticsea
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
+			util.InitObjectMeta(tp)
 
 			tp.Spec = v.Spec
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences

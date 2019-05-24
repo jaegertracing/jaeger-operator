@@ -284,3 +284,49 @@ func TestGetPortSpecified(t *testing.T) {
 
 	assert.Equal(t, int32(6831), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
 }
+
+func TestInitObjectMeta(t *testing.T) {
+	tests := map[string]struct {
+		obj metav1.Object
+		exp metav1.Object
+	}{
+		"A object without initialized labels shouldn't have a nil map after initialization.": {
+			obj: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "test",
+					Annotations: map[string]string{"gopher": "jaeger"},
+				},
+			},
+			exp: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "test",
+					Annotations: map[string]string{"gopher": "jaeger"},
+					Labels:      map[string]string{},
+				},
+			},
+		},
+
+		"A object without initialized annotations shouldn't have a nil map after initialization.": {
+			obj: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{"gopher": "jaeger"},
+				},
+			},
+			exp: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "test",
+					Labels:      map[string]string{"gopher": "jaeger"},
+					Annotations: map[string]string{},
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			InitObjectMeta(test.obj)
+			assert.Equal(t, test.exp, test.obj)
+		})
+	}
+}

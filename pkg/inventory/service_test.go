@@ -25,7 +25,9 @@ func TestServiceInventory(t *testing.T) {
 	}
 	updated := v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: v1.ServiceSpec{
 			ExternalName: "v2.example.com",

@@ -24,7 +24,9 @@ func TestConfigMapInventory(t *testing.T) {
 	}
 	updated := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Data: map[string]string{
 			"field": "bar",

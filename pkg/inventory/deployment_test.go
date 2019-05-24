@@ -24,7 +24,9 @@ func TestDeploymentInventory(t *testing.T) {
 	}
 	updated := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "to-update",
+			Name:        "to-update",
+			Annotations: map[string]string{"gopher": "jaeger"},
+			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: appsv1.DeploymentSpec{
 			MinReadySeconds: 2,
