@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/types"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
@@ -25,6 +26,9 @@ import (
 type ElasticSearchTestSuite struct {
 	suite.Suite
 }
+
+var trueVar = true
+var falseVar = false
 
 func(suite *ElasticSearchTestSuite) SetupSuite() {
 	t = suite.T()
@@ -103,9 +107,6 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
-	// Skip until https://github.com/jaegertracing/jaeger/issues/1468 is fixed
-	t.Skip()
-
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 
@@ -127,6 +128,14 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
+
+	// Once we've created a span with the smoke test, enable the index cleaer
+	key := types.NamespacedName{Name:name, Namespace:namespace}
+	err = fw.Client.Get(context.Background(), key, j)
+	require.NoError(t, err)
+	j.Spec.Storage.EsIndexCleaner.Enabled = &trueVar
+	err = fw.Client.Update(context.Background(), j)
+	require.NoError(t, err)
 
 	esPod, err := GetPod(storageNamespace, "elasticsearch", "elasticsearch", fw.KubeClient)
 	require.NoError(t, err, "Error getting Pod")
@@ -196,6 +205,7 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 					"es.server-urls": esServerUrls,
 				}),
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
+					Enabled:	&falseVar,
 					Schedule:     "*/1 * * * *",
 					NumberOfDays: &numberOfDays,
 				},
