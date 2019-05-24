@@ -164,3 +164,15 @@ func GetPort(arg string, args []string, port int32) int32 {
 
 	return port
 }
+
+// InitObjectMeta will set the required default settings to
+// kubernetes objects metadata if is required.
+func InitObjectMeta(obj metav1.Object) {
+	if obj.GetLabels() == nil {
+		obj.SetLabels(map[string]string{})
+	}
+
+	if obj.GetAnnotations() == nil {
+		obj.SetAnnotations(map[string]string{})
+	}
+}

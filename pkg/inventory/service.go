@@ -2,6 +2,8 @@ package inventory
 
 import (
 	"k8s.io/api/core/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Service represents the inventory of routes based on the current and desired states
@@ -20,7 +22,7 @@ func ForServices(existing []v1.Service, desired []v1.Service) Service {
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
 			tp := t.DeepCopy()
-			initK8sObjectMeta(tp)
+			util.InitObjectMeta(tp)
 
 			// we keep the ClusterIP that got assigned by the cluster, if it's empty in the "desired" and not empty on the "current"
 			if v.Spec.ClusterIP == "" && len(tp.Spec.ClusterIP) > 0 {
