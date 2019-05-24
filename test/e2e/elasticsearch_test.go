@@ -27,8 +27,7 @@ type ElasticSearchTestSuite struct {
 	suite.Suite
 }
 
-var trueVar = true
-var falseVar = false
+var esEnabled = false
 
 func(suite *ElasticSearchTestSuite) SetupSuite() {
 	t = suite.T()
@@ -133,7 +132,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	key := types.NamespacedName{Name:name, Namespace:namespace}
 	err = fw.Client.Get(context.Background(), key, j)
 	require.NoError(t, err)
-	j.Spec.Storage.EsIndexCleaner.Enabled = &trueVar
+	esEnabled = true
 	err = fw.Client.Update(context.Background(), j)
 	require.NoError(t, err)
 
@@ -205,7 +204,7 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 					"es.server-urls": esServerUrls,
 				}),
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
-					Enabled:	&falseVar,
+					Enabled:	&esEnabled,
 					Schedule:     "*/1 * * * *",
 					NumberOfDays: &numberOfDays,
 				},
