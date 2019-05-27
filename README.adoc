@@ -3,6 +3,7 @@
 image:https://travis-ci.org/jaegertracing/jaeger-operator.svg?branch=master["Build Status", link="https://travis-ci.org/jaegertracing/jaeger-operator"]
 image:https://goreportcard.com/badge/github.com/jaegertracing/jaeger-operator["Go Report Card", link="https://goreportcard.com/report/github.com/jaegertracing/jaeger-operator"]
 image:https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/badge.svg["Code Coverage", link="https://codecov.io/gh/jaegertracing/jaeger-operator"]
+image:https://godoc.org/github.com/jaegertracing/jaeger-operator?status.svg["GoDoc", link="https://godoc.org/github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1#JaegerSpec"]
 
 = Jaeger Operator for Kubernetes
 toc::[]
