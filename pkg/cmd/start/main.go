@@ -186,8 +186,7 @@ func start(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	} else if operatorService != nil {
-		err = setOwnerReference(operatorService)
-		if err != nil {
+		if err := setOwnerReference(operatorService); err != nil {
 			log.Fatal(err)
 		}
 	}
