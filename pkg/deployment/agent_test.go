@@ -86,6 +86,26 @@ func TestDaemonSetAgentAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestDaemonSetAgentLabels(t *testing.T) {
+	jaeger := v1.NewJaeger("TestDaemonSetAgentLabels")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Agent.Labels = map[string]string{
+		"hello":   "world", // Override top level label
+		"another": "false",
+	}
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+}
+
 func TestDaemonSetAgentResources(t *testing.T) {
 	jaeger := v1.NewJaeger("TestDaemonSetAgentResources")
 	jaeger.Spec.Agent.Strategy = "daemonset"

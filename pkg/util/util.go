@@ -45,6 +45,7 @@ func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.Vo
 // Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
 func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	annotations := make(map[string]string)
+	labels := make(map[string]string)
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
 	resources := &corev1.ResourceRequirements{}
@@ -57,6 +58,13 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			// Only use the value if key has not already been used
 			if _, ok := annotations[k]; !ok {
 				annotations[k] = v
+			}
+		}
+		// Merge labels
+		for k, v := range commonSpec.Labels {
+			// Only use the value if key has not already been used
+			if _, ok := labels[k]; !ok {
+				labels[k] = v
 			}
 		}
 		volumeMounts = append(volumeMounts, commonSpec.VolumeMounts...)
@@ -75,6 +83,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 
 	return &v1.JaegerCommonSpec{
 		Annotations:  annotations,
+		Labels:       labels,
 		VolumeMounts: removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:      removeDuplicatedVolumes(volumes),
 		Resources:    *resources,

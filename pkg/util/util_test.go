@@ -68,6 +68,27 @@ func TestMergeAnnotations(t *testing.T) {
 	assert.Equal(t, "false", merged.Annotations["prometheus.io/scrape"])
 }
 
+func TestMergeLabels(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		Labels: map[string]string{
+			"name":  "operator",
+			"hello": "jaeger",
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		Labels: map[string]string{
+			"hello":   "world", // Override general annotation
+			"another": "false",
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Equal(t, "operator", merged.Labels["name"])
+	assert.Equal(t, "world", merged.Labels["hello"])
+	assert.Equal(t, "false", merged.Labels["another"])
+}
+
 func TestMergeMountVolumes(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		VolumeMounts: []corev1.VolumeMount{{

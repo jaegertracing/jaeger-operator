@@ -50,6 +50,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 		},
+		Labels: labels,
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -83,7 +84,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        a.jaeger.Name,
 			Namespace:   a.jaeger.Namespace,
-			Labels:      labels,
+			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -101,7 +102,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
+					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{

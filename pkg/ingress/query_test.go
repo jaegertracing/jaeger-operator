@@ -100,3 +100,22 @@ func TestQueryIngressAnnotations(t *testing.T) {
 	assert.Equal(t, "world", dep.Annotations["hello"])
 	assert.Equal(t, "false", dep.Annotations["prometheus.io/scrape"])
 }
+
+func TestQueryIngressLabels(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryIngressLabels")
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Ingress.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	ingress := NewQueryIngress(jaeger)
+	dep := ingress.Get()
+
+	assert.Equal(t, "operator", dep.Labels["name"])
+	assert.Equal(t, "world", dep.Labels["hello"])
+	assert.Equal(t, "false", dep.Labels["another"])
+}

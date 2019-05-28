@@ -131,6 +131,25 @@ func TestIngesterAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestIngesterLabels(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterLabels")
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Ingester.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+}
+
 func TestIngesterSecrets(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterSecrets")
 	secret := "mysecret"
@@ -340,8 +359,8 @@ func TestIngesterWithStorageType(t *testing.T) {
 	assert.Equal(t, "--kafka.consumer.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[2])
 }
 
-func TestIngesterLabels(t *testing.T) {
-	ingester := NewIngester(newIngesterJaeger("TestIngesterLabels"))
+func TestIngesterStandardLabels(t *testing.T) {
+	ingester := NewIngester(newIngesterJaeger("TestIngesterStandardLabels"))
 	dep := ingester.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "ingester", dep.Spec.Template.Labels["app.kubernetes.io/component"])

@@ -133,6 +133,25 @@ func TestCollectorAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestCollectorLabels(t *testing.T) {
+	jaeger := v1.NewJaeger("TestCollectorLabels")
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Collector.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+}
+
 func TestCollectorSecrets(t *testing.T) {
 	jaeger := v1.NewJaeger("TestCollectorSecrets")
 	secret := "mysecret"
@@ -309,8 +328,8 @@ func TestCollectorResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
-func TestCollectorLabels(t *testing.T) {
-	c := NewCollector(v1.NewJaeger("TestCollectorLabels"))
+func TestCollectorStandardLabels(t *testing.T) {
+	c := NewCollector(v1.NewJaeger("TestCollectorStandardLabels"))
 	dep := c.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "collector", dep.Spec.Template.Labels["app.kubernetes.io/component"])
