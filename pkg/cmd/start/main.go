@@ -182,11 +182,14 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	// Create Service object to expose the metrics port.
-	var operatorService *corev1.Service
-	if operatorService, err = metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
+	operatorService, err := metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port"))
+	if err != nil {
 		log.Fatal(err)
-	} else if err = setOwnerReference(operatorService); err != nil {
-		log.Fatal(err)
+	} else if operatorService != nil {
+		err = setOwnerReference(operatorService)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Start the Cmd
