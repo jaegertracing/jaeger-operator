@@ -86,7 +86,6 @@ func newProductionStrategy(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) S
 	var esRollover []batchv1beta1.CronJob
 	if storage.EnableRollover(jaeger.Spec.Storage) {
 		esRollover = cronjob.CreateRollover(jaeger)
-		c.cronJobs = append(c.cronJobs, esRollover...)
 	}
 
 	// prepare the deployments, which may get changed by the elasticsearch routine
@@ -124,6 +123,9 @@ func newProductionStrategy(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) S
 	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
 	if indexCleaner != nil {
 		c.cronJobs = append(c.cronJobs, *indexCleaner)
+	}
+	if len(esRollover) > 0 {
+		c.cronJobs = append(c.cronJobs, esRollover...)
 	}
 
 	// add the deployments, which may have been changed by the ES self-provisioning routine
