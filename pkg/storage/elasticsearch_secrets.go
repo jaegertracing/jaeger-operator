@@ -99,6 +99,12 @@ func (ed *ElasticsearchDeployment) CreateCerts() error {
 	return createESCerts(ed.CertScript, ed.Jaeger)
 }
 
+// CleanCerts removes certificates from local filesystem.
+// Use this function in tests to clean resources
+func (ed *ElasticsearchDeployment) CleanCerts() error {
+	return os.RemoveAll(getWorkingDir(ed.Jaeger))
+}
+
 func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secret) error {
 	secretMap := map[string]corev1.Secret{}
 	for _, sec := range secrets {

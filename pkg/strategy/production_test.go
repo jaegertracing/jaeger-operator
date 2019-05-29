@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -185,23 +186,27 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 	}
 }
 
-func TestInjectElasticsearch(t *testing.T) {
-	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
+func TestElasticsearchInject(t *testing.T) {
+	j := v1.NewJaeger(t.Name())
 	j.Spec.Storage.Type = "elasticsearch"
 	verdad := true
 	one := int(1)
 	j.Spec.Storage.EsIndexCleaner.Enabled = &verdad
 	j.Spec.Storage.EsIndexCleaner.NumberOfDays = &one
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
-	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"})
+	es := &storage.ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"}
+	err := es.CleanCerts()
+	require.NoError(t, err)
+	defer es.CleanCerts()
+	c := newProductionStrategy(j, es)
 	// there should be index-cleaner, rollover, lookback
 	assert.Equal(t, 3, len(c.cronJobs))
-	assertInjectedEsSecrets(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
-	assertInjectedEsSecrets(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
-	assertInjectedEsSecrets(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
 }
 
-func assertInjectedEsSecrets(t *testing.T, p corev1.PodSpec) {
+func assertEsInjectSecrets(t *testing.T, p corev1.PodSpec) {
 	assert.Equal(t, 1, len(p.Volumes))
 	assert.Equal(t, "certs", p.Volumes[0].Name)
 	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[0].Name)

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -16,17 +17,22 @@ import (
 )
 
 func TestCreateESSecretsError(t *testing.T) {
-	es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger("foo"), CertScript: "/foo"}
-	err := es.CreateCerts()
+	j := v1.NewJaeger(t.Name())
+	es := &ElasticsearchDeployment{Jaeger: j, CertScript: "/foo"}
+	err := es.CleanCerts()
+	require.NoError(t, err)
+	defer es.CleanCerts()
+	err = es.CreateCerts()
 	assert.EqualError(t, err, "error running script /foo: exit status 127")
 }
 
 func TestCreateESSecrets(t *testing.T) {
-	defer os.RemoveAll(tmpWorkingDir)
-	j := v1.NewJaeger("foo")
-	j.Namespace = "myproject"
+	j := v1.NewJaeger(t.Name())
 	es := &ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"}
-	err := es.CreateCerts()
+	err := es.CleanCerts()
+	require.NoError(t, err)
+	defer es.CleanCerts()
+	err = es.CreateCerts()
 	assert.NoError(t, err)
 	sec := es.ExtractSecrets()
 	assert.Equal(t, []string{
@@ -37,11 +43,11 @@ func TestCreateESSecrets(t *testing.T) {
 		[]string{sec[0].Name, sec[1].Name, sec[2].Name, sec[3].Name})
 	for _, s := range sec {
 		if s.Name == jaegerSecret.instanceName(j) {
-			ca, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/ca.crt")
+			ca, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/ca.crt", tmpWorkingDir, j.Name))
 			assert.NoError(t, err)
-			key, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.key")
+			key, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/user.jaeger.key", tmpWorkingDir, j.Name))
 			assert.NoError(t, err)
-			cert, err := ioutil.ReadFile(tmpWorkingDir + "/myproject/foo/user.jaeger.crt")
+			cert, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/user.jaeger.crt", tmpWorkingDir, j.Name))
 			assert.NoError(t, err)
 			assert.Equal(t, map[string][]byte{"ca": ca, "key": key, "cert": cert}, s.Data)
 		}
@@ -61,12 +67,13 @@ func TestCreateSecret(t *testing.T) {
 }
 
 func TestGetWorkingFileDirContent(t *testing.T) {
-	defer os.RemoveAll(tmpWorkingDir)
-	err := os.MkdirAll(tmpWorkingDir, os.ModePerm)
+	dir := "/tmp/_" + t.Name()
+	defer os.RemoveAll(dir)
+	err := os.MkdirAll(dir, os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(tmpWorkingDir+"/foobar", []byte("foo"), 0644)
+	err = ioutil.WriteFile(dir+"/foobar", []byte("foo"), 0644)
 	assert.NoError(t, err)
-	b := getDirFileContents(tmpWorkingDir, "foobar")
+	b := getDirFileContents(dir, "foobar")
 	assert.Equal(t, "foo", string(b))
 }
 
@@ -86,17 +93,17 @@ func TestGetFileContent_EmptyPath(t *testing.T) {
 }
 
 func TestExtractSecretsToFile(t *testing.T) {
-	defer os.RemoveAll(tmpWorkingDir)
-	j := v1.NewJaeger("houdy")
-	j.Namespace = "bar"
+	j := v1.NewJaeger(t.Name())
+	caFile := fmt.Sprintf("%s/%s/ca.crt", tmpWorkingDir, j.Name)
+	defer os.Remove(caFile)
 	content := "115dasrez"
 	err := extractSecretsToFile(
 		j,
-		[]corev1.Secret{{ObjectMeta: metav1.ObjectMeta{Name: "houdy-sec"}, Data: map[string][]byte{"ca": []byte(content)}}},
+		[]corev1.Secret{{ObjectMeta: metav1.ObjectMeta{Name: j.Name + "-sec"}, Data: map[string][]byte{"ca": []byte(content)}}},
 		secret{name: "sec", keyFileNameMap: map[string]string{"ca": "ca.crt"}},
 	)
 	assert.NoError(t, err)
-	ca, err := ioutil.ReadFile(tmpWorkingDir + "/bar/houdy/ca.crt")
+	ca, err := ioutil.ReadFile(caFile)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte(content), ca)
 }
@@ -107,7 +114,7 @@ func TestExtractSecretsToFile_Err(t *testing.T) {
 }
 
 func TestExtractSecretsToFile_FileExists(t *testing.T) {
-	defer os.RemoveAll(tmpWorkingDir)
+	defer os.RemoveAll(tmpWorkingDir + "/bar/houdy")
 	content := "115dasrez"
 	err := os.MkdirAll(tmpWorkingDir+"/bar/houdy", os.ModePerm)
 	assert.NoError(t, err)
