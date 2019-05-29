@@ -14,6 +14,10 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
+const (
+	esCertGenerationScript = "./scripts/cert_generation.sh"
+)
+
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
@@ -32,7 +36,8 @@ func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 		return newStreamingStrategy(jaeger)
 	}
 
-	return newProductionStrategy(jaeger, secrets)
+	es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}
+	return newProductionStrategy(jaeger, es)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when

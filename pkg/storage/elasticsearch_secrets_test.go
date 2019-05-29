@@ -15,18 +15,20 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestCreateESSecrets(t *testing.T) {
-	err := CreateESCerts(v1.NewJaeger("foo"), []corev1.Secret{})
-	assert.EqualError(t, err, "error running script ./scripts/cert_generation.sh: exit status 127")
+func TestCreateESSecretsError(t *testing.T) {
+	es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger("foo"), CertScript: "/foo"}
+	err := es.CreateCerts()
+	assert.EqualError(t, err, "error running script /foo: exit status 127")
 }
 
-func TestCreateESSecrets_internal(t *testing.T) {
+func TestCreateESSecrets(t *testing.T) {
 	defer os.RemoveAll(tmpWorkingDir)
 	j := v1.NewJaeger("foo")
 	j.Namespace = "myproject"
-	err := createESCerts("../../scripts/cert_generation.sh", j)
+	es := &ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"}
+	err := es.CreateCerts()
 	assert.NoError(t, err)
-	sec := ESSecrets(j)
+	sec := es.ExtractSecrets()
 	assert.Equal(t, []string{
 		masterSecret.instanceName(j),
 		esSecret.instanceName(j),

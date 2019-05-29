@@ -22,7 +22,7 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(v1.NewJaeger(name), []corev1.Secret{})
+	c := newProductionStrategy(v1.NewJaeger(name), &storage.ElasticsearchDeployment{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
 }
 
@@ -34,7 +34,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(name)
 	normalize(jaeger)
 
-	c := newProductionStrategy(jaeger, []corev1.Secret{})
+	c := newProductionStrategy(jaeger, &storage.ElasticsearchDeployment{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, true, false)
 }
 
@@ -44,7 +44,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(name)
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newProductionStrategy(j, []corev1.Secret{})
+	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	assertDeploymentsAndServicesForProduction(t, name, c, true, false, false)
 }
 
@@ -58,7 +58,7 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newProductionStrategy(j, []corev1.Secret{})
+	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, true)
 }
 
@@ -109,7 +109,7 @@ func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger("TestDelegateProductionDependencies")
 	j.Spec.Storage.Type = "cassandra"
-	c := newProductionStrategy(j, []corev1.Secret{})
+	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -164,23 +164,53 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 
 func TestSparkDependenciesProduction(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(jaeger, []corev1.Secret{})
+		return newProductionStrategy(jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
 	})
 }
 
 func TestEsIndexCleanerProduction(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(jaeger, []corev1.Secret{})
+		return newProductionStrategy(jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) {
 	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
-	c := newProductionStrategy(j, []corev1.Secret{})
+	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
 			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 		}
 	}
+}
+
+func TestInjectElasticsearch(t *testing.T) {
+	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
+	j.Spec.Storage.Type = "elasticsearch"
+	verdad := true
+	one := int(1)
+	j.Spec.Storage.EsIndexCleaner.Enabled = &verdad
+	j.Spec.Storage.EsIndexCleaner.NumberOfDays = &one
+	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
+	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"})
+	// there should be index-cleaner, rollover, lookback
+	assert.Equal(t, 3, len(c.cronJobs))
+	assertInjectedEsSecrets(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
+	assertInjectedEsSecrets(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
+	assertInjectedEsSecrets(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
+}
+
+func assertInjectedEsSecrets(t *testing.T, p corev1.PodSpec) {
+	assert.Equal(t, 1, len(p.Volumes))
+	assert.Equal(t, "certs", p.Volumes[0].Name)
+	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[0].Name)
+	envs := map[string]corev1.EnvVar{}
+	for _, e := range p.Containers[0].Env {
+		envs[e.Name] = e
+	}
+	assert.Contains(t, envs, "ES_TLS")
+	assert.Contains(t, envs, "ES_TLS_CA")
+	assert.Contains(t, envs, "ES_TLS_KEY")
+	assert.Contains(t, envs, "ES_TLS_CERT")
 }

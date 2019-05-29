@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -20,7 +19,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newProductionStrategy(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) S {
+func newProductionStrategy(jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
 	c := S{typ: Production}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
@@ -95,15 +94,11 @@ func newProductionStrategy(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) S
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
-		es := &storage.ElasticsearchDeployment{
-			Jaeger: jaeger,
-		}
-
-		err := storage.CreateESCerts(jaeger, existingSecrets)
+		err := es.CreateCerts()
 		if err != nil {
 			jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
 		} else {
-			c.secrets = storage.ESSecrets(jaeger)
+			c.secrets = es.ExtractSecrets()
 			c.elasticsearches = append(c.elasticsearches, *es.Elasticsearch())
 
 			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
