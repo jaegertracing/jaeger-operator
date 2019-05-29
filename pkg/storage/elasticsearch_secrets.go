@@ -19,7 +19,6 @@ import (
 
 const (
 	tmpWorkingDir = "/tmp/_certs"
-	certScript    = "./scripts/cert_generation.sh"
 )
 
 type secret struct {
@@ -78,26 +77,32 @@ var curatorSecret = secret{
 	},
 }
 
-// ESSecrets assembles a set of secrets related to Elasticsearch
-func ESSecrets(jaeger *v1.Jaeger) []corev1.Secret {
+// ExtractSecrets assembles a set of secrets related to Elasticsearch
+func (ed *ElasticsearchDeployment) ExtractSecrets() []corev1.Secret {
 	return []corev1.Secret{
-		createSecret(jaeger, masterSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), masterSecret.keyFileNameMap)),
-		createSecret(jaeger, esSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), esSecret.keyFileNameMap)),
-		createSecret(jaeger, jaegerSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), jaegerSecret.keyFileNameMap)),
-		createSecret(jaeger, curatorSecret.instanceName(jaeger), getWorkingDirContents(getWorkingDir(jaeger), curatorSecret.keyFileNameMap)),
+		createSecret(ed.Jaeger, masterSecret.instanceName(ed.Jaeger), getWorkingDirContents(getWorkingDir(ed.Jaeger), masterSecret.keyFileNameMap)),
+		createSecret(ed.Jaeger, esSecret.instanceName(ed.Jaeger), getWorkingDirContents(getWorkingDir(ed.Jaeger), esSecret.keyFileNameMap)),
+		createSecret(ed.Jaeger, jaegerSecret.instanceName(ed.Jaeger), getWorkingDirContents(getWorkingDir(ed.Jaeger), jaegerSecret.keyFileNameMap)),
+		createSecret(ed.Jaeger, curatorSecret.instanceName(ed.Jaeger), getWorkingDirContents(getWorkingDir(ed.Jaeger), curatorSecret.keyFileNameMap)),
 	}
 }
 
-// CreateESCerts creates certificates for elasticsearch, jaeger and curator
+// CreateCerts creates certificates for elasticsearch, jaeger and curator
 // The cert generation is done by shell script. If the certificates are not present
 // on the filesystem the operator injects them from secrets - this allows operator restarts.
 // The script also re-generates expired certificates.
-func CreateESCerts(jaeger *v1.Jaeger, existingSecrets []corev1.Secret) error {
-	err := extractSecretsToFile(jaeger, existingSecrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
+func (ed *ElasticsearchDeployment) CreateCerts() error {
+	err := extractSecretsToFile(ed.Jaeger, ed.Secrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
 	if err != nil {
 		return errors.Wrap(err, "failed to extract certificates from secrets to file")
 	}
-	return createESCerts(certScript, jaeger)
+	return createESCerts(ed.CertScript, ed.Jaeger)
+}
+
+// CleanCerts removes certificates from local filesystem.
+// Use this function in tests to clean resources
+func (ed *ElasticsearchDeployment) CleanCerts() error {
+	return os.RemoveAll(getWorkingDir(ed.Jaeger))
 }
 
 func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secret) error {

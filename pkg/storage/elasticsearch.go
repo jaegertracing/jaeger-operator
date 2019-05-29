@@ -33,7 +33,9 @@ func ShouldDeployElasticsearch(s v1.JaegerStorageSpec) bool {
 
 // ElasticsearchDeployment represents an ES deployment for Jaeger
 type ElasticsearchDeployment struct {
-	Jaeger *v1.Jaeger
+	Jaeger     *v1.Jaeger
+	CertScript string
+	Secrets    []corev1.Secret
 }
 
 // InjectStorageConfiguration changes the given spec to include ES-related command line options
