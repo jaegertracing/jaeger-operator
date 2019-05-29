@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/pkg/errors"
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,7 +75,34 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		return nil, err
 	}
 
+	imageName, err := getJaegerOperatorImage(f.KubeClient)
+	if err != nil {
+		return nil, err
+	}
+	t.Logf("Using jaeger-operator image %s\n", imageName)
+
 	return ctx, nil
+}
+
+func getJaegerOperatorImage(kubeclient kubernetes.Interface) (string, error) {
+	emptyOptions := new(metav1.ListOptions)
+	namespaces, err := kubeclient.CoreV1().Namespaces().List(*emptyOptions)
+	if err != nil {
+		return "", err
+	} else {
+		for _, item := range namespaces.Items {
+			dep, err := kubeclient.AppsV1().Deployments(item.Name).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
+			if err != nil {
+				if !strings.Contains(err.Error(), "not found") {
+					return "", err
+				}
+			} else {
+				return dep.Spec.Template.Spec.Containers[0].Image, nil
+			}
+		}
+	}
+
+	return "", errors.New("Could not find the operator image")
 }
 
 func isOpenShift(t *testing.T) bool {
