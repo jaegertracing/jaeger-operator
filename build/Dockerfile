@@ -1,5 +1,9 @@
 FROM centos
 
+ENV OPERATOR=/usr/local/bin/jaeger-operator \
+    USER_UID=1001 \
+    USER_NAME=jaeger-operator
+
 RUN INSTALL_PKGS=" \
       openssl \
       " && \
@@ -11,7 +15,12 @@ RUN INSTALL_PKGS=" \
 
 COPY scripts/* /scripts/
 
-USER nobody
+# install operator binary
+COPY build/_output/bin/jaeger-operator ${OPERATOR}
 
-ADD build/_output/bin/jaeger-operator /usr/local/bin/jaeger-operator
-ENTRYPOINT ["/usr/local/bin/jaeger-operator"]
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}

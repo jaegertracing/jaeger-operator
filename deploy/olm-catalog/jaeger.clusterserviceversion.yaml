@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   name: jaeger-operator.v1.12.0
-  namespace: placeholder
+  namespace: default
   annotations:
     categories: "Logging & Tracing"
     certified: "false"

@@ -1,5 +1,5 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= "build/_output/bin"
@@ -23,8 +23,13 @@ TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../
 
 .DEFAULT_GOAL := build
 
+.PHONY: vendor
+vendor:
+	@echo Building vendor...
+	@${GO_FLAGS} go mod vendor
+
 .PHONY: check
-check:
+check: vendor
 	@echo Checking...
 	@go fmt $(PACKAGES) > $(FMT_LOG)
 	@.travis/import-order-cleanup.sh stdout > $(IMPORT_LOG)
@@ -35,7 +40,7 @@ ensure-generate-is-noop: generate
 	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go || (echo "Build failed: a model has been changed but the deep copy functions aren't up to date. Run 'make generate' and update your PR." && exit 1)
 
 .PHONY: format
-format:
+format: vendor
 	@echo Formatting code...
 	@.travis/import-order-cleanup.sh inplace
 	@go fmt $(PACKAGES)
@@ -51,7 +56,7 @@ security:
 	@gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
 
 .PHONY: build
-build: format
+build: vendor format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
@@ -170,7 +175,7 @@ ingress:
 	@minikube addons enable ingress
 
 .PHONY: generate
-generate:
+generate: vendor
 	@operator-sdk generate k8s
 
 .PHONY: test
