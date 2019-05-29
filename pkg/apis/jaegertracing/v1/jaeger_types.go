@@ -201,11 +201,11 @@ type ElasticsearchSpec struct {
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
 // +k8s:openapi-gen=true
 type JaegerCassandraCreateSchemaSpec struct {
-	Enabled      *bool  `json:"enabled"`
-	Image        string `json:"image"`
-	Datacenter   string `json:"datacenter"`
-	Mode         string `json:"mode"`
-	CompletedTTL *int32 `json:"completedTTL"`
+	Enabled            *bool  `json:"enabled"`
+	Image              string `json:"image"`
+	Datacenter         string `json:"datacenter"`
+	Mode               string `json:"mode"`
+	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -219,25 +219,25 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
-	CompletedTTL                *int32 `json:"completedTTL"`
+	AfterCompletionTTL          *int32 `json:"afterCompletionTTL"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
 // +k8s:openapi-gen=true
 type JaegerEsIndexCleanerSpec struct {
-	Enabled      *bool  `json:"enabled"`
-	NumberOfDays *int   `json:"numberOfDays"`
-	Schedule     string `json:"schedule"`
-	Image        string `json:"image"`
-	CompletedTTL *int32 `json:"completedTTL"`
+	Enabled            *bool  `json:"enabled"`
+	NumberOfDays       *int   `json:"numberOfDays"`
+	Schedule           string `json:"schedule"`
+	Image              string `json:"image"`
+	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
 type JaegerEsRolloverSpec struct {
-	Image        string `json:"image"`
-	Schedule     string `json:"schedule"`
-	Conditions   string `json:"conditions"`
-	CompletedTTL *int32 `json:"completedTTL"`
+	Image              string `json:"image"`
+	Schedule           string `json:"schedule"`
+	Conditions         string `json:"conditions"`
+	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
 	// we parse it with time.ParseDuration
 	ReadTTL string `json:"readTTL"`
 }

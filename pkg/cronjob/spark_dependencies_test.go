@@ -79,10 +79,10 @@ func TestCreate(t *testing.T) {
 
 func TestSparkDependencies(t *testing.T) {
 	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
-	completedTTL := int32(100)
-	j.Spec.Storage.SparkDependencies.CompletedTTL = &completedTTL
+	afterCompletionTTL := int32(100)
+	j.Spec.Storage.SparkDependencies.AfterCompletionTTL = &afterCompletionTTL
 
 	cjob := CreateSparkDependencies(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
-	assert.Equal(t, completedTTL, *cjob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
+	assert.Equal(t, afterCompletionTTL, *cjob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
 }

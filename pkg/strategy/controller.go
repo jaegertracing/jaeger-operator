@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	// Default to 1 hour
-	defCompletedTTL = int32(3600)
+	// Default to 1 day
+	defAfterCompletionTTL = int32(86400)
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
@@ -113,8 +113,8 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	if spec.SparkDependencies.Schedule == "" {
 		spec.SparkDependencies.Schedule = "55 23 * * *"
 	}
-	if spec.SparkDependencies.CompletedTTL == nil {
-		spec.SparkDependencies.CompletedTTL = &defCompletedTTL
+	if spec.SparkDependencies.AfterCompletionTTL == nil {
+		spec.SparkDependencies.AfterCompletionTTL = &defAfterCompletionTTL
 	}
 }
 
@@ -134,8 +134,8 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		defDays := 7
 		spec.NumberOfDays = &defDays
 	}
-	if spec.CompletedTTL == nil {
-		spec.CompletedTTL = &defCompletedTTL
+	if spec.AfterCompletionTTL == nil {
+		spec.AfterCompletionTTL = &defAfterCompletionTTL
 	}
 }
 
@@ -152,14 +152,14 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
 	}
-	if spec.CompletedTTL == nil {
-		spec.CompletedTTL = &defCompletedTTL
+	if spec.AfterCompletionTTL == nil {
+		spec.AfterCompletionTTL = &defAfterCompletionTTL
 	}
 }
 
 func normalizeCassandraCreateSchema(spec *v1.JaegerCassandraCreateSchemaSpec) {
-	if spec.CompletedTTL == nil {
-		spec.CompletedTTL = &defCompletedTTL
+	if spec.AfterCompletionTTL == nil {
+		spec.AfterCompletionTTL = &defAfterCompletionTTL
 	}
 }
 

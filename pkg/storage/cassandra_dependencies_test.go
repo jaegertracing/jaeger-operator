@@ -33,13 +33,13 @@ func TestCassandraCreateSchemaEnabledNil(t *testing.T) {
 	assert.Len(t, cassandraDeps(jaeger), 1)
 }
 
-func TestCassandraCreateSchemaCompletedTTL(t *testing.T) {
+func TestCassandraCreateSchemaAfterCompletionTTL(t *testing.T) {
 	trueVar := true
 
-	jaeger := v1.NewJaeger("TestCassandraCreateSchemaCompletedTTL")
+	jaeger := v1.NewJaeger("TestCassandraCreateSchemaAfterCompletionTTL")
 	jaeger.Spec.Storage.CassandraCreateSchema.Enabled = &trueVar
-	completedTTL := int32(100)
-	jaeger.Spec.Storage.CassandraCreateSchema.CompletedTTL = &completedTTL
+	afterCompletionTTL := int32(100)
+	jaeger.Spec.Storage.CassandraCreateSchema.AfterCompletionTTL = &afterCompletionTTL
 	cjob := cassandraDeps(jaeger)
-	assert.Equal(t, completedTTL, *cjob[0].Spec.TTLSecondsAfterFinished)
+	assert.Equal(t, afterCompletionTTL, *cjob[0].Spec.TTLSecondsAfterFinished)
 }

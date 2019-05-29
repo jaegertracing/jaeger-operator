@@ -82,7 +82,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 			},
 			Spec: batchv1.JobSpec{
 				ActiveDeadlineSeconds:   &deadline,
-				TTLSecondsAfterFinished: jaeger.Spec.Storage.CassandraCreateSchema.CompletedTTL,
+				TTLSecondsAfterFinished: jaeger.Spec.Storage.CassandraCreateSchema.AfterCompletionTTL,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,
