@@ -75,34 +75,43 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		return nil, err
 	}
 
-	imageName, err := getJaegerOperatorImage(f.KubeClient)
-	if err != nil {
-		return nil, err
-	}
-	t.Logf("Using jaeger-operator image %s\n", imageName)
-
 	return ctx, nil
 }
 
-func getJaegerOperatorImage(kubeclient kubernetes.Interface) (string, error) {
+// Return a map of image name to WATCH_NAMESPACE for all deployed jaeger-operators
+func getJaegerOperatorImages(kubeclient kubernetes.Interface) (map[string]string, error) {
+	imageNamesMap := make(map[string]string)
 	emptyOptions := new(metav1.ListOptions)
 	namespaces, err := kubeclient.CoreV1().Namespaces().List(*emptyOptions)
 	if err != nil {
-		return "", err
-	} else {
-		for _, item := range namespaces.Items {
-			dep, err := kubeclient.AppsV1().Deployments(item.Name).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
-			if err != nil {
-				if !strings.Contains(err.Error(), "not found") {
-					return "", err
+		return imageNamesMap, err
+	}
+
+	for _, item := range namespaces.Items {
+		deployment, err := kubeclient.AppsV1().Deployments(item.Name).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
+		if err != nil {
+			if !strings.Contains(err.Error(), "not found") {
+				return imageNamesMap, err
+			}
+		} else {
+			containers := deployment.Spec.Template.Spec.Containers
+			for _, container := range containers {
+				if container.Name == "jaeger-operator" {
+					for _, env := range container.Env {
+						if env.Name == "WATCH_NAMESPACE" {
+							imageNamesMap[container.Image] = env.Value
+						}
+					}
 				}
-			} else {
-				return dep.Spec.Template.Spec.Containers[0].Image, nil
 			}
 		}
 	}
 
-	return "", errors.New("Could not find the operator image")
+	if len(imageNamesMap) == 0 {
+		return imageNamesMap, errors.New("Could not find the operator image")
+	} else {
+		return imageNamesMap, nil
+	}
 }
 
 func isOpenShift(t *testing.T) bool {

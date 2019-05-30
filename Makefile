@@ -70,7 +70,7 @@ unit-tests:
 	@go test $(PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-misc e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: crd build docker push
@@ -110,6 +110,11 @@ e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-misc
+e2e-tests-misc: prepare-e2e-tests
+	@echo Running Misc end-to-end tests...
+	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=misc ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
