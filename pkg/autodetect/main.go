@@ -77,6 +77,54 @@ func (b *Background) Stop() {
 	b.ticker.Stop()
 }
 
+func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deployment {
+	instances := &v1.JaegerList{}
+	if err := b.cl.List(context.Background(), instances); err != nil {
+		return nil
+	}
+	requireUpdates := make([]*appsv1.Deployment, 0)
+	for i := 0; i < len(deps.Items); i++ {
+		dep := &deps.Items[i]
+		if inject.Needed(dep) { // If sidecar is not present and should be
+			jaeger := inject.Select(dep, instances)
+			if jaeger != nil { // Instance exists.
+				jaeger.Logger().WithFields(log.Fields{
+					"deploymentName":      dep.Name,
+					"deploymentNamespace": dep.Namespace,
+				}).Info("Injecting Jaeger Agent sidecar")
+				dep.Annotations[inject.Annotation] = jaeger.Name
+				newDep := inject.Sidecar(jaeger, dep)
+				requireUpdates = append(requireUpdates, newDep)
+			}
+		} else {
+			// Try to update the sidecar if is required
+			jaeger := inject.Select(dep, instances)
+			updated := inject.UpdateSideCar(jaeger, dep)
+			if updated {
+				if err := b.cl.Update(context.Background(), dep); err != nil {
+					return nil
+				}
+			}
+		}
+	}
+	return requireUpdates
+}
+
+func (b *Background) detectDeploymentUpdates() error {
+	deps := &appsv1.DeploymentList{}
+	if err := b.cl.List(context.Background(), deps); err != nil {
+		return err
+	}
+	injectedDeps := b.requireUpdates(deps)
+	for _, d := range injectedDeps {
+		if err := b.cl.Update(context.Background(), d); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (b *Background) autoDetectCapabilities() {
 	apiList, err := b.availableAPIs()
 	if err != nil {
@@ -92,6 +140,7 @@ func (b *Background) autoDetectCapabilities() {
 
 	b.detectClusterRoles()
 	b.cleanDeployments()
+	b.detectDeploymentUpdates()
 
 }
 

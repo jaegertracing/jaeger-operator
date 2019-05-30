@@ -62,6 +62,17 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
+// UpdateSideCar modify the deployment side car with the latest parameters if it's required.
+func UpdateSideCar(jaeger *v1.Jaeger, dep *appsv1.Deployment) bool {
+	for i := range dep.Spec.Template.Spec.Containers {
+		if dep.Spec.Template.Spec.Containers[i].Name == "jaeger-agent" {
+			dep.Spec.Template.Spec.Containers[i] = container(jaeger, dep)
+			return true
+		}
+	}
+	return false
+}
+
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment) bool {
 	if dep.Annotations[Annotation] == "" {
