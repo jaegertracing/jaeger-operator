@@ -50,10 +50,9 @@ func (suite *MiscTestSuite) SetupTest() {
 func (suite *MiscTestSuite) TestValidateBuildImage() {
 	buildImage := os.Getenv("BUILD_IMAGE")
 	require.NotEmptyf(t, buildImage, "BUILD_IMAGE must be defined")
-	imagesMap, err := getJaegerOperatorImages(fw.KubeClient)
+	imagesMap, err := getJaegerOperatorImages(fw.KubeClient, namespace)
 	require.NoError(t, err)
 
-	// TODO update test to deal with multiple installed operators if necessary
 	require.Len(t, imagesMap, 1, "Expected 1 deployed operator")
 
 	_, ok := imagesMap[buildImage]
