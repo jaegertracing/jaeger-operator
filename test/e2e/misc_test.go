@@ -3,11 +3,11 @@
 package e2e
 
 import (
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	log "github.com/sirupsen/logrus"
 )
