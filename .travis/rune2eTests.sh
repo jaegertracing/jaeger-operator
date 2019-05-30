@@ -14,6 +14,8 @@ elif [ "${TEST_GROUP}" = "smoke" ]
 then
     echo "Running Smoke Tests"
     make e2e-tests-smoke
+    echo "Running Misc Tests"
+    make e2e-tests-misc
 elif [ "${TEST_GROUP}" = "cassandra" ]
 then
     echo "Running Cassandra Tests"
