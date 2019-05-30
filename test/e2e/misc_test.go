@@ -1,4 +1,4 @@
-// +build misc
+// +build smoke
 
 package e2e
 
