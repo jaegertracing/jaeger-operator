@@ -108,6 +108,25 @@ func TestQueryAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 }
 
+func TestQueryLabels(t *testing.T) {
+	jaeger := v1.NewJaeger("TestQueryLabels")
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Query.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+}
+
 func TestQuerySecrets(t *testing.T) {
 	jaeger := v1.NewJaeger("TestQuerySecrets")
 	secret := "mysecret"
@@ -295,8 +314,8 @@ func TestQueryResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
-func TestQueryLabels(t *testing.T) {
-	query := NewQuery(v1.NewJaeger("TestQueryLabels"))
+func TestQueryStandardLabels(t *testing.T) {
+	query := NewQuery(v1.NewJaeger("TestQueryStandardLabels"))
 	dep := query.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "query", dep.Spec.Template.Labels["app.kubernetes.io/component"])

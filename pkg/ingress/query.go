@@ -31,7 +31,18 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 
 	trueVar := true
 
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec})
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Labels: map[string]string{
+			"app":                          "jaeger",
+			"app.kubernetes.io/name":       fmt.Sprintf("%s-query", i.jaeger.Name),
+			"app.kubernetes.io/instance":   i.jaeger.Name,
+			"app.kubernetes.io/component":  "query-ingress",
+			"app.kubernetes.io/part-of":    "jaeger",
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		},
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	spec := extv1beta1.IngressSpec{}
 	backend := extv1beta1.IngressBackend{
@@ -54,14 +65,7 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", i.jaeger.Name),
 			Namespace: i.jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       fmt.Sprintf("%s-query", i.jaeger.Name),
-				"app.kubernetes.io/instance":   i.jaeger.Name,
-				"app.kubernetes.io/component":  "query-ingress",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: i.jaeger.APIVersion,

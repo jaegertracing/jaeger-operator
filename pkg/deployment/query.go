@@ -66,6 +66,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			// it at will. So, we leave this configured just like any other application would
 			"sidecar.jaegertracing.io/inject": q.jaeger.Name,
 		},
+		Labels: labels,
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -97,7 +98,7 @@ func (q *Query) Get() *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-query", q.jaeger.Name),
 			Namespace:   q.jaeger.Namespace,
-			Labels:      labels,
+			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -116,7 +117,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
+					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{

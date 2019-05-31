@@ -64,6 +64,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 		},
+		Labels: labels,
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -80,7 +81,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-agent-daemonset", a.jaeger.Name),
 			Namespace: a.jaeger.Namespace,
-			Labels:    labels,
+			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: a.jaeger.APIVersion,
@@ -97,7 +98,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
+					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
