@@ -33,5 +33,14 @@ func TestWithSecurityOAuthProxy(t *testing.T) {
 
 func TestJaegerName(t *testing.T) {
 	jaeger := v1.NewJaeger("foo")
-	assert.Equal(t, "foo", JaegerServiceAccountFor(jaeger))
+	jaeger.Spec.ServiceAccount = "bar"
+	jaeger.Spec.Collector.ServiceAccount = "col-sa"
+	jaeger.Spec.Query.ServiceAccount = "query-sa"
+	jaeger.Spec.AllInOne.ServiceAccount = "aio-sa"
+
+	assert.Equal(t, "foo", JaegerServiceAccountFor(jaeger, ""))
+	assert.Equal(t, "col-sa", JaegerServiceAccountFor(jaeger, "collector"))
+	assert.Equal(t, "query-sa", JaegerServiceAccountFor(jaeger, "query"))
+	assert.Equal(t, "aio-sa", JaegerServiceAccountFor(jaeger, "all-in-one"))
+	assert.Equal(t, "bar", JaegerServiceAccountFor(jaeger, "ingester"))
 }

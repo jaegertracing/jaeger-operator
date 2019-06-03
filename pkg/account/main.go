@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Get returns all the service accounts to be created for this Jaeger instance
@@ -22,11 +23,11 @@ func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 	trueVar := true
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      JaegerServiceAccountFor(jaeger),
+			Name:      JaegerServiceAccountFor(jaeger, ""),
 			Namespace: jaeger.Namespace,
 			Labels: map[string]string{
 				"app":                          "jaeger",
-				"app.kubernetes.io/name":       JaegerServiceAccountFor(jaeger),
+				"app.kubernetes.io/name":       JaegerServiceAccountFor(jaeger, ""),
 				"app.kubernetes.io/instance":   jaeger.Name,
 				"app.kubernetes.io/component":  "service-account",
 				"app.kubernetes.io/part-of":    "jaeger",
@@ -46,6 +47,21 @@ func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 }
 
 // JaegerServiceAccountFor prints service name for Jaeger instance
-func JaegerServiceAccountFor(jaeger *v1.Jaeger) string {
-	return fmt.Sprintf("%s", jaeger.Name)
+func JaegerServiceAccountFor(jaeger *v1.Jaeger, component string) string {
+	sa := ""
+	switch component {
+	case "collector":
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Collector.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case "query":
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Query.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case "ingester":
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingester.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case "all-in-one":
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.AllInOne.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	}
+
+	if sa == "" {
+		return fmt.Sprintf("%s", jaeger.Name)
+	}
+	return sa
 }
