@@ -1,39 +1,65 @@
+// +build smoke
+
 package e2e
 
 import (
 	goctx "context"
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func SimplestJaeger(t *testing.T) {
-	ctx, err := prepare(t)
-	if (err != nil) {
-		ctx.Cleanup()
-		require.FailNow(t, "Failed in prepare")
-	}
-	defer ctx.Cleanup()
-
-	if err := simplest(t, framework.Global, ctx); err != nil {
-		t.Fatal(err)
-	}
+type SimplestTestSuite struct {
+	suite.Suite
 }
 
-func simplest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
+func (suite *SimplestTestSuite) SetupSuite() {
+	t = suite.T()
+	var err error
+	ctx, err = prepare(t)
+	if (err != nil) {
+		if ctx != nil {
+			ctx.Cleanup()
+		}
+		require.FailNow(t, "Failed in prepare with: " + err.Error())
 	}
+	fw = framework.Global
+	namespace, _ = ctx.GetNamespace()
+	require.NotNil(t, namespace, "GetNamespace failed")
 
+	addToFrameworkSchemeForSmokeTests(t)
+}
+
+func (suite *SimplestTestSuite) TearDownSuite() {
+	ctx.Cleanup()
+}
+
+func (suite *SimplestTestSuite) SetupTest() {
+	t = suite.T()
+}
+
+func TestSimplestSuite(t *testing.T) {
+	suite.Run(t, new(SimplestTestSuite))
+}
+
+func (suite *SimplestTestSuite) simplest() {
 	// create jaeger custom resource
-	exampleJaeger := &v1.Jaeger{
+	simplestJaeger := getSimplestJaeger()
+	err := fw.Client.Create(goctx.TODO(), simplestJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Failed to create simplest jaeger")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	require.NoError(t, err, "Failed to deploye simplest jaeger")
+}
+
+func getSimplestJaeger() *v1.Jaeger {
+	simplestJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
@@ -44,10 +70,5 @@ func simplest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) erro
 		},
 		Spec: v1.JaegerSpec{},
 	}
-	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	if err != nil {
-		return err
-	}
-
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	return simplestJaeger
 }
