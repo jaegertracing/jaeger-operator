@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/pkg/errors"
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,6 +76,32 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	}
 
 	return ctx, nil
+}
+
+func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) (map[string]string, error) {
+	imageNamesMap := make(map[string]string)
+
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
+	if err != nil {
+		return imageNamesMap, err
+	} else {
+		containers := deployment.Spec.Template.Spec.Containers
+		for _, container := range containers {
+			if container.Name == "jaeger-operator" {
+				for _, env := range container.Env {
+					if env.Name == "WATCH_NAMESPACE" {
+						imageNamesMap[container.Image] = env.Value
+					}
+				}
+			}
+		}
+	}
+
+	if len(imageNamesMap) == 0 {
+		return imageNamesMap, errors.New("Could not find the operator image")
+	} else {
+		return imageNamesMap, nil
+	}
 }
 
 func isOpenShift(t *testing.T) bool {
