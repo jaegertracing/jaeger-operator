@@ -83,9 +83,7 @@ func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) 
 
 	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
 	if err != nil {
-		if !strings.Contains(err.Error(), "not found") {
-			return imageNamesMap, err
-		}
+		return imageNamesMap, err
 	} else {
 		containers := deployment.Spec.Template.Spec.Containers
 		for _, container := range containers {
