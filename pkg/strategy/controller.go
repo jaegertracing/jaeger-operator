@@ -131,9 +131,6 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 	if spec.NodeCount == 0 {
 		spec.NodeCount = 1
 	}
-	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-elasticsearch-image")
-	}
 }
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {

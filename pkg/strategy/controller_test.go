@@ -234,14 +234,12 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 }
 
 func TestNormalizeElasticsearch(t *testing.T) {
-	viper.Set("jaeger-elasticsearch-image", "hoo")
-	defer viper.Reset()
 	tests := []struct {
 		underTest v1.ElasticsearchSpec
 		expected  v1.ElasticsearchSpec
 	}{
 		{underTest: v1.ElasticsearchSpec{},
-			expected: v1.ElasticsearchSpec{Image: "hoo", NodeCount: 1}},
+			expected: v1.ElasticsearchSpec{NodeCount: 1}},
 		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150},
 			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150}},
 	}
