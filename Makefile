@@ -194,10 +194,10 @@ scorecard:
 
 .PHONY: install-sdk
 install-sdk:
-	curl https://github.com/operator-framework/operator-sdk/releases/download/${SDK_VERSION}/operator-sdk-${SDK_VERSION}-x86_64-linux-gnu -sLo ${GOPATH}/bin/operator-sdk
-	chmod +x ${GOPATH}/bin/operator-sdk
+	@curl https://github.com/operator-framework/operator-sdk/releases/download/${SDK_VERSION}/operator-sdk-${SDK_VERSION}-x86_64-linux-gnu -sLo ${GOPATH}/bin/operator-sdk
+	@chmod +x ${GOPATH}/bin/operator-sdk
 
 .PHONY: install-tools
 install-tools:
-	go get -u golang.org/x/lint/golint
-	go get github.com/securego/gosec/cmd/gosec/...
+	@go get -u golang.org/x/lint/golint
+	@go get github.com/securego/gosec/cmd/gosec/...
