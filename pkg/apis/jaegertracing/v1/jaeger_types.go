@@ -201,11 +201,11 @@ type ElasticsearchSpec struct {
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job
 // +k8s:openapi-gen=true
 type JaegerCassandraCreateSchemaSpec struct {
-	Enabled            *bool  `json:"enabled"`
-	Image              string `json:"image"`
-	Datacenter         string `json:"datacenter"`
-	Mode               string `json:"mode"`
-	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
+	Enabled                 *bool  `json:"enabled"`
+	Image                   string `json:"image"`
+	Datacenter              string `json:"datacenter"`
+	Mode                    string `json:"mode"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -219,25 +219,25 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
-	AfterCompletionTTL          *int32 `json:"afterCompletionTTL"`
+	TTLSecondsAfterFinished     *int32 `json:"ttlSecondsAfterFinished"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
 // +k8s:openapi-gen=true
 type JaegerEsIndexCleanerSpec struct {
-	Enabled            *bool  `json:"enabled"`
-	NumberOfDays       *int   `json:"numberOfDays"`
-	Schedule           string `json:"schedule"`
-	Image              string `json:"image"`
-	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
+	Enabled                 *bool  `json:"enabled"`
+	NumberOfDays            *int   `json:"numberOfDays"`
+	Schedule                string `json:"schedule"`
+	Image                   string `json:"image"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
 type JaegerEsRolloverSpec struct {
-	Image              string `json:"image"`
-	Schedule           string `json:"schedule"`
-	Conditions         string `json:"conditions"`
-	AfterCompletionTTL *int32 `json:"afterCompletionTTL"`
+	Image                   string `json:"image"`
+	Schedule                string `json:"schedule"`
+	Conditions              string `json:"conditions"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
 	// we parse it with time.ParseDuration
 	ReadTTL string `json:"readTTL"`
 }

@@ -171,15 +171,15 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 	falseVar := false
 	days7 := 7
 	days55 := 55
-	afterCompletionTTL100 := int32(100)
+	ttlSecondsAfterFinished100 := int32(100)
 	tests := []struct {
 		underTest v1.JaegerEsIndexCleanerSpec
 		expected  v1.JaegerEsIndexCleanerSpec
 	}{
 		{underTest: v1.JaegerEsIndexCleanerSpec{},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar, AfterCompletionTTL: &defAfterCompletionTTL}},
-		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar, AfterCompletionTTL: &afterCompletionTTL100},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar, AfterCompletionTTL: &afterCompletionTTL100}},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar, TTLSecondsAfterFinished: &defTTLSecondsAfterFinished}},
+		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar, TTLSecondsAfterFinished: &ttlSecondsAfterFinished100},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar, TTLSecondsAfterFinished: &ttlSecondsAfterFinished100}},
 	}
 	for _, test := range tests {
 		normalizeIndexCleaner(&test.underTest, "elasticsearch")
@@ -190,15 +190,15 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 func TestNormalizeRollover(t *testing.T) {
 	viper.Set("jaeger-es-rollover-image", "hoo")
 	defer viper.Reset()
-	afterCompletionTTL100 := int32(100)
+	ttlSecondsAfterFinished100 := int32(100)
 	tests := []struct {
 		underTest v1.JaegerEsRolloverSpec
 		expected  v1.JaegerEsRolloverSpec
 	}{
 		{underTest: v1.JaegerEsRolloverSpec{},
-			expected: v1.JaegerEsRolloverSpec{Image: "hoo", Schedule: "*/30 * * * *", AfterCompletionTTL: &defAfterCompletionTTL}},
-		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol", AfterCompletionTTL: &afterCompletionTTL100},
-			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol", AfterCompletionTTL: &afterCompletionTTL100}},
+			expected: v1.JaegerEsRolloverSpec{Image: "hoo", Schedule: "*/30 * * * *", TTLSecondsAfterFinished: &defTTLSecondsAfterFinished}},
+		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol", TTLSecondsAfterFinished: &ttlSecondsAfterFinished100},
+			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol", TTLSecondsAfterFinished: &ttlSecondsAfterFinished100}},
 	}
 	for _, test := range tests {
 		normalizeRollover(&test.underTest)
@@ -211,7 +211,7 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	defer viper.Reset()
 	trueVar := true
 	falseVar := false
-	afterCompletionTTL100 := int32(100)
+	ttlSecondsAfterFinished100 := int32(100)
 	tests := []struct {
 		underTest v1.JaegerStorageSpec
 		expected  v1.JaegerStorageSpec
@@ -219,15 +219,15 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 		{
 			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
 			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
-				SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar, AfterCompletionTTL: &defAfterCompletionTTL}},
+				SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", Enabled: &trueVar, TTLSecondsAfterFinished: &defTTLSecondsAfterFinished}},
 		},
 		{
 			underTest: v1.JaegerStorageSpec{Type: "elasticsearch"},
-			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", AfterCompletionTTL: &defAfterCompletionTTL}},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo", TTLSecondsAfterFinished: &defTTLSecondsAfterFinished}},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar, AfterCompletionTTL: &afterCompletionTTL100}},
-			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar, AfterCompletionTTL: &afterCompletionTTL100}},
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar, TTLSecondsAfterFinished: &ttlSecondsAfterFinished100}},
+			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", SparkDependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar, TTLSecondsAfterFinished: &ttlSecondsAfterFinished100}},
 		},
 	}
 	for _, test := range tests {

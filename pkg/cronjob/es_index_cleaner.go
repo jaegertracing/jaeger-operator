@@ -60,7 +60,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism:             &one,
-					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.AfterCompletionTTL,
+					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
