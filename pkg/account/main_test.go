@@ -37,11 +37,13 @@ func TestJaegerName(t *testing.T) {
 	jaeger.Spec.ServiceAccount = "bar"
 	jaeger.Spec.Collector.ServiceAccount = "col-sa"
 	jaeger.Spec.Query.ServiceAccount = "query-sa"
+	jaeger.Spec.Agent.ServiceAccount = "agent-sa"
 	jaeger.Spec.AllInOne.ServiceAccount = "aio-sa"
 
 	assert.Equal(t, "foo", JaegerServiceAccountFor(jaeger, ""))
 	assert.Equal(t, "col-sa", JaegerServiceAccountFor(jaeger, util.CollectorComponent))
 	assert.Equal(t, "query-sa", JaegerServiceAccountFor(jaeger, util.QueryComponent))
 	assert.Equal(t, "aio-sa", JaegerServiceAccountFor(jaeger, util.AllInOneComponent))
+	assert.Equal(t, "agent-sa", JaegerServiceAccountFor(jaeger, util.AgentComponent))
 	assert.Equal(t, "bar", JaegerServiceAccountFor(jaeger, util.IngesterComponent))
 }

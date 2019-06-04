@@ -14,10 +14,20 @@ import (
 type Component string
 
 const (
+	// CollectorComponent represents the value for the Component type for Jaeger Collector
 	CollectorComponent Component = "collector"
-	QueryComponent     Component = "query"
-	IngesterComponent  Component = "ingester"
-	AllInOneComponent  Component = "all-in-one"
+
+	// QueryComponent represents the value for the Component type for Jaeger Query
+	QueryComponent Component = "query"
+
+	// IngesterComponent represents the value for the Component type for Jaeger Ingester
+	IngesterComponent Component = "ingester"
+
+	// AllInOneComponent represents the value for the Component type for Jaeger All-In-One
+	AllInOneComponent Component = "all-in-one"
+
+	// AgentComponent epresents the value for the Component type for Jaeger Agent
+	AgentComponent Component = "agent"
 )
 
 // removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.

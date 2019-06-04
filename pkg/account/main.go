@@ -56,6 +56,8 @@ func JaegerServiceAccountFor(jaeger *v1.Jaeger, component util.Component) string
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingester.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	case util.AllInOneComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.AllInOne.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case util.AgentComponent:
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	}
 
 	if sa == "" {
