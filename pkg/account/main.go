@@ -1,8 +1,6 @@
 package account
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -47,21 +45,21 @@ func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 }
 
 // JaegerServiceAccountFor prints service name for Jaeger instance
-func JaegerServiceAccountFor(jaeger *v1.Jaeger, component string) string {
+func JaegerServiceAccountFor(jaeger *v1.Jaeger, component util.Component) string {
 	sa := ""
 	switch component {
-	case "collector":
+	case util.CollectorComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Collector.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case "query":
+	case util.QueryComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Query.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case "ingester":
+	case util.IngesterComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingester.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case "all-in-one":
+	case util.AllInOneComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.AllInOne.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	}
 
 	if sa == "" {
-		return fmt.Sprintf("%s", jaeger.Name)
+		return jaeger.Name
 	}
 	return sa
 }

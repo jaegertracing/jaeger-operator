@@ -169,7 +169,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
-					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, "collector"),
+					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, util.CollectorComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,

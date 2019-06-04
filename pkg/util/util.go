@@ -10,6 +10,16 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
+// Component represents type of jaeger component
+type Component string
+
+const (
+	CollectorComponent Component = "collector"
+	QueryComponent     Component = "query"
+	IngesterComponent  Component = "ingester"
+	AllInOneComponent  Component = "all-in-one"
+)
+
 // removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
 func removeDuplicatedVolumes(volumes []corev1.Volume) []corev1.Volume {
 	var results []corev1.Volume
