@@ -514,6 +514,10 @@ The types of configuration supported include:
 
 * link:https://kubernetes.io/docs/concepts/storage/volumes/[volumes] and volume mounts
 
+* link:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/[serviceAccount] to run each component with separate identity
+
+* link:https://kubernetes.io/docs/tasks/configure-pod-container/security-context/[securityContext] to define privileges of running components
+
 [source,yaml]
 ----
 apiVersion: jaegertracing.io/v1
@@ -563,6 +567,9 @@ spec:
       operator: "Equal"
       value: "value1"
       effect: "NoExecute"
+  serviceAccount: nameOfServiceAccount
+  securityContext: 
+    runAsUser: 1000
   volumeMounts:
     - name: config-vol
       mountPath: /etc/config

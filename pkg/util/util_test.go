@@ -215,6 +215,35 @@ func TestAffinityOverride(t *testing.T) {
 	assert.Nil(t, merged.Affinity.NodeAffinity)
 }
 
+func TestSecurityContextDefault(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{}
+	specificSpec := v1.JaegerCommonSpec{}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Nil(t, merged.SecurityContext)
+}
+
+func TestSecurityContextOverride(t *testing.T) {
+	intVal := int64(1000)
+	generalSpec := v1.JaegerCommonSpec{
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsUser: &intVal,
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsGroup: &intVal,
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.NotNil(t, merged.SecurityContext)
+	assert.NotNil(t, merged.SecurityContext.RunAsGroup)
+	assert.Nil(t, merged.SecurityContext.RunAsUser)
+}
+
 func TestMergeTolerations(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		Tolerations: []corev1.Toleration{{

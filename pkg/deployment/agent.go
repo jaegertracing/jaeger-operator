@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -147,8 +148,10 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						},
 						Resources: commonSpec.Resources,
 					}},
-					Affinity:    commonSpec.Affinity,
-					Tolerations: commonSpec.Tolerations,
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
+					SecurityContext:    commonSpec.SecurityContext,
+					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AgentComponent),
 				},
 			},
 		},
