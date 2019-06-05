@@ -101,10 +101,10 @@ Jaeger Agent can be configured to be deployed as a `DaemonSet` using a `HostPort
 
 [source,bash]
 ----
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/hostport-scc-daemonset.yaml # <1>
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/examples/openshift/hostport-scc-daemonset.yaml # <1>
 
 oc new-project myappnamespace
-oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account_jaeger-agent-daemonset.yaml # <2>
+oc create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/examples/openshift/service_account_jaeger-agent-daemonset.yaml # <2>
 oc adm policy add-scc-to-user daemonset-with-hostport -z jaeger-agent-daemonset # <3>
 oc apply -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/examples/openshift/agent-as-daemonset.yaml # <4>
 ----
