@@ -16,6 +16,7 @@ OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 ES_OPERATOR_NAMESPACE = openshift-logging
+SDK_VERSION=v0.8.1
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1)
@@ -190,3 +191,14 @@ ci: ensure-generate-is-noop check format lint security build unit-tests
 .PHONY: scorecard
 scorecard:
 	@operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
+
+.PHONY: install-sdk
+install-sdk:
+	@echo Installing SDK ${SDK_VERSION}
+	@curl https://github.com/operator-framework/operator-sdk/releases/download/${SDK_VERSION}/operator-sdk-${SDK_VERSION}-x86_64-linux-gnu -sLo ${GOPATH}/bin/operator-sdk
+	@chmod +x ${GOPATH}/bin/operator-sdk
+
+.PHONY: install-tools
+install-tools:
+	@go get -u golang.org/x/lint/golint
+	@go get github.com/securego/gosec/cmd/gosec/...

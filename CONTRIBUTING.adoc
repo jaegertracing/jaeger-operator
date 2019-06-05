@@ -17,28 +17,7 @@ This project is a regular link:https://coreos.com/operators/[Kubernetes Operator
 
 === Installing the Operator SDK command line tool
 
-At the time of this writing, the link:https://github.com/operator-framework/operator-sdk[Operator SDK GitHub page] listed the following commands as required to install the command line tool:
-
-[source,bash]
-----
-mkdir -p $GOPATH/src/github.com/operator-framework
-cd $GOPATH/src/github.com/operator-framework
-git clone https://github.com/operator-framework/operator-sdk
-cd operator-sdk
-git checkout v0.5.0
-make dep
-make install
-----
-
-Alternatively, a released binary can be used instead:
-
-[source,bash]
-----
-curl https://github.com/operator-framework/operator-sdk/releases/download/v0.5.0/operator-sdk-v0.5.0-x86_64-linux-gnu -sLo $GOPATH/bin/operator-sdk
-chmod +x $GOPATH/bin/operator-sdk
-----
-
-NOTE: Make sure your `$GOPATH/bin` is part of your regular `$PATH`.
+Follow the installation guidelines from link::https://github.com/operator-framework/operator-sdk[Operator SDK GitHub page] or run `make install-sdk`.
 
 === Developing
 
