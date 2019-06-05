@@ -45,18 +45,18 @@ func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 }
 
 // JaegerServiceAccountFor prints service name for Jaeger instance
-func JaegerServiceAccountFor(jaeger *v1.Jaeger, component util.Component) string {
+func JaegerServiceAccountFor(jaeger *v1.Jaeger, component Component) string {
 	sa := ""
 	switch component {
-	case util.CollectorComponent:
+	case CollectorComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Collector.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case util.QueryComponent:
+	case QueryComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Query.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case util.IngesterComponent:
+	case IngesterComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingester.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case util.AllInOneComponent:
+	case AllInOneComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.AllInOne.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
-	case util.AgentComponent:
+	case AgentComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	}
 

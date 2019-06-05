@@ -175,7 +175,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
-					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, util.AllInOneComponent),
+					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,

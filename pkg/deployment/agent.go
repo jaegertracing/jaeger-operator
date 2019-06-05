@@ -151,7 +151,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
-					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, util.AgentComponent),
+					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AgentComponent),
 				},
 			},
 		},

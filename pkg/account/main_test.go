@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func TestWithSecurityNil(t *testing.T) {
@@ -41,9 +40,9 @@ func TestJaegerName(t *testing.T) {
 	jaeger.Spec.AllInOne.ServiceAccount = "aio-sa"
 
 	assert.Equal(t, "foo", JaegerServiceAccountFor(jaeger, ""))
-	assert.Equal(t, "col-sa", JaegerServiceAccountFor(jaeger, util.CollectorComponent))
-	assert.Equal(t, "query-sa", JaegerServiceAccountFor(jaeger, util.QueryComponent))
-	assert.Equal(t, "aio-sa", JaegerServiceAccountFor(jaeger, util.AllInOneComponent))
-	assert.Equal(t, "agent-sa", JaegerServiceAccountFor(jaeger, util.AgentComponent))
-	assert.Equal(t, "bar", JaegerServiceAccountFor(jaeger, util.IngesterComponent))
+	assert.Equal(t, "col-sa", JaegerServiceAccountFor(jaeger, CollectorComponent))
+	assert.Equal(t, "query-sa", JaegerServiceAccountFor(jaeger, QueryComponent))
+	assert.Equal(t, "aio-sa", JaegerServiceAccountFor(jaeger, AllInOneComponent))
+	assert.Equal(t, "agent-sa", JaegerServiceAccountFor(jaeger, AgentComponent))
+	assert.Equal(t, "bar", JaegerServiceAccountFor(jaeger, IngesterComponent))
 }

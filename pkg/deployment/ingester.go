@@ -146,7 +146,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
-					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, util.IngesterComponent),
+					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, account.IngesterComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
