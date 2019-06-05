@@ -1,9 +1,0 @@
-apiVersion: operators.coreos.com/v1alpha2
-kind: OperatorGroup
-metadata:
-  name: jaeger-operator-group
-  namespace: default
-  spec:
-    targetNamespaces:
-    - default
-
