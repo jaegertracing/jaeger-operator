@@ -76,3 +76,13 @@ func TestStorageEnvs(t *testing.T) {
 func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }
+
+func TestSparkDependencies(t *testing.T) {
+	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
+	ttlSecondsAfterFinished := int32(100)
+	j.Spec.Storage.SparkDependencies.TTLSecondsAfterFinished = &ttlSecondsAfterFinished
+
+	cjob := CreateSparkDependencies(j)
+	assert.Equal(t, j.Namespace, cjob.Namespace)
+	assert.Equal(t, ttlSecondsAfterFinished, *cjob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
+}

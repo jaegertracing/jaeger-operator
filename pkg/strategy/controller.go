@@ -18,6 +18,11 @@ const (
 	esCertGenerationScript = "./scripts/cert_generation.sh"
 )
 
+var (
+	// Default to 1 day
+	defTTLSecondsAfterFinished = int32(86400)
+)
+
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
@@ -90,6 +95,7 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.Rollover)
+	normalizeCassandraCreateSchema(&jaeger.Spec.Storage.CassandraCreateSchema)
 	normalizeUI(&jaeger.Spec)
 }
 
@@ -106,6 +112,9 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	}
 	if spec.SparkDependencies.Schedule == "" {
 		spec.SparkDependencies.Schedule = "55 23 * * *"
+	}
+	if spec.SparkDependencies.TTLSecondsAfterFinished == nil {
+		spec.SparkDependencies.TTLSecondsAfterFinished = &defTTLSecondsAfterFinished
 	}
 }
 
@@ -125,6 +134,9 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		defDays := 7
 		spec.NumberOfDays = &defDays
 	}
+	if spec.TTLSecondsAfterFinished == nil {
+		spec.TTLSecondsAfterFinished = &defTTLSecondsAfterFinished
+	}
 }
 
 func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
@@ -139,6 +151,15 @@ func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
+	}
+	if spec.TTLSecondsAfterFinished == nil {
+		spec.TTLSecondsAfterFinished = &defTTLSecondsAfterFinished
+	}
+}
+
+func normalizeCassandraCreateSchema(spec *v1.JaegerCassandraCreateSchemaSpec) {
+	if spec.TTLSecondsAfterFinished == nil {
+		spec.TTLSecondsAfterFinished = &defTTLSecondsAfterFinished
 	}
 }
 
