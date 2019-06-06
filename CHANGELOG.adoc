@@ -2,6 +2,20 @@
 
 = Changelog
 
+== v1.12.1 (2019-06-06)
+
+* Removed 'expose metrics port' to prevent 'failed to create or get service' error (https://github.com/jaegertracing/jaeger-operator/pull/462[#462])
+* Add support for securityContext and serviceAccount (https://github.com/jaegertracing/jaeger-operator/pull/456[#456])
+* Add install SDK goal to make (https://github.com/jaegertracing/jaeger-operator/pull/458[#458])
+* Upgraded the operator-sdk version to 0.8.1 (https://github.com/jaegertracing/jaeger-operator/pull/449[#449])
+* Switch to go modules from dep (https://github.com/jaegertracing/jaeger-operator/pull/449[#449])
+* Do not set a default Elasticsearch image (https://github.com/jaegertracing/jaeger-operator/pull/450[#450])
+* Log the operator image name when created (https://github.com/jaegertracing/jaeger-operator/pull/452[#452])
+* Add label to the common spec (https://github.com/jaegertracing/jaeger-operator/pull/445[#445])
+* Fix injecting volumes into rollover jobs (https://github.com/jaegertracing/jaeger-operator/pull/446[#446])
+* Remove race condition by disabling esIndexCleaner till after SmokeTes… (https://github.com/jaegertracing/jaeger-operator/pull/437[#437])
+* Fix runtime panic when trying to update operator controlled resources that don't have annotation or labels   (https://github.com/jaegertracing/jaeger-operator/pull/433[#433])
+
 == v1.12.0 (2019-05-22)
 
 * Update to 1.12 and use new admin ports (https://github.com/jaegertracing/jaeger-operator/pull/425[#425])
