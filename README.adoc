@@ -361,7 +361,7 @@ spec:
 
 == Auto injection of Jaeger Agent sidecars
 
-The operator can also inject Jaeger Agent sidecars in `Deployment` workloads, provided that the deployment has the annotation `sidecar.jaegertracing.io/inject` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.
+The operator can also inject Jaeger Agent sidecars in `Pod` objects, provided that the pod has the annotation `sidecar.jaegertracing.io/inject` with a suitable value. The values can be either `"true"` (as string), or the Jaeger instance name, as returned by `kubectl get jaegers`. When `"true"` is used, there should be exactly *one* Jaeger instance for the same namespace as the deployment, otherwise, the operator can't figure out automatically which Jaeger instance to use.
 
 The following snippet shows a simple application that will get a sidecar injected, with the Jaeger Agent pointing to the single Jaeger instance available in the same namespace:
 
@@ -371,8 +371,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
-  annotations:
-    "sidecar.jaegertracing.io/inject": "true" # <1>
 spec:
   selector:
     matchLabels:
@@ -381,6 +379,8 @@ spec:
     metadata:
       labels:
         app: myapp
+      annotations:
+        "sidecar.jaegertracing.io/inject": "true" # <1>
     spec:
       containers:
       - name: myapp
@@ -389,6 +389,20 @@ spec:
 <1> Either `"true"` (as string) or the Jaeger instance name
 
 A complete sample deployment is available at link:./deploy/examples/business-application-injected-sidecar.yaml[`deploy/examples/business-application-injected-sidecar.yaml`]
+
+IMPORTANT: up to the Jaeger Operator v1.12.1, the annotation was set in the metadata for the `Deployment` object. This is now deprecated, and the appropriate way to get the sidecar injected is to add the annotation to the metadata in the `PodTemplate` node. Even though the old style is discouraged, it is still supported and the operator will attempt copy the annotation over to the `PodTemplate`, unless the `PodTemplate` set its own annotation already.
+
+=== Setting up the auto-injection mechanism
+
+The automatic sidecar injection works via the "Mutating Webhook Admission Controller" feature from Kubernetes and it requires some setup by cluster administrators. The first step is to provision a certificate for the endpoint serving the webhook. The second is to tell Kubernetes about the webhook.
+
+The provision of the certificate for production purposes may be different from cluster to cluster, perhaps even involving manual steps to sign and approve the certificate signing request. Once a certificate is generated and signed by a CA trusted by Kubernetes API Server, the certificate and key should be placed into a `TLS secret` (`type: kubernetes.io/tls`) named `jaeger-operator-webhook-cert`. The script `scripts/create-webhook-csr.sh` can be used as reference for this step, including the creation of the certificate signing request via `cfssl`.
+
+IMPORTANT: as mentioned in the link:https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/[Kubernetes documentation], "the ability to approve CSRs (Certificate Signing Requests) decides who trusts who within the cluster". As such, the certificates used by the webhook should be managed by cluster administrators
+
+Once that is done, the admin should register the webhook with the API Server by creating a `MutatingWebhookConfiguration`. The webhook is accessible via a regular Kubernetes `Service`, which should map the incoming connections on port `443` to the Operator's port `8443`. The script `scripts/install-webhook.sh` can be used as reference for this step.
+
+IMPORTANT: mutating webhooks are highly privileged components in a Kubernetes cluster and should be managed by cluster administrators
 
 == Agent as DaemonSet
 

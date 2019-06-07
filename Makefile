@@ -7,8 +7,10 @@ IMPORT_LOG=import.log
 FMT_LOG=fmt.log
 
 OPERATOR_NAME ?= jaeger-operator
-NAMESPACE ?= "$(USER)"
-BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+NAMESPACE ?= "observability"
+
+IMAGE_NAMESPACE ?= "$(USER)"
+BUILD_IMAGE ?= "$(IMAGE_NAMESPACE)/$(OPERATOR_NAME):latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
@@ -161,9 +163,26 @@ kafka:
 clean:
 	@rm -f deploy/test/*.yaml 
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
-	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} || true
+
+	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE)  > /dev/null 2>&1 || true
+
+	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE)  > /dev/null 2>&1 || true
+	@kubectl delete namespace $(ES_OPERATOR_NAMESPACE) > /dev/null 2>&1 || true
+
+	@kubectl delete -f deploy/crds/jaegertracing_v1_jaeger_crd.yaml > /dev/null 2>&1 || true
+	@kubectl delete -f deploy/service_account.yaml > /dev/null 2>&1 || true
+	@kubectl delete -f deploy/role.yaml > /dev/null 2>&1 || true
+	@kubectl delete -f deploy/role_binding.yaml > /dev/null 2>&1 || true
+	@kubectl delete -f deploy/operator.yaml > /dev/null 2>&1 || true
+
+	@kubectl delete csr jaeger-operator-webhook.$(NAMESPACE) > /dev/null 2>&1 || true
+	@kubectl delete secret/jaeger-operator-webhook-cert service/jaeger-operator-webhook > /dev/null 2>&1 || true
+	@kubectl delete mutatingwebhookconfiguration jaeger-operator-webhook-cfg > /dev/null 2>&1 || true
+
+	@kubectl delete $(NAMESPACE) > /dev/null 2>&1 || true
+	@./scripts/ensure-namespace.sh default
+
+	@echo "Cleaned up"
 
 .PHONY: crd
 crd:
@@ -202,3 +221,25 @@ install-sdk:
 install-tools:
 	@go get -u golang.org/x/lint/golint
 	@go get github.com/securego/gosec/cmd/gosec/...
+	@go get -u github.com/cloudflare/cfssl/cmd/cfssl
+	@go get -u github.com/cloudflare/cfssl/cmd/cfssljson
+
+.PHONY: ensure-namespace
+ensure-namespace:
+	@./scripts/ensure-namespace.sh
+
+.PHONY: webhook-cert
+webhook-cert: ensure-namespace
+	@./scripts/create-webhook-csr.sh
+
+.PHONY: webhook
+webhook: ensure-namespace webhook-cert
+	@./scripts/install-webhook.sh
+
+.PHONY: install
+install: ensure-namespace
+	@kubectl apply -f deploy/crds/jaegertracing_v1_jaeger_crd.yaml
+	@kubectl apply -f deploy/service_account.yaml
+	@kubectl apply -f deploy/role.yaml
+	@kubectl apply -f deploy/role_binding.yaml
+	@kubectl apply -f deploy/operator.yaml

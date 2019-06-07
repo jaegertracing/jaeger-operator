@@ -1,15 +1,20 @@
 package inject
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	admission "k8s.io/api/admission/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -28,35 +33,145 @@ const (
 	envVarPropagation = "JAEGER_PROPAGATION"
 )
 
-// Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
+// Sidecar adds a new container to the pod, connecting to the given jaeger instance
+func Sidecar(jaeger *v1.Jaeger, pod corev1.Pod) corev1.Pod {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := jaeger.Logger().WithField("deployment", dep.Name)
+	logFields := jaeger.Logger().WithField("pod", pod.Name)
 
-	if jaeger == nil || (dep.Annotations[Annotation] != jaeger.Name && dep.Annotations[AnnotationLegacy] != jaeger.Name) {
+	if jaeger == nil || (pod.Annotations[Annotation] != jaeger.Name && pod.Annotations[AnnotationLegacy] != jaeger.Name) {
 		logFields.Debug("skipping sidecar injection")
 	} else {
-		decorate(dep)
+		decorate(pod)
 		logFields.Debug("injecting sidecar")
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
+		pod.Spec = SidecarIntoPodSpec(jaeger, pod.Spec)
 	}
 
-	return dep
+	return pod
+}
+
+// Process an admission review, returning an AdmissionResponse with a patch object in case a sidecar is needed
+func Process(ar *admission.AdmissionReview, c client.Client) (*admission.AdmissionResponse, error) {
+	podGvk := metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
+	if podGvk == ar.Request.Kind {
+		return processPod(c, ar)
+	}
+
+	depGvk := metav1.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
+	if depGvk == ar.Request.Kind {
+		return processDeployment(ar)
+	}
+
+	// unknown type, just ignore it
+	log.WithField("gvk", ar.Request.Kind).Info("unknown group/version/kind, ignoring")
+	return &admission.AdmissionResponse{Allowed: true}, nil
+
+}
+
+func processPod(c client.Client, ar *admission.AdmissionReview) (*admission.AdmissionResponse, error) {
+	var pod corev1.Pod
+	if err := json.Unmarshal(ar.Request.Object.Raw, &pod); err != nil {
+		log.WithError(err).Warn("couldn't process the admission review's raw object")
+		return &admission.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}, err
+	}
+
+	if Needed(pod) {
+		jaegerInstances := &v1.JaegerList{}
+		opts := &client.ListOptions{}
+		err := c.List(context.Background(), opts, jaegerInstances)
+		if err != nil {
+			log.WithError(err).Error("failed to get the available Jaeger instances")
+			return &admission.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: err.Error(),
+				},
+			}, err
+		}
+
+		jaeger := Select(pod, jaegerInstances)
+		if jaeger != nil {
+			// prepare the patch operation to return
+			patch := map[string]interface{}{
+				"op":    "add",
+				"path":  "/spec/containers/-",
+				"value": container(jaeger),
+			}
+
+			log.WithField("patch", patch).Debug("returning patch for pod")
+			return getResponseForPatch(patch)
+		}
+
+		log.WithFields(log.Fields{
+			"pod":       pod.Name,
+			"namespace": pod.Namespace,
+		}).Info("no suitable Jaeger instances found to inject a sidecar")
+	}
+
+	// sidecar not needed, skip
+	return &admission.AdmissionResponse{Allowed: true}, nil
+}
+
+func processDeployment(ar *admission.AdmissionReview) (*admission.AdmissionResponse, error) {
+	var dep appsv1.Deployment
+	if err := json.Unmarshal(ar.Request.Object.Raw, &dep); err != nil {
+		log.WithError(err).Warn("couldn't process the admission review's raw object")
+		return &admission.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}, err
+	}
+
+	// given that a similar event is triggered for the pod inside the deployment,
+	// we just need to place a new annotation in the pod, in case
+	// the deployment has one of the known annotations
+	if _, ok := getAnnotation(dep.Spec.Template.Annotations); ok {
+		// the pod has its own annotation, just skip
+		log.WithFields(log.Fields{
+			"deployment": dep.Name,
+			"namespace":  dep.Namespace,
+		}).Debug("pod has its own annotation, skipping processing of deployment")
+
+		return &admission.AdmissionResponse{Allowed: true}, nil
+	}
+
+	if val, ok := getAnnotation(dep.Annotations); ok {
+		// deployment has the annotation, copy it over to the pod
+		patch := map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/template/metadata/annotations",
+			"value": map[string]string{Annotation: val},
+		}
+
+		log.WithFields(log.Fields{
+			"deployment": dep.Name,
+			"namespace":  dep.Namespace,
+			"patch":      patch,
+		}).Debug("returning a patch for the deployment")
+
+		return getResponseForPatch(patch)
+	}
+
+	// we stop processing this review here, as there's nothing for us to do at the deployment level
+	return &admission.AdmissionResponse{Allowed: true}, nil
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment) bool {
-	if dep.Annotations[Annotation] == "" {
+func Needed(pod corev1.Pod) bool {
+	if pod.Annotations[Annotation] == "" {
 		log.WithFields(log.Fields{
-			"namespace":  dep.Namespace,
-			"deployment": dep.Name,
+			"namespace":  pod.Namespace,
+			"deployment": pod.Name,
 		}).Debug("annotation not present, not injecting")
 		return false
 	}
 
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	for _, container := range dep.Spec.Template.Spec.Containers {
+	for _, container := range pod.Spec.Containers {
 		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
 			return false
 		}
@@ -66,7 +181,7 @@ func Needed(dep *appsv1.Deployment) bool {
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+func Select(target corev1.Pod, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
 	jaegerName := target.Annotations[Annotation]
 	if strings.EqualFold(jaegerName, "true") && len(availableJaegerPods.Items) == 1 {
 		// if there's only *one* jaeger within this namespace, then that's what
@@ -85,6 +200,12 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 		}
 	}
 	return nil
+}
+
+// SidecarIntoPodSpec provides a Container with the Jaeger Agent to be used as a sidecar
+func SidecarIntoPodSpec(jaeger *v1.Jaeger, pod corev1.PodSpec) corev1.PodSpec {
+	pod.Containers = append(pod.Containers, container(jaeger))
+	return pod
 }
 
 func container(jaeger *v1.Jaeger) corev1.Container {
@@ -136,31 +257,31 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 	}
 }
 
-func decorate(dep *appsv1.Deployment) {
-	app, found := dep.Spec.Template.Labels["app.kubernetes.io/instance"]
+func decorate(pod corev1.Pod) {
+	app, found := pod.Labels["app.kubernetes.io/instance"]
 	if !found {
-		app, found = dep.Spec.Template.Labels["app.kubernetes.io/name"]
+		app, found = pod.Labels["app.kubernetes.io/name"]
 	}
 	if !found {
-		app, found = dep.Spec.Template.Labels["app"]
+		app, found = pod.Labels["app"]
 	}
 	if found {
 		// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
 		// which also matches with the style used in Istio.
-		if len(dep.Namespace) > 0 {
-			app += "." + dep.Namespace
+		if len(pod.Namespace) > 0 {
+			app += "." + pod.Namespace
 		} else {
 			app += ".default"
 		}
-		for i := 0; i < len(dep.Spec.Template.Spec.Containers); i++ {
-			if !hasEnv(envVarServiceName, dep.Spec.Template.Spec.Containers[i].Env) {
-				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+		for i := 0; i < len(pod.Spec.Containers); i++ {
+			if !hasEnv(envVarServiceName, pod.Spec.Containers[i].Env) {
+				pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarServiceName,
 					Value: app,
 				})
 			}
-			if !hasEnv(envVarPropagation, dep.Spec.Template.Spec.Containers[i].Env) {
-				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
+			if !hasEnv(envVarPropagation, pod.Spec.Containers[i].Env) {
+				pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarPropagation,
 					Value: "jaeger,b3",
 				})
@@ -176,4 +297,36 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 		}
 	}
 	return false
+}
+
+func getAnnotation(annotations map[string]string) (string, bool) {
+	if val, ok := annotations[Annotation]; ok {
+		return val, ok
+	}
+
+	val, ok := annotations[AnnotationLegacy]
+	return val, ok
+}
+
+func getResponseForPatch(patch map[string]interface{}) (*admission.AdmissionResponse, error) {
+	var patches [1]map[string]interface{} // json patches are always arrays
+	patches[0] = patch
+
+	jsonPatch, err := json.Marshal(patches)
+	if err != nil {
+		// is it even possible to fail here?
+		return &admission.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}, err
+	}
+
+	patchType := admission.PatchTypeJSONPatch
+	return &admission.AdmissionResponse{
+		Allowed:   true,
+		Patch:     jsonPatch,
+		PatchType: &patchType,
+	}, nil
+
 }

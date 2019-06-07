@@ -7,9 +7,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
@@ -41,7 +41,11 @@ func newStreamingStrategy(jaeger *v1.Jaeger) S {
 	}
 
 	// add the deployments
-	c.deployments = []appsv1.Deployment{*collector.Get(), *inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))}
+	cDep := collector.Get()
+	qDep := query.Get()
+	qDep.Spec.Template.Spec = inject.OAuthProxy(jaeger, qDep.Spec.Template.Spec)
+	qDep.Spec.Template.Spec = inject.SidecarIntoPodSpec(jaeger, qDep.Spec.Template.Spec)
+	c.deployments = []appsv1.Deployment{*cDep, *qDep}
 
 	if d := ingester.Get(); d != nil {
 		c.deployments = append(c.deployments, *d)

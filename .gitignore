@@ -3,6 +3,9 @@ build/_output
 build/_test
 deploy/test
 vendor
+server.csr
+server-key.pem
+server.crt
 
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###

@@ -2,7 +2,10 @@ package start
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
 	"runtime"
 	"strings"
 
@@ -12,7 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -22,6 +27,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
+	"github.com/jaegertracing/jaeger-operator/pkg/webhook"
 )
 
 // NewStartCommand starts the Jaeger Operator
@@ -82,6 +88,15 @@ func NewStartCommand() *cobra.Command {
 
 	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
 	viper.BindPFlag("metrics-port", cmd.Flags().Lookup("metrics-port"))
+
+	cmd.Flags().String("webhook-host", "0.0.0.0", "The host to bind the mutating webhook admission controller port")
+	viper.BindPFlag("webhook-host", cmd.Flags().Lookup("webhook-host"))
+
+	cmd.Flags().Int32("webhook-port", 8443, "The mutating webhook admission controller port")
+	viper.BindPFlag("webhook-port", cmd.Flags().Lookup("webhook-port"))
+
+	cmd.Flags().String("webhook-cert-secret", "jaeger-operator-webhook-cert", "The TLS secret containing the certificate and key for the mutating webhook admission controller")
+	viper.BindPFlag("webhook-cert-secret", cmd.Flags().Lookup("webhook-cert-secret"))
 
 	return cmd
 }
@@ -173,6 +188,9 @@ func start(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	// Start the mutating webhook admission controller
+	startWebhookEndpoint(mgr)
+
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }
@@ -209,4 +227,49 @@ func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
 		}
 	}
 	return false
+}
+
+func startWebhookEndpoint(mgr manager.Manager) {
+	namespace := os.Getenv("POD_NAMESPACE")
+	if len(namespace) == 0 {
+		log.Warn("Unable to get identify the current namespace. Using 'default'.")
+		namespace = "default"
+	}
+
+	// Start the HTTP server for the Mutating Webhook Admission Controller
+	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		log.WithError(err).Warn("Unable to get a Kubernetes client to retrieve the secret containing the TLS configuration for the mutating webhook admission controller. Injection of sidecars will *not* work.")
+		return
+	}
+
+	tlsSecretKey := types.NamespacedName{
+		Namespace: namespace,
+		Name:      viper.GetString("webhook-cert-secret"),
+	}
+	tlsSecret, err := clientset.CoreV1().Secrets(tlsSecretKey.Namespace).Get(tlsSecretKey.Name, metav1.GetOptions{})
+	if err != nil {
+		log.WithError(err).Warn("Unable to retrieve the secret containing the TLS configuration for the mutating webhook admission controller. Injection of sidecars will *not* work. Check the Jaeger Operator documentation on how to create the TLS secret.")
+		return
+	}
+
+	pem := tlsSecret.Data["tls.crt"]
+	key := tlsSecret.Data["tls.key"]
+	cert, err := tls.X509KeyPair(pem, key)
+	if err != nil {
+		log.WithError(err).Warn("Unable to extract the cert and/or key from the secret. Injection of sidecars will *not* work. Check the Jaeger Operator documentation on how to create a proper TLS secret.")
+		return
+	}
+
+	whServer := &http.Server{
+		Addr:      fmt.Sprintf("%s:%d", viper.GetString("webhook-host"), viper.GetInt32("webhook-port")),
+		TLSConfig: &tls.Config{Certificates: []tls.Certificate{cert}},
+		Handler:   webhook.NewHandler(mgr.GetClient()), // this HTTP server has a single handler, no need for a mux here
+	}
+
+	go func() {
+		if err := whServer.ListenAndServeTLS("", ""); err != nil {
+			log.WithError(err).Warn("Failed to start HTTP server with TLS for the mutating webhook admission controller. Injection of sidecars will *not* work.")
+		}
+	}()
 }

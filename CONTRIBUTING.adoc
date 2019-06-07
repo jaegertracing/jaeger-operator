@@ -65,7 +65,22 @@ make test
 
 NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
 
-Similar instructions also work for OpenShift, but the target `run-openshift` can be used instead of `run`. Make sure you are using the `default` namespace or that you are overriding the target namespace by setting `NAMESPACE`, like: `make run-openshift WATCH_NAMESPACE=myproject`
+==== Automatic sidecar injection
+
+The automatic sidecar injection feature allows the Jaeger Operator to add a new container to pods that are annotated with `sidecar.jaegertracing.io/inject`. This is implemented via the Mutating Webhook Admission Controller feature from Kubernetes: the Jaeger Operator exposes an endpoint that is called by Kubernetes' API Server whenever a pod is created or updated.
+
+Due to the nature of this feature, Kubernetes requires the communication between the API Server and the webhook to be secured. For development purposes, we provide a couple of scripts under `scripts/`, making it easier to get this feature working. Inspect the `create-webhook-csr.sh` script to understand how the certificate is provisioned and the `install-webhook.sh` script to understand how the webhook is created and registered with the API server.
+
+When working on a feature that requires interaction with the sidecar injection, the operator has to run inside the cluster, which is *not* something that happens when you issue a regular `make run`. The appropriate workflow in this case is:
+
+1. Provision the certificates and install the webhook: `make webhook-cert webhook`
+1. Build the operator, submitting the container image to the remote repository and install the operator: `make build docker push install`
+
+When a change to the operator is made, delete the operator's deployment (`kubectl delete deployment jaeger-operator`) and run the last step again (`make build docker push install`). Make sure that the image being set via `deploy/operator.yaml` matches your development image, and not `jaegertracing/jaeger-operator`.
+
+It's advisable to test your changes via unit tests, as it provides a faster cycle between changes.
+
+NOTE: it should be possible to get the webhook working locally with `make run`, as long as the `clientConfig` node from the `deploy/mutating-webhook-configuration.yaml` is set to a URL that is reachable by the API Server and valid certs are used there, matching the hostname. In the end, it's probably faster and easier to run the steps above, even if it means longer waits between changes.
 
 ==== Model changes
 
@@ -193,4 +208,3 @@ If you face issues like the one below, make sure you don't have any Jaeger insta
 ...
 ...
 ----
-

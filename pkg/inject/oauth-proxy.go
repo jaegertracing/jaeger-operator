@@ -4,24 +4,23 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // OAuthProxy injects an appropriate proxy into the given deployment
-func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
+func OAuthProxy(jaeger *v1.Jaeger, pod corev1.PodSpec) corev1.PodSpec {
 	if jaeger.Spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
-		return dep
+		return pod
 	}
 
-	dep.Spec.Template.Spec.ServiceAccountName = account.OAuthProxyAccountNameFor(jaeger)
-	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, getOAuthProxyContainer(jaeger))
-	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, corev1.Volume{
+	pod.ServiceAccountName = account.OAuthProxyAccountNameFor(jaeger)
+	pod.Containers = append(pod.Containers, getOAuthProxyContainer(jaeger))
+	pod.Volumes = append(pod.Volumes, corev1.Volume{
 		Name: service.GetTLSSecretNameForQueryService(jaeger),
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
@@ -29,7 +28,7 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 			},
 		},
 	})
-	return dep
+	return pod
 }
 
 func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {

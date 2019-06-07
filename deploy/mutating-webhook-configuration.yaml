@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: jaeger-operator-webhook-cfg
+  labels:
+    name: jaeger-operator
+webhooks:
+  - name: sidecar.jaegertracing.io
+    clientConfig:
+      service:
+        name: jaeger-operator-webhook
+        namespace: observability
+        path: "/mutate"
+      caBundle: ${CA_BUNDLE}
+    failurePolicy: Ignore
+    sideEffects: None
+    rules:
+      - operations: [ "CREATE", "UPDATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+      - operations: [ "CREATE", "UPDATE" ]
+        apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        resources: ["deployments"]

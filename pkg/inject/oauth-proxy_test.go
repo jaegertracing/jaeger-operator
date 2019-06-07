@@ -9,49 +9,50 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
 func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestOAuthProxyContainerIsNotAddedByDefault")
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Equal(t, "jaeger-query", dep.Spec.Template.Spec.Containers[0].Name)
+	pod := deployment.NewQuery(jaeger).Get().Spec.Template.Spec
+	pod = OAuthProxy(jaeger, pod)
+	assert.Len(t, pod.Containers, 1)
+	assert.Equal(t, "jaeger-query", pod.Containers[0].Name)
 }
 
 func TestOAuthProxyContainerIsAdded(t *testing.T) {
 	jaeger := v1.NewJaeger("TestOAuthProxyContainerIsAdded")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Equal(t, "oauth-proxy", dep.Spec.Template.Spec.Containers[1].Name)
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
+	assert.Len(t, pod.Containers, 2)
+	assert.Equal(t, "oauth-proxy", pod.Containers[1].Name)
 }
 
 func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 	jaeger := v1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsAdded")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
-	assert.Equal(t, dep.Spec.Template.Spec.Volumes[0].Name, service.GetTLSSecretNameForQueryService(jaeger))
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
+	assert.Len(t, pod.Volumes, 1)
+	assert.Equal(t, pod.Volumes[0].Name, service.GetTLSSecretNameForQueryService(jaeger))
 }
 
 func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault")
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
+	assert.Len(t, pod.Volumes, 0)
 }
 
 func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 	// see https://github.com/openshift/oauth-proxy/issues/95
 	jaeger := v1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
 
 	found := false
-	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--openshift-service-account=%s", dep.Spec.Template.Spec.ServiceAccountName) {
+	for _, a := range pod.Containers[1].Args {
+		if a == fmt.Sprintf("--openshift-service-account=%s", pod.ServiceAccountName) {
 			found = true
 		}
 	}
@@ -61,15 +62,15 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 func TestOAuthProxyOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
 
-	sortedArgs := make([]string, len(dep.Spec.Template.Spec.Containers[1].Args))
-	copy(sortedArgs, dep.Spec.Template.Spec.Containers[1].Args)
+	sortedArgs := make([]string, len(pod.Containers[1].Args))
+	copy(sortedArgs, pod.Containers[1].Args)
 	sort.Strings(sortedArgs)
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 7)
-	assert.Equal(t, sortedArgs, dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Len(t, pod.Containers, 2)
+	assert.Len(t, pod.Containers[1].Args, 7)
+	assert.Equal(t, sortedArgs, pod.Containers[1].Args)
 }
 
 func TestOAuthProxyResourceLimits(t *testing.T) {
@@ -95,11 +96,11 @@ func TestOAuthProxyResourceLimits(t *testing.T) {
 		},
 	}
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
+	pod := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get().Spec.Template.Spec)
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), pod.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
+	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), pod.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), pod.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
+	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), pod.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), pod.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), pod.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }

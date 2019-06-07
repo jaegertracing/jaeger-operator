@@ -7,9 +7,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
@@ -22,7 +22,7 @@ func newAllInOneStrategy(jaeger *v1.Jaeger) S {
 	c := S{typ: AllInOne}
 	jaeger.Logger().Debug("Creating all-in-one deployment")
 
-	dep := deployment.NewAllInOne(jaeger)
+	instance := deployment.NewAllInOne(jaeger)
 
 	// add all service accounts
 	for _, acc := range account.Get(jaeger) {
@@ -40,7 +40,9 @@ func newAllInOneStrategy(jaeger *v1.Jaeger) S {
 	}
 
 	// add the deployments
-	c.deployments = []appsv1.Deployment{*inject.OAuthProxy(jaeger, dep.Get())}
+	dep := instance.Get()
+	dep.Spec.Template.Spec = inject.OAuthProxy(jaeger, dep.Spec.Template.Spec)
+	c.deployments = []appsv1.Deployment{*dep}
 
 	// add the daemonsets
 	if ds := deployment.NewAgent(jaeger).Get(); ds != nil {
@@ -48,7 +50,7 @@ func newAllInOneStrategy(jaeger *v1.Jaeger) S {
 	}
 
 	// add the services
-	for _, svc := range dep.Services() {
+	for _, svc := range instance.Services() {
 		c.services = append(c.services, *svc)
 	}
 
