@@ -12,11 +12,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func setDefaults() {
-	viper.SetDefault("jaeger-version", "1.7")
 	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
 }
 

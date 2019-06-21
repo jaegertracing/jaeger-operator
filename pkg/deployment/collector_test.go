@@ -16,7 +16,6 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
 	viper.SetDefault("jaeger-collector-image", "jaegertracing/all-in-one")
 }
 
@@ -91,15 +90,16 @@ func TestCollectorServices(t *testing.T) {
 
 func TestDefaultCollectorImage(t *testing.T) {
 	viper.Set("jaeger-collector-image", "org/custom-collector-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	collector := NewCollector(v1.NewJaeger(types.NamespacedName{Name: "TestCollectorImage"}))
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	collector := NewCollector(jaeger)
 	dep := collector.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
-	assert.Equal(t, "org/custom-collector-image:123", containers[0].Image)
+	assert.Empty(t, jaeger.Spec.Collector.Image)
+	assert.Equal(t, "org/custom-collector-image:0.0.0", containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{

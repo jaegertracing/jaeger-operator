@@ -16,7 +16,6 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
 	viper.SetDefault("jaeger-ingester-image", "jaegertracing/jaeger-ingester")
 }
 
@@ -93,15 +92,16 @@ func TestIngesterName(t *testing.T) {
 
 func TestDefaultIngesterImage(t *testing.T) {
 	viper.Set("jaeger-ingester-image", "org/custom-ingester-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	ingester := NewIngester(newIngesterJaeger("TestDefaultIngesterImage"))
+	jaeger := newIngesterJaeger("my-instance")
+	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
 
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
-	assert.Equal(t, "org/custom-ingester-image:123", containers[0].Image)
+	assert.Empty(t, jaeger.Spec.Ingester.Image)
+	assert.Equal(t, "org/custom-ingester-image:0.0.0", containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{
