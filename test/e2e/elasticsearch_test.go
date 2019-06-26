@@ -44,6 +44,10 @@ func(suite *ElasticSearchTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetNamespace failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
+
+	if isOpenShift(t) {
+		esServerUrls = "http://elasticsearch." + storageNamespace + ".svc.cluster.local:9200"
+	}
 }
 
 func (suite *ElasticSearchTestSuite) TearDownSuite() {

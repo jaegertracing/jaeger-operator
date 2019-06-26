@@ -52,6 +52,10 @@ func(suite *SelfProvisionedTestSuite) SetupSuite() {
 	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")
+
+	if isOpenShift(t) {
+		esServerUrls = "http://elasticsearch." + storageNamespace + ".svc.cluster.local:9200"
+	}
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {
@@ -112,6 +116,9 @@ func getJaegerSimpleProd() *v1.Jaeger {
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": esServerUrls,
+				}),
 			},
 		},
 	}

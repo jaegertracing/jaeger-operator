@@ -110,7 +110,7 @@ e2e-tests-es: prepare-e2e-tests es
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
-	@go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
