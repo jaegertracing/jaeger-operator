@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -41,7 +41,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:  name,
-							Image: jaeger.Spec.Storage.Rollover.Image,
+							Image: jaeger.Spec.Storage.EsRollover.Image,
 							Args:  []string{"init", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
 							Env:   envVars(jaeger.Spec.Storage.Options),
 						},

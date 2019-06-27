@@ -147,8 +147,8 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 // validate validates CR before processing it
 func validate(jaeger *v1.Jaeger) error {
-	if jaeger.Spec.Storage.Rollover.ReadTTL != "" {
-		if _, err := time.ParseDuration(jaeger.Spec.Storage.Rollover.ReadTTL); err != nil {
+	if jaeger.Spec.Storage.EsRollover.ReadTTL != "" {
+		if _, err := time.ParseDuration(jaeger.Spec.Storage.EsRollover.ReadTTL); err != nil {
 			return errors.Wrap(err, "failed to parse esRollover.readTTL to time.Duration")
 		}
 	}

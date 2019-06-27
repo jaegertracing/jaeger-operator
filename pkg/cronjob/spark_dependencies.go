@@ -25,8 +25,8 @@ func SupportedStorage(storage string) bool {
 func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	envVars := []corev1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
-		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.SparkDependencies.SparkMaster},
-		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.SparkDependencies.JavaOpts},
+		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.Dependencies.SparkMaster},
+		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.Dependencies.JavaOpts},
 	}
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
 
@@ -57,7 +57,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
-			Schedule:          jaeger.Spec.Storage.SparkDependencies.Schedule,
+			Schedule:          jaeger.Spec.Storage.Dependencies.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
@@ -65,7 +65,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Image: jaeger.Spec.Storage.SparkDependencies.Image,
+									Image: jaeger.Spec.Storage.Dependencies.Image,
 									Name:  name,
 									// let spark job use its default values
 									Env: removeEmptyVars(envVars),
@@ -103,7 +103,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "CASSANDRA_PASSWORD", Value: sFlagsMap["cassandra.password"]},
 			{Name: "CASSANDRA_USE_SSL", Value: sFlagsMap["cassandra.tls"]},
 			{Name: "CASSANDRA_LOCAL_DC", Value: sFlagsMap["cassandra.local-dc"]},
-			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.SparkDependencies.CassandraClientAuthEnabled)},
+			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.Dependencies.CassandraClientAuthEnabled)},
 		}
 	case "elasticsearch":
 		return []corev1.EnvVar{
@@ -111,8 +111,8 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
-			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.SparkDependencies.ElasticsearchClientNodeOnly)},
-			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.SparkDependencies.ElasticsearchNodesWanOnly)},
+			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchClientNodeOnly)},
+			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchNodesWanOnly)},
 		}
 	default:
 		return nil

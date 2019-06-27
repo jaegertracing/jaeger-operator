@@ -135,15 +135,15 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 	}{
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "elasticsearch",
-				SparkDependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
+				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "cassandra",
-				SparkDependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
+				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "kafka",
-				SparkDependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
+				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
