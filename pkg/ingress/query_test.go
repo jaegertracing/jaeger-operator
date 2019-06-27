@@ -1,12 +1,11 @@
 package ingress
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestQueryIngress(t *testing.T) {
@@ -16,7 +15,7 @@ func TestQueryIngress(t *testing.T) {
 
 	dep := ingress.Get()
 
-	assert.Contains(t, dep.Spec.Backend.ServiceName, fmt.Sprintf("%s-query", name))
+	assert.Contains(t, dep.Spec.Backend.ServiceName, "testqueryingress-query")
 }
 
 func TestQueryIngressDisabled(t *testing.T) {

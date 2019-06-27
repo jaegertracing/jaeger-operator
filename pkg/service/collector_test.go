@@ -1,12 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestCollectorServiceNameAndPorts(t *testing.T) {
@@ -16,8 +15,8 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	jaeger := v1.NewJaeger(name)
 	svcs := NewCollectorServices(jaeger, selector)
 
-	assert.Equal(t, svcs[0].Name, fmt.Sprintf("%s-collector-headless", name))
-	assert.Equal(t, svcs[1].Name, fmt.Sprintf("%s-collector", name))
+	assert.Equal(t, "testcollectorservicenameandports-collector-headless", svcs[0].Name)
+	assert.Equal(t, "testcollectorservicenameandports-collector", svcs[1].Name)
 
 	ports := map[int32]bool{
 		9411:  false,

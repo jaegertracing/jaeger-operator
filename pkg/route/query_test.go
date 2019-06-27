@@ -1,13 +1,12 @@
 package route
 
 import (
-	"fmt"
 	"testing"
 
 	corev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestQueryRoute(t *testing.T) {
@@ -17,7 +16,7 @@ func TestQueryRoute(t *testing.T) {
 
 	dep := route.Get()
 
-	assert.Contains(t, dep.Spec.To.Name, fmt.Sprintf("%s-query", name))
+	assert.Contains(t, dep.Spec.To.Name, "testqueryroute-query")
 }
 
 func TestQueryRouteDisabled(t *testing.T) {

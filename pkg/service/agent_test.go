@@ -1,12 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestAgentServiceNameAndPorts(t *testing.T) {
@@ -15,7 +14,7 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 
 	jaeger := v1.NewJaeger(name)
 	svc := NewAgentService(jaeger, selector)
-	assert.Equal(t, svc.ObjectMeta.Name, fmt.Sprintf("%s-agent", name))
+	assert.Equal(t, "testagentservicenameandports-agent", svc.ObjectMeta.Name)
 
 	ports := map[int32]bool{
 		5775: false,

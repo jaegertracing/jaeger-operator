@@ -2,12 +2,13 @@ package strategy
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -93,9 +94,9 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 
 	// and these services
 	services := map[string]bool{
-		fmt.Sprintf("%s-agent", name):     false,
-		fmt.Sprintf("%s-collector", name): false,
-		fmt.Sprintf("%s-query", name):     false,
+		fmt.Sprintf("%s-agent", strings.ToLower(name)):     false,
+		fmt.Sprintf("%s-collector", strings.ToLower(name)): false,
+		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
 	// the ingress rule, if we are not on openshift
