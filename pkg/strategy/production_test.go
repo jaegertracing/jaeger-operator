@@ -12,7 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -139,8 +139,8 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 	}
 
 	services := map[string]bool{
-		fmt.Sprintf("%s-collector", name): false,
-		fmt.Sprintf("%s-query", name):     false,
+		fmt.Sprintf("%s-collector", strings.ToLower(name)): false,
+		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
 	ingresses := map[string]bool{}

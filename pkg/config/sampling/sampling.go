@@ -6,7 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
@@ -81,7 +82,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 
 	volume := corev1.Volume{
-		Name: fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name),
+		Name: samplingConfigVolumeName(jaeger),
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
@@ -97,11 +98,15 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 		},
 	}
 	volumeMount := corev1.VolumeMount{
-		Name:      fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name),
+		Name:      samplingConfigVolumeName(jaeger),
 		MountPath: "/etc/jaeger/sampling",
 		ReadOnly:  true,
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 	*options = append(*options, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json")
+}
+
+func samplingConfigVolumeName(jaeger *v1.Jaeger) string {
+	return util.DNSName(fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name))
 }

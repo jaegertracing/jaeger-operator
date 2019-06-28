@@ -7,7 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // NewQueryService returns a new Kubernetes service for Jaeger Query backed by the pods matching the selector
@@ -62,7 +63,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 
 // GetNameForQueryService returns the query service name for this Jaeger instance
 func GetNameForQueryService(jaeger *v1.Jaeger) string {
-	return fmt.Sprintf("%s-query", jaeger.Name)
+	return util.DNSName(fmt.Sprintf("%s-query", jaeger.Name))
 }
 
 // GetTLSSecretNameForQueryService returns the auto-generated TLS secret name for the Query Service for the given Jaeger instance

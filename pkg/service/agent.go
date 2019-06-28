@@ -6,7 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // NewAgentService returns a new Kubernetes service for Jaeger Agent backed by the pods matching the selector
@@ -19,7 +20,7 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-agent", jaeger.Name),
+			Name:      util.DNSName(fmt.Sprintf("%s-agent", jaeger.Name)),
 			Namespace: jaeger.Namespace,
 			Labels: map[string]string{
 				"app":                          "jaeger",

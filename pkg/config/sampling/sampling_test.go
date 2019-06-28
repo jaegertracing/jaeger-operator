@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestNoSamplingConfig(t *testing.T) {
@@ -52,9 +52,9 @@ func TestUpdateNoSamplingConfig(t *testing.T) {
 
 	Update(jaeger, &commonSpec, &options)
 	assert.Len(t, commonSpec.Volumes, 1)
-	assert.Equal(t, "TestUpdateNoSamplingConfig-sampling-configuration-volume", commonSpec.Volumes[0].Name)
+	assert.Equal(t, "testupdatenosamplingconfig-sampling-configuration-volume", commonSpec.Volumes[0].Name)
 	assert.Len(t, commonSpec.VolumeMounts, 1)
-	assert.Equal(t, "TestUpdateNoSamplingConfig-sampling-configuration-volume", commonSpec.VolumeMounts[0].Name)
+	assert.Equal(t, "testupdatenosamplingconfig-sampling-configuration-volume", commonSpec.VolumeMounts[0].Name)
 	assert.Len(t, options, 1)
 	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json", options[0])
 }
@@ -73,9 +73,9 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 
 	Update(jaeger, &commonSpec, &options)
 	assert.Len(t, commonSpec.Volumes, 1)
-	assert.Equal(t, "TestUpdateWithSamplingConfig-sampling-configuration-volume", commonSpec.Volumes[0].Name)
+	assert.Equal(t, "testupdatewithsamplingconfig-sampling-configuration-volume", commonSpec.Volumes[0].Name)
 	assert.Len(t, commonSpec.VolumeMounts, 1)
-	assert.Equal(t, "TestUpdateWithSamplingConfig-sampling-configuration-volume", commonSpec.VolumeMounts[0].Name)
+	assert.Equal(t, "testupdatewithsamplingconfig-sampling-configuration-volume", commonSpec.VolumeMounts[0].Name)
 	assert.Len(t, options, 1)
 	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json", options[0])
 }

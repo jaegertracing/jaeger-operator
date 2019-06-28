@@ -6,7 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // UIConfig represents a UI configmap
@@ -76,7 +77,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 	}
 
 	volume := corev1.Volume{
-		Name: fmt.Sprintf("%s-ui-configuration-volume", jaeger.Name),
+		Name: configurationVolumeName(jaeger),
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
@@ -92,11 +93,15 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 		},
 	}
 	volumeMount := corev1.VolumeMount{
-		Name:      fmt.Sprintf("%s-ui-configuration-volume", jaeger.Name),
+		Name:      configurationVolumeName(jaeger),
 		MountPath: "/etc/config",
 		ReadOnly:  true,
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 	*options = append(*options, "--query.ui-config=/etc/config/ui.json")
+}
+
+func configurationVolumeName(jaeger *v1.Jaeger) string {
+	return util.DNSName(fmt.Sprintf("%s-ui-configuration-volume", jaeger.Name))
 }
