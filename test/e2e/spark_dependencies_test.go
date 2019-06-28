@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/pkg/errors"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,50 +13,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func SparkDependenciesElasticsearch(t *testing.T) {
-	testCtx, err := prepare(t)
-	if (err != nil) {
-		if testCtx != nil {
-			testCtx.Cleanup()
-		}
-		require.FailNow(t, "Failed in prepare")
-	}
-	defer testCtx.Cleanup()
-	storage := v1.JaegerStorageSpec{
-		Type: "elasticsearch",
-		Options: v1.NewOptions(map[string]interface{}{
-			"es.server-urls": esServerUrls,
-		}),
-	}
-	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func SparkDependenciesCassandra(t *testing.T) {
-	testCtx, err := prepare(t)
-	if (err != nil) {
-		testCtx.Cleanup()
-		require.FailNow(t, "Failed in prepare")
-	}
-	defer testCtx.Cleanup()
-
-	storage := v1.JaegerStorageSpec{
-		Type: "cassandra",
-		Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
-		CassandraCreateSchema:v1.JaegerCassandraCreateSchemaSpec{Datacenter:"datacenter1", Mode: "prod"},
-	}
-	if err := sparkTest(t, framework.Global, testCtx, storage); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx, storage v1.JaegerStorageSpec) error {
-	namespace, err := testCtx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
-
 	storage.SparkDependencies = v1.JaegerDependenciesSpec{
 		// run immediately
 		Schedule: "*/1 * * * *",
@@ -79,20 +36,25 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 		},
 	}
 
-	err = f.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: testCtx, Timeout: timeout, RetryInterval: retryInterval})
+	err := f.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: testCtx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
-		return err
+		return errors.WithMessagef(err, "Failed on client create")
 	}
 
 	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "Failed waiting for cron job")
 	}
 
 	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "Failed waiting for Job Of An Owner")
 	}
 
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err =  e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
+	if err != nil {
+		return errors.WithMessage(err, "Failed waiting for deployment ")
+	} else {
+		return nil
+	}
 }
