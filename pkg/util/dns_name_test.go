@@ -16,6 +16,7 @@ func TestDnsName(t *testing.T) {
 		{"instance.with.dots-collector-headless", "instance-with-dots-collector-headless"},
 		{"TestQueryDottedServiceName.With.Dots", "testquerydottedservicename-with-dots"},
 		{"Service🦄", "service-z"},
+		{"📈Stock-Tracker", "a-stock-tracker"},
 	}
 
 	for _, tt := range tests {

@@ -6,11 +6,12 @@ import (
 	"unicode/utf8"
 )
 
+var regex = regexp.MustCompile(`[a-z0-9]`)
+
 // DNSName returns a dns-safe string for the given name.
 // Any char that is not [a-z0-9] is replaced by "-".
 // If the final name starts with "-", "a" is added as prefix. Similarly, if it ends with "-", "z" is added.
 func DNSName(name string) string {
-	var regex = regexp.MustCompile(`[a-z0-9]`)
 	var d []rune
 
 	first := true
