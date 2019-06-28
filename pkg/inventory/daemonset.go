@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,7 +54,7 @@ func ForDaemonSets(existing []appsv1.DaemonSet, desired []appsv1.DaemonSet) Daem
 func daemonsetMap(deps []appsv1.DaemonSet) map[string]appsv1.DaemonSet {
 	m := map[string]appsv1.DaemonSet{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

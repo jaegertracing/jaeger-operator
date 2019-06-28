@@ -1,7 +1,9 @@
 package inventory
 
 import (
-	"k8s.io/api/core/v1"
+	"fmt"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -53,7 +55,7 @@ func ForConfigMaps(existing []v1.ConfigMap, desired []v1.ConfigMap) ConfigMap {
 func configsMap(deps []v1.ConfigMap) map[string]v1.ConfigMap {
 	m := map[string]v1.ConfigMap{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

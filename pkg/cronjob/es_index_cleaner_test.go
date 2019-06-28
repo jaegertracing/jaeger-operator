@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestCreateEsIndexCleaner(t *testing.T) {
@@ -26,7 +27,7 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 }
 
 func TestEsIndexCleanerSecrets(t *testing.T) {
-	jaeger := v1.NewJaeger("TestEsIndexCleanerSecrets")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerSecrets"})
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 

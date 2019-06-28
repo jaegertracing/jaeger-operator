@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestWithSecurityNil(t *testing.T) {
-	jaeger := v1.NewJaeger("TestWithOAuthProxyNil")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyNil"})
 	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
 	sas := Get(jaeger)
 	assert.Len(t, sas, 1)
@@ -17,7 +18,7 @@ func TestWithSecurityNil(t *testing.T) {
 }
 
 func TestWithSecurityNone(t *testing.T) {
-	jaeger := v1.NewJaeger("TestWithOAuthProxyFalse")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyFalse"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
 	sas := Get(jaeger)
 	assert.Len(t, sas, 1)
@@ -25,14 +26,14 @@ func TestWithSecurityNone(t *testing.T) {
 }
 
 func TestWithSecurityOAuthProxy(t *testing.T) {
-	jaeger := v1.NewJaeger("TestWithOAuthProxyTrue")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyTrue"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	assert.Len(t, Get(jaeger), 2)
 }
 
 func TestJaegerName(t *testing.T) {
-	jaeger := v1.NewJaeger("foo")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "foo"})
 	jaeger.Spec.ServiceAccount = "bar"
 	jaeger.Spec.Collector.ServiceAccount = "col-sa"
 	jaeger.Spec.Query.ServiceAccount = "query-sa"

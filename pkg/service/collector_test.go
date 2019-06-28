@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -12,7 +13,7 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	name := "TestCollectorServiceNameAndPorts"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	svcs := NewCollectorServices(jaeger, selector)
 
 	assert.Equal(t, "testcollectorservicenameandports-collector-headless", svcs[0].Name)
@@ -42,7 +43,7 @@ func TestCollectorServiceWithClusterIPEmptyAndNone(t *testing.T) {
 	name := "TestCollectorServiceWithClusterIP"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	svcs := NewCollectorServices(jaeger, selector)
 
 	// we want two services, one headless (load balanced by the client, possibly via DNS)

@@ -52,3 +52,24 @@ func TestCronJobInventory(t *testing.T) {
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)
 }
+
+func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
+	create := []batchv1beta1.CronJob{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "to-create",
+			Namespace: "tenant1",
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "to-create",
+			Namespace: "tenant2",
+		},
+	}}
+
+	inv := ForCronJobs([]batchv1beta1.CronJob{}, create)
+	assert.Len(t, inv.Create, 2)
+	assert.Contains(t, create, create[0])
+	assert.Contains(t, create, create[1])
+	assert.Len(t, inv.Update, 0)
+	assert.Len(t, inv.Delete, 0)
+}

@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestNoSamplingConfig(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNoSamplingConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNoSamplingConfig"})
 
 	config := NewConfig(jaeger)
 	cm := config.Get()
@@ -19,7 +20,7 @@ func TestNoSamplingConfig(t *testing.T) {
 
 func TestWithEmptySamplingConfig(t *testing.T) {
 	uiconfig := v1.NewFreeForm(map[string]interface{}{})
-	jaeger := v1.NewJaeger("TestWithEmptySamplingConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithEmptySamplingConfig"})
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewConfig(jaeger)
@@ -36,7 +37,7 @@ func TestWithSamplingConfig(t *testing.T) {
 		},
 	})
 	json := `{"default_strategy":{"param":"20","type":"probabilistic"}}`
-	jaeger := v1.NewJaeger("TestWithSamplingConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithSamplingConfig"})
 	jaeger.Spec.Sampling.Options = samplingconfig
 
 	config := NewConfig(jaeger)
@@ -45,7 +46,7 @@ func TestWithSamplingConfig(t *testing.T) {
 }
 
 func TestUpdateNoSamplingConfig(t *testing.T) {
-	jaeger := v1.NewJaeger("TestUpdateNoSamplingConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateNoSamplingConfig"})
 
 	commonSpec := v1.JaegerCommonSpec{}
 	options := []string{}
@@ -65,7 +66,7 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 			"gaID": "UA-000000-2",
 		},
 	})
-	jaeger := v1.NewJaeger("TestUpdateWithSamplingConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfig"})
 	jaeger.Spec.UI.Options = uiconfig
 
 	commonSpec := v1.JaegerCommonSpec{}

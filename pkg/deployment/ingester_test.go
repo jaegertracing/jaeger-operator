@@ -10,8 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func init() {
@@ -20,7 +21,7 @@ func init() {
 }
 
 func TestIngesterNotDefined(t *testing.T) {
-	jaeger := v1.NewJaeger("TestIngesterNotDefined")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestIngesterNotDefined"})
 
 	ingester := NewIngester(jaeger)
 	assert.Nil(t, ingester.Get())

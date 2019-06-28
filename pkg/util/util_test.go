@@ -7,8 +7,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {
@@ -285,7 +286,7 @@ func TestGetEsHostname(t *testing.T) {
 }
 
 func TestAsOwner(t *testing.T) {
-	j := v1.NewJaeger("joe")
+	j := v1.NewJaeger(types.NamespacedName{Name: "joe"})
 	j.Kind = "human"
 	j.APIVersion = "homosapiens"
 	j.UID = "boom!"
@@ -302,7 +303,7 @@ func TestLabels(t *testing.T) {
 		"app.kubernetes.io/component":  "leg",
 		"app.kubernetes.io/part-of":    "jaeger",
 		"app.kubernetes.io/managed-by": "jaeger-operator",
-	}, Labels("joe", "leg", *v1.NewJaeger("thatone")))
+	}, Labels("joe", "leg", *v1.NewJaeger(types.NamespacedName{Name: "thatone"})))
 }
 
 func TestFindItem(t *testing.T) {

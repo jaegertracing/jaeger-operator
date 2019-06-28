@@ -5,13 +5,14 @@ import (
 
 	corev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestQueryRoute(t *testing.T) {
 	name := "TestQueryRoute"
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	route := NewQueryRoute(jaeger)
 
 	dep := route.Get()
@@ -22,7 +23,7 @@ func TestQueryRoute(t *testing.T) {
 func TestQueryRouteDisabled(t *testing.T) {
 	enabled := false
 	name := "TestQueryRouteDisabled"
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
@@ -34,7 +35,7 @@ func TestQueryRouteDisabled(t *testing.T) {
 func TestQueryRouteEnabled(t *testing.T) {
 	enabled := true
 	name := "TestQueryRouteEnabled"
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
@@ -44,7 +45,7 @@ func TestQueryRouteEnabled(t *testing.T) {
 }
 
 func TestQueryRouteTerminationTypeWithOAuthProxy(t *testing.T) {
-	jaeger := v1.NewJaeger("TestQueryRouteTerminationTypeWithOAuthProxy")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryRouteTerminationTypeWithOAuthProxy"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	route := NewQueryRoute(jaeger)
 
@@ -53,7 +54,7 @@ func TestQueryRouteTerminationTypeWithOAuthProxy(t *testing.T) {
 }
 
 func TestQueryRouteTerminationTypeWithoutOAuthProxy(t *testing.T) {
-	jaeger := v1.NewJaeger("TestQueryRouteTerminationTypeWithOAuthProxy")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryRouteTerminationTypeWithOAuthProxy"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
 	route := NewQueryRoute(jaeger)
 

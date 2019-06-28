@@ -11,12 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 )
 
 func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.Deployment) error {
-	opts := client.MatchingLabels(map[string]string{
+	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
@@ -31,14 +31,20 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 	// 3) deployments that are only on `existing` (delete)
 	depInventory := inventory.ForDeployments(depList.Items, desired)
 	for _, d := range depInventory.Create {
-		jaeger.Logger().WithField("deployment", d.Name).Debug("creating deployment")
+		jaeger.Logger().WithFields(log.Fields{
+			"deployment": d.Name,
+			"namespace":  d.Namespace,
+		}).Debug("creating deployment")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range depInventory.Update {
-		jaeger.Logger().WithField("deployment", d.Name).Debug("updating deployment")
+		jaeger.Logger().WithFields(log.Fields{
+			"deployment": d.Name,
+			"namespace":  d.Namespace,
+		}).Debug("updating deployment")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
@@ -58,7 +64,10 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 	}
 
 	for _, d := range depInventory.Delete {
-		jaeger.Logger().WithField("deployment", d.Name).Debug("deleting deployment")
+		jaeger.Logger().WithFields(log.Fields{
+			"deployment": d.Name,
+			"namespace":  d.Namespace,
+		}).Debug("deleting deployment")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}

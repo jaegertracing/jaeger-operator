@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -19,7 +20,7 @@ func init() {
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
-	c := newAllInOneStrategy(v1.NewJaeger(name))
+	c := newAllInOneStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, false)
 }
 
@@ -28,7 +29,7 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	defer viper.Reset()
 	name := "TestCreateAllInOneDeploymentOnOpenShift"
 
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	normalize(jaeger)
 
 	c := newAllInOneStrategy(jaeger)
@@ -38,7 +39,7 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "TestCreateAllInOneDeploymentWithDaemonSetAgent"
 
-	j := v1.NewJaeger(name)
+	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newAllInOneStrategy(j)
@@ -48,7 +49,7 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 	name := "TestCreateAllInOneDeploymentWithUIConfigMap"
 
-	j := v1.NewJaeger(name)
+	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.UI.Options = v1.NewFreeForm(map[string]interface{}{
 		"tracking": map[string]interface{}{
 			"gaID": "UA-000000-2",
@@ -61,7 +62,7 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 
 func TestDelegateAllInOneDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	j := v1.NewJaeger("TestDelegateAllInOneDependencies")
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateAllInOneDependencies"})
 	c := newAllInOneStrategy(j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
