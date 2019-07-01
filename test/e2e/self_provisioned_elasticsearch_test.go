@@ -67,7 +67,7 @@ func (suite *SelfProvisionedTestSuite) SetupTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
-	t.Skip("Skipping until issue481 is fixed")
+	t.Skip("Please re-enable once https://github.com/jaegertracing/jaeger-operator/issues/481 is fixed")
 	// create jaeger custom resource
 	exampleJaeger := getJaegerSimpleProd()
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
