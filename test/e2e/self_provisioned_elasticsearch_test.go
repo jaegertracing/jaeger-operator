@@ -52,10 +52,6 @@ func(suite *SelfProvisionedTestSuite) SetupSuite() {
 	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()
 	require.NotNil(t, namespace, "GetNamespace failed")
-
-	if isOpenShift(t) {
-		esServerUrls = "http://elasticsearch." + storageNamespace + ".svc.cluster.local:9200"
-	}
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {
@@ -71,6 +67,7 @@ func (suite *SelfProvisionedTestSuite) SetupTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
+	t.Skip("Please re-enable once https://github.com/jaegertracing/jaeger-operator/issues/481 is fixed")
 	// create jaeger custom resource
 	exampleJaeger := getJaegerSimpleProd()
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
@@ -116,9 +113,6 @@ func getJaegerSimpleProd() *v1.Jaeger {
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
-				Options: v1.NewOptions(map[string]interface{}{
-					"es.server-urls": esServerUrls,
-				}),
 			},
 		},
 	}
