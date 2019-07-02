@@ -1,13 +1,13 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: jaeger-operator.v1.12.1
+  name: jaeger-operator.v1.13.0
   namespace: placeholder
   annotations:
     categories: "Logging & Tracing"
     certified: "false"
-    containerImage: docker.io/jaegertracing/jaeger-operator:1.12.1
-    createdAt: "2019-06-06T09:03:45+00:00"
+    containerImage: docker.io/jaegertracing/jaeger-operator:1.13.0
+    createdAt: "2019-07-02T12:27:45+00:00"
     capabilities: Seamless Upgrades
     support: Jaeger
     description: Provides tracing, monitoring and troubleshooting microservices-based distributed systems
@@ -23,7 +23,7 @@ metadata:
           "spec": {
             "strategy": "allInOne",
             "allInOne": {
-              "image": "jaegertracing/all-in-one:1.12",
+              "image": "jaegertracing/all-in-one:1.13",
               "options": {
                 "log-level": "debug",
                 "query": {
@@ -131,8 +131,8 @@ spec:
     mediatype: image/svg+xml          
 
   keywords: ['tracing', 'monitoring', 'troubleshooting']
-  version: 1.12.1
-  replaces: jaeger-operator.v1.12.0
+  version: 1.13.0
+  replaces: jaeger-operator.v1.12.1
   maturity: alpha
   maintainers:
   - email: jaeger-tracing@googlegroups.com
@@ -255,7 +255,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.12.1
+                image: jaegertracing/jaeger-operator:1.13.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
