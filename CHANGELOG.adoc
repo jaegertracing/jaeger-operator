@@ -2,6 +2,13 @@
 
 = Changelog
 
+== v1.13.0 (2019-07-02)
+
+* Changed to always use namespace when a name is involved (https://github.com/jaegertracing/jaeger-operator/pull/485[#485])
+* Sanitize names that must follow DNS naming rules (https://github.com/jaegertracing/jaeger-operator/pull/483[#483])
+* Added instructions for daemonsets on OpenShift (https://github.com/jaegertracing/jaeger-operator/pull/346[#346])
+* Enable completion time-to-live to be set on all jobs (https://github.com/jaegertracing/jaeger-operator/pull/407[#407])
+
 == v1.12.1 (2019-06-06)
 
 * Removed 'expose metrics port' to prevent 'failed to create or get service' error (https://github.com/jaegertracing/jaeger-operator/pull/462[#462])
