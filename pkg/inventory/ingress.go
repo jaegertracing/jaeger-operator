@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	"k8s.io/api/extensions/v1beta1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,7 +54,7 @@ func ForIngresses(existing []v1beta1.Ingress, desired []v1beta1.Ingress) Ingress
 func ingressMap(deps []v1beta1.Ingress) map[string]v1beta1.Ingress {
 	m := map[string]v1beta1.Ingress{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

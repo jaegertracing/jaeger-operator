@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	osv1 "github.com/openshift/api/route/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,7 +54,7 @@ func ForRoutes(existing []osv1.Route, desired []osv1.Route) Route {
 func routeMap(deps []osv1.Route) map[string]osv1.Route {
 	m := map[string]osv1.Route{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

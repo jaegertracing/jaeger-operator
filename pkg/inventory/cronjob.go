@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,7 +54,7 @@ func ForCronJobs(existing []batchv1beta1.CronJob, desired []batchv1beta1.CronJob
 func jobsMap(deps []batchv1beta1.CronJob) map[string]batchv1beta1.CronJob {
 	m := map[string]batchv1beta1.CronJob{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

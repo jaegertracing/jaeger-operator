@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestCreateESSecretsError(t *testing.T) {
-	j := v1.NewJaeger(t.Name())
+	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
 	es := &ElasticsearchDeployment{Jaeger: j, CertScript: "/foo"}
 	err := es.CleanCerts()
 	require.NoError(t, err)
@@ -27,7 +28,7 @@ func TestCreateESSecretsError(t *testing.T) {
 }
 
 func TestCreateESSecrets(t *testing.T) {
-	j := v1.NewJaeger(t.Name())
+	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
 	es := &ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"}
 	err := es.CleanCerts()
 	require.NoError(t, err)
@@ -55,7 +56,7 @@ func TestCreateESSecrets(t *testing.T) {
 }
 
 func TestCreateSecret(t *testing.T) {
-	j := v1.NewJaeger("foo")
+	j := v1.NewJaeger(types.NamespacedName{Name: "foo"})
 	j.Namespace = "myproject"
 	s := createSecret(j, "bar", map[string][]byte{"foo": {}})
 	assert.Equal(t, "bar", s.ObjectMeta.Name)
@@ -93,7 +94,7 @@ func TestGetFileContent_EmptyPath(t *testing.T) {
 }
 
 func TestExtractSecretsToFile(t *testing.T) {
-	j := v1.NewJaeger(t.Name())
+	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
 	caFile := fmt.Sprintf("%s/%s/ca.crt", tmpWorkingDir, j.Name)
 	defer os.Remove(caFile)
 	content := "115dasrez"
@@ -121,7 +122,7 @@ func TestExtractSecretsToFile_FileExists(t *testing.T) {
 	err = ioutil.WriteFile(tmpWorkingDir+"/bar/houdy/ca.crt", []byte(content), os.ModePerm)
 	assert.NoError(t, err)
 
-	j := v1.NewJaeger("houdy")
+	j := v1.NewJaeger(types.NamespacedName{Name: "houdy"})
 	j.Namespace = "bar"
 	err = extractSecretsToFile(
 		j,

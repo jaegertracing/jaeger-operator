@@ -6,8 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -81,8 +82,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		j := v1.NewJaeger("foo")
-		j.Namespace = "myproject"
+		j := v1.NewJaeger(types.NamespacedName{Name: "foo", Namespace: "myproject"})
 		j.Spec.Storage.Elasticsearch = test.jEsSpec
 		es := &ElasticsearchDeployment{Jaeger: j}
 		cr := es.Elasticsearch()
@@ -215,7 +215,7 @@ func TestInject(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger("hoo")}
+		es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "hoo"})}
 		es.Jaeger.Spec.Storage.Elasticsearch = test.es
 		es.InjectStorageConfiguration(test.pod)
 		assert.Equal(t, test.expected, test.pod)

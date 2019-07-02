@@ -53,3 +53,24 @@ func TestElasticsearchInventory(t *testing.T) {
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)
 }
+
+func TestElasticsearchInventoryWithSameNameInstances(t *testing.T) {
+	create := []esv1.Elasticsearch{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "to-create",
+			Namespace: "tenant1",
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "to-create",
+			Namespace: "tenant2",
+		},
+	}}
+
+	inv := ForElasticsearches([]esv1.Elasticsearch{}, create)
+	assert.Len(t, inv.Create, 2)
+	assert.Contains(t, inv.Create, create[0])
+	assert.Contains(t, inv.Create, create[1])
+	assert.Len(t, inv.Update, 0)
+	assert.Len(t, inv.Delete, 0)
+}

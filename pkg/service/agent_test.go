@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -12,7 +13,7 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 	name := "TestAgentServiceNameAndPorts"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "agent"}
 
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	svc := NewAgentService(jaeger, selector)
 	assert.Equal(t, "testagentservicenameandports-agent", svc.ObjectMeta.Name)
 

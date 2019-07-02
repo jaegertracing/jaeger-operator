@@ -7,19 +7,20 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsDefault")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
 	assert.Equal(t, ctrl.Type(), AllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNewControllerForAllInOneAsExplicitValue")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsExplicitValue"})
 	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
@@ -27,7 +28,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 }
 
 func TestNewControllerForProduction(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNewControllerForProduction")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
@@ -36,14 +37,14 @@ func TestNewControllerForProduction(t *testing.T) {
 }
 
 func TestUnknownStorage(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNewControllerForProduction")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
 	jaeger.Spec.Storage.Type = "unknown"
 	normalize(jaeger)
 	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
 }
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
-	jaeger := v1.NewJaeger("TestElasticsearchAsStorageOptions")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestElasticsearchAsStorageOptions"})
 	jaeger.Spec.Strategy = "production"
 	jaeger.Spec.Storage.Type = "elasticsearch"
 	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
@@ -121,13 +122,13 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 }
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {
-	jaeger := v1.NewJaeger("TestSetSecurityToNoneByDefault")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneByDefault"})
 	normalize(jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
-	jaeger := v1.NewJaeger("TestSetSecurityToNoneWhenExplicitSettingToNone")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneWhenExplicitSettingToNone"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	normalize(jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
@@ -137,14 +138,14 @@ func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger("TestSetSecurityToOAuthProxyByDefaultOnOpenShift")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToOAuthProxyByDefaultOnOpenShift"})
 	normalize(jaeger)
 
 	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
-	jaeger := v1.NewJaeger("TestSetSecurityToNoneOnNonOpenShift")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneOnNonOpenShift"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	normalize(jaeger)
@@ -156,7 +157,7 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger("TestAcceptExplicitValueFromSecurityWhenOnOpenShift")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAcceptExplicitValueFromSecurityWhenOnOpenShift"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 
 	normalize(jaeger)

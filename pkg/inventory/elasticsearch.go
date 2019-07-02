@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -50,7 +52,7 @@ func ForElasticsearches(existing []esv1.Elasticsearch, desired []esv1.Elasticsea
 func esMap(deps []esv1.Elasticsearch) map[string]esv1.Elasticsearch {
 	m := map[string]esv1.Elasticsearch{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

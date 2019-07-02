@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -22,7 +22,7 @@ func TestDaemonSetsCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 	}
 
 	req := reconcile.Request{
@@ -67,7 +67,7 @@ func TestDaemonSetsUpdate(t *testing.T) {
 	orig.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&orig,
 	}
 
@@ -106,7 +106,7 @@ func TestDaemonSetsDelete(t *testing.T) {
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&orig,
 	}
 
@@ -128,4 +128,61 @@ func TestDaemonSetsDelete(t *testing.T) {
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
 	assert.Error(t, err) // not found
+}
+
+func TestDaemonSetsCreateExistingNameInAnotherNamespace(t *testing.T) {
+	// prepare
+	nsn := types.NamespacedName{
+		Name:      "TestDaemonSetsCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant1",
+	}
+	nsnExisting := types.NamespacedName{
+		Name:      "TestDaemonSetsCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant2",
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+		v1.NewJaeger(nsnExisting),
+		&appsv1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsnExisting.Name,
+				Namespace: nsnExisting.Namespace,
+			},
+		},
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithDaemonSets([]appsv1.DaemonSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsn.Name,
+				Namespace: nsn.Namespace,
+			},
+		}})
+		return s
+	}
+
+	// test
+	res, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue, "We don't requeue for now")
+
+	persisted := &appsv1.DaemonSet{}
+	err = cl.Get(context.Background(), nsn, persisted)
+	assert.NoError(t, err)
+	assert.Equal(t, nsn.Name, persisted.Name)
+	assert.Equal(t, nsn.Namespace, persisted.Namespace)
+
+	persistedExisting := &appsv1.DaemonSet{}
+	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
+	assert.NoError(t, err)
+	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
+	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

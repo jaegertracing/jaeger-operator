@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -23,7 +24,7 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(v1.NewJaeger(name), &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(v1.NewJaeger(types.NamespacedName{Name: name}), &storage.ElasticsearchDeployment{})
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
 }
 
@@ -32,7 +33,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	defer viper.Reset()
 	name := "TestCreateProductionDeploymentOnOpenShift"
 
-	jaeger := v1.NewJaeger(name)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	normalize(jaeger)
 
 	c := newProductionStrategy(jaeger, &storage.ElasticsearchDeployment{})
@@ -42,7 +43,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "TestCreateProductionDeploymentWithDaemonSetAgent"
 
-	j := v1.NewJaeger(name)
+	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
@@ -52,7 +53,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 	name := "TestCreateProductionDeploymentWithUIConfigMap"
 
-	j := v1.NewJaeger(name)
+	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.UI.Options = v1.NewFreeForm(map[string]interface{}{
 		"tracking": map[string]interface{}{
 			"gaID": "UA-000000-2",
@@ -108,7 +109,7 @@ func TestOptionsArePassed(t *testing.T) {
 
 func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	j := v1.NewJaeger("TestDelegateProductionDependencies")
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateProductionDependencies"})
 	j.Spec.Storage.Type = "cassandra"
 	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
@@ -176,7 +177,7 @@ func TestEsIndexCleanerProduction(t *testing.T) {
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) {
-	j := v1.NewJaeger("TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction")
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction"})
 	c := newProductionStrategy(j, &storage.ElasticsearchDeployment{})
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
@@ -187,7 +188,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 }
 
 func TestElasticsearchInject(t *testing.T) {
-	j := v1.NewJaeger(t.Name())
+	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
 	j.Spec.Storage.Type = "elasticsearch"
 	verdad := true
 	one := int(1)

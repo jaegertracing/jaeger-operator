@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -22,7 +22,7 @@ func TestHandleDependencies(t *testing.T) {
 		Name: "TestHandleDependencies",
 	}
 
-	objs := []runtime.Object{v1.NewJaeger(nsn.Name)}
+	objs := []runtime.Object{v1.NewJaeger(nsn)}
 
 	dep := batchv1.Job{}
 	dep.Name = nsn.Name

@@ -7,18 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func TestCreateRollover(t *testing.T) {
-	cj := CreateRollover(v1.NewJaeger("pikachu"))
+	cj := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
 	assert.Equal(t, 2, len(cj))
 }
 
 func TestRollover(t *testing.T) {
-	j := v1.NewJaeger("eevee")
+	j := v1.NewJaeger(types.NamespacedName{Name: "eevee"})
 	j.Namespace = "kitchen"
 	j.Spec.Storage.Rollover.Image = "wohooo"
 	j.Spec.Storage.Rollover.Conditions = "weheee"
@@ -38,7 +39,7 @@ func TestRollover(t *testing.T) {
 }
 
 func TestLookback(t *testing.T) {
-	j := v1.NewJaeger("squirtle")
+	j := v1.NewJaeger(types.NamespacedName{Name: "squirtle"})
 	j.Namespace = "kitchen"
 	j.Spec.Storage.Rollover.Image = "wohooo"
 	j.Spec.Storage.Rollover.ReadTTL = "2h"

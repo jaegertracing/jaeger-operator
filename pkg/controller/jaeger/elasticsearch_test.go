@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -26,7 +26,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 	}
 
 	req := reconcile.Request{
@@ -74,7 +74,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 	orig.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&orig,
 	}
 
@@ -116,7 +116,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 	orig.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&orig,
 	}
 
@@ -138,4 +138,64 @@ func TestElasticsearchesDelete(t *testing.T) {
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
 	assert.Error(t, err) // not found
+}
+
+func TestElasticsearchesCreateExistingNameInAnotherNamespace(t *testing.T) {
+	// prepare
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{
+		Name:      "TestElasticsearchesCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant1",
+	}
+	nsnExisting := types.NamespacedName{
+		Name:      "TestElasticsearchesCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant2",
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+		v1.NewJaeger(nsnExisting),
+		&esv1.Elasticsearch{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsnExisting.Name,
+				Namespace: nsnExisting.Namespace,
+			},
+		},
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithElasticsearches([]esv1.Elasticsearch{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsn.Name,
+				Namespace: nsn.Namespace,
+			},
+		}})
+		return s
+	}
+
+	// test
+	res, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue, "We don't requeue for now")
+
+	persisted := &esv1.Elasticsearch{}
+	err = cl.Get(context.Background(), nsn, persisted)
+	assert.NoError(t, err)
+	assert.Equal(t, nsn.Name, persisted.Name)
+	assert.Equal(t, nsn.Namespace, persisted.Namespace)
+
+	persistedExisting := &esv1.Elasticsearch{}
+	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
+	assert.NoError(t, err)
+	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
+	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

@@ -1,7 +1,9 @@
 package inventory
 
 import (
-	"k8s.io/api/core/v1"
+	"fmt"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -59,7 +61,7 @@ func ForServices(existing []v1.Service, desired []v1.Service) Service {
 func serviceMap(deps []v1.Service) map[string]v1.Service {
 	m := map[string]v1.Service{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

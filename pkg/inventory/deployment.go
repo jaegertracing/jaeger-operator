@@ -1,6 +1,8 @@
 package inventory
 
 import (
+	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,7 +54,7 @@ func ForDeployments(existing []appsv1.Deployment, desired []appsv1.Deployment) D
 func deploymentMap(deps []appsv1.Deployment) map[string]appsv1.Deployment {
 	m := map[string]appsv1.Deployment{}
 	for _, d := range deps {
-		m[d.Name] = d
+		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }

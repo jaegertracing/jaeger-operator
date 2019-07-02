@@ -13,18 +13,19 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
 func TestDeploymentCreate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestDeploymentCreate",
+		Name:      "TestDeploymentCreate",
+		Namespace: "tenant1",
 	}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 	}
 
 	req := reconcile.Request{
@@ -35,7 +36,8 @@ func TestDeploymentCreate(t *testing.T) {
 	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: nsn.Name,
+				Name:      nsn.Name,
+				Namespace: nsn.Namespace,
 			},
 		}})
 		return s
@@ -61,15 +63,17 @@ func TestDeploymentCreate(t *testing.T) {
 func TestDeploymentUpdate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestDeploymentUpdate",
+		Name:      "TestDeploymentUpdate",
+		Namespace: "tenant1",
 	}
 
 	depOriginal := appsv1.Deployment{}
 	depOriginal.Name = nsn.Name
+	depOriginal.Namespace = nsn.Namespace
 	depOriginal.Annotations = map[string]string{"key": "value"}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&depOriginal,
 	}
 
@@ -77,6 +81,7 @@ func TestDeploymentUpdate(t *testing.T) {
 	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		depUpdated := appsv1.Deployment{}
 		depUpdated.Name = depOriginal.Name
+		depUpdated.Namespace = depOriginal.Namespace
 		depUpdated.Annotations = map[string]string{"key": "new-value"}
 
 		s := strategy.New().WithDeployments([]appsv1.Deployment{depUpdated})
@@ -108,7 +113,7 @@ func TestDeploymentDelete(t *testing.T) {
 	depOriginal.Name = nsn.Name
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 		&depOriginal,
 	}
 
@@ -145,7 +150,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 		"app.kubernetes.io/instance":   nsn.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
-	objs := []runtime.Object{v1.NewJaeger(nsn.Name), &depToDelete}
+	objs := []runtime.Object{v1.NewJaeger(nsn), &depToDelete}
 
 	// the deployment to be created
 	dep := appsv1.Deployment{}
@@ -194,4 +199,61 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	persistedDelete = &appsv1.Deployment{}
 	assert.Error(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
 	assert.Empty(t, persistedDelete.Name)
+}
+
+func TestDeploymentCreateExistingNameInAnotherNamespace(t *testing.T) {
+	// prepare
+	nsn := types.NamespacedName{
+		Name:      "TestDeploymentCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant1",
+	}
+	nsnExisting := types.NamespacedName{
+		Name:      "TestDeploymentCreateExistingNameInAnotherNamespace",
+		Namespace: "tenant2",
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+		v1.NewJaeger(nsnExisting),
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsnExisting.Name,
+				Namespace: nsnExisting.Namespace,
+			},
+		},
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithDeployments([]appsv1.Deployment{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsn.Name,
+				Namespace: nsn.Namespace,
+			},
+		}})
+		return s
+	}
+
+	// test
+	res, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue, "We don't requeue for now")
+
+	persisted := &appsv1.Deployment{}
+	err = cl.Get(context.Background(), nsn, persisted)
+	assert.NoError(t, err)
+	assert.Equal(t, nsn.Name, persisted.Name)
+	assert.Equal(t, nsn.Namespace, persisted.Namespace)
+
+	persistedExisting := &appsv1.Deployment{}
+	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
+	assert.NoError(t, err)
+	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
+	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

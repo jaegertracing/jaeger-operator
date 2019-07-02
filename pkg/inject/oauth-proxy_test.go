@@ -8,21 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
 
 func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyContainerIsNotAddedByDefault")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyContainerIsNotAddedByDefault"})
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, "jaeger-query", dep.Spec.Template.Spec.Containers[0].Name)
 }
 
 func TestOAuthProxyContainerIsAdded(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyContainerIsAdded")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyContainerIsAdded"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -30,7 +31,7 @@ func TestOAuthProxyContainerIsAdded(t *testing.T) {
 }
 
 func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsAdded")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyTLSSecretVolumeIsAdded"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
@@ -38,14 +39,14 @@ func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 }
 
 func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault"})
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
 }
 
 func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 	// see https://github.com/openshift/oauth-proxy/issues/95
-	jaeger := v1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyConsistentServiceAccountName"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
@@ -59,7 +60,7 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 }
 
 func TestOAuthProxyOrderOfArguments(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyConsistentServiceAccountName")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyConsistentServiceAccountName"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
@@ -73,7 +74,7 @@ func TestOAuthProxyOrderOfArguments(t *testing.T) {
 }
 
 func TestOAuthProxyResourceLimits(t *testing.T) {
-	jaeger := v1.NewJaeger("TestOAuthProxyResourceLimits")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyResourceLimits"})
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),

@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -25,7 +25,7 @@ func TestNewJaegerInstance(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		v1.NewJaeger(nsn.Name),
+		v1.NewJaeger(nsn),
 	}
 
 	req := reconcile.Request{
@@ -61,7 +61,7 @@ func TestDeletedInstance(t *testing.T) {
 
 	// we should just not fail, as there won't be anything to do
 	// all our objects should have an OwnerReference, so that when the jaeger object is deleted, the owned objects are deleted as well
-	jaeger := v1.NewJaeger("TestDeletedInstance")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDeletedInstance"})
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
 

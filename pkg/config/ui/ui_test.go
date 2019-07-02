@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestNoUIConfig(t *testing.T) {
-	jaeger := v1.NewJaeger("TestNoUIConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNoUIConfig"})
 
 	config := NewUIConfig(jaeger)
 	dep := config.Get()
@@ -18,7 +19,7 @@ func TestNoUIConfig(t *testing.T) {
 
 func TestWithEmptyUIConfig(t *testing.T) {
 	uiconfig := v1.NewFreeForm(map[string]interface{}{})
-	jaeger := v1.NewJaeger("TestWithEmptyUIConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithEmptyUIConfig"})
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewUIConfig(jaeger)
@@ -33,7 +34,7 @@ func TestWithUIConfig(t *testing.T) {
 		},
 	})
 	json := `{"tracking":{"gaID":"UA-000000-2"}}`
-	jaeger := v1.NewJaeger("TestWithUIConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithUIConfig"})
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewUIConfig(jaeger)
@@ -42,7 +43,7 @@ func TestWithUIConfig(t *testing.T) {
 }
 
 func TestUpdateNoUIConfig(t *testing.T) {
-	jaeger := v1.NewJaeger("TestUpdateNoUIConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateNoUIConfig"})
 
 	commonSpec := v1.JaegerCommonSpec{}
 	options := []string{}
@@ -59,7 +60,7 @@ func TestUpdateWithUIConfig(t *testing.T) {
 			"gaID": "UA-000000-2",
 		},
 	})
-	jaeger := v1.NewJaeger("TestUpdateWithUIConfig")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithUIConfig"})
 	jaeger.Spec.UI.Options = uiconfig
 
 	commonSpec := v1.JaegerCommonSpec{}

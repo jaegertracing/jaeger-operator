@@ -6,8 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -48,7 +49,7 @@ func TestEnableRollover(t *testing.T) {
 }
 
 func TestElasticsearchDependencies(t *testing.T) {
-	j := v1.NewJaeger("eevee")
+	j := v1.NewJaeger(types.NamespacedName{Name: "eevee"})
 	j.Namespace = "kitchen"
 	j.Spec.Storage.Rollover.Image = "wohooo"
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})

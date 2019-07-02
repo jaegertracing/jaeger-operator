@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -29,7 +30,7 @@ func reset() {
 }
 
 func TestInjectSidecar(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecar")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecar"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -38,7 +39,7 @@ func TestInjectSidecar(t *testing.T) {
 }
 
 func TestInjectSidecarWithLegacyAnnotation(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithLegacyAnnotation")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithLegacyAnnotation"})
 	dep := dep(map[string]string{AnnotationLegacy: jaeger.Name}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -47,7 +48,7 @@ func TestInjectSidecarWithLegacyAnnotation(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVars")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVars"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -60,7 +61,7 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsK8sAppName")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsK8sAppName"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{
 		"app":                    "noapp",
 		"app.kubernetes.io/name": "testapp",
@@ -73,7 +74,7 @@ func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsK8sAppInstance")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsK8sAppInstance"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{
 		"app":                        "noapp",
 		"app.kubernetes.io/name":     "noname",
@@ -87,7 +88,7 @@ func TestInjectSidecarWithEnvVarsK8sAppInstance(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsWithNamespace")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsWithNamespace"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Namespace = "mynamespace"
 	dep = Sidecar(jaeger, dep)
@@ -101,7 +102,7 @@ func TestInjectSidecarWithEnvVarsWithNamespace(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverrideName")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsOverrideName"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  envVarServiceName,
@@ -119,7 +120,7 @@ func TestInjectSidecarWithEnvVarsOverrideName(t *testing.T) {
 }
 
 func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
-	jaeger := v1.NewJaeger("TestInjectSidecarWithEnvVarsOverridePropagation")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsOverridePropagation"})
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
 	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  envVarPropagation,
@@ -137,7 +138,7 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 }
 
 func TestSkipInjectSidecar(t *testing.T) {
-	jaeger := v1.NewJaeger("TestSkipInjectSidecar")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSkipInjectSidecar"})
 	dep := dep(map[string]string{Annotation: "non-existing-operator"}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
@@ -168,7 +169,7 @@ func TestSidecarNeeded(t *testing.T) {
 func TestHasSidecarAlready(t *testing.T) {
 	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
 	assert.True(t, Needed(dep))
-	jaeger := v1.NewJaeger("TestHasSidecarAlready")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestHasSidecarAlready"})
 	dep = Sidecar(jaeger, dep)
 	assert.False(t, Needed(dep))
 }
@@ -241,7 +242,7 @@ func TestSelectBasedOnName(t *testing.T) {
 }
 
 func TestSidecarOrderOfArguments(t *testing.T) {
-	jaeger := v1.NewJaeger("TestQueryOrderOfArguments")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryOrderOfArguments"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"b-option": "b-value",
 		"a-option": "a-value",
@@ -261,7 +262,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 }
 
 func TestSidecarOverrideReporter(t *testing.T) {
-	jaeger := v1.NewJaeger("TestQueryOrderOfArguments")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryOrderOfArguments"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"reporter.type":             "thrift",
 		"reporter.thrift.host-port": "collector:14267",
@@ -277,7 +278,7 @@ func TestSidecarOverrideReporter(t *testing.T) {
 }
 
 func TestSidecarAgentResources(t *testing.T) {
-	jaeger := v1.NewJaeger("TestSidecarAgentResources")
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentResources"})
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),

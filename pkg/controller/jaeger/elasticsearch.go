@@ -12,13 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
-	opts := client.MatchingLabels(map[string]string{
+	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance": jaeger.Name,
 		"app.kubernetes.io/part-of":  "jaeger",
 	})
@@ -29,7 +29,10 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.
 
 	inv := inventory.ForElasticsearches(list.Items, desired)
 	for _, d := range inv.Create {
-		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("creating elasticsearch")
+		jaeger.Logger().WithFields(log.Fields{
+			"elasticsearch": d.Name,
+			"namespace":     d.Namespace,
+		}).Debug("creating elasticsearch")
 		if err := r.client.Create(context.Background(), &d); err != nil {
 			return err
 		}
@@ -39,14 +42,20 @@ func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.
 	}
 
 	for _, d := range inv.Update {
-		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("updating elasticsearch")
+		jaeger.Logger().WithFields(log.Fields{
+			"elasticsearch": d.Name,
+			"namespace":     d.Namespace,
+		}).Debug("updating elasticsearch")
 		if err := r.client.Update(context.Background(), &d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range inv.Delete {
-		jaeger.Logger().WithField("elasticsearch", d.Name).Debug("deleting elasticsearch")
+		jaeger.Logger().WithFields(log.Fields{
+			"elasticsearch": d.Name,
+			"namespace":     d.Namespace,
+		}).Debug("deleting elasticsearch")
 		if err := r.client.Delete(context.Background(), &d); err != nil {
 			return err
 		}
