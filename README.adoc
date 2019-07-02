@@ -311,6 +311,19 @@ The self-provision of an Elasticsearch cluster can be disabled by setting the fl
 
 IMPORTANT: At the moment there can be only one Jaeger with self-provisioned Elasticsearch instance per namespace.
 
+=== Elasticsearch index cleaner job
+
+When using `elasticsearch` storage by default a job is created to clean old traces from it, the options for it are listed below so you can configure it to your use case
+
+	  storage:
+        type: elasticsearch
+        esIndexCleaner:
+          enabled: false                                // turn the job deployment on and off
+          numberOfDays: 7                               // number of days to wait before deleting a record
+          schedule: "55 23 * * *"                       // cron expession for it to run
+          image: jaegertracing/jaeger-es-index-cleaner  // image of the job
+
+
 == Accessing the UI
 
 === Kubernetes
