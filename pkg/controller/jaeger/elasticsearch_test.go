@@ -146,11 +146,11 @@ func TestElasticsearchesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
-		Name:      "TestDaemonSetsCreateExistingNameInAnotherNamespace",
+		Name:      "TestElasticsearchesCreateExistingNameInAnotherNamespace",
 		Namespace: "tenant1",
 	}
 	nsnExisting := types.NamespacedName{
-		Name:      "TestDaemonSetsCreateExistingNameInAnotherNamespace",
+		Name:      "TestElasticsearchesCreateExistingNameInAnotherNamespace",
 		Namespace: "tenant2",
 	}
 

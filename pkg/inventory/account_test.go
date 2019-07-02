@@ -66,8 +66,8 @@ func TestAccountInventoryWithSameNameInstances(t *testing.T) {
 
 	inv := ForAccounts([]v1.ServiceAccount{}, create)
 	assert.Len(t, inv.Create, 2)
-	assert.Contains(t, create, create[0])
-	assert.Contains(t, create, create[1])
+	assert.Contains(t, inv.Create, create[0])
+	assert.Contains(t, inv.Create, create[1])
 	assert.Len(t, inv.Update, 0)
 	assert.Len(t, inv.Delete, 0)
 }

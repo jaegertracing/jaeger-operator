@@ -204,11 +204,11 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 func TestDeploymentCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name:      "TestDeploymentCreate",
+		Name:      "TestDeploymentCreateExistingNameInAnotherNamespace",
 		Namespace: "tenant1",
 	}
 	nsnExisting := types.NamespacedName{
-		Name:      "TestDeploymentCreate",
+		Name:      "TestDeploymentCreateExistingNameInAnotherNamespace",
 		Namespace: "tenant2",
 	}
 

@@ -68,8 +68,8 @@ func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
 
 	inv := ForCronJobs([]batchv1beta1.CronJob{}, create)
 	assert.Len(t, inv.Create, 2)
-	assert.Contains(t, create, create[0])
-	assert.Contains(t, create, create[1])
+	assert.Contains(t, inv.Create, create[0])
+	assert.Contains(t, inv.Create, create[1])
 	assert.Len(t, inv.Update, 0)
 	assert.Len(t, inv.Delete, 0)
 }
