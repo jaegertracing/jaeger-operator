@@ -244,8 +244,10 @@ func TestNormalizeElasticsearch(t *testing.T) {
 	}{
 		{underTest: v1.ElasticsearchSpec{},
 			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy"}},
-		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150},
-			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150}},
+		{underTest: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"},
+			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"}},
+		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy"},
+			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy"}},
 	}
 	for _, test := range tests {
 		normalizeElasticsearch(&test.underTest)
