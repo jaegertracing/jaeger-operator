@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
@@ -81,8 +81,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds:   &deadline,
-				TTLSecondsAfterFinished: jaeger.Spec.Storage.CassandraCreateSchema.TTLSecondsAfterFinished,
+				ActiveDeadlineSeconds: &deadline,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,

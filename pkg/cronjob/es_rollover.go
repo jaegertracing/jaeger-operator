@@ -11,7 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -47,8 +47,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			Schedule:          jaeger.Spec.Storage.Rollover.Schedule,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
-					TTLSecondsAfterFinished: jaeger.Spec.Storage.Rollover.TTLSecondsAfterFinished,
-					Parallelism:             &one,
+					Parallelism: &one,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
