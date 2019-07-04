@@ -14,10 +14,7 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 		map[string]interface{}{"es.index-prefix": "tenant1", "es.server-urls": "http://nowhere:666,foo"})}}}
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
-	ttlSecondsAfterFinished := int32(100)
-	jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished = &ttlSecondsAfterFinished
 	cronJob := CreateEsIndexCleaner(jaeger)
-	assert.Equal(t, ttlSecondsAfterFinished, *cronJob.Spec.JobTemplate.Spec.TTLSecondsAfterFinished)
 	assert.Equal(t, 2, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args))
 	// default number of days (7) is applied in normalize in controller
 	assert.Equal(t, []string{"0", "http://nowhere:666"}, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)

@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
@@ -207,7 +207,7 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Image                   string `json:"image"`
 	Datacenter              string `json:"datacenter"`
 	Mode                    string `json:"mode"`
-	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -221,7 +221,7 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled  bool   `json:"cassandraClientAuthEnabled"`
 	ElasticsearchClientNodeOnly bool   `json:"elasticsearchClientNodeOnly"`
 	ElasticsearchNodesWanOnly   bool   `json:"elasticsearchNodesWanOnly"`
-	TTLSecondsAfterFinished     *int32 `json:"ttlSecondsAfterFinished"`
+	TTLSecondsAfterFinished     *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
@@ -231,7 +231,7 @@ type JaegerEsIndexCleanerSpec struct {
 	NumberOfDays            *int   `json:"numberOfDays"`
 	Schedule                string `json:"schedule"`
 	Image                   string `json:"image"`
-	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
@@ -239,7 +239,7 @@ type JaegerEsRolloverSpec struct {
 	Image                   string `json:"image"`
 	Schedule                string `json:"schedule"`
 	Conditions              string `json:"conditions"`
-	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished"`
+	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 	// we parse it with time.ParseDuration
 	ReadTTL string `json:"readTTL"`
 }
