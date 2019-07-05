@@ -78,6 +78,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							Annotations: map[string]string{
 								"prometheus.io/scrape":    "false",
 								"sidecar.istio.io/inject": "false",
+								"linkerd.io/inject":       "disabled",
 							},
 						},
 					},

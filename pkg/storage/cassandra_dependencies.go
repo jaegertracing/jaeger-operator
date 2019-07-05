@@ -48,6 +48,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	annotations := map[string]string{
 		"prometheus.io/scrape":    "false",
 		"sidecar.istio.io/inject": "false",
+		"linkerd.io/inject":       "disabled",
 	}
 
 	// TODO: should this be configurable? Would we ever think that 2 minutes is OK for this job to complete?

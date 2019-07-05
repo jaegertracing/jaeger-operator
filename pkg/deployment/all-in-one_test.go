@@ -59,6 +59,7 @@ func TestAllInOneAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "disabled", dep.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
 func TestAllInOneLabels(t *testing.T) {

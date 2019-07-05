@@ -33,6 +33,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Annotations: map[string]string{
 						"prometheus.io/scrape":    "false",
 						"sidecar.istio.io/inject": "false",
+						"linkerd.io/inject":       "disabled",
 					},
 				},
 				Spec: corev1.PodSpec{
