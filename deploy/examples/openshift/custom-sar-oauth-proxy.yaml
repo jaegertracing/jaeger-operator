@@ -1,0 +1,9 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: custom-sar-oauth-proxy
+spec:
+  ingress:
+    openshift:
+      sar: '{"namespace": "default", "resource": "pods", "verb": "get"}'
+      delegate-urls: '{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}'

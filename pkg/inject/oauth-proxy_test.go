@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -57,6 +58,60 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 		}
 	}
 	assert.True(t, found)
+}
+
+func TestOAuthProxyWithCustomSAR(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyWithCustomSAR"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Ingress.OpenShift.SAR = `{"namespace": "default", "resource": "pods", "verb": "get"}`
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.OpenShift.SAR) {
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestOAuthProxyWithCustomDelegateURLs(t *testing.T) {
+	viper.Set("auth-delegator-available", true)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyWithCustomDelegateURLs"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.OpenShift.DelegateURLs) {
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *testing.T) {
+	viper.Set("auth-delegator-available", false)
+	defer func() {
+		viper.Reset()
+		setDefaults()
+	}()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestOAuthProxyWithCustomDelegateURLs"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.OpenShift.DelegateURLs) {
+			found = true
+		}
+	}
+	assert.False(t, found)
 }
 
 func TestOAuthProxyOrderOfArguments(t *testing.T) {

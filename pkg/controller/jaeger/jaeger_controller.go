@@ -20,7 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -41,6 +42,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	c, err := controller.New("jaeger-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
+	}
+
+	if d, err := autodetect.New(mgr); err != nil {
+		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
+	} else {
+		d.Start()
 	}
 
 	// Watch for changes to primary resource Jaeger
@@ -184,6 +191,10 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 	}
 
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
+		return err
+	}
+
+	if err := r.applyClusterRoleBindingBindings(jaeger, str.ClusterRoleBindings()); err != nil {
 		return err
 	}
 

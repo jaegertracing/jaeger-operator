@@ -313,6 +313,12 @@ spec:
           - cronjobs
           verbs:
           - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - 'clusterrolebindings'
+          verbs:
+          - '*'
         serviceAccountName: jaeger-operator
     strategy: deployment
   customresourcedefinitions:

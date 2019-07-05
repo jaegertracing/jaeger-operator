@@ -5,26 +5,28 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ             Type
-	accounts        []v1.ServiceAccount
-	configMaps      []v1.ConfigMap
-	cronJobs        []batchv1beta1.CronJob
-	daemonSets      []appsv1.DaemonSet
-	dependencies    []batchv1.Job
-	deployments     []appsv1.Deployment
-	elasticsearches []esv1.Elasticsearch
-	ingresses       []v1beta1.Ingress
-	routes          []osv1.Route
-	services        []v1.Service
-	secrets         []v1.Secret
+	typ                 Type
+	accounts            []v1.ServiceAccount
+	configMaps          []v1.ConfigMap
+	cronJobs            []batchv1beta1.CronJob
+	clusterRoleBindings []rbac.ClusterRoleBinding
+	daemonSets          []appsv1.DaemonSet
+	dependencies        []batchv1.Job
+	deployments         []appsv1.Deployment
+	elasticsearches     []esv1.Elasticsearch
+	ingresses           []v1beta1.Ingress
+	routes              []osv1.Route
+	services            []v1.Service
+	secrets             []v1.Secret
 }
 
 // Type represents a specific deployment strategy, like 'all-in-one'
@@ -55,6 +57,12 @@ func (s S) Type() Type {
 // WithAccounts returns the strategy with the given list of service accounts
 func (s S) WithAccounts(accs []v1.ServiceAccount) S {
 	s.accounts = accs
+	return s
+}
+
+// WithClusterRoleBindings returns the strategy with the given list of config maps
+func (s S) WithClusterRoleBindings(c []rbac.ClusterRoleBinding) S {
+	s.clusterRoleBindings = c
 	return s
 }
 
@@ -121,6 +129,11 @@ func (s S) WithSecrets(secrets []v1.Secret) S {
 // Accounts returns the list of service accounts for this strategy
 func (s S) Accounts() []v1.ServiceAccount {
 	return s.accounts
+}
+
+// ClusterRoleBindings returns the list of cluster role bindings for this strategy
+func (s S) ClusterRoleBindings() []rbac.ClusterRoleBinding {
+	return s.clusterRoleBindings
 }
 
 // ConfigMaps returns the list of config maps for this strategy
