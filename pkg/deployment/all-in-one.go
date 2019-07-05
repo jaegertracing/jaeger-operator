@@ -49,6 +49,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
 		},
 		Labels: labels,
 	}

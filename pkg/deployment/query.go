@@ -58,6 +58,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
 
 			// note that we are explicitly using a string here, not the value from `inject.Annotation`
 			// this has two reasons:
