@@ -2,6 +2,12 @@
 
 = Changelog
 
+== v1.13.1 (2019-07-05)
+
+* Bump Jaeger to 1.13 (https://github.com/jaegertracing/jaeger-operator/pull/504[#504])
+* Disable the property ttlSecondsAfterFinished (https://github.com/jaegertracing/jaeger-operator/pull/503[#503])
+* Set default redundancy policy to zero (https://github.com/jaegertracing/jaeger-operator/pull/501[#501])
+
 == v1.13.0 (2019-07-02)
 
 * Changed to always use namespace when a name is involved (https://github.com/jaegertracing/jaeger-operator/pull/485[#485])
