@@ -157,11 +157,7 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for jaeger deployment")
 
-	queryPod, err := GetPod(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", fw.KubeClient)
-	require.NoError(t, err, "Failed to find pod starting with all-in-one-with-ui-config with image jaegertracing/all-in-one")
-
-	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.NoError(t, err, "Failed to create PortForward")
+	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 

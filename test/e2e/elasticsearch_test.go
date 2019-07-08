@@ -89,18 +89,11 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	queryPod, err := GetPod(namespace, "simple-prod-query", "jaegertracing/jaeger-query", fw.KubeClient)
-	require.NoError(t, err, "Error getting Pod")
-
-	collectorPod, err := GetPod(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", fw.KubeClient)
-	require.NoError(t, err, "Error getting Pod")
-
-	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
+	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", []string{"16686"}, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
-	portForwColl, closeChanColl, err := CreatePortForward(namespace, collectorPod.Name, []string{"14268"}, fw.KubeConfig)
+
+	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", []string{"14268"}, fw.KubeConfig)
 	require.NoError(t, err, "Error creating port forward")
 
 	defer portForwColl.Close()
@@ -120,12 +113,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	jaegerPod, err := GetPod(namespace, name, "jaegertracing/all-in-one", fw.KubeClient)
-	require.NoError(t, err, "Error getting Pod")
-
-	portForw, closeChan, err := CreatePortForward(namespace, jaegerPod.Name, []string{"16686", "14268"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
+	portForw, closeChan := CreatePortForward(namespace, name, "jaegertracing/all-in-one", []string{"16686", "14268"}, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
@@ -140,12 +128,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	err = fw.Client.Update(context.Background(), j)
 	require.NoError(t, err)
 
-	esPod, err := GetPod(storageNamespace, "elasticsearch", "elasticsearch", fw.KubeClient)
-	require.NoError(t, err, "Error getting Pod")
-
-	portForwES, closeChanES, err := CreatePortForward(esPod.Namespace, esPod.Name, []string{"9200"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
+	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{"9200"}, fw.KubeConfig)
 	defer portForwES.Close()
 	defer close(closeChanES)
 
