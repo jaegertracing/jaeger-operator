@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -129,6 +129,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
+	uuid := strings.ReplaceAll(ed.Jaeger.Namespace+ed.Jaeger.Name, "-", "_")
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ed.Jaeger.Namespace,
@@ -152,12 +153,12 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 				Image:     ed.Jaeger.Spec.Storage.Elasticsearch.Image,
 				Resources: ed.Jaeger.Spec.Storage.Elasticsearch.Resources,
 			},
-			Nodes: getNodes(ed.Jaeger.Spec.Storage.Elasticsearch),
+			Nodes: getNodes(uuid, ed.Jaeger.Spec.Storage.Elasticsearch),
 		},
 	}
 }
 
-func getNodes(es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
+func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 	if es.NodeCount <= 3 {
 		return []esv1.ElasticsearchNode{
 			{
@@ -165,21 +166,25 @@ func getNodes(es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 				Storage:      es.Storage,
 				NodeSelector: es.NodeSelector,
 				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
+				GenUUID:      &uuid,
 			},
 		}
 	}
+	genuuidmaster := uuid + "master"
 	return []esv1.ElasticsearchNode{
 		{
 			NodeCount:    3,
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
 			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+			GenUUID:      &genuuidmaster,
 		},
 		{
 			NodeCount:    dataNodesCount(es.NodeCount),
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
 			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+			GenUUID:      &uuid,
 		},
 	}
 }

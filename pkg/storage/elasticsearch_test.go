@@ -29,11 +29,19 @@ func TestShouldDeployElasticsearch(t *testing.T) {
 
 func TestCreateElasticsearchCR(t *testing.T) {
 	storageClassName := "floppydisk"
+	genuuid1 := "myprojectfoo"
+	genuuidmaster1 := "myprojectfoomaster"
+	genuuid2 := "myprojectfoo_bar"
+	genuuidmaster2 := "myprojectfoo_barmaster"
 	tests := []struct {
-		jEsSpec v1.ElasticsearchSpec
-		esSpec  esv1.ElasticsearchSpec
+		name      string
+		namespace string
+		jEsSpec   v1.ElasticsearchSpec
+		esSpec    esv1.ElasticsearchSpec
 	}{
 		{
+			name:      "foo",
+			namespace: "myproject",
 			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        2,
 				RedundancyPolicy: esv1.FullRedundancy,
@@ -50,11 +58,14 @@ func TestCreateElasticsearchCR(t *testing.T) {
 						NodeCount: 2,
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
+						GenUUID:   &genuuid1,
 					},
 				},
 			},
 		},
 		{
+			name:      "foo",
+			namespace: "myproject",
 			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        5,
 				RedundancyPolicy: esv1.FullRedundancy,
@@ -71,25 +82,57 @@ func TestCreateElasticsearchCR(t *testing.T) {
 						NodeCount: 3,
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+						GenUUID:   &genuuidmaster1,
 					},
 					{
 						NodeCount: 2,
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+						GenUUID:   &genuuid1,
+					},
+				},
+			},
+		},
+		{
+			name:      "foo-bar",
+			namespace: "myproject",
+			jEsSpec: v1.ElasticsearchSpec{
+				NodeCount:        5,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Storage: esv1.ElasticsearchStorageSpec{
+					StorageClassName: &storageClassName,
+				},
+			},
+			esSpec: esv1.ElasticsearchSpec{
+				ManagementState:  esv1.ManagementStateManaged,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Spec:             esv1.ElasticsearchNodeSpec{},
+				Nodes: []esv1.ElasticsearchNode{
+					{
+						NodeCount: 3,
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+						GenUUID:   &genuuidmaster2,
+					},
+					{
+						NodeCount: 2,
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+						GenUUID:   &genuuid2,
 					},
 				},
 			},
 		},
 	}
 	for _, test := range tests {
-		j := v1.NewJaeger(types.NamespacedName{Name: "foo", Namespace: "myproject"})
+		j := v1.NewJaeger(types.NamespacedName{Name: test.name, Namespace: test.namespace})
 		j.Spec.Storage.Elasticsearch = test.jEsSpec
 		es := &ElasticsearchDeployment{Jaeger: j}
 		cr := es.Elasticsearch()
-		assert.Equal(t, "myproject", cr.Namespace)
+		assert.Equal(t, test.namespace, cr.Namespace)
 		assert.Equal(t, "elasticsearch", cr.Name)
 		trueVar := true
-		assert.Equal(t, []metav1.OwnerReference{{Name: "foo", Controller: &trueVar}}, cr.OwnerReferences)
+		assert.Equal(t, []metav1.OwnerReference{{Name: test.name, Controller: &trueVar}}, cr.OwnerReferences)
 		assert.Equal(t, cr.Spec, test.esSpec)
 	}
 }
