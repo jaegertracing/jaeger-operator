@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,24 +65,34 @@ func (suite *DaemonSetTestSuite) SetupTest() {
 
 // DaemonSet runs a test with the agent as DaemonSet
 func (suite *DaemonSetTestSuite) TestDaemonSet()  {
+	var err error
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	if isOpenShift(t) {
-		err := fw.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
+		err = fw.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
 			t.Fatalf("Failed creating hostPortSccDaemonset %v\n", err)
 		}
 
-		// ideally, we would use the REST API, but for a single-usage within the project, this is the simplest solution that works
-		cmd := exec.Command("oc", "adm", "--namespace", namespace, "policy",  "add-scc-to-user", "daemonset-with-hostport", "-z", "default")
+		cmd := exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/service_account_jaeger-agent-daemonset.yaml")
 		output, err := cmd.CombinedOutput()
-		require.NoError(t, err,"Failed creating hostport scc with OUTPUT: [%s]\n", string(output) )
-	}
+		if err != nil && !strings.Contains(string(output), "AlreadyExists") {
+			require.NoError(t, err, "Failed creating service account with: [%s]\n", string(output))
+		}
 
-	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
-	log.Infof("passing %v", j)
-	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.NoError(t, err, "Error deploying jaeger")
+		cmd = exec.Command("oc", "adm", "policy", "--namespace", namespace, "add-scc-to-user", "daemonset-with-hostport", "-z", "jaeger-agent-daemonset")
+		output, err = cmd.CombinedOutput()
+		require.NoError(t, err,"Failed during occ adm policy command with: [%s]\n", string(output) )
+
+		cmd = exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/agent-as-daemonset.yaml")
+		output, err = cmd.CombinedOutput()
+		require.NoError(t, err,"Failed creating daemonset with: [%s]\n", string(output) )
+	} else {
+		j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
+		log.Infof("passing %v", j)
+		err = fw.Client.Create(goctx.TODO(), j, cleanupOptions)
+		require.NoError(t, err, "Error deploying jaeger")
+	}
 
 	err = WaitForDaemonSet(t, fw.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for daemonset to startup")
