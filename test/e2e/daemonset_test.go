@@ -95,11 +95,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for VertX app to start")
 
-	queryPod, err := GetPod(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", fw.KubeClient)
-	require.NoErrorf(t, err, "Error trying to find pod with prefix agent-as-daemonset and image jaegertracing/all-in-one in namespace [%s]: %s\n", namespace)
-
-	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating portforward")
+	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 

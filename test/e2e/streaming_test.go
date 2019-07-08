@@ -68,22 +68,14 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	queryPod, err := GetPod(namespace, "simple-streaming-query", "jaegertracing/jaeger-query", fw.KubeClient)
-	require.NoError(t, err, "Error getting Query Pod")
-
-	collectorPod, err := GetPod(namespace, "simple-streaming-collector", "jaegertracing/jaeger-collector", fw.KubeClient)
-	require.NoError(t, err, "Error getting Collector Pod")
-
-	portForw, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
+	portForw, closeChan := CreatePortForward(namespace, "simple-streaming-query", "jaegertracing/jaeger-query", []string{"16686"}, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
-	portForwColl, closeChanColl, err := CreatePortForward(namespace, collectorPod.Name, []string{"14268"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
 
+	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-streaming-collector", "jaegertracing/jaeger-collector", []string{"14268"}, fw.KubeConfig)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
+
 	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
 }

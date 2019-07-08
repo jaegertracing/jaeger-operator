@@ -7,19 +7,22 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 )
 
 // CreatePortForward listens for local connections and forwards them to a remote pod
-func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Config) (*portforward.PortForwarder, chan struct{}, error) {
+func CreatePortForward(namespace, podNamePrefix, containsImage string, ports []string, kConfig *rest.Config) (*portforward.PortForwarder, chan struct{}) {
 	roundTripper, upgrader, err := spdy.RoundTripperFor(kConfig)
 	if err != nil {
-		return nil, nil, err
+		printTestStackTrace()
+		require.NoError(t, err)
 	}
 
-	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod)
+	pod := GetPod(namespace, podNamePrefix, containsImage, fw.KubeClient)
+	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod.Name)
 	hostIP := strings.TrimLeft(kConfig.Host, "https://")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 
@@ -29,8 +32,10 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 	out, errOut := new(bytes.Buffer), new(bytes.Buffer)
 	forwarder, err := portforward.New(dialer, ports, stopChan, readyChan, out, errOut)
 	if err != nil {
-		return nil, nil, err
+		printTestStackTrace()
+		require.NoError(t, err)
 	}
+
 	go func() {
 		for range readyChan { // Kubernetes will close this channel when it has something to tell us.
 		}
@@ -46,5 +51,5 @@ func CreatePortForward(namespace, pod string, ports []string, kConfig *rest.Conf
 		}
 	}()
 	<- forwarder.Ready
-	return forwarder, stopChan, nil
+	return forwarder, stopChan
 }

@@ -3,10 +3,12 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -37,21 +39,28 @@ var (
 )
 
 // GetPod returns pod name
-func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) (corev1.Pod, error) {
+func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) corev1.Pod {
 	pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 	if err != nil {
-		return corev1.Pod{}, err
+		printTestStackTrace()
+		require.NoError(t, err)
 	}
 	for _, pod := range pods.Items {
 		if strings.HasPrefix(pod.Name, namePrefix) {
 			for _, c := range pod.Spec.Containers {
 				if strings.Contains(c.Image, containsImage) {
-					return pod, nil
+					return pod
 				}
 			}
 		}
 	}
-	return corev1.Pod{}, fmt.Errorf("could not find pod with image %s", containsImage)
+
+	errorMessage := fmt.Sprintf("could not find pod in namespace %s with prefix %s and image %s", namespace, namePrefix, containsImage)
+	require.FailNow(t, errorMessage)
+
+	// We should never get here, but go requires a return statement
+	emptyPod := &corev1.Pod{}
+	return *emptyPod
 }
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {
@@ -148,6 +157,19 @@ func addToFrameworkSchemeForSmokeTests(t *testing.T) {
 	if isOpenShift(t) {
 		assert.NoError(t, framework.AddToFrameworkScheme(osv1.AddToScheme, &osv1.Route{}))
 		assert.NoError(t, framework.AddToFrameworkScheme(osv1sec.AddToScheme, &osv1sec.SecurityContextConstraints{}))
+	}
+}
+
+// Print a stack trace to help analyze test failures.  This is shorter and easier to read than debug.printstack()
+func printTestStackTrace() {
+	i := 1
+	for {
+		_, filename, lineNumber, ok := runtime.Caller(i);
+		if !ok || !strings.Contains(filename, "jaeger-operator") {
+			break
+		}
+		fmt.Printf("\t%s#%d\n", filename, lineNumber)
+		i++
 	}
 }
 
