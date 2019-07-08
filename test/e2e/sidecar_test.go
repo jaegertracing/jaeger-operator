@@ -74,11 +74,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
-	queryPod, err := GetPod(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", fw.KubeClient)
-	require.NoError(t, err, "Failed to find pod starting with agent-as-sidecar with image jaegertracing/all-in-one")
-
-	portForward, closeChan, err := CreatePortForward(namespace, queryPod.Name, []string{"16686"}, fw.KubeConfig)
-	require.NoError(t, err, "Failed to create PortForward")
+	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 
