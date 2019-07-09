@@ -31,8 +31,8 @@ func TestCreateElasticsearchCR(t *testing.T) {
 	storageClassName := "floppydisk"
 	genuuid1 := "myprojectfoo"
 	genuuidmaster1 := "myprojectfoomaster"
-	genuuid2 := "myprojectfoo_bar"
-	genuuidmaster2 := "myprojectfoo_barmaster"
+	genuuid2 := "myprojectfoobar"
+	genuuidmaster2 := "myprojectfoobarmaster"
 	tests := []struct {
 		name      string
 		namespace string
@@ -94,8 +94,8 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			},
 		},
 		{
-			name:      "foo-bar",
-			namespace: "myproject",
+			name:      "foo-ba%r",
+			namespace: "myproje&ct",
 			jEsSpec: v1.ElasticsearchSpec{
 				NodeCount:        5,
 				RedundancyPolicy: esv1.FullRedundancy,
