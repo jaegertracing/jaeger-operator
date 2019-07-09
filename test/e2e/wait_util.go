@@ -50,7 +50,7 @@ func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 			return false, err
 		}
 
-		if daemonset.Status.NumberReady == daemonset.Status.DesiredNumberScheduled {
+		if daemonset.Status.NumberReady > 0 && daemonset.Status.NumberReady == daemonset.Status.DesiredNumberScheduled {
 			return true, nil
 		}
 		t.Logf("Waiting for full availability of %s daemonsets (%d/%d)\n", name, daemonset.Status.NumberReady, daemonset.Status.DesiredNumberScheduled)
