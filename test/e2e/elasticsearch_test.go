@@ -1,4 +1,4 @@
-// +build elasticsearch
+
 
 package e2e
 
@@ -127,6 +127,8 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	esEnabled = true
 	err = fw.Client.Update(context.Background(), j)
 	require.NoError(t, err)
+	// Turn off esIndexCleaner when test finishes, as this can cause failures in other tests
+	defer turnOffEsIndexCleaner(j)
 
 	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{"9200"}, fw.KubeConfig)
 	defer portForwES.Close()
@@ -147,6 +149,12 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 		return !flag, err
 	})
 	require.NoError(t, err, "TODO")
+}
+
+func turnOffEsIndexCleaner(jaeger *v1.Jaeger) {
+	esEnabled = false
+	err := fw.Client.Update(context.Background(), jaeger)
+	require.NoError(t, err)
 }
 
 func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
