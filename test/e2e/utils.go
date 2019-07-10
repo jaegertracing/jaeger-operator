@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	goctx "context"
 	"os"
 	"runtime"
 	"strings"
@@ -171,6 +172,11 @@ func printTestStackTrace() {
 		fmt.Printf("\t%s#%d\n", filename, lineNumber)
 		i++
 	}
+}
+
+func undeployJaegerInstance(jaeger *v1.Jaeger) {
+	err := fw.Client.Delete(goctx.TODO(), jaeger)
+	require.NoError(t, err, "Error undeploying Jaeger")
 }
 
 type resp struct {

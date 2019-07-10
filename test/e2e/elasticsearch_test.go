@@ -82,6 +82,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	exampleJaeger := getJaegerSimpleProdWithServerUrls()
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
@@ -108,6 +109,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 
 	err := fw.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying Jaeger")
+	defer undeployJaegerInstance(j)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
@@ -127,8 +129,6 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	esEnabled = true
 	err = fw.Client.Update(context.Background(), j)
 	require.NoError(t, err)
-	// Turn off esIndexCleaner when test finishes, as this can cause failures in other tests
-	defer turnOffEsIndexCleaner(j)
 
 	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{"9200"}, fw.KubeConfig)
 	defer portForwES.Close()
@@ -149,12 +149,6 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 		return !flag, err
 	})
 	require.NoError(t, err, "TODO")
-}
-
-func turnOffEsIndexCleaner(jaeger *v1.Jaeger) {
-	esEnabled = false
-	err := fw.Client.Update(context.Background(), jaeger)
-	require.NoError(t, err)
 }
 
 func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {

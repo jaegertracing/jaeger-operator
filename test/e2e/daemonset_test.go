@@ -68,6 +68,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	var err error
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
+	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 	if isOpenShift(t) {
 		err = fw.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
@@ -88,11 +89,11 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 		output, err = cmd.CombinedOutput()
 		require.NoError(t, err,"Failed creating daemonset with: [%s]\n", string(output) )
 	} else {
-		j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 		log.Infof("passing %v", j)
 		err = fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 		require.NoError(t, err, "Error deploying jaeger")
 	}
+	defer undeployJaegerInstance(j)
 
 	err = WaitForDaemonSet(t, fw.KubeClient, namespace, "agent-as-daemonset-agent-daemonset", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for daemonset to startup")

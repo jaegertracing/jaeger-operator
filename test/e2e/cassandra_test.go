@@ -58,6 +58,7 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 	log.Infof("passing %v", j)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Error deploying jaeger")
+	defer undeployJaegerInstance(j)
 
 	err = WaitForJob(t, fw.KubeClient, namespace, "with-cassandra-cassandra-schema-job", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for startup")

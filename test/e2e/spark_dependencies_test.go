@@ -40,6 +40,7 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	if err != nil {
 		return errors.WithMessagef(err, "Failed on client create")
 	}
+	defer undeployJaegerInstance(j)
 
 	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout)
 	if err != nil {

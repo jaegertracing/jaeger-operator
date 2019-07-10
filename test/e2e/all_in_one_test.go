@@ -70,6 +70,7 @@ func (suite *AllInOneTestSuite) TestAllInOne() {
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
@@ -88,6 +89,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Failed to create Jaeger instance")
+	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
 	require.NoError(t, err, "Error waiting for Jaeger deployment")
@@ -156,6 +158,7 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 	require.NoError(t, err, "Error creating jaeger instance")
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for jaeger deployment")
+	defer undeployJaegerInstance(j)
 
 	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
 	defer portForward.Close()
