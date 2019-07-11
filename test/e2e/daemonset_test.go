@@ -21,6 +21,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -68,7 +69,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	var err error
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	j := jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
+	j := &v1.Jaeger{}
 	if isOpenShift(t) {
 		err = fw.Client.Create(goctx.TODO(), hostPortSccDaemonset(), cleanupOptions)
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
@@ -87,8 +88,14 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 
 		cmd = exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/agent-as-daemonset.yaml")
 		output, err = cmd.CombinedOutput()
-		require.NoError(t, err,"Failed creating daemonset with: [%s]\n", string(output) )
+		require.NoError(t, err,"Failed creating daemonset with: [%s]\n", string(output))
+
+		// Get the Jaeger instance we've just created so we can undeploy when the test finishes
+		key := types.NamespacedName{Name:"agent-as-daemonset", Namespace:namespace}
+		err = fw.Client.Get(goctx.Background(), key, j)
+		require.NoError(t, err)
 	} else {
+		j = jaegerAgentAsDaemonsetDefinition(namespace, "agent-as-daemonset")
 		log.Infof("passing %v", j)
 		err = fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 		require.NoError(t, err, "Error deploying jaeger")
