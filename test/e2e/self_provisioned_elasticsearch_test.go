@@ -72,6 +72,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	exampleJaeger := getJaegerSimpleProd()
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")

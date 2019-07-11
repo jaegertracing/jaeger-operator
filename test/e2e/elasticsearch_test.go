@@ -82,6 +82,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	exampleJaeger := getJaegerSimpleProdWithServerUrls()
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
@@ -108,6 +109,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 
 	err := fw.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying Jaeger")
+	defer undeployJaegerInstance(j)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
