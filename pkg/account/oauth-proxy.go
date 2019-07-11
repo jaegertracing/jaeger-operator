@@ -6,7 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // OAuthProxy returns a service account representing a client in the context of the OAuth Proxy
@@ -46,6 +47,12 @@ func OAuthProxy(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 
 // OAuthProxyAccountNameFor returns the service account name for this Jaeger instance in the context of the OAuth Proxy
 func OAuthProxyAccountNameFor(jaeger *v1.Jaeger) string {
+	sa := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Query.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	if len(sa) > 0 {
+		// if we have a custom service account for the query object, that's the service name we return
+		return sa
+	}
+
 	return fmt.Sprintf("%s-ui-proxy", jaeger.Name)
 }
 
