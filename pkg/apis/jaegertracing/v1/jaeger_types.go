@@ -110,7 +110,7 @@ type Jaeger struct {
 }
 
 // JaegerCommonSpec defines the common elements used in multiple other spec structs
-// +k8s:openapi-gen=false
+// +k8s:openapi-gen=true
 type JaegerCommonSpec struct {
 	// +optional
 	Volumes []v1.Volume `json:"volumes,omitempty"`
