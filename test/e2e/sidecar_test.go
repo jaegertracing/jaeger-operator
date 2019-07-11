@@ -66,6 +66,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	j := getJaegerAgentAsSidecarDefinition(namespace)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
+	defer undeployJaegerInstance(j)
 
 	dep := getVertxDefinition(namespace)
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)

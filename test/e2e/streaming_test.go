@@ -61,6 +61,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	log.Infof("passing %v", j)
 	err = fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
+	defer undeployJaegerInstance(j)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
