@@ -177,6 +177,8 @@ func printTestStackTrace() {
 func undeployJaegerInstance(jaeger *v1.Jaeger) {
 	err := fw.Client.Delete(goctx.TODO(), jaeger)
 	require.NoError(t, err, "Error undeploying Jaeger")
+	err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
+	require.NoError(t, err)
 }
 
 type resp struct {
