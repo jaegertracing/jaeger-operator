@@ -16,7 +16,7 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
         - name: jaeger-operator
-          image: jpkroehling/jaeger-operator:102-Add-support-for-openshift-sar
+          image: jaegertracing/jaeger-operator:1.13.1
           ports:
           - containerPort: 8383
             name: metrics
