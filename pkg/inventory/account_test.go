@@ -29,6 +29,8 @@ func TestAccountInventory(t *testing.T) {
 			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		AutomountServiceAccountToken: &falseVar,
+		Secrets:                      []v1.ObjectReference{{Kind: "Secret"}},
+		ImagePullSecrets:             []v1.LocalObjectReference{{Name: "ImagePullSecret"}},
 	}
 	toDelete := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -45,7 +47,13 @@ func TestAccountInventory(t *testing.T) {
 
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
-	assert.Equal(t, &falseVar, inv.Update[0].AutomountServiceAccountToken)
+
+	// we do *not* set this in any of our current service accounts,
+	// but this might be set by the cluster -- in this case,
+	// we keep whatever is there, not touching the fields at all
+	assert.Equal(t, &trueVar, inv.Update[0].AutomountServiceAccountToken)
+	assert.Len(t, inv.Update[0].Secrets, 0)
+	assert.Len(t, inv.Update[0].ImagePullSecrets, 0)
 
 	assert.Len(t, inv.Delete, 1)
 	assert.Equal(t, "to-delete", inv.Delete[0].Name)
