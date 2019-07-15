@@ -20,7 +20,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/uuid v1.0.0 // indirect
-	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/googleapis/gnostic v0.2.0
 	github.com/gophercloud/gophercloud v0.1.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
