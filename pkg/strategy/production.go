@@ -69,7 +69,7 @@ func newProductionStrategy(jaeger *v1.Jaeger, es *storage.ElasticsearchDeploymen
 		}
 	}
 
-	if isBoolTrue(jaeger.Spec.Storage.SparkDependencies.Enabled) {
+	if isBoolTrue(jaeger.Spec.Storage.Dependencies.Enabled) {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			c.cronJobs = append(c.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
 		} else {

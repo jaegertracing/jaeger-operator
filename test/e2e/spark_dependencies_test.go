@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx, storage v1.JaegerStorageSpec) error {
-	storage.SparkDependencies = v1.JaegerDependenciesSpec{
+	storage.Dependencies = v1.JaegerDependenciesSpec{
 		// run immediately
 		Schedule: "*/1 * * * *",
 	}
@@ -51,7 +51,7 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 		return errors.WithMessage(err, "Failed waiting for Job Of An Owner")
 	}
 
-	err =  e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
 	if err != nil {
 		return errors.WithMessage(err, "Failed waiting for deployment ")
 	} else {
