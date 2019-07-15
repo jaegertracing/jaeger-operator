@@ -490,9 +490,9 @@ func (in *JaegerStorageSpec) DeepCopyInto(out *JaegerStorageSpec) {
 	*out = *in
 	in.Options.DeepCopyInto(&out.Options)
 	in.CassandraCreateSchema.DeepCopyInto(&out.CassandraCreateSchema)
-	in.SparkDependencies.DeepCopyInto(&out.SparkDependencies)
+	in.Dependencies.DeepCopyInto(&out.Dependencies)
 	in.EsIndexCleaner.DeepCopyInto(&out.EsIndexCleaner)
-	in.Rollover.DeepCopyInto(&out.Rollover)
+	in.EsRollover.DeepCopyInto(&out.EsRollover)
 	in.Elasticsearch.DeepCopyInto(&out.Elasticsearch)
 	return
 }

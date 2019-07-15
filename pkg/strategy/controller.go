@@ -90,23 +90,23 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
-	normalizeRollover(&jaeger.Spec.Storage.Rollover)
+	normalizeRollover(&jaeger.Spec.Storage.EsRollover)
 	normalizeUI(&jaeger.Spec)
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
-		spec.SparkDependencies.Enabled == nil &&
+		spec.Dependencies.Enabled == nil &&
 		!storage.ShouldDeployElasticsearch(*spec) {
 		trueVar := true
-		spec.SparkDependencies.Enabled = &trueVar
+		spec.Dependencies.Enabled = &trueVar
 	}
-	if spec.SparkDependencies.Image == "" {
-		spec.SparkDependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
+	if spec.Dependencies.Image == "" {
+		spec.Dependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
 	}
-	if spec.SparkDependencies.Schedule == "" {
-		spec.SparkDependencies.Schedule = "55 23 * * *"
+	if spec.Dependencies.Schedule == "" {
+		spec.Dependencies.Schedule = "55 23 * * *"
 	}
 }
 
@@ -154,7 +154,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 		}
 	}
 	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
-	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.SparkDependencies.Enabled)
+	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
 	enableLogOut(uiOpts, spec)
 	if len(uiOpts) > 0 {
 		spec.UI.Options = v1.NewFreeForm(uiOpts)
