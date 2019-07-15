@@ -27,9 +27,6 @@ func ForAccounts(existing []v1.ServiceAccount, desired []v1.ServiceAccount) Acco
 			util.InitObjectMeta(tp)
 
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
-			tp.Secrets = v.Secrets
-			tp.ImagePullSecrets = v.ImagePullSecrets
-			tp.AutomountServiceAccountToken = v.AutomountServiceAccountToken
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
 
 			for k, v := range v.ObjectMeta.Annotations {
