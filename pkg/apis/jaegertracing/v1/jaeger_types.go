@@ -126,9 +126,18 @@ type JaegerSamplingSpec struct {
 // JaegerIngressSpec defines the options to be used when deploying the query ingress
 // +k8s:openapi-gen=true
 type JaegerIngressSpec struct {
-	Enabled  *bool               `json:"enabled"`
-	Security IngressSecurityType `json:"security"`
+	Enabled   *bool                      `json:"enabled"`
+	Security  IngressSecurityType        `json:"security"`
+	OpenShift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
 	JaegerCommonSpec
+}
+
+// JaegerIngressOpenShiftSpec defines the OpenShift-specific options in the context of ingress connections,
+// such as options for the OAuth Proxy
+// +k8s:openapi-gen=true
+type JaegerIngressOpenShiftSpec struct {
+	SAR          string `json:"sar,omitempty"`
+	DelegateURLs string `json:"delegate-urls,omitempty"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query

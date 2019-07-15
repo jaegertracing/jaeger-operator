@@ -8,8 +8,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
@@ -17,6 +18,11 @@ import (
 func TestWithAccounts(t *testing.T) {
 	c := New().WithAccounts([]v1.ServiceAccount{{}})
 	assert.Len(t, c.Accounts(), 1)
+}
+
+func TestWithClusterRoleBindings(t *testing.T) {
+	c := New().WithClusterRoleBindings([]rbac.ClusterRoleBinding{{}})
+	assert.Len(t, c.ClusterRoleBindings(), 1)
 }
 
 func TestWithConfigMaps(t *testing.T) {
@@ -62,4 +68,9 @@ func TestWithRoutes(t *testing.T) {
 func TestWithServices(t *testing.T) {
 	c := New().WithServices([]v1.Service{{}})
 	assert.Len(t, c.Services(), 1)
+}
+
+func TestWithSecrets(t *testing.T) {
+	c := New().WithSecrets([]v1.Secret{{}})
+	assert.Len(t, c.Secrets(), 1)
 }
