@@ -534,6 +534,11 @@ func (in *Options) DeepCopyInto(out *Options) {
 			(*out)[key] = val
 		}
 	}
+	if in.json != nil {
+		in, out := &in.json, &out.json
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
