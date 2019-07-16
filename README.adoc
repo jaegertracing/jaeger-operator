@@ -322,7 +322,7 @@ storage:
   esIndexCleaner:
     enabled: false                                // turn the job deployment on and off
     numberOfDays: 7                               // number of days to wait before deleting a record
-    schedule: "55 23 * * *"                       // cron expession for it to run
+    schedule: "55 23 * * *"                       // cron expression for it to run
     image: jaegertracing/jaeger-es-index-cleaner  // image of the job
 -----
 
