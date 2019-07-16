@@ -7,6 +7,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -130,6 +131,11 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
+		log.Fatal(err)
+	}
+
+	// Create Service object to expose the metrics port.
+	if _, err := metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
 		log.Fatal(err)
 	}
 

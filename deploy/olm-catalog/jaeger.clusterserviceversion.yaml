@@ -319,6 +319,14 @@ spec:
           - 'clusterrolebindings'
           verbs:
           - '*'
+        - apiGroups:
+          - apps
+          resourceNames:
+          - jaeger-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
         serviceAccountName: jaeger-operator
     strategy: deployment
   customresourcedefinitions:
