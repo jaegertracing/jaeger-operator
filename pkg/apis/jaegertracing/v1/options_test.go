@@ -118,3 +118,20 @@ func TestExposedMap(t *testing.T) {
 	o.UnmarshalJSON([]byte(`{"cassandra": {"servers": "cassandra:9042"}}`))
 	assert.Equal(t, "cassandra:9042", o.Map()["cassandra.servers"])
 }
+
+func TestMarshallRaw(t *testing.T) {
+	json := []byte(`{"cassandra": {"servers": "cassandra:9042"}}`)
+	o := NewOptions(nil)
+	o.json = json
+	bytes, err := o.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, bytes, json)
+}
+
+func TestMarshallEmpty(t *testing.T) {
+	o := NewOptions(nil)
+	json := []byte(`{}`)
+	bytes, err := o.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, bytes, json)
+}
