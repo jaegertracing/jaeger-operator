@@ -129,7 +129,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
-	uuid := strings.ReplaceAll(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), "-", "")
+	uuid := strings.Replace(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), "-", "", -1)
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ed.Jaeger.Namespace,
