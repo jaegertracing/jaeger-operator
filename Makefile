@@ -108,7 +108,7 @@ e2e-tests-es: prepare-e2e-tests es
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-self-provisioned-es
-e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
+e2e-tests-self-provisioned-es: prepare-e2e-tests
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
