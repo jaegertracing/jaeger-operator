@@ -76,3 +76,11 @@ rules:
   - 'clusterrolebindings'
   verbs:
   - '*'
+- apiGroups:
+  - apps
+  resourceNames:
+  - jaeger-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
