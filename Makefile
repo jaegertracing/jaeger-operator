@@ -130,8 +130,13 @@ run-debug: CLI_FLAGS = "--log-level=debug"
 set-max-map-count:
 	@minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
 
+.PHONY: set-node-os-linux
+set-node-os-linux:
+#	ES operator requires labeled nodes
+	@oc label nodes --all kubernetes.io/os=linux --overwrite
+
 .PHONY: deploy-es-operator
-deploy-es-operator: set-max-map-count
+deploy-es-operator: set-max-map-count set-node-os-linux
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
