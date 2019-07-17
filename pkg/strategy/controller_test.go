@@ -240,7 +240,7 @@ func TestNormalizeElasticsearch(t *testing.T) {
 		expected  v1.ElasticsearchSpec
 	}{
 		{underTest: v1.ElasticsearchSpec{},
-			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy"}},
+			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "SingleRedundancy"}},
 		{underTest: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"},
 			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"}},
 		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy"},
