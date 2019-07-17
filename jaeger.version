@@ -2,4 +2,4 @@
 # by default with the Jaeger Operator. This would usually be the latest 
 # stable Jaeger version. When you update this file, make sure to update the
 # the docs as well.
-1.13
+1.13.1
