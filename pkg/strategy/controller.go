@@ -133,7 +133,11 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 		spec.NodeCount = 1
 	}
 	if spec.RedundancyPolicy == "" {
-		spec.RedundancyPolicy = esv1.SingleRedundancy
+		if spec.NodeCount == 1 {
+			spec.RedundancyPolicy = esv1.ZeroRedundancy
+		} else {
+			spec.RedundancyPolicy = esv1.SingleRedundancy
+		}
 	}
 }
 
