@@ -10,6 +10,9 @@ if [ "${TEST_GROUP}" = "es" ]; then
     echo "Running elasticsearch tests"
     make es
     make e2e-tests-es
+elif [ "${TEST_GROUP}" = "es-self-provisioned" ]; then
+    echo "Running self provisioned elasticsearch tests"
+    make e2e-tests-self-provisioned-es
 elif [ "${TEST_GROUP}" = "smoke" ]
 then
     echo "Running Smoke Tests"
