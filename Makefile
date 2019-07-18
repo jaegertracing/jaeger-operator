@@ -16,6 +16,7 @@ OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 ES_OPERATOR_NAMESPACE = openshift-logging
+ES_OPERATOR_VERSION = 4.1
 SDK_VERSION=v0.8.1
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -135,11 +136,12 @@ deploy-es-operator: set-max-map-count
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/02-role.yaml
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/03-role-bindings.yaml
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
-	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/master/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/02-role.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/03-role-bindings.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
+	@kubectl set image deployment/elasticsearch-operator elasticsearch-operator=quay.io/openshift/origin-elasticsearch-operator:${ES_OPERATOR_VERSION} -n ${ES_OPERATOR_NAMESPACE}
 
 .PHONY: es
 es: storage
