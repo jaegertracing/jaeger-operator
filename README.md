@@ -42,7 +42,7 @@ The official documentation for the Jaeger Operator, including all its customizat
 
 ## Contributing and Developing
 
-Please see [CONTRIBUTING.adoc](CONTRIBUTING.adoc).
+Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
   
