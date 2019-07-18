@@ -1,6 +1,9 @@
 language: go
 sudo: required
 dist: xenial
+sevices:
+  - docker
+
 
 go:
 - 1.12.5
@@ -25,52 +28,66 @@ env:
 
 jobs:
   include:
-    - stage: build
-      env:
-      - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
-      name: "Build and unit test"
-      install:
-      - make install-sdk install-tools
-      script:
-      - "./.travis/script.sh"
-      after_success:
-      - "./.travis/after_success.sh"
+#    - stage: build
+#      env:
+#      - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
+#      name: "Build and unit test"
+#      install:
+#      - make install-sdk install-tools
+#      script:
+#      - "./.travis/script.sh"
+#      after_success:
+#      - "./.travis/after_success.sh"
+#
+#    - stage: build
+#      name: "Run e2e elasticsearch tests"
+#      install:
+#      - "./.travis/setupMinikube.sh"
+#      script:
+#      - "./.travis/rune2eTests.sh"
+#      env:
+#      - TEST_GROUP=es
+#
+#    - stage: build
+#      name: "Run e2e smoke tests"
+#      install:
+#      - "./.travis/setupMinikube.sh"
+#      script:
+#      - "./.travis/rune2eTests.sh"
+#      env:
+#      - TEST_GROUP=smoke
+#
+#    - stage: build
+#      name: "Run e2e cassandra tests"
+#      install:
+#      - "./.travis/setupMinikube.sh"
+#      script:
+#      - "./.travis/rune2eTests.sh"
+#      env:
+#      - TEST_GROUP=cassandra
+#
+#    - stage: build
+#      name: "Run e2e streaming tests"
+#      install:
+#      - "./.travis/setupMinikube.sh"
+#      script:
+#      - "./.travis/rune2eTests.sh"
+#      env:
+#      - TEST_GROUP=streaming
 
     - stage: build
-      name: "Run e2e elasticsearch tests"
+      name: "Run e2e es-self-provisioned tests"
       install:
-      - "./.travis/setupMinikube.sh"
+        - cat /etc/docker/daemon.json
+        - sudo echo '{ "insecure-registries": ["172.30.0.0/16"] }' > /etc/docker/daemon.json
+#        - sudo apt-get update -qq
+#        - sudo sed -i "s/\DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry=172.30.0.0\/16 /g" /etc/default/docker
+        - sudo service docker restart
+        - "./.travis/setupOpenShift.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+        - "./.travis/rune2eTests.sh"
       env:
-      - TEST_GROUP=es
-
-    - stage: build
-      name: "Run e2e smoke tests"
-      install:
-      - "./.travis/setupMinikube.sh"
-      script:
-      - "./.travis/rune2eTests.sh"
-      env:
-      - TEST_GROUP=smoke
-
-    - stage: build
-      name: "Run e2e cassandra tests"
-      install:
-      - "./.travis/setupMinikube.sh"
-      script:
-      - "./.travis/rune2eTests.sh"
-      env:
-      - TEST_GROUP=cassandra
-
-    - stage: build
-      name: "Run e2e streaming tests"
-      install:
-      - "./.travis/setupMinikube.sh"
-      script:
-      - "./.travis/rune2eTests.sh"
-      env:
-      - TEST_GROUP=streaming
+        - TEST_GROUP=es-self-provisioned
 
     - stage: deploy
       name: "Publish latest image"
