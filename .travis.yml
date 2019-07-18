@@ -1,6 +1,9 @@
 language: go
 sudo: required
 dist: xenial
+sevices:
+  - docker
+
 
 go:
 - 1.12.5
@@ -71,6 +74,15 @@ jobs:
       - "./.travis/rune2eTests.sh"
       env:
       - TEST_GROUP=streaming
+
+    - stage: build
+      name: "Run e2e es-self-provisioned tests"
+      install:
+      - "./.travis/setupOpenShift.sh"
+      script:
+      - "./.travis/rune2eTests.sh"
+      env:
+      - TEST_GROUP=es-self-provisioned
 
     - stage: deploy
       name: "Publish latest image"
