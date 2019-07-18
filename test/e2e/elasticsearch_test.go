@@ -90,16 +90,20 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", []string{"16686"}, fw.KubeConfig)
+	queryPort := randomPortNumber()
+	queryPorts := []string{queryPort + ":16686"}
+	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", queryPorts, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
-	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", []string{"14268"}, fw.KubeConfig)
+	collectorPort := randomPortNumber()
+	collectorPorts := []string{collectorPort + ":14268"}
+	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", collectorPorts, fw.KubeConfig)
 	require.NoError(t, err, "Error creating port forward")
 
 	defer portForwColl.Close()
 	defer close(closeChanColl)
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
+	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foobar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
 }
 
@@ -115,11 +119,14 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	portForw, closeChan := CreatePortForward(namespace, name, "jaegertracing/all-in-one", []string{"16686", "14268"}, fw.KubeConfig)
+	queryPort := randomPortNumber()
+	collectorPort := randomPortNumber()
+	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
+	portForw, closeChan := CreatePortForward(namespace, name, "jaegertracing/all-in-one", ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
+	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foo-bar", retryInterval, timeout)
 	require.NoError(t, err, "Error running smoketest")
 
 	// Once we've created a span with the smoke test, enable the index cleaer
@@ -130,11 +137,13 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	err = fw.Client.Update(context.Background(), j)
 	require.NoError(t, err)
 
-	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{"9200"}, fw.KubeConfig)
+	esPort := randomPortNumber()
+	esPorts := []string{esPort + ":9200"}
+	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", esPorts, fw.KubeConfig)
 	defer portForwES.Close()
 	defer close(closeChanES)
 
-	flag, err := hasIndexWithPrefix("jaeger-")
+	flag, err := hasIndexWithPrefix("jaeger-", esPort)
 	require.NoError(t, err, "Error searching for index")
 	require.True(t, flag, "HasIndexWithPrefix returned false")
 
@@ -145,7 +154,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for Cron Job")
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		flag, err := hasIndexWithPrefix("jaeger-")
+		flag, err := hasIndexWithPrefix("jaeger-", esPort)
 		return !flag, err
 	})
 	require.NoError(t, err, "TODO")
@@ -203,9 +212,9 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 	return j
 }
 
-func hasIndexWithPrefix(prefix string) (bool, error) {
+func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 	c := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, "http://localhost:9200/_cat/indices", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://localhost:" + esPort + "/_cat/indices", nil)
 	if err != nil {
 		return false, err
 	}

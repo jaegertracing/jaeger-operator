@@ -160,11 +160,13 @@ func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
 	require.NoError(t, err, "Error waiting for jaeger deployment")
 	defer undeployJaegerInstance(j)
 
-	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
+	queryPort := randomPortNumber()
+	ports := []string{queryPort + ":16686"}
+	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 
-	url := fmt.Sprintf("http://localhost:16686/%s/search", basePath)
+	url := fmt.Sprintf("http://localhost:" + queryPort + "/%s/search", basePath)
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

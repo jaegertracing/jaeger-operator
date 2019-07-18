@@ -3,8 +3,10 @@ package e2e
 import (
 	"fmt"
 	goctx "context"
+	"math/rand"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -211,6 +213,15 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) {
 	require.NoError(t, err, "Error undeploying Jaeger")
 	err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
 	require.NoError(t, err)
+}
+
+func randomPortNumber() string {
+	rand.Seed( time.Now().UnixNano())
+	min := 32768
+	max := 65535
+
+	port := rand.Intn(max - min) + min
+	return strconv.Itoa(port)
 }
 
 type resp struct {
