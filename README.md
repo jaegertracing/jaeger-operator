@@ -5,7 +5,40 @@
 
 The Jaeger Operator is an implementation of a [Kubernetes Operator](https://coreos.com/operators/).
 
-Information about how to install and use the operator can be found [here](https://www.jaegertracing.io/docs/latest/operator/).
+## Getting started
+
+To install the operator, run:
+```
+kubectl create namespace observability
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing_v1_jaeger_crd.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
+```
+
+Once the `jaeger-operator` deployment in the namespace `observability` is ready, create a Jaeger instance, like:
+
+```
+kubectl apply -f - <<EOF
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: simplest
+EOF
+```
+
+This will create a Jaeger instance named `simplest`. The Jaeger UI is served via the `Ingress`, like:
+
+```console
+$ kubectl get ingress
+NAME             HOSTS     ADDRESS          PORTS     AGE
+simplest-query   *         192.168.122.34   80        3m
+```
+
+In this example, the Jaeger UI is available at http://192.168.122.34.
+
+The official documentation for the Jaeger Operator, including all its customization options, are available under the main [Jaeger Documentation](https://www.jaegertracing.io/docs/latest/operator/).
 
 ## Contributing and Developing
 
