@@ -75,12 +75,12 @@ jobs:
     - stage: build
       name: "Run e2e es-self-provisioned tests"
       install:
+        - sudo apt-get update -qq
         - "./.travis/setupOpenShift.sh"
       script:
         - "./.travis/rune2eTests.sh"
       env:
         - TEST_GROUP=es-self-provisioned
-
 
     - stage: deploy
       name: "Publish latest image"
