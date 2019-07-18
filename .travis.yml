@@ -76,6 +76,8 @@ jobs:
       name: "Run e2e es-self-provisioned tests"
       install:
         - sudo apt-get update -qq
+        - sudo sed -i "s/\DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry=172.30.0.0\/16 /g" /etc/default/docker
+        - sudo service docker restart
         - "./.travis/setupOpenShift.sh"
       script:
         - "./.travis/rune2eTests.sh"
