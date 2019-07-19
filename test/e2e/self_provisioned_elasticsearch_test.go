@@ -79,16 +79,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", []string{"16686"}, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", []string{"14268"}, fw.KubeConfig)
-	defer portForwColl.Close()
-	defer close(closeChanColl)
-
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	SmokeTestWithCollector("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector", "jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
 }
 
 func getJaegerSimpleProd() *v1.Jaeger {

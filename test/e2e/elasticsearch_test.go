@@ -90,17 +90,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", []string{"16686"}, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", []string{"14268"}, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
-	defer portForwColl.Close()
-	defer close(closeChanColl)
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foobar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	SmokeTest("simple-prod-query", "jaegertracing/jaeger-query", "foobar", retryInterval, timeout)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
@@ -115,12 +105,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	portForw, closeChan := CreatePortForward(namespace, name, "jaegertracing/all-in-one", []string{"16686", "14268"}, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	err = SmokeTest("http://localhost:16686/api/traces", "http://localhost:14268/api/traces", "foo-bar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	SmokeTestWithCollector(name, "jaegertracing/all-in-one",  name, "jaegertracing/all-in-one", "foo-bar", retryInterval, timeout)
 
 	// Once we've created a span with the smoke test, enable the index cleaer
 	key := types.NamespacedName{Name:name, Namespace:namespace}
