@@ -10,6 +10,14 @@ if [ "${TEST_GROUP}" = "es" ]; then
     echo "Running elasticsearch tests"
     make es
     make e2e-tests-es
+elif [ "${TEST_GROUP}" = "es-self-provisioned" ]; then
+    echo "Running self provisioned elasticsearch tests"
+    make e2e-tests-self-provisioned-es
+    res=$?
+    if [[ ${res} -ne 0 ]]; then
+        kubectl log deploy/elasticsearch-operator -n openshift-logging
+    fi
+    exit ${res}
 elif [ "${TEST_GROUP}" = "smoke" ]
 then
     echo "Running Smoke Tests"

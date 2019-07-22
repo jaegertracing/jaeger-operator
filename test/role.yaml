@@ -42,6 +42,10 @@ rules:
 - apiGroups:
   - extensions
   resources:
+  - replicasets
+  - deployments
+  - daemonsets
+  - statefulsets
   - ingresses
   verbs:
   - "*"
@@ -78,6 +82,7 @@ rules:
   - '*'
 - apiGroups:
   - apps
+  - extensions
   resourceNames:
   - jaeger-operator
   resources:
