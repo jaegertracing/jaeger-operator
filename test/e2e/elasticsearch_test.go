@@ -10,15 +10,15 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/types"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"k8s.io/apimachinery/pkg/util/wait"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -138,8 +138,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err)
 
 	esPort := randomPortNumber()
-	esPorts := []string{esPort + ":9200"}
-	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", esPorts, fw.KubeConfig)
+	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort + ":9200"}, fw.KubeConfig)
 	defer portForwES.Close()
 	defer close(closeChanES)
 
@@ -153,8 +152,14 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Cron Job")
 
+	// We shouldn't need another port forward here, but I've added this because of frequent dropped connections
+	esPort2 := randomPortNumber()
+	portForwES2, closeChanES2 := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort2 + ":9200"}, fw.KubeConfig)
+	defer portForwES2.Close()
+	defer close(closeChanES2)
+
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		flag, err := hasIndexWithPrefix("jaeger-", esPort)
+		flag, err := hasIndexWithPrefix("jaeger-", esPort2)
 		return !flag, err
 	})
 	require.NoError(t, err, "TODO")
