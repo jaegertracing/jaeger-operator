@@ -1,12 +1,11 @@
 package e2e
 
 import (
-	"fmt"
 	goctx "context"
-	"math/rand"
+	"fmt"
+	"net"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -216,12 +215,16 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) {
 }
 
 func randomPortNumber() string {
-	rand.Seed( time.Now().UnixNano())
-	min := 32768
-	max := 65535
+	listener, err := net.Listen("tcp","")
+	require.NoError(t, err)
+	defer listener.Close()
 
-	port := rand.Intn(max - min) + min
-	return strconv.Itoa(port)
+	// listener.Addr().String looks like '[[::]:55807]' - strip out the colons and brackets to get the port number
+	port := strings.FieldsFunc(listener.Addr().String(), func(r rune) bool {
+		return r == ':' || r == '[' || r == ']'
+	})
+
+	return port[0]
 }
 
 type resp struct {
