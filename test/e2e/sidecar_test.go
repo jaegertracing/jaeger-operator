@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,11 +75,13 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
-	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
+	queryPort := randomPortNumber()
+	ports := []string{queryPort + ":16686"}
+	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 
-	url := "http://localhost:16686/api/traces?service=order"
+	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

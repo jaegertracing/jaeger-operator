@@ -3,6 +3,7 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -53,3 +54,18 @@ func CreatePortForward(namespace, podNamePrefix, containsImage string, ports []s
 	<- forwarder.Ready
 	return forwarder, stopChan
 }
+
+// TODO use port-forward from k8s instead once we upgrade k8s API to 1.15.0+.  See https://github.com/jaegertracing/jaeger-operator/pull/288
+func randomPortNumber() string {
+	listener, err := net.Listen("tcp", "")
+	require.NoError(t, err)
+	defer listener.Close()
+
+	// listener.Addr().String looks like '[[::]:55807]' - strip out the colons and brackets to get the port number
+	port := strings.FieldsFunc(listener.Addr().String(), func(r rune) bool {
+		return r == ':' || r == '[' || r == ']'
+	})
+
+	return port[0]
+}
+
