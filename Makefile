@@ -158,17 +158,9 @@ undeploy-es-operator:
 es: storage
 	@kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
-.PHONY: undeploy-es
-undeploy-es:
-	@kubectl delete -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 || true
-
 .PHONY: cassandra
 cassandra: storage
 	@kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
-
-.PHONY: undeploy-cassandra
-undeploy-cassandra:
-	@kubectl delete -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 || true
 
 .PHONY: storage
 storage:
@@ -188,12 +180,11 @@ undeploy-kafka:
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 
 .PHONY: clean
-clean:
+clean: undeploy-kafka undeploy-es-operator
 	@rm -f deploy/test/*.yaml 
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} || true
 
 .PHONY: crd
 crd:
