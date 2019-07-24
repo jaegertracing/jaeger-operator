@@ -1,8 +1,8 @@
 package e2e
 
 import (
-	goctx "context"
 	"fmt"
+	goctx "context"
 	"os"
 	"runtime"
 	"strings"
