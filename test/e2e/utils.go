@@ -3,7 +3,6 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
-	"net"
 	"os"
 	"runtime"
 	"strings"
@@ -212,19 +211,6 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) {
 	require.NoError(t, err, "Error undeploying Jaeger")
 	err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
 	require.NoError(t, err)
-}
-
-func randomPortNumber() string {
-	listener, err := net.Listen("tcp","")
-	require.NoError(t, err)
-	defer listener.Close()
-
-	// listener.Addr().String looks like '[[::]:55807]' - strip out the colons and brackets to get the port number
-	port := strings.FieldsFunc(listener.Addr().String(), func(r rune) bool {
-		return r == ':' || r == '[' || r == ']'
-	})
-
-	return port[0]
 }
 
 type resp struct {
