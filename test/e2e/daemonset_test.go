@@ -113,11 +113,13 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for VertX app to start")
 
-	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", []string{"16686"}, fw.KubeConfig)
+	queryPort := randomPortNumber()
+	ports := []string{queryPort + ":16686"}
+	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
-	url := "http://localhost:16686/api/traces?service=order"
+	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
