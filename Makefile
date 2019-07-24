@@ -143,13 +143,32 @@ deploy-es-operator: set-max-map-count
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl set image deployment/elasticsearch-operator elasticsearch-operator=quay.io/openshift/origin-elasticsearch-operator:${ES_OPERATOR_VERSION} -n ${ES_OPERATOR_NAMESPACE}
 
+.PHONY: undeploy-es-operator
+undeploy-es-operator:
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/03-role-bindings.yaml || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/02-role.yaml || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/release-${ES_OPERATOR_VERSION}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
+	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} 2>&1 || true
+
 .PHONY: es
 es: storage
 	@kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
+.PHONY: undeploy-es
+undeploy-es:
+	@kubectl delete -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 || true
+
 .PHONY: cassandra
 cassandra: storage
 	@kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+
+.PHONY: undeploy-cassandra
+undeploy-cassandra:
+	@kubectl delete -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 || true
 
 .PHONY: storage
 storage:
@@ -162,6 +181,11 @@ kafka:
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
 	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+
+.PHONY: undeploy-kafka
+undeploy-kafka:
+	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
+	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 
 .PHONY: clean
 clean:
