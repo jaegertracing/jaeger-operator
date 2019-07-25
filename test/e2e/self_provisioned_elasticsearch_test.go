@@ -4,8 +4,10 @@ package e2e
 
 import (
 	goctx "context"
+	"os"
 	"testing"
 
+	"k8s.io/client-go/kubernetes"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
@@ -95,6 +97,17 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	require.NoError(t, err, "Error running smoketest")
 }
 
+func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
+	expectedEsOperatorImage := os.Getenv("ES_OPERATOR_IMAGE")
+	require.NotEmpty(t, expectedEsOperatorImage, "ES_OPERATOR_IMAGE must be defined")
+	esOperatorNamespace := os.Getenv("ES_OPERATOR_NAMESPACE")
+	require.NotEmpty(t, esOperatorNamespace, "ES_OPERATOR_NAMESPACE must be defined")
+
+	imageName := getElasticSearchOperatorImage(fw.KubeClient, esOperatorNamespace)
+	t.Logf("Using elasticsearch-operator image: %s\n", imageName)
+	require.Equal(t, expectedEsOperatorImage, imageName)
+}
+
 func getJaegerSimpleProd() *v1.Jaeger {
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -114,3 +127,19 @@ func getJaegerSimpleProd() *v1.Jaeger {
 	}
 	return exampleJaeger
 }
+
+func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) (string) {
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("elasticsearch-operator", metav1.GetOptions{IncludeUninitialized: false})
+	require.NoErrorf(t, err, "Did not find elasticsearch-operator in namespace %s\n", namespace)
+
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "elasticsearch-operator" {
+			return container.Image
+		}
+	}
+
+	require.FailNowf(t,"Did not find elasticsearch-operator in namespace %s\n", namespace)
+	return ""
+}
+
