@@ -18,8 +18,12 @@ if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 fi
 
-echo "Building and publishing image ${BUILD_IMAGE}"
-make build docker push BUILD_IMAGE=${BUILD_IMAGE}
+echo "Building image ${BUILD_IMAGE}"
+make build docker BUILD_IMAGE="${BUILD_IMAGE}"
+
+# see https://github.com/jaegertracing/jaeger-operator/issues/555
+echo "Pushing image ${BUILD_IMAGE}"
+docker push "${BUILD_IMAGE}"
 
 if [ "${MAJOR_MINOR}x" != "x" ]; then
     MAJOR_MINOR_IMAGE="${BASE_BUILD_IMAGE}:${MAJOR_MINOR}"
