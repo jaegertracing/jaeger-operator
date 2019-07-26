@@ -26,3 +26,21 @@ if [ "${MAJOR_MINOR}x" != "x" ]; then
     docker tag "${BUILD_IMAGE}" "${MAJOR_MINOR_IMAGE}"
     docker push "${MAJOR_MINOR_IMAGE}"
 fi
+
+## now, push to quay.io
+if [ "${QUAY_PASSWORD}x" != "x" -a "${QUAY_USERNAME}x" != "x" ]; then
+    echo "Performing a 'docker login' for Quay"
+    echo "${QUAY_PASSWORD}" | docker login -u "${QUAY_USERNAME}" quay.io --password-stdin
+
+    echo "Tagging ${BUILD_IMAGE} as quay.io/${BUILD_IMAGE}"
+    docker tag "${BUILD_IMAGE}" "quay.io/${BUILD_IMAGE}"
+
+    echo "Pushing 'quay.io/${BUILD_IMAGE}'"
+    docker push "quay.io/${BUILD_IMAGE}"
+
+    if [ "${MAJOR_MINOR_IMAGE}x" != "x" ]; then
+        echo "Pushing 'quay.io/${MAJOR_MINOR_IMAGE}' to quay.io"
+        docker tag "${MAJOR_MINOR_IMAGE}" "quay.io/${MAJOR_MINOR_IMAGE}"
+        docker push "quay.io/${MAJOR_MINOR_IMAGE}"
+    fi
+fi
