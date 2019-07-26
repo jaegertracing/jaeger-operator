@@ -107,16 +107,15 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	// workaround for https://github.com/kubernetes-sigs/controller-runtime/issues/202
-	// see also: https://github.com/kubernetes-sigs/controller-runtime/pull/212
-	// once there's a version incorporating the PR above, the manual setting of the GKV can be removed
-	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
-	instance.Kind = "Jaeger"
 	if err = r.handleFinalizer(instance.GetDeletionTimestamp() != nil, instance); err != nil || instance.GetDeletionTimestamp() != nil {
 		// if it's marked for deletion or was an error executing finalizer, we need to return a reconcilie result.
 		// otherwise we can continue.
 		return reconcile.Result{}, err
 	}
+
+	// workaround for https://github.com/jaegertracing/jaeger-operator/pull/558
+	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
+	instance.Kind = "Jaeger"
 
 	originalInstance := *instance
 
@@ -282,14 +281,14 @@ func (r *ReconcileJaeger) handleFinalizer(deleted bool, jaeger *v1.Jaeger) error
 				continue
 			}
 		}
-		jaeger.Logger().Info("removing Finalizer")
+		jaeger.Logger().Debug("Removing finalizer")
 		// Set finalizer and update the CR
 		jaeger.SetFinalizers(nil)
 		return r.client.Update(context.Background(), jaeger)
 	}
 	if !containsFinalizer(jaeger, finalizer) {
 		// no marked for deletion and dont' contain finalizer, so we need to add the finalizer to the CR.
-		jaeger.Logger().Info("adding Finalizer")
+		jaeger.Logger().Debug("Adding finalizer")
 		jaeger.SetFinalizers([]string{finalizer})
 		err = r.client.Update(context.Background(), jaeger)
 	}
