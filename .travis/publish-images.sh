@@ -19,7 +19,7 @@ if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
 fi
 
 echo "Building image ${BUILD_IMAGE}"
-make build docker
+make build docker BUILD_IMAGE="${BUILD_IMAGE}"
 
 # see https://github.com/jaegertracing/jaeger-operator/issues/555
 echo "Pushing image ${BUILD_IMAGE}"
