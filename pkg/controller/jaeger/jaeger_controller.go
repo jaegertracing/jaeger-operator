@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,8 +23,11 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
+
+const finalizer = "finalizer.jaegertracing.io"
 
 // Add creates a new Jaeger Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -108,6 +112,11 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	// once there's a version incorporating the PR above, the manual setting of the GKV can be removed
 	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
 	instance.Kind = "Jaeger"
+	if err = r.handleFinalizer(instance.GetDeletionTimestamp() != nil, instance); err != nil || instance.GetDeletionTimestamp() != nil {
+		// if it's marked for deletion or was an error executing finalizer, we need to return a reconcilie result.
+		// otherwise we can continue.
+		return reconcile.Result{}, err
+	}
 
 	originalInstance := *instance
 
@@ -232,4 +241,57 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 	}
 
 	return nil
+}
+
+func containsFinalizer(jaeger *v1.Jaeger, finalizerID string) bool {
+	finalizers := jaeger.GetFinalizers()
+	for _, finalizer := range finalizers {
+		if finalizer == finalizerID {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *ReconcileJaeger) handleFinalizer(deleted bool, jaeger *v1.Jaeger) error {
+	// Is marked for deletion?
+	var err error
+	if deleted {
+		jaeger.Logger().Debug("marked as deleted, executing finalizer")
+		// Execute clean logic
+		opts := client.MatchingLabels(map[string]string{
+			inject.Annotation: jaeger.Name,
+		})
+		depList := &appsv1.DeploymentList{}
+		if err := r.client.List(context.Background(), opts, depList); err != nil {
+			return err
+		}
+		jaeger.Logger().Debug("cleaning sidecars")
+		// Clean deployments.
+		inject.CleanSidecars(depList.Items)
+		for _, d := range depList.Items {
+			jaeger.Logger().WithFields(log.Fields{
+				"deploymentName":      d.Name,
+				"deploymentNamespace": d.Namespace,
+			}).Debug("clean sidecar")
+			if err := r.client.Update(context.Background(), &d); err != nil {
+				jaeger.Logger().WithFields(log.Fields{
+					"deploymentName":      d.Name,
+					"deploymentNamespace": d.Namespace,
+				}).Error(err)
+				continue
+			}
+		}
+		jaeger.Logger().Info("removing Finalizer")
+		// Set finalizer and update the CR
+		jaeger.SetFinalizers(nil)
+		return r.client.Update(context.Background(), jaeger)
+	}
+	if !containsFinalizer(jaeger, finalizer) {
+		// no marked for deletion and dont' contain finalizer, so we need to add the finalizer to the CR.
+		jaeger.Logger().Info("adding Finalizer")
+		jaeger.SetFinalizers([]string{finalizer})
+		err = r.client.Update(context.Background(), jaeger)
+	}
+	return err
 }

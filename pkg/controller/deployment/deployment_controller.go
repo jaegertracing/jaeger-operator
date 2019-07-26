@@ -91,8 +91,9 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		}
 
 		jaeger := inject.Select(instance, pods)
-		if jaeger != nil {
+		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+			// Verified that jaeger instance was found and is not marked for deletion.
 			log.WithFields(log.Fields{
 				"deployment":       instance.Name,
 				"namespace":        instance.Namespace,

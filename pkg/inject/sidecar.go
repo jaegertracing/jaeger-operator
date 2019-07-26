@@ -18,7 +18,6 @@ import (
 var (
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
-
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
 )
@@ -39,6 +38,14 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		decorate(dep)
 		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
+		// Add label to deployment
+		logFields.Debug("adding label to deployment")
+
+		if dep.Labels == nil {
+			dep.Labels = map[string]string{Annotation: jaeger.Name}
+		} else {
+			dep.Labels[Annotation] = jaeger.Name
+		}
 	}
 
 	return dep
@@ -176,4 +183,20 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 		}
 	}
 	return false
+}
+
+// CleanSidecars of  deployments  associated with the jaeger instance.
+func CleanSidecars(deployments []appsv1.Deployment) {
+	for i := 0; i < len(deployments); i++ {
+		dep := &deployments[i]
+		delete(dep.Annotations, Annotation)
+		delete(dep.Labels, Annotation)
+		for c := 0; c < len(dep.Spec.Template.Spec.Containers); c++ {
+			if dep.Spec.Template.Spec.Containers[c].Name == "jaeger-agent" {
+				// delete jaeger-agent container
+				dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers[:c], dep.Spec.Template.Spec.Containers[c+1:]...)
+				break
+			}
+		}
+	}
 }
