@@ -81,20 +81,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	queryPort := randomPortNumber()
-	queryPorts := []string{queryPort + ":16686"}
-	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", queryPorts, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	collectorPort := randomPortNumber()
-	collectorPorts := []string{collectorPort + ":14268"}
-	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", collectorPorts, fw.KubeConfig)
-	defer portForwColl.Close()
-	defer close(closeChanColl)
-
-	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foobar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	SmokeTestWithCollector("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector", "jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
 }
 
 func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {

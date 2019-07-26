@@ -66,15 +66,7 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
 
-	queryPort := randomPortNumber()
-	collectorPort := randomPortNumber()
-	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
-	portForw, closeChan := CreatePortForward(namespace, "with-cassandra", "jaegertracing/all-in-one", ports, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foobar", retryInterval, timeout)
-	require.NoError(t, err, "SmokeTest Failed")
+	SmokeTest("with-cassandra", "jaegertracing/all-in-one", "foobar", retryInterval, timeout)
 }
 
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {
