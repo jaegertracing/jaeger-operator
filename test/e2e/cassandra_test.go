@@ -66,7 +66,7 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
 
-	AllInOneSmokeTest("with-cassandra", "jaegertracing/all-in-one", "foobar", retryInterval, timeout)
+	AllInOneSmokeTest("with-cassandra")
 }
 
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {

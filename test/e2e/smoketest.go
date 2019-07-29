@@ -14,21 +14,27 @@ import (
 )
 
 // This version is for the all-in-one image, where query and collector use the same pod
-func AllInOneSmokeTest(allInOnePodPrefix, allInOnePodImageName, serviceName string, interval, timeout time.Duration) {
+func AllInOneSmokeTest(resourceName string) {
+	allInOneImageName := "jaegertracing/all-in-one"
 	queryPort := randomPortNumber()
 	collectorPort := randomPortNumber()
 	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
-	portForw, closeChan := CreatePortForward(namespace, allInOnePodPrefix, allInOnePodImageName, ports, fw.KubeConfig)
+	portForw, closeChan := CreatePortForward(namespace, resourceName, allInOneImageName, ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
 	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
 	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
 }
 
 // Call this version if query and collector are in separate pods
-func ProductionSmokeTest(queryPodPrefix, queryPodImageName, collectorPodPrefix, collectorPodImageName, serviceName string, interval, timeout time.Duration) {
+func ProductionSmokeTest(resourceName string) {
+	queryPodImageName := "jaegertracing/jaeger-query"
+	collectorPodImageName := "jaegertracing/jaeger-collector"
+	queryPodPrefix := resourceName + "-query"
+	collectorPodPrefix := resourceName + "-collector"
+
 	queryPort := randomPortNumber()
 	queryPorts := []string{queryPort + ":16686"}
 	portForw, closeChan := CreatePortForward(namespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
@@ -43,10 +49,11 @@ func ProductionSmokeTest(queryPodPrefix, queryPodImageName, collectorPodPrefix, 
 
 	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
 	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
 }
 
-func executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interval time.Duration, duration time.Duration) {
+func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
+	serviceName := "smoketest"
 	cfg := config.Configuration{
 		Reporter: &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
 		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
@@ -61,7 +68,7 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, 
 		Finish()
 	closer.Close()
 
-	err = wait.Poll(interval, timeout, func() (done bool, err error) {
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		c := http.Client{Timeout: time.Second}
 		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+"?service="+serviceName, nil)
 		if err != nil {
