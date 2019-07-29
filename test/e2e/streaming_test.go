@@ -69,7 +69,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	SmokeTestWithCollector("simple-streaming-query", "jaegertracing/jaeger-query", "simple-streaming-collector", "jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
+	ProductionSmokeTest("simple-streaming-query", "jaegertracing/jaeger-query", "simple-streaming-collector", "jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
 }
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {

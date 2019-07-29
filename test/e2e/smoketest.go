@@ -14,11 +14,11 @@ import (
 )
 
 // This version is for the all-in-one image, where query and collector use the same pod
-func SmokeTest(queryPodPrefix, queryPodImageName, serviceName string, interval, timeout time.Duration) {
+func AllInOneSmokeTest(allInOnePodPrefix, allInOnePodImageName, serviceName string, interval, timeout time.Duration) {
 	queryPort := randomPortNumber()
 	collectorPort := randomPortNumber()
 	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
-	portForw, closeChan := CreatePortForward(namespace, queryPodPrefix, queryPodImageName, ports, fw.KubeConfig)
+	portForw, closeChan := CreatePortForward(namespace, allInOnePodPrefix, allInOnePodImageName, ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
@@ -28,7 +28,7 @@ func SmokeTest(queryPodPrefix, queryPodImageName, serviceName string, interval, 
 }
 
 // Call this version if query and collector are in separate pods
-func SmokeTestWithCollector(queryPodPrefix, queryPodImageName, collectorPodPrefix, collectorPodImageName, serviceName string, interval, timeout time.Duration) {
+func ProductionSmokeTest(queryPodPrefix, queryPodImageName, collectorPodPrefix, collectorPodImageName, serviceName string, interval, timeout time.Duration) {
 	queryPort := randomPortNumber()
 	queryPorts := []string{queryPort + ":16686"}
 	portForw, closeChan := CreatePortForward(namespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)

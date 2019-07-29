@@ -90,7 +90,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	SmokeTestWithCollector("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector",
+	ProductionSmokeTest("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector",
 		"jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
 }
 
@@ -106,7 +106,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	SmokeTest(name, "jaegertracing/all-in-one", "foo-bar", retryInterval, timeout)
+	AllInOneSmokeTest(name, "jaegertracing/all-in-one", "foo-bar", retryInterval, timeout)
 
 	// Once we've created a span with the smoke test, enable the index cleaer
 	key := types.NamespacedName{Name:name, Namespace:namespace}
