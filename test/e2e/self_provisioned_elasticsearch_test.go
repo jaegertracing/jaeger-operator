@@ -81,7 +81,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	ProductionSmokeTest("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector", "jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
+	ProductionSmokeTest("simple-prod")
 }
 
 func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
