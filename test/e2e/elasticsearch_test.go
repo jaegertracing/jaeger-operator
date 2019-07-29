@@ -90,21 +90,8 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	queryPort := randomPortNumber()
-	queryPorts := []string{queryPort + ":16686"}
-	portForw, closeChan := CreatePortForward(namespace, "simple-prod-query", "jaegertracing/jaeger-query", queryPorts, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	collectorPort := randomPortNumber()
-	collectorPorts := []string{collectorPort + ":14268"}
-	portForwColl, closeChanColl := CreatePortForward(namespace, "simple-prod-collector", "jaegertracing/jaeger-collector", collectorPorts, fw.KubeConfig)
-	require.NoError(t, err, "Error creating port forward")
-
-	defer portForwColl.Close()
-	defer close(closeChanColl)
-	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foobar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	ProductionSmokeTest("simple-prod-query", "jaegertracing/jaeger-query", "simple-prod-collector",
+		"jaegertracing/jaeger-collector", "foobar", retryInterval, timeout)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
@@ -119,15 +106,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	require.NoError(t, err, "Error waiting for deployment")
 
 	// create span, otherwise index cleaner fails - there would not be indices
-	queryPort := randomPortNumber()
-	collectorPort := randomPortNumber()
-	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
-	portForw, closeChan := CreatePortForward(namespace, name, "jaegertracing/all-in-one", ports, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-
-	err = SmokeTest("http://localhost:" + queryPort + "/api/traces", "http://localhost:" + collectorPort + "/api/traces", "foo-bar", retryInterval, timeout)
-	require.NoError(t, err, "Error running smoketest")
+	AllInOneSmokeTest(name, "jaegertracing/all-in-one", "foo-bar", retryInterval, timeout)
 
 	// Once we've created a span with the smoke test, enable the index cleaer
 	key := types.NamespacedName{Name:name, Namespace:namespace}
