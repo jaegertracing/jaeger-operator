@@ -24,7 +24,7 @@ func AllInOneSmokeTest(allInOnePodPrefix, allInOnePodImageName, serviceName stri
 
 	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
 	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
-	ExecuteSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
 }
 
 // Call this version if query and collector are in separate pods
@@ -43,10 +43,10 @@ func ProductionSmokeTest(queryPodPrefix, queryPodImageName, collectorPodPrefix, 
 
 	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
 	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
-	ExecuteSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName, interval, timeout)
 }
 
-func ExecuteSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interval time.Duration, duration time.Duration) {
+func executeSmokeTest(apiTracesEndpoint, collectorEndpoint, serviceName string, interval time.Duration, duration time.Duration) {
 	cfg := config.Configuration{
 		Reporter: &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
 		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
