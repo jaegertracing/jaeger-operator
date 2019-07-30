@@ -12,12 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // AllInOne builds pods for jaegertracing/all-in-one
@@ -27,10 +28,6 @@ type AllInOne struct {
 
 // NewAllInOne builds a new AllInOne struct based on the given spec
 func NewAllInOne(jaeger *v1.Jaeger) *AllInOne {
-	if jaeger.Spec.AllInOne.Image == "" {
-		jaeger.Spec.AllInOne.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), viper.GetString("jaeger-version"))
-	}
-
 	return &AllInOne{jaeger: jaeger}
 }
 
@@ -77,6 +74,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		})
 	}
 
+	image := a.jaeger.Spec.AllInOne.Image
+	if image == "" {
+		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), version.Get().Jaeger)
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -108,7 +110,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: a.jaeger.Spec.AllInOne.Image,
+						Image: image,
 						Name:  "jaeger",
 						Args:  options,
 						Env: []corev1.EnvVar{

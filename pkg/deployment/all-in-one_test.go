@@ -14,19 +14,19 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
 	viper.SetDefault("jaeger-all-in-one-image", "jaegertracing/all-in-one")
 }
 
 func TestDefaultAllInOneImage(t *testing.T) {
 	viper.Set("jaeger-all-in-one-image", "org/custom-all-in-one-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	d := NewAllInOne(v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneDefaultImage"})).Get()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	d := NewAllInOne(jaeger).Get()
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
-	assert.Equal(t, "org/custom-all-in-one-image:123", d.Spec.Template.Spec.Containers[0].Image)
+	assert.Empty(t, jaeger.Spec.AllInOne.Image)
+	assert.Equal(t, "org/custom-all-in-one-image:0.0.0", d.Spec.Template.Spec.Containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{

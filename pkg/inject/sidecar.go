@@ -6,13 +6,15 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 var (
@@ -117,8 +119,13 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
+	image := jaeger.Spec.Agent.Image
+	if image == "" {
+		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), version.Get().Jaeger)
+	}
+
 	return corev1.Container{
-		Image: jaeger.Spec.Agent.Image,
+		Image: image,
 		Name:  "jaeger-agent",
 		Args:  args,
 		Ports: []corev1.ContainerPort{

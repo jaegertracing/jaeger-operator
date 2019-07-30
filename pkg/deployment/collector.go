@@ -13,11 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // Collector builds pods for jaegertracing/jaeger-collector
@@ -35,10 +36,6 @@ func NewCollector(jaeger *v1.Jaeger) *Collector {
 		}
 
 		jaeger.Spec.Collector.Replicas = &replicaSize
-	}
-
-	if jaeger.Spec.Collector.Image == "" {
-		jaeger.Spec.Collector.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &Collector{jaeger: jaeger}
@@ -93,6 +90,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	image := c.jaeger.Spec.Collector.Image
+	if image == "" {
+		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-collector-image"), version.Get().Jaeger)
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -125,7 +127,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: c.jaeger.Spec.Collector.Image,
+						Image: image,
 						Name:  "jaeger-collector",
 						Args:  options,
 						Env: []corev1.EnvVar{

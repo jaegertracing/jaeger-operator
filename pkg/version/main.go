@@ -5,7 +5,6 @@ import (
 	"runtime"
 
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -25,17 +24,10 @@ type Version struct {
 
 // Get returns the Version object with the relevant information
 func Get() Version {
-	var jaeger string
-	if viper.IsSet("jaeger-version") {
-		jaeger = viper.GetString("jaeger-version")
-	} else {
-		jaeger = defaultJaeger
-	}
-
 	return Version{
 		Operator:    version,
 		BuildDate:   buildDate,
-		Jaeger:      jaeger,
+		Jaeger:      DefaultJaeger(),
 		Go:          runtime.Version(),
 		OperatorSdk: sdkVersion.Version,
 	}
@@ -54,5 +46,11 @@ func (v Version) String() string {
 
 // DefaultJaeger returns the default Jaeger to use when no versions are specified via CLI or configuration
 func DefaultJaeger() string {
-	return defaultJaeger
+	if len(defaultJaeger) > 0 {
+		// this should always be set, as it's specified during the build
+		return defaultJaeger
+	}
+
+	// fallback value, useful for tests
+	return "0.0.0"
 }

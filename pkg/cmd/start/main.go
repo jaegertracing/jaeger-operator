@@ -17,6 +17,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
+	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -31,8 +32,7 @@ func NewStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("jaeger-version", version.DefaultJaeger(), "The Jaeger version to use")
-	viper.BindPFlag("jaeger-version", cmd.Flags().Lookup("jaeger-version"))
+	cmd.Flags().String("jaeger-version", version.DefaultJaeger(), "Deprecated: the Jaeger version is now managed entirely by the operator. This option is currently no-op.")
 
 	cmd.Flags().String("jaeger-agent-image", "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
 	viper.BindPFlag("jaeger-agent-image", cmd.Flags().Lookup("jaeger-agent-image"))
@@ -96,6 +96,7 @@ func start(cmd *cobra.Command, args []string) {
 		"version":         runtime.Version(),
 		"operator-sdk":    version.Get().OperatorSdk,
 		"jaeger-operator": version.Get().Operator,
+		"jaeger":          version.Get().Jaeger,
 	}).Info("Versions")
 
 	ctx := context.Background()
@@ -127,6 +128,11 @@ func start(cmd *cobra.Command, args []string) {
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Fatal(err)
+	}
+
+	// upgrades all the instances managed by this operator
+	if err := upgrade.ManagedInstances(mgr.GetClient()); err != nil {
+		log.WithError(err).Warn("failed to upgrade managed instances")
 	}
 
 	// Setup all Controllers

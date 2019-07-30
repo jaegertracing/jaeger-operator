@@ -131,10 +131,12 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	logFields := instance.Logger().WithField("execution", execution)
 
-	if err := r.apply(*instance, str); err != nil {
+	updated, err := r.apply(*instance, str)
+	if err != nil {
 		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, err
 	}
+	instance = &updated
 
 	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
@@ -175,16 +177,21 @@ func defaultStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strate
 	return strategy.For(context.Background(), instance, secrets)
 }
 
-func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
+func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
+	jaeger, err := r.applyUpgrades(jaeger)
+	if err != nil {
+		return jaeger, err
+	}
+
 	// secrets have to be created before ES - they are mounted to the ES pod
 	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	elasticsearches := str.Elasticsearches()
 	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchTrue) {
 		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
-			return err
+			return jaeger, err
 		}
 	} else if len(elasticsearches) > 0 {
 		log.WithFields(log.Fields{
@@ -195,51 +202,51 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) error {
 
 	// storage dependencies have to be deployed after ES is ready
 	if err := r.handleDependencies(str); err != nil {
-		return errors.Wrap(err, "failed to handler dependencies")
+		return jaeger, errors.Wrap(err, "failed to handler dependencies")
 	}
 
 	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if err := r.applyClusterRoleBindingBindings(jaeger, str.ClusterRoleBindings()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if err := r.applyCronJobs(jaeger, str.CronJobs()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if err := r.applyDaemonSets(jaeger, str.DaemonSets()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	// seems counter intuitive to have services created *before* deployments,
 	// but some resources used by deployments are created by services, such as TLS certs
 	// for the oauth proxy, if one is used
 	if err := r.applyServices(jaeger, str.Services()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
-		return err
+		return jaeger, err
 	}
 
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformOpenShift) {
 		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
-			return err
+			return jaeger, err
 		}
 	} else {
 		if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
-			return err
+			return jaeger, err
 		}
 	}
 
-	return nil
+	return jaeger, nil
 }
 
 func containsFinalizer(jaeger *v1.Jaeger, finalizerID string) bool {

@@ -15,7 +15,6 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-version", "1.6")
 	viper.SetDefault("jaeger-query-image", "jaegertracing/all-in-one")
 }
 
@@ -78,15 +77,16 @@ func TestQueryReplicaWinsOverSize(t *testing.T) {
 
 func TestDefaultQueryImage(t *testing.T) {
 	viper.Set("jaeger-query-image", "org/custom-query-image")
-	viper.Set("jaeger-version", "123")
 	defer viper.Reset()
 
-	query := NewQuery(v1.NewJaeger(types.NamespacedName{Name: "TestQueryImage"}))
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryImage"})
+	query := NewQuery(jaeger)
 	dep := query.Get()
 	containers := dep.Spec.Template.Spec.Containers
 
 	assert.Len(t, containers, 1)
-	assert.Equal(t, "org/custom-query-image:123", containers[0].Image)
+	assert.Empty(t, jaeger.Spec.Query.Image)
+	assert.Equal(t, "org/custom-query-image:0.0.0", containers[0].Image)
 }
 
 func TestQueryAnnotations(t *testing.T) {

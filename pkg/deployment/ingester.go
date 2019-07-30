@@ -13,9 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // Ingester builds pods for jaegertracing/jaeger-ingester
@@ -33,10 +34,6 @@ func NewIngester(jaeger *v1.Jaeger) *Ingester {
 		}
 
 		jaeger.Spec.Ingester.Replicas = &replicaSize
-	}
-
-	if jaeger.Spec.Ingester.Image == "" {
-		jaeger.Spec.Ingester.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-ingester-image"), viper.GetString("jaeger-version"))
 	}
 
 	return &Ingester{jaeger: jaeger}
@@ -87,6 +84,11 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	image := i.jaeger.Spec.Ingester.Image
+	if image == "" {
+		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-ingester-image"), version.Get().Jaeger)
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -118,7 +120,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: i.jaeger.Spec.Ingester.Image,
+						Image: image,
 						Name:  "jaeger-ingester",
 						Args:  options,
 						Env: []corev1.EnvVar{

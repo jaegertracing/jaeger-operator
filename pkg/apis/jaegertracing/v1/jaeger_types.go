@@ -89,7 +89,7 @@ type JaegerSpec struct {
 // JaegerStatus defines the observed state of Jaeger
 // +k8s:openapi-gen=true
 type JaegerStatus struct {
-	// Fill me
+	Version string `json:"version"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
