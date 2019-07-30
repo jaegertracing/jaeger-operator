@@ -6,6 +6,7 @@ import (
 	"time"
 
 	osv1 "github.com/openshift/api/route/v1"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -166,6 +167,61 @@ func TestAddOnlyOneFinalizer(t *testing.T) {
 	persisted := &v1.Jaeger{}
 	cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.Equal(t, len(persisted.Finalizers), 1)
+}
+
+func TestSetOwnerOnNewInstance(t *testing.T) {
+	// prepare
+	viper.Set(v1.ConfigIdentity, "my-identity")
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+	jaeger := v1.NewJaeger(nsn)
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	cl := fake.NewFakeClient(jaeger)
+	r := &ReconcileJaeger{client: cl, scheme: s}
+	req := reconcile.Request{NamespacedName: nsn}
+
+	// test
+	_, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	persisted := &v1.Jaeger{}
+	cl.Get(context.Background(), req.NamespacedName, persisted)
+	assert.NotNil(t, persisted.Labels)
+	assert.Equal(t, "my-identity", persisted.Labels["app.kubernetes.io/managed-by"])
+}
+
+func TestSkipOnNonOwnedCR(t *testing.T) {
+	// prepare
+	viper.Set(v1.ConfigIdentity, "my-identity")
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+	jaeger := v1.NewJaeger(nsn)
+	jaeger.Labels = map[string]string{
+		"app.kubernetes.io/managed-by": "another-identity",
+	}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	cl := fake.NewFakeClient(jaeger)
+	r := &ReconcileJaeger{client: cl, scheme: s}
+	req := reconcile.Request{NamespacedName: nsn}
+
+	// test
+	_, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	persisted := &v1.Jaeger{}
+	cl.Get(context.Background(), req.NamespacedName, persisted)
+	assert.NotNil(t, persisted.Labels)
+
+	// the only way to reliably test this is to verify that the operator didn't attempt to set the ownership field
+	assert.Equal(t, "another-identity", persisted.Labels["app.kubernetes.io/managed-by"])
 }
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {

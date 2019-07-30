@@ -102,9 +102,40 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
+	logFields := instance.Logger().WithField("execution", execution)
+
 	if err := validate(instance); err != nil {
 		instance.Logger().WithError(err).Error("Failed to validate")
 		return reconcile.Result{}, err
+	}
+
+	// note: we need a namespace-scoped owner identity, which makes the `OwnerReference`
+	// not suitable for this purpose
+	identity := viper.GetString(v1.ConfigIdentity)
+	if val, found := instance.Labels[v1.LabelManagedBy]; found {
+		if val != identity {
+			// if we are not the ones managing this instance, skip the reconciliation
+			log.WithFields(log.Fields{
+				"our-identity":   identity,
+				"owner-identity": val,
+			}).Debug("skipping CR as we are not owners")
+			return reconcile.Result{}, nil
+		}
+	} else {
+		if instance.Labels == nil {
+			instance.Labels = map[string]string{}
+		}
+
+		instance.Labels[v1.LabelManagedBy] = identity
+		if err := r.client.Update(context.Background(), instance); err != nil {
+			logFields.WithField(
+				"operator-identity", identity,
+			).WithError(err).Error("failed to set this operator as the manager of the instance")
+			return reconcile.Result{}, err
+		}
+
+		logFields.WithField("operator-identity", identity).Debug("configured this operator as the owner of the CR")
+		return reconcile.Result{}, nil
 	}
 
 	if err = r.handleFinalizer(instance.GetDeletionTimestamp() != nil, instance); err != nil || instance.GetDeletionTimestamp() != nil {
@@ -128,8 +159,6 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 	str := r.runStrategyChooser(instance, list.Items)
-
-	logFields := instance.Logger().WithField("execution", execution)
 
 	updated, err := r.apply(*instance, str)
 	if err != nil {
