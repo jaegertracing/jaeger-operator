@@ -9,7 +9,7 @@ fi
 BASE_BUILD_IMAGE=${BASE_BUILD_IMAGE:-"jaegertracing/jaeger-operator"}
 OPERATOR_VERSION=${OPERATOR_VERSION:-$(git describe --tags)}
 OPERATOR_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d\.]+)")
-JAEGER_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d]+\.[\d]+)")
+JAEGER_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d]+\.[\d]+\.[\d]+)" | head -n 1)
 TAG=${TAG:-"v${OPERATOR_VERSION}"}
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
 CREATED_AT=$(date -u -Isecond)
