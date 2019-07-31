@@ -199,7 +199,10 @@ type JaegerIngressOpenShiftSpec struct {
 	SAR string `json:"sar,omitempty"`
 
 	// +optional
-	DelegateURLs string `json:"delegate-urls,omitempty"`
+	DelegateURLs string `json:"delegateUrls,omitempty"`
+
+	// +optional
+	HtpasswdFile string `json:"htpasswdFile,omitempty"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
