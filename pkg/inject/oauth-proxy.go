@@ -44,6 +44,19 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		"--upstream=http://localhost:16686",
 	}
 
+	volumeMounts := []corev1.VolumeMount{{
+		MountPath: "/etc/tls/private",
+		Name:      service.GetTLSSecretNameForQueryService(jaeger),
+	}}
+
+	if len(jaeger.Spec.Ingress.OpenShift.HtpasswdFile) > 0 {
+		args = append(args, fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Ingress.OpenShift.HtpasswdFile))
+		args = append(args, "--display-htpasswd-form=false")
+
+		// we can only get VolumeMounts from the top-level node
+		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
+	}
+
 	if len(jaeger.Spec.Ingress.OpenShift.SAR) > 0 {
 		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.OpenShift.SAR))
 	}
@@ -57,13 +70,10 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	return corev1.Container{
-		Image: viper.GetString("openshift-oauth-proxy-image"),
-		Name:  "oauth-proxy",
-		Args:  args,
-		VolumeMounts: []corev1.VolumeMount{{
-			MountPath: "/etc/tls/private",
-			Name:      service.GetTLSSecretNameForQueryService(jaeger),
-		}},
+		Image:        viper.GetString("openshift-oauth-proxy-image"),
+		Name:         "oauth-proxy",
+		Args:         args,
+		VolumeMounts: volumeMounts,
 		Ports: []corev1.ContainerPort{
 			{
 				ContainerPort: 8443,
