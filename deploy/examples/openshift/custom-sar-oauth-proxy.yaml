@@ -6,4 +6,4 @@ spec:
   ingress:
     openshift:
       sar: '{"namespace": "default", "resource": "pods", "verb": "get"}'
-      delegate-urls: '{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}'
+      delegateUrls: '{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}'
