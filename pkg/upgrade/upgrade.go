@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -13,12 +14,27 @@ import (
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
 func ManagedInstances(c client.Client) error {
 	list := &v1.JaegerList{}
-	opts := &client.ListOptions{}
+	identity := viper.GetString(v1.ConfigIdentity)
+	opts := client.MatchingLabels(map[string]string{
+		v1.LabelManagedBy: identity,
+	})
 	if err := c.List(context.Background(), opts, list); err != nil {
 		return err
 	}
 
 	for _, j := range list.Items {
+		// this check shouldn't have been necessary, as I'd expect the list of items to come filtered out already
+		// but apparently, at least the fake client used in the unit tests doesn't filter it out... so, let's double-check
+		// that we indeed own the item
+		owner := j.Labels[v1.LabelManagedBy]
+		if owner != identity {
+			log.WithFields(log.Fields{
+				"our-identity":   identity,
+				"owner-identity": owner,
+			}).Debug("skipping CR upgrade as we are not owners")
+			continue
+		}
+
 		jaeger, err := ManagedInstance(c, j)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance

@@ -122,7 +122,7 @@ e2e-tests-streaming: prepare-e2e-tests es kafka
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
-	@bash -c 'trap "exit 0" INT; OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start ${CLI_FLAGS}'
+	@bash -c 'trap "exit 0" INT; POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start ${CLI_FLAGS}'
 
 .PHONY: run-debug
 run-debug: run

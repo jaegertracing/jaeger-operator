@@ -3,6 +3,7 @@ package start
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -16,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
 	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -90,12 +92,26 @@ func start(cmd *cobra.Command, args []string) {
 		log.SetLevel(level)
 	}
 
+	podNamespace, found := os.LookupEnv("POD_NAMESPACE")
+	if !found {
+		log.Warn("the POD_NAMESPACE env var isn't set, this operator's identity might clash with another operator's instance")
+	}
+
+	operatorName, found := os.LookupEnv("OPERATOR_NAME")
+	if !found {
+		log.Warn("the OPERATOR_NAME env var isn't set, this operator's identity might clash with another operator's instance")
+	}
+
+	identity := fmt.Sprintf("%s.%s", podNamespace, operatorName)
+	viper.Set(v1.ConfigIdentity, identity)
+
 	log.WithFields(log.Fields{
 		"os":              runtime.GOOS,
 		"arch":            runtime.GOARCH,
 		"version":         runtime.Version(),
 		"operator-sdk":    version.Get().OperatorSdk,
 		"jaeger-operator": version.Get().Operator,
+		"identity":        identity,
 		"jaeger":          version.Get().Jaeger,
 	}).Info("Versions")
 

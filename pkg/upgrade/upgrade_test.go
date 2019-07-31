@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,6 +19,34 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	nsn := types.NamespacedName{Name: "my-instance"}
 
 	existing := v1.NewJaeger(nsn)
+	existing.Status.Version = "1.11.0" // this is the first version we have an upgrade function
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+
+	// test
+	assert.NoError(t, ManagedInstances(cl))
+
+	// verify
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, latest.v, persisted.Status.Version)
+}
+
+func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
+	// prepare
+	viper.Set(v1.ConfigIdentity, "my-identity")
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+
+	existing := v1.NewJaeger(nsn)
+	existing.Labels = map[string]string{
+		v1.LabelManagedBy: viper.GetString(v1.ConfigIdentity),
+	}
 	existing.Status.Version = "1.11.0" // this is the first version we have an upgrade function
 	objs := []runtime.Object{existing}
 
@@ -55,4 +84,32 @@ func TestUnknownVersion(t *testing.T) {
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.10.0", persisted.Status.Version)
+}
+
+func TestSkipForNonOwnedInstances(t *testing.T) {
+	// prepare
+	viper.Set(v1.ConfigIdentity, "the-identity")
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+
+	existing := v1.NewJaeger(nsn)
+	existing.Labels = map[string]string{
+		v1.LabelManagedBy: "some-other-identity",
+	}
+	existing.Status.Version = "1.11.0"
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+
+	// test
+	assert.NoError(t, ManagedInstances(cl))
+
+	// verify
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
