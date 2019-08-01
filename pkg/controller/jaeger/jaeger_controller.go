@@ -112,7 +112,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	// note: we need a namespace-scoped owner identity, which makes the `OwnerReference`
 	// not suitable for this purpose
 	identity := viper.GetString(v1.ConfigIdentity)
-	if val, found := instance.Labels[v1.LabelManagedBy]; found {
+	if val, found := instance.Labels[v1.LabelOperatedBy]; found {
 		if val != identity {
 			// if we are not the ones managing this instance, skip the reconciliation
 			log.WithFields(log.Fields{
@@ -126,7 +126,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			instance.Labels = map[string]string{}
 		}
 
-		instance.Labels[v1.LabelManagedBy] = identity
+		instance.Labels[v1.LabelOperatedBy] = identity
 		if err := r.client.Update(context.Background(), instance); err != nil {
 			logFields.WithField(
 				"operator-identity", identity,

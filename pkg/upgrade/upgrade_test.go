@@ -45,7 +45,7 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 
 	existing := v1.NewJaeger(nsn)
 	existing.Labels = map[string]string{
-		v1.LabelManagedBy: viper.GetString(v1.ConfigIdentity),
+		v1.LabelOperatedBy: viper.GetString(v1.ConfigIdentity),
 	}
 	existing.Status.Version = "1.11.0" // this is the first version we have an upgrade function
 	objs := []runtime.Object{existing}
@@ -95,7 +95,7 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 
 	existing := v1.NewJaeger(nsn)
 	existing.Labels = map[string]string{
-		v1.LabelManagedBy: "some-other-identity",
+		v1.LabelOperatedBy: "some-other-identity",
 	}
 	existing.Status.Version = "1.11.0"
 	objs := []runtime.Object{existing}
