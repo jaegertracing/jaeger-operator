@@ -319,15 +319,9 @@ func TestCleanSidecars(t *testing.T) {
 	}
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := Sidecar(jaeger, dep(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
-	dep2 := Sidecar(jaeger, dep(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
-	dep3 := Sidecar(jaeger, dep(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
-	deployments := []appsv1.Deployment{*dep1, *dep2, *dep3}
-	CleanSidecars(deployments)
-	assert.Equal(t, len(deployments[0].Spec.Template.Spec.Containers), 1)
-	assert.Equal(t, len(deployments[0].Spec.Template.Spec.Containers), 1)
-	assert.Equal(t, len(deployments[0].Spec.Template.Spec.Containers), 1)
-	assert.NotContains(t, deployments[0].Labels, Annotation)
-	assert.NotContains(t, deployments[0].Annotations, Annotation)
+	CleanSidecar(dep1)
+	assert.Equal(t, len(dep1.Spec.Template.Spec.Containers), 1)
+
 }
 
 func TestSidecarWithLabel(t *testing.T) {
@@ -338,13 +332,13 @@ func TestSidecarWithLabel(t *testing.T) {
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep1 = Sidecar(jaeger, dep1)
-	assert.Equal(t, dep1.Labels[Annotation], "TestSidecarWithLabel")
+	assert.Equal(t, dep1.Labels[Label], "TestSidecarWithLabel")
 	dep2 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep2.Labels = map[string]string{"anotherLabel": "anotherValue"}
 	dep2 = Sidecar(jaeger, dep2)
 	assert.Equal(t, len(dep2.Labels), 2)
 	assert.Equal(t, dep2.Labels["anotherLabel"], "anotherValue")
-	assert.Equal(t, dep2.Labels[Annotation], jaeger.Name)
+	assert.Equal(t, dep2.Labels[Label], jaeger.Name)
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {

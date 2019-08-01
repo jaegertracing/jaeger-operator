@@ -10,7 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -20,6 +20,8 @@ import (
 var (
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
+	// Label is the label name the operator put on injected deployments.
+	Label = "sidecar.jaegertracing.io/injected"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
 )
@@ -44,9 +46,9 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		logFields.Debug("adding label to deployment")
 
 		if dep.Labels == nil {
-			dep.Labels = map[string]string{Annotation: jaeger.Name}
+			dep.Labels = map[string]string{Label: jaeger.Name}
 		} else {
-			dep.Labels[Annotation] = jaeger.Name
+			dep.Labels[Label] = jaeger.Name
 		}
 	}
 
@@ -192,18 +194,14 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 	return false
 }
 
-// CleanSidecars of  deployments  associated with the jaeger instance.
-func CleanSidecars(deployments []appsv1.Deployment) {
-	for i := 0; i < len(deployments); i++ {
-		dep := &deployments[i]
-		delete(dep.Annotations, Annotation)
-		delete(dep.Labels, Annotation)
-		for c := 0; c < len(dep.Spec.Template.Spec.Containers); c++ {
-			if dep.Spec.Template.Spec.Containers[c].Name == "jaeger-agent" {
-				// delete jaeger-agent container
-				dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers[:c], dep.Spec.Template.Spec.Containers[c+1:]...)
-				break
-			}
+// CleanSidecar of  deployments  associated with the jaeger instance.
+func CleanSidecar(deployment *appsv1.Deployment) {
+	delete(deployment.Labels, Label)
+	for c := 0; c < len(deployment.Spec.Template.Spec.Containers); c++ {
+		if deployment.Spec.Template.Spec.Containers[c].Name == "jaeger-agent" {
+			// delete jaeger-agent container
+			deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers[:c], deployment.Spec.Template.Spec.Containers[c+1:]...)
+			break
 		}
 	}
 }
