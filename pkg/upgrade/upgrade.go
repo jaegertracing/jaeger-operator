@@ -16,7 +16,7 @@ func ManagedInstances(c client.Client) error {
 	list := &v1.JaegerList{}
 	identity := viper.GetString(v1.ConfigIdentity)
 	opts := client.MatchingLabels(map[string]string{
-		v1.LabelManagedBy: identity,
+		v1.LabelOperatedBy: identity,
 	})
 	if err := c.List(context.Background(), opts, list); err != nil {
 		return err
@@ -26,7 +26,7 @@ func ManagedInstances(c client.Client) error {
 		// this check shouldn't have been necessary, as I'd expect the list of items to come filtered out already
 		// but apparently, at least the fake client used in the unit tests doesn't filter it out... so, let's double-check
 		// that we indeed own the item
-		owner := j.Labels[v1.LabelManagedBy]
+		owner := j.Labels[v1.LabelOperatedBy]
 		if owner != identity {
 			log.WithFields(log.Fields{
 				"our-identity":   identity,

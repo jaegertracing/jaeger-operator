@@ -13,7 +13,7 @@ func NewJaeger(nsn types.NamespacedName) *Jaeger {
 			Name:      nsn.Name,
 			Namespace: nsn.Namespace,
 			Labels: map[string]string{
-				LabelManagedBy: viper.GetString(ConfigIdentity),
+				LabelOperatedBy: viper.GetString(ConfigIdentity),
 			},
 		},
 	}

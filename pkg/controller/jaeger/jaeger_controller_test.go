@@ -191,7 +191,7 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 	persisted := &v1.Jaeger{}
 	cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotNil(t, persisted.Labels)
-	assert.Equal(t, "my-identity", persisted.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "my-identity", persisted.Labels[v1.LabelOperatedBy])
 }
 
 func TestSkipOnNonOwnedCR(t *testing.T) {
@@ -202,7 +202,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	nsn := types.NamespacedName{Name: "my-instance"}
 	jaeger := v1.NewJaeger(nsn)
 	jaeger.Labels = map[string]string{
-		"app.kubernetes.io/managed-by": "another-identity",
+		v1.LabelOperatedBy: "another-identity",
 	}
 
 	s := scheme.Scheme
@@ -221,7 +221,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	assert.NotNil(t, persisted.Labels)
 
 	// the only way to reliably test this is to verify that the operator didn't attempt to set the ownership field
-	assert.Equal(t, "another-identity", persisted.Labels["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "another-identity", persisted.Labels[v1.LabelOperatedBy])
 }
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
