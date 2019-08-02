@@ -47,6 +47,7 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 				{
 					Name: "zk-compact-trft",
 					Port: 5775,
+					Protocol: corev1.ProtocolUDP,
 				},
 				{
 					Name: "config-rest",
@@ -55,10 +56,12 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 				{
 					Name: "jg-compact-trft",
 					Port: 6831,
+					Protocol: corev1.ProtocolUDP,
 				},
 				{
 					Name: "jg-binary-trft",
 					Port: 6832,
+					Protocol: corev1.ProtocolUDP,
 				},
 			},
 		},
