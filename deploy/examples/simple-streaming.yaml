@@ -1,5 +1,5 @@
 # setup an elasticsearch with `make es`
-# setup a kafka platform using https://strimzi.io with quickstart instructions
+# setup a kafka platform with `make kafka`  See https://strimzi.io for more information
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
@@ -24,4 +24,5 @@ spec:
     type: elasticsearch
     options:
       es:
-        server-urls: http://elasticsearch:9200
+        # Note: This assumes elasticsearch is running in the "default" namespace.
+        server-urls: http://elasticsearch.default.svc:9200

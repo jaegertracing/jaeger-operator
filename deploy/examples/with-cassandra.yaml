@@ -1,14 +1,16 @@
+# setup a cassandra instance with `make cassandra`
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: with-cassandra
 spec:
-  strategy: all-in-one
+  strategy: allInOne
   storage:
     type: cassandra
     options:
       cassandra:
-        servers: cassandra
+        # Note: This assumes cassandra is running in the "default" namespace.
+        servers: cassandra.default.svc
         keyspace: jaeger_v1_datacenter3
     cassandraCreateSchema:
       datacenter: "datacenter3"
