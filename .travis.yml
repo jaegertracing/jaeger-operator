@@ -33,7 +33,7 @@ jobs:
       - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
       name: "Build and unit test"
       install:
-      - make install-sdk install-tools
+      - "travis_retry ./.travis/install.sh"
       script:
       - "./.travis/script.sh"
       after_success:
