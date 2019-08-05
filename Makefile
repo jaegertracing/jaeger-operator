@@ -224,3 +224,6 @@ install-sdk:
 install-tools:
 	@go get -u golang.org/x/lint/golint
 	@go get github.com/securego/gosec/cmd/gosec/...
+
+.PHONY: install
+install: install-sdk install-tools vendor
