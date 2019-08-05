@@ -69,7 +69,9 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
-
+	if q.jaeger.Spec.Query.TokenPropagation {
+		options = append(options, "--query.bearer-token-propagation=true")
+	}
 	configmap.Update(q.jaeger, commonSpec, &options)
 	var envFromSource []corev1.EnvFromSource
 	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
@@ -193,4 +195,9 @@ func (q *Query) labels() map[string]string {
 
 func (q *Query) name() string {
 	return fmt.Sprintf("%s-query", q.jaeger.Name)
+}
+
+//TokenPropagation returns true is token propagation is enabled on query service.
+func (q *Query) TokenPropagation() bool {
+	return q.jaeger.Spec.Query.TokenPropagation
 }

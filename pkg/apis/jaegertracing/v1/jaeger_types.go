@@ -197,6 +197,9 @@ type JaegerQuerySpec struct {
 	Options Options `json:"options,omitempty"`
 
 	// +optional
+	TokenPropagation bool `json:"tokenPropagation,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 

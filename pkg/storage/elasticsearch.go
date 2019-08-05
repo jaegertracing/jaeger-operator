@@ -39,7 +39,7 @@ type ElasticsearchDeployment struct {
 }
 
 // InjectStorageConfiguration changes the given spec to include ES-related command line options
-func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec) {
+func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec, tlsAuthentication bool) {
 	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
@@ -52,10 +52,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 	if len(p.Containers) > 0 {
 		p.Containers[0].Args = append(p.Containers[0].Args,
 			"--es.server-urls="+elasticsearchURL,
-			"--es.tls=true",
+			"--es.tls="+strconv.FormatBool(tlsAuthentication),
 			"--es.tls.ca="+caPath,
 			"--es.tls.cert="+certPath,
 			"--es.tls.key="+keyPath)
+
 		if util.FindItem("--es.timeout", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, "--es.timeout=15s")
 		}

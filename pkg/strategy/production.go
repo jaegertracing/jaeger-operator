@@ -24,7 +24,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
+func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
@@ -115,6 +115,25 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 		for i := range esRollover {
 			jobs = append(jobs, &esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+
+		err := es.CreateCerts()
+		if err != nil {
+			jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+		} else {
+			c.secrets = es.ExtractSecrets()
+			c.elasticsearches = append(c.elasticsearches, *es.Elasticsearch())
+
+			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec, !query.TokenPropagation())
+			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec, true)
+			if indexCleaner != nil {
+				es.InjectSecretsConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+			}
+			for i := range esRollover {
+				es.InjectSecretsConfiguration(&esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+			}
+			for i := range c.dependencies {
+				es.InjectSecretsConfiguration(&c.dependencies[i].Spec.Template.Spec)
+			}
 		}
 		autoProvisionElasticsearch(&c, jaeger, jobs, []*appsv1.Deployment{queryDep, cDep})
 	}
