@@ -42,6 +42,7 @@ jobs:
     - stage: build
       name: "Run e2e elasticsearch tests"
       install:
+      - "travis_retry make vendor"
       - "./.travis/setupMinikube.sh"
       script:
       - "./.travis/rune2eTests.sh"
@@ -51,6 +52,7 @@ jobs:
     - stage: build
       name: "Run e2e smoke tests"
       install:
+      - "travis_retry make vendor"
       - "./.travis/setupMinikube.sh"
       script:
       - "./.travis/rune2eTests.sh"
@@ -60,6 +62,7 @@ jobs:
     - stage: build
       name: "Run e2e cassandra tests"
       install:
+      - "travis_retry make vendor"
       - "./.travis/setupMinikube.sh"
       script:
       - "./.travis/rune2eTests.sh"
@@ -69,6 +72,7 @@ jobs:
     - stage: build
       name: "Run e2e streaming tests"
       install:
+      - "travis_retry make vendor"
       - "./.travis/setupMinikube.sh"
       script:
       - "./.travis/rune2eTests.sh"
@@ -78,6 +82,7 @@ jobs:
     - stage: build
       name: "Run e2e es-self-provisioned tests"
       install:
+      - "travis_retry make vendor"
       - "./.travis/setupOpenShift.sh"
       script:
       - "./.travis/rune2eTests.sh"
