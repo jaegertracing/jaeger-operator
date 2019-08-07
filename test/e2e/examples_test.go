@@ -3,16 +3,17 @@
 package e2e
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"os/exec"
+	"strings"
+	"testing"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"os/exec"
-	"strings"
-	"testing"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type ExamplesTestSuite struct {
