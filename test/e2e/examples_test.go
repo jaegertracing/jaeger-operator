@@ -178,9 +178,9 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	require.NoError(t, err)
 
 	vertxPort := intstr.IntOrString{IntVal: 8080}
-	livelinessHandler := &corev1.HTTPGetAction{Path: "/", Port: vertxPort, Scheme:corev1.URISchemeHTTP}
+	livelinessHandler := &corev1.HTTPGetAction{Path: "/", Port: vertxPort, Scheme: corev1.URISchemeHTTP}
 	handler := &corev1.Handler{HTTPGet: livelinessHandler}
-	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds:1, FailureThreshold:3, PeriodSeconds:10, SuccessThreshold:1, TimeoutSeconds:1}
+	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds: 1, FailureThreshold: 3, PeriodSeconds: 10, SuccessThreshold: 1, TimeoutSeconds: 1}
 
 	containers := vertxDeployment.Spec.Template.Spec.Containers
 	for index, container := range containers {
@@ -216,7 +216,6 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	})
 	require.NoError(t, err, "SmokeTest failed")
 }
-
 
 func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", filename)
