@@ -5,15 +5,15 @@ package e2e
 import (
 	goctx "context"
 	"encoding/json"
-	"golang.org/x/net/context"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
 	"os/exec"
 	"strings"
 	"testing"
 
+	"golang.org/x/net/context"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
