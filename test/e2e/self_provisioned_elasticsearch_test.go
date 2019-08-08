@@ -113,7 +113,7 @@ func getJaegerSimpleProd() *v1.Jaeger {
 				Type: "elasticsearch",
 				Elasticsearch: v1.ElasticsearchSpec{
 					NodeCount:        1,
-					Resources:        corev1.ResourceRequirements{
+					Resources:        &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 						Requests:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},

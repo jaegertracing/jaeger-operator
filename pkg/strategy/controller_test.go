@@ -237,7 +237,7 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 func TestNormalizeElasticsearch(t *testing.T) {
 	defResources := &corev1.ResourceRequirements{
 		Limits:   corev1.ResourceList{corev1.ResourceMemory: defaultEsMemory},
-		Requests: corev1.ResourceList{corev1.ResourceMemory: defaultEsMemory, corev1.ResourceCPU: defaultEsCpuRequest},
+		Requests: corev1.ResourceList{corev1.ResourceMemory: defaultEsMemory, corev1.ResourceCPU: defaultEsCPURequest},
 	}
 	tests := []struct {
 		underTest v1.ElasticsearchSpec

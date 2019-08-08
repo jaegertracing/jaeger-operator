@@ -22,7 +22,7 @@ const (
 
 var (
 	defaultEsMemory     = resource.MustParse("16Gi")
-	defaultEsCpuRequest = resource.MustParse("1")
+	defaultEsCPURequest = resource.MustParse("1")
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
@@ -152,7 +152,7 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 			},
 			Requests: corev1.ResourceList{
 				corev1.ResourceMemory: defaultEsMemory,
-				corev1.ResourceCPU:    defaultEsCpuRequest,
+				corev1.ResourceCPU:    defaultEsCPURequest,
 			},
 		}
 	}
