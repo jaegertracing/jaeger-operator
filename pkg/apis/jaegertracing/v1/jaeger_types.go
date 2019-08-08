@@ -313,7 +313,7 @@ type ElasticsearchSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
-	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 
 	// +optional
 	NodeCount int32 `json:"nodeCount,omitempty"`

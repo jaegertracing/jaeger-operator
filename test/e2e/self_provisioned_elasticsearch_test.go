@@ -7,13 +7,14 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/client-go/kubernetes"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -109,6 +110,13 @@ func getJaegerSimpleProd() *v1.Jaeger {
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
+				Elasticsearch: v1.ElasticsearchSpec{
+					NodeCount:        1,
+					Resources:        corev1.ResourceRequirements{
+						Limits:   corev1.ResourceList{corev1.ResourceMemory: "1Gi"},
+						Requests:   corev1.ResourceList{corev1.ResourceMemory: "1Gi", corev1.ResourceCPU: "1"},
+					},
+				},
 			},
 		},
 	}

@@ -235,18 +235,23 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 }
 
 func TestNormalizeElasticsearch(t *testing.T) {
+	defResources := &corev1.ResourceRequirements{
+		Limits:   corev1.ResourceList{corev1.ResourceMemory: defaultEsMemory},
+		Requests: corev1.ResourceList{corev1.ResourceMemory: defaultEsMemory, corev1.ResourceCPU: defaultEsCpuRequest},
+	}
 	tests := []struct {
 		underTest v1.ElasticsearchSpec
 		expected  v1.ElasticsearchSpec
 	}{
 		{underTest: v1.ElasticsearchSpec{},
-			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy"}},
-		{underTest: v1.ElasticsearchSpec{NodeCount: 3},
-			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "SingleRedundancy"}},
+			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "SingleRedundancy", Resources: defResources},
+		},
+		{underTest: v1.ElasticsearchSpec{NodeCount: 1},
+			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy", Resources: defResources}},
 		{underTest: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"},
-			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"}},
-		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy"},
-			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy"}},
+			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy", Resources: defResources}},
+		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}},
+			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}}},
 	}
 	for _, test := range tests {
 		normalizeElasticsearch(&test.underTest)
