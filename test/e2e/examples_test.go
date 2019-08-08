@@ -3,6 +3,13 @@
 package e2e
 
 import (
+	goctx "context"
+	"encoding/json"
+	"golang.org/x/net/context"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"net/http"
 	"os/exec"
 	"strings"
 	"testing"
@@ -12,6 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -145,6 +154,69 @@ func smokeTestProductionExample(name, yamlFileName string) {
 
 	ProductionSmokeTest(name)
 }
+
+func (suite *ExamplesTestSuite) TestBusinessApp() {
+	// First deploy a Jaeger instance
+	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
+	defer undeployJaegerInstance(jaegerInstance)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
+	require.NoError(t, err)
+
+	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
+	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../deploy/examples/business-application-injected-sidecar.yaml")
+	output, err := cmd.CombinedOutput()
+	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
+		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
+	}
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
+	require.NoError(t, err, "Failed waiting for myapp deployment")
+
+	// Add a liveliness probe to create some traces
+	vertxDeployment := &appsv1.Deployment{}
+	key := types.NamespacedName{Name: "myapp", Namespace: namespace}
+	err = fw.Client.Get(goctx.Background(), key, vertxDeployment)
+	require.NoError(t, err)
+
+	vertxPort := intstr.IntOrString{IntVal: 8080}
+	livelinessHandler := &corev1.HTTPGetAction{Path: "/", Port: vertxPort, Scheme:corev1.URISchemeHTTP}
+	handler := &corev1.Handler{HTTPGet: livelinessHandler}
+	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds:1, FailureThreshold:3, PeriodSeconds:10, SuccessThreshold:1, TimeoutSeconds:1}
+
+	containers := vertxDeployment.Spec.Template.Spec.Containers
+	for index, container := range containers {
+		if container.Name == "myapp" {
+			vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
+			err = fw.Client.Update(context.Background(), vertxDeployment)
+			require.NoError(t, err)
+			break
+		}
+	}
+
+	// Confirm that we've created some traces
+	queryPort := randomPortNumber()
+	ports := []string{queryPort + ":16686"}
+	portForward, closeChan := CreatePortForward(namespace, "simplest", "jaegertracing/all-in-one", ports, fw.KubeConfig)
+	defer portForward.Close()
+	defer close(closeChan)
+
+	url := "http://localhost:" + queryPort + "/api/traces?service=order"
+	err = WaitAndPollForHttpResponse(url, func(response *http.Response) (bool, error) {
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return false, err
+		}
+
+		resp := &resp{}
+		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			return false, err
+		}
+
+		return len(resp.Data) > 0 && strings.Contains(string(body), "traceID"), nil
+	})
+	require.NoError(t, err, "SmokeTest failed")
+}
+
 
 func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", filename)
