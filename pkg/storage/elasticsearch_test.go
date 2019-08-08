@@ -81,7 +81,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 					{
 						NodeCount: 3,
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
-						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 						GenUUID:   &genuuidmaster1,
 					},
 					{
@@ -111,7 +111,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 					{
 						NodeCount: 3,
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
-						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 						GenUUID:   &genuuidmaster2,
 					},
 					{

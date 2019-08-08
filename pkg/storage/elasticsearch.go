@@ -176,7 +176,7 @@ func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 			NodeCount:    3,
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
-			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 			GenUUID:      &genuuidmaster,
 		},
 		{
