@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
@@ -113,8 +114,8 @@ func getJaegerSimpleProd() *v1.Jaeger {
 				Elasticsearch: v1.ElasticsearchSpec{
 					NodeCount:        1,
 					Resources:        corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: "1Gi"},
-						Requests:   corev1.ResourceList{corev1.ResourceMemory: "1Gi", corev1.ResourceCPU: "1"},
+						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
 			},
