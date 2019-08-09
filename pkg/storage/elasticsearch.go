@@ -62,11 +62,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 		if util.FindItem("--es.num-shards", p.Containers[0].Args) == "" {
 			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 			// every ES node is a data node
-			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
+			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
 		}
 		if util.FindItem("--es.num-replicas", p.Containers[0].Args) == "" {
 			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
-				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
+				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
 		}
 		if strings.EqualFold(util.FindItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
 			p.Containers[0].Args = append(p.Containers[0].Args,
@@ -82,11 +82,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 			if util.FindItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
 				// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
 				// every ES node is a data node
-				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-shards=%d", dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))
+				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
 			}
 			if util.FindItem("--es-archive.num-replicas", p.Containers[0].Args) == "" {
 				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-replicas=%d",
-					calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))))
+					calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
 			}
 		}
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
@@ -116,8 +116,8 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
 			corev1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
 			corev1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
-			corev1.EnvVar{Name: "SHARDS", Value: strconv.Itoa(int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))},
-			corev1.EnvVar{Name: "REPLICAS", Value: strconv.Itoa(calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(dataNodesCount(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))},
+			corev1.EnvVar{Name: "SHARDS", Value: strconv.Itoa(int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))},
+			corev1.EnvVar{Name: "REPLICAS", Value: strconv.Itoa(calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))},
 		)
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
@@ -165,7 +165,7 @@ func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 				NodeCount:    es.NodeCount,
 				Storage:      es.Storage,
 				NodeSelector: es.NodeSelector,
-				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData, esv1.ElasticsearchRoleMaster},
+				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 				GenUUID:      &uuid,
 			},
 		}
@@ -176,24 +176,17 @@ func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 			NodeCount:    3,
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
-			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster},
+			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 			GenUUID:      &genuuidmaster,
 		},
 		{
-			NodeCount:    dataNodesCount(es.NodeCount),
+			NodeCount:    es.NodeCount - 3,
 			Storage:      es.Storage,
 			NodeSelector: es.NodeSelector,
 			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 			GenUUID:      &uuid,
 		},
 	}
-}
-
-func dataNodesCount(nodesCount int32) int32 {
-	if nodesCount > 3 {
-		return nodesCount - 3
-	}
-	return nodesCount
 }
 
 // taken from https://github.com/openshift/cluster-logging-operator/blob/1ead6701c7c7af9c0578aa66597261079b2781d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/defaults.go#L33
