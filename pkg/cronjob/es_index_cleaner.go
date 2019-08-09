@@ -3,6 +3,7 @@ package cronjob
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -31,6 +32,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 				},
 			},
 		})
+	}
+	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
+	if val, ok := jaeger.Spec.Storage.Options.Map()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
+		envs = append(envs, corev1.EnvVar{Name: "ROLLOVER", Value: "true"})
 	}
 
 	return &batchv1beta1.CronJob{
@@ -68,7 +73,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Name:    name,
 									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Args:    []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:     esScriptEnvVars(jaeger.Spec.Storage.Options),
+									Env:     envs,
 									EnvFrom: envFromSource,
 								},
 							},
