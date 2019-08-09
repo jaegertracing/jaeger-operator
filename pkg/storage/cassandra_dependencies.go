@@ -45,6 +45,9 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		host = "cassandra" // this is the default in the image
 	}
 
+	username := jaeger.Spec.Storage.Options.Map()["cassandra.username"]
+	password := jaeger.Spec.Storage.Options.Map()["cassandra.password"]
+
 	annotations := map[string]string{
 		"prometheus.io/scrape":    "false",
 		"sidecar.istio.io/inject": "false",
@@ -99,6 +102,12 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 							}, {
 								Name:  "DATACENTER",
 								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+							}, {
+								Name:  "CASSANDRA_USERNAME",
+								Value: username,
+							}, {
+								Name:  "CASSANDRA_PASSWORD",
+								Value: password,
 							}},
 						}},
 						RestartPolicy: corev1.RestartPolicyOnFailure,
