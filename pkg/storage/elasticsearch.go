@@ -130,7 +130,6 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 	uuid := strings.Replace(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), "-", "", -1)
-	//res := ed.Jaeger.Spec.Storage.Elasticsearch.Resources
 	var res corev1.ResourceRequirements
 	if ed.Jaeger.Spec.Storage.Elasticsearch.Resources != nil {
 		res = *ed.Jaeger.Spec.Storage.Elasticsearch.Resources
