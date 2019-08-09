@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -32,4 +33,36 @@ func TestEsIndexCleanerSecrets(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 	cronJob := CreateEsIndexCleaner(jaeger)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestEsIndexCleanerEnvVars(t *testing.T) {
+	tests := []struct {
+		opts map[string]interface{}
+		envs []corev1.EnvVar
+	}{
+		{
+			// empty options do not add any env vars
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}},
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "false"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}},
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"}},
+		},
+	}
+
+	for _, test := range tests {
+		jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerSecrets"})
+		days := 0
+		jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+		jaeger.Spec.Storage.Options = v1.NewOptions(test.opts)
+		cronJob := CreateEsIndexCleaner(jaeger)
+		assert.Equal(t, test.envs, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
+	}
 }
