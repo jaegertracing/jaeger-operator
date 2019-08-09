@@ -80,6 +80,16 @@ jobs:
       - TEST_GROUP=streaming
 
     - stage: build
+      name: "Run e2e examples tests"
+      install:
+        - "travis_retry make vendor"
+        - "./.travis/setupMinikube.sh"
+      script:
+        - "./.travis/rune2eTests.sh"
+      env:
+        - TEST_GROUP=examples
+
+    - stage: build
       name: "Run e2e es-self-provisioned tests"
       install:
       - "travis_retry make vendor"

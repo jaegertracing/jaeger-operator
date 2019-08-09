@@ -1,8 +1,9 @@
 package e2e
 
 import (
-	"fmt"
 	goctx "context"
+	"fmt"
+	"net/http"
 	"os"
 	"runtime"
 	"strings"
@@ -18,6 +19,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -211,6 +214,31 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) {
 	require.NoError(t, err, "Error undeploying Jaeger")
 	err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
 	require.NoError(t, err)
+}
+
+func getJaegerInstance(name, namespace string) *v1.Jaeger {
+	jaegerInstance := &v1.Jaeger{}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	err := fw.Client.Get(goctx.Background(), key, jaegerInstance)
+	require.NoError(t, err)
+	return jaegerInstance
+}
+
+type ValidateHttpResponseFunc func(response *http.Response) (done bool, err error)
+
+func WaitAndPollForHttpResponse(targetUrl string, condition ValidateHttpResponseFunc) (err error) {
+	client := http.Client{Timeout: 5 * time.Second}
+	request, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+	require.NoError(t, err)
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		response, err := client.Do(request)
+		require.NoError(t, err)
+		defer response.Body.Close()
+
+		return condition(response)
+	})
+
+	return err
 }
 
 type resp struct {
