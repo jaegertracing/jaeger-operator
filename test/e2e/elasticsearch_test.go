@@ -19,6 +19,7 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/portforward"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -27,13 +28,13 @@ type ElasticSearchTestSuite struct {
 	suite.Suite
 }
 
-var esEnabled = false
+var esIndexCleanerEnabled = false
 
-func(suite *ElasticSearchTestSuite) SetupSuite() {
+func (suite *ElasticSearchTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
@@ -93,7 +94,41 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	ProductionSmokeTest("simple-prod")
 }
 
+func (suite *ElasticSearchTestSuite) TestEsIndexPrefixes() {
+	esIndexCleanerEnabled = false
+	esIndexPrefix := "prefix"
+	name := "test-es-index-prefixes"
+
+	exampleJaeger := getJaegerAllInOne(name)
+
+	// Add an index prefix to the CR before creating this Jaeger instance
+	options := exampleJaeger.Spec.Storage.Options.Map()
+	updateOptions := make(map[string]interface{})
+	for key, value := range options {
+		updateOptions[key] = value
+	}
+	updateOptions["es.index-prefix"] = esIndexPrefix
+	exampleJaeger.Spec.Storage.Options = v1.NewOptions(updateOptions)
+
+	err := fw.Client.Create(context.Background(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for deployment")
+
+	// Run the smoke test so indices will be created
+	AllInOneSmokeTest(name)
+
+	// Now verify that we have indices with the prefix we want
+	indexWithPrefixExists(esIndexPrefix+"-jaeger-", true)
+
+	// Turn on index clean and make sure we clean up
+	turnOnEsIndexCleaner(name, exampleJaeger)
+	indexWithPrefixExists(esIndexPrefix+"-jaeger-", false)
+}
+
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
+	esIndexCleanerEnabled = false
 	name := "test-es-index-cleaner"
 	j := getJaegerAllInOne(name)
 
@@ -104,43 +139,15 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
 
-	// create span, otherwise index cleaner fails - there would not be indices
+	// create span, then make sure indices have been created
 	AllInOneSmokeTest(name)
+	indexWithPrefixExists("jaeger-", true)
 
-	// Once we've created a span with the smoke test, enable the index cleaer
-	key := types.NamespacedName{Name:name, Namespace:namespace}
-	err = fw.Client.Get(context.Background(), key, j)
-	require.NoError(t, err)
-	esEnabled = true
-	err = fw.Client.Update(context.Background(), j)
-	require.NoError(t, err)
+	// Once we've created a span with the smoke test, enable the index cleaner
+	turnOnEsIndexCleaner(name, j)
 
-	esPort := randomPortNumber()
-	portForwES, closeChanES := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort + ":9200"}, fw.KubeConfig)
-	defer portForwES.Close()
-	defer close(closeChanES)
-
-	flag, err := hasIndexWithPrefix("jaeger-", esPort)
-	require.NoError(t, err, "Error searching for index")
-	require.True(t, flag, "HasIndexWithPrefix returned false")
-
-	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for Cron Job")
-
-	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for Cron Job")
-
-	// We shouldn't need another port forward here, but I've added this because of frequent dropped connections
-	esPort2 := randomPortNumber()
-	portForwES2, closeChanES2 := CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort2 + ":9200"}, fw.KubeConfig)
-	defer portForwES2.Close()
-	defer close(closeChanES2)
-
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		flag, err := hasIndexWithPrefix("jaeger-", esPort2)
-		return !flag, err
-	})
-	require.NoError(t, err, "TODO")
+	// Now make sure indices have been deleted
+	indexWithPrefixExists("jaeger-", false)
 }
 
 func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
@@ -185,7 +192,7 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 					"es.server-urls": esServerUrls,
 				}),
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
-					Enabled:	&esEnabled,
+					Enabled:      &esIndexCleanerEnabled,
 					Schedule:     "*/1 * * * *",
 					NumberOfDays: &numberOfDays,
 				},
@@ -197,7 +204,7 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 
 func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 	c := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, "http://localhost:" + esPort + "/_cat/indices", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://localhost:"+esPort+"/_cat/indices", nil)
 	if err != nil {
 		return false, err
 	}
@@ -211,4 +218,36 @@ func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 	bodyString := string(bodyBytes)
 
 	return strings.Contains(bodyString, prefix), nil
+}
+
+func createEsPortForward() (portForwES *portforward.PortForwarder, closeChanES chan struct{}, esPort string) {
+	esPort = randomPortNumber()
+	portForwES, closeChanES = CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort + ":9200"}, fw.KubeConfig)
+	return portForwES, closeChanES, esPort
+}
+
+func turnOnEsIndexCleaner(name string, exampleJaeger *v1.Jaeger) {
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	err := fw.Client.Get(context.Background(), key, exampleJaeger)
+	require.NoError(t, err)
+	esIndexCleanerEnabled = true
+	err = fw.Client.Update(context.Background(), exampleJaeger)
+	require.NoError(t, err)
+
+	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
+
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
+}
+
+func indexWithPrefixExists(prefix string, condition bool) {
+	portForwES, closeChanES, esPort := createEsPortForward()
+	defer portForwES.Close()
+	defer close(closeChanES)
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		flag, err := hasIndexWithPrefix(prefix, esPort)
+		return flag == condition, err
+	})
+	require.NoError(t, err)
 }
