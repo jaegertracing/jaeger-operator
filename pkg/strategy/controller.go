@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
@@ -17,6 +18,11 @@ import (
 
 const (
 	esCertGenerationScript = "./scripts/cert_generation.sh"
+)
+
+var (
+	defaultEsMemory     = resource.MustParse("16Gi")
+	defaultEsCPURequest = resource.MustParse("1")
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
@@ -130,13 +136,24 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 
 func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 	if spec.NodeCount == 0 {
-		spec.NodeCount = 1
+		spec.NodeCount = 3
 	}
 	if spec.RedundancyPolicy == "" {
 		if spec.NodeCount == 1 {
 			spec.RedundancyPolicy = esv1.ZeroRedundancy
 		} else {
 			spec.RedundancyPolicy = esv1.SingleRedundancy
+		}
+	}
+	if spec.Resources == nil {
+		spec.Resources = &corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: defaultEsMemory,
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: defaultEsMemory,
+				corev1.ResourceCPU:    defaultEsCPURequest,
+			},
 		}
 	}
 }
