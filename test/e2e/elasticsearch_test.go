@@ -94,7 +94,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	ProductionSmokeTest("simple-prod")
 }
 
-func (suite *ElasticSearchTestSuite) TestEsIndexPrefixes() {
+func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
 	esIndexCleanerEnabled = false
 	esIndexPrefix := "prefix"
 	name := "test-es-index-prefixes"
