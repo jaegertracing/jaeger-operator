@@ -29,11 +29,11 @@ type SidecarTestSuite struct {
 	suite.Suite
 }
 
-func(suite *SidecarTestSuite) SetupSuite() {
+func (suite *SidecarTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}

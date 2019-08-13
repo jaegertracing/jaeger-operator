@@ -20,11 +20,11 @@ type CassandraTestSuite struct {
 	suite.Suite
 }
 
-func(suite *CassandraTestSuite) SetupSuite() {
+func (suite *CassandraTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
@@ -51,7 +51,7 @@ func (suite *CassandraTestSuite) SetupTest() {
 }
 
 // Cassandra runs a test with Cassandra as the backing storage
-func (suite *CassandraTestSuite) TestCassandra()  {
+func (suite *CassandraTestSuite) TestCassandra() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	j := getJaegerWithCassandra(namespace)
 
@@ -69,11 +69,11 @@ func (suite *CassandraTestSuite) TestCassandra()  {
 	AllInOneSmokeTest("with-cassandra")
 }
 
-func (suite *CassandraTestSuite) TestCassandraSparkDependencies()  {
+func (suite *CassandraTestSuite) TestCassandraSparkDependencies() {
 	storage := v1.JaegerStorageSpec{
-		Type: "cassandra",
-		Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
-		CassandraCreateSchema:v1.JaegerCassandraCreateSchemaSpec{Datacenter:"datacenter1", Mode: "prod"},
+		Type:                  "cassandra",
+		Options:               v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+		CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{Datacenter: "datacenter1", Mode: "prod"},
 	}
 	err := sparkTest(t, framework.Global, ctx, storage)
 	require.NoError(t, err, "SparkTest failed")

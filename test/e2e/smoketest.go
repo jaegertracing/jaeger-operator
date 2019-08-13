@@ -55,8 +55,8 @@ func ProductionSmokeTest(resourceName string) {
 func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
 	serviceName := "smoketest"
 	cfg := config.Configuration{
-		Reporter: &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
-		Sampler: &config.SamplerConfig{Type: "const", Param: 1},
+		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
+		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
 		ServiceName: serviceName,
 	}
 	tracer, closer, err := cfg.NewTracer()

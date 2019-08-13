@@ -18,15 +18,15 @@ type MiscTestSuite struct {
 	suite.Suite
 }
 
-func(suite *MiscTestSuite) SetupSuite() {
+func (suite *MiscTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
-		require.FailNow(t, "Failed in prepare with: " + err.Error())
+		require.FailNow(t, "Failed in prepare with: "+err.Error())
 	}
 	fw = framework.Global
 	namespace, _ = ctx.GetNamespace()

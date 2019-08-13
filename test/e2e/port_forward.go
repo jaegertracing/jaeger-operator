@@ -51,7 +51,7 @@ func CreatePortForward(namespace, podNamePrefix, containsImage string, ports []s
 			panic(err)
 		}
 	}()
-	<- forwarder.Ready
+	<-forwarder.Ready
 	return forwarder, stopChan
 }
 
@@ -68,4 +68,3 @@ func randomPortNumber() string {
 
 	return port[0]
 }
-

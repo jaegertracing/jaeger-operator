@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	osv1 "github.com/openshift/api/route/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -33,11 +33,11 @@ type AllInOneTestSuite struct {
 	suite.Suite
 }
 
-func(suite *AllInOneTestSuite) SetupSuite() {
+func (suite *AllInOneTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
@@ -76,7 +76,7 @@ func (suite *AllInOneTestSuite) TestAllInOne() {
 	require.NoError(t, err, "Error waiting for deployment")
 }
 
-func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
+func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
@@ -149,7 +149,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress()  {
 	require.NoError(t, err, "Failed waiting for expected content")
 }
 
-func (suite *AllInOneTestSuite)  TestAllInOneWithUIConfig()  {
+func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 
@@ -255,7 +255,7 @@ func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 	return exampleJaeger
 }
 
-func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route) {
+func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	routeList := &osv1.RouteList{}
 	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
 		opts := &client.ListOptions{}
@@ -280,5 +280,5 @@ func findRoute(t *testing.T, f *framework.Framework, name string) (*osv1.Route) 
 	}
 
 	t.Fatal("Could not find route")
-	return nil;
+	return nil
 }

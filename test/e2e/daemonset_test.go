@@ -28,17 +28,15 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-
-
 type DaemonSetTestSuite struct {
 	suite.Suite
 }
 
-func(suite *DaemonSetTestSuite) SetupSuite() {
+func (suite *DaemonSetTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
@@ -65,7 +63,7 @@ func (suite *DaemonSetTestSuite) SetupTest() {
 }
 
 // DaemonSet runs a test with the agent as DaemonSet
-func (suite *DaemonSetTestSuite) TestDaemonSet()  {
+func (suite *DaemonSetTestSuite) TestDaemonSet() {
 	var err error
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
@@ -84,14 +82,14 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 
 		cmd = exec.Command("oc", "adm", "policy", "--namespace", namespace, "add-scc-to-user", "daemonset-with-hostport", "-z", "jaeger-agent-daemonset")
 		output, err = cmd.CombinedOutput()
-		require.NoError(t, err,"Failed during occ adm policy command with: [%s]\n", string(output) )
+		require.NoError(t, err, "Failed during occ adm policy command with: [%s]\n", string(output))
 
 		cmd = exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/agent-as-daemonset.yaml")
 		output, err = cmd.CombinedOutput()
-		require.NoError(t, err,"Failed creating daemonset with: [%s]\n", string(output))
+		require.NoError(t, err, "Failed creating daemonset with: [%s]\n", string(output))
 
 		// Get the Jaeger instance we've just created so we can undeploy when the test finishes
-		key := types.NamespacedName{Name:"agent-as-daemonset", Namespace:namespace}
+		key := types.NamespacedName{Name: "agent-as-daemonset", Namespace: namespace}
 		err = fw.Client.Get(goctx.Background(), key, j)
 		require.NoError(t, err)
 	} else {
@@ -125,7 +123,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet()  {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
 
-	err =  wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
 		if err != nil {
 			return false, err
@@ -234,24 +232,24 @@ func jaegerAgentAsDaemonsetDefinition(namespace string, name string) *v1.Jaeger 
 	return j
 }
 
-func hostPortSccDaemonset() (*osv1sec.SecurityContextConstraints) {
+func hostPortSccDaemonset() *osv1sec.SecurityContextConstraints {
 	annotations := make(map[string]string)
 	annotations["kubernetes.io/description"] = "Allows DaemonSets to bind to a well-known host port"
 
 	scc := &osv1sec.SecurityContextConstraints{
-		TypeMeta: metav1.TypeMeta {
-			Kind: "SecurityContextConstraints",
-			APIVersion:"security.openshift.io/v1",
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "SecurityContextConstraints",
+			APIVersion: "security.openshift.io/v1",
 		},
-		ObjectMeta: metav1.ObjectMeta {
-			Name: "daemonset-with-hostport",
-			Annotations:annotations,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "daemonset-with-hostport",
+			Annotations: annotations,
 		},
 		RunAsUser: osv1sec.RunAsUserStrategyOptions{
 			Type: osv1sec.RunAsUserStrategyRunAsAny,
 		},
 		SELinuxContext: osv1sec.SELinuxContextStrategyOptions{
-			Type:"RunAsAny",
+			Type: "RunAsAny",
 		},
 		AllowHostPorts: true,
 	}
