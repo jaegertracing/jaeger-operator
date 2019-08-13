@@ -6,19 +6,25 @@ import (
 	"testing"
 	"time"
 
-	openapi_v2 "github.com/googleapis/gnostic/OpenAPIv2"
+	"github.com/googleapis/gnostic/OpenAPIv2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes/scheme"
 	restclient "k8s.io/client-go/rest"
 	fakeRest "k8s.io/client-go/rest/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 func TestStart(t *testing.T) {
@@ -292,6 +298,94 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	}
 	b.detectClusterRoles()
 	assert.False(t, viper.GetBool("auth-delegator-available"))
+}
+
+func TestCleanDeployments(t *testing.T) {
+	cl := customFakeClient()
+	cl.CreateFunc = cl.Client.Create
+	dcl := &fakeDiscoveryClient{}
+
+	jaeger1 := v1.NewJaeger(types.NamespacedName{
+		Name:      "TestDeletedInstance",
+		Namespace: "TestNS",
+	})
+
+	jaeger2 := v1.NewJaeger(types.NamespacedName{
+		Name:      "TestDeletedInstance2",
+		Namespace: "TestNS",
+	})
+
+	dep1 := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						corev1.Container{
+							Name:  "C1",
+							Image: "image1",
+						},
+					},
+				},
+			},
+		},
+	}
+	dep2 := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						corev1.Container{
+							Name:  "C1",
+							Image: "image1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	dep1.Name = "mydep1"
+	dep1.Annotations = map[string]string{inject.Annotation: jaeger1.Name}
+	dep1 = inject.Sidecar(jaeger1, dep1)
+
+	dep2.Name = "mydep2"
+	dep2.Annotations = map[string]string{inject.Annotation: jaeger2.Name}
+	dep2 = inject.Sidecar(jaeger2, dep2)
+
+	require.Equal(t, len(dep1.Spec.Template.Spec.Containers), 2)
+	require.Equal(t, len(dep2.Spec.Template.Spec.Containers), 2)
+
+	err := cl.Create(context.TODO(), dep1)
+	require.NoError(t, err)
+	err = cl.Create(context.TODO(), dep2)
+	require.NoError(t, err)
+	err = cl.Create(context.TODO(), jaeger2)
+	require.NoError(t, err)
+
+	b := WithClients(cl, dcl)
+	b.cleanDeployments()
+	persisted1 := &appsv1.Deployment{}
+	err = cl.Get(context.Background(), types.NamespacedName{
+		Namespace: dep1.Namespace,
+		Name:      dep1.Name,
+	}, persisted1)
+	require.NoError(t, err)
+	assert.Equal(t, len(persisted1.Spec.Template.Spec.Containers), 1)
+	assert.NotContains(t, persisted1.Labels, inject.Label)
+
+	persisted2 := &appsv1.Deployment{}
+	err = cl.Get(context.Background(), types.NamespacedName{
+		Namespace: dep2.Namespace,
+		Name:      dep2.Name,
+	}, persisted2)
+	require.NoError(t, err)
+	assert.Equal(t, len(persisted2.Spec.Template.Spec.Containers), 2)
+	assert.Contains(t, persisted2.Labels, inject.Label)
 }
 
 type fakeClient struct {
