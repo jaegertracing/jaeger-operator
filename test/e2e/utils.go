@@ -135,17 +135,16 @@ func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) 
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
 			return imageNamesMap, nil
-		} else {
-			return imageNamesMap, err
 		}
-	} else {
-		containers := deployment.Spec.Template.Spec.Containers
-		for _, container := range containers {
-			if container.Name == "jaeger-operator" {
-				for _, env := range container.Env {
-					if env.Name == "WATCH_NAMESPACE" {
-						imageNamesMap[container.Image] = env.Value
-					}
+		return imageNamesMap, err
+	}
+
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "jaeger-operator" {
+			for _, env := range container.Env {
+				if env.Name == "WATCH_NAMESPACE" {
+					imageNamesMap[container.Image] = env.Value
 				}
 			}
 		}
@@ -224,11 +223,13 @@ func getJaegerInstance(name, namespace string) *v1.Jaeger {
 	return jaegerInstance
 }
 
-type ValidateHttpResponseFunc func(response *http.Response) (done bool, err error)
+// ValidateHTTPResponseFunc should determine whether the response contains the desired content
+type ValidateHTTPResponseFunc func(response *http.Response) (done bool, err error)
 
-func WaitAndPollForHttpResponse(targetUrl string, condition ValidateHttpResponseFunc) (err error) {
+// WaitAndPollForHTTPResponse will try the targetURL until it gets the desired response or times out
+func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponseFunc) (err error) {
 	client := http.Client{Timeout: 5 * time.Second}
-	request, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+	request, err := http.NewRequest(http.MethodGet, targetURL, nil)
 	require.NoError(t, err)
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		response, err := client.Do(request)

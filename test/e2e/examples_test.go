@@ -200,7 +200,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	defer close(closeChan)
 
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
-	err = WaitAndPollForHttpResponse(url, func(response *http.Response) (bool, error) {
+	err = WaitAndPollForHTTPResponse(url, func(response *http.Response) (bool, error) {
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			return false, err

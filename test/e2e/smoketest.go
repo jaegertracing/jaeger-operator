@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// This version is for the all-in-one image, where query and collector use the same pod
+// AllInOneSmokeTest is for the all-in-one image, where query and collector use the same pod
 func AllInOneSmokeTest(resourceName string) {
 	allInOneImageName := "jaegertracing/all-in-one"
 	queryPort := randomPortNumber()
@@ -28,7 +28,7 @@ func AllInOneSmokeTest(resourceName string) {
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
 }
 
-// Call this version if query and collector are in separate pods
+// ProductionSmokeTest should be used if query and collector are in separate pods
 func ProductionSmokeTest(resourceName string) {
 	queryPodImageName := "jaegertracing/jaeger-query"
 	collectorPodImageName := "jaegertracing/jaeger-collector"
