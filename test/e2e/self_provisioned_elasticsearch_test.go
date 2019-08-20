@@ -7,13 +7,13 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/api/resource"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -26,7 +26,7 @@ type SelfProvisionedTestSuite struct {
 	suite.Suite
 }
 
-func(suite *SelfProvisionedTestSuite) SetupSuite() {
+func (suite *SelfProvisionedTestSuite) SetupSuite() {
 	t = suite.T()
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
@@ -47,7 +47,7 @@ func(suite *SelfProvisionedTestSuite) SetupSuite() {
 
 	var err error
 	ctx, err = prepare(t)
-	if (err != nil) {
+	if err != nil {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
@@ -112,10 +112,10 @@ func getJaegerSimpleProd() *v1.Jaeger {
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount:        1,
-					Resources:        &corev1.ResourceRequirements{
+					NodeCount: 1,
+					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
 			},
@@ -124,7 +124,7 @@ func getJaegerSimpleProd() *v1.Jaeger {
 	return exampleJaeger
 }
 
-func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) (string) {
+func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) string {
 	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("elasticsearch-operator", metav1.GetOptions{IncludeUninitialized: false})
 	require.NoErrorf(t, err, "Did not find elasticsearch-operator in namespace %s\n", namespace)
 
@@ -135,7 +135,6 @@ func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace st
 		}
 	}
 
-	require.FailNowf(t,"Did not find elasticsearch-operator in namespace %s\n", namespace)
+	require.FailNowf(t, "Did not find elasticsearch-operator in namespace %s\n", namespace)
 	return ""
 }
-

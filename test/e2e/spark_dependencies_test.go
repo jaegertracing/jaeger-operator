@@ -55,7 +55,7 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
 	if err != nil {
 		return errors.WithMessage(err, "Failed waiting for deployment ")
-	} else {
-		return nil
 	}
+
+	return nil
 }
