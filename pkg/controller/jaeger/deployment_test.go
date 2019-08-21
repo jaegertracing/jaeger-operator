@@ -67,21 +67,25 @@ func TestDeploymentUpdate(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	depOriginal := appsv1.Deployment{}
-	depOriginal.Name = nsn.Name
-	depOriginal.Namespace = nsn.Namespace
-	depOriginal.Annotations = map[string]string{"key": "value"}
+	orig := appsv1.Deployment{}
+	orig.Name = nsn.Name
+	orig.Namespace = nsn.Namespace
+	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
-		&depOriginal,
+		&orig,
 	}
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
 		depUpdated := appsv1.Deployment{}
-		depUpdated.Name = depOriginal.Name
-		depUpdated.Namespace = depOriginal.Namespace
+		depUpdated.Name = orig.Name
+		depUpdated.Namespace = orig.Namespace
 		depUpdated.Annotations = map[string]string{"key": "new-value"}
 
 		s := strategy.New().WithDeployments([]appsv1.Deployment{depUpdated})
@@ -95,8 +99,8 @@ func TestDeploymentUpdate(t *testing.T) {
 	// verify
 	persisted := &appsv1.Deployment{}
 	persistedName := types.NamespacedName{
-		Name:      depOriginal.Name,
-		Namespace: depOriginal.Namespace,
+		Name:      orig.Name,
+		Namespace: orig.Namespace,
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
@@ -109,12 +113,16 @@ func TestDeploymentDelete(t *testing.T) {
 		Name: "TestDeploymentDelete",
 	}
 
-	depOriginal := appsv1.Deployment{}
-	depOriginal.Name = nsn.Name
+	orig := appsv1.Deployment{}
+	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
-		&depOriginal,
+		&orig,
 	}
 
 	r, cl := getReconciler(objs)
@@ -129,8 +137,8 @@ func TestDeploymentDelete(t *testing.T) {
 	// verify
 	persisted := &appsv1.Deployment{}
 	persistedName := types.NamespacedName{
-		Name:      depOriginal.Name,
-		Namespace: depOriginal.Namespace,
+		Name:      orig.Name,
+		Namespace: orig.Namespace,
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
@@ -146,7 +154,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	// the deployment to be deleted
 	depToDelete := appsv1.Deployment{}
 	depToDelete.Name = nsn.Name + "-delete"
-	depToDelete.Annotations = map[string]string{
+	depToDelete.Labels = map[string]string{
 		"app.kubernetes.io/instance":   nsn.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}

@@ -65,6 +65,10 @@ func TestConfigMapsUpdate(t *testing.T) {
 	orig := corev1.ConfigMap{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -104,6 +108,10 @@ func TestConfigMapsDelete(t *testing.T) {
 
 	orig := corev1.ConfigMap{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),

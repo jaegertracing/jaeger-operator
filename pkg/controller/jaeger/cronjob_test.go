@@ -65,6 +65,10 @@ func TestCronJobsUpdate(t *testing.T) {
 	orig := batchv1beta1.CronJob{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -104,6 +108,10 @@ func TestCronJobsDelete(t *testing.T) {
 
 	orig := batchv1beta1.CronJob{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),

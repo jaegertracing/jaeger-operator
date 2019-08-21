@@ -72,6 +72,10 @@ func TestElasticsearchesUpdate(t *testing.T) {
 	orig := esv1.Elasticsearch{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance": nsn.Name,
+		"app.kubernetes.io/part-of":  "jaeger",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -114,6 +118,10 @@ func TestElasticsearchesDelete(t *testing.T) {
 
 	orig := esv1.Elasticsearch{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance": nsn.Name,
+		"app.kubernetes.io/part-of":  "jaeger",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),

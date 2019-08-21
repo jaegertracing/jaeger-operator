@@ -20,7 +20,7 @@ Follow the installation guidelines from [Operator SDK GitHub page](https://githu
 
 ### Developing
 
-As usual for operators following the Operator SDK, the dependencies are checked into the source repository under the `vendor` directory. The dependencies are managed using [`go dep`](https://github.com/golang/dep). Refer to that project's documentation for instructions on how to add or update dependencies.
+As usual for operators following the Operator SDK in recent versions, the dependencies are managed using [`go modules`](https://golang.org/doc/go1.11#modules). Refer to that project's documentation for instructions on how to add or update dependencies.
 
 The first step is to get a local Kubernetes instance up and running. The recommended approach is using `minikube`. Refer to the Kubernetes'  [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/) for instructions on how to install it.
 
@@ -60,11 +60,9 @@ make test
 
 NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
 
-Similar instructions also work for OpenShift, but the target `run-openshift` can be used instead of `run`. Make sure you are using the `default` namespace or that you are overriding the target namespace by setting `NAMESPACE`, like: `make run-openshift WATCH_NAMESPACE=myproject`
-
 #### Model changes
 
-The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go` file via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
+The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.*.go` files via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
 
 #### Ingress configuration
 
