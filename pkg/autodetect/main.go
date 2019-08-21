@@ -7,13 +7,15 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 // Background represents a procedure that runs in the background, periodically auto-detecting features
@@ -79,6 +81,8 @@ func (b *Background) autoDetectCapabilities() {
 	}
 
 	b.detectClusterRoles()
+	b.cleanDeployments()
+
 }
 
 func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
@@ -144,6 +148,52 @@ func (b *Background) detectClusterRoles() {
 			log.Info("The service account running this operator has the role 'system:auth-delegator', enabling OAuth Proxy's 'delegate-urls' option")
 		}
 		viper.Set("auth-delegator-available", true)
+	}
+}
+
+func (b *Background) cleanDeployments() {
+	log.Debug("detecting orphaned deployments.")
+	deployments := &appsv1.DeploymentList{}
+	deployOpts := &client.ListOptions{}
+	jaegerOpts := &client.ListOptions{}
+	instances := &v1.JaegerList{}
+
+	instancesMap := make(map[string]*v1.Jaeger)
+
+	// Only select fields that have the label 'sidecar.jaegertracing.io/injected'
+	if err := deployOpts.SetLabelSelector(inject.Label); err != nil {
+		log.WithError(err).Error("error cleaning orphaned deployment")
+	}
+
+	if err := b.cl.List(context.Background(), deployOpts, deployments); err != nil {
+		log.WithError(err).Error("error cleaning orphaned deployment")
+	}
+
+	// get all jaeger instances
+	if err := b.cl.List(context.Background(), jaegerOpts, instances); err != nil {
+		log.WithError(err).Error("error cleaning orphaned deployment")
+	}
+
+	/* map jaeger instances */
+	for i := 0; i < len(instances.Items); i++ {
+		jaeger := &instances.Items[i]
+		instancesMap[jaeger.Name] = jaeger
+	}
+
+	// check deployments to see which one needs to be cleaned.
+	for _, dep := range deployments.Items {
+		if instanceName, ok := dep.Annotations[inject.Annotation]; ok {
+			_, instanceExists := instancesMap[instanceName]
+			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
+				inject.CleanSidecar(&dep)
+				if err := b.cl.Update(context.Background(), &dep); err != nil {
+					log.WithFields(log.Fields{
+						"deploymentName":      dep.Name,
+						"deploymentNamespace": dep.Namespace,
+					}).WithError(err).Error("error cleaning orphaned deployment")
+				}
+			}
+		}
 	}
 }
 
