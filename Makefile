@@ -233,3 +233,7 @@ install-tools:
 
 .PHONY: install
 install: install-sdk install-tools vendor
+
+.PHONY: setup-minikube
+setup-minikube:
+	@./.travis/setupMinikube.sh
