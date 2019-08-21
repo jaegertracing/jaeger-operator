@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"testing"
@@ -240,6 +241,41 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 	})
 
 	return err
+}
+
+func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
+	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", filename)
+	output, err := cmd.CombinedOutput()
+	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
+		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
+	}
+
+	return getJaegerInstance(name, namespace)
+}
+
+func smokeTestProductionExample(name, yamlFileName string) {
+	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	queryDeploymentName := name + "-query"
+	collectorDeploymentName := name + "-collector"
+
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryDeploymentName, 1, retryInterval, timeout)
+	require.NoErrorf(t, err, "Error waiting for %s to deploy", queryDeploymentName)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, collectorDeploymentName, 1, retryInterval, timeout)
+	require.NoErrorf(t, err, "Error waiting for %s to deploy", collectorDeploymentName)
+
+	ProductionSmokeTest(name)
+}
+
+func smokeTestAllInOneExample(name, yamlFileName string) {
+	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
+
+	AllInOneSmokeTest(name)
 }
 
 type resp struct {

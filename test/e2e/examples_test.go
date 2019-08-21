@@ -1,4 +1,4 @@
-// +build examples
+// +build examples1
 
 package e2e
 
@@ -21,8 +21,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type ExamplesTestSuite struct {
@@ -82,10 +80,6 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	AllInOneSmokeTest(name)
 }
 
-func (suite *ExamplesTestSuite) TestSimplestExample() {
-	smokeTestAllInOneExample("simplest", "../../deploy/examples/simplest.yaml")
-}
-
 func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 	if !isOpenShift(t) {
 		t.Skip("Only applies to openshift")
@@ -94,65 +88,9 @@ func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
-func (suite *ExamplesTestSuite) TestSimpleProdWithVolumes() {
-	yamlFileName := "../../deploy/examples/simple-prod-with-volumes.yaml"
-	smokeTestProductionExample("simple-prod", yamlFileName)
-}
-
-func (suite *ExamplesTestSuite) TestSimpleProdExample() {
-	yamlFileName := "../../deploy/examples/simple-prod.yaml"
-	smokeTestProductionExample("simple-prod", yamlFileName)
-}
-
-func (suite *ExamplesTestSuite) TestSimpleStreamingExample() {
-	yamlFileName := "../../deploy/examples/simple-streaming.yaml"
-	smokeTestProductionExample("simple-streaming", yamlFileName)
-}
-
 func (suite *ExamplesTestSuite) TestWithCassandra() {
 	yamlFileName := "../../deploy/examples/with-cassandra.yaml"
 	smokeTestAllInOneExample("with-cassandra", yamlFileName)
-}
-
-func (suite *ExamplesTestSuite) TestWithSampling() {
-	name := "with-sampling"
-	yamlFileName := "../../deploy/examples/with-sampling.yaml"
-	// This is the same as smokeTestAllInOneExample, but we need to check the jaegerInstance after it finishes
-	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
-	defer undeployJaegerInstance(jaegerInstance)
-
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
-	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
-
-	// Check sampling options.  t would be nice to create some spans and check that they are being sampled at the correct rate
-	samplingOptions, err := jaegerInstance.Spec.Sampling.Options.MarshalJSON()
-	require.NoError(t, err)
-	require.Equal(t, "{\"default_strategy\":{\"param\":50,\"type\":\"probabilistic\"}}", string(samplingOptions))
-}
-
-func smokeTestAllInOneExample(name, yamlFileName string) {
-	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
-	defer undeployJaegerInstance(jaegerInstance)
-
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
-	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
-
-	AllInOneSmokeTest(name)
-}
-
-func smokeTestProductionExample(name, yamlFileName string) {
-	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
-	defer undeployJaegerInstance(jaegerInstance)
-
-	queryDeploymentName := name + "-query"
-	collectorDeploymentName := name + "-collector"
-
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryDeploymentName, 1, retryInterval, timeout)
-	require.NoErrorf(t, err, "Error waiting for %s to deploy", queryDeploymentName)
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, collectorDeploymentName, 1, retryInterval, timeout)
-	require.NoErrorf(t, err, "Error waiting for %s to deploy", collectorDeploymentName)
-
-	ProductionSmokeTest(name)
 }
 
 func (suite *ExamplesTestSuite) TestBusinessApp() {
@@ -215,16 +153,6 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 		return len(resp.Data) > 0 && strings.Contains(string(body), "traceID"), nil
 	})
 	require.NoError(t, err, "SmokeTest failed")
-}
-
-func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
-	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", filename)
-	output, err := cmd.CombinedOutput()
-	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
-		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
-	}
-
-	return getJaegerInstance(name, namespace)
 }
 
 func execOcCommand(args ...string) {
