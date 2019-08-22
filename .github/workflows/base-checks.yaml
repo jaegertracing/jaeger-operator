@@ -1,0 +1,16 @@
+name: "CI Workflow"
+on: [push, pull_request]
+
+jobs:
+  basic-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: src/github.com/jaegertracing/jaeger-operator # remove when using operator >= 0.9.0
+    - uses: jpkrohling/setup-operator-sdk@v1-release
+
+    - name: "basic checks"
+      env:
+        GOPATH: /home/runner/work/jaeger-operator #remove when using operator >= 0.9.0
+      run: ./.ci/script.sh

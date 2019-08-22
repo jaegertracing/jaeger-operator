@@ -4,7 +4,6 @@ dist: xenial
 sevices:
   - docker
 
-
 go:
 - 1.12.5
 
@@ -33,19 +32,19 @@ jobs:
       - OPERATOR_VERSION="JOB_${TRAVIS_JOB_NUMBER}"
       name: "Build and unit test"
       install:
-      - "travis_retry ./.travis/install.sh"
+      - "travis_retry ./.ci/install.sh"
       script:
-      - "./.travis/script.sh"
+      - "./.ci/script.sh"
       after_success:
-      - "./.travis/after_success.sh"
+      - "./.ci/after-success.sh"
 
     - stage: build
       name: "Run e2e elasticsearch tests"
       install:
       - "travis_retry make vendor"
-      - "./.travis/setupMinikube.sh"
+      - "./.ci/start-minikube.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+      - "./.ci/run-e2e-tests.sh"
       env:
       - TEST_GROUP=es
 
@@ -53,9 +52,9 @@ jobs:
       name: "Run e2e smoke tests"
       install:
       - "travis_retry make vendor"
-      - "./.travis/setupMinikube.sh"
+      - "./.ci/start-minikube.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+      - "./.ci/run-e2e-tests.sh"
       env:
       - TEST_GROUP=smoke
 
@@ -63,9 +62,9 @@ jobs:
       name: "Run e2e cassandra tests"
       install:
       - "travis_retry make vendor"
-      - "./.travis/setupMinikube.sh"
+      - "./.ci/start-minikube.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+      - "./.ci/run-e2e-tests.sh"
       env:
       - TEST_GROUP=cassandra
 
@@ -73,9 +72,9 @@ jobs:
       name: "Run e2e streaming tests"
       install:
       - "travis_retry make vendor"
-      - "./.travis/setupMinikube.sh"
+      - "./.ci/start-minikube.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+      - "./.ci/run-e2e-tests.sh"
       env:
       - TEST_GROUP=streaming
 
@@ -83,9 +82,9 @@ jobs:
       name: "Run e2e examples tests"
       install:
         - "travis_retry make vendor"
-        - "./.travis/setupMinikube.sh"
+        - "./.ci/start-minikube.sh"
       script:
-        - "./.travis/rune2eTests.sh"
+        - "./.ci/run-e2e-tests.sh"
       env:
         - TEST_GROUP=examples
 
@@ -93,9 +92,9 @@ jobs:
       name: "Run e2e es-self-provisioned tests"
       install:
       - "travis_retry make vendor"
-      - "./.travis/setupOpenShift.sh"
+      - "./.ci/start-openshift.sh"
       script:
-      - "./.travis/rune2eTests.sh"
+      - "./.ci/run-e2e-tests.sh"
       env:
       - TEST_GROUP=es-self-provisioned
 
@@ -104,12 +103,12 @@ jobs:
       env:
       - OPERATOR_VERSION="${TRAVIS_BRANCH}"
       script:
-      - "./.travis/publish-images.sh"
+      - "./.ci/publish-images.sh"
 
     - stage: deploy
       name: "Release"
       env:
       - OPERATOR_VERSION="${TRAVIS_BRANCH}"
       script:
-      - "./.travis/release.sh"
+      - "./.ci/release.sh"
       if: tag =~ /^release\/v.[\d\.]+(\-.*)?$/
