@@ -90,7 +90,7 @@ func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 	if !isOpenShift(t) {
 		t.Skip("Only applies to openshift")
 	}
-	yamlFileName := "../../deploy/examples/simple-prod-deploy-es.yaml"
+	yamlFileName := "../../deploy/examples/openshift/simple-prod-deploy-es.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
