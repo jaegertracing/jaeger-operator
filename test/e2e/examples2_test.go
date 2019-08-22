@@ -75,7 +75,7 @@ func (suite *ExamplesTestSuite2) TestWithSampling() {
 	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
 
-	// Check sampling options.  t would be nice to create some spans and check that they are being sampled at the correct rate
+	// Check sampling options.  We should also create some spans and check that they are being sampled at the correct rate
 	samplingOptions, err := jaegerInstance.Spec.Sampling.Options.MarshalJSON()
 	require.NoError(t, err)
 	require.Equal(t, "{\"default_strategy\":{\"param\":50,\"type\":\"probabilistic\"}}", string(samplingOptions))
