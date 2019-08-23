@@ -181,7 +181,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	// Add a liveliness probe to create some traces
 	vertxDeployment := &appsv1.Deployment{}
 	key := types.NamespacedName{Name: "myapp", Namespace: namespace}
-	err = fw.Client.Get(goctx.Background(), key, vertxDeployment)
+	err = fw.Client.Get(context.Background(), key, vertxDeployment)
 	require.NoError(t, err)
 
 	vertxPort := intstr.IntOrString{IntVal: 8080}
