@@ -55,6 +55,29 @@ func TestEsIndexCleanerEnvVars(t *testing.T) {
 			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true"},
 			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"}},
 		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true", "es.tls": "true"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"},
+				{Name: "ES_TLS", Value: "true"}},
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true", "es.tls": "true", "es.tls.ca": "foo/bar/ca.crt"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"},
+				{Name: "ES_TLS", Value: "true"}, {Name: "ES_TLS_CA", Value: "foo/bar/ca.crt"}},
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true", "es.tls": "true",
+				"es.tls.ca": "foo/bar/ca.crt", "es.tls.cert": "foo/bar/cert.crt"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"},
+				{Name: "ES_TLS", Value: "true"}, {Name: "ES_TLS_CA", Value: "foo/bar/ca.crt"}, {Name: "ES_TLS_CERT", Value: "foo/bar/cert.crt"}},
+		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true", "es.tls": "true",
+				"es.tls.ca": "foo/bar/ca.crt", "es.tls.cert": "foo/bar/cert.crt", "es.tls.key": "foo/bar/cert.key"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"},
+				{Name: "ES_TLS", Value: "true"}, {Name: "ES_TLS_CA", Value: "foo/bar/ca.crt"}, {Name: "ES_TLS_CERT", Value: "foo/bar/cert.crt"},
+				{Name: "ES_TLS_KEY", Value: "foo/var/cert.key"}},
+		},
 	}
 
 	for _, test := range tests {

@@ -60,12 +60,14 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
-									Name:  name,
-									Image: jaeger.Spec.Storage.EsRollover.Image,
-									Args:  []string{"rollover", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-									Env:   envs,
+									Name:         name,
+									Image:        jaeger.Spec.Storage.EsRollover.Image,
+									Args:         []string{"rollover", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
+									Env:          envs,
+									VolumeMounts: jaeger.Spec.VolumeMounts,
 								},
 							},
+							Volumes: jaeger.Spec.Volumes,
 						},
 					},
 				},
@@ -139,6 +141,18 @@ func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 	}
 	if val, ok := opts.Map()["es.password"]; ok {
 		envs = append(envs, corev1.EnvVar{Name: "ES_PASSWORD", Value: val})
+	}
+	if val, ok := opts.Map()["es.tls"]; ok {
+		envs = append(envs, corev1.EnvVar{Name: "ES_TLS", Value: val})
+	}
+	if val, ok := opts.Map()["es.tls.ca"]; ok {
+		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_CA", Value: val})
+	}
+	if val, ok := opts.Map()["es.tls.cert"]; ok {
+		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_CERT", Value: val})
+	}
+	if val, ok := opts.Map()["es.tls.key"]; ok {
+		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_KEY", Value: val})
 	}
 	return envs
 }

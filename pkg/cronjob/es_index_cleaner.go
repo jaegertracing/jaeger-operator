@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -70,14 +70,16 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Name:    name,
-									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
-									Args:    []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:     envs,
-									EnvFrom: envFromSource,
+									Name:         name,
+									Image:        jaeger.Spec.Storage.EsIndexCleaner.Image,
+									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Env:          envs,
+									EnvFrom:      envFromSource,
+									VolumeMounts: jaeger.Spec.VolumeMounts,
 								},
 							},
 							RestartPolicy: corev1.RestartPolicyNever,
+							Volumes:       jaeger.Spec.Volumes,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
