@@ -280,7 +280,7 @@ type JaegerAgentSpec struct {
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
 // +k8s:openapi-gen=true
 type JaegerStorageSpec struct {
-	// Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `managed`
+	// Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`
 	// +optional
 	Type string `json:"type,omitempty"`
 

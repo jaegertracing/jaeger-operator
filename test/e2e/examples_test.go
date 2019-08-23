@@ -3,7 +3,7 @@
 package e2e
 
 import (
-	goctx "context"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -84,6 +83,14 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 
 func (suite *ExamplesTestSuite) TestSimplestExample() {
 	smokeTestAllInOneExample("simplest", "../../deploy/examples/simplest.yaml")
+}
+
+func (suite *ExamplesTestSuite) TestSimplestWithBadgerExample() {
+	smokeTestAllInOneExample("simplest-with-badger", "../../deploy/examples/simplest-with-badger.yaml")
+}
+
+func (suite *ExamplesTestSuite) TestSimplestWithBadgerAndVolumeExample() {
+	smokeTestAllInOneExample("simplest-with-badger-and-volume", "../../deploy/examples/simplest-with-badger-and-volume.yaml")
 }
 
 func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {

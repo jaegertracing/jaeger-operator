@@ -72,12 +72,25 @@ func TestDefaultName(t *testing.T) {
 	assert.NotEmpty(t, jaeger.Name)
 }
 
-func TestIncompatibleStorageForProduction(t *testing.T) {
+func TestIncompatibleMemoryStorageForProduction(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
+			},
+		},
+	}
+	normalize(jaeger)
+	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+}
+
+func TestIncompatibleBadgerStorageForProduction(t *testing.T) {
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1.JaegerStorageSpec{
+				Type: "badger",
 			},
 		},
 	}
