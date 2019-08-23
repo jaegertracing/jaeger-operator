@@ -69,7 +69,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_TLS", Value: "true"},
 				{Name: "ES_TLS_CA", Value: "foo/bar/ca.crt"},
 				{Name: "ES_TLS_CERT", Value: "foo/bar/cert.crt"},
-				{Name: "ES_TLS_KEY", Value: "foo/var/cert.key"},
+				{Name: "ES_TLS_KEY", Value: "foo/bar/cert.key"},
 			}},
 	}
 	for _, test := range tests {
