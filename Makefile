@@ -70,8 +70,12 @@ docker:
 
 .PHONY: push
 push:
-	@echo Pushing image $(BUILD_IMAGE)...
-	@[ ! -z "$(TRAVIS)" ] || docker push $(BUILD_IMAGE) > /dev/null
+ifeq ($(CI),true)
+	@echo Skipping push, as the build is running within a CI environment
+else
+	@echo "Pushing image $(BUILD_IMAGE)..."
+	@docker push $(BUILD_IMAGE) > /dev/null
+endif
 
 .PHONY: unit-tests
 unit-tests:
