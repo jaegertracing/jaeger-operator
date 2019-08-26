@@ -13,9 +13,3 @@ sudo service docker restart
 sudo docker cp $(docker create docker.io/openshift/origin:$OPENSHIFT_VERSION):/bin/oc /usr/local/bin/oc
 oc cluster up --version=$OPENSHIFT_VERSION
 oc login -u system:admin
-
-# download kubectl
-curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl && \
-    chmod +x kubectl &&  \
-    sudo mv kubectl /usr/local/bin/
-
