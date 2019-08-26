@@ -1,6 +1,8 @@
 name: "Release"
 on:
   push:
+    branches:
+    paths:
     tags:
     - 'release/v*'
 
