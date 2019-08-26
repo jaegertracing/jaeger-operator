@@ -18,17 +18,11 @@ sudo apt-get update && sudo apt-get install socat
 export MINIKUBE_VERSION=v1.0.0
 export KUBERNETES_VERSION=v1.14.0
 
+MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
+
 sudo mount --make-rshared /
 sudo mount --make-rshared /proc
 sudo mount --make-rshared /sys
-
-curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl && \
-    chmod +x kubectl &&  \
-    sudo mv kubectl /usr/local/bin/
-
-curl -Lo minikube https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64 && \
-    chmod +x minikube &&  \
-    sudo mv minikube /usr/local/bin/minikube
 
 mkdir "${HOME}"/.kube || true
 touch "${HOME}"/.kube/config
@@ -38,8 +32,8 @@ minikube config set WantNoneDriverWarning false
 minikube config set vm-driver none
 
 minikube version
-sudo minikube start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
-sudo chown -R travis: /home/travis/.minikube/
+sudo ${MINIKUBE} start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
+sudo chown -R $USER $HOME/.kube $HOME/.minikube
 
 minikube update-context
 
@@ -52,5 +46,6 @@ JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.ty
 # waiting for kube-dns to be ready
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
 
-sudo minikube addons enable ingress
+sudo ${MINIKUBE} addons enable ingress
 
+eval $(minikube docker-env)
