@@ -5,7 +5,7 @@ on:
     - 'release/v*'
 
 jobs:
-  end-to-end:
+  release:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -13,4 +13,6 @@ jobs:
         path: src/github.com/jaegertracing/jaeger-operator # remove when using operator >= 0.9.0
 
     - name: "perform the release"
+      env:
+        GH_WRITE_TOKEN: ${{ secrets. GH_WRITE_TOKEN }}
       run: ./.ci/release.sh
