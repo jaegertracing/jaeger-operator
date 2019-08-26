@@ -1,0 +1,16 @@
+name: "Release"
+on:
+  push:
+    tags:
+    - 'release/v*'
+
+jobs:
+  end-to-end:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: src/github.com/jaegertracing/jaeger-operator # remove when using operator >= 0.9.0
+
+    - name: "perform the release"
+      run: ./.ci/release.sh
