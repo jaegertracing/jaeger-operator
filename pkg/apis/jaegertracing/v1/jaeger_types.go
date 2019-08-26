@@ -360,6 +360,9 @@ type JaegerDependenciesSpec struct {
 	Schedule string `json:"schedule,omitempty"`
 
 	// +optional
+	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
+
+	// +optional
 	Image string `json:"image,omitempty"`
 
 	// +optional
@@ -394,6 +397,9 @@ type JaegerEsIndexCleanerSpec struct {
 	Schedule string `json:"schedule,omitempty"`
 
 	// +optional
+	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
+
+	// +optional
 	Image string `json:"image,omitempty"`
 
 	// +optional
@@ -410,6 +416,9 @@ type JaegerEsRolloverSpec struct {
 
 	// +optional
 	Schedule string `json:"schedule,omitempty"`
+
+	// +optional
+	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
 
 	// +optional
 	Conditions string `json:"conditions,omitempty"`

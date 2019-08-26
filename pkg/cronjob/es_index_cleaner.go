@@ -72,7 +72,8 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			Schedule: jaeger.Spec.Storage.EsIndexCleaner.Schedule,
+			Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
+			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism:             &one,

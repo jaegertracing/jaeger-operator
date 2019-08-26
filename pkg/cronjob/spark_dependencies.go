@@ -80,8 +80,9 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
-			Schedule:          jaeger.Spec.Storage.Dependencies.Schedule,
+			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+			Schedule:                   jaeger.Spec.Storage.Dependencies.Schedule,
+			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
