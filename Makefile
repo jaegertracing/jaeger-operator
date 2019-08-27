@@ -83,7 +83,7 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: crd build docker push
@@ -124,10 +124,15 @@ e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
 
-.PHONY: e2e-tests-examples
-e2e-tests-examples: prepare-e2e-tests es cassandra kafka deploy-es-operator
-	@echo Running Example end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples ./test/e2e/... $(TEST_OPTIONS)
+.PHONY: e2e-tests-examples1
+e2e-tests-examples1: prepare-e2e-tests es cassandra deploy-es-operator
+	@echo Running Example end-to-end tests part 1...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-examples2
+e2e-tests-examples2: prepare-e2e-tests es kafka deploy-es-operator
+	@echo Running Example end-to-end tests part 2...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
