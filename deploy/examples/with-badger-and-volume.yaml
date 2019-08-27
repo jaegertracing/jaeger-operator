@@ -1,7 +1,7 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: simplest-with-badger-and-volume
+  name: with-badger-and-volume
 spec:
   allInOne:
     volumeMounts:

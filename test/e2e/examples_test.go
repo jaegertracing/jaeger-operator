@@ -85,12 +85,12 @@ func (suite *ExamplesTestSuite) TestSimplestExample() {
 	smokeTestAllInOneExample("simplest", "../../deploy/examples/simplest.yaml")
 }
 
-func (suite *ExamplesTestSuite) TestSimplestWithBadgerExample() {
-	smokeTestAllInOneExample("simplest-with-badger", "../../deploy/examples/simplest-with-badger.yaml")
+func (suite *ExamplesTestSuite) TestWithBadgerExample() {
+	smokeTestAllInOneExample("with-badger", "../../deploy/examples/with-badger.yaml")
 }
 
-func (suite *ExamplesTestSuite) TestSimplestWithBadgerAndVolumeExample() {
-	smokeTestAllInOneExample("simplest-with-badger-and-volume", "../../deploy/examples/simplest-with-badger-and-volume.yaml")
+func (suite *ExamplesTestSuite) TestWithBadgerAndVolumeExample() {
+	smokeTestAllInOneExample("with-badger-and-volume", "../../deploy/examples/with-badger-and-volume.yaml")
 }
 
 func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
