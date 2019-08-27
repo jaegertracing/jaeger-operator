@@ -133,26 +133,20 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 
 func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 	var envs []corev1.EnvVar
-	if val, ok := opts.Map()["es.index-prefix"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "INDEX_PREFIX", Value: val})
-	}
-	if val, ok := opts.Map()["es.username"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_USERNAME", Value: val})
-	}
-	if val, ok := opts.Map()["es.password"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_PASSWORD", Value: val})
-	}
-	if val, ok := opts.Map()["es.tls"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_TLS", Value: val})
-	}
-	if val, ok := opts.Map()["es.tls.ca"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_CA", Value: val})
-	}
-	if val, ok := opts.Map()["es.tls.cert"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_CERT", Value: val})
-	}
-	if val, ok := opts.Map()["es.tls.key"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_TLS_KEY", Value: val})
+	options := opts.Map()
+
+	for k, v := range map[string]string{
+		"es.index-prefix": "INDEX_PREFIX",
+		"es.username":     "ES_USERNAME",
+		"es.password":     "ES_PASSWORD",
+		"es.tls":          "ES_TLS",
+		"es.tls.ca":       "ES_TLS_CA",
+		"es.tls.cert":     "ES_TLS_CERT",
+		"es.tls.key":      "ES_TLS_KEY",
+	} {
+		if val, ok := options[k]; ok {
+			envs = append(envs, corev1.EnvVar{Name: v, Value: val})
+		}
 	}
 	return envs
 }
