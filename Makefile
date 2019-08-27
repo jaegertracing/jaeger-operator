@@ -15,6 +15,8 @@ JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
+KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.12.1/strimzi-cluster-operator-0.12.1.yaml"
+KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/release-0.12.x/examples/kafka/kafka-ephemeral.yaml"
 ES_OPERATOR_NAMESPACE = openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.1
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.1
@@ -182,8 +184,10 @@ storage:
 kafka:
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
-	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	@curl --location ${KAFKA_YAML} --output ./test/kafka-operator.yml
+	@curl --location ${KAFKA_EXAMPLE} --output ./test/kafka-example.yaml
+	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@kubectl apply -f ./test/kafka-example.yaml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
