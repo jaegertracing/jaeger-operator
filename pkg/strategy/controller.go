@@ -77,7 +77,7 @@ func normalize(jaeger *v1.Jaeger) {
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if strings.EqualFold(jaeger.Spec.Storage.Type, "memory") && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
+	if !distributedStorage(jaeger.Spec.Storage.Type) && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
 		jaeger.Logger().WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to all-in-one")
 		jaeger.Spec.Strategy = "allInOne"
 	}
@@ -98,6 +98,10 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.EsRollover)
 	normalizeUI(&jaeger.Spec)
+}
+
+func distributedStorage(storage string) bool {
+	return !strings.EqualFold(storage, "memory") && !strings.EqualFold(storage, "badger")
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
