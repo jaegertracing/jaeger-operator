@@ -36,7 +36,7 @@ vendor:
 check: vendor
 	@echo Checking...
 	@go fmt $(PACKAGES) > $(FMT_LOG)
-	@.travis/import-order-cleanup.sh stdout > $(IMPORT_LOG)
+	@.ci/import-order-cleanup.sh stdout > $(IMPORT_LOG)
 	@[ ! -s "$(FMT_LOG)" -a ! -s "$(IMPORT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) $(IMPORT_LOG) && false)
 
 .PHONY: ensure-generate-is-noop
@@ -46,18 +46,18 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format: vendor
 	@echo Formatting code...
-	@.travis/import-order-cleanup.sh inplace
+	@.ci/import-order-cleanup.sh inplace
 	@go fmt $(PACKAGES)
 
 .PHONY: lint
 lint:
 	@echo Linting...
-	@golint -set_exit_status=1 $(PACKAGES)
+	@${GOPATH}/bin/golint -set_exit_status=1 $(PACKAGES)
 
 .PHONY: security
 security:
 	@echo Security...
-	@gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
+	@${GOPATH}/bin/gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
 
 .PHONY: build
 build: vendor format
@@ -70,8 +70,12 @@ docker:
 
 .PHONY: push
 push:
-	@echo Pushing image $(BUILD_IMAGE)...
-	@[ ! -z "$(TRAVIS)" ] || docker push $(BUILD_IMAGE) > /dev/null
+ifeq ($(CI),true)
+	@echo Skipping push, as the build is running within a CI environment
+else
+	@echo "Pushing image $(BUILD_IMAGE)..."
+	@docker push $(BUILD_IMAGE) > /dev/null
+endif
 
 .PHONY: unit-tests
 unit-tests:
@@ -205,7 +209,7 @@ ingress:
 
 .PHONY: generate
 generate: vendor
-	@operator-sdk generate k8s
+	@${GO_FLAGS} operator-sdk generate k8s
 
 .PHONY: test
 test: unit-tests e2e-tests
@@ -228,12 +232,9 @@ install-sdk:
 
 .PHONY: install-tools
 install-tools:
-	@go get -u golang.org/x/lint/golint
-	@go get github.com/securego/gosec/cmd/gosec/...
+	@${GO_FLAGS} go get -u \
+		golang.org/x/lint/golint \
+		github.com/securego/gosec/cmd/gosec
 
 .PHONY: install
 install: install-sdk install-tools vendor
-
-.PHONY: setup-minikube
-setup-minikube:
-	@./.travis/setupMinikube.sh
