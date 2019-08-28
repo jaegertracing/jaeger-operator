@@ -11,7 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -131,6 +131,10 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	}
 }
 
+// esScriptEnvVars converts ElasticSearch options from the Jaeger Spec
+// into Container Environment Variables to be mounted to the pod
+// these are used in the cleaning script, see in the main Jaeger repository:
+// jaeger/plugin/storage/es/esCleaner.py for reference
 func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 	var envs []corev1.EnvVar
 	options := opts.Map()

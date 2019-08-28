@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestRemoveEmptyVars(t *testing.T) {
@@ -57,19 +57,14 @@ func TestStorageEnvs(t *testing.T) {
 			}},
 		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
-				"es.username": "jdoe", "es.password": "none", "es.tls": "true", "es.tls.ca": "foo/bar/ca.crt",
-				"es.tls.cert": "foo/bar/cert.crt", "es.tls.key": "foo/bar/cert.key"})},
+				"es.username": "jdoe", "es.password": "none"})},
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
-				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
-				{Name: "ES_TLS", Value: "true"},
-				{Name: "ES_TLS_CA", Value: "foo/bar/ca.crt"},
-				{Name: "ES_TLS_CERT", Value: "foo/bar/cert.crt"},
-				{Name: "ES_TLS_KEY", Value: "foo/bar/cert.key"},
+				{Name: "ES_NODES_WAN_ONLY", Value: "false"}
 			}},
 	}
 	for _, test := range tests {
