@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -115,10 +115,6 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
 			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchClientNodeOnly)},
 			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchNodesWanOnly)},
-			{Name: "ES_TLS", Value: sFlagsMap["es.tls"]},
-			{Name: "ES_TLS_CA", Value: sFlagsMap["es.tls.ca"]},
-			{Name: "ES_TLS_CERT", Value: sFlagsMap["es.tls.cert"]},
-			{Name: "ES_TLS_KEY", Value: sFlagsMap["es.tls.key"]},
 		}
 	default:
 		return nil
