@@ -64,7 +64,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
-				{Name: "ES_NODES_WAN_ONLY", Value: "false"}
+				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
 			}},
 	}
 	for _, test := range tests {
