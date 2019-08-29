@@ -3,6 +3,7 @@ package strategy
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -14,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 const (
@@ -113,7 +115,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 		spec.Dependencies.Enabled = &trueVar
 	}
 	if spec.Dependencies.Image == "" {
-		spec.Dependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
+		spec.Dependencies.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-spark-dependencies-image"), version.Get().Jaeger)
 	}
 	if spec.Dependencies.Schedule == "" {
 		spec.Dependencies.Schedule = "55 23 * * *"
@@ -127,7 +129,7 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		spec.Enabled = &trueVar
 	}
 	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-es-index-cleaner-image")
+		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-index-cleaner-image"), version.Get().Jaeger)
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
@@ -164,7 +166,7 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-es-rollover-image")
+		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-rollover-image"), version.Get().Jaeger)
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
