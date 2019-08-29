@@ -190,7 +190,7 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 		expected  v1.JaegerEsIndexCleanerSpec
 	}{
 		{underTest: v1.JaegerEsIndexCleanerSpec{},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo:0.0.0", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
 		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
 			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar}},
 	}
@@ -208,7 +208,7 @@ func TestNormalizeRollover(t *testing.T) {
 		expected  v1.JaegerEsRolloverSpec
 	}{
 		{underTest: v1.JaegerEsRolloverSpec{},
-			expected: v1.JaegerEsRolloverSpec{Image: "hoo", Schedule: "*/30 * * * *"}},
+			expected: v1.JaegerEsRolloverSpec{Image: "hoo:0.0.0", Schedule: "*/30 * * * *"}},
 		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
 			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"}},
 	}
