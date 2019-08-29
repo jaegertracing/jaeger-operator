@@ -77,7 +77,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 	queryPort := randomPortNumber()
 	ports := []string{queryPort + ":16686"}
-	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "jaegertracing/all-in-one", ports, fw.KubeConfig)
+	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 
