@@ -165,6 +165,9 @@ endif
 
 .PHONY: undeploy-es-operator
 undeploy-es-operator:
+ifeq ($(OLM),true)
+	@echo Skipping es-operator undeployment, as it should have been installed via OperatorHub
+else
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml || true
@@ -173,6 +176,7 @@ undeploy-es-operator:
 	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
 	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
 	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} 2>&1 || true
+endif
 
 .PHONY: es
 es: storage
@@ -190,7 +194,7 @@ storage:
 .PHONY: kafka
 kafka:
 ifeq ($(OLM),true)
-	@echo Skipping Kafka deployment, assuming it has been installed via OperatorHub
+	@echo Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
@@ -200,8 +204,12 @@ endif
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
+ifeq ($(OLM),true)
+	@echo Skipping kafka-operator undeployment, as it should have been installed via OperatorHub
+else
 	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
+endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator
