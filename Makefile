@@ -199,15 +199,15 @@ else
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
-	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 endif
+	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
+	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
 ifeq ($(OLM),true)
 	@echo Skipping kafka-operator undeployment, as it should have been installed via OperatorHub
 else
-	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 endif
 
