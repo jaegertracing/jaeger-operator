@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -82,4 +83,67 @@ func TestSparkDependencies(t *testing.T) {
 
 	cjob := CreateSparkDependencies(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
+}
+
+func TestSparkDependenciesResources(t *testing.T) {
+
+	parentResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+
+	dependencyResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+	}
+
+	tests := []struct {
+		jaeger   *v1.Jaeger
+		expected corev1.ResourceRequirements
+	}{
+		{
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			expected: corev1.ResourceRequirements{},
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: parentResources,
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{
+					Type: "elasticsearch",
+					Dependencies: v1.JaegerDependenciesSpec{
+						Resources: dependencyResources,
+					},
+				},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: dependencyResources,
+		},
+	}
+	for _, test := range tests {
+		cjob := CreateSparkDependencies(test.jaeger)
+		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
+
+	}
 }
