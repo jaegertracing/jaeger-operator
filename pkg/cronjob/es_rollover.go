@@ -152,6 +152,7 @@ func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 			envs = append(envs, corev1.EnvVar{Name: v, Value: val})
 		}
 	}
+
 	return envs
 }
 
