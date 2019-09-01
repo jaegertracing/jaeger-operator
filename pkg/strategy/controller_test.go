@@ -72,12 +72,25 @@ func TestDefaultName(t *testing.T) {
 	assert.NotEmpty(t, jaeger.Name)
 }
 
-func TestIncompatibleStorageForProduction(t *testing.T) {
+func TestIncompatibleMemoryStorageForProduction(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
+			},
+		},
+	}
+	normalize(jaeger)
+	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+}
+
+func TestIncompatibleBadgerStorageForProduction(t *testing.T) {
+	jaeger := &v1.Jaeger{
+		Spec: v1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1.JaegerStorageSpec{
+				Type: "badger",
 			},
 		},
 	}
@@ -177,7 +190,7 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 		expected  v1.JaegerEsIndexCleanerSpec
 	}{
 		{underTest: v1.JaegerEsIndexCleanerSpec{},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
+			expected: v1.JaegerEsIndexCleanerSpec{Image: "foo:0.0.0", Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
 		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
 			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar}},
 	}
@@ -195,7 +208,7 @@ func TestNormalizeRollover(t *testing.T) {
 		expected  v1.JaegerEsRolloverSpec
 	}{
 		{underTest: v1.JaegerEsRolloverSpec{},
-			expected: v1.JaegerEsRolloverSpec{Image: "hoo", Schedule: "*/30 * * * *"}},
+			expected: v1.JaegerEsRolloverSpec{Image: "hoo:0.0.0", Schedule: "*/30 * * * *"}},
 		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
 			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"}},
 	}

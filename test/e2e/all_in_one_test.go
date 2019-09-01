@@ -162,7 +162,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 
 	queryPort := randomPortNumber()
 	ports := []string{queryPort + ":16686"}
-	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "jaegertracing/all-in-one", ports, fw.KubeConfig)
+	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 

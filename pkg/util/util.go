@@ -73,7 +73,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		volumes = append(volumes, commonSpec.Volumes...)
 
 		// Merge resources
-		mergeResources(resources, commonSpec.Resources)
+		MergeResources(resources, commonSpec.Resources)
 
 		// Set the affinity based on the most specific definition available
 		if affinity == nil {
@@ -104,7 +104,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	}
 }
 
-func mergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceRequirements) {
+// MergeResources returns a merged version of two resource requirements
+func MergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceRequirements) {
 
 	for k, v := range res.Limits {
 		if _, ok := resources.Limits[k]; !ok {

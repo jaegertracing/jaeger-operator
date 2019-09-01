@@ -113,7 +113,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 
 	queryPort := randomPortNumber()
 	ports := []string{queryPort + ":16686"}
-	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "jaegertracing/all-in-one", ports, fw.KubeConfig)
+	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "all-in-one", ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 

@@ -15,7 +15,7 @@ JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
-ES_OPERATOR_NAMESPACE = openshift-logging
+ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.1
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.1
 SDK_VERSION=v0.8.1
@@ -83,7 +83,7 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: crd build docker push
@@ -117,17 +117,22 @@ e2e-tests-es: prepare-e2e-tests es
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=${ES_OPERATOR_NAMESPACE} ES_OPERATOR_IMAGE=${ES_OPERATOR_IMAGE} go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
 
-.PHONY: e2e-tests-examples
-e2e-tests-examples: prepare-e2e-tests es cassandra kafka deploy-es-operator
-	@echo Running Example end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples ./test/e2e/... $(TEST_OPTIONS)
+.PHONY: e2e-tests-examples1
+e2e-tests-examples1: prepare-e2e-tests es cassandra deploy-es-operator
+	@echo Running Example end-to-end tests part 1...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-examples2
+e2e-tests-examples2: prepare-e2e-tests es kafka deploy-es-operator
+	@echo Running Example end-to-end tests part 2...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
@@ -144,6 +149,9 @@ set-max-map-count:
 
 .PHONY: deploy-es-operator
 deploy-es-operator: set-max-map-count
+ifeq ($(OLM),true)
+	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
+else
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
@@ -153,9 +161,13 @@ deploy-es-operator: set-max-map-count
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl set image deployment/elasticsearch-operator elasticsearch-operator=${ES_OPERATOR_IMAGE} -n ${ES_OPERATOR_NAMESPACE}
+endif
 
 .PHONY: undeploy-es-operator
 undeploy-es-operator:
+ifeq ($(OLM),true)
+	@echo Skipping es-operator undeployment, as it should have been installed via OperatorHub
+else
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml || true
@@ -164,6 +176,7 @@ undeploy-es-operator:
 	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
 	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
 	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} 2>&1 || true
+endif
 
 .PHONY: es
 es: storage
@@ -180,15 +193,23 @@ storage:
 
 .PHONY: kafka
 kafka:
+ifeq ($(OLM),true)
+	@echo Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
+else
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
 	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+endif
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
+ifeq ($(OLM),true)
+	@echo Skipping kafka-operator undeployment, as it should have been installed via OperatorHub
+else
 	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
+endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator

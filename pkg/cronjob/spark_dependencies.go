@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
@@ -33,6 +34,8 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
+	resources := jaeger.Spec.Storage.Dependencies.Resources
+	util.MergeResources(&resources, jaeger.Spec.Resources)
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -68,8 +71,8 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Image: jaeger.Spec.Storage.Dependencies.Image,
 									Name:  name,
 									// let spark job use its default values
-									Env:          removeEmptyVars(envVars),
-									VolumeMounts: jaeger.Spec.VolumeMounts,
+									Env:       removeEmptyVars(envVars),
+									Resources: resources,
 								},
 							},
 							Volumes:       jaeger.Spec.Volumes,

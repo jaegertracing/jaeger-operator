@@ -31,10 +31,14 @@ elif [ "${TEST_GROUP}" = "streaming" ]
 then
     echo "Running Streaming Tests"
     make e2e-tests-streaming
-elif [ "${TEST_GROUP}" = "examples" ]
+elif [ "${TEST_GROUP}" = "examples1" ]
 then
-    echo "Running Examples Tests"
-    make e2e-tests-examples
+    echo "Running Examples1 Tests"
+    make e2e-tests-examples1
+elif [ "${TEST_GROUP}" = "examples2" ]
+then
+    echo "Running Examples2 Tests"
+    make e2e-tests-examples2
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi

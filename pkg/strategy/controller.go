@@ -3,6 +3,7 @@ package strategy
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -14,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 const (
@@ -77,7 +79,7 @@ func normalize(jaeger *v1.Jaeger) {
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if strings.EqualFold(jaeger.Spec.Storage.Type, "memory") && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
+	if !distributedStorage(jaeger.Spec.Storage.Type) && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
 		jaeger.Logger().WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to all-in-one")
 		jaeger.Spec.Strategy = "allInOne"
 	}
@@ -100,6 +102,10 @@ func normalize(jaeger *v1.Jaeger) {
 	normalizeUI(&jaeger.Spec)
 }
 
+func distributedStorage(storage string) bool {
+	return !strings.EqualFold(storage, "memory") && !strings.EqualFold(storage, "badger")
+}
+
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
@@ -109,6 +115,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 		spec.Dependencies.Enabled = &trueVar
 	}
 	if spec.Dependencies.Image == "" {
+		// the version is not included, there is only one version - latest
 		spec.Dependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
 	}
 	if spec.Dependencies.Schedule == "" {
@@ -123,7 +130,7 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		spec.Enabled = &trueVar
 	}
 	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-es-index-cleaner-image")
+		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-index-cleaner-image"), version.Get().Jaeger)
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
@@ -160,7 +167,7 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	if spec.Image == "" {
-		spec.Image = viper.GetString("jaeger-es-rollover-image")
+		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-rollover-image"), version.Get().Jaeger)
 	}
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"

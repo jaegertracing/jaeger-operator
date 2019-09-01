@@ -11,6 +11,7 @@ func ValidTypes() []string {
 		"kafka",
 		"elasticsearch",
 		"cassandra",
+		"badger",
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 
 // AllInOneSmokeTest is for the all-in-one image, where query and collector use the same pod
 func AllInOneSmokeTest(resourceName string) {
-	allInOneImageName := "jaegertracing/all-in-one"
+	allInOneImageName := "all-in-one"
 	queryPort := randomPortNumber()
 	collectorPort := randomPortNumber()
 	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
@@ -30,8 +30,8 @@ func AllInOneSmokeTest(resourceName string) {
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
 func ProductionSmokeTest(resourceName string) {
-	queryPodImageName := "jaegertracing/jaeger-query"
-	collectorPodImageName := "jaegertracing/jaeger-collector"
+	queryPodImageName := "jaeger-query"
+	collectorPodImageName := "jaeger-collector"
 	queryPodPrefix := resourceName + "-query"
 	collectorPodPrefix := resourceName + "-collector"
 
