@@ -205,6 +205,11 @@ endif
 .PHONY: undeploy-kafka
 undeploy-kafka:
 	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
+ifeq ($(OLM),true)
+	@echo Skiping kafka-operator undeploy
+else
+	@kubectl delete -f ./test/kafka-operator.yml 2>&1 || true
+endif
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 
 .PHONY: clean
