@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -38,7 +39,7 @@ func (suite *StreamingTestSuite) SetupSuite() {
 
 func (suite *StreamingTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	//ctx.Cleanup()
 }
 
 func TestStreamingSuite(t *testing.T) {
@@ -60,7 +61,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	log.Infof("passing %v", j)
 	err = fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
-	defer undeployJaegerInstance(j)
+	//defer undeployJaegerInstance(j)
 
 	err = waitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-ingester", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for ingester deployment")
@@ -75,6 +76,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 }
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -89,13 +91,13 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic":   "jaeger-spans",
-					"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.producer.brokers": kafkaClusterURL,
 				}),
 			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.topic":   "jaeger-spans",
-					"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.consumer.brokers": kafkaClusterURL,
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
