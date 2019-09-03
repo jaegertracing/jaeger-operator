@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -34,8 +35,17 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
-	resources := jaeger.Spec.Storage.Dependencies.Resources
-	util.MergeResources(&resources, jaeger.Spec.Resources)
+
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "false",
+			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
+		},
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -72,17 +82,18 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Name:  name,
 									// let spark job use its default values
 									Env:       removeEmptyVars(envVars),
-									Resources: resources,
+									Resources: commonSpec.Resources,
 								},
 							},
-							RestartPolicy: corev1.RestartPolicyNever,
+							RestartPolicy:      corev1.RestartPolicyNever,
+							Affinity:           commonSpec.Affinity,
+							Tolerations:        commonSpec.Tolerations,
+							SecurityContext:    commonSpec.SecurityContext,
+							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
 						},
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-								"linkerd.io/inject":       "disabled",
-							},
+							Labels:      commonSpec.Labels,
+							Annotations: commonSpec.Annotations,
 						},
 					},
 				},

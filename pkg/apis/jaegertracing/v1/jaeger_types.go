@@ -378,7 +378,7 @@ type JaegerDependenciesSpec struct {
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// +optional
-	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
