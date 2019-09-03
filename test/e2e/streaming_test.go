@@ -39,7 +39,7 @@ func (suite *StreamingTestSuite) SetupSuite() {
 
 func (suite *StreamingTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	//ctx.Cleanup()
+	ctx.Cleanup()
 }
 
 func TestStreamingSuite(t *testing.T) {
@@ -61,7 +61,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	log.Infof("passing %v", j)
 	err = fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
-	//defer undeployJaegerInstance(j)
+	defer undeployJaegerInstance(j)
 
 	err = waitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-ingester", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for ingester deployment")
