@@ -247,7 +247,7 @@ func (in *JaegerDependenciesSpec) DeepCopyInto(out *JaegerDependenciesSpec) {
 		*out = new(int32)
 		**out = **in
 	}
-	in.Resources.DeepCopyInto(&out.Resources)
+	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
 
