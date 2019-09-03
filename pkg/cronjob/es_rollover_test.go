@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -97,5 +98,211 @@ func TestParseUnits(t *testing.T) {
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.units, parseToUnits(test.d))
+	}
+}
+
+func TestEsRolloverAnnotations(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverAnnotations"})
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsRollover.Annotations = map[string]string{
+		"hello":                "world", // Override top level annotation
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	cjob := rollover(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
+}
+
+func TestEsRolloverLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsRollover.Labels = map[string]string{
+		"hello":   "world", // Override top level label
+		"another": "false",
+	}
+
+	cjob := rollover(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["another"])
+}
+
+func TestEsRolloverResources(t *testing.T) {
+
+	parentResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+
+	childResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+	}
+
+	tests := []struct {
+		jaeger   *v1.Jaeger
+		expected corev1.ResourceRequirements
+	}{
+		{
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			expected: corev1.ResourceRequirements{},
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: parentResources,
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{
+					Type: "elasticsearch",
+					EsRollover: v1.JaegerEsRolloverSpec{
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: childResources,
+						},
+					},
+				},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: childResources,
+		},
+	}
+	for _, test := range tests {
+		cjob := rollover(test.jaeger)
+		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
+
+	}
+}
+
+func TestEsRolloverLookbackAnnotations(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverLookbackAnnotations"})
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsRollover.Annotations = map[string]string{
+		"hello":                "world", // Override top level annotation
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	cjob := lookback(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
+}
+
+func TestEsRolloverLookbackLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverLookbackLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsRollover.Labels = map[string]string{
+		"hello":   "world", // Override top level label
+		"another": "false",
+	}
+
+	cjob := lookback(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["another"])
+}
+
+func TestEsRolloverLookbackResources(t *testing.T) {
+
+	parentResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+
+	childResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+	}
+
+	tests := []struct {
+		jaeger   *v1.Jaeger
+		expected corev1.ResourceRequirements
+	}{
+		{
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			expected: corev1.ResourceRequirements{},
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: parentResources,
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{
+					Type: "elasticsearch",
+					EsRollover: v1.JaegerEsRolloverSpec{
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: childResources,
+						},
+					},
+				},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: childResources,
+		},
+	}
+	for _, test := range tests {
+		cjob := lookback(test.jaeger)
+		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
+
 	}
 }

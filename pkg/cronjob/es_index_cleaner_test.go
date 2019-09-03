@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -64,5 +65,118 @@ func TestEsIndexCleanerEnvVars(t *testing.T) {
 		jaeger.Spec.Storage.Options = v1.NewOptions(test.opts)
 		cronJob := CreateEsIndexCleaner(jaeger)
 		assert.Equal(t, test.envs, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
+	}
+}
+
+func TestEsIndexCleanerAnnotations(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerAnnotations"})
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsIndexCleaner.Annotations = map[string]string{
+		"hello":                "world", // Override top level annotation
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
+}
+
+func TestEsIndexCleanerLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.EsIndexCleaner.Labels = map[string]string{
+		"hello":   "world", // Override top level label
+		"another": "false",
+	}
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["another"])
+}
+
+func TestEsIndexCleanerResources(t *testing.T) {
+
+	parentResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+		},
+	}
+
+	childResources := corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceLimitsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceRequestsCPU:              *resource.NewQuantity(2048, resource.BinarySI),
+			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(1024, resource.DecimalSI),
+		},
+	}
+
+	days := 0
+
+	tests := []struct {
+		jaeger   *v1.Jaeger
+		expected corev1.ResourceRequirements
+	}{
+		{
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			expected: corev1.ResourceRequirements{},
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: parentResources,
+		},
+		{
+			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{
+					Type: "elasticsearch",
+					EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: childResources,
+						},
+					},
+				},
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: parentResources,
+				},
+			}},
+			expected: childResources,
+		},
+	}
+	for _, test := range tests {
+		test.jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+		cjob := CreateEsIndexCleaner(test.jaeger)
+		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
+
 	}
 }

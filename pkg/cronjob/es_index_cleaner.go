@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -37,6 +38,16 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	if val, ok := jaeger.Spec.Storage.Options.Map()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
 		envs = append(envs, corev1.EnvVar{Name: "ROLLOVER", Value: "true"})
 	}
+
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "false",
+			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
+		},
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsIndexCleaner.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -70,21 +81,23 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Name:    name,
-									Image:   jaeger.Spec.Storage.EsIndexCleaner.Image,
-									Args:    []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:     envs,
-									EnvFrom: envFromSource,
+									Name:      name,
+									Image:     jaeger.Spec.Storage.EsIndexCleaner.Image,
+									Args:      []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Env:       envs,
+									EnvFrom:   envFromSource,
+									Resources: commonSpec.Resources,
 								},
 							},
-							RestartPolicy: corev1.RestartPolicyNever,
+							RestartPolicy:      corev1.RestartPolicyNever,
+							Affinity:           commonSpec.Affinity,
+							Tolerations:        commonSpec.Tolerations,
+							SecurityContext:    commonSpec.SecurityContext,
+							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
 						},
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-								"linkerd.io/inject":       "disabled",
-							},
+							Labels:      commonSpec.Labels,
+							Annotations: commonSpec.Annotations,
 						},
 					},
 				},
