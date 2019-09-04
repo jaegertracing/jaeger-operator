@@ -345,9 +345,6 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
-
-	// +optional
-	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.

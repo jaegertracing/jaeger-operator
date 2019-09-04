@@ -136,7 +136,6 @@ func (in *JaegerCassandraCreateSchemaSpec) DeepCopyInto(out *JaegerCassandraCrea
 		*out = new(int32)
 		**out = **in
 	}
-	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
 

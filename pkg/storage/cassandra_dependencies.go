@@ -8,9 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -49,18 +47,14 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		host = "cassandra" // this is the default in the image
 	}
 
-	// TODO: should this be configurable? Would we ever think that 2 minutes is OK for this job to complete?
-	deadline := int64(120)
-
-	baseCommonSpec := v1.JaegerCommonSpec{
-		Annotations: map[string]string{
-			"prometheus.io/scrape":    "false",
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
-		},
+	annotations := map[string]string{
+		"prometheus.io/scrape":    "false",
+		"sidecar.istio.io/inject": "false",
+		"linkerd.io/inject":       "disabled",
 	}
 
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.CassandraCreateSchema.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	// TODO: should this be configurable? Would we ever think that 2 minutes is OK for this job to complete?
+	deadline := int64(120)
 
 	return []batchv1.Job{
 		batchv1.Job{
@@ -93,8 +87,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				ActiveDeadlineSeconds: &deadline,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Labels:      commonSpec.Labels,
-						Annotations: commonSpec.Annotations,
+						Annotations: annotations,
 					},
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{{
@@ -110,13 +103,8 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 								Name:  "DATACENTER",
 								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
 							}},
-							Resources: commonSpec.Resources,
 						}},
-						RestartPolicy:      corev1.RestartPolicyOnFailure,
-						Affinity:           commonSpec.Affinity,
-						Tolerations:        commonSpec.Tolerations,
-						SecurityContext:    commonSpec.SecurityContext,
-						ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.CassandraCreateSchemaComponent),
+						RestartPolicy: corev1.RestartPolicyOnFailure,
 					},
 				},
 			},
