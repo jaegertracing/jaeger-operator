@@ -21,4 +21,13 @@ const (
 
 	// DependenciesComponent represents the value for the Component type for Jaeger Dependencies CronJob
 	DependenciesComponent Component = "dependencies"
+
+	// EsIndexCleanerComponent represents the value for the Component type for Jaeger EsIndexCleaner CronJob
+	EsIndexCleanerComponent Component = "es-index-cleaner"
+
+	// EsRolloverComponent represents the value for the Component type for Jaeger EsRollover CronJob
+	EsRolloverComponent Component = "es-rollover"
+
+	// CassandraCreateSchemaComponent represents the value for the Component type for Jaeger CassandraCreateSchema CronJob
+	CassandraCreateSchemaComponent Component = "cassandra-create-schema"
 )

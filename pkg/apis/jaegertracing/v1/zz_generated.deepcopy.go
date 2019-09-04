@@ -279,6 +279,7 @@ func (in *JaegerEsIndexCleanerSpec) DeepCopyInto(out *JaegerEsIndexCleanerSpec) 
 		*out = new(int32)
 		**out = **in
 	}
+	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
 
@@ -300,6 +301,7 @@ func (in *JaegerEsRolloverSpec) DeepCopyInto(out *JaegerEsRolloverSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
 
