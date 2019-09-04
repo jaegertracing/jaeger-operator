@@ -41,7 +41,7 @@ func (suite *StreamingTestSuite) SetupSuite() {
 func (suite *StreamingTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
 
-	if !t.Failed() {
+	if !debugMode || !t.Failed() {
 		ctx.Cleanup()
 	} else {
 		cmd := exec.Command("kubectl", "get", "all", "--namespace", namespace)

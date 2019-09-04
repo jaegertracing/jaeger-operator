@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +38,7 @@ var (
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	noSetup              = os.Getenv("NO_SETUP")
+	debugMode, _         = strconv.ParseBool(getEnv("DEBUG_MODE", "false"))
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	ctx                  *framework.TestCtx
@@ -44,6 +46,14 @@ var (
 	namespace            string
 	t                    *testing.T
 )
+
+func getEnv(key, fallback string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		value = fallback
+	}
+	return value
+}
 
 // GetPod returns pod name
 func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) corev1.Pod {
@@ -211,7 +221,7 @@ func printTestStackTrace() {
 }
 
 func undeployJaegerInstance(jaeger *v1.Jaeger) {
-	if !t.Failed() {
+	if !debugMode || !t.Failed() {
 		err := fw.Client.Delete(goctx.TODO(), jaeger)
 		require.NoError(t, err, "Error undeploying Jaeger")
 		err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
