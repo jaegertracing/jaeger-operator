@@ -5,6 +5,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -39,7 +40,18 @@ func (suite *StreamingTestSuite) SetupSuite() {
 
 func (suite *StreamingTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+
+	if !t.Failed() {
+		ctx.Cleanup()
+	} else {
+		cmd := exec.Command("oc", "get", "all", "--namespace", namespace)
+		output, err := cmd.CombinedOutput()
+		fmt.Printf("OUTPUT: %sn\n", output)
+		if err != nil {
+			fmt.Printf("ERROR %v\n", err)
+		}
+		ctx.Cleanup()
+	}
 }
 
 func TestStreamingSuite(t *testing.T) {
