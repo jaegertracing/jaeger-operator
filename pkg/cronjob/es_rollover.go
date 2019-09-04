@@ -29,18 +29,6 @@ func CreateRollover(jaeger *v1.Jaeger) []batchv1beta1.CronJob {
 	return []batchv1beta1.CronJob{rollover(jaeger), lookback(jaeger)}
 }
 
-func createCommonSpec(jaeger *v1.Jaeger) *v1.JaegerCommonSpec {
-	baseCommonSpec := v1.JaegerCommonSpec{
-		Annotations: map[string]string{
-			"prometheus.io/scrape":    "false",
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
-		},
-	}
-
-	return util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
-}
-
 func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	name := fmt.Sprintf("%s-es-rollover", jaeger.Name)
 	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
@@ -48,8 +36,6 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 		envs = append(envs, corev1.EnvVar{Name: "CONDITIONS", Value: jaeger.Spec.Storage.EsRollover.Conditions})
 	}
 	one := int32(1)
-
-	commonSpec := createCommonSpec(jaeger)
 
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -64,14 +50,24 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
-					Template:    *createTemplate(name, "rollover", jaeger, commonSpec, envs),
+					Template:    *createTemplate(name, "rollover", jaeger, envs),
 				},
 			},
 		},
 	}
 }
 
-func createTemplate(name, action string, jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
+func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "false",
+			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
+		},
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      commonSpec.Labels,
@@ -113,8 +109,6 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 		}
 	}
 
-	commonSpec := createCommonSpec(jaeger)
-
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -128,7 +122,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
-					Template:                *createTemplate(name, "lookback", jaeger, commonSpec, envs),
+					Template:                *createTemplate(name, "lookback", jaeger, envs),
 				},
 			},
 		},
