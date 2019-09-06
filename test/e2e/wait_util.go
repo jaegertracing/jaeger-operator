@@ -128,7 +128,6 @@ func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 // See #WaitForDeployment for the full semantics
 func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespace, ownerName string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
-
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		jobList, err := kubeclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{IncludeUninitialized: true})
 		if err != nil {
@@ -152,7 +151,7 @@ func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespac
 		t.Logf("Failed waiting for job of an owner after %s\n", time.Since(start))
 		return err
 	}
-	t.Logf("Jobs succeeded\n")
+	t.Logf("Jobs succeeded after %s\n", time.Since(start))
 	return nil
 }
 

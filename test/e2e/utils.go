@@ -293,7 +293,7 @@ func smokeTestProductionExample(name, yamlFileName string) {
 	queryDeploymentName := name + "-query"
 	collectorDeploymentName := name + "-collector"
 
-	if name == "simple-streaming" {
+	if jaegerInstance.Spec.Strategy == "streaming" {
 		ingesterDeploymentName := name + "-ingester"
 		err := waitForDeployment(t, fw.KubeClient, namespace, ingesterDeploymentName, 1, retryInterval, timeout)
 		require.NoErrorf(t, err, "Error waiting for %s to deploy", ingesterDeploymentName)
