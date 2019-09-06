@@ -44,7 +44,7 @@ func (suite *StreamingTestSuite) TearDownSuite() {
 	if !t.Failed() {
 		ctx.Cleanup()
 	} else {
-		cmd := exec.Command("kubectl", "get", "all", "--namespace", namespace)
+		cmd := exec.Command("oc", "get", "all", "--namespace", namespace)
 		output, err := cmd.CombinedOutput()
 		fmt.Printf("OUTPUT: %sn\n", output)
 		if err != nil {
