@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -80,7 +81,7 @@ func (suite *ExamplesTestSuite2) TestWithSampling() {
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	err := waitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
 
 	// Check sampling options.  t would be nice to create some spans and check that they are being sampled at the correct rate

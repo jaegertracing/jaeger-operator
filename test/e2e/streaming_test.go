@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -63,13 +64,10 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(j)
 
-	err = waitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-ingester", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for ingester deployment")
-
-	err = waitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
-	err = waitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTest("simple-streaming")

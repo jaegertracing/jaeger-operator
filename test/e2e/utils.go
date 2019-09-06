@@ -15,7 +15,6 @@ import (
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -280,7 +279,7 @@ func smokeTestAllInOneExample(name, yamlFileName string) {
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	err := waitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
 
 	AllInOneSmokeTest(name)
@@ -293,24 +292,10 @@ func smokeTestProductionExample(name, yamlFileName string) {
 	queryDeploymentName := name + "-query"
 	collectorDeploymentName := name + "-collector"
 
-	if jaegerInstance.Spec.Strategy == "streaming" {
-		ingesterDeploymentName := name + "-ingester"
-		err := waitForDeployment(t, fw.KubeClient, namespace, ingesterDeploymentName, 1, retryInterval, timeout)
-		require.NoErrorf(t, err, "Error waiting for %s to deploy", ingesterDeploymentName)
-	}
-
-	err := waitForDeployment(t, fw.KubeClient, namespace, queryDeploymentName, 1, retryInterval, timeout)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryDeploymentName, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", queryDeploymentName)
-	err = waitForDeployment(t, fw.KubeClient, namespace, collectorDeploymentName, 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, collectorDeploymentName, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", collectorDeploymentName)
 
 	ProductionSmokeTest(name)
-}
-
-func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
-	start := time.Now()
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
-	elapsed := time.Since(start)
-	log.Infof("Deployment of %s in namespace %s took %s\n", name, namespace, elapsed)
-	return err
 }
