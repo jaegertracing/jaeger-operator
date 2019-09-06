@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -96,7 +95,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	// First deploy a Jaeger instance
 	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
+	err := waitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
 	require.NoError(t, err)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
@@ -105,7 +104,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
 	}
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
+	err = waitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for myapp deployment")
 
 	// Add a liveliness probe to create some traces
