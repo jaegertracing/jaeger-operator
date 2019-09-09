@@ -10,7 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -27,8 +27,10 @@ var (
 )
 
 const (
+	envVarTags        = "JAEGER_TAGS"
 	envVarServiceName = "JAEGER_SERVICE_NAME"
 	envVarPropagation = "JAEGER_PROPAGATION"
+	envVarPodName     = "POD_NAME"
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
@@ -41,7 +43,7 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	} else {
 		decorate(dep)
 		logFields.Debug("injecting sidecar")
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger))
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 		// Add label to deployment
 		logFields.Debug("adding label to deployment")
 
@@ -98,7 +100,7 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 	return nil
 }
 
-func container(jaeger *v1.Jaeger) corev1.Container {
+func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
 	if len(util.FindItem("--reporter.type=", args)) == 0 {
@@ -115,21 +117,46 @@ func container(jaeger *v1.Jaeger) corev1.Container {
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
 
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
+	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
+		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s",
+			"cluster", "undefined", // this value isn't currently available
+			"deployment.name", dep.Name,
+			"pod.namespace", dep.Namespace,
+			"pod.name", fmt.Sprintf("${%s:}", envVarPodName),
+		)
 
-	// ensure we have a consistent order of the arguments
-	// see https://github.com/jaegertracing/jaeger-operator/issues/334
-	sort.Strings(args)
+		if len(dep.Spec.Template.Spec.Containers) == 1 {
+			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
+				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
+			)
+
+			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
+		}
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	image := jaeger.Spec.Agent.Image
 	if image == "" {
 		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), version.Get().Jaeger)
 	}
 
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(args)
+
 	return corev1.Container{
 		Image: image,
 		Name:  "jaeger-agent",
 		Args:  args,
+		Env: []corev1.EnvVar{{
+			Name: envVarPodName,
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		}},
 		Ports: []corev1.ContainerPort{
 			{
 				ContainerPort: zkCompactTrft,
