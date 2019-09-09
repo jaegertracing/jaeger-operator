@@ -65,6 +65,10 @@ func TestIngressesUpdate(t *testing.T) {
 	orig := v1beta1.Ingress{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   nsn.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -104,6 +108,10 @@ func TestIngressesDelete(t *testing.T) {
 
 	orig := v1beta1.Ingress{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   nsn.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),

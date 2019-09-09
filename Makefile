@@ -18,7 +18,8 @@ KAFKA_NAMESPACE ?= "kafka"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.1
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.1
-SDK_VERSION=v0.8.1
+SDK_VERSION=v0.10.0
+GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...  ./test/... |  grep -v elasticsearch/v1)

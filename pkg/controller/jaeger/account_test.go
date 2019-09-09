@@ -17,9 +17,7 @@ import (
 
 func TestServiceAccountCreate(t *testing.T) {
 	// prepare
-	nsn := types.NamespacedName{
-		Name: "TestServiceAccountCreate",
-	}
+	nsn := types.NamespacedName{Name: "my-instance"}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -58,13 +56,15 @@ func TestServiceAccountCreate(t *testing.T) {
 
 func TestServiceAccountUpdate(t *testing.T) {
 	// prepare
-	nsn := types.NamespacedName{
-		Name: "TestServiceAccountUpdate",
-	}
+	nsn := types.NamespacedName{Name: "my-instance"}
 
 	orig := corev1.ServiceAccount{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -98,12 +98,14 @@ func TestServiceAccountUpdate(t *testing.T) {
 
 func TestServiceAccountDelete(t *testing.T) {
 	// prepare
-	nsn := types.NamespacedName{
-		Name: "TestServiceAccountDelete",
-	}
+	nsn := types.NamespacedName{Name: "my-instance"}
 
 	orig := corev1.ServiceAccount{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -133,11 +135,11 @@ func TestServiceAccountDelete(t *testing.T) {
 func TestAccountCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name:      "TestAccountCreateExistingNameInAnotherNamespace",
+		Name:      "my-instance",
 		Namespace: "tenant1",
 	}
 	nsnExisting := types.NamespacedName{
-		Name:      "TestAccountCreateExistingNameInAnotherNamespace",
+		Name:      "my-instance",
 		Namespace: "tenant2",
 	}
 
