@@ -190,12 +190,6 @@ spec:
           - get
           - create
         - apiGroups:
-          - io.jaegertracing
-          resources:
-          - '*'
-          verbs:
-          - '*'
-        - apiGroups:
           - extensions
           resources:
           - ingresses
@@ -298,12 +292,6 @@ spec:
           verbs:
           - get
           - create
-        - apiGroups:
-          - io.jaegertracing
-          resources:
-          - '*'
-          verbs:
-          - '*'
         - apiGroups:
           - extensions
           resources:
