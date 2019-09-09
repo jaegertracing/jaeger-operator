@@ -79,6 +79,19 @@ func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }
 
+func TestSparkDependenciesSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecrets"})
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	cronJob := CreateSparkDependencies(jaeger)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom, 1)
+	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestSparkDependencies(t *testing.T) {
 	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
 

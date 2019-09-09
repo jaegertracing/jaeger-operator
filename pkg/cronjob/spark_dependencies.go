@@ -32,6 +32,17 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	}
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
 
+	var envFromSource []corev1.EnvFromSource
+	if len(jaeger.Spec.Storage.SecretName) > 0 {
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: jaeger.Spec.Storage.SecretName,
+				},
+			},
+		})
+	}
+
 	trueVar := true
 	one := int32(1)
 	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
@@ -82,6 +93,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Name:  name,
 									// let spark job use its default values
 									Env:       removeEmptyVars(envVars),
+									EnvFrom:   envFromSource,
 									Resources: commonSpec.Resources,
 								},
 							},
