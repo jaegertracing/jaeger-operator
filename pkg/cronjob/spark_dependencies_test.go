@@ -87,6 +87,8 @@ func TestSparkDependenciesSecrets(t *testing.T) {
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 	cronJob := CreateSparkDependencies(jaeger)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom, 1)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
