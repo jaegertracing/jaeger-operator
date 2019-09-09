@@ -79,8 +79,8 @@ func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }
 
-func TestSparkDependenciesSecretSecrets(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecretSecrets"})
+func TestSparkDependenciesSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecrets"})
 	secret := "mysecret"
 	jaeger.Spec.Storage.SecretName = secret
 
