@@ -255,7 +255,7 @@ install-sdk:
 
 .PHONY: install-tools
 install-tools:
-	@${GO_FLAGS} go get -u \
+	@${GO_FLAGS} go get \
 		golang.org/x/lint/golint \
 		github.com/securego/gosec/cmd/gosec
 
