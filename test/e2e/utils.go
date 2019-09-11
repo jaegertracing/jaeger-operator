@@ -277,6 +277,7 @@ type services struct {
 }
 
 func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
+	// #nosec   G204: Subprocess launching should be audited
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", filename)
 	output, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
