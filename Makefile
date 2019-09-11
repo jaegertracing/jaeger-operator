@@ -201,17 +201,19 @@ kafka:
 ifeq ($(OLM),true)
 	@echo Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
-	@curl --location $(KAFKA_YAML) |  sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@curl --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml
+	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
 endif
-	@curl --location $(KAFKA_EXAMPLE) | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
+	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
-	@kubectl get kafkas --namespace $(KAFKA_NAMESPACE) --output jsonpath='{.items[0].metadata.name}' | xargs kubectl delete kafka --namespace $(KAFKA_NAMESPACE)
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
 ifeq ($(OLM),true)
 	@echo Skiping kafka-operator undeploy
 else
-	@kubectl get deployments --namespace $(KAFKA_NAMESPACE) --output jsonpath='{.items[0].metadata.name}' | xargs kubectl delete deployment --namespace $(KAFKA_NAMESPACE)
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml 2>&1 || true
 endif
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 
