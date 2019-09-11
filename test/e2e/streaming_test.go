@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -75,6 +76,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 }
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -89,13 +91,13 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic":   "jaeger-spans",
-					"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.producer.brokers": kafkaClusterURL,
 				}),
 			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.topic":   "jaeger-spans",
-					"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.consumer.brokers": kafkaClusterURL,
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
