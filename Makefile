@@ -16,9 +16,9 @@ OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.1
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.1
-SDK_VERSION=v0.10.0
+ES_OPERATOR_BRANCH ?= release-4.2
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
+SDK_VERSION=v0.8.1
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -146,10 +146,18 @@ run-debug: CLI_FLAGS = "--log-level=debug"
 
 .PHONY: set-max-map-count
 set-max-map-count:
+#	This is not required in OCP 4.1. The node tuning operator configures the property automatically
+#	when label tuned.openshift.io/elasticsearch=true label is present on the ES pod. The label
+# is configured by ES operator.
 	@minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
 
+.PHONY: set-node-os-linux
+set-node-os-linux:
+#	Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
+	@oc label nodes --all kubernetes.io/os=linux --overwrite
+
 .PHONY: deploy-es-operator
-deploy-es-operator: set-max-map-count
+deploy-es-operator: set-node-os-linux set-max-map-count
 ifeq ($(OLM),true)
 	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
 else
