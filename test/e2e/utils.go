@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -36,7 +37,7 @@ var (
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
-	noSetup              = os.Getenv("NO_SETUP")
+	usingOLM             = getBoolEnv("OLM", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	ctx                  *framework.TestCtx
@@ -44,6 +45,15 @@ var (
 	namespace            string
 	t                    *testing.T
 )
+
+func getBoolEnv(key string, defaultValue bool) bool {
+	if value, ok := os.LookupEnv(key); ok {
+		boolValue, err := strconv.ParseBool(value)
+		require.NoError(t, err)
+		return boolValue
+	}
+	return defaultValue
+}
 
 // GetPod returns pod name
 func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) corev1.Pod {
@@ -72,8 +82,8 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {
 	ctx := framework.NewTestCtx(t)
-	doSetup := len(noSetup) == 0
-	if doSetup {
+	// Install jaeger-operator unless we've installed it from OperatorHub
+	if !usingOLM {
 		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 		if err != nil {
 			t.Fatalf("failed to initialize cluster resources: %v", err)
@@ -120,7 +130,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
-	if doSetup {
+	if !usingOLM {
 		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 		if err != nil {
 			return nil, err
