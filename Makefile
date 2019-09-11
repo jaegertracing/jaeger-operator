@@ -154,7 +154,7 @@ set-max-map-count:
 .PHONY: set-node-os-linux
 set-node-os-linux:
 #	Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
-	@oc label nodes --all kubernetes.io/os=linux --overwrite
+	@kubectl label nodes --all kubernetes.io/os=linux --overwrite
 
 .PHONY: deploy-es-operator
 deploy-es-operator: set-node-os-linux set-max-map-count
