@@ -1,0 +1,32 @@
+name: "OpenShift end-to-end tests, ES operator 4.1"
+on: [push, pull_request]
+
+jobs:
+  end-to-end:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        TEST_GROUP: [es-self-provisioned]
+    steps:
+    - uses: jpkrohling/setup-kubectl@v1-release
+    - uses: jpkrohling/setup-operator-sdk@v1-release
+      with:
+        operator-sdk-version: v0.10.0
+    - uses: actions/checkout@v1
+
+    - name: "setup docker"
+      run: ./.ci/setup-docker.sh
+
+    - name: "set max_map_count"
+      run: sudo sysctl -w vm.max_map_count=262144
+
+    - name: "start openshift"
+      run: ./.ci/start-openshift.sh
+
+    - name: "running end to end test"
+      env:
+        CI: true
+        TEST_GROUP: ${{ matrix.TEST_GROUP }}
+        ES_OPERATOR_BRANCH: release-4.1
+        ES_OPERATOR_IMAGE: quay.io/openshift/origin-elasticsearch-operator:4.1
+      run: ./.ci/run-e2e-tests.sh
