@@ -75,6 +75,9 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	err := WaitForDaemonSet(t, fw.KubeClient, namespace, name+"-agent-daemonset", retryInterval, timeout)
 	require.NoError(t, err)
 
+	err = waitForDeployment(t, fw.KubeClient, namespace, "agent-as-daemonset", 1, retryInterval, timeout)
+	require.NoError(t, err)
+
 	AllInOneSmokeTest(name)
 }
 
