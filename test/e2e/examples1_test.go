@@ -75,6 +75,9 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	err := WaitForDaemonSet(t, fw.KubeClient, namespace, name+"-agent-daemonset", retryInterval, timeout)
 	require.NoError(t, err)
 
+	err = WaitForDeployment(t, fw.KubeClient, namespace, "agent-as-daemonset", 1, retryInterval, timeout)
+	require.NoError(t, err)
+
 	AllInOneSmokeTest(name)
 }
 
@@ -95,7 +98,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	// First deploy a Jaeger instance
 	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
-	err := waitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
+	err := WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
 	require.NoError(t, err)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
@@ -104,7 +107,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
 	}
-	err = waitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, "myapp", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for myapp deployment")
 
 	// Add a liveliness probe to create some traces

@@ -80,7 +80,7 @@ func (suite *ExamplesTestSuite2) TestWithSampling() {
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	err := waitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err := WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
 
 	// Check sampling options.  t would be nice to create some spans and check that they are being sampled at the correct rate
