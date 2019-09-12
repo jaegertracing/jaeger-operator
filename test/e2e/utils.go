@@ -16,6 +16,7 @@ import (
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -48,7 +49,9 @@ var (
 func getBoolEnv(key string, defaultValue bool) bool {
 	if value, ok := os.LookupEnv(key); ok {
 		boolValue, err := strconv.ParseBool(value)
-		require.NoError(t, err)
+		if err != nil {
+			logrus.Warnf("Error [%v] received converting environment variable [%s] using [%v]", err, key, boolValue)
+		}
 		return boolValue
 	}
 	return defaultValue
