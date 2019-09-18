@@ -3,7 +3,7 @@
 
 # Jaeger Operator for Kubernetes
 
-The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
+The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator).
 
 ## Getting started
 
