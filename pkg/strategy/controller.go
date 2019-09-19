@@ -231,13 +231,18 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 		return
 	}
 
+	docURL := viper.GetString("documentation-url")
+	if docURL == "" {
+		docURL = "https://www.jaegertracing.io/docs/latest"
+	}
+
 	menuStr := `[
 		{
 		  "label": "About",
 		  "items": [
 			{
 			  "label": "Documentation",
-			  "url": "https://www.jaegertracing.io/docs/latest"
+			  "url": "` + docURL + `"
 			}
 		  ]
 		},

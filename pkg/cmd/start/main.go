@@ -89,6 +89,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
 	viper.BindPFlag("cr-metrics-port", cmd.Flags().Lookup("cr-metrics-port"))
 
+	cmd.Flags().String("documentation-url", "https://www.jaegertracing.io/docs/latest", "The URL for the 'Documentation' menu item")
+	viper.BindPFlag("documentation-url", cmd.Flags().Lookup("documentation-url"))
+
 	return cmd
 }
 

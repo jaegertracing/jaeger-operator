@@ -407,6 +407,35 @@ func TestMenuWithSignOut(t *testing.T) {
 	assert.Equal(t, uiOpts["menu"], expected)
 }
 
+func TestMenuWithCustomDocURL(t *testing.T) {
+	docURL := "http://test/doc/url"
+
+	viper.Set("documentation-url", docURL)
+	defer viper.Reset()
+
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   docURL,
+				},
+			},
+		},
+		map[string]interface{}{
+			"label":        "Log Out",
+			"url":          "/oauth/sign_in",
+			"anchorTarget": "_self",
+		},
+	}
+	assert.Equal(t, uiOpts["menu"], expected)
+}
+
 func TestMenuNoSignOutIngressSecurityNone(t *testing.T) {
 	uiOpts := map[string]interface{}{}
 	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}})
