@@ -58,7 +58,7 @@ The easiest way is to copy the header from one of the existing source files and
 make sure the year is current and the copyright says "The Jaeger Authors".
 
 ```
-// Copyright (c) 2018 The Jaeger Authors.
+// Copyright (c) 2019 The Jaeger Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
