@@ -12,18 +12,6 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func setDefaults() {
-	viper.SetDefault("documentation-url", "https://www.jaegertracing.io/docs/latest")
-}
-
-func init() {
-	setDefaults()
-}
-
-func reset() {
-	viper.Reset()
-	setDefaults()
-}
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
 
@@ -396,6 +384,9 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 }
 
 func TestMenuWithSignOut(t *testing.T) {
+	viper.SetDefault("documentation-url", "https://www.jaegertracing.io/docs/latest")
+	defer viper.Reset()
+
 	uiOpts := map[string]interface{}{}
 	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
 	assert.Contains(t, uiOpts, "menu")
