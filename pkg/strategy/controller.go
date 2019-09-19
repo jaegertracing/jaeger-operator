@@ -232,17 +232,14 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	}
 
 	docURL := viper.GetString("documentation-url")
-	if docURL == "" {
-		docURL = "https://www.jaegertracing.io/docs/latest"
-	}
 
-	menuStr := `[
+	menuStr := fmt.Sprintf(`[
 		{
 		  "label": "About",
 		  "items": [
 			{
 			  "label": "Documentation",
-			  "url": "` + docURL + `"
+			  "url": "%s"
 			}
 		  ]
 		},
@@ -251,7 +248,7 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 		  "url": "/oauth/sign_in",
 		  "anchorTarget": "_self"
 		}
-	  ]`
+	  ]`, docURL)
 
 	menuArray := make([]interface{}, 2)
 
