@@ -3,13 +3,6 @@ kind: Jaeger
 metadata:
   name: with-badger-and-volume
 spec:
-  allInOne:
-    volumeMounts:
-    - name: data
-      mountPath: /badger
-    volumes:
-    - name: data
-      emptyDir: {}
   storage:
     type: badger
     options:
