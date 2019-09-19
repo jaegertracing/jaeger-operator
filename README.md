@@ -48,8 +48,8 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
   
 [Apache 2.0 License](./LICENSE).
 
-[ci-img]: https://travis-ci.org/jaegertracing/jaeger-operator.svg?branch=master
-[ci]: https://travis-ci.org/jaegertracing/jaeger-operator
+[ci-img]: https://github.com/jaegertracing/jaeger-operator/workflows/CI%20Workflow/badge.svg
+[ci]: https://github.com/jaegertracing/jaeger-operator/actions
 [cov-img]: https://codecov.io/gh/jaegertracing/jaeger-operator/branch/master/graph/badge.svg
 [cov]: https://codecov.io/github/jaegertracing/jaeger-operator/
 [goreport-img]: https://goreportcard.com/badge/github.com/jaegertracing/jaeger-operator
