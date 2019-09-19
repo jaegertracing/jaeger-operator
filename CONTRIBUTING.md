@@ -6,10 +6,6 @@ This project is [Apache 2.0 licensed](LICENSE) and accepts contributions via Git
 
 We gratefully welcome improvements to documentation as well as to code.
 
-## Certificate of Origin
-
-By contributing to this project you agree to the [Developer Certificate of Origin](https://developercertificate.org/) (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. See the [DCO](DCO) file for details.
-
 ## Getting Started
 
 This project is a regular [Kubernetes Operator](https://coreos.com/operators/)  built using the Operator SDK. Refer to the Operator SDK documentation to understand the basic architecture of this operator.
