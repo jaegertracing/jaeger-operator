@@ -1,6 +1,8 @@
 # Releasing the Jaeger Operator for Kubernetes
 
-1. Make sure the `jaeger.version` file is up to date
+1. Make sure you are using an operator-sdk newer than 0.10.0 (or master, if no released version exists)
+
+1. Make sure the `versions.txt` file is up to date
 
 1. Make sure the new version is present at `pkg/upgrade/versions.go`
 
@@ -26,10 +28,11 @@
     git push git@github.com:jaegertracing/jaeger-operator.git release/v1.6.1
     ```
 
+1. Temporary step: run the release script manually, as the release workflow is temporarily disabled
+
 1. Apply generated OLM catalog files to operatorhub.io
 
-    * Retrieve the auto-generated operator manifests, e.g. `git pull upstream master`
     * Clone the [operatorhub](https://github.com/operator-framework/community-operators) repo
-    * Apply the following changes to [community-operators/jaeger](https://github.com/operator-framework/community-operators/tree/master/community-operators/jaeger) and [upstream-community-operators/jaeger](https://github.com/operator-framework/community-operators/tree/master/upstream-community-operators/jaeger) in separate PRs:
-      - overwrite the file `jaeger-package.yaml` from `deploy/olm-catalog` in jaeger-operator repo
-      - copy the `jaeger.clusterserviceversion.yaml` and rename to include the version, e.g. `jaeger.<version>.clusterserviceverson.yaml`
+    * Run `make operatorhub`
+      - If you have [`hub`](https://hub.github.com/) installed and configured, it will open the necessary PRs for you automatically. Hint: `dnf install hub` works fine on Fedora.
+      - If you don't have it, the branches will be pushed to `origin` and you should be able to open the PR from there
