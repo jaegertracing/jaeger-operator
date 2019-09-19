@@ -1,4 +1,0 @@
-packageName: jaeger
-channels:
-- name: stable
-  currentCSV: jaeger-operator.v1.14.0
