@@ -29,10 +29,10 @@ if [ "${GH_WRITE_TOKEN}x" == "x" ]; then
 fi
 
 operator-sdk olm-catalog gen-csv \
-    --operator-name=jaeger
+    --operator-name=jaeger \
     --csv-channel=stable \
     --csv-version=${OPERATOR_VERSION} \
-    --from-version=${PREVIOUS_VERSION} \
+    --from-version=${PREVIOUS_VERSION}
 
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
