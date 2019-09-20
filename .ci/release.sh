@@ -51,7 +51,7 @@ else
       deploy/operator.yaml \
       deploy/olm-catalog/jaeger/jaeger.package.yaml \
       deploy/olm-catalog/jaeger/${OPERATOR_VERSION} \
-      test/operator.yaml \
+      #test/operator.yaml \
       jaeger-operator.version
 
     git diff -s --exit-code
