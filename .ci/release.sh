@@ -54,6 +54,13 @@ else
       test/operator.yaml \
       jaeger-operator.version
 
+    git diff -s --exit-code
+    if [[ $? != 0 ]]; then
+        echo "There are more changes than expected. Skipping the release."
+        git diff
+        exit 1
+    fi
+
     # git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     # git tag ${TAG}
     # git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git --tags
