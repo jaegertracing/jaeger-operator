@@ -49,9 +49,10 @@ if [[ $? == 0 ]]; then
 else
     git add \
       deploy/operator.yaml \
-      deploy/olm-catalog/jaeger.package.yaml \
-      deploy/olm-catalog/jaeger.clusterserviceversion.yaml \
-      test/operator.yaml
+      deploy/olm-catalog/jaeger/jaeger.package.yaml \
+      deploy/olm-catalog/jaeger/${OPERATOR_VERSION} \
+      test/operator.yaml \
+      jaeger-operator.version
 
     # git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     # git tag ${TAG}
