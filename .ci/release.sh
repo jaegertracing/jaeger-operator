@@ -41,7 +41,7 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deplo
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
 
 # change the jaeger-operator.version
-sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}" -i jaeger-operator.version
+sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i jaeger-operator.version
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
