@@ -15,10 +15,13 @@ JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
+KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/release-0.12.x/examples/kafka/kafka-ephemeral.yaml"
+KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.12.1/strimzi-cluster-operator-0.12.1.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.1
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.1
-SDK_VERSION=v0.8.1
+ES_OPERATOR_BRANCH ?= release-4.2
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
+SDK_VERSION=v0.10.0
+GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...  ./test/... |  grep -v elasticsearch/v1)
@@ -145,10 +148,18 @@ run-debug: CLI_FLAGS = "--log-level=debug"
 
 .PHONY: set-max-map-count
 set-max-map-count:
+	# This is not required in OCP 4.1. The node tuning operator configures the property automatically
+	# when label tuned.openshift.io/elasticsearch=true label is present on the ES pod. The label
+	# is configured by ES operator.
 	@minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
 
+.PHONY: set-node-os-linux
+set-node-os-linux:
+	# Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
+	@kubectl label nodes --all kubernetes.io/os=linux --overwrite
+
 .PHONY: deploy-es-operator
-deploy-es-operator: set-max-map-count
+deploy-es-operator: set-node-os-linux set-max-map-count
 ifeq ($(OLM),true)
 	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
 else
@@ -193,23 +204,26 @@ storage:
 
 .PHONY: kafka
 kafka:
+	@echo Creating namespace $(KAFKA_NAMESPACE)
+	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 ifeq ($(OLM),true)
 	@echo Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
-	@echo Creating namespace $(KAFKA_NAMESPACE)
-	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-	@sed 's/namespace: .*/namespace: kafka/' ./test/kafka-operator.yml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
-	@kubectl apply -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	@curl --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml
+	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
 endif
+	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
+	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
 undeploy-kafka:
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
 ifeq ($(OLM),true)
-	@echo Skipping kafka-operator undeployment, as it should have been installed via OperatorHub
+	@echo Skiping kafka-operator undeploy
 else
-	@kubectl delete -f ./test/kafka.yml -n $(KAFKA_NAMESPACE) 2>&1 || true
-	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml 2>&1 || true
 endif
+	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator
@@ -248,8 +262,7 @@ scorecard:
 .PHONY: install-sdk
 install-sdk:
 	@echo Installing SDK ${SDK_VERSION}
-	@curl https://github.com/operator-framework/operator-sdk/releases/download/${SDK_VERSION}/operator-sdk-${SDK_VERSION}-x86_64-linux-gnu -sLo ${GOPATH}/bin/operator-sdk
-	@chmod +x ${GOPATH}/bin/operator-sdk
+	@SDK_VERSION=$(SDK_VERSION) GOPATH=$(GOPATH) ./.ci/install-sdk.sh
 
 .PHONY: install-tools
 install-tools:

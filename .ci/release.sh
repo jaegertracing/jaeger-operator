@@ -7,12 +7,25 @@ if [[ $? != 0 ]]; then
 fi
 
 BASE_BUILD_IMAGE=${BASE_BUILD_IMAGE:-"jaegertracing/jaeger-operator"}
-OPERATOR_VERSION=${OPERATOR_VERSION:-$(git describe --tags)}
+BASE_TAG=${BASE_TAG:-$(git describe --tags)}
+OPERATOR_VERSION=${OPERATOR_VERSION:-${BASE_TAG}}
 OPERATOR_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d\.]+)")
 JAEGER_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d]+\.[\d]+\.[\d]+)" | head -n 1)
 TAG=${TAG:-"v${OPERATOR_VERSION}"}
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
 CREATED_AT=$(date -u -Isecond)
+
+if [[ ${BASE_TAG} =~ ^release/v.[[:digit:].]+(\-.*)?$ ]]; then
+    echo "Releasing ${OPERATOR_VERSION} from ${BASE_TAG}"
+else
+    echo "The release tag does not match the expected format: ${BASE_TAG}"
+    exit 1
+fi
+
+if [ "${GH_WRITE_TOKEN}x" == "x" ]; then
+    echo "The GitHub write token isn't set. Skipping release process."
+    exit 1
+fi
 
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml

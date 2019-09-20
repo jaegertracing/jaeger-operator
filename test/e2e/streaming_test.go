@@ -4,10 +4,10 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -63,16 +63,20 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(j)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-ingester", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for ingester deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTest("simple-streaming")
 }
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -87,13 +91,13 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic":   "jaeger-spans",
-					"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.producer.brokers": kafkaClusterURL,
 				}),
 			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.topic":   "jaeger-spans",
-					"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+					"kafka.consumer.brokers": kafkaClusterURL,
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{

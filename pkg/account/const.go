@@ -16,6 +16,18 @@ const (
 	// AllInOneComponent represents the value for the Component type for Jaeger All-In-One
 	AllInOneComponent Component = "all-in-one"
 
-	// AgentComponent epresents the value for the Component type for Jaeger Agent
+	// AgentComponent represents the value for the Component type for Jaeger Agent
 	AgentComponent Component = "agent"
+
+	// DependenciesComponent represents the value for the Component type for Jaeger Dependencies CronJob
+	DependenciesComponent Component = "dependencies"
+
+	// EsIndexCleanerComponent represents the value for the Component type for Jaeger EsIndexCleaner CronJob
+	EsIndexCleanerComponent Component = "es-index-cleaner"
+
+	// EsRolloverComponent represents the value for the Component type for Jaeger EsRollover CronJob
+	EsRolloverComponent Component = "es-rollover"
+
+	// CassandraCreateSchemaComponent represents the value for the Component type for Jaeger CassandraCreateSchema CronJob
+	CassandraCreateSchemaComponent Component = "cassandra-create-schema"
 )

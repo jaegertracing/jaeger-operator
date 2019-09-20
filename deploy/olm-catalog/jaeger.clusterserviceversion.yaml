@@ -1,14 +1,14 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: jaeger-operator.v1.13.1
+  name: jaeger-operator.v1.14.0
   namespace: placeholder
   annotations:
     categories: "Logging & Tracing"
     certified: "false"
-    containerImage: docker.io/jaegertracing/jaeger-operator:1.13.1
-    createdAt: "2019-07-05T11:16:15+00:00"
-    capabilities: Seamless Upgrades
+    containerImage: docker.io/jaegertracing/jaeger-operator:1.14.0
+    createdAt: "2019-09-04T13:28:40+00:00"
+    capabilities: Deep Insights
     support: Jaeger
     description: Provides tracing, monitoring and troubleshooting microservices-based distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
@@ -18,46 +18,56 @@ metadata:
           "apiVersion": "jaegertracing.io/v1",
           "kind": "Jaeger",
           "metadata": {
-            "name": "my-jaeger"
+            "name": "jaeger-all-in-one-inmemory"
+          }
+        },
+        {
+          "apiVersion": "jaegertracing.io/v1",
+          "kind": "Jaeger",
+          "metadata": {
+            "name": "jaeger-prod-elasticsearch"
           },
           "spec": {
-            "strategy": "allInOne",
-            "allInOne": {
-              "image": "jaegertracing/all-in-one:1.13",
-              "options": {
-                "log-level": "debug",
-                "query": {
-                  "base-path": "/jaeger"
-                }
-              }
-            },
-            "ui": {
-              "options": {
-                "dependencies": {
-                  "menuEnabled": false
-                },
-                "tracking": {
-                  "gaID": "UA-000000-2"
-                },
-                "menu": [
-                  {
-                    "label": "About Jaeger",
-                    "items": [
-                      {
-                        "label": "Documentation",
-                        "url": "https://www.jaegertracing.io/docs/latest"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
+            "strategy": "production",
             "storage": {
+              "type": "elasticsearch",
               "options": {
-                "memory": {
-                  "max-traces": 100000
+                "es": {
+                  "server-urls": "http://elasticsearch.default.svc:9200"
                 }
               }
+            }
+          }
+        },
+        {
+          "apiVersion": "jaegertracing.io/v1",
+          "kind": "Jaeger",
+          "metadata": {
+            "name": "jaeger-all-in-one-local-storage"
+          },
+          "spec": {
+            "storage": {
+              "type": "badger",
+              "options": {
+                "badger": {
+                  "ephemeral": false,
+                  "directory-key": "/badger/key",
+                  "directory-value": "/badger/data"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/badger"
+                }
+              ],
+              "volumes": [
+                {
+                  "name": "data",
+                  "emptyDir": {
+                  }
+                }
+              ]
             }
           }
         }
@@ -131,8 +141,8 @@ spec:
     mediatype: image/svg+xml          
 
   keywords: ['tracing', 'monitoring', 'troubleshooting']
-  version: 1.13.1
-  replaces: jaeger-operator.v1.13.0
+  version: 1.14.0
+  replaces: jaeger-operator.v1.13.1
   maturity: alpha
   maintainers:
   - email: jaeger-tracing@googlegroups.com
@@ -189,12 +199,6 @@ spec:
           verbs:
           - get
           - create
-        - apiGroups:
-          - io.jaegertracing
-          resources:
-          - '*'
-          verbs:
-          - '*'
         - apiGroups:
           - extensions
           resources:
@@ -259,7 +263,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.13.1
+                image: jaegertracing/jaeger-operator:1.14.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -298,12 +302,6 @@ spec:
           verbs:
           - get
           - create
-        - apiGroups:
-          - io.jaegertracing
-          resources:
-          - '*'
-          verbs:
-          - '*'
         - apiGroups:
           - extensions
           resources:

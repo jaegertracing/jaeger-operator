@@ -55,11 +55,10 @@ func (suite *MiscTestSuite) TestValidateBuildImage() {
 
 	// If we did the normal test setup the operator will be in the current namespace.  If not we need to iterate
 	// over all namespaces to find it, being sure to match on WATCH_NAMESPACE
-	didSetup := len(noSetup) == 0
-	if didSetup {
-		validateBuildImageInTestNamespace(buildImage)
-	} else {
+	if usingOLM {
 		validateBuildImageInCluster(buildImage)
+	} else {
+		validateBuildImageInTestNamespace(buildImage)
 	}
 }
 

@@ -7,11 +7,16 @@ import (
 	"runtime"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -81,6 +86,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
 	viper.BindPFlag("metrics-port", cmd.Flags().Lookup("metrics-port"))
 
+	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
+	viper.BindPFlag("cr-metrics-port", cmd.Flags().Lookup("cr-metrics-port"))
+
 	return cmd
 }
 
@@ -135,6 +143,7 @@ func start(cmd *cobra.Command, args []string) {
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
+		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", viper.GetString("metrics-host"), viper.GetInt32("metrics-port")),
 	})
 	if err != nil {
@@ -157,10 +166,61 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	// Create Service object to expose the metrics port.
-	if _, err := metrics.ExposeMetricsPort(ctx, viper.GetInt32("metrics-port")); err != nil {
-		log.Fatal(err)
+	if err := serveCRMetrics(cfg); err != nil {
+		log.WithField("error", err.Error()).Warn("could not generate and serve custom resource metrics")
+	}
+
+	metricsPort := viper.GetInt32("metrics-port")
+	operatorMetricsPort := viper.GetInt32("cr-metrics-port")
+
+	// Add to the below struct any other metrics ports you want to expose.
+	servicePorts := []corev1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+	}
+	// Create Service object to expose the metrics port(s).
+	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	if err != nil {
+		log.WithField("error", err.Error()).Warn("could not create metrics Service")
+	}
+
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	services := []*corev1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err != nil {
+		log.WithField("error", err.Error()).Warn("Could not create ServiceMonitor object")
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.WithField("error", err.Error()).Warn("Install prometheus-operator in your cluster to create ServiceMonitor objects")
+		}
 	}
 
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+}
+
+// serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
+// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+func serveCRMetrics(cfg *rest.Config) error {
+	// Below function returns filtered operator/CustomResource specific GVKs.
+	// For more control override the below GVK list with your own custom logic.
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	if err != nil {
+		return err
+	}
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		return err
+	}
+	// To generate metrics in other namespaces, add the values below.
+	ns := []string{operatorNs}
+	// Generate and serve custom resource specific metrics.
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, viper.GetString("metrics-host"), viper.GetInt32("cr-metrics-port"))
+	if err != nil {
+		return err
+	}
+	return nil
 }

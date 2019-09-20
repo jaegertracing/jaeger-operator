@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -35,6 +36,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 		envs = append(envs, corev1.EnvVar{Name: "CONDITIONS", Value: jaeger.Spec.Storage.EsRollover.Conditions})
 	}
 	one := int32(1)
+
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -48,28 +50,42 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-								"linkerd.io/inject":       "disabled",
-							},
-						},
-						Spec: corev1.PodSpec{
-							RestartPolicy: corev1.RestartPolicyOnFailure,
-							Containers: []corev1.Container{
-								{
-									Name:         name,
-									Image:        jaeger.Spec.Storage.EsRollover.Image,
-									Args:         []string{"rollover", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-									Env:          envs,
-									VolumeMounts: jaeger.Spec.VolumeMounts,
-								},
-							},
-							Volumes: jaeger.Spec.Volumes,
-						},
-					},
+					Template:    *createTemplate(name, "rollover", jaeger, envs),
+				},
+			},
+		},
+	}
+}
+
+func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "false",
+			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
+		},
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
+	return &corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:      commonSpec.Labels,
+			Annotations: commonSpec.Annotations,
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy:      corev1.RestartPolicyOnFailure,
+			Affinity:           commonSpec.Affinity,
+			Tolerations:        commonSpec.Tolerations,
+			SecurityContext:    commonSpec.SecurityContext,
+			ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
+			Containers: []corev1.Container{
+				{
+					Name:      name,
+					Image:     jaeger.Spec.Storage.EsRollover.Image,
+					Args:      []string{action, util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
+					Env:       envs,
+					Resources: commonSpec.Resources,
 				},
 			},
 		},
@@ -92,6 +108,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 				Error("Failed to parse esRollover.readTTL to time.duration")
 		}
 	}
+
 	return batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -105,26 +122,7 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								"prometheus.io/scrape":    "false",
-								"sidecar.istio.io/inject": "false",
-								"linkerd.io/inject":       "disabled",
-							},
-						},
-						Spec: corev1.PodSpec{
-							RestartPolicy: corev1.RestartPolicyOnFailure,
-							Containers: []corev1.Container{
-								{
-									Name:  name,
-									Image: jaeger.Spec.Storage.EsRollover.Image,
-									Args:  []string{"lookback", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-									Env:   envs,
-								},
-							},
-						},
-					},
+					Template:                *createTemplate(name, "lookback", jaeger, envs),
 				},
 			},
 		},

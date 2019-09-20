@@ -1,6 +1,40 @@
 Changes by Version
 ==================
 
+1.14.0 (2019-09-04)
+-------------------
+
+* Add commonSpec to other jobs (es-index-cleaner, es-rollover, cassandr… ([#640](https://github.com/jaegertracing/jaeger-operator/pull/640))
+* Add common spec to dependencies ([#637](https://github.com/jaegertracing/jaeger-operator/pull/637))
+* Add resource limits for spark dependencies cronjob ([#620](https://github.com/jaegertracing/jaeger-operator/pull/620))
+* Add Jaeger version to Elasticsearch job images ([#628](https://github.com/jaegertracing/jaeger-operator/pull/628))
+* Add badger to supported list of storage types ([#616](https://github.com/jaegertracing/jaeger-operator/pull/616))
+* Get rid of finalizer, clean sidecars when no jaeger instance found ([#575](https://github.com/jaegertracing/jaeger-operator/pull/575))
+* Deploy production ready self provisioned ES by default ([#585](https://github.com/jaegertracing/jaeger-operator/pull/585))
+* Always deploy client,data nodes with master node ([#586](https://github.com/jaegertracing/jaeger-operator/pull/586))
+* Configure index cleaner properly when rollover is enabled ([#587](https://github.com/jaegertracing/jaeger-operator/pull/587))
+* Agent service ports with correct protocol ([#579](https://github.com/jaegertracing/jaeger-operator/pull/579))
+* Renamed the ManagedBy label to OperatedBy ([#576](https://github.com/jaegertracing/jaeger-operator/pull/576))
+* Added htpasswd option to the OpenShift OAuth type ([#573](https://github.com/jaegertracing/jaeger-operator/pull/573))
+* Changed Operator to set ownership of the instances it manages ([#571](https://github.com/jaegertracing/jaeger-operator/pull/571))
+* Added upgrade mechanism for managed Jaeger instances ([#476](https://github.com/jaegertracing/jaeger-operator/pull/476))
+* Check and update finalizers before setting APIVersion and Kind ([#558](https://github.com/jaegertracing/jaeger-operator/pull/558))
+* Remove sidecar when instance is deleted ([#453](https://github.com/jaegertracing/jaeger-operator/pull/453))
+* Allow setting es-operator-image ([#549](https://github.com/jaegertracing/jaeger-operator/pull/549))
+* Use zero redundancy when number of ES nodes is 1 ([#539](https://github.com/jaegertracing/jaeger-operator/pull/539))
+* Use es-operator from 4.1 branch ([#537](https://github.com/jaegertracing/jaeger-operator/pull/537))
+* Reinstated the service metrics ([#530](https://github.com/jaegertracing/jaeger-operator/pull/530))
+* Use ES single redundancy by default ([#531](https://github.com/jaegertracing/jaeger-operator/pull/531))
+* Change replace method, to remain compatible with golang 1.11 ([#529](https://github.com/jaegertracing/jaeger-operator/pull/529))
+* Avoid touching the original structure of the options. ([#523](https://github.com/jaegertracing/jaeger-operator/pull/523))
+* Prevented the Operator from overriding Secrets/ImagePullSecrets on ServiceAccounts ([#526](https://github.com/jaegertracing/jaeger-operator/pull/526))
+* Added support for OpenShift-specific OAuth Proxy options ([#508](https://github.com/jaegertracing/jaeger-operator/pull/508))
+* Allowed usage of custom SA for OAuth Proxy ([#520](https://github.com/jaegertracing/jaeger-operator/pull/520))
+* Make sure the ES operator's UUID is a valid DNS name ([#515](https://github.com/jaegertracing/jaeger-operator/pull/515))
+* Set the ES node GenUUID to explicit value based on jaeger instance namespace and name ([#495](https://github.com/jaegertracing/jaeger-operator/pull/495))
+* Add linkerd.io/inject=disabled annotation ([#507](https://github.com/jaegertracing/jaeger-operator/pull/507))
+
+
 1.13.1 (2019-07-05)
 -------------------
 

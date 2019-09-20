@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -78,11 +79,62 @@ func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
 }
 
+func TestSparkDependenciesSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecrets"})
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	cronJob := CreateSparkDependencies(jaeger)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom, 1)
+	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestSparkDependencies(t *testing.T) {
 	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
 
 	cjob := CreateSparkDependencies(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
+}
+
+func TestDependenciesAnnotations(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesAnnotations"})
+	jaeger.Spec.Annotations = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.Dependencies.Annotations = map[string]string{
+		"hello":                "world", // Override top level annotation
+		"prometheus.io/scrape": "false", // Override implicit value
+	}
+
+	cjob := CreateSparkDependencies(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
+}
+
+func TestDependenciesLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":  "operator",
+		"hello": "jaeger",
+	}
+	jaeger.Spec.Storage.Dependencies.Labels = map[string]string{
+		"hello":   "world", // Override top level label
+		"another": "false",
+	}
+
+	cjob := CreateSparkDependencies(jaeger)
+
+	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["another"])
 }
 
 func TestSparkDependenciesResources(t *testing.T) {
@@ -131,7 +183,9 @@ func TestSparkDependenciesResources(t *testing.T) {
 				Storage: v1.JaegerStorageSpec{
 					Type: "elasticsearch",
 					Dependencies: v1.JaegerDependenciesSpec{
-						Resources: dependencyResources,
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: dependencyResources,
+						},
 					},
 				},
 				JaegerCommonSpec: v1.JaegerCommonSpec{

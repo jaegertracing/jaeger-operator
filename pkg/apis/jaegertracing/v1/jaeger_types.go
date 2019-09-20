@@ -378,7 +378,7 @@ type JaegerDependenciesSpec struct {
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// +optional
-	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
@@ -398,6 +398,9 @@ type JaegerEsIndexCleanerSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+
+	// +optional
+	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
@@ -417,6 +420,9 @@ type JaegerEsRolloverSpec struct {
 	// we parse it with time.ParseDuration
 	// +optional
 	ReadTTL string `json:"readTTL,omitempty"`
+
+	// +optional
+	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

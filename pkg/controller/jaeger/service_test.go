@@ -65,6 +65,10 @@ func TestServicesUpdate(t *testing.T) {
 	orig := corev1.Service{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -104,6 +108,10 @@ func TestServicesDelete(t *testing.T) {
 
 	orig := corev1.Service{}
 	orig.Name = nsn.Name
+	orig.Labels = map[string]string{
+		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
