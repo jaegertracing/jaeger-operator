@@ -14,6 +14,7 @@ JAEGER_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d]+\.[\d]+\.[\d]+)" | h
 TAG=${TAG:-"v${OPERATOR_VERSION}"}
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
 CREATED_AT=$(date -u -Isecond)
+PREVIOUS_VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 
 if [[ ${BASE_TAG} =~ ^release/v.[[:digit:].]+(\-.*)?$ ]]; then
     echo "Releasing ${OPERATOR_VERSION} from ${BASE_TAG}"
@@ -27,29 +28,19 @@ if [ "${GH_WRITE_TOKEN}x" == "x" ]; then
     exit 1
 fi
 
+operator-sdk olm-catalog gen-csv \
+    --csv-channel=stable \
+    --csv-version=${OPERATOR_VERSION} \
+    --from-version=${PREVIOUS_VERSION}
+
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
 
-# changes to deploy/olm-catalog/jaeger.package.yaml
-sed "s/currentCSV: jaeger-operator.*/currentCSV: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.package.yaml
-
-# changes to deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-sed "s~containerImage: docker.io/jaegertracing/jaeger-operator.*~containerImage: docker.io/${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-sed "s/name: jaeger-operator\.v.*/name: jaeger-operator.v${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-
-sed "s/all-in-one:.*\"/all-in-one:${JAEGER_VERSION}\"/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-
-sed "s/createdAt: .*/createdAt: \"${CREATED_AT}\"/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-
-export PREVIOUS_OPERATOR_VERSION=`grep "version: [0-9]" deploy/olm-catalog/jaeger.clusterserviceversion.yaml | cut -f4 -d' '`
-sed "s/replaces: jaeger-operator\.v.*/replaces: jaeger-operator.v${PREVIOUS_OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-
-## there's a "version: v1" there somewhere that we want to avoid
-sed -E "s/version: ([0-9\.]+).*/version: ${OPERATOR_VERSION}/gi" -i deploy/olm-catalog/jaeger.clusterserviceversion.yaml
-
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
+
+# change the jaeger-operator.version
+sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i jaeger-operator.version
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
@@ -57,9 +48,17 @@ if [[ $? == 0 ]]; then
 else
     git add \
       deploy/operator.yaml \
-      deploy/olm-catalog/jaeger.package.yaml \
-      deploy/olm-catalog/jaeger.clusterserviceversion.yaml \
-      test/operator.yaml
+      deploy/olm-catalog/jaeger/jaeger.package.yaml \
+      deploy/olm-catalog/jaeger/${OPERATOR_VERSION} \
+      test/operator.yaml \
+      jaeger-operator.version
+
+    git diff -s --exit-code
+    if [[ $? != 0 ]]; then
+        echo "There are more changes than expected. Skipping the release."
+        git diff
+        exit 1
+    fi
 
     git commit -qm "Release ${TAG}" --author="Jaeger Release <jaeger-release@jaegertracing.io>"
     git tag ${TAG}
