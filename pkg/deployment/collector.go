@@ -159,6 +159,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 								ContainerPort: adminPort,
 								Name:          "admin-http",
 							},
+							{
+								ContainerPort: 14250,
+								Name:          "grpc",
+							},
 						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
