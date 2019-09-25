@@ -384,6 +384,9 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 }
 
 func TestMenuWithSignOut(t *testing.T) {
+	viper.SetDefault("documentation-url", "https://www.jaegertracing.io/docs/latest")
+	defer viper.Reset()
+
 	uiOpts := map[string]interface{}{}
 	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
 	assert.Contains(t, uiOpts, "menu")
@@ -395,6 +398,35 @@ func TestMenuWithSignOut(t *testing.T) {
 				map[string]interface{}{
 					"label": "Documentation",
 					"url":   "https://www.jaegertracing.io/docs/latest",
+				},
+			},
+		},
+		map[string]interface{}{
+			"label":        "Log Out",
+			"url":          "/oauth/sign_in",
+			"anchorTarget": "_self",
+		},
+	}
+	assert.Equal(t, uiOpts["menu"], expected)
+}
+
+func TestMenuWithCustomDocURL(t *testing.T) {
+	docURL := "http://test/doc/url"
+
+	viper.Set("documentation-url", docURL)
+	defer viper.Reset()
+
+	uiOpts := map[string]interface{}{}
+	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	assert.Contains(t, uiOpts, "menu")
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   docURL,
 				},
 			},
 		},

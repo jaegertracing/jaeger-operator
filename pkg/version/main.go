@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"runtime"
+	"strings"
 
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
@@ -53,4 +54,10 @@ func DefaultJaeger() string {
 
 	// fallback value, useful for tests
 	return "0.0.0"
+}
+
+// DefaultJaegerMajorMinor returns the major.minor format of the default Jaeger version
+func DefaultJaegerMajorMinor() string {
+	version := DefaultJaeger()
+	return version[:strings.LastIndex(version, ".")]
 }

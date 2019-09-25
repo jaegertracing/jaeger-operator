@@ -11,7 +11,7 @@ NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
-JAEGER_VERSION ?= "$(shell grep -v '\#' jaeger.version)"
+JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
@@ -272,3 +272,12 @@ install-tools:
 
 .PHONY: install
 install: install-sdk install-tools vendor
+
+.PHONY: operatorhub
+operatorhub: check-operatorhub-pr-template
+	@./.ci/operatorhub.sh
+
+.PHONY: check-operatorhub-pr-template
+check-operatorhub-pr-template:
+	@curl https://raw.githubusercontent.com/operator-framework/community-operators/master/docs/pull_request_template.md -o .ci/.operatorhub-pr-template.md -s > /dev/null 2>&1
+	@git diff -s --exit-code .ci/.operatorhub-pr-template.md || (echo "Build failed: the PR template for OperatorHub has changed. Sync it and try again." && exit 1)
