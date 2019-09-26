@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,11 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+)
+
+var (
+	// ErrDeploymentRemoved is returned when a deployment existed but has been removed
+	ErrDeploymentRemoved = errors.New("deployment has been removed")
 )
 
 func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.Deployment) error {
@@ -79,10 +85,22 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 	// TODO: decide what's a good timeout... the first cold run might take a while to download
 	// the images, subsequent runs should take only a few seconds
+
+	seen := false
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
 		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
 			if k8serrors.IsNotFound(err) {
+				if seen {
+					// we have seen this object before, but it doesn't exist anymore!
+					// we don't have anything else to do here, break the poll
+					log.WithFields(log.Fields{
+						"namespace": dep.Namespace,
+						"name":      dep.Name,
+					}).Warn("Deployment has been removed.")
+					return true, ErrDeploymentRemoved
+				}
+
 				// the object might have not been created yet
 				log.WithFields(log.Fields{
 					"namespace": dep.Namespace,
@@ -93,6 +111,7 @@ func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 			return false, err
 		}
 
+		seen = true
 		if d.Status.ReadyReplicas != d.Status.Replicas {
 			log.WithFields(log.Fields{
 				"namespace": dep.Namespace,

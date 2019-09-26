@@ -17,6 +17,11 @@ import (
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
+var (
+	// ErrElasticsearchRemoved is returned when an ES cluster existed but has been removed
+	ErrElasticsearchRemoved = errors.New("Elasticsearch cluster has been removed")
+)
+
 func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
 	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance": jaeger.Name,
@@ -69,6 +74,8 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 	for _, n := range es.Spec.Nodes {
 		expectedSize += n.NodeCount
 	}
+
+	seen := false
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
 		depList := corev1.DeploymentList{}
 		labels := map[string]string{
@@ -77,6 +84,16 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 		}
 		if err = c.List(context.Background(), client.MatchingLabels(labels).InNamespace(es.Namespace), &depList); err != nil {
 			if k8serrors.IsNotFound(err) {
+				if seen {
+					// we have seen this object before, but it doesn't exist anymore!
+					// we don't have anything else to do here, break the poll
+					log.WithFields(log.Fields{
+						"namespace": es.Namespace,
+						"name":      es.Name,
+					}).Warn("Elasticsearch cluster has been removed.")
+					return true, ErrElasticsearchRemoved
+				}
+
 				// the object might have not been created yet
 				log.WithFields(log.Fields{
 					"namespace": es.Namespace,
@@ -86,6 +103,8 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 			}
 			return false, err
 		}
+
+		seen = true
 		availableDep := int32(0)
 		for _, d := range depList.Items {
 			if d.Status.Replicas == d.Status.AvailableReplicas {
