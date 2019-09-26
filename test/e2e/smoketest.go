@@ -69,15 +69,12 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
 	closer.Close()
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		c := http.Client{Timeout: time.Second}
+		c := http.Client{Timeout: 3 * time.Second}
 		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+"?service="+serviceName, nil)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
+
 		resp, err := c.Do(req)
-		if err != nil {
-			return false, nil
-		}
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
