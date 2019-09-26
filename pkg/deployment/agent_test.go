@@ -147,6 +147,24 @@ func TestDaemonSetAgentResources(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[0].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
 }
 
+func TestDaemonSetAgentHostNetwork(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDaemonSetAgentHostNetwork"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, true, dep.Spec.Template.Spec.HostNetwork)
+}
+
+func TestDaemonSetAgentDnsPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDaemonSetAgentDnsPolicy"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, corev1.DNSClusterFirstWithHostNet, dep.Spec.Template.Spec.DNSPolicy)
+}
+
 func TestAgentLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentLabels"})
 	jaeger.Spec.Agent.Strategy = "daemonset"

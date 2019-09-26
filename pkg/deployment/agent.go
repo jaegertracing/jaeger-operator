@@ -151,6 +151,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					HostNetwork:        true,
+					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
