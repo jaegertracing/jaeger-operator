@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -51,10 +50,7 @@ func (suite *DaemonSetTestSuite) SetupSuite() {
 }
 
 func (suite *DaemonSetTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestDaemonSetSuite(t *testing.T) {
@@ -66,10 +62,7 @@ func (suite *DaemonSetTestSuite) SetupTest() {
 }
 
 func (suite *DaemonSetTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 // DaemonSet runs a test with the agent as DaemonSet

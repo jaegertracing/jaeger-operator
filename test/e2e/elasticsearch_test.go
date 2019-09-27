@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,10 +51,7 @@ func (suite *ElasticSearchTestSuite) SetupSuite() {
 }
 
 func (suite *ElasticSearchTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestElasticSearchSuite(t *testing.T) {
@@ -68,10 +63,7 @@ func (suite *ElasticSearchTestSuite) SetupTest() {
 }
 
 func (suite *ElasticSearchTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {

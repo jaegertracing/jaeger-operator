@@ -7,13 +7,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
@@ -48,10 +46,7 @@ func (suite *SidecarTestSuite) SetupSuite() {
 }
 
 func (suite *SidecarTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestSidecarSuite(t *testing.T) {
@@ -63,10 +58,7 @@ func (suite *SidecarTestSuite) SetupTest() {
 }
 
 func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 // Sidecar runs a test with the agent as sidecar

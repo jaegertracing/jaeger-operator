@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -52,10 +51,7 @@ func (suite *AllInOneTestSuite) SetupSuite() {
 }
 
 func (suite *AllInOneTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestAllInOneSuite(t *testing.T) {
@@ -67,10 +63,7 @@ func (suite *AllInOneTestSuite) SetupTest() {
 }
 
 func (suite *AllInOneTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 func (suite *AllInOneTestSuite) TestAllInOne() {

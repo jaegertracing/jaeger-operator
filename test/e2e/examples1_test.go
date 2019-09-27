@@ -7,13 +7,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
@@ -44,10 +42,7 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 }
 
 func (suite *ExamplesTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestExamplesSuite(t *testing.T) {
@@ -59,10 +54,7 @@ func (suite *ExamplesTestSuite) SetupTest() {
 }
 
 func (suite *ExamplesTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {

@@ -4,7 +4,6 @@ package e2e
 
 import (
 	goctx "context"
-	"os"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -39,10 +38,7 @@ func (suite *CassandraTestSuite) SetupSuite() {
 }
 
 func (suite *CassandraTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestCassandraSuite(t *testing.T) {
@@ -54,10 +50,7 @@ func (suite *CassandraTestSuite) SetupTest() {
 }
 
 func (suite *CassandraTestSuite) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 // Cassandra runs a test with Cassandra as the backing storage

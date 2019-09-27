@@ -3,11 +3,9 @@
 package e2e
 
 import (
-	"os"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -34,10 +32,7 @@ func (suite *ExamplesTestSuite2) SetupSuite() {
 }
 
 func (suite *ExamplesTestSuite2) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestExamplesSuite2(t *testing.T) {
@@ -49,10 +44,7 @@ func (suite *ExamplesTestSuite2) SetupTest() {
 }
 
 func (suite *ExamplesTestSuite2) AfterTest(suiteName, testName string) {
-	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
-	}
+	handleTestFailure()
 }
 
 func (suite *ExamplesTestSuite2) TestSimplestExample() {

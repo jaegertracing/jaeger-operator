@@ -260,6 +260,20 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 	return err
 }
 
+func handleSuiteTearDown() {
+	logrus.Info("Entering TearDownSuite()")
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
+}
+
+func handleTestFailure() {
+	if debugMode && t.Failed() {
+		logrus.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
+}
+
 type resp struct {
 	Data []trace `json:"data"`
 }
