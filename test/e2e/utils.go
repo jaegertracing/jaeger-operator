@@ -37,6 +37,7 @@ var (
 	timeout              = time.Minute * 2
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
+	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
@@ -83,6 +84,7 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 }
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {
+	logrus.Infof("Debug Mode? %v", debugMode)
 	ctx := framework.NewTestCtx(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	if !usingOLM {
@@ -223,10 +225,12 @@ func printTestStackTrace() {
 }
 
 func undeployJaegerInstance(jaeger *v1.Jaeger) {
-	err := fw.Client.Delete(goctx.TODO(), jaeger)
-	require.NoError(t, err, "Error undeploying Jaeger")
-	err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
-	require.NoError(t, err)
+	if !debugMode || !t.Failed() {
+		err := fw.Client.Delete(goctx.TODO(), jaeger)
+		require.NoError(t, err, "Error undeploying Jaeger")
+		err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
+		require.NoError(t, err)
+	}
 }
 
 func getJaegerInstance(name, namespace string) *v1.Jaeger {
@@ -254,6 +258,20 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 	})
 
 	return err
+}
+
+func handleSuiteTearDown() {
+	logrus.Info("Entering TearDownSuite()")
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
+}
+
+func handleTestFailure() {
+	if debugMode && t.Failed() {
+		logrus.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 type resp struct {

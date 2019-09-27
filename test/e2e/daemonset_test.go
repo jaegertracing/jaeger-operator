@@ -50,8 +50,7 @@ func (suite *DaemonSetTestSuite) SetupSuite() {
 }
 
 func (suite *DaemonSetTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestDaemonSetSuite(t *testing.T) {
@@ -60,6 +59,10 @@ func TestDaemonSetSuite(t *testing.T) {
 
 func (suite *DaemonSetTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *DaemonSetTestSuite) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 // DaemonSet runs a test with the agent as DaemonSet

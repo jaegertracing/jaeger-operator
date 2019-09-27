@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -33,8 +32,7 @@ func (suite *ExamplesTestSuite2) SetupSuite() {
 }
 
 func (suite *ExamplesTestSuite2) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestExamplesSuite2(t *testing.T) {
@@ -43,6 +41,10 @@ func TestExamplesSuite2(t *testing.T) {
 
 func (suite *ExamplesTestSuite2) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *ExamplesTestSuite2) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 func (suite *ExamplesTestSuite2) TestSimplestExample() {

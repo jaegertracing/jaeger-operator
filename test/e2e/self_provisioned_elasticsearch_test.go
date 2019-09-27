@@ -59,7 +59,7 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestSelfProvisionedSuite(t *testing.T) {
@@ -68,6 +68,10 @@ func TestSelfProvisionedSuite(t *testing.T) {
 
 func (suite *SelfProvisionedTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {

@@ -51,8 +51,7 @@ func (suite *AllInOneTestSuite) SetupSuite() {
 }
 
 func (suite *AllInOneTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestAllInOneSuite(t *testing.T) {
@@ -61,6 +60,10 @@ func TestAllInOneSuite(t *testing.T) {
 
 func (suite *AllInOneTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *AllInOneTestSuite) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 func (suite *AllInOneTestSuite) TestAllInOne() {

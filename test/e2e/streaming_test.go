@@ -38,8 +38,7 @@ func (suite *StreamingTestSuite) SetupSuite() {
 }
 
 func (suite *StreamingTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestStreamingSuite(t *testing.T) {
@@ -48,6 +47,10 @@ func TestStreamingSuite(t *testing.T) {
 
 func (suite *StreamingTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {

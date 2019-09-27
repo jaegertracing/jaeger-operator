@@ -38,8 +38,7 @@ func (suite *CassandraTestSuite) SetupSuite() {
 }
 
 func (suite *CassandraTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	handleSuiteTearDown()
 }
 
 func TestCassandraSuite(t *testing.T) {
@@ -48,6 +47,10 @@ func TestCassandraSuite(t *testing.T) {
 
 func (suite *CassandraTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *CassandraTestSuite) AfterTest(suiteName, testName string) {
+	handleTestFailure()
 }
 
 // Cassandra runs a test with Cassandra as the backing storage
