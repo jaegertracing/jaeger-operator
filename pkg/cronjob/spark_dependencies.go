@@ -97,11 +97,12 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Resources: commonSpec.Resources,
 								},
 							},
-							Volumes:       jaeger.Spec.Volumes,
+							Volumes:            jaeger.Spec.Volumes,
 							Affinity:           commonSpec.Affinity,
 							Tolerations:        commonSpec.Tolerations,
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
+						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,
 							Annotations: commonSpec.Annotations,
