@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -44,7 +45,10 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 
 func (suite *ExamplesTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		ctx.Cleanup()
+	}
 }
 
 func TestExamplesSuite(t *testing.T) {
@@ -53,6 +57,12 @@ func TestExamplesSuite(t *testing.T) {
 
 func (suite *ExamplesTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *ExamplesTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		os.Exit(1)
+	}
 }
 
 func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {

@@ -53,7 +53,9 @@ func (suite *ElasticSearchTestSuite) SetupSuite() {
 
 func (suite *ElasticSearchTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
 }
 
 func TestElasticSearchSuite(t *testing.T) {
@@ -62,6 +64,13 @@ func TestElasticSearchSuite(t *testing.T) {
 
 func (suite *ElasticSearchTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *ElasticSearchTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {

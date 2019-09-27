@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -48,7 +49,9 @@ func (suite *SidecarTestSuite) SetupSuite() {
 
 func (suite *SidecarTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
 }
 
 func TestSidecarSuite(t *testing.T) {
@@ -57,6 +60,13 @@ func TestSidecarSuite(t *testing.T) {
 
 func (suite *SidecarTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 // Sidecar runs a test with the agent as sidecar

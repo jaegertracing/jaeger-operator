@@ -37,7 +37,9 @@ func (suite *MiscTestSuite) SetupSuite() {
 
 func (suite *MiscTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
 }
 
 func TestMiscSuite(t *testing.T) {
@@ -46,6 +48,13 @@ func TestMiscSuite(t *testing.T) {
 
 func (suite *MiscTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *MiscTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 // Make sure we're testing correct image

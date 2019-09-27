@@ -5,6 +5,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -39,7 +40,9 @@ func (suite *StreamingTestSuite) SetupSuite() {
 
 func (suite *StreamingTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
 }
 
 func TestStreamingSuite(t *testing.T) {
@@ -48,6 +51,13 @@ func TestStreamingSuite(t *testing.T) {
 
 func (suite *StreamingTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {

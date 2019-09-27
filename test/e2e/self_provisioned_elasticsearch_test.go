@@ -59,7 +59,9 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {
-	ctx.Cleanup()
+	if !debugMode || !t.Failed() {
+		ctx.Cleanup()
+	}
 }
 
 func TestSelfProvisionedSuite(t *testing.T) {
@@ -68,6 +70,13 @@ func TestSelfProvisionedSuite(t *testing.T) {
 
 func (suite *SelfProvisionedTestSuite) SetupTest() {
 	t = suite.T()
+}
+
+func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
+	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
+		os.Exit(1)
+	}
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
