@@ -4,6 +4,7 @@ package e2e
 
 import (
 	goctx "context"
+	"os"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"

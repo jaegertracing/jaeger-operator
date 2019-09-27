@@ -46,7 +46,6 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 func (suite *ExamplesTestSuite) TearDownSuite() {
 	log.Info("Entering TearDownSuite()")
 	if !debugMode || !t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
 		ctx.Cleanup()
 	}
 }
@@ -61,6 +60,7 @@ func (suite *ExamplesTestSuite) SetupTest() {
 
 func (suite *ExamplesTestSuite) AfterTest(suiteName, testName string) {
 	if debugMode && t.Failed() {
+		log.Errorf("Test %s failed - terminating suite\n", t.Name())
 		os.Exit(1)
 	}
 }
