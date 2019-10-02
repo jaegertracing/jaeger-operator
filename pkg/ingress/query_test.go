@@ -119,3 +119,13 @@ func TestQueryIngressLabels(t *testing.T) {
 	assert.Equal(t, "world", dep.Labels["hello"])
 	assert.Equal(t, "false", dep.Labels["another"])
 }
+
+func TestQueryIngressTLSSecret(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSSecret"})
+	jaeger.Spec.Ingress.SecretName = "test-secret"
+
+	ingress := NewQueryIngress(jaeger)
+	dep := ingress.Get()
+
+	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
+}
