@@ -188,6 +188,9 @@ type JaegerIngressSpec struct {
 	OpenShift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
 
 	// +optional
+	SecretName string `json:"secretName,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
