@@ -57,7 +57,7 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 		spec.Backend = &backend
 	}
 
-	i.addTLSSpec(spec)
+	i.addTLSSpec(&spec)
 
 	return &extv1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
@@ -83,7 +83,7 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 	}
 }
 
-func (i *QueryIngress) addTLSSpec(spec extv1beta1.IngressSpec) {
+func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
 	secretName := i.jaeger.Spec.Ingress.SecretName
 	if secretName != "" {
 		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
