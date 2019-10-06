@@ -386,6 +386,36 @@ func TestSidecarWithLabel(t *testing.T) {
 	assert.Equal(t, dep2.Labels[Label], jaeger.Name)
 }
 
+func TestSidecarWithoutPrometheusAnnotations(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarWithoutPrometheusAnnotations"})
+	dep := Sidecar(jaeger, dep(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Contains(t, dep.Annotations, "prometheus.io/scrape")
+	assert.Contains(t, dep.Annotations, "prometheus.io/port")
+}
+
+func TestSidecarWithPrometheusAnnotations(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarWithPrometheusAnnotations"})
+	dep := dep(map[string]string{
+		Annotation:             jaeger.Name,
+		"prometheus.io/scrape": "false",
+		"prometheus.io/port":   "9090",
+	}, map[string]string{})
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Equal(t, dep.Annotations["prometheus.io/scrape"], "false")
+	assert.Equal(t, dep.Annotations["prometheus.io/port"], "9090")
+}
+
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{

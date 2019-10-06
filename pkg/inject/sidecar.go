@@ -24,6 +24,11 @@ var (
 	Label = "sidecar.jaegertracing.io/injected"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
+	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
+	PrometheusDefaultAnnotations = map[string]string{
+		"prometheus.io/scrape": "true",
+		"prometheus.io/port":   "5778",
+	}
 )
 
 const (
@@ -210,6 +215,13 @@ func decorate(dep *appsv1.Deployment) {
 			}
 		}
 	}
+	for key, value := range PrometheusDefaultAnnotations {
+		_, ok := dep.Annotations[key]
+		if !ok {
+			dep.Annotations[key] = value
+		}
+	}
+
 }
 
 func hasEnv(name string, vars []corev1.EnvVar) bool {
