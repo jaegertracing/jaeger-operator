@@ -94,9 +94,11 @@ func TestSparkDependenciesSecrets(t *testing.T) {
 
 func TestSparkDependencies(t *testing.T) {
 	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
-
+	historyLimits := int32(3)
+	j.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit = &historyLimits
 	cjob := CreateSparkDependencies(j)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
+	assert.Equal(t, historyLimits, *cjob.Spec.SuccessfulJobsHistoryLimit)
 }
 
 func TestDependenciesAnnotations(t *testing.T) {

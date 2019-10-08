@@ -16,6 +16,8 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 		map[string]interface{}{"es.index-prefix": "tenant1", "es.server-urls": "http://nowhere:666,foo"})}}}
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	historyLimits := int32(1)
+	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
 	cronJob := CreateEsIndexCleaner(jaeger)
 	assert.Equal(t, 2, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args))
 	// default number of days (7) is applied in normalize in controller
@@ -23,6 +25,7 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 	assert.Equal(t, 1, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env))
 	assert.Equal(t, "INDEX_PREFIX", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "tenant1", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Value)
+	assert.Equal(t, historyLimits, *cronJob.Spec.SuccessfulJobsHistoryLimit)
 }
 
 func TestEsIndexCleanerSecrets(t *testing.T) {
@@ -32,8 +35,11 @@ func TestEsIndexCleanerSecrets(t *testing.T) {
 
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	historyLimits := int32(0)
+	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
 	cronJob := CreateEsIndexCleaner(jaeger)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+	assert.Equal(t, historyLimits, *cronJob.Spec.SuccessfulJobsHistoryLimit)
 }
 
 func TestEsIndexCleanerEnvVars(t *testing.T) {

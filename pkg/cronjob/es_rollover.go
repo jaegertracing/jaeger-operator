@@ -45,8 +45,9 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
-			Schedule:          jaeger.Spec.Storage.EsRollover.Schedule,
+			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+			Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
@@ -117,8 +118,9 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
-			Schedule:          jaeger.Spec.Storage.EsRollover.Schedule,
+			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+			Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
