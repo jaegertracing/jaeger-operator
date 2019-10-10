@@ -87,7 +87,7 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 
 	kafkaUserName := "my-user"
 	kafkaUser := getKafkaUser(kafkaUserName, kafkaNamespace)
-	err := fw.Client.Create(context.TODO(), kafkaUser, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := fw.Client.Create(context.Background(), kafkaUser, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying kafkauser")
 
 	defer func() {
@@ -153,8 +153,8 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 }
 
 func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName string) *v1.Jaeger {
-	volumes := getTlsVolumes(kafkaUserName)
-	volumeMounts := getTlsVolumeMounts()
+	volumes := getTLSVolumes(kafkaUserName)
+	volumeMounts := getTLSVolumeMounts()
 
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-bootstrap.%s.svc.cluster.local:9093", kafkaNamespace)
 	j := &v1.Jaeger{
@@ -227,7 +227,7 @@ func getKafkaUser(name, namespace string) *unstructured.Unstructured {
 	return kafkaUser
 }
 
-func getTlsVolumeMounts() []corev1.VolumeMount {
+func getTLSVolumeMounts() []corev1.VolumeMount {
 	kafkaUserVolumeMount := corev1.VolumeMount{
 		Name:      "kafkauser",
 		MountPath: "/var/run/secrets/kafkauser",
@@ -244,7 +244,7 @@ func getTlsVolumeMounts() []corev1.VolumeMount {
 	return volumeMounts
 }
 
-func getTlsVolumes(kafkaUserName string) []corev1.Volume {
+func getTLSVolumes(kafkaUserName string) []corev1.Volume {
 	kafkaUserSecretName := corev1.SecretVolumeSource{
 		SecretName: kafkaUserName,
 	}
