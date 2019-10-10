@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -195,18 +196,17 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 }
 
 // WaitForSecret waits for a secret to be available
-func WaitForSecret(secretName string) {
+func WaitForSecret(secretName, secretNamespace string) {
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		secretList, err := fw.KubeClient.CoreV1().Secrets(kafkaNamespace).List(metav1.ListOptions{IncludeUninitialized: false})
-		require.NoError(t, err)
-
-		for _, secret := range secretList.Items {
-			if secret.Name == secretName {
-				return true, nil
-			}
+		secret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Get(secretName, metav1.GetOptions{IncludeUninitialized: false})
+		if err == nil {
+			logrus.Debugf("Found secret %s\n", secret.Name)
+			return true, nil
+		} else if err != nil && strings.Contains(err.Error(), "not found") {
+			return false, nil
+		} else {
+			return false, err
 		}
-
-		return false, nil
 	})
 	require.NoError(t, err)
 }
