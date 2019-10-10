@@ -89,6 +89,7 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	kafkaUser := getKafkaUser(kafkaUserName, kafkaNamespace)
 	err := fw.Client.Create(context.Background(), kafkaUser, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying kafkauser")
+	WaitForSecret(kafkaUserName)
 
 	defer func() {
 		if !debugMode || !t.Failed() {

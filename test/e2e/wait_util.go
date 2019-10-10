@@ -6,6 +6,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"k8s.io/api/extensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,4 +192,21 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	elapsed := time.Since(start)
 	logrus.Infof("Deployment of %s in namespace %s took %s\n", name, namespace, elapsed)
 	return err
+}
+
+// WaitForSecret waits for a secret to be available
+func WaitForSecret(secretName string) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		secretList, err := fw.KubeClient.CoreV1().Secrets(kafkaNamespace).List(metav1.ListOptions{IncludeUninitialized: false})
+		require.NoError(t, err)
+
+		for _, secret := range secretList.Items {
+			if secret.Name == secretName {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
+	require.NoError(t, err)
 }
