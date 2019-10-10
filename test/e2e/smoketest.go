@@ -30,6 +30,15 @@ func AllInOneSmokeTest(resourceName string) {
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
 func ProductionSmokeTest(resourceName string) {
+	productionSmokeTest(resourceName, namespace)
+}
+
+// ProductionSmokeTestWithNamespace is the same as ProductionSmokeTest but for when you can't use the default namespace
+func ProductionSmokeTestWithNamespace(resourceName, namespace string) {
+	productionSmokeTest(resourceName, namespace)
+}
+
+func productionSmokeTest(resourceName, namespace string) {
 	queryPodImageName := "jaeger-query"
 	collectorPodImageName := "jaeger-collector"
 	queryPodPrefix := resourceName + "-query"
