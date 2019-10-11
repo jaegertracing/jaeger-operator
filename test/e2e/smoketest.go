@@ -30,6 +30,15 @@ func AllInOneSmokeTest(resourceName string) {
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
 func ProductionSmokeTest(resourceName string) {
+	productionSmokeTest(resourceName, namespace)
+}
+
+// ProductionSmokeTestWithNamespace is the same as ProductionSmokeTest but for when you can't use the default namespace
+func ProductionSmokeTestWithNamespace(resourceName, smokeTestNamespace string) {
+	productionSmokeTest(resourceName, smokeTestNamespace)
+}
+
+func productionSmokeTest(resourceName, smokeTestNamespace string) {
 	queryPodImageName := "jaeger-query"
 	collectorPodImageName := "jaeger-collector"
 	queryPodPrefix := resourceName + "-query"
@@ -37,13 +46,13 @@ func ProductionSmokeTest(resourceName string) {
 
 	queryPort := randomPortNumber()
 	queryPorts := []string{queryPort + ":16686"}
-	portForw, closeChan := CreatePortForward(namespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
+	portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 
 	collectorPort := randomPortNumber()
 	collectorPorts := []string{collectorPort + ":14268"}
-	portForwColl, closeChanColl := CreatePortForward(namespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig)
+	portForwColl, closeChanColl := CreatePortForward(smokeTestNamespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
 

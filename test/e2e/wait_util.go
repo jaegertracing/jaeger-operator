@@ -1,11 +1,13 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"k8s.io/api/extensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,4 +193,20 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	elapsed := time.Since(start)
 	logrus.Infof("Deployment of %s in namespace %s took %s\n", name, namespace, elapsed)
 	return err
+}
+
+// WaitForSecret waits for a secret to be available
+func WaitForSecret(secretName, secretNamespace string) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		secret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Get(secretName, metav1.GetOptions{IncludeUninitialized: false})
+		if err == nil {
+			logrus.Debugf("Found secret %s\n", secret.Name)
+			return true, nil
+		} else if err != nil && strings.Contains(err.Error(), "not found") {
+			return false, nil
+		} else {
+			return false, err
+		}
+	})
+	require.NoError(t, err)
 }
