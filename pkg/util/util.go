@@ -246,15 +246,15 @@ func CreateEnvsFromSecret(secretName string) []corev1.EnvFromSource {
 }
 
 // GenerateProxySecret generate random secret key for oauth proxy cookie.
-func GenerateProxySecret() string {
+func GenerateProxySecret() (string, error) {
 	const secretLength = 16
 	randString := make([]byte, secretLength)
 	_, err := rand.Read(randString)
 	if err != nil {
 		// If we cannot generate random, return fixed.
-		return "ncNDoqLGrayxXzxTn5ANbOXZp3qXd0LA"
+		return "", err
 	}
 	base64Secret := base64.StdEncoding.EncodeToString(randString)
-	return base64Secret
+	return base64Secret, nil
 
 }

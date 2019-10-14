@@ -38,8 +38,55 @@ type ElasticsearchDeployment struct {
 	Secrets    []corev1.Secret
 }
 
+func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
+	container.Args = append(container.Args,
+		"--es.server-urls="+elasticsearchURL)
+	if util.FindItem("--es.tls=", container.Args) == "" {
+		container.Args = append(container.Args, "--es.tls=true")
+	}
+
+	container.Args = append(container.Args,
+		"--es.tls.ca="+caPath,
+		"--es.tls.cert="+certPath,
+		"--es.tls.key="+keyPath)
+
+	if util.FindItem("--es.timeout", container.Args) == "" {
+		container.Args = append(container.Args, "--es.timeout=15s")
+	}
+	if util.FindItem("--es.num-shards", container.Args) == "" {
+		// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
+		// every ES node is a data node
+		container.Args = append(container.Args, fmt.Sprintf("--es.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
+	}
+	if util.FindItem("--es.num-replicas", container.Args) == "" {
+		container.Args = append(container.Args, fmt.Sprintf("--es.num-replicas=%d",
+			calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
+	}
+	if strings.EqualFold(util.FindItem("--es-archive.enabled", container.Args), "--es-archive.enabled=true") {
+		container.Args = append(container.Args,
+			"--es-archive.server-urls="+elasticsearchURL,
+			"--es-archive.tls=true",
+			"--es-archive.tls.ca="+caPath,
+			"--es-archive.tls.cert="+certPath,
+			"--es-archive.tls.key="+keyPath,
+		)
+		if util.FindItem("--es-archive.timeout", container.Args) == "" {
+			container.Args = append(container.Args, "--es-archive.timeout=15s")
+		}
+		if util.FindItem("--es-archive.num-shards", container.Args) == "" {
+			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
+			// every ES node is a data node
+			container.Args = append(container.Args, fmt.Sprintf("--es-archive.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
+		}
+		if util.FindItem("--es-archive.num-replicas", container.Args) == "" {
+			container.Args = append(container.Args, fmt.Sprintf("--es-archive.num-replicas=%d",
+				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
+		}
+	}
+}
+
 // InjectStorageConfiguration changes the given spec to include ES-related command line options
-func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec, tlsAuthentication bool) {
+func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec) {
 	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
@@ -50,46 +97,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec,
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
-		p.Containers[0].Args = append(p.Containers[0].Args,
-			"--es.server-urls="+elasticsearchURL,
-			"--es.tls="+strconv.FormatBool(tlsAuthentication),
-			"--es.tls.ca="+caPath,
-			"--es.tls.cert="+certPath,
-			"--es.tls.key="+keyPath)
-
-		if util.FindItem("--es.timeout", p.Containers[0].Args) == "" {
-			p.Containers[0].Args = append(p.Containers[0].Args, "--es.timeout=15s")
-		}
-		if util.FindItem("--es.num-shards", p.Containers[0].Args) == "" {
-			// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
-			// every ES node is a data node
-			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
-		}
-		if util.FindItem("--es.num-replicas", p.Containers[0].Args) == "" {
-			p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es.num-replicas=%d",
-				calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
-		}
-		if strings.EqualFold(util.FindItem("--es-archive.enabled", p.Containers[0].Args), "--es-archive.enabled=true") {
-			p.Containers[0].Args = append(p.Containers[0].Args,
-				"--es-archive.server-urls="+elasticsearchURL,
-				"--es-archive.tls=true",
-				"--es-archive.tls.ca="+caPath,
-				"--es-archive.tls.cert="+certPath,
-				"--es-archive.tls.key="+keyPath,
-			)
-			if util.FindItem("--es-archive.timeout", p.Containers[0].Args) == "" {
-				p.Containers[0].Args = append(p.Containers[0].Args, "--es-archive.timeout=15s")
-			}
-			if util.FindItem("--es-archive.num-shards", p.Containers[0].Args) == "" {
-				// taken from https://github.com/openshift/cluster-logging-operator/blob/32b69e8bcf61a805e8f3c45c664a3c08d1ee62d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/configmaps.go#L38
-				// every ES node is a data node
-				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-shards=%d", ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))
-			}
-			if util.FindItem("--es-archive.num-replicas", p.Containers[0].Args) == "" {
-				p.Containers[0].Args = append(p.Containers[0].Args, fmt.Sprintf("--es-archive.num-replicas=%d",
-					calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
-			}
-		}
+		ed.injectArguments(&p.Containers[0])
 		p.Containers[0].VolumeMounts = append(p.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  true,

@@ -123,8 +123,8 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) {
 			c.secrets = es.ExtractSecrets()
 			c.elasticsearches = append(c.elasticsearches, *es.Elasticsearch())
 
-			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec, !query.TokenPropagation())
-			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec, true)
+			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
+			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
 			if indexCleaner != nil {
 				es.InjectSecretsConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
 			}

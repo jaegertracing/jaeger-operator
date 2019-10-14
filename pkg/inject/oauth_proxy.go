@@ -9,10 +9,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
+
+const defaultProxySecret = "ncNDoqLGrayxXzxTn5ANbOXZp3qXd0LA"
 
 // OAuthProxy injects an appropriate proxy into the given deployment
 func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
@@ -33,10 +35,14 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
-
+func proxyInitArguments(jaeger *v1.Jaeger) []string {
+	secret, err := util.GenerateProxySecret()
+	if err != nil {
+		jaeger.Logger().Warnf("Error generating secret: %s, fallback to fixed secret", secret)
+		secret = defaultProxySecret
+	}
 	args := []string{
-		fmt.Sprintf("--cookie-secret=%s", util.GenerateProxySecret()),
+		fmt.Sprintf("--cookie-secret=%s", secret),
 		"--https-address=:8443",
 		fmt.Sprintf("--openshift-service-account=%s", account.OAuthProxyAccountNameFor(jaeger)),
 		"--provider=openshift",
@@ -44,16 +50,11 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		"--tls-key=/etc/tls/private/tls.key",
 		"--upstream=http://localhost:16686",
 	}
+	return args
+}
 
-	if jaeger.Spec.Query.TokenPropagation {
-		args = append(args,
-			"--pass-access-token=true",
-			"--pass-user-bearer-token=true",
-			"--scope=user:info user:check-access user:list-projects",
-			"--pass-basic-auth=false",
-		)
-	}
-
+func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
+	args := proxyInitArguments(jaeger)
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: "/etc/tls/private",
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
@@ -74,6 +75,8 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && viper.GetBool("auth-delegator-available") {
 		args = append(args, fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls))
 	}
+
+	args = append(args, jaeger.Spec.Ingress.Options.ToArgs()...)
 
 	sort.Strings(args)
 
