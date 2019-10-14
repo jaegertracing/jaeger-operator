@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -145,7 +145,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
 	list := &corev1.SecretList{}
-	if err := r.client.List(context.Background(), opts, list); err != nil {
+	if err := r.client.List(context.Background(), list, opts); err != nil {
 		return reconcile.Result{}, err
 	}
 	str := r.runStrategyChooser(instance, list.Items)

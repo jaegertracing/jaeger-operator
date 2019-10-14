@@ -129,7 +129,7 @@ func getJaegerSimpleProd() *v1.Jaeger {
 }
 
 func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) string {
-	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("elasticsearch-operator", metav1.GetOptions{IncludeUninitialized: false})
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("elasticsearch-operator", metav1.GetOptions{})
 	require.NoErrorf(t, err, "Did not find elasticsearch-operator in namespace %s\n", namespace)
 
 	containers := deployment.Spec.Template.Spec.Containers

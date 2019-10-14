@@ -20,13 +20,13 @@ KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/downlo
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.2
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
-SDK_VERSION=v0.10.0
+SDK_VERSION=v0.11.0
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 PACKAGES := $(shell go list ./cmd/... ./pkg/...  ./test/... |  grep -v elasticsearch/v1)
 UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1)
-TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing_v1_jaeger_crd.yaml -root .
+TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing.io_jaegers_crd.yaml -root .
 
 .DEFAULT_GOAL := build
 
@@ -234,7 +234,7 @@ clean: undeploy-kafka undeploy-es-operator
 
 .PHONY: crd
 crd:
-	@kubectl create -f deploy/crds/jaegertracing_v1_jaeger_crd.yaml 2>&1 | grep -v "already exists" || true
+	@kubectl create -f deploy/crds/jaegertracing.io_jaegers_crd.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: ingress
 ingress:

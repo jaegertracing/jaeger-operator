@@ -12,12 +12,15 @@ import (
 )
 
 func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
-	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	})
+	opts := []client.ListOption{
+		client.InNamespace(jaeger.Namespace),
+		client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		}),
+	}
 	list := &batchv1beta1.CronJobList{}
-	if err := r.client.List(context.Background(), opts, list); err != nil {
+	if err := r.client.List(context.Background(), list, opts...); err != nil {
 		return err
 	}
 

@@ -109,7 +109,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			Verbs:     []string{"*"},
 		}},
 	}
-	if _, err := framework.Global.KubeClient.Rbac().ClusterRoles().Create(cr); err != nil {
+	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoles().Create(cr); err != nil {
 		t.Fatal(err)
 	}
 
@@ -125,7 +125,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: roleName},
 	}
 
-	if _, err := framework.Global.KubeClient.Rbac().ClusterRoleBindings().Create(crb); err != nil {
+	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
 		t.Fatal(err)
 	}
 
@@ -147,7 +147,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) (map[string]string, error) {
 	imageNamesMap := make(map[string]string)
 
-	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("jaeger-operator", metav1.GetOptions{IncludeUninitialized: false})
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("jaeger-operator", metav1.GetOptions{})
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
 			return imageNamesMap, nil

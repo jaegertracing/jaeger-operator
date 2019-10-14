@@ -18,7 +18,7 @@ func ManagedInstances(c client.Client) error {
 	opts := client.MatchingLabels(map[string]string{
 		v1.LabelOperatedBy: identity,
 	})
-	if err := c.List(context.Background(), opts, list); err != nil {
+	if err := c.List(context.Background(), list, opts); err != nil {
 		return err
 	}
 

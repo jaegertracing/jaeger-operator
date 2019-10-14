@@ -12,12 +12,15 @@ import (
 )
 
 func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.DaemonSet) error {
-	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	})
+	opts := []client.ListOption{
+		client.InNamespace(jaeger.Namespace),
+		client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		}),
+	}
 	list := &appsv1.DaemonSetList{}
-	if err := r.client.List(context.Background(), opts, list); err != nil {
+	if err := r.client.List(context.Background(), list, opts...); err != nil {
 		return err
 	}
 

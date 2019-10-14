@@ -10,11 +10,13 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -154,23 +156,21 @@ func (b *Background) detectClusterRoles() {
 func (b *Background) cleanDeployments() {
 	log.Debug("detecting orphaned deployments.")
 	deployments := &appsv1.DeploymentList{}
-	deployOpts := &client.ListOptions{}
-	jaegerOpts := &client.ListOptions{}
+	deployOpts := []client.ListOption{
+		matchingLabelKeys(map[string]string{inject.Label: ""}),
+	}
+
+	jaegerOpts := []client.ListOption{}
 	instances := &v1.JaegerList{}
 
 	instancesMap := make(map[string]*v1.Jaeger)
 
-	// Only select fields that have the label 'sidecar.jaegertracing.io/injected'
-	if err := deployOpts.SetLabelSelector(inject.Label); err != nil {
-		log.WithError(err).Error("error cleaning orphaned deployment")
-	}
-
-	if err := b.cl.List(context.Background(), deployOpts, deployments); err != nil {
+	if err := b.cl.List(context.Background(), deployments, deployOpts...); err != nil {
 		log.WithError(err).Error("error cleaning orphaned deployment")
 	}
 
 	// get all jaeger instances
-	if err := b.cl.List(context.Background(), jaegerOpts, instances); err != nil {
+	if err := b.cl.List(context.Background(), instances, jaegerOpts...); err != nil {
 		log.WithError(err).Error("error cleaning orphaned deployment")
 	}
 
@@ -215,4 +215,19 @@ func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
 		}
 	}
 	return false
+}
+
+type matchingLabelKeys map[string]string
+
+func (m matchingLabelKeys) ApplyToList(opts *client.ListOptions) {
+	sel := labels.NewSelector()
+	for k := range map[string]string(m) {
+		req, err := labels.NewRequirement(k, selection.Exists, []string{})
+		if err != nil {
+			log.Warnf("failed to build label selector: %v", err)
+			return
+		}
+		sel.Add(*req)
+	}
+	opts.LabelSelector = sel
 }

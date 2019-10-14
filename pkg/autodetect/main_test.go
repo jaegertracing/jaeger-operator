@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/googleapis/gnostic/OpenAPIv2"
+	openapi_v2 "github.com/googleapis/gnostic/OpenAPIv2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -68,7 +68,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	// prepare
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object) error {
+	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl)
@@ -249,7 +249,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object) error {
+	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl)
@@ -267,7 +267,7 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object) error {
+	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl)
@@ -293,7 +293,7 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	b.detectClusterRoles()
 	assert.True(t, viper.GetBool("auth-delegator-available"))
 
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object) error {
+	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b.detectClusterRoles()
@@ -390,7 +390,7 @@ func TestCleanDeployments(t *testing.T) {
 
 type fakeClient struct {
 	client.Client
-	CreateFunc func(ctx context.Context, obj runtime.Object) error
+	CreateFunc func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
 }
 
 func customFakeClient() *fakeClient {
@@ -398,7 +398,7 @@ func customFakeClient() *fakeClient {
 	return &fakeClient{Client: c, CreateFunc: c.Create}
 }
 
-func (f *fakeClient) Create(ctx context.Context, obj runtime.Object) error {
+func (f *fakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 	return f.CreateFunc(ctx, obj)
 }
 

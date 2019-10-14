@@ -22,9 +22,8 @@ import (
 	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 const TrackingID = "MyTrackingId"
@@ -261,8 +260,7 @@ func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	routeList := &osv1.RouteList{}
 	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
-		opts := &client.ListOptions{}
-		if err := f.Client.List(context.Background(), opts, routeList); err != nil {
+		if err := f.Client.List(context.Background(), routeList); err != nil {
 			return false, err
 		}
 		if len(routeList.Items) >= 1 {

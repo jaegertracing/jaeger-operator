@@ -12,7 +12,7 @@ jobs:
     - uses: jpkrohling/setup-kubectl@v1-release
     - uses: jpkrohling/setup-operator-sdk@v1-release
       with:
-        operator-sdk-version: v0.10.0
+        operator-sdk-version: v0.11.0
     - uses: actions/checkout@v1
 
     - name: "setup docker"

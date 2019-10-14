@@ -22,12 +22,15 @@ var (
 )
 
 func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.Deployment) error {
-	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	})
+	opts := []client.ListOption{
+		client.InNamespace(jaeger.Namespace),
+		client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		}),
+	}
 	depList := &appsv1.DeploymentList{}
-	if err := r.client.List(context.Background(), opts, depList); err != nil {
+	if err := r.client.List(context.Background(), depList, opts...); err != nil {
 		return err
 	}
 
