@@ -10,6 +10,7 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -17,14 +18,16 @@ import (
 type S struct {
 	typ                 v1.DeploymentStrategy
 	accounts            []corev1.ServiceAccount
+	clusterRoleBindings []rbac.ClusterRoleBinding
 	configMaps          []corev1.ConfigMap
 	cronJobs            []batchv1beta1.CronJob
-	clusterRoleBindings []rbac.ClusterRoleBinding
 	daemonSets          []appsv1.DaemonSet
 	dependencies        []batchv1.Job
 	deployments         []appsv1.Deployment
 	elasticsearches     []esv1.Elasticsearch
 	ingresses           []v1beta1.Ingress
+	kafkas              []kafkav1beta1.Kafka
+	kafkaUsers          []kafkav1beta1.KafkaUser
 	routes              []osv1.Route
 	services            []corev1.Service
 	secrets             []corev1.Secret
@@ -100,6 +103,18 @@ func (s S) WithRoutes(r []osv1.Route) S {
 	return s
 }
 
+// WithKafkas returns the strategy with the given list of Kafkas
+func (s S) WithKafkas(k []kafkav1beta1.Kafka) S {
+	s.kafkas = k
+	return s
+}
+
+// WithKafkaUsers returns the strategy with the given list of Kafka Users
+func (s S) WithKafkaUsers(k []kafkav1beta1.KafkaUser) S {
+	s.kafkaUsers = k
+	return s
+}
+
 // WithServices returns the strategy with the given list of routes
 func (s S) WithServices(svcs []corev1.Service) S {
 	s.services = svcs
@@ -150,6 +165,16 @@ func (s S) Elasticsearches() []esv1.Elasticsearch {
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent
 func (s S) Ingresses() []v1beta1.Ingress {
 	return s.ingresses
+}
+
+// Kafkas returns the list of Kafkas for this strategy.
+func (s S) Kafkas() []kafkav1beta1.Kafka {
+	return s.kafkas
+}
+
+// KafkaUsers returns the list of KafkaUsers for this strategy.
+func (s S) KafkaUsers() []kafkav1beta1.KafkaUser {
+	return s.kafkaUsers
 }
 
 // Routes returns the list of routes for this strategy. This might be platform-dependent

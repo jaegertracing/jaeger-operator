@@ -25,6 +25,9 @@ type Background struct {
 	cl     client.Client
 	dcl    discovery.DiscoveryInterface
 	ticker *time.Ticker
+
+	retryDetectKafka bool
+	retryDetectEs    bool
 }
 
 // New creates a new auto-detect runner
@@ -34,12 +37,16 @@ func New(mgr manager.Manager) (*Background, error) {
 		return nil, err
 	}
 
-	return &Background{dcl: dcl, cl: mgr.GetClient()}, nil
+	return WithClients(mgr.GetClient(), dcl), nil
 }
 
 // WithClients builds a new Background with the provided clients
 func WithClients(cl client.Client, dcl discovery.DiscoveryInterface) *Background {
-	return &Background{cl: cl, dcl: dcl}
+	// whether we should keep adjusting depending on the environment
+	retryDetectEs := viper.GetString("es-provision") == v1.FlagProvisionElasticsearchAuto
+	retryDetectKafka := viper.GetString("kafka-provision") == v1.FlagProvisionKafkaAuto
+
+	return &Background{cl: cl, dcl: dcl, retryDetectKafka: retryDetectKafka, retryDetectEs: retryDetectEs}
 }
 
 // Start initializes the auto-detection process that runs in the background
@@ -80,6 +87,7 @@ func (b *Background) autoDetectCapabilities() {
 		// we could run all the detect* functions in parallel, but let's keep it simple for now
 		b.detectPlatform(apiList)
 		b.detectElasticsearch(apiList)
+		b.detectKafka(apiList)
 	}
 
 	b.detectClusterRoles()
@@ -97,7 +105,7 @@ func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
 }
 
 func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
-	// detect the platform
+	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
 		log.Debug("Attempting to auto-detect the platform")
 		if isOpenShift(apiList) {
@@ -114,17 +122,42 @@ func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
 
 func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
 	// detect whether the Elasticsearch operator is available
-	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchAuto) {
+	if b.retryDetectEs {
 		log.Debug("Determining whether we should enable the Elasticsearch Operator integration")
+		previous := viper.GetString("es-provision")
 		if isElasticsearchOperatorAvailable(apiList) {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
 		} else {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchFalse)
 		}
 
-		log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")
+		if previous != viper.GetString("es-provision") {
+			log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")
+		}
 	} else {
 		log.WithField("es-provision", viper.GetString("es-provision")).Debug("The 'es-provision' option is explicitly set")
+	}
+}
+
+// detectKafka checks whether the Kafka Operator is available
+func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
+	// viper has a "IsSet" method that we could use, except that it returns "true" even
+	// when nothing is set but it finds a 'Default' value...
+	if b.retryDetectKafka {
+		log.Debug("Determining whether we should enable the Kafka Operator integration")
+
+		previous := viper.GetString("kafka-provision")
+		if isKafkaOperatorAvailable(apiList) {
+			viper.Set("kafka-provision", v1.FlagProvisionKafkaTrue)
+		} else {
+			viper.Set("kafka-provision", v1.FlagProvisionKafkaFalse)
+		}
+
+		if previous != viper.GetString("kafka-provision") {
+			log.WithField("kafka-provision", viper.GetString("kafka-provision")).Info("Automatically adjusted the 'kafka-provision' flag")
+		}
+	} else {
+		log.WithField("kafka-provision", viper.GetString("kafka-provision")).Debug("The 'kafka-provision' option is explicitly set")
 	}
 }
 
@@ -211,6 +244,16 @@ func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
 	apiGroups := apiList.Groups
 	for i := 0; i < len(apiGroups); i++ {
 		if apiGroups[i].Name == "logging.openshift.io" {
+			return true
+		}
+	}
+	return false
+}
+
+func isKafkaOperatorAvailable(apiList *metav1.APIGroupList) bool {
+	apiGroups := apiList.Groups
+	for i := 0; i < len(apiGroups); i++ {
+		if apiGroups[i].Name == "kafka.strimzi.io" {
 			return true
 		}
 	}

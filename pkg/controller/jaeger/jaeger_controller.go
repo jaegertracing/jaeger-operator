@@ -219,6 +219,23 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, er
 		}).Warn("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
 	}
 
+	kafkas := str.Kafkas()
+	kafkaUsers := str.KafkaUsers()
+	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaTrue) {
+		if err := r.applyKafkas(jaeger, kafkas); err != nil {
+			return jaeger, err
+		}
+
+		if err := r.applyKafkaUsers(jaeger, kafkaUsers); err != nil {
+			return jaeger, err
+		}
+	} else if len(kafkas) > 0 || len(kafkaUsers) > 0 {
+		log.WithFields(log.Fields{
+			"namespace": jaeger.Namespace,
+			"instance":  jaeger.Name,
+		}).Warn("A Kafka cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+	}
+
 	// storage dependencies have to be deployed after ES is ready
 	if err := r.handleDependencies(str); err != nil {
 		return jaeger, errors.Wrap(err, "failed to handler dependencies")

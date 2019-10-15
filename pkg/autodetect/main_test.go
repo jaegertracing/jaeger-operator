@@ -144,13 +144,12 @@ func TestAutoDetectFallback(t *testing.T) {
 
 func TestAutoDetectOpenShift(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformAutoDetect)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
-
-	viper.Set("platform", v1.FlagPlatformAutoDetect)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -169,13 +168,12 @@ func TestAutoDetectOpenShift(t *testing.T) {
 
 func TestAutoDetectKubernetes(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformAutoDetect)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
-
-	viper.Set("platform", v1.FlagPlatformAutoDetect)
 
 	// test
 	b.autoDetectCapabilities()
@@ -186,13 +184,12 @@ func TestAutoDetectKubernetes(t *testing.T) {
 
 func TestExplicitPlatform(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
-
-	viper.Set("platform", v1.FlagPlatformOpenShift)
 
 	// test
 	b.autoDetectCapabilities()
@@ -203,13 +200,12 @@ func TestExplicitPlatform(t *testing.T) {
 
 func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	// prepare
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
-
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 
 	// test
 	b.autoDetectCapabilities()
@@ -220,13 +216,12 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 
 func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	// prepare
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
-
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -241,6 +236,119 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 
 	// verify
 	assert.True(t, viper.GetBool("es-provision"))
+}
+
+func TestAutoDetectKafkaProvisionNoKafkaOperator(t *testing.T) {
+	// prepare
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaAuto)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.False(t, viper.GetBool("kafka-provision"))
+}
+
+func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
+	// prepare
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaAuto)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{
+			Groups: []metav1.APIGroup{{
+				Name: "kafka.strimzi.io",
+			}},
+		}, nil
+	}
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.True(t, viper.GetBool("kafka-provision"))
+}
+
+func TestAutoDetectKafkaExplicitTrue(t *testing.T) {
+	// prepare
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaTrue)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.True(t, viper.GetBool("kafka-provision"))
+}
+
+func TestAutoDetectKafkaExplicitFalse(t *testing.T) {
+	// prepare
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaFalse)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.False(t, viper.GetBool("kafka-provision"))
+}
+
+func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
+	// prepare
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaAuto)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.False(t, viper.GetBool("kafka-provision"))
+}
+
+func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
+	// prepare
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaAuto)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl)
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{
+			Groups: []metav1.APIGroup{{
+				Name: "kafka.strimzi.io",
+			}},
+		}, nil
+	}
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.True(t, viper.GetBool("kafka-provision"))
 }
 
 func TestNoAuthDelegatorAvailable(t *testing.T) {

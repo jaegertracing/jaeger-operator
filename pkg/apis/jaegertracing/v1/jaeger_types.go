@@ -36,6 +36,18 @@ const (
 	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchFalse = "false"
 
+	// FlagProvisionKafkaAuto represents the 'auto' value for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaAuto = "auto"
+
+	// FlagProvisionKafkaTrue represents the value 'true' for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaTrue = "true"
+
+	// FlagProvisionKafkaFalse represents the value 'false' for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaFalse = "false"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	// +k8s:openapi-gen=true
 	IngressSecurityNone IngressSecurityType = ""
@@ -47,6 +59,14 @@ const (
 	// IngressSecurityOAuthProxy represents an OAuth Proxy as security type
 	// +k8s:openapi-gen=true
 	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
+
+	// AnnotationProvisionedKafkaKey is a label to be added to Kafkas that have been provisioned by Jaeger
+	// +k8s:openapi-gen=true
+	AnnotationProvisionedKafkaKey string = "jaegertracing.io/provisioned"
+
+	// AnnotationProvisionedKafkaValue is a label to be added to Kafkas that have been provisioned by Jaeger
+	// +k8s:openapi-gen=true
+	AnnotationProvisionedKafkaValue string = "true"
 )
 
 // JaegerSpec defines the desired state of Jaeger

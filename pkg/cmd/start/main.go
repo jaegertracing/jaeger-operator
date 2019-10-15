@@ -77,6 +77,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("es-provision", "auto", "Whether to auto-provision an Elasticsearch cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'logging.openshift.io' is available, auto-provisioning is enabled.")
 	viper.BindPFlag("es-provision", cmd.Flags().Lookup("es-provision"))
 
+	cmd.Flags().String("kafka-provision", "auto", "Whether to auto-provision a Kafka cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'kafka.strimzi.io' is available, auto-provisioning is enabled.")
+	viper.BindPFlag("kafka-provision", cmd.Flags().Lookup("kafka-provision"))
+
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
 	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 

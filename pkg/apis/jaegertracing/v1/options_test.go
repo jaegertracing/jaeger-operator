@@ -135,3 +135,16 @@ func TestMarshallEmpty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, bytes, json)
 }
+
+func TestUpdate(t *testing.T) {
+	// prepare
+	o := NewOptions(map[string]interface{}{
+		"key": "original",
+	})
+
+	// test
+	o.Map()["key"] = "new"
+
+	// verify
+	assert.Equal(t, o.opts["key"], "new")
+}
