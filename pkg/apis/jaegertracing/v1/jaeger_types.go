@@ -49,11 +49,15 @@ const (
 	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
 )
 
+// DeploymentStrategy represents the possible values for deployment strategies
+// +k8s:openapi-gen=true
+type DeploymentStrategy string
+
 // JaegerSpec defines the desired state of Jaeger
 // +k8s:openapi-gen=true
 type JaegerSpec struct {
 	// +optional
-	Strategy string `json:"strategy,omitempty"`
+	Strategy DeploymentStrategy `json:"strategy,omitempty"`
 
 	// +optional
 	AllInOne JaegerAllInOneSpec `json:"allInOne,omitempty"`
