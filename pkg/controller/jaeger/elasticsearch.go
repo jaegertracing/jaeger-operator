@@ -23,12 +23,15 @@ var (
 )
 
 func (r *ReconcileJaeger) applyElasticsearches(jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
-	opts := client.InNamespace(jaeger.Namespace).MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance": jaeger.Name,
-		"app.kubernetes.io/part-of":  "jaeger",
-	})
+	opts := []client.ListOption{
+		client.InNamespace(jaeger.Namespace),
+		client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance": jaeger.Name,
+			"app.kubernetes.io/part-of":  "jaeger",
+		}),
+	}
 	list := &esv1.ElasticsearchList{}
-	if err := r.client.List(context.Background(), opts, list); err != nil {
+	if err := r.client.List(context.Background(), list, opts...); err != nil {
 		return err
 	}
 
@@ -82,7 +85,12 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 			"cluster-name": es.Name,
 			"component":    "elasticsearch",
 		}
-		if err = c.List(context.Background(), client.MatchingLabels(labels).InNamespace(es.Namespace), &depList); err != nil {
+		opts := []client.ListOption{
+			client.InNamespace(es.Namespace),
+			client.MatchingLabels(labels),
+		}
+
+		if err = c.List(context.Background(), &depList, opts...); err != nil {
 			if k8serrors.IsNotFound(err) {
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
@@ -112,7 +120,7 @@ func waitForAvailableElastic(c client.Client, es esv1.Elasticsearch) error {
 			}
 		}
 		ssList := corev1.StatefulSetList{}
-		if err = c.List(context.Background(), client.MatchingLabels(labels).InNamespace(es.Namespace), &ssList); err != nil {
+		if err = c.List(context.Background(), &ssList, opts...); err != nil {
 			if k8serrors.IsNotFound(err) {
 				// the object might have not been created yet
 				log.WithFields(log.Fields{

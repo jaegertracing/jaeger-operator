@@ -20,7 +20,7 @@ import (
 func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s statefulset\n", name)
@@ -48,7 +48,7 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s daemonset\n", name)
@@ -77,7 +77,7 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 	start := time.Now()
 	var ingress *v1beta1.Ingress
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		ingress, err = kubeclient.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		ingress, err = kubeclient.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s ingress\n", name)
@@ -105,7 +105,7 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		job, err := kubeclient.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		job, err := kubeclient.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s job\n", name)
@@ -133,7 +133,7 @@ func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespace, ownerName string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		jobList, err := kubeclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{IncludeUninitialized: true})
+		jobList, err := kubeclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s job owner\n", ownerName)
@@ -164,7 +164,7 @@ func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespac
 func WaitForCronJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) error {
 	start := time.Now()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		cronJob, err := kubeclient.BatchV1beta1().CronJobs(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		cronJob, err := kubeclient.BatchV1beta1().CronJobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s cronjob\n", name)
@@ -198,7 +198,7 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 // WaitForSecret waits for a secret to be available
 func WaitForSecret(secretName, secretNamespace string) {
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		secret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Get(secretName, metav1.GetOptions{IncludeUninitialized: false})
+		secret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Get(secretName, metav1.GetOptions{})
 		if err == nil {
 			logrus.Debugf("Found secret %s\n", secret.Name)
 			return true, nil
