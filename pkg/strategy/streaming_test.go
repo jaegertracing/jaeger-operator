@@ -73,7 +73,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 			Namespace: "simple-prod-ns",
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic": "mytopic",

@@ -377,7 +377,7 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 			Name: "TestCollectorWithIngesterStorageType",
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic": "mytopic",
@@ -417,7 +417,7 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 			Name: "TestCollectorWithIngesterNoOptionsStorageType",
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{

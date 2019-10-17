@@ -93,7 +93,7 @@ func getJaegerWithCassandra(s string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
+			Strategy: v1.DeploymentStrategyAllInOne,
 			Storage: v1.JaegerStorageSpec{
 				Type:    "cassandra",
 				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),

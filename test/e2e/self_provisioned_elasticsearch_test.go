@@ -112,7 +112,7 @@ func getJaegerSimpleProd() *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "production",
+			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Elasticsearch: v1.ElasticsearchSpec{

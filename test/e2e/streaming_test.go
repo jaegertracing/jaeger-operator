@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type StreamingTestSuite struct {
@@ -129,7 +129,7 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic":   "jaeger-spans",
@@ -168,7 +168,7 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.authentication": "tls",

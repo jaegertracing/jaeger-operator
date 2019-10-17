@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 const TrackingID = "MyTrackingId"
@@ -214,7 +214,7 @@ func getJaegerAllInOneWithUiDefinition(basePath string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
+			Strategy: v1.DeploymentStrategyAllInOne,
 			AllInOne: v1.JaegerAllInOneSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"query.base-path": basePath,
@@ -246,7 +246,7 @@ func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
+			Strategy: v1.DeploymentStrategyAllInOne,
 			AllInOne: v1.JaegerAllInOneSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"log-level":         "debug",

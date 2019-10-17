@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,7 +40,7 @@ func NewIngester(jaeger *v1.Jaeger) *Ingester {
 
 // Get returns a ingester pod
 func (i *Ingester) Get() *appsv1.Deployment {
-	if !strings.EqualFold(i.jaeger.Spec.Strategy, "streaming") {
+	if i.jaeger.Spec.Strategy != v1.DeploymentStrategyStreaming {
 		return nil
 	}
 

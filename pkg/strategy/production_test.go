@@ -74,7 +74,7 @@ func TestOptionsArePassed(t *testing.T) {
 			Namespace: "simple-prod-ns",
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "production",
+			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
 				Options: v1.NewOptions(map[string]interface{}{

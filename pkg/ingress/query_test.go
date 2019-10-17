@@ -49,7 +49,7 @@ func TestQueryIngressAllInOneBasePath(t *testing.T) {
 	name := "TestQueryIngressAllInOneBasePath"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &enabled
-	jaeger.Spec.Strategy = "allInOne"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
 	ingress := NewQueryIngress(jaeger)
 
@@ -68,7 +68,7 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 	name := "TestQueryIngressQueryBasePath"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &enabled
-	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
 	ingress := NewQueryIngress(jaeger)
 
