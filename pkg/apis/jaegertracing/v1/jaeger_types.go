@@ -53,6 +53,24 @@ const (
 // +k8s:openapi-gen=true
 type DeploymentStrategy string
 
+const (
+	// DeploymentStrategyDeprecatedAllInOne
+	// +k8s:openapi-gen=true
+	DeploymentStrategyDeprecatedAllInOne DeploymentStrategy = "all-in-one"
+
+	// DeploymentStrategyAllInOne
+	// +k8s:openapi-gen=true
+	DeploymentStrategyAllInOne DeploymentStrategy = "allinone"
+
+	// DeploymentStrategyStreaming
+	// +k8s:openapi-gen=true
+	DeploymentStrategyStreaming DeploymentStrategy = "streaming"
+
+	// DeploymentStrategyProduction
+	// +k8s:openapi-gen=true
+	DeploymentStrategyProduction DeploymentStrategy = "production"
+)
+
 // JaegerSpec defines the desired state of Jaeger
 // +k8s:openapi-gen=true
 type JaegerSpec struct {
