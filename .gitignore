@@ -3,6 +3,7 @@ build/_output
 build/_test
 deploy/test
 vendor
+.idea/
 
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
