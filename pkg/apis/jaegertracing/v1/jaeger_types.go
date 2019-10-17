@@ -54,19 +54,19 @@ const (
 type DeploymentStrategy string
 
 const (
-	// DeploymentStrategyDeprecatedAllInOne
+	// DeploymentStrategyDeprecatedAllInOne represents the (deprecated) 'all-in-one' deployment strategy
 	// +k8s:openapi-gen=true
 	DeploymentStrategyDeprecatedAllInOne DeploymentStrategy = "all-in-one"
 
-	// DeploymentStrategyAllInOne
+	// DeploymentStrategyAllInOne represents the 'allInOne' deployment strategy (default)
 	// +k8s:openapi-gen=true
 	DeploymentStrategyAllInOne DeploymentStrategy = "allinone"
 
-	// DeploymentStrategyStreaming
+	// DeploymentStrategyStreaming represents the 'streaming' deployment strategy
 	// +k8s:openapi-gen=true
 	DeploymentStrategyStreaming DeploymentStrategy = "streaming"
 
-	// DeploymentStrategyProduction
+	// DeploymentStrategyProduction represents the 'production' deployment strategy
 	// +k8s:openapi-gen=true
 	DeploymentStrategyProduction DeploymentStrategy = "production"
 )
