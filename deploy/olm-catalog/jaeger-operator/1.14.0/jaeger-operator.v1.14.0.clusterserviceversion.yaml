@@ -94,13 +94,13 @@ spec:
     * Service dependency analysis
     * Performance / latency optimization
     * OpenTracing compatible data model
-    * Multiple storage backends: Cassandra, Elasticsearch, Memory, Badger.
+    * Multiple storage backends: Badger, Cassandra, Elasticsearch, Memory.
 
     ### Operator features
 
     * **Multiple modes** - Supports `allInOne`, `production`, and `streaming` [modes of deployment](https://www.jaegertracing.io/docs/latest/operator/#deployment-strategies).
 
-    * **Configuration** - Directly pass down all supported [Jaeger configuration](https://www.jaegertracing.io/docs/latest/operator/#configuring-the-custom-resource) through the Operator.
+    * **Configuration** - The Operator manages [configuration information](https://www.jaegertracing.io/docs/latest/operator/#configuring-the-custom-resource) when installing Jaeger instances.
 
     * **Storage** - [Configure storage](https://www.jaegertracing.io/docs/latest/operator/#storage-options) used by Jaeger. By default, `memory` is used. Other options include `elasticsearch`, `cassandra` or `badger`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
 
