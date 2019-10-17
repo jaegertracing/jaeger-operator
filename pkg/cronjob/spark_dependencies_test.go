@@ -31,11 +31,13 @@ func TestStorageEnvs(t *testing.T) {
 	tests := []struct {
 		storage  v1.JaegerStorageSpec
 		expected []corev1.EnvVar
+		name     string
 	}{
 		{storage: v1.JaegerStorageSpec{Type: "foo"}},
 		{storage: v1.JaegerStorageSpec{Type: "cassandra",
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none"})},
+			name: "C with cassandra.password, no SSL",
 			expected: []corev1.EnvVar{
 				{Name: "CASSANDRA_CONTACT_POINTS", Value: "lol:hol"},
 				{Name: "CASSANDRA_KEYSPACE", Value: "haha"},
@@ -48,6 +50,7 @@ func TestStorageEnvs(t *testing.T) {
 		{storage: v1.JaegerStorageSpec{Type: "cassandra",
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none", "cassandra.tls": "ofcourse!", "cassandra.local-dc": "no-remote"})},
+			name: "C with cassandra.password, SSL",
 			expected: []corev1.EnvVar{
 				{Name: "CASSANDRA_CONTACT_POINTS", Value: "lol:hol"},
 				{Name: "CASSANDRA_KEYSPACE", Value: "haha"},
@@ -58,20 +61,51 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
 			}},
 		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
-			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
-				"es.username": "jdoe", "es.password": "none"})},
+			Options: v1.NewOptions(map[string]interface{}{
+				"es.server-urls":  "lol:hol",
+				"es.index-prefix": "haha",
+				"es.username":     "jdoe",
+				"es.password":     "none",
+			})},
+			name: "ES with es.password",
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
-				{Name: "ES_USERNAME", Value: "jdoe"},
-				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
 				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
+				{Name: "ES_USERNAME", Value: "jdoe"},
+				{Name: "ES_PASSWORD", Value: "none"},
+			}},
+		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+			Options:    v1.NewOptions(map[string]interface{}{"es.server-urls": "http://es.monitoring.svc:9200"}),
+			SecretName: "jaeger-secret"},
+			name: "ES with secretName",
+			expected: []corev1.EnvVar{
+				{Name: "ES_NODES", Value: "http://es.monitoring.svc:9200"},
+				{Name: "ES_INDEX_PREFIX", Value: ""},
+				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
+				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
+			}},
+		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+			Options: v1.NewOptions(map[string]interface{}{
+				"es.server-urls": "http://es.monitoring.svc:9200",
+				"es.username":    "jaeger-client-user",
+				"es.password":    "oh-so-secret",
+			}),
+			SecretName: "jaeger-secret"},
+			name: "ES with secretName & username + password",
+			expected: []corev1.EnvVar{
+				{Name: "ES_NODES", Value: "http://es.monitoring.svc:9200"},
+				{Name: "ES_INDEX_PREFIX", Value: ""},
+				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
+				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
+				{Name: "ES_USERNAME", Value: "jaeger-client-user"},
+				{Name: "ES_PASSWORD", Value: "oh-so-secret"},
 			}},
 	}
 	for _, test := range tests {
 		envVars := getStorageEnvs(test.storage)
-		assert.Equal(t, test.expected, envVars)
+		assert.Equal(t, test.expected, envVars, test.name)
 	}
 }
 

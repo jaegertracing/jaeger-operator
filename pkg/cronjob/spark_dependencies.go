@@ -122,6 +122,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 	if keyspace == "" {
 		keyspace = "jaeger_v1_test"
 	}
+
 	switch s.Type {
 	case "cassandra":
 		return []corev1.EnvVar{
@@ -133,15 +134,27 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "CASSANDRA_LOCAL_DC", Value: sFlagsMap["cassandra.local-dc"]},
 			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.Dependencies.CassandraClientAuthEnabled)},
 		}
+
 	case "elasticsearch":
-		return []corev1.EnvVar{
+		env := []corev1.EnvVar{
 			{Name: "ES_NODES", Value: sFlagsMap["es.server-urls"]},
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
-			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
-			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
 			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchClientNodeOnly)},
 			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchNodesWanOnly)},
 		}
+
+		// we add ES_USERNAME and ES_PASSWORD (as empty strings) if the secret is empty or if we know that we have both
+		// username and passwords in the options Map (if also there's a secret, it's up to the user to make sure it is
+		// right at runtime, as the secret can be used for more stuff than ES_USERNAME/ES_PASSWORD)
+		username, hasUsername := sFlagsMap["es.username"]
+		password, hasPassword := sFlagsMap["es.password"]
+		if len(s.SecretName) == 0 || (hasUsername && hasPassword) {
+			env = append(env,
+				corev1.EnvVar{Name: "ES_USERNAME", Value: username},
+				corev1.EnvVar{Name: "ES_PASSWORD", Value: password})
+		}
+		return env
+
 	default:
 		return nil
 	}
