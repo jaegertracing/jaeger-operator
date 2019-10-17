@@ -61,7 +61,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: jaeger.Namespace,
-			Labels: commonSpec.Labels,
+			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,
