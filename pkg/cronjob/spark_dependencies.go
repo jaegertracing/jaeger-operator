@@ -134,14 +134,19 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.Dependencies.CassandraClientAuthEnabled)},
 		}
 	case "elasticsearch":
-		return []corev1.EnvVar{
+		vars := []corev1.EnvVar{
 			{Name: "ES_NODES", Value: sFlagsMap["es.server-urls"]},
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
-			{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchClientNodeOnly)},
-			{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(s.Dependencies.ElasticsearchNodesWanOnly)},
 		}
+		if s.Dependencies.ElasticsearchNodesWanOnly != nil {
+			vars = append(vars, corev1.EnvVar{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(*s.Dependencies.ElasticsearchNodesWanOnly)})
+		}
+		if s.Dependencies.ElasticsearchClientNodeOnly != nil {
+			vars = append(vars, corev1.EnvVar{Name: "ES_CLIENT_NODE_ONLY", Value: strconv.FormatBool(*s.Dependencies.ElasticsearchClientNodeOnly)})
+		}
+		return vars
 	default:
 		return nil
 	}
