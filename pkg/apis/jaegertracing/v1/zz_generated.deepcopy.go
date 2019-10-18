@@ -247,6 +247,16 @@ func (in *JaegerDependenciesSpec) DeepCopyInto(out *JaegerDependenciesSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.ElasticsearchClientNodeOnly != nil {
+		in, out := &in.ElasticsearchClientNodeOnly, &out.ElasticsearchClientNodeOnly
+		*out = new(bool)
+		**out = **in
+	}
+	if in.ElasticsearchNodesWanOnly != nil {
+		in, out := &in.ElasticsearchNodesWanOnly, &out.ElasticsearchNodesWanOnly
+		*out = new(bool)
+		**out = **in
+	}
 	if in.TTLSecondsAfterFinished != nil {
 		in, out := &in.TTLSecondsAfterFinished, &out.TTLSecondsAfterFinished
 		*out = new(int32)

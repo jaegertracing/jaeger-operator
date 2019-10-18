@@ -375,10 +375,10 @@ type JaegerDependenciesSpec struct {
 	CassandraClientAuthEnabled bool `json:"cassandraClientAuthEnabled,omitempty"`
 
 	// +optional
-	ElasticsearchClientNodeOnly bool `json:"elasticsearchClientNodeOnly,omitempty"`
+	ElasticsearchClientNodeOnly *bool `json:"elasticsearchClientNodeOnly,omitempty"`
 
 	// +optional
-	ElasticsearchNodesWanOnly bool `json:"elasticsearchNodesWanOnly,omitempty"`
+	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`

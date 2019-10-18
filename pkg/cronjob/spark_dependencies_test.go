@@ -28,6 +28,8 @@ func TestRemoveEmptyVars(t *testing.T) {
 }
 
 func TestStorageEnvs(t *testing.T) {
+	trueVar := true
+	falseVar := false
 	tests := []struct {
 		storage  v1.JaegerStorageSpec
 		expected []corev1.EnvVar
@@ -65,8 +67,18 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
-				{Name: "ES_CLIENT_NODE_ONLY", Value: "false"},
+			}},
+		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+				"es.username": "jdoe", "es.password": "none"}),
+			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchClientNodeOnly: &trueVar, ElasticsearchNodesWanOnly: &falseVar}},
+			expected: []corev1.EnvVar{
+				{Name: "ES_NODES", Value: "lol:hol"},
+				{Name: "ES_INDEX_PREFIX", Value: "haha"},
+				{Name: "ES_USERNAME", Value: "jdoe"},
+				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
+				{Name: "ES_CLIENT_NODE_ONLY", Value: "true"},
 			}},
 	}
 	for _, test := range tests {
