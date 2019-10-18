@@ -104,7 +104,7 @@ spec:
 
     * **Storage** - [Configure storage](https://www.jaegertracing.io/docs/latest/operator/#storage-options) used by Jaeger. By default, `memory` is used. Other options include `elasticsearch`, `cassandra` or `badger`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
 
-    * **Agent** - can be deployed as [sidecar](https://www.jaegertracing.io/docs/latest/operator/#auto-injecting-jaeger-agent-sidecars) and/or [daemonset](https://www.jaegertracing.io/docs/latest/operator/#installing-the-agent-as-daemonset).
+    * **Agent** - can be deployed as [sidecar](https://www.jaegertracing.io/docs/latest/operator/#auto-injecting-jaeger-agent-sidecars) (default) and/or [daemonset](https://www.jaegertracing.io/docs/latest/operator/#installing-the-agent-as-daemonset).
 
     * **UI** - Optionally setup ingress (Kubernetes) or secure route (OpenShift) to provide [access to the Jaeger UI](https://www.jaegertracing.io/docs/latest/operator/#accessing-the-jaeger-console-ui).
 
