@@ -1,14 +1,12 @@
 module github.com/jaegertracing/jaeger-operator
 
 require (
-	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/googleapis/gnostic v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/onsi/ginkgo v1.10.1 // indirect
-	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/openshift/api v0.0.0-20180830153656-5ad8479f64f1
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/pkg/errors v0.8.1
+	github.com/securego/gosec v0.0.0-20191008095658-28c1128b7336 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
@@ -16,11 +14,9 @@ require (
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.15.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0 // indirect
-	golang.org/x/crypto v0.0.0-20190907121410-71b5226ff739 // indirect
-	golang.org/x/net v0.0.0-20190909003024-a7b16738d86b
-	golang.org/x/sys v0.0.0-20190909082730-f460065e899a // indirect
-	golang.org/x/tools v0.0.0-20190909030654-5b82db07426d // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
+	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
+	golang.org/x/tools v0.0.0-20191018000036-341939e08647 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
@@ -52,3 +48,5 @@ replace (
 )
 
 replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
+
+go 1.13
