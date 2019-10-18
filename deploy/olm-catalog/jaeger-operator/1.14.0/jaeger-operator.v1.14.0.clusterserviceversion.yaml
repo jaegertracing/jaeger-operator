@@ -98,11 +98,11 @@ spec:
 
     ### Operator features
 
-    * **Multiple modes** - Supports `allInOne`, `production`, and `streaming` [modes of deployment](https://www.jaegertracing.io/docs/latest/operator/#deployment-strategies).
+    * **Multiple modes** - Supports `allInOne`, `production` and `streaming` [modes of deployment](https://www.jaegertracing.io/docs/latest/operator/#deployment-strategies).
 
     * **Configuration** - The Operator manages [configuration information](https://www.jaegertracing.io/docs/latest/operator/#configuring-the-custom-resource) when installing Jaeger instances.
 
-    * **Storage** - [Configure storage](https://www.jaegertracing.io/docs/latest/operator/#storage-options) used by Jaeger. By default, `memory` is used. Other options include `elasticsearch`, `cassandra` or `badger`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
+    * **Storage** - [Configure storage](https://www.jaegertracing.io/docs/latest/operator/#storage-options) used by Jaeger. By default, `memory` is used. Other options include `badger`, `cassandra` or `elasticsearch`. On OpenShift, the operator can delegate creation of an Elasticsearch cluster to the Elasticsearch Operator if deployed.
 
     * **Agent** - can be deployed as [sidecar](https://www.jaegertracing.io/docs/latest/operator/#auto-injecting-jaeger-agent-sidecars) (default) and/or [daemonset](https://www.jaegertracing.io/docs/latest/operator/#installing-the-agent-as-daemonset).
 
