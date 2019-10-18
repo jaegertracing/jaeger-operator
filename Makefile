@@ -271,7 +271,7 @@ install-tools:
 		github.com/securego/gosec/cmd/gosec
 
 .PHONY: install
-install: install-sdk install-tools vendor
+install: install-tools vendor install-sdk
 
 .PHONY: operatorhub
 operatorhub: check-operatorhub-pr-template
