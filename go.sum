@@ -415,7 +415,7 @@ github.com/operator-framework/operator-marketplace v0.0.0-20190216021216-57300a3
 github.com/operator-framework/operator-registry v1.0.1/go.mod h1:1xEdZjjUg2hPEd52LG3YQ0jtwiwEGdm98S1TH5P4RAA=
 github.com/operator-framework/operator-registry v1.0.4/go.mod h1:hve6YwcjM2nGVlscLtNsp9sIIBkNZo6jlJgzWw7vP9s=
 github.com/operator-framework/operator-registry v1.1.1/go.mod h1:7D4WEwL+EKti5npUh4/u64DQhawCBRugp8Ql20duUb4=
-github.com/operator-framework/operator-sdk v0.11.0 h1:tQumPT2UjD6uhggfAerRbPt+rWOPKC80DmgKUEqeGYo=
+github.com/operator-framework/operator-sdk v0.11.0 h1:If0MefBJjPGYAW6Os6azpTMoaFtsSlXRlQctF23/ORs=
 github.com/operator-framework/operator-sdk v0.11.0/go.mod h1:Oo+O2br5qR6XSLWY/GgIvTvpsEKtzeWp+I3rHF0WIq8=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c/go.mod h1:VyrYX9gd7irzKovcSS6BIIEwPRkP2Wm2m9ufcdFSJ34=

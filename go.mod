@@ -52,5 +52,3 @@ replace (
 )
 
 replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
-
-go 1.13
