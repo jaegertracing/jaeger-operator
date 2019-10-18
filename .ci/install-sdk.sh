@@ -14,11 +14,11 @@ function install_sdk() {
 
 mkdir -p ${GOPATH}/bin
 
-if [ ! -f ${DEST} ]; then
-    install_sdk
-fi
-
-${DEST} version | grep -q ${SDK_VERSION}
-if [ $? != 0 ]; then
-    install_sdk
-fi
+#if [ ! -f ${DEST} ]; then
+#    install_sdk
+#fi
+#
+#${DEST} version | grep -q ${SDK_VERSION}
+#if [ $? != 0 ]; then
+install_sdk
+#fi
