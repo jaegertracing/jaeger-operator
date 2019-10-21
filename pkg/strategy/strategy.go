@@ -9,12 +9,13 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 
+	jv1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ                 Type
+	typ                 jv1.DeploymentStrategy
 	accounts            []v1.ServiceAccount
 	configMaps          []v1.ConfigMap
 	cronJobs            []batchv1beta1.CronJob
@@ -29,28 +30,13 @@ type S struct {
 	secrets             []v1.Secret
 }
 
-// Type represents a specific deployment strategy, like 'all-in-one'
-type Type string
-
-const (
-
-	// AllInOne represents the 'all-in-one' deployment strategy
-	AllInOne Type = "allInOne"
-
-	// Production represents the 'production' deployment strategy
-	Production Type = "production"
-
-	// Streaming represents the 'streaming' deployment strategy
-	Streaming Type = "streaming"
-)
-
 // New constructs a new strategy from scratch
 func New() *S {
 	return &S{}
 }
 
 // Type returns the strategy type for the given strategy
-func (s S) Type() Type {
+func (s S) Type() jv1.DeploymentStrategy {
 	return s.typ
 }
 

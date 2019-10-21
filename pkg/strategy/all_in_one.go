@@ -20,7 +20,7 @@ import (
 )
 
 func newAllInOneStrategy(jaeger *v1.Jaeger) S {
-	c := S{typ: AllInOne}
+	c := S{typ: v1.DeploymentStrategyAllInOne}
 	jaeger.Logger().Debug("Creating all-in-one deployment")
 
 	dep := deployment.NewAllInOne(jaeger)

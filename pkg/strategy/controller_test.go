@@ -16,15 +16,15 @@ func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), AllInOne)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsExplicitValue"})
-	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
+	jaeger.Spec.Strategy = v1.DeploymentStrategyDeprecatedAllInOne // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), AllInOne)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
 func TestNewControllerForProduction(t *testing.T) {
@@ -33,7 +33,7 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), Production)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyProduction)
 }
 
 func TestUnknownStorage(t *testing.T) {

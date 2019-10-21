@@ -20,7 +20,7 @@ import (
 )
 
 func newStreamingStrategy(jaeger *v1.Jaeger) S {
-	c := S{typ: Streaming}
+	c := S{typ: v1.DeploymentStrategyStreaming}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
 	agent := deployment.NewAgent(jaeger)
