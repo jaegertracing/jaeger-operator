@@ -1,22 +1,17 @@
-name: "Release"
 on:
   push:
-    tags:
-    - 'release/v*'
+    branches:
+      - master
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: "perform the release"
-      env:
-        GH_WRITE_TOKEN: ${{ secrets.GH_WRITE_TOKEN }}
-      run: ./.ci/release.sh
     - name: "publishes the images"
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
         QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        OPERATOR_VERSION: master
       run: ./.ci/publish-images.sh
