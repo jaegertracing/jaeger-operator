@@ -45,6 +45,14 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
+		Labels: map[string]string{
+			"app":                          "jaeger",
+			"app.kubernetes.io/name":       name,
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/component":  "cronjob-es-index-cleaner",
+			"app.kubernetes.io/part-of":    "jaeger",
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		},
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsIndexCleaner.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -53,14 +61,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       name,
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "cronjob-es-index-cleaner",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,

@@ -116,6 +116,9 @@ func TestEsIndexCleanerLabels(t *testing.T) {
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["another"])
+
+	// Check if the labels of cronjob pod template equal to the labels of cronjob.
+	assert.Equal(t, cjob.ObjectMeta.Labels, cjob.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels)
 }
 
 func TestEsIndexCleanerResources(t *testing.T) {
