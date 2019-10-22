@@ -28,25 +28,25 @@ const (
 	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchAuto = "auto"
 
-	// FlagProvisionElasticsearchTrue represents the value 'true' for the 'es-provision' flag
+	// FlagProvisionElasticsearchYes represents the value 'yes' for the 'es-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionElasticsearchTrue = "true"
+	FlagProvisionElasticsearchYes = "yes"
 
-	// FlagProvisionElasticsearchFalse represents the value 'false' for the 'es-provision' flag
+	// FlagProvisionElasticsearchNo represents the value 'no' for the 'es-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionElasticsearchFalse = "false"
+	FlagProvisionElasticsearchNo = "no"
 
 	// FlagProvisionKafkaAuto represents the 'auto' value for the 'kafka-provision' flag
 	// +k8s:openapi-gen=true
 	FlagProvisionKafkaAuto = "auto"
 
-	// FlagProvisionKafkaTrue represents the value 'true' for the 'kafka-provision' flag
+	// FlagProvisionKafkaYes represents the value 'yes' for the 'kafka-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionKafkaTrue = "true"
+	FlagProvisionKafkaYes = "yes"
 
-	// FlagProvisionKafkaFalse represents the value 'false' for the 'kafka-provision' flag
+	// FlagProvisionKafkaNo represents the value 'no' for the 'kafka-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionKafkaFalse = "false"
+	FlagProvisionKafkaNo = "no"
 
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	// +k8s:openapi-gen=true

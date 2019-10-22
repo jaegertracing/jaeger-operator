@@ -208,7 +208,7 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, er
 	}
 
 	elasticsearches := str.Elasticsearches()
-	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchTrue) {
+	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchYes) {
 		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
 			return jaeger, err
 		}
@@ -221,7 +221,7 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, er
 
 	kafkas := str.Kafkas()
 	kafkaUsers := str.KafkaUsers()
-	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaTrue) {
+	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaYes) {
 		if err := r.applyKafkas(jaeger, kafkas); err != nil {
 			return jaeger, err
 		}

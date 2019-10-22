@@ -19,7 +19,7 @@ import (
 
 func TestKafkaCreate(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaTrue)
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -77,7 +77,7 @@ func TestKafkaCreate(t *testing.T) {
 
 func TestKafkaUpdate(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaTrue)
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -155,7 +155,7 @@ func TestKafkaUpdate(t *testing.T) {
 
 func TestKafkaDelete(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaTrue)
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -202,7 +202,7 @@ func TestKafkaDelete(t *testing.T) {
 
 func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaTrue)
+	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{

@@ -82,7 +82,7 @@ func (b *Background) autoDetectCapabilities() {
 	if err != nil {
 		log.WithError(err).Info("Failed to determine the platform capabilities. Auto-detected properties will fallback to their default values.")
 		viper.Set("platform", v1.FlagPlatformKubernetes)
-		viper.Set("es-provision", v1.FlagProvisionElasticsearchFalse)
+		viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
 	} else {
 		// we could run all the detect* functions in parallel, but let's keep it simple for now
 		b.detectPlatform(apiList)
@@ -126,9 +126,9 @@ func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
 		log.Debug("Determining whether we should enable the Elasticsearch Operator integration")
 		previous := viper.GetString("es-provision")
 		if isElasticsearchOperatorAvailable(apiList) {
-			viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 		} else {
-			viper.Set("es-provision", v1.FlagProvisionElasticsearchFalse)
+			viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
 		}
 
 		if previous != viper.GetString("es-provision") {
@@ -148,9 +148,9 @@ func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
 
 		previous := viper.GetString("kafka-provision")
 		if isKafkaOperatorAvailable(apiList) {
-			viper.Set("kafka-provision", v1.FlagProvisionKafkaTrue)
+			viper.Set("kafka-provision", v1.FlagProvisionKafkaYes)
 		} else {
-			viper.Set("kafka-provision", v1.FlagProvisionKafkaFalse)
+			viper.Set("kafka-provision", v1.FlagProvisionKafkaNo)
 		}
 
 		if previous != viper.GetString("kafka-provision") {

@@ -211,7 +211,7 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.False(t, viper.GetBool("es-provision"))
+	assert.Equal(t, v1.FlagProvisionElasticsearchNo, viper.GetString("es-provision"))
 }
 
 func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
@@ -235,24 +235,23 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.True(t, viper.GetBool("es-provision"))
+	assert.Equal(t, v1.FlagProvisionElasticsearchYes, viper.GetString("es-provision"))
 }
 
 func TestAutoDetectKafkaProvisionNoKafkaOperator(t *testing.T) {
 	// prepare
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaAuto)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl)
 
-	viper.Set("kafka-provision", v1.FlagProvisionKafkaAuto)
-
 	// test
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.False(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
 }
 
 func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
@@ -276,12 +275,12 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.True(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
 func TestAutoDetectKafkaExplicitTrue(t *testing.T) {
 	// prepare
-	viper.Set("kafka-provision", v1.FlagProvisionKafkaTrue)
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -292,12 +291,12 @@ func TestAutoDetectKafkaExplicitTrue(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.True(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
 func TestAutoDetectKafkaExplicitFalse(t *testing.T) {
 	// prepare
-	viper.Set("kafka-provision", v1.FlagProvisionKafkaFalse)
+	viper.Set("kafka-provision", v1.FlagProvisionKafkaNo)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -348,7 +347,7 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.True(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
 func TestNoAuthDelegatorAvailable(t *testing.T) {
