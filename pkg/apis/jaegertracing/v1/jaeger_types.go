@@ -53,7 +53,7 @@ const (
 // +k8s:openapi-gen=true
 type JaegerSpec struct {
 	// +optional
-	Strategy string `json:"strategy,omitempty"`
+	Strategy DeploymentStrategy `json:"strategy,omitempty"`
 
 	// +optional
 	AllInOne JaegerAllInOneSpec `json:"allInOne,omitempty"`

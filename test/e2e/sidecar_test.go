@@ -177,7 +177,7 @@ func getJaegerAgentAsSidecarDefinition(namespace string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
+			Strategy: v1.DeploymentStrategyAllInOne,
 			AllInOne: v1.JaegerAllInOneSpec{},
 			Agent: v1.JaegerAgentSpec{
 				Options: v1.NewOptions(map[string]interface{}{

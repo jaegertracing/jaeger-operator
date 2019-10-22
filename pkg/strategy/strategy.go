@@ -5,18 +5,19 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ                 Type
-	accounts            []v1.ServiceAccount
-	configMaps          []v1.ConfigMap
+	typ                 v1.DeploymentStrategy
+	accounts            []corev1.ServiceAccount
+	configMaps          []corev1.ConfigMap
 	cronJobs            []batchv1beta1.CronJob
 	clusterRoleBindings []rbac.ClusterRoleBinding
 	daemonSets          []appsv1.DaemonSet
@@ -25,24 +26,9 @@ type S struct {
 	elasticsearches     []esv1.Elasticsearch
 	ingresses           []v1beta1.Ingress
 	routes              []osv1.Route
-	services            []v1.Service
-	secrets             []v1.Secret
+	services            []corev1.Service
+	secrets             []corev1.Secret
 }
-
-// Type represents a specific deployment strategy, like 'all-in-one'
-type Type string
-
-const (
-
-	// AllInOne represents the 'all-in-one' deployment strategy
-	AllInOne Type = "allInOne"
-
-	// Production represents the 'production' deployment strategy
-	Production Type = "production"
-
-	// Streaming represents the 'streaming' deployment strategy
-	Streaming Type = "streaming"
-)
 
 // New constructs a new strategy from scratch
 func New() *S {
@@ -50,12 +36,12 @@ func New() *S {
 }
 
 // Type returns the strategy type for the given strategy
-func (s S) Type() Type {
+func (s S) Type() v1.DeploymentStrategy {
 	return s.typ
 }
 
 // WithAccounts returns the strategy with the given list of service accounts
-func (s S) WithAccounts(accs []v1.ServiceAccount) S {
+func (s S) WithAccounts(accs []corev1.ServiceAccount) S {
 	s.accounts = accs
 	return s
 }
@@ -67,7 +53,7 @@ func (s S) WithClusterRoleBindings(c []rbac.ClusterRoleBinding) S {
 }
 
 // WithConfigMaps returns the strategy with the given list of config maps
-func (s S) WithConfigMaps(c []v1.ConfigMap) S {
+func (s S) WithConfigMaps(c []corev1.ConfigMap) S {
 	s.configMaps = c
 	return s
 }
@@ -115,19 +101,19 @@ func (s S) WithRoutes(r []osv1.Route) S {
 }
 
 // WithServices returns the strategy with the given list of routes
-func (s S) WithServices(svcs []v1.Service) S {
+func (s S) WithServices(svcs []corev1.Service) S {
 	s.services = svcs
 	return s
 }
 
 // WithSecrets returns the strategy with the given list of secrets
-func (s S) WithSecrets(secrets []v1.Secret) S {
+func (s S) WithSecrets(secrets []corev1.Secret) S {
 	s.secrets = secrets
 	return s
 }
 
 // Accounts returns the list of service accounts for this strategy
-func (s S) Accounts() []v1.ServiceAccount {
+func (s S) Accounts() []corev1.ServiceAccount {
 	return s.accounts
 }
 
@@ -137,7 +123,7 @@ func (s S) ClusterRoleBindings() []rbac.ClusterRoleBinding {
 }
 
 // ConfigMaps returns the list of config maps for this strategy
-func (s S) ConfigMaps() []v1.ConfigMap {
+func (s S) ConfigMaps() []corev1.ConfigMap {
 	return s.configMaps
 }
 
@@ -172,12 +158,12 @@ func (s S) Routes() []osv1.Route {
 }
 
 // Services returns the list of services for this strategy
-func (s S) Services() []v1.Service {
+func (s S) Services() []corev1.Service {
 	return s.services
 }
 
 // Secrets returns the list of secrets for this strategy
-func (s S) Secrets() []v1.Secret {
+func (s S) Secrets() []corev1.Secret {
 	return s.secrets
 }
 

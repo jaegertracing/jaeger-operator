@@ -29,19 +29,19 @@ var (
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
-	if strings.EqualFold(jaeger.Spec.Strategy, "all-in-one") {
+	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {
 		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
-		jaeger.Spec.Strategy = "allInOne"
+		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
 	normalize(jaeger)
 
 	jaeger.Logger().WithField("strategy", jaeger.Spec.Strategy).Debug("Strategy chosen")
-	if strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
+	if jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
 		return newAllInOneStrategy(jaeger)
 	}
 
-	if strings.EqualFold(jaeger.Spec.Strategy, "streaming") {
+	if jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
 		return newStreamingStrategy(jaeger)
 	}
 
@@ -73,15 +73,15 @@ func normalize(jaeger *v1.Jaeger) {
 	}
 
 	// normalize the deployment strategy
-	if !strings.EqualFold(jaeger.Spec.Strategy, "production") && !strings.EqualFold(jaeger.Spec.Strategy, "streaming") {
-		jaeger.Spec.Strategy = "allInOne"
+	if jaeger.Spec.Strategy != v1.DeploymentStrategyProduction && jaeger.Spec.Strategy != v1.DeploymentStrategyStreaming {
+		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
-	if !distributedStorage(jaeger.Spec.Storage.Type) && !strings.EqualFold(jaeger.Spec.Strategy, "allinone") {
-		jaeger.Logger().WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to all-in-one")
-		jaeger.Spec.Strategy = "allInOne"
+	if !distributedStorage(jaeger.Spec.Storage.Type) && jaeger.Spec.Strategy != v1.DeploymentStrategyAllInOne {
+		jaeger.Logger().WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to allInOne")
+		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
 	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'

@@ -16,24 +16,24 @@ func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), AllInOne)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsExplicitValue"})
-	jaeger.Spec.Strategy = "ALL-IN-ONE" // same as 'all-in-one'
+	jaeger.Spec.Strategy = v1.DeploymentStrategyDeprecatedAllInOne // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), AllInOne)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
 func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
-	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
 	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, ctrl.Type(), Production)
+	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyProduction)
 }
 
 func TestUnknownStorage(t *testing.T) {
@@ -45,7 +45,7 @@ func TestUnknownStorage(t *testing.T) {
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestElasticsearchAsStorageOptions"})
-	jaeger.Spec.Strategy = "production"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Storage.Type = "elasticsearch"
 	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
@@ -75,63 +75,63 @@ func TestDefaultName(t *testing.T) {
 func TestIncompatibleMemoryStorageForProduction(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
-			Strategy: "production",
+			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
 	}
 	normalize(jaeger)
-	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
 func TestIncompatibleBadgerStorageForProduction(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
-			Strategy: "production",
+			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "badger",
 			},
 		},
 	}
 	normalize(jaeger)
-	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
 func TestIncompatibleStorageForStreaming(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
 	}
 	normalize(jaeger)
-	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
 func TestDeprecatedAllInOneStrategy(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
-			Strategy: "all-in-one",
+			Strategy: v1.DeploymentStrategyDeprecatedAllInOne,
 		},
 	}
 	For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
 func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		Spec: v1.JaegerSpec{
-			Strategy: "production",
+			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "memory",
 			},
 		},
 	}
 	For(context.TODO(), jaeger, []corev1.Secret{})
-	assert.Equal(t, "allInOne", jaeger.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {

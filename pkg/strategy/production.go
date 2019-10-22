@@ -21,7 +21,7 @@ import (
 )
 
 func newProductionStrategy(jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
-	c := S{typ: Production}
+	c := S{typ: v1.DeploymentStrategyProduction}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
 	agent := deployment.NewAgent(jaeger)

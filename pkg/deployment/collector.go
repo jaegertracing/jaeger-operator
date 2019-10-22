@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -76,9 +75,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 	}
 
 	storageType := c.jaeger.Spec.Storage.Type
-	// If strategy is "streaming", then change storage type
+	// If strategy is DeploymentStrategyStreaming, then change storage type
 	// to Kafka, and the storage options will be used in the Ingester instead
-	if strings.EqualFold(c.jaeger.Spec.Strategy, "streaming") {
+	if c.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
 		storageType = "kafka"
 	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,

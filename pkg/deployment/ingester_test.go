@@ -330,7 +330,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 			Name: "TestIngesterStorageType",
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.topic":   "mytopic",
@@ -394,7 +394,7 @@ func newIngesterJaeger(name string) *v1.Jaeger {
 			Name: name,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "streaming",
+			Strategy: v1.DeploymentStrategyStreaming,
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"any": "option",

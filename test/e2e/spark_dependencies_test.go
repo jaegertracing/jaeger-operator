@@ -30,7 +30,7 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
-			Strategy: "allInOne",
+			Strategy: v1.DeploymentStrategyAllInOne,
 			AllInOne: v1.JaegerAllInOneSpec{},
 			Storage:  storage,
 		},
