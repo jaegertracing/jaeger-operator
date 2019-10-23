@@ -272,16 +272,17 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 
 func TestReplaceVolume(t *testing.T) {
 	// prepare
-	existing := []corev1.Volume{
+	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
+	instance.Spec.Volumes = []corev1.Volume{
 		{
-			Name: "volume-a",
+			Name: "kafkauser-my-instance",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: "secret-name-a",
 				},
 			},
 		}, {
-			Name: "volume-b",
+			Name: "kafkauser-my-instance-cluster-ca",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: "secret-name-b",
@@ -297,39 +298,21 @@ func TestReplaceVolume(t *testing.T) {
 		},
 	}
 
-	new := []corev1.Volume{
-		{
-			Name: "volume-a",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "new-secret-name-a",
-				},
-			},
-		}, {
-			Name: "volume-b",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "new-secret-name-b",
-				},
-			},
-		},
-	}
-
 	// test
-	res := replaceVolume(existing, new...)
+	autoProvisionKafka(instance, newStreamingStrategy(instance))
 
 	// verify
-	assert.Len(t, res, 3)
+	assert.Len(t, instance.Spec.Volumes, 3)
 
 	found := 0
-	for _, v := range res {
-		if v.Name == "volume-a" {
+	for _, v := range instance.Spec.Volumes {
+		if v.Name == "kafkauser-my-instance-cluster-ca" {
 			found = found + 1
-			assert.Equal(t, "new-secret-name-a", v.VolumeSource.Secret.SecretName)
+			assert.Equal(t, "my-instance-cluster-ca-cert", v.VolumeSource.Secret.SecretName)
 		}
-		if v.Name == "volume-b" {
+		if v.Name == "kafkauser-my-instance" {
 			found = found + 1
-			assert.Equal(t, "new-secret-name-b", v.VolumeSource.Secret.SecretName)
+			assert.Equal(t, "my-instance", v.VolumeSource.Secret.SecretName)
 		}
 	}
 	assert.Equal(t, 2, found)
@@ -337,43 +320,30 @@ func TestReplaceVolume(t *testing.T) {
 
 func TestReplaceVolumeMount(t *testing.T) {
 	// prepare
-	existing := []corev1.VolumeMount{
+	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
+	instance.Spec.VolumeMounts = []corev1.VolumeMount{
 		{
-			Name:      "volume-a",
+			Name:      "kafkauser-my-instance-cluster-ca",
 			MountPath: "/var/path",
 		}, {
-			Name:      "volume-b",
-			MountPath: "/var/path-b",
+			Name:      "kafkauser-my-instance",
+			MountPath: "/var/path",
 		}, {
 			Name:      "volume-c",
 			MountPath: "/var/path-c",
 		},
 	}
 
-	new := []corev1.VolumeMount{
-		{
-			Name:      "volume-a",
-			MountPath: "/user/path",
-		}, {
-			Name:      "volume-b",
-			MountPath: "/user/path-b",
-		},
-	}
-
 	// test
-	res := replaceVolumeMount(existing, new...)
+	autoProvisionKafka(instance, newStreamingStrategy(instance))
 
 	// verify
-	assert.Len(t, res, 3)
+	assert.Len(t, instance.Spec.VolumeMounts, 3)
 	found := 0
-	for _, v := range res {
-		if v.Name == "volume-a" {
+	for _, v := range instance.Spec.VolumeMounts {
+		if v.Name == "kafkauser-my-instance-cluster-ca" || v.Name == "kafkauser-my-instance" {
 			found = found + 1
-			assert.Equal(t, "/user/path", v.MountPath)
-		}
-		if v.Name == "volume-b" {
-			found = found + 1
-			assert.Equal(t, "/user/path-b", v.MountPath)
+			assert.True(t, strings.HasPrefix(v.MountPath, "/var/run/secrets"))
 		}
 	}
 	assert.Equal(t, 2, found)

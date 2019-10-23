@@ -62,7 +62,7 @@ const (
 
 	// AnnotationProvisionedKafkaKey is a label to be added to Kafkas that have been provisioned by Jaeger
 	// +k8s:openapi-gen=true
-	AnnotationProvisionedKafkaKey string = "jaegertracing.io/provisioned"
+	AnnotationProvisionedKafkaKey string = "jaegertracing.io/kafka-provisioned"
 
 	// AnnotationProvisionedKafkaValue is a label to be added to Kafkas that have been provisioned by Jaeger
 	// +k8s:openapi-gen=true

@@ -20,6 +20,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func newStreamingStrategy(jaeger *v1.Jaeger) S {
@@ -47,8 +48,8 @@ func newStreamingStrategy(jaeger *v1.Jaeger) S {
 		manifest.configMaps = append(manifest.configMaps, *cm)
 	}
 
-	_, pfound := asOptionsMap(jaeger.Spec.Collector.Options.Map())["kafka.producer.brokers"]
-	_, cfound := asOptionsMap(jaeger.Spec.Ingester.Options.Map())["kafka.consumer.brokers"]
+	_, pfound := jaeger.Spec.Collector.Options.GenericMap()["kafka.producer.brokers"]
+	_, cfound := jaeger.Spec.Ingester.Options.GenericMap()["kafka.consumer.brokers"]
 	provisioned := jaeger.Annotations[v1.AnnotationProvisionedKafkaKey] == v1.AnnotationProvisionedKafkaValue
 
 	// we provision a Kafka when no brokers have been set, or, when we are not in the first run,
@@ -126,9 +127,12 @@ func autoProvisionKafka(jaeger *v1.Jaeger, manifest S) S {
 	clusterCAPath := fmt.Sprintf("/var/run/secrets/%s-cluster-ca", jaeger.Name)
 	clientCertPath := fmt.Sprintf("/var/run/secrets/%s", ku.Name)
 
+	// store the new volumes/volume mounts in a common spec, later to be merged with the instance's common spec
+	commonSpec := v1.JaegerCommonSpec{}
+
 	// this is the volume containing the client TLS details, like the cert and key
 	kuVolume := corev1.Volume{
-		Name: ku.Name,
+		Name: fmt.Sprintf("kafkauser-%s", ku.Name),
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
 				SecretName: ku.Name,
@@ -137,30 +141,30 @@ func autoProvisionKafka(jaeger *v1.Jaeger, manifest S) S {
 	}
 	// this is the volume containing the CA cluster cert
 	kuCAVolume := corev1.Volume{
-		Name: fmt.Sprintf("%s-cluster-ca", jaeger.Name), // the cluster name is the jaeger name
+		Name: fmt.Sprintf("kafkauser-%s-cluster-ca", jaeger.Name), // the cluster name is the jaeger name
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
 				SecretName: fmt.Sprintf("%s-cluster-ca-cert", jaeger.Name),
 			},
 		},
 	}
-	jaeger.Spec.Volumes = replaceVolume(jaeger.Spec.Volumes, kuVolume, kuCAVolume)
+	commonSpec.Volumes = append(commonSpec.Volumes, kuVolume, kuCAVolume)
 
 	// and finally, the mount paths to have the secrets in the container file system
 	kuVolumeMount := corev1.VolumeMount{
-		Name:      ku.Name,
+		Name:      fmt.Sprintf("kafkauser-%s", ku.Name),
 		MountPath: clientCertPath,
 	}
 	kuCAVolumeMount := corev1.VolumeMount{
-		Name:      fmt.Sprintf("%s-cluster-ca", jaeger.Name), // the cluster name is the jaeger name
+		Name:      fmt.Sprintf("kafkauser-%s-cluster-ca", jaeger.Name), // the cluster name is the jaeger name
 		MountPath: clusterCAPath,
 	}
-	jaeger.Spec.VolumeMounts = replaceVolumeMount(jaeger.Spec.VolumeMounts, kuVolumeMount, kuCAVolumeMount)
+	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, kuVolumeMount, kuCAVolumeMount)
 
 	brokers := fmt.Sprintf("%s-kafka-bootstrap.kafka.svc.cluster.local:9093", k.Name)
 
-	collectorOpts := asOptionsMap(jaeger.Spec.Collector.Options.Map())
-	ingesterOpts := asOptionsMap(jaeger.Spec.Ingester.Options.Map())
+	collectorOpts := jaeger.Spec.Collector.Options.GenericMap()
+	ingesterOpts := jaeger.Spec.Ingester.Options.GenericMap()
 
 	collectorOpts["kafka.producer.brokers"] = brokers
 	collectorOpts["kafka.producer.authentication"] = "tls"
@@ -182,70 +186,7 @@ func autoProvisionKafka(jaeger *v1.Jaeger, manifest S) S {
 
 	jaeger.Spec.Collector.Options = v1.NewOptions(collectorOpts)
 	jaeger.Spec.Ingester.Options = v1.NewOptions(ingesterOpts)
+	jaeger.Spec.JaegerCommonSpec = *util.Merge([]v1.JaegerCommonSpec{commonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	return manifest
-}
-
-func asOptionsMap(in map[string]string) map[string]interface{} {
-	out := make(map[string]interface{})
-	for k, v := range in {
-		out[k] = v
-	}
-	return out
-}
-
-func replaceVolume(volumes []corev1.Volume, name ...corev1.Volume) []corev1.Volume {
-	out := []corev1.Volume{}
-
-	for _, v := range volumes {
-		add := true
-
-		for _, n := range name {
-			if n.Name == v.Name {
-				// we have an existing volume with the same name one of the new volumes
-				// skip adding the old one to the output
-				add = false
-				break
-			}
-		}
-
-		if add {
-			out = append(out, v)
-		}
-	}
-
-	// now, we add the new volumes
-	for _, n := range name {
-		out = append(out, n)
-	}
-
-	return out
-}
-
-func replaceVolumeMount(volumes []corev1.VolumeMount, name ...corev1.VolumeMount) []corev1.VolumeMount {
-	out := []corev1.VolumeMount{}
-
-	for _, v := range volumes {
-		add := true
-
-		for _, n := range name {
-			if n.Name == v.Name {
-				// we have an existing volume with the same name one of the new volumes
-				// skip adding the old one to the output
-				add = false
-				break
-			}
-		}
-
-		if add {
-			out = append(out, v)
-		}
-	}
-
-	// now, we add the new volumes
-	for _, n := range name {
-		out = append(out, n)
-	}
-
-	return out
 }

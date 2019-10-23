@@ -101,3 +101,12 @@ func (o *Options) ToArgs() []string {
 func (o *Options) Map() map[string]string {
 	return o.opts
 }
+
+// GenericMap returns the map representing the option entries as interface{}, suitable for usage with NewOptions()
+func (o *Options) GenericMap() map[string]interface{} {
+	out := make(map[string]interface{})
+	for k, v := range o.opts {
+		out[k] = v
+	}
+	return out
+}

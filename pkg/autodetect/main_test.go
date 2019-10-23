@@ -278,7 +278,7 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
-func TestAutoDetectKafkaExplicitTrue(t *testing.T) {
+func TestAutoDetectKafkaExplicitYes(t *testing.T) {
 	// prepare
 	viper.Set("kafka-provision", v1.FlagProvisionKafkaYes)
 	defer viper.Reset()
@@ -294,7 +294,7 @@ func TestAutoDetectKafkaExplicitTrue(t *testing.T) {
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
-func TestAutoDetectKafkaExplicitFalse(t *testing.T) {
+func TestAutoDetectKafkaExplicitNo(t *testing.T) {
 	// prepare
 	viper.Set("kafka-provision", v1.FlagProvisionKafkaNo)
 	defer viper.Reset()
@@ -307,7 +307,7 @@ func TestAutoDetectKafkaExplicitFalse(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.False(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
 }
 
 func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
@@ -323,7 +323,7 @@ func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.False(t, viper.GetBool("kafka-provision"))
+	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
 }
 
 func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {

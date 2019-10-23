@@ -159,7 +159,8 @@ func TestKafkaDelete(t *testing.T) {
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
-		Name: "TestKafkaDelete",
+		Name:      "TestKafkaDelete",
+		Namespace: "tenant1",
 	}
 
 	orig := v1beta1.Kafka{

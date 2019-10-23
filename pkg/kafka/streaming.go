@@ -19,7 +19,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 				"app":                         "jaeger",
 				"app.kubernetes.io/name":      jaeger.Name,
 				"app.kubernetes.io/instance":  jaeger.Name,
-				"app.kubernetes.io/component": "kafkauser",
+				"app.kubernetes.io/component": "kafka",
 				"app.kubernetes.io/part-of":   "jaeger",
 
 				// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
