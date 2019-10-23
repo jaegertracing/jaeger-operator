@@ -38,7 +38,6 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 		Spec: v1beta1.KafkaSpec{
 			v1.NewFreeForm(map[string]interface{}{
 				"kafka": map[string]interface{}{
-					"version":  "2.3.0",
 					"replicas": 3,
 					"listeners": map[string]interface{}{
 						"plain": map[string]interface{}{},

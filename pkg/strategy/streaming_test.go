@@ -255,7 +255,6 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.key")
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.cert")
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.ca")
-	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.topic")
 	assert.NotContains(t, jaeger.Spec.Collector.Options.Map(), "kafka.consumer.brokers")
 
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.brokers")
@@ -263,7 +262,6 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.key")
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.cert")
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.ca")
-	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.topic")
 	assert.NotContains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.producer.brokers")
 
 	assert.Len(t, jaeger.Spec.Volumes, 2)
