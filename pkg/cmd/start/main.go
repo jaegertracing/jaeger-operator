@@ -106,7 +106,10 @@ func start(cmd *cobra.Command, args []string) {
 
 	podNamespace, found := os.LookupEnv("POD_NAMESPACE")
 	if !found {
-		log.Warn("the POD_NAMESPACE env var isn't set, this operator's identity might clash with another operator's instance")
+		log.Warn("the POD_NAMESPACE env var isn't set, trying to determine it from the service account info")
+		if podNamespace, err = k8sutil.GetOperatorNamespace(); err != nil {
+			log.WithError(err).Warn("could not read the namespace from the service account")
+		}
 	}
 
 	operatorName, found := os.LookupEnv("OPERATOR_NAME")
@@ -114,7 +117,12 @@ func start(cmd *cobra.Command, args []string) {
 		log.Warn("the OPERATOR_NAME env var isn't set, this operator's identity might clash with another operator's instance")
 	}
 
-	identity := fmt.Sprintf("%s.%s", podNamespace, operatorName)
+	var identity string
+	if len(podNamespace) > 0 {
+		identity = fmt.Sprintf("%s.%s", podNamespace, operatorName)
+	} else {
+		identity = fmt.Sprintf("%s", operatorName)
+	}
 	viper.Set(v1.ConfigIdentity, identity)
 
 	log.WithFields(log.Fields{
