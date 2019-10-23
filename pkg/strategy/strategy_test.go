@@ -12,6 +12,7 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 
+	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -58,6 +59,16 @@ func TestWithElasticsearches(t *testing.T) {
 func TestWithIngresses(t *testing.T) {
 	c := New().WithIngresses([]v1beta1.Ingress{{}})
 	assert.Len(t, c.Ingresses(), 1)
+}
+
+func TestWithKafkas(t *testing.T) {
+	c := New().WithKafkas([]kafkav1beta1.Kafka{{}})
+	assert.Len(t, c.Kafkas(), 1)
+}
+
+func TestWithKafkaUsers(t *testing.T) {
+	c := New().WithKafkaUsers([]kafkav1beta1.KafkaUser{{}})
+	assert.Len(t, c.KafkaUsers(), 1)
 }
 
 func TestWithRoutes(t *testing.T) {

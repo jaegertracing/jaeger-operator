@@ -28,13 +28,25 @@ const (
 	// +k8s:openapi-gen=true
 	FlagProvisionElasticsearchAuto = "auto"
 
-	// FlagProvisionElasticsearchTrue represents the value 'true' for the 'es-provision' flag
+	// FlagProvisionElasticsearchYes represents the value 'yes' for the 'es-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionElasticsearchTrue = "true"
+	FlagProvisionElasticsearchYes = "yes"
 
-	// FlagProvisionElasticsearchFalse represents the value 'false' for the 'es-provision' flag
+	// FlagProvisionElasticsearchNo represents the value 'no' for the 'es-provision' flag
 	// +k8s:openapi-gen=true
-	FlagProvisionElasticsearchFalse = "false"
+	FlagProvisionElasticsearchNo = "no"
+
+	// FlagProvisionKafkaAuto represents the 'auto' value for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaAuto = "auto"
+
+	// FlagProvisionKafkaYes represents the value 'yes' for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaYes = "yes"
+
+	// FlagProvisionKafkaNo represents the value 'no' for the 'kafka-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionKafkaNo = "no"
 
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	// +k8s:openapi-gen=true
@@ -47,6 +59,14 @@ const (
 	// IngressSecurityOAuthProxy represents an OAuth Proxy as security type
 	// +k8s:openapi-gen=true
 	IngressSecurityOAuthProxy IngressSecurityType = "oauth-proxy"
+
+	// AnnotationProvisionedKafkaKey is a label to be added to Kafkas that have been provisioned by Jaeger
+	// +k8s:openapi-gen=true
+	AnnotationProvisionedKafkaKey string = "jaegertracing.io/kafka-provisioned"
+
+	// AnnotationProvisionedKafkaValue is a label to be added to Kafkas that have been provisioned by Jaeger
+	// +k8s:openapi-gen=true
+	AnnotationProvisionedKafkaValue string = "true"
 )
 
 // JaegerSpec defines the desired state of Jaeger

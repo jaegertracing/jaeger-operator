@@ -43,20 +43,20 @@ rules:
   - statefulsets
   - ingresses
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - batch
   resources:
   - jobs
   - cronjobs
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - route.openshift.io
   resources:
   - routes
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - logging.openshift.io
   resources:
@@ -72,7 +72,7 @@ rules:
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
-  - 'clusterrolebindings'
+  - clusterrolebindings
   verbs:
   - '*'
 - apiGroups:
@@ -84,3 +84,10 @@ rules:
   - deployments/finalizers
   verbs:
   - update
+- apiGroups:
+  - kafka.strimzi.io
+  resources:
+  - kafkas
+  - kafkausers
+  verbs:
+  - '*'

@@ -19,7 +19,7 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
-          args: ["start"]
+          args: ["start", "--log-level=debug"]
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

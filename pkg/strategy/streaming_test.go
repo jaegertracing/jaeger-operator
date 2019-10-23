@@ -21,15 +21,48 @@ func init() {
 }
 
 func TestCreateStreamingDeployment(t *testing.T) {
-	name := "TestCreateStreamingDeployment"
+	name := "my-instance"
 	c := newStreamingStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
+}
+
+func TestStreamingKafkaProvisioning(t *testing.T) {
+	name := "my-instance"
+	c := newStreamingStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
+
+	// one Kafka, one KafkaUser
+	assert.Len(t, c.Kafkas(), 1)
+	assert.Len(t, c.KafkaUsers(), 1)
+}
+
+func TestStreamingNoKafkaProvisioningWhenConsumerBrokersSet(t *testing.T) {
+	name := "my-instance"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{
+		"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+	})
+	c := newStreamingStrategy(jaeger)
+
+	// one Kafka, one KafkaUser
+	assert.Len(t, c.Kafkas(), 0)
+}
+
+func TestStreamingNoKafkaProvisioningWhenProducerBrokersSet(t *testing.T) {
+	name := "my-instance"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
+		"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
+	})
+	c := newStreamingStrategy(jaeger)
+
+	// one Kafka, one KafkaUser
+	assert.Len(t, c.Kafkas(), 0)
 }
 
 func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
-	name := "TestCreateStreamingDeploymentOnOpenShift"
+	name := "my-instance"
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	normalize(jaeger)
@@ -39,7 +72,7 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 }
 
 func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
-	name := "TestCreateStreamingDeploymentWithDaemonSetAgent"
+	name := "my-instance"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
@@ -49,7 +82,7 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 }
 
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
-	name := "TestCreateStreamingDeploymentWithUIConfigMap"
+	name := "my-instance"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.UI.Options = v1.NewFreeForm(map[string]interface{}{
@@ -76,12 +109,14 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.producer.topic": "mytopic",
+					"kafka.producer.topic":   "mytopic",
+					"kafka.producer.brokers": "my.broker:9092",
 				}),
 			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.topic":    "mytopic",
+					"kafka.consumer.brokers":  "my.broker:9092",
 					"kafka.consumer.group-id": "mygroup",
 				}),
 			},
@@ -109,13 +144,12 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 		}
 		if strings.Contains(dep.Name, "collector") {
 			// Including parameters for sampling config and kafka topic
-			assert.Len(t, args, 2)
+			assert.Len(t, args, 3)
 			assert.Equal(t, 0, escount)
 		} else if strings.Contains(dep.Name, "ingester") {
 			// Including parameters for ES and kafka topic
-			assert.Len(t, args, 5)
+			assert.Len(t, args, 6)
 			assert.Equal(t, 3, escount)
-
 		} else {
 			// Including parameters for ES only
 			assert.Len(t, args, 3)
@@ -126,7 +160,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 
 func TestDelegateStreamingDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
-	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateStreamingDependencies"})
+	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := newStreamingStrategy(j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
@@ -193,7 +227,7 @@ func TestEsIndexClenarStreaming(t *testing.T) {
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
-	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarIsInjectedIntoQueryForStreaming"})
+	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := newStreamingStrategy(j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
@@ -201,4 +235,114 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 		}
 	}
+}
+
+func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
+	name := "my-instance"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{})
+	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{})
+	manifest := S{typ: v1.DeploymentStrategyStreaming}
+
+	// test
+	autoProvisionKafka(jaeger, manifest)
+
+	// verify
+	assert.Equal(t, v1.AnnotationProvisionedKafkaValue, jaeger.Annotations[v1.AnnotationProvisionedKafkaKey])
+
+	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.brokers")
+	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.authentication")
+	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.key")
+	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.cert")
+	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.ca")
+	assert.NotContains(t, jaeger.Spec.Collector.Options.Map(), "kafka.consumer.brokers")
+
+	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.brokers")
+	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.authentication")
+	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.key")
+	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.cert")
+	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.ca")
+	assert.NotContains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.producer.brokers")
+
+	assert.Len(t, jaeger.Spec.Volumes, 2)
+	assert.Len(t, jaeger.Spec.VolumeMounts, 2)
+}
+
+func TestReplaceVolume(t *testing.T) {
+	// prepare
+	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
+	instance.Spec.Volumes = []corev1.Volume{
+		{
+			Name: "kafkauser-my-instance",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "secret-name-a",
+				},
+			},
+		}, {
+			Name: "kafkauser-my-instance-cluster-ca",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "secret-name-b",
+				},
+			},
+		}, {
+			Name: "volume-c",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "secret-name-c",
+				},
+			},
+		},
+	}
+
+	// test
+	autoProvisionKafka(instance, newStreamingStrategy(instance))
+
+	// verify
+	assert.Len(t, instance.Spec.Volumes, 3)
+
+	found := 0
+	for _, v := range instance.Spec.Volumes {
+		if v.Name == "kafkauser-my-instance-cluster-ca" {
+			found = found + 1
+			assert.Equal(t, "my-instance-cluster-ca-cert", v.VolumeSource.Secret.SecretName)
+		}
+		if v.Name == "kafkauser-my-instance" {
+			found = found + 1
+			assert.Equal(t, "my-instance", v.VolumeSource.Secret.SecretName)
+		}
+	}
+	assert.Equal(t, 2, found)
+}
+
+func TestReplaceVolumeMount(t *testing.T) {
+	// prepare
+	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
+	instance.Spec.VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      "kafkauser-my-instance-cluster-ca",
+			MountPath: "/var/path",
+		}, {
+			Name:      "kafkauser-my-instance",
+			MountPath: "/var/path",
+		}, {
+			Name:      "volume-c",
+			MountPath: "/var/path-c",
+		},
+	}
+
+	// test
+	autoProvisionKafka(instance, newStreamingStrategy(instance))
+
+	// verify
+	assert.Len(t, instance.Spec.VolumeMounts, 3)
+	found := 0
+	for _, v := range instance.Spec.VolumeMounts {
+		if v.Name == "kafkauser-my-instance-cluster-ca" || v.Name == "kafkauser-my-instance" {
+			found = found + 1
+			assert.True(t, strings.HasPrefix(v.MountPath, "/var/run/secrets"))
+		}
+	}
+	assert.Equal(t, 2, found)
 }

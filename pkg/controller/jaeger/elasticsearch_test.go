@@ -17,7 +17,7 @@ import (
 )
 
 func TestElasticsearchesCreate(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 	defer viper.Reset()
 
 	// prepare
@@ -61,7 +61,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 }
 
 func TestElasticsearchesUpdate(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 	defer viper.Reset()
 
 	// prepare
@@ -108,7 +108,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 }
 
 func TestElasticsearchesDelete(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 	defer viper.Reset()
 
 	// prepare
@@ -150,7 +150,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 
 func TestElasticsearchesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchTrue)
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
