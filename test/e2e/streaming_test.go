@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -209,26 +208,27 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 	return j
 }
 
-func getKafkaUser(name, namespace string) *unstructured.Unstructured {
-	kafkaUser := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "kafka.strimzi.io/v1beta1",
-			"kind":       "KafkaUser",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": namespace,
-				"labels": map[string]interface{}{
-					"strimzi.io/cluster": "my-cluster",
-				},
+func getKafkaUser(name, namespace string) *kafkav1beta1.KafkaUser {
+	kafkaUser := &kafkav1beta1.KafkaUser{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "kafka.strimzi.io/v1beta1",
+			Kind:       "KafkaUser",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"strimzi.io/cluster": "my-cluster",
 			},
-			"spec": map[string]interface{}{
+		},
+		Spec: kafkav1beta1.KafkaUserSpec{
+			v1.NewFreeForm(map[string]interface{}{
 				"authentication": map[string]interface{}{
 					"type": "tls",
 				},
-			},
+			}),
 		},
 	}
-
 	return kafkaUser
 }
 
