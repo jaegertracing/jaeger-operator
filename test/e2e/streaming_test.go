@@ -59,7 +59,6 @@ func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {
-	t.Skip()
 	waitForElasticSearch()
 	waitForKafkaInstance()
 
