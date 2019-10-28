@@ -173,7 +173,6 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
-				Image: "jaegertracing/jaeger-collector:latest",
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.authentication": "tls",
 					"kafka.producer.topic":          "jaeger-spans",
@@ -184,7 +183,6 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 				}),
 			},
 			Ingester: v1.JaegerIngesterSpec{
-				Image: "jaegertracing/jaeger-ingester:latest",
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.consumer.authentication": "tls",
 					"kafka.consumer.topic":          "jaeger-spans",
