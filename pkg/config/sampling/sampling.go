@@ -2,6 +2,7 @@ package sampling
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,6 +82,14 @@ func (u *Config) Get() *corev1.ConfigMap {
 // support for the Sampling configmap.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 
+	// Check to validate if sampling strategy file is already passed as an option
+	for _, option := range *options {
+		if strings.Contains(option, "sampling.strategies-file") {
+			jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+			return
+		}
+	}
+
 	volume := corev1.Volume{
 		Name: samplingConfigVolumeName(jaeger),
 		VolumeSource: corev1.VolumeSource{
@@ -105,6 +114,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 	*options = append(*options, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json")
+	//fmt.Println(options)
 }
 
 func samplingConfigVolumeName(jaeger *v1.Jaeger) string {
