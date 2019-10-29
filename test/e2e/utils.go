@@ -269,8 +269,8 @@ func handleSuiteTearDown() {
 
 func handleTestFailure() {
 	if debugMode && t.Failed() {
-		logrus.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
+		logrus.Errorf("Test %s failed\n", t.Name())
+		// FIXME find a better way to terminate tests than os.Exit(1)
 	}
 }
 

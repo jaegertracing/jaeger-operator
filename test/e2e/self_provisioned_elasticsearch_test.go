@@ -91,6 +91,10 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
+	// Skip for now with OLM, this may be re-instated later
+	if usingOLM {
+		t.Skip()
+	}
 	expectedEsOperatorImage := os.Getenv("ES_OPERATOR_IMAGE")
 	require.NotEmpty(t, expectedEsOperatorImage, "ES_OPERATOR_IMAGE must be defined")
 	esOperatorNamespace := os.Getenv("ES_OPERATOR_NAMESPACE")

@@ -59,6 +59,11 @@ func (suite *MiscTestSuite) AfterTest(suiteName, testName string) {
 
 // Make sure we're testing correct image
 func (suite *MiscTestSuite) TestValidateBuildImage() {
+	// Skip for now with OLM, this may be re-instated later
+	if usingOLM {
+		t.Skip()
+	}
+
 	buildImage := os.Getenv("BUILD_IMAGE")
 	require.NotEmptyf(t, buildImage, "BUILD_IMAGE must be defined")
 
