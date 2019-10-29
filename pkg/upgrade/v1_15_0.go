@@ -1,6 +1,8 @@
 package upgrade
 
 import (
+	"context"
+
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -16,7 +18,7 @@ type deprecationFlagMap struct {
 	to   string
 }
 
-func upgrade1_15_0(client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+func upgrade1_15_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
 	d := []deprecationFlagMap{{
 		from: "collector.grpc.tls.client.ca", // client dot ca
 		to:   "collector.grpc.tls.client-ca", // client dash ca

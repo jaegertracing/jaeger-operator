@@ -34,7 +34,7 @@ func TestRoutesCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithRoutes([]osv1.Route{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -83,7 +83,7 @@ func TestRoutesUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := osv1.Route{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
@@ -129,7 +129,7 @@ func TestRoutesDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -178,7 +178,7 @@ func TestRoutesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithRoutes([]osv1.Route{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,

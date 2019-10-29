@@ -28,7 +28,7 @@ func TestHandleDependencies(t *testing.T) {
 	dep.Name = nsn.Name
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDependencies([]batchv1.Job{dep})
 		return s
 	}

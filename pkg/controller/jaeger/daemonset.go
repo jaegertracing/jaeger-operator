@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/global"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -9,9 +10,14 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.DaemonSet) error {
+func (r *ReconcileJaeger) applyDaemonSets(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.DaemonSet) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyDaemonSets")
+	defer span.End()
+
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
@@ -20,8 +26,8 @@ func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.Dae
 		}),
 	}
 	list := &appsv1.DaemonSetList{}
-	if err := r.client.List(context.Background(), list, opts...); err != nil {
-		return err
+	if err := r.client.List(ctx, list, opts...); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	inv := inventory.ForDaemonSets(list.Items, desired)
@@ -30,8 +36,8 @@ func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.Dae
 			"daemonset": d.Name,
 			"namespace": d.Namespace,
 		}).Debug("creating daemonset")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -40,8 +46,8 @@ func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.Dae
 			"daemonset": d.Name,
 			"namespace": d.Namespace,
 		}).Debug("updating daemonset")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -50,8 +56,8 @@ func (r *ReconcileJaeger) applyDaemonSets(jaeger v1.Jaeger, desired []appsv1.Dae
 			"daemonset": d.Name,
 			"namespace": d.Namespace,
 		}).Debug("deleting daemonset")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 

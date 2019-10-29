@@ -28,7 +28,7 @@ func TestServiceAccountCreate(t *testing.T) {
 		NamespacedName: nsn,
 	}
 
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithAccounts([]corev1.ServiceAccount{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -72,7 +72,7 @@ func TestServiceAccountUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := corev1.ServiceAccount{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
@@ -113,7 +113,7 @@ func TestServiceAccountDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -159,7 +159,7 @@ func TestAccountCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithAccounts([]corev1.ServiceAccount{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,

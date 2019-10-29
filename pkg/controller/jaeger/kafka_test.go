@@ -36,7 +36,7 @@ func TestKafkaCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithKafkas([]v1beta1.Kafka{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      jaeger.Name,
@@ -111,7 +111,7 @@ func TestKafkaUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		kafkaUpdated := v1beta1.Kafka{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        nsn.Name,
@@ -182,7 +182,7 @@ func TestKafkaDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -243,7 +243,7 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithKafkas([]v1beta1.Kafka{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,

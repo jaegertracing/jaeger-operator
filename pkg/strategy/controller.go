@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.opentelemetry.io/otel/global"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -29,29 +30,37 @@ var (
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "strategy")
+	defer span.End()
+
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {
 		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
-	normalize(jaeger)
+	normalize(ctx, jaeger)
 
 	jaeger.Logger().WithField("strategy", jaeger.Spec.Strategy).Debug("Strategy chosen")
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
-		return newAllInOneStrategy(jaeger)
+		return newAllInOneStrategy(ctx, jaeger)
 	}
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
-		return newStreamingStrategy(jaeger)
+		return newStreamingStrategy(ctx, jaeger)
 	}
 
 	es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}
-	return newProductionStrategy(jaeger, es)
+	return newProductionStrategy(ctx, jaeger, es)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when
 // needed and incompatible options are cleaned
-func normalize(jaeger *v1.Jaeger) {
+func normalize(ctx context.Context, jaeger *v1.Jaeger) {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "normalize")
+	defer span.End()
+
 	// we need a name!
 	if jaeger.Name == "" {
 		jaeger.Logger().Info("This Jaeger instance was created without a name. Applying a default name.")

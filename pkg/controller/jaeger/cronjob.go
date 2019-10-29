@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/global"
 
 	log "github.com/sirupsen/logrus"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -9,9 +10,14 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
+func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyCronJobs")
+	defer span.End()
+
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
@@ -20,8 +26,8 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1
 		}),
 	}
 	list := &batchv1beta1.CronJobList{}
-	if err := r.client.List(context.Background(), list, opts...); err != nil {
-		return err
+	if err := r.client.List(ctx, list, opts...); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	inv := inventory.ForCronJobs(list.Items, desired)
@@ -30,8 +36,8 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1
 			"cronjob":   d.Name,
 			"namespace": d.Namespace,
 		}).Debug("creating cronjob")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -40,8 +46,8 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1
 			"cronjob":   d.Name,
 			"namespace": d.Namespace,
 		}).Debug("updating cronjob")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -50,8 +56,8 @@ func (r *ReconcileJaeger) applyCronJobs(jaeger v1.Jaeger, desired []batchv1beta1
 			"cronjob":   d.Name,
 			"namespace": d.Namespace,
 		}).Debug("deleting cronjob")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 

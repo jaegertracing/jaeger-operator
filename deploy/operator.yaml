@@ -35,3 +35,11 @@ spec:
                   fieldPath: metadata.namespace
             - name: OPERATOR_NAME
               value: "jaeger-operator"
+        - name: jaeger-agent
+          image: jaegertracing/jaeger-agent:1.15
+          args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.observability.svc.cluster.local:14250
+          ports:
+          - containerPort: 6831
+            name: jg-compact-trft
+            protocol: UDP

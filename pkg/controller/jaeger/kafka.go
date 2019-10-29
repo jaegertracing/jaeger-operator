@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel/global"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 var (
@@ -22,7 +24,11 @@ var (
 	ErrKafkaRemoved = errors.New("kafka has been removed")
 )
 
-func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.Kafka) error {
+func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta1.Kafka) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyKafkas")
+	defer span.End()
+
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
@@ -33,8 +39,8 @@ func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.K
 		}),
 	}
 	list := &kafkav1beta1.KafkaList{}
-	if err := r.client.List(context.Background(), list, opts...); err != nil {
-		return err
+	if err := r.client.List(ctx, list, opts...); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	inv := inventory.ForKafkas(list.Items, desired)
@@ -43,8 +49,8 @@ func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.K
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("creating kafkas")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -53,8 +59,8 @@ func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.K
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("updating kafka")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -64,13 +70,13 @@ func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.K
 		// right now, they both share the same name, so, it doesn't matter much that they are
 		// different objects. A side effect is that we'll wait twice for the same objects, but that's also
 		// not a big problem, as the second check will be fast, as the objects will exist already
-		if err := r.waitForKafkaStability(d); err != nil {
-			return err
+		if err := r.waitForKafkaStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 	for _, d := range inv.Update {
-		if err := r.waitForKafkaStability(d); err != nil {
-			return err
+		if err := r.waitForKafkaStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -79,19 +85,23 @@ func (r *ReconcileJaeger) applyKafkas(jaeger v1.Jaeger, desired []kafkav1beta1.K
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("deleting kafka")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
 	return nil
 }
 
-func (r *ReconcileJaeger) waitForKafkaStability(kafka kafkav1beta1.Kafka) error {
+func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafkav1beta1.Kafka) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "waitForKafkaStability")
+	defer span.End()
+
 	seen := false
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		k := &kafkav1beta1.Kafka{}
-		if err := r.client.Get(context.Background(), types.NamespacedName{Name: kafka.GetName(), Namespace: kafka.GetNamespace()}, k); err != nil {
+		if err := r.client.Get(ctx, types.NamespacedName{Name: kafka.GetName(), Namespace: kafka.GetNamespace()}, k); err != nil {
 			if k8serrors.IsNotFound(err) {
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
@@ -110,7 +120,7 @@ func (r *ReconcileJaeger) waitForKafkaStability(kafka kafkav1beta1.Kafka) error 
 				}).Debug("kafka doesn't exist yet.")
 				return false, nil
 			}
-			return false, err
+			return false, tracing.HandleError(err, span)
 		}
 
 		seen = true

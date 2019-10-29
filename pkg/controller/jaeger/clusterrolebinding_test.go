@@ -29,7 +29,7 @@ func TestClusterRoleBindingsCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithClusterRoleBindings([]rbac.ClusterRoleBinding{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -74,7 +74,7 @@ func TestClusterRoleBindingsUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := rbac.ClusterRoleBinding{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
@@ -116,7 +116,7 @@ func TestClusterRoleBindingsDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 

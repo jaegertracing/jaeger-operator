@@ -30,7 +30,7 @@ func TestCronJobsCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithCronJobs([]batchv1beta1.CronJob{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -76,7 +76,7 @@ func TestCronJobsUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := batchv1beta1.CronJob{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
@@ -119,7 +119,7 @@ func TestCronJobsDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -165,7 +165,7 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithCronJobs([]batchv1beta1.CronJob{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,

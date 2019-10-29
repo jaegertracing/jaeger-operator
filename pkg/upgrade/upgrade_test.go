@@ -28,7 +28,7 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -56,7 +56,7 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -78,7 +78,7 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -106,7 +106,7 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl))
 
 	// verify
 	persisted := &v1.Jaeger{}
