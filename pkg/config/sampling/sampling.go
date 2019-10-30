@@ -114,7 +114,6 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 	*options = append(*options, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json")
-	//fmt.Println(options)
 }
 
 func samplingConfigVolumeName(jaeger *v1.Jaeger) string {
