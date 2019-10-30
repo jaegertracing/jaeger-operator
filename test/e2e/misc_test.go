@@ -59,7 +59,7 @@ func (suite *MiscTestSuite) AfterTest(suiteName, testName string) {
 
 // Make sure we're testing correct image
 func (suite *MiscTestSuite) TestValidateBuildImage() {
-	// Skip for now with OLM, this may be re-instated later
+	// TODO reinstate this if we come up with a good solution, but skip for now when using OLM installed operators
 	if usingOLM {
 		t.Skip()
 	}

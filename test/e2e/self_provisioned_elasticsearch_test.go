@@ -91,7 +91,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
-	// Skip for now with OLM, this may be re-instated later
+	// TODO reinstate this if we come up with a good solution, but skip for now when using OLM installed operators
 	if usingOLM {
 		t.Skip()
 	}
