@@ -13,7 +13,8 @@ func TestNoSamplingConfig(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNoSamplingConfig"})
 
 	config := NewConfig(jaeger)
-	cm := config.Get()
+	options := []string{}
+	cm := config.Get(&options)
 	assert.NotNil(t, cm)
 	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
@@ -24,7 +25,8 @@ func TestWithEmptySamplingConfig(t *testing.T) {
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewConfig(jaeger)
-	cm := config.Get()
+	options := []string{}
+	cm := config.Get(&options)
 	assert.NotNil(t, cm)
 	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
@@ -40,7 +42,8 @@ func TestWithSamplingConfig(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithSamplingConfig"})
 	jaeger.Spec.Sampling.Options = samplingconfig
 	config := NewConfig(jaeger)
-	cm := config.Get()
+	options := []string{}
+	cm := config.Get(&options)
 	assert.Equal(t, json, cm.Data["sampling"])
 }
 
@@ -81,7 +84,7 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 }
 
 func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfig"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfigFileOption"})
 	options := []string{
 		0: "--sampling.strategies-file=/etc/jaeger/sampling.json",
 	}
@@ -89,4 +92,16 @@ func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
 	Update(jaeger, &commonSpec, &options)
 	assert.Len(t, options, 1)
 	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling.json", options[0])
+}
+
+func TestGetWithSamplingConfigFileOption(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithSamplingConfigFileOption"})
+	options := []string{
+		0: "--sampling.strategies-file=/etc/jaeger/sampling.json",
+	}
+	config := NewConfig(jaeger)
+	cm := config.Get(&options)
+	assert.Len(t, options, 1)
+	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling.json", options[0])
+	assert.Nil(t, cm)
 }
