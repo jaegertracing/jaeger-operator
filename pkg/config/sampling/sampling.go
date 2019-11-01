@@ -26,10 +26,13 @@ func NewConfig(jaeger *v1.Jaeger) *Config {
 }
 
 // Get returns a configmap specification for the current instance
-func (u *Config) Get() *corev1.ConfigMap {
+func (u *Config) Get(options *[]string) *corev1.ConfigMap {
 	var jsonObject []byte
 	var err error
 
+	if CheckForSamplingConfigFile(u.jaeger, options) {
+		return nil
+	}
 	// Check for empty map
 	if u.jaeger.Spec.Sampling.Options.IsEmpty() {
 		jsonObject = []byte(defaultSamplingStrategy)
@@ -47,6 +50,8 @@ func (u *Config) Get() *corev1.ConfigMap {
 	data := map[string]string{
 		"sampling": string(jsonObject),
 	}
+
+	fmt.Println(data)
 
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -78,16 +83,32 @@ func (u *Config) Get() *corev1.ConfigMap {
 	}
 }
 
+// CheckForSamplingConfigFile will check if there is a config file present
+// if there is one it returns true
+func CheckForSamplingConfigFile(jaeger *v1.Jaeger, options *[]string) bool {
+	for _, option := range *options {
+		if strings.Contains(option, "sampling.strategies-file") {
+			jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+			return true
+		}
+	}
+	return false
+}
+
 // Update will modify the supplied common spec and options to include
 // support for the Sampling configmap.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 
-	// Check to validate if sampling strategy file is already passed as an option
-	for _, option := range *options {
-		if strings.Contains(option, "sampling.strategies-file") {
-			jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
-			return
-		}
+	// // Check to validate if sampling strategy file is already passed as an option
+	// for _, option := range *options {
+	// 	if strings.Contains(option, "sampling.strategies-file") {
+	// 		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+	// 		return
+	// 	}
+	// }
+
+	if CheckForSamplingConfigFile(jaeger, options) {
+		return
 	}
 
 	volume := corev1.Volume{
