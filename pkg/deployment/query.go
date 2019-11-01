@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +16,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // Query builds pods for jaegertracing/jaeger-query
@@ -88,11 +86,6 @@ func (q *Query) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
-	image := q.jaeger.Spec.Query.Image
-	if image == "" {
-		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-query-image"), version.Get().Jaeger)
-	}
-
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -125,7 +118,7 @@ func (q *Query) Get() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: image,
+						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
 						Args:  options,
 						Env: []corev1.EnvVar{

@@ -3,13 +3,12 @@ package storage
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
@@ -34,11 +33,6 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	if jaeger.Spec.Storage.CassandraCreateSchema.Mode == "" {
 		jaeger.Logger().Info("Mode not specified. Using 'prod' for the cassandra-create-schema job.")
 		jaeger.Spec.Storage.CassandraCreateSchema.Mode = "prod"
-	}
-
-	image := jaeger.Spec.Storage.CassandraCreateSchema.Image
-	if image == "" {
-		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-cassandra-schema-image"), version.Get().Jaeger)
 	}
 
 	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]
@@ -94,7 +88,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 					},
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{{
-							Image: image,
+							Image: util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
 							Name:  fmt.Sprintf("%s-cassandra-schema", jaeger.Name),
 							Env: []corev1.EnvVar{{
 								Name:  "CQLSH_HOST",

@@ -15,7 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
@@ -129,9 +129,7 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		trueVar := true
 		spec.Enabled = &trueVar
 	}
-	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-index-cleaner-image"), version.Get().Jaeger)
-	}
+	spec.Image = util.ImageName(spec.Image, "jaeger-es-index-cleaner-image")
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
 	}
@@ -166,9 +164,7 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 }
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
-	if spec.Image == "" {
-		spec.Image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-es-rollover-image"), version.Get().Jaeger)
-	}
+	spec.Image = util.ImageName(spec.Image, "jaeger-es-rollover-image")
 	if spec.Schedule == "" {
 		spec.Schedule = "*/30 * * * *"
 	}
