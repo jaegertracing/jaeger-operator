@@ -1,13 +1,16 @@
 package util
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
@@ -197,4 +200,19 @@ func InitObjectMeta(obj metav1.Object) {
 	if obj.GetAnnotations() == nil {
 		obj.SetAnnotations(map[string]string{})
 	}
+}
+
+// ImageName returns the image associated with the supplied image if defined, otherwise
+// uses the parameter name to retrieve the value. If the parameter value does not
+// include a tag/digest, the Jaeger version will be appended.
+func ImageName(image, param string) string {
+	if image == "" {
+		param := viper.GetString(param)
+		if strings.IndexByte(param, ':') == -1 {
+			image = fmt.Sprintf("%s:%s", param, version.Get().Jaeger)
+		} else {
+			image = param
+		}
+	}
+	return image
 }

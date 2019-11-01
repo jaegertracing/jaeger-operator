@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -380,4 +381,46 @@ func TestInitObjectMeta(t *testing.T) {
 			assert.Equal(t, test.exp, test.obj)
 		})
 	}
+}
+
+func TestImageNameSupplied(t *testing.T) {
+	viper.Set("test-image", "org/custom-image")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/actual-image:1.2.3", ImageName("org/actual-image:1.2.3", "test-image"))
+}
+
+func TestImageNameParamNoTag(t *testing.T) {
+	viper.Set("test-image", "org/custom-image")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/custom-image:0.0.0", ImageName("", "test-image"))
+}
+
+func TestImageNameParamWithTag(t *testing.T) {
+	viper.Set("test-image", "org/custom-image:1.2.3")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/custom-image:1.2.3", ImageName("", "test-image"))
+}
+
+func TestImageNameParamWithDigest(t *testing.T) {
+	viper.Set("test-image", "org/custom-image@sha256:2a7ef4373262fa5fa3b3eaac86015650f8f3eee65d6e2674df931657873e318e")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/custom-image@sha256:2a7ef4373262fa5fa3b3eaac86015650f8f3eee65d6e2674df931657873e318e", ImageName("", "test-image"))
+}
+
+func TestImageNameParamDefaultNoTag(t *testing.T) {
+	viper.SetDefault("test-image", "org/default-image")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/default-image:0.0.0", ImageName("", "test-image"))
+}
+
+func TestImageNameParamDefaultWithTag(t *testing.T) {
+	viper.SetDefault("test-image", "org/default-image:1.2.3")
+	defer viper.Reset()
+
+	assert.Equal(t, "org/default-image:1.2.3", ImageName("", "test-image"))
 }

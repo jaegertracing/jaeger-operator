@@ -1,11 +1,9 @@
 package deployment
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +16,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // AllInOne builds pods for jaegertracing/all-in-one
@@ -74,11 +71,6 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		})
 	}
 
-	image := a.jaeger.Spec.AllInOne.Image
-	if image == "" {
-		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-all-in-one-image"), version.Get().Jaeger)
-	}
-
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -110,7 +102,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: image,
+						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
 						Args:  options,
 						Env: []corev1.EnvVar{

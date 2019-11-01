@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,6 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 // Agent builds pods for jaegertracing/jaeger-agent
@@ -72,11 +70,6 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
-	image := a.jaeger.Spec.Agent.Image
-	if image == "" {
-		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), version.Get().Jaeger)
-	}
-
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -107,7 +100,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: image,
+						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
 						Args:  args,
 						Ports: []corev1.ContainerPort{
