@@ -13,8 +13,7 @@ func TestNoSamplingConfig(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNoSamplingConfig"})
 
 	config := NewConfig(jaeger)
-	options := []string{}
-	cm := config.Get(&options)
+	cm := config.Get()
 	assert.NotNil(t, cm)
 	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
@@ -25,8 +24,8 @@ func TestWithEmptySamplingConfig(t *testing.T) {
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewConfig(jaeger)
-	options := []string{}
-	cm := config.Get(&options)
+
+	cm := config.Get()
 	assert.NotNil(t, cm)
 	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
 }
@@ -42,8 +41,7 @@ func TestWithSamplingConfig(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithSamplingConfig"})
 	jaeger.Spec.Sampling.Options = samplingconfig
 	config := NewConfig(jaeger)
-	options := []string{}
-	cm := config.Get(&options)
+	cm := config.Get()
 	assert.Equal(t, json, cm.Data["sampling"])
 }
 
@@ -85,23 +83,24 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 
 func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfigFileOption"})
-	options := []string{
-		0: "--sampling.strategies-file=/etc/jaeger/sampling.json",
-	}
+	jaeger.Spec.Sampling.Options = v1.NewFreeForm(map[string]interface{}{
+		"sampling.strategies-file": "/etc/jaeger/sampling.json",
+	})
+	options := []string{}
 	commonSpec := v1.JaegerCommonSpec{}
 	Update(jaeger, &commonSpec, &options)
-	assert.Len(t, options, 1)
-	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling.json", options[0])
+	assert.Len(t, commonSpec.Volumes, 0)
+	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Len(t, options, 0)
 }
 
 func TestGetWithSamplingConfigFileOption(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithSamplingConfigFileOption"})
-	options := []string{
-		0: "--sampling.strategies-file=/etc/jaeger/sampling.json",
-	}
+	jaeger.Spec.Sampling.Options = v1.NewFreeForm(map[string]interface{}{
+		"sampling.strategies-file": "/etc/jaeger/sampling.json",
+	})
+
 	config := NewConfig(jaeger)
-	cm := config.Get(&options)
-	assert.Len(t, options, 1)
-	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling.json", options[0])
+	cm := config.Get()
 	assert.Nil(t, cm)
 }
