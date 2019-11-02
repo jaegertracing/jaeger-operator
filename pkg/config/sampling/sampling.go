@@ -26,11 +26,11 @@ func NewConfig(jaeger *v1.Jaeger) *Config {
 }
 
 // Get returns a configmap specification for the current instance
-func (u *Config) Get(options *[]string) *corev1.ConfigMap {
+func (u *Config) Get() *corev1.ConfigMap {
 	var jsonObject []byte
 	var err error
 
-	if CheckForSamplingConfigFile(u.jaeger, options) {
+	if CheckForSamplingConfigFile(u.jaeger) {
 		return nil
 	}
 	// Check for empty map
@@ -50,8 +50,6 @@ func (u *Config) Get(options *[]string) *corev1.ConfigMap {
 	data := map[string]string{
 		"sampling": string(jsonObject),
 	}
-
-	fmt.Println(data)
 
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -85,13 +83,20 @@ func (u *Config) Get(options *[]string) *corev1.ConfigMap {
 
 // CheckForSamplingConfigFile will check if there is a config file present
 // if there is one it returns true
-func CheckForSamplingConfigFile(jaeger *v1.Jaeger, options *[]string) bool {
-	for _, option := range *options {
-		if strings.Contains(option, "sampling.strategies-file") {
-			jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
-			return true
-		}
+func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
+	jsonObject, err := jaeger.Spec.Sampling.Options.MarshalJSON()
+
+	if err != nil {
+		return false
 	}
+	data := map[string]string{
+		"sampling": string(jsonObject),
+	}
+	if strings.Contains(data["sampling"], "sampling.strategies-file") {
+		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+		return true
+	}
+
 	return false
 }
 
@@ -99,15 +104,7 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger, options *[]string) bool {
 // support for the Sampling configmap.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 
-	// // Check to validate if sampling strategy file is already passed as an option
-	// for _, option := range *options {
-	// 	if strings.Contains(option, "sampling.strategies-file") {
-	// 		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
-	// 		return
-	// 	}
-	// }
-
-	if CheckForSamplingConfigFile(jaeger, options) {
+	if CheckForSamplingConfigFile(jaeger) {
 		return
 	}
 
