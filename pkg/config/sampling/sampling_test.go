@@ -83,7 +83,7 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 
 func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfigFileOption"})
-	jaeger.Spec.Strategy = "allInOne"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
 		"sampling.strategies-file": "/etc/jaeger/sampling.json",
 	})

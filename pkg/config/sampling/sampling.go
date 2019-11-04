@@ -88,7 +88,7 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
 	options := v1.Options{}
 
 	// check for deployment strategy
-	if jaeger.Spec.Strategy == "allInOne" {
+	if jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
 		options = jaeger.Spec.AllInOne.Options
 	} else {
 		options = jaeger.Spec.Collector.Options
