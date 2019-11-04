@@ -33,6 +33,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 	if CheckForSamplingConfigFile(u.jaeger) {
 		return nil
 	}
+
 	// Check for empty map
 	if u.jaeger.Spec.Sampling.Options.IsEmpty() {
 		jsonObject = []byte(defaultSamplingStrategy)
@@ -84,7 +85,16 @@ func (u *Config) Get() *corev1.ConfigMap {
 // CheckForSamplingConfigFile will check if there is a config file present
 // if there is one it returns true
 func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
-	jsonObject, err := jaeger.Spec.Sampling.Options.MarshalJSON()
+	options := v1.Options{}
+
+	// check for deployment strategy
+	if jaeger.Spec.Strategy == "allInOne" {
+		options = jaeger.Spec.AllInOne.Options
+	} else {
+		options = jaeger.Spec.Collector.Options
+	}
+
+	jsonObject, err := options.MarshalJSON()
 
 	if err != nil {
 		return false

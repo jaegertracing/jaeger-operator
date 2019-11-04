@@ -83,11 +83,13 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 
 func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfigFileOption"})
-	jaeger.Spec.Sampling.Options = v1.NewFreeForm(map[string]interface{}{
+	jaeger.Spec.Strategy = "allInOne"
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
 		"sampling.strategies-file": "/etc/jaeger/sampling.json",
 	})
 	options := []string{}
 	commonSpec := v1.JaegerCommonSpec{}
+
 	Update(jaeger, &commonSpec, &options)
 	assert.Len(t, commonSpec.Volumes, 0)
 	assert.Len(t, commonSpec.VolumeMounts, 0)
@@ -96,7 +98,7 @@ func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
 
 func TestGetWithSamplingConfigFileOption(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithSamplingConfigFileOption"})
-	jaeger.Spec.Sampling.Options = v1.NewFreeForm(map[string]interface{}{
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
 		"sampling.strategies-file": "/etc/jaeger/sampling.json",
 	})
 
