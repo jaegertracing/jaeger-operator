@@ -2,7 +2,6 @@ package sampling
 
 import (
 	"fmt"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,15 +93,7 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
 		options = jaeger.Spec.Collector.Options
 	}
 
-	jsonObject, err := options.MarshalJSON()
-
-	if err != nil {
-		return false
-	}
-	data := map[string]string{
-		"sampling": string(jsonObject),
-	}
-	if strings.Contains(data["sampling"], "sampling.strategies-file") {
+	if _, exists := options.Map()["sampling.strategies-file"]; exists {
 		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
 		return true
 	}
