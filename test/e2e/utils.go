@@ -2,6 +2,7 @@ package e2e
 
 import (
 	goctx "context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -336,4 +338,57 @@ func smokeTestProductionExample(name, yamlFileName string) {
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", collectorDeploymentName)
 
 	ProductionSmokeTest(name)
+}
+
+func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
+	routeList := &osv1.RouteList{}
+	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
+		if err := f.Client.List(context.Background(), routeList); err != nil {
+			return false, err
+		}
+		if len(routeList.Items) >= 1 {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		t.Fatalf("Failed waiting for route: %v", err)
+	}
+
+	for _, r := range routeList.Items {
+		if strings.HasPrefix(r.Spec.Host, name) {
+			return &r
+		}
+	}
+
+	t.Fatal("Could not find route")
+	return nil
+}
+
+func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bool) (string, http.Client) {
+	var url string
+	var httpClient http.Client
+
+	if isOpenShift(t) {
+		route := findRoute(t, fw, jaegerInstanceName)
+		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
+
+		url = fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+		}
+		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
+	} else {
+		ingress, err := WaitForIngress(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", retryInterval, timeout)
+		require.NoError(t, err, "Failed waiting for ingress")
+		require.Len(t, ingress.Status.LoadBalancer.Ingress, 1, "Wrong number of ingresses.")
+
+		address := ingress.Status.LoadBalancer.Ingress[0].IP
+		url = fmt.Sprintf("http://"+urlPattern, address)
+		httpClient = http.Client{Timeout: time.Second}
+	}
+	logrus.Infof("Using Query URL [%v]\n", url)
+
+	return url, httpClient
 }
