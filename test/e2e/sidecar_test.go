@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
-	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -23,6 +22,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
+
+var ingressEnabled = true
 
 type SidecarTestSuite struct {
 	suite.Suite
@@ -65,7 +66,8 @@ func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SidecarTestSuite) TestSidecar() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	j := getJaegerAgentAsSidecarDefinition(namespace)
+	jaegerInstanceName := "agent-as-sidecar"
+	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
 	defer undeployJaegerInstance(j)
@@ -77,34 +79,19 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
-	queryPort := randomPortNumber()
-	ports := []string{queryPort + ":16686"}
-	portForward, closeChan := CreatePortForward(namespace, "agent-as-sidecar", "all-in-one", ports, fw.KubeConfig)
-	defer portForward.Close()
-	defer close(closeChan)
-
-	url := "http://localhost:" + queryPort + "/api/traces?service=order"
-	c := http.Client{Timeout: time.Second}
-
+	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
-
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil {
-			return false, err
-		}
+		res, err := httpClient.Do(req)
+		require.NoError(t, err)
 
 		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		resp := &resp{}
 		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		return len(resp.Data) > 0, nil
 	})
@@ -166,14 +153,14 @@ func getVertxDefinition(s string) *appsv1.Deployment {
 	return dep
 }
 
-func getJaegerAgentAsSidecarDefinition(namespace string) *v1.Jaeger {
+func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "agent-as-sidecar",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
@@ -183,6 +170,10 @@ func getJaegerAgentAsSidecarDefinition(namespace string) *v1.Jaeger {
 				Options: v1.NewOptions(map[string]interface{}{
 					"log-level": "debug",
 				}),
+			},
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
 			},
 		},
 	}

@@ -4,7 +4,6 @@ package e2e
 
 import (
 	goctx "context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,13 +12,11 @@ import (
 	"testing"
 	"time"
 
-	osv1 "github.com/openshift/api/route/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -96,43 +93,18 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, 3*timeout)
 	require.NoError(t, err, "Error waiting for Jaeger deployment")
 
-	var url string
-	var httpClient http.Client
-	if isOpenShift(t) {
-		route := findRoute(t, fw, name)
-		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
-
-		url = fmt.Sprintf("https://%s/api/services", route.Spec.Host)
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
-	} else {
-		ingress, err := WaitForIngress(t, fw.KubeClient, namespace, "my-jaeger-with-ingress-query", retryInterval, timeout)
-		require.NoError(t, err, "Failed waiting for ingress")
-		require.Len(t, ingress.Status.LoadBalancer.Ingress, 1, "Wrong number of ingresses.")
-
-		address := ingress.Status.LoadBalancer.Ingress[0].IP
-		url = fmt.Sprintf("http://%s/api/services", address)
-		httpClient = http.Client{Timeout: time.Second}
-	}
-
+	url, httpClient := getQueryURLAndHTTPClient(name, "%s/api/services", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
-
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
 	httpClient.Do(req)
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		resp := &services{}
 		err = json.Unmarshal(body, &resp)
@@ -255,31 +227,4 @@ func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
 		},
 	}
 	return exampleJaeger
-}
-
-func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
-	routeList := &osv1.RouteList{}
-	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
-		if err := f.Client.List(context.Background(), routeList); err != nil {
-			return false, err
-		}
-		if len(routeList.Items) >= 1 {
-			return true, nil
-		} else {
-			return false, nil
-		}
-	})
-
-	if err != nil {
-		t.Fatalf("Failed waiting for route: %v", err)
-	}
-
-	for _, r := range routeList.Items {
-		if strings.HasPrefix(r.Spec.Host, name) {
-			return &r
-		}
-	}
-
-	t.Fatal("Could not find route")
-	return nil
 }
