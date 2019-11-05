@@ -24,6 +24,7 @@ func TestWithEmptySamplingConfig(t *testing.T) {
 	jaeger.Spec.UI.Options = uiconfig
 
 	config := NewConfig(jaeger)
+
 	cm := config.Get()
 	assert.NotNil(t, cm)
 	assert.Equal(t, defaultSamplingStrategy, cm.Data["sampling"])
@@ -39,7 +40,6 @@ func TestWithSamplingConfig(t *testing.T) {
 	json := `{"default_strategy":{"param":"20","type":"probabilistic"}}`
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithSamplingConfig"})
 	jaeger.Spec.Sampling.Options = samplingconfig
-
 	config := NewConfig(jaeger)
 	cm := config.Get()
 	assert.Equal(t, json, cm.Data["sampling"])
@@ -79,4 +79,30 @@ func TestUpdateWithSamplingConfig(t *testing.T) {
 	assert.Equal(t, "testupdatewithsamplingconfig-sampling-configuration-volume", commonSpec.VolumeMounts[0].Name)
 	assert.Len(t, options, 1)
 	assert.Equal(t, "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json", options[0])
+}
+
+func TestUpdateWithSamplingConfigFileOption(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithSamplingConfigFileOption"})
+	jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
+		"sampling.strategies-file": "/etc/jaeger/sampling.json",
+	})
+	options := []string{}
+	commonSpec := v1.JaegerCommonSpec{}
+
+	Update(jaeger, &commonSpec, &options)
+	assert.Len(t, commonSpec.Volumes, 0)
+	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Len(t, options, 0)
+}
+
+func TestGetWithSamplingConfigFileOption(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithSamplingConfigFileOption"})
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
+		"sampling.strategies-file": "/etc/jaeger/sampling.json",
+	})
+
+	config := NewConfig(jaeger)
+	cm := config.Get()
+	assert.Nil(t, cm)
 }

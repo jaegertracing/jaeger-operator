@@ -29,6 +29,10 @@ func (u *Config) Get() *corev1.ConfigMap {
 	var jsonObject []byte
 	var err error
 
+	if CheckForSamplingConfigFile(u.jaeger) {
+		return nil
+	}
+
 	// Check for empty map
 	if u.jaeger.Spec.Sampling.Options.IsEmpty() {
 		jsonObject = []byte(defaultSamplingStrategy)
@@ -77,9 +81,33 @@ func (u *Config) Get() *corev1.ConfigMap {
 	}
 }
 
+// CheckForSamplingConfigFile will check if there is a config file present
+// if there is one it returns true
+func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
+	options := v1.Options{}
+
+	// check for deployment strategy
+	if jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+		options = jaeger.Spec.AllInOne.Options
+	} else {
+		options = jaeger.Spec.Collector.Options
+	}
+
+	if _, exists := options.Map()["sampling.strategies-file"]; exists {
+		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+		return true
+	}
+
+	return false
+}
+
 // Update will modify the supplied common spec and options to include
 // support for the Sampling configmap.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
+
+	if CheckForSamplingConfigFile(jaeger) {
+		return
+	}
 
 	volume := corev1.Volume{
 		Name: samplingConfigVolumeName(jaeger),
