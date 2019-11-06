@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 var (
@@ -141,17 +139,12 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	image := jaeger.Spec.Agent.Image
-	if image == "" {
-		image = fmt.Sprintf("%s:%s", viper.GetString("jaeger-agent-image"), version.Get().Jaeger)
-	}
-
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
 	return corev1.Container{
-		Image: image,
+		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
 		Args:  args,
 		Env: []corev1.EnvVar{{
