@@ -178,6 +178,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								},
 							},
 							InitialDelaySeconds: 1,
+							PeriodSeconds:       15,
+							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
