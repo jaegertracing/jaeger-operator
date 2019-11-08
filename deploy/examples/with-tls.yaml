@@ -1,0 +1,9 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: with-tls
+spec:
+  strategy: allInOne
+  ingress:
+    tls:
+      - secretName: jaeger-tls
