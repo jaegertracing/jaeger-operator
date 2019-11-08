@@ -48,15 +48,8 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 		ServiceName: service.GetNameForQueryService(i.jaeger),
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
-	if path, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
-		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
-	} else if path, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
-		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
-	} else if i.jaeger.Spec.Ingress.Hosts != nil {
-		spec.Rules = append(spec.Rules, getRules("", i.jaeger.Spec.Ingress.Hosts, backend)...)
-	} else {
-		spec.Backend = &backend
-	}
+
+	i.addRulesSpec(&spec, &backend)
 
 	i.addTLSSpec(&spec)
 
@@ -84,6 +77,18 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 	}
 }
 
+func (i *QueryIngress) addRulesSpec(spec *extv1beta1.IngressSpec, backend *extv1beta1.IngressBackend) {
+	if path, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
+	} else if path, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
+		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
+	} else if i.jaeger.Spec.Ingress.Hosts != nil {
+		spec.Rules = append(spec.Rules, getRules("", i.jaeger.Spec.Ingress.Hosts, backend)...)
+	} else {
+		spec.Backend = backend
+	}
+}
+
 func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
 	for _, tls := range i.jaeger.Spec.Ingress.TLS {
 		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
@@ -93,7 +98,7 @@ func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
 	}
 }
 
-func getRules(path string, hosts []string, backend extv1beta1.IngressBackend) []extv1beta1.IngressRule {
+func getRules(path string, hosts []string, backend *extv1beta1.IngressBackend) []extv1beta1.IngressRule {
 	if len(hosts) > 0 {
 		rules := make([]extv1beta1.IngressRule, len(hosts))
 		for i, host := range hosts {
@@ -101,19 +106,18 @@ func getRules(path string, hosts []string, backend extv1beta1.IngressBackend) []
 			rules[i] = rule
 		}
 		return rules
-	} else {
-		return []extv1beta1.IngressRule{getRule("", path, backend)}
 	}
+	return []extv1beta1.IngressRule{getRule("", path, backend)}
 }
 
-func getRule(host string, path string, backend extv1beta1.IngressBackend) extv1beta1.IngressRule {
+func getRule(host string, path string, backend *extv1beta1.IngressBackend) extv1beta1.IngressRule {
 	rule := extv1beta1.IngressRule{}
 	rule.Host = host
 	rule.HTTP = &extv1beta1.HTTPIngressRuleValue{
 		Paths: []extv1beta1.HTTPIngressPath{
 			extv1beta1.HTTPIngressPath{
 				Path:    path,
-				Backend: backend,
+				Backend: *backend,
 			},
 		},
 	}
