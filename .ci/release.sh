@@ -39,8 +39,8 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deplo
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
 
-# change the jaeger-operator.version
-sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i jaeger-operator.version
+# change the versions.txt
+sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
@@ -48,10 +48,10 @@ if [[ $? == 0 ]]; then
 else
     git add \
       deploy/operator.yaml \
-      deploy/olm-catalog/jaeger/jaeger.package.yaml \
-      deploy/olm-catalog/jaeger/${OPERATOR_VERSION} \
+      deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml \
+      deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION} \
       test/operator.yaml \
-      jaeger-operator.version
+      versions.txt
 
     git diff -s --exit-code
     if [[ $? != 0 ]]; then
