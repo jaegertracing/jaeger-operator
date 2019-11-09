@@ -1,6 +1,42 @@
 Changes by Version
 ==================
 
+1.15.0 (2019-11-09)
+-------------------
+
+Breaking changes:
+* Breaking change - removed legacy io.jaegertracing CRD ([#649](https://github.com/jaegertracing/jaeger-operator/pull/649))
+
+Other noteworthy changes:
+* fix sampling strategy file issue in Jaeger Collector ([#741](https://github.com/jaegertracing/jaeger-operator/pull/741))
+* Enable tag/digest to be specified in the image parameters to the operator ([#743](https://github.com/jaegertracing/jaeger-operator/pull/743))
+* Upgrade deprecated flags from 1.14 and previous, to 1.15 ([#730](https://github.com/jaegertracing/jaeger-operator/pull/730))
+* Use StatefulSet from apps/v1 API for ES and Cassandra ([#727](https://github.com/jaegertracing/jaeger-operator/pull/727))
+* Read the service account's namespace when POD_NAMESPACE is missing ([#722](https://github.com/jaegertracing/jaeger-operator/pull/722))
+* Added automatic provisioning of Kafka when its operator is available ([#713](https://github.com/jaegertracing/jaeger-operator/pull/713))
+* New DeploymentStrategy type for JaegerSpec.Strategy  ([#704](https://github.com/jaegertracing/jaeger-operator/pull/704))
+* Added workflows publishing the 'master' container image ([#718](https://github.com/jaegertracing/jaeger-operator/pull/718))
+* Added labels to cronjob pod template ([#707](https://github.com/jaegertracing/jaeger-operator/pull/707))
+* Pass only specified options to spark dependencies ([#708](https://github.com/jaegertracing/jaeger-operator/pull/708))
+* Updated Operator SDK to v0.11.0 ([#695](https://github.com/jaegertracing/jaeger-operator/pull/695))
+* Update gopkg.in/yaml.v2 dependency to v2.2.4 ([#699](https://github.com/jaegertracing/jaeger-operator/pull/699))
+* added cassandra creds ([#590](https://github.com/jaegertracing/jaeger-operator/pull/590))
+* Updated the business-application example ([#693](https://github.com/jaegertracing/jaeger-operator/pull/693))
+* Add support for TLS on ingress ([#681](https://github.com/jaegertracing/jaeger-operator/pull/681))
+* Add support to SuccessfulJobsHistoryLimit ([#621](https://github.com/jaegertracing/jaeger-operator/pull/621))
+* Add prometheus annotations to sidecar's deployment ([#684](https://github.com/jaegertracing/jaeger-operator/pull/684))
+* add missing grpc port ([#680](https://github.com/jaegertracing/jaeger-operator/pull/680))
+* Recognize when a resource has been deleted while the operator waits ([#672](https://github.com/jaegertracing/jaeger-operator/pull/672))
+* Enable the documentation URL in the default menu items to be configured via the operator CLI ([#666](https://github.com/jaegertracing/jaeger-operator/pull/666))
+* Adjusted the ALM examples and operator capabilities in CSV ([#665](https://github.com/jaegertracing/jaeger-operator/pull/665))
+* Bring jaeger operator repo inline with contributing guidelines in mai… ([#664](https://github.com/jaegertracing/jaeger-operator/pull/664))
+* Fix error handling when getting environment variable value ([#661](https://github.com/jaegertracing/jaeger-operator/pull/661))
+* Update install-sdk to work on Mac ([#660](https://github.com/jaegertracing/jaeger-operator/pull/660))
+* Improved the install-sdk target ([#653](https://github.com/jaegertracing/jaeger-operator/pull/653))
+* Use elasticsearch operator 4.2, add workflow for 4.1 ([#631](https://github.com/jaegertracing/jaeger-operator/pull/631))
+* Load env variables in the given secretName in Spark dependencies ([#651](https://github.com/jaegertracing/jaeger-operator/pull/651))
+* Added default agent tags ([#648](https://github.com/jaegertracing/jaeger-operator/pull/648))
+
 1.14.0 (2019-09-04)
 -------------------
 
