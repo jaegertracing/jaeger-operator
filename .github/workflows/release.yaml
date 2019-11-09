@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - uses: jpkrohling/setup-operator-sdk@v1-release
+      with:
+        operator-sdk-version: v0.11.0
     - name: "perform the release"
       env:
         GH_WRITE_TOKEN: ${{ secrets.GH_WRITE_TOKEN }}
