@@ -1,5 +1,5 @@
 channels:
-- currentCSV: jaeger-operator.v1.14.0
+- currentCSV: jaeger-operator.v1.15.0
   name: stable
 defaultChannel: stable
 packageName: jaeger
