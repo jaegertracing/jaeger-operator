@@ -153,7 +153,7 @@ func (q *Query) Get() *appsv1.Deployment {
 									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: 5,
 							PeriodSeconds:       15,
 							FailureThreshold:    5,
 						},
@@ -189,7 +189,7 @@ func (q *Query) Services() []*corev1.Service {
 
 func (q *Query) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       q.name(),
 		"app.kubernetes.io/instance":   q.jaeger.Name,
 		"app.kubernetes.io/component":  "query",

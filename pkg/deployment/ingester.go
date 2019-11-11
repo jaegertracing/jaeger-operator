@@ -143,7 +143,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: 5,
 							PeriodSeconds:       15,
 							FailureThreshold:    5,
 						},
@@ -171,7 +171,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 func (i *Ingester) labels() map[string]string {
 	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
+		"app": "jaeger", // TODO(jpkroehling): see collector.go in this package
 		"app.kubernetes.io/name":       i.name(),
 		"app.kubernetes.io/instance":   i.jaeger.Name,
 		"app.kubernetes.io/component":  "ingester",

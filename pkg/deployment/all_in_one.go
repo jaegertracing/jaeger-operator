@@ -177,7 +177,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 									Port: intstr.FromInt(int(adminPort)),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: 5,
 							PeriodSeconds:       15,
 							FailureThreshold:    5,
 						},
