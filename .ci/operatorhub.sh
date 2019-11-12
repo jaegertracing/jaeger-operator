@@ -14,6 +14,7 @@ OLD_PWD=$(pwd)
 VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 PKG_FILE=deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml
 CSV_FILE=deploy/olm-catalog/jaeger-operator/${VERSION}/jaeger-operator.v${VERSION}.clusterserviceversion.yaml
+CRD_FILE=deploy/crds/jaegertracing.io_jaegers_crd.yaml
 
 # once we get a clarification on the following item, we might not need to have different file names
 # https://github.com/operator-framework/community-operators/issues/701
@@ -34,7 +35,9 @@ git rebase -q upstream/master
 
 for dest in upstream-community-operators community-operators; do
     cp "${OLD_PWD}/${PKG_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${DEST_PKG_FILE}"
-    cp "${OLD_PWD}/${CSV_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${DEST_CSV_FILE}"
+    mkdir "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
+    cp "${OLD_PWD}/${CSV_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}/${DEST_CSV_FILE}"
+    cp "${OLD_PWD}/${CRD_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
 
     git checkout -q master
 
