@@ -1,22 +1,30 @@
 Thanks submitting your Operator. Please check below list before you create your Pull Request.
+*************************************************
+**Flat operator directory structure is obsolete from 23-rd of October 2019, only nested directory structure will be accepted.**
+*************************************************
 
 ### New Submissions
 
+* [ ] Has you operator [nested directory structure](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#create-a-bundle)?
 * [ ] Have you selected the Project *Community Operator Submissions* in your PR on the right-hand menu bar?
 * [ ] Are you familiar with our [contribution guidelines](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md)?
 * [ ] Have you [packaged and deployed](https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md) your Operator for Operator Framework?
 * [ ] Have you tested your Operator with all Custom Resource Definitions?
 * [ ] Have you tested your Operator in all supported [installation modes](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata)?
+* [ ] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
 
 ### Updates to existing Operators
 
 * [ ] Is your new CSV pointing to the previous version with the `replaces` property?
 * [ ] Is your new CSV referenced in the [appropriate channel](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#bundle-format) defined in the `package.yaml` ?
 * [ ] Have you tested an update to your Operator when deployed via OLM?
+* [ ] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
 
 ### Your submission should not
 
 * [ ] Modify more than one operator
+* [ ] Modify an Operator you don't own
+* [ ] Rename an operator - please remove and add with a different name instead
 * [ ] Submit operators to both `upstream-community-operators` and `community-operators` at once
 * [ ] Modify any files outside the above mentioned folders
 * [ ] Contain more than one commit. **Please squash your commits.**
