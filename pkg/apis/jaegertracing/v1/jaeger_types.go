@@ -213,6 +213,10 @@ type JaegerIngressSpec struct {
 	// +optional
 	TLS []JaegerIngressTLSSpec `json:"tls,omitempty"`
 
+	// Deprecated in favor of the TLS property
+	// +optional
+	SecretName string `json:"secretName,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }

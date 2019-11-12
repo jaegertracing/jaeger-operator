@@ -78,23 +78,38 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 }
 
 func (i *QueryIngress) addRulesSpec(spec *extv1beta1.IngressSpec, backend *extv1beta1.IngressBackend) {
-	if path, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+	path := ""
+
+	if allInOneQueryBasePath, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+		path = allInOneQueryBasePath
+	} else if queryBasePath, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
+		path = queryBasePath
+	}
+
+	if len(i.jaeger.Spec.Ingress.Hosts) > 0 || path != "" {
 		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
-	} else if path, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
-		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
-	} else if i.jaeger.Spec.Ingress.Hosts != nil {
-		spec.Rules = append(spec.Rules, getRules("", i.jaeger.Spec.Ingress.Hosts, backend)...)
 	} else {
+		// no hosts and no custom path -> fall back to a single service Ingress
 		spec.Backend = backend
 	}
 }
 
 func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
-	for _, tls := range i.jaeger.Spec.Ingress.TLS {
+	if len(i.jaeger.Spec.Ingress.TLS) > 0 {
+		for _, tls := range i.jaeger.Spec.Ingress.TLS {
+			spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
+				Hosts:      tls.Hosts,
+				SecretName: tls.SecretName,
+			})
+		}
+		if i.jaeger.Spec.Ingress.SecretName != "" {
+			i.jaeger.Logger().Warn("Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.")
+		}
+	} else if i.jaeger.Spec.Ingress.SecretName != "" {
 		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
-			Hosts:      tls.Hosts,
-			SecretName: tls.SecretName,
+			SecretName: i.jaeger.Spec.Ingress.SecretName,
 		})
+		i.jaeger.Logger().Warn("'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.")
 	}
 }
 

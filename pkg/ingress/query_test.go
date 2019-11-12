@@ -122,7 +122,7 @@ func TestQueryIngressLabels(t *testing.T) {
 
 func TestQueryIngressWithHosts(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressHosts"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithHosts"})
 	jaeger.Spec.Ingress.Enabled = &enabled
 	jaeger.Spec.Ingress.Hosts = []string{"test-host-1"}
 
@@ -139,7 +139,7 @@ func TestQueryIngressWithHosts(t *testing.T) {
 
 func TestQueryIngressWithMultipleHosts(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressMultipleHosts"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithMultipleHosts"})
 	jaeger.Spec.Ingress.Enabled = &enabled
 	jaeger.Spec.Ingress.Hosts = []string{"test-host-1", "test-host-2"}
 
@@ -189,6 +189,37 @@ func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
 	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+}
+
+//TODO: Remove this test when ingress.secretName is removed from the spec
+func TestQueryIngressDeprecatedSecretName(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressDeprecatedSecretName"})
+
+	jaeger.Spec.Ingress.SecretName = "test-secret"
+
+	ingress := NewQueryIngress(jaeger)
+	dep := ingress.Get()
+
+	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
+}
+
+//TODO: Remove this test when ingress.secretName is removed from the spec
+func TestQueryIngressTLSOverridesDeprecatedSecretName(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSOverridesDeprecatedSecretName"})
+
+	jaeger.Spec.Ingress.SecretName = "test-secret-secret-name"
+
+	jaeger.Spec.Ingress.TLS = []v1.JaegerIngressTLSSpec{
+		v1.JaegerIngressTLSSpec{
+			SecretName: "test-secret-tls",
+		},
+	}
+
+	ingress := NewQueryIngress(jaeger)
+	dep := ingress.Get()
+
+	assert.Len(t, dep.Spec.TLS, 1)
+	assert.Equal(t, "test-secret-tls", dep.Spec.TLS[0].SecretName)
 }
 
 func TestQueryIngressTLSSecret(t *testing.T) {

@@ -1,7 +1,7 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: with-tls
+  name: with-ingress-tls
 spec:
   strategy: allInOne
   ingress:
