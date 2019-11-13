@@ -208,10 +208,27 @@ type JaegerIngressSpec struct {
 	OpenShift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
 
 	// +optional
+	Hosts []string `json:"hosts,omitempty"`
+
+	// +optional
+	TLS []JaegerIngressTLSSpec `json:"tls,omitempty"`
+
+	// Deprecated in favor of the TLS property
+	// +optional
 	SecretName string `json:"secretName,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+}
+
+// JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress
+// +k8s:openapi-gen=true
+type JaegerIngressTLSSpec struct {
+	// +optional
+	Hosts []string `json:"hosts,omitempty"`
+
+	// +optional
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // JaegerIngressOpenShiftSpec defines the OpenShift-specific options in the context of ingress connections,

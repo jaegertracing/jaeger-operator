@@ -48,13 +48,8 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 		ServiceName: service.GetNameForQueryService(i.jaeger),
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
-	if _, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
-		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.AllInOne.Options, backend))
-	} else if _, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
-		spec.Rules = append(spec.Rules, getRule(i.jaeger.Spec.Query.Options, backend))
-	} else {
-		spec.Backend = &backend
-	}
+
+	i.addRulesSpec(&spec, &backend)
 
 	i.addTLSSpec(&spec)
 
@@ -82,22 +77,62 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 	}
 }
 
-func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
-	secretName := i.jaeger.Spec.Ingress.SecretName
-	if secretName != "" {
-		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
-			SecretName: secretName,
-		})
+func (i *QueryIngress) addRulesSpec(spec *extv1beta1.IngressSpec, backend *extv1beta1.IngressBackend) {
+	path := ""
+
+	if allInOneQueryBasePath, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+		path = allInOneQueryBasePath
+	} else if queryBasePath, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
+		path = queryBasePath
+	}
+
+	if len(i.jaeger.Spec.Ingress.Hosts) > 0 || path != "" {
+		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
+	} else {
+		// no hosts and no custom path -> fall back to a single service Ingress
+		spec.Backend = backend
 	}
 }
 
-func getRule(options v1.Options, backend extv1beta1.IngressBackend) extv1beta1.IngressRule {
+func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
+	if len(i.jaeger.Spec.Ingress.TLS) > 0 {
+		for _, tls := range i.jaeger.Spec.Ingress.TLS {
+			spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
+				Hosts:      tls.Hosts,
+				SecretName: tls.SecretName,
+			})
+		}
+		if i.jaeger.Spec.Ingress.SecretName != "" {
+			i.jaeger.Logger().Warn("Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.")
+		}
+	} else if i.jaeger.Spec.Ingress.SecretName != "" {
+		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
+			SecretName: i.jaeger.Spec.Ingress.SecretName,
+		})
+		i.jaeger.Logger().Warn("'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.")
+	}
+}
+
+func getRules(path string, hosts []string, backend *extv1beta1.IngressBackend) []extv1beta1.IngressRule {
+	if len(hosts) > 0 {
+		rules := make([]extv1beta1.IngressRule, len(hosts))
+		for i, host := range hosts {
+			rule := getRule(host, path, backend)
+			rules[i] = rule
+		}
+		return rules
+	}
+	return []extv1beta1.IngressRule{getRule("", path, backend)}
+}
+
+func getRule(host string, path string, backend *extv1beta1.IngressBackend) extv1beta1.IngressRule {
 	rule := extv1beta1.IngressRule{}
+	rule.Host = host
 	rule.HTTP = &extv1beta1.HTTPIngressRuleValue{
 		Paths: []extv1beta1.HTTPIngressPath{
 			extv1beta1.HTTPIngressPath{
-				Path:    options.Map()["query.base-path"],
-				Backend: backend,
+				Path:    path,
+				Backend: *backend,
 			},
 		},
 	}

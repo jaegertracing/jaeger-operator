@@ -1,0 +1,13 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: with-ingress-host-and-tls
+spec:
+  strategy: allInOne
+  ingress:
+    hosts:
+      - jaeger.example.com
+    tls:
+      - hosts:
+          - jaeger.example.com
+        secretName: jaeger-example-com-tls
