@@ -14,9 +14,6 @@ jobs:
         operator-sdk-version: v0.11.0
     - uses: actions/checkout@v1
 
-    - name: "setup docker"
-      run: ./.ci/setup-docker.sh
-
     - name: "set max_map_count"
       run: sudo sysctl -w vm.max_map_count=262144
 

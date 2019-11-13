@@ -15,9 +15,6 @@ jobs:
         operator-sdk-version: v0.11.0
     - uses: actions/checkout@v1
 
-    - name: "setup docker"
-      run: ./.ci/setup-docker.sh
-
     - name: "start minikube"
       run: ./.ci/start-minikube.sh
 
