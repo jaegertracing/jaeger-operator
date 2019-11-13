@@ -15,8 +15,11 @@ jobs:
         operator-sdk-version: v0.11.0
     - uses: actions/checkout@v1
 
+    - name: "setup docker"
+      run: sudo apt-get install --only-upgrade brackets
+
     - name: "start minikube"
-      run: sudo apt-get update && sudo apt-get upgrade docker && ./.ci/start-minikube.sh
+      run: ./.ci/start-minikube.sh
 
     - name: "running end to end test"
       env:
