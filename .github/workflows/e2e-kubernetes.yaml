@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: "setup docker"
-      run: sudo apt-get install --only-upgrade brackets
+      run: sudo apt-get install --only-upgrade docker
 
     - name: "start minikube"
       run: ./.ci/start-minikube.sh
