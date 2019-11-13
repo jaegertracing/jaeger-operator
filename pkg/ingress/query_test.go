@@ -58,8 +58,10 @@ func TestQueryIngressAllInOneBasePath(t *testing.T) {
 	assert.NotNil(t, dep)
 	assert.Nil(t, dep.Spec.Backend)
 	assert.Len(t, dep.Spec.Rules, 1)
+
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Empty(t, dep.Spec.Rules[0].Host)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
@@ -77,8 +79,10 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 	assert.NotNil(t, dep)
 	assert.Nil(t, dep.Spec.Backend)
 	assert.Len(t, dep.Spec.Rules, 1)
+
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Empty(t, dep.Spec.Rules[0].Host)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
@@ -133,8 +137,11 @@ func TestQueryIngressWithHosts(t *testing.T) {
 	assert.NotNil(t, dep)
 	assert.Nil(t, dep.Spec.Backend)
 	assert.Len(t, dep.Spec.Rules, 1)
+
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Empty(t, dep.Spec.Rules[0].HTTP.Paths[0].Path)
 	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
 func TestQueryIngressWithMultipleHosts(t *testing.T) {
@@ -150,10 +157,16 @@ func TestQueryIngressWithMultipleHosts(t *testing.T) {
 	assert.NotNil(t, dep)
 	assert.Nil(t, dep.Spec.Backend)
 	assert.Len(t, dep.Spec.Rules, 2)
-	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Empty(t, dep.Spec.Rules[0].HTTP.Paths[0].Path)
-	assert.Equal(t, "test-host-2", dep.Spec.Rules[1].Host)
+	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+
+	assert.Len(t, dep.Spec.Rules[1].HTTP.Paths, 1)
 	assert.Empty(t, dep.Spec.Rules[1].HTTP.Paths[0].Path)
+	assert.Equal(t, "test-host-2", dep.Spec.Rules[1].Host)
+	assert.NotNil(t, dep.Spec.Rules[1].HTTP.Paths[0].Backend)
 }
 
 func TestQueryIngressWithoutHosts(t *testing.T) {
@@ -185,10 +198,11 @@ func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
 	assert.NotNil(t, dep)
 	assert.Nil(t, dep.Spec.Backend)
 	assert.Len(t, dep.Spec.Rules, 1)
+
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
-	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
 //TODO: Remove this test when ingress.secretName is removed from the spec
