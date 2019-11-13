@@ -24,17 +24,8 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	one := int32(1)
 	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
 
-	var envFromSource []corev1.EnvFromSource
-	if len(jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, corev1.EnvFromSource{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: jaeger.Spec.Storage.SecretName,
-				},
-			},
-		})
-	}
-	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
+	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
+	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
 	if val, ok := jaeger.Spec.Storage.Options.Map()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
 		envs = append(envs, corev1.EnvVar{Name: "ROLLOVER", Value: "true"})
 	}
@@ -59,9 +50,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: jaeger.Namespace,
-			Labels:    commonSpec.Labels,
+			Name:        name,
+			Namespace:   jaeger.Namespace,
+			Labels:      commonSpec.Labels,
+			Annotations: commonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: jaeger.APIVersion,
@@ -83,12 +75,13 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Name:      name,
-									Image:     jaeger.Spec.Storage.EsIndexCleaner.Image,
-									Args:      []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:       envs,
-									EnvFrom:   envFromSource,
-									Resources: commonSpec.Resources,
+									Name:         name,
+									Image:        jaeger.Spec.Storage.EsIndexCleaner.Image,
+									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Env:          util.RemoveEmptyVars(envs),
+									EnvFrom:      envFromSource,
+									Resources:    commonSpec.Resources,
+									VolumeMounts: commonSpec.VolumeMounts,
 								},
 							},
 							RestartPolicy:      corev1.RestartPolicyNever,
@@ -96,6 +89,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							Tolerations:        commonSpec.Tolerations,
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
+							Volumes:            commonSpec.Volumes,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,

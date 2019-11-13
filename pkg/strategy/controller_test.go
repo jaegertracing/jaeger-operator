@@ -237,6 +237,27 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Image: "foo"}},
 		},
 		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true})},
+			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Image: "foo", Schedule: "55 23 * * *", Enabled: nil},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true}),
+			},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false})},
+			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Image: "foo", Schedule: "55 23 * * *", Enabled: &trueVar},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false}),
+			},
+		},
+		{
+			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"})},
+			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Image: "foo", Schedule: "55 23 * * *", Enabled: nil},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"}),
+			},
+		},
+		{
 			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
 			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
 		},

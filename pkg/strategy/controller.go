@@ -107,10 +107,18 @@ func distributedStorage(storage string) bool {
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
+	sFlagsMap := spec.Options.Map()
+	tlsEnabled := sFlagsMap["es.tls"]
+	tlsSkipHost := sFlagsMap["es.tls.skip-host-verify"]
+	tlsCa := sFlagsMap["es.tls.ca"]
+	tlsIsNotEnabled := !strings.EqualFold(tlsEnabled, "true") &&
+		!strings.EqualFold(tlsSkipHost, "true") &&
+		strings.EqualFold(tlsCa, "")
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
 		spec.Dependencies.Enabled == nil &&
-		!storage.ShouldDeployElasticsearch(*spec) {
+		!storage.ShouldDeployElasticsearch(*spec) &&
+		tlsIsNotEnabled {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar
 	}
