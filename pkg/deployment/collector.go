@@ -156,6 +156,17 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Name:          "grpc",
 							},
 						},
+						LivenessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path: "/",
+									Port: intstr.FromInt(int(adminPort)),
+								},
+							},
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       15,
+							FailureThreshold:    5,
+						},
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
