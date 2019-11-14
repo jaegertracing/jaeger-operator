@@ -86,10 +86,11 @@ func TestEnvVars(t *testing.T) {
 				"es.username":     "fredy"}),
 			expected: []corev1.EnvVar{
 				{Name: "INDEX_PREFIX", Value: "foo"},
+				{Name: "ES_USERNAME", Value: "fredy"},
+				{Name: "ES_PASSWORD", Value: "nopass"},
 				{Name: "SHARDS", Value: "5"},
 				{Name: "REPLICAS", Value: "3"},
-				{Name: "ES_USERNAME", Value: "fredy"},
-				{Name: "ES_PASSWORD", Value: "nopass"}},
+			},
 		},
 	}
 	for _, test := range tests {

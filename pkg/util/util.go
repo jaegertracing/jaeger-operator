@@ -216,3 +216,29 @@ func ImageName(image, param string) string {
 	}
 	return image
 }
+
+// RemoveEmptyVars removes empty variables from the input slice.
+func RemoveEmptyVars(envVars []corev1.EnvVar) []corev1.EnvVar {
+	var notEmpty []corev1.EnvVar
+	for _, v := range envVars {
+		if v.Value != "" || v.ValueFrom != nil {
+			notEmpty = append(notEmpty, v)
+		}
+	}
+	return notEmpty
+}
+
+// CreateEnvsFromSecret adds env from secret name.
+func CreateEnvsFromSecret(secretName string) []corev1.EnvFromSource {
+	var envs []corev1.EnvFromSource
+	if len(secretName) > 0 {
+		envs = append(envs, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
+				},
+			},
+		})
+	}
+	return envs
+}

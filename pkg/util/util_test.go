@@ -424,3 +424,37 @@ func TestImageNameParamDefaultWithTag(t *testing.T) {
 
 	assert.Equal(t, "org/default-image:1.2.3", ImageName("", "test-image"))
 }
+
+func TestRemoveEmptyVars(t *testing.T) {
+	tests := []struct {
+		underTest []corev1.EnvVar
+		expected  []corev1.EnvVar
+	}{
+		{},
+		{underTest: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo3"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}},
+			expected: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}}},
+		{underTest: []corev1.EnvVar{{Name: "foo"}}},
+	}
+	for _, test := range tests {
+		exp := RemoveEmptyVars(test.underTest)
+		assert.Equal(t, test.expected, exp)
+	}
+}
+
+func TestCreateFromSecret(t *testing.T) {
+	tests := []struct {
+		secret   string
+		expected []corev1.EnvFromSource
+	}{
+		{},
+		{
+			secret: "foobar", expected: []corev1.EnvFromSource{
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "foobar"}}},
+			},
+		},
+	}
+	for _, test := range tests {
+		exp := CreateEnvsFromSecret(test.secret)
+		assert.Equal(t, test.expected, exp)
+	}
+}

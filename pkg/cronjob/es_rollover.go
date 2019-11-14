@@ -31,7 +31,7 @@ func CreateRollover(jaeger *v1.Jaeger) []batchv1beta1.CronJob {
 
 func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	name := fmt.Sprintf("%s-es-rollover", jaeger.Name)
-	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
+	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
 	if jaeger.Spec.Storage.EsRollover.Conditions != "" {
 		envs = append(envs, corev1.EnvVar{Name: "CONDITIONS", Value: jaeger.Spec.Storage.EsRollover.Conditions})
 	}
@@ -59,6 +59,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 }
 
 func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
+	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "false",
@@ -80,13 +81,16 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 			Tolerations:        commonSpec.Tolerations,
 			SecurityContext:    commonSpec.SecurityContext,
 			ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
+			Volumes:            commonSpec.Volumes,
 			Containers: []corev1.Container{
 				{
-					Name:      name,
-					Image:     jaeger.Spec.Storage.EsRollover.Image,
-					Args:      []string{action, util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
-					Env:       envs,
-					Resources: commonSpec.Resources,
+					Name:         name,
+					Image:        jaeger.Spec.Storage.EsRollover.Image,
+					Args:         []string{action, util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
+					Env:          util.RemoveEmptyVars(envs),
+					EnvFrom:      envFromSource,
+					Resources:    commonSpec.Resources,
+					VolumeMounts: commonSpec.VolumeMounts,
 				},
 			},
 		},
@@ -95,7 +99,7 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 
 func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	name := fmt.Sprintf("%s-es-lookback", jaeger.Name)
-	envs := esScriptEnvVars(jaeger.Spec.Storage.Options)
+	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
 	if jaeger.Spec.Storage.EsRollover.ReadTTL != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.EsRollover.ReadTTL)
 		if err == nil {
@@ -131,16 +135,27 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	}
 }
 
-func esScriptEnvVars(opts v1.Options) []corev1.EnvVar {
+// EsScriptEnvVars returns environmental variables for ES cron jobs.
+func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
+	scriptEnvVars := []struct {
+		flag   string
+		envVar string
+	}{
+		{flag: "es.index-prefix", envVar: "INDEX_PREFIX"},
+		{flag: "es.username", envVar: "ES_USERNAME"},
+		{flag: "es.password", envVar: "ES_PASSWORD"},
+		{flag: "es.tls", envVar: "ES_TLS"},
+		{flag: "es.tls.ca", envVar: "ES_TLS_CA"},
+		{flag: "es.tls.cert", envVar: "ES_TLS_CERT"},
+		{flag: "es.tls.key", envVar: "ES_TLS_KEY"},
+		{flag: "es.tls.skip-host-verify", envVar: "ES_TLS_SKIP_HOST_VERIFY"},
+	}
+	options := opts.Map()
 	var envs []corev1.EnvVar
-	if val, ok := opts.Map()["es.index-prefix"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "INDEX_PREFIX", Value: val})
-	}
-	if val, ok := opts.Map()["es.username"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_USERNAME", Value: val})
-	}
-	if val, ok := opts.Map()["es.password"]; ok {
-		envs = append(envs, corev1.EnvVar{Name: "ES_PASSWORD", Value: val})
+	for _, x := range scriptEnvVars {
+		if val, ok := options[x.flag]; ok {
+			envs = append(envs, corev1.EnvVar{Name: x.envVar, Value: val})
+		}
 	}
 	return envs
 }

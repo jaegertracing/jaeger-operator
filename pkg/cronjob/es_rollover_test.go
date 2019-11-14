@@ -71,17 +71,29 @@ func TestEnvVars(t *testing.T) {
 		},
 		{
 			opts: v1.NewOptions(map[string]interface{}{
-				"es.index-prefix": "foo",
-				"es.password":     "nopass",
-				"es.username":     "fredy"}),
+				"es.index-prefix":         "foo",
+				"es.password":             "nopass",
+				"es.username":             "fredy",
+				"es.tls":                  "true",
+				"es.tls.ca":               "/etc/ca",
+				"es.tls.key":              "/etc/key",
+				"es.tls.cert":             "/etc/cert",
+				"es.tls.skip-host-verify": "true",
+			}),
 			expected: []corev1.EnvVar{
 				{Name: "INDEX_PREFIX", Value: "foo"},
 				{Name: "ES_USERNAME", Value: "fredy"},
-				{Name: "ES_PASSWORD", Value: "nopass"}},
+				{Name: "ES_PASSWORD", Value: "nopass"},
+				{Name: "ES_TLS", Value: "true"},
+				{Name: "ES_TLS_CA", Value: "/etc/ca"},
+				{Name: "ES_TLS_CERT", Value: "/etc/cert"},
+				{Name: "ES_TLS_KEY", Value: "/etc/key"},
+				{Name: "ES_TLS_SKIP_HOST_VERIFY", Value: "true"},
+			},
 		},
 	}
 	for _, test := range tests {
-		assert.Equal(t, test.expected, esScriptEnvVars(test.opts))
+		assert.EqualValues(t, test.expected, EsScriptEnvVars(test.opts))
 	}
 }
 

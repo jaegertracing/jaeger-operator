@@ -11,22 +11,6 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestRemoveEmptyVars(t *testing.T) {
-	tests := []struct {
-		underTest []corev1.EnvVar
-		expected  []corev1.EnvVar
-	}{
-		{},
-		{underTest: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo3"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}},
-			expected: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}}},
-		{underTest: []corev1.EnvVar{{Name: "foo"}}},
-	}
-	for _, test := range tests {
-		exp := removeEmptyVars(test.underTest)
-		assert.Equal(t, test.expected, exp)
-	}
-}
-
 func TestStorageEnvs(t *testing.T) {
 	trueVar := true
 	falseVar := false

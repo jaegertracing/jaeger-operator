@@ -12,7 +12,6 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -25,6 +24,7 @@ func SupportedStorage(storage string) bool {
 
 // CreateSparkDependencies creates a new cronjob for the Spark Dependencies task
 func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
+	logTLSNotSupported(jaeger)
 	envVars := []corev1.EnvVar{
 		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
 		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.Dependencies.SparkMaster},
@@ -32,16 +32,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	}
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
 
-	var envFromSource []corev1.EnvFromSource
-	if len(jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, corev1.EnvFromSource{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: jaeger.Spec.Storage.SecretName,
-				},
-			},
-		})
-	}
+	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 
 	trueVar := true
 	one := int32(1)
@@ -94,7 +85,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Image: jaeger.Spec.Storage.Dependencies.Image,
 									Name:  name,
 									// let spark job use its default values
-									Env:       removeEmptyVars(envVars),
+									Env:       util.RemoveEmptyVars(envVars),
 									EnvFrom:   envFromSource,
 									Resources: commonSpec.Resources,
 								},
@@ -117,14 +108,13 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 }
 
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
-	sFlags := s.Options.Filter(storage.OptionsPrefix(s.Type))
-	sFlagsMap := sFlags.Map()
-	keyspace := sFlagsMap["cassandra.keyspace"]
-	if keyspace == "" {
-		keyspace = "jaeger_v1_test"
-	}
+	sFlagsMap := s.Options.Map()
 	switch s.Type {
 	case "cassandra":
+		keyspace := sFlagsMap["cassandra.keyspace"]
+		if keyspace == "" {
+			keyspace = "jaeger_v1_test"
+		}
 		return []corev1.EnvVar{
 			{Name: "CASSANDRA_CONTACT_POINTS", Value: sFlagsMap["cassandra.servers"]},
 			{Name: "CASSANDRA_KEYSPACE", Value: keyspace},
@@ -153,12 +143,12 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 	}
 }
 
-func removeEmptyVars(envVars []corev1.EnvVar) []corev1.EnvVar {
-	var notEmpty []corev1.EnvVar
-	for _, v := range envVars {
-		if v.Value != "" || v.ValueFrom != nil {
-			notEmpty = append(notEmpty, v)
-		}
+func logTLSNotSupported(j *v1.Jaeger) {
+	sFlagsMap := j.Spec.Storage.Options.Map()
+	if strings.EqualFold(sFlagsMap["es.tls.enabled"], "true") || strings.EqualFold(sFlagsMap["es.tls"], "true") {
+		j.Logger().Warn("Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies")
 	}
-	return notEmpty
+	if strings.EqualFold(sFlagsMap["es.tls.skip-host-verify"], "true") || sFlagsMap["es.tls.ca"] != "" {
+		j.Logger().Warn("Spark dependencies does not support insecure TLS nor specifying only CA cert, consider disabling dependencies")
+	}
 }
