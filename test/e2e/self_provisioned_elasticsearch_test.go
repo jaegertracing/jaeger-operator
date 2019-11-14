@@ -5,13 +5,17 @@ package e2e
 import (
 	goctx "context"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,18 +80,56 @@ func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
-	exampleJaeger := getJaegerSimpleProd()
+	jaegerInstanceName := "simple-prod"
+	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	ProductionSmokeTest("simple-prod")
+	ProductionSmokeTest(jaegerInstanceName)
+}
+
+func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
+	jaegerInstanceName := "simple-prod"
+	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
+	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(exampleJaeger)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+
+	updateNodeCount := 2
+	changeNodeCount(jaegerInstanceName, updateNodeCount)
+	updatedJaegerInstance := getJaegerInstance(jaegerInstanceName, namespace)
+	require.EqualValues(t, updateNodeCount, updatedJaegerInstance.Spec.Storage.Elasticsearch.NodeCount)
+
+	// Make sure there are 2 ES deployments. Note: The deployment name is based on  "elasticsearch-cdm-" + namespace + jaegerInstanceName + "-1"
+	// with dashes in the namespace and  jaegerInstanceName removed
+	for i := 1; i <= updateNodeCount; i++ {
+		deploymentName := "elasticsearch-cdm-" + strings.ReplaceAll(namespace, "-", "") + strings.ReplaceAll(jaegerInstanceName, "-", "") + "-" + strconv.Itoa(i)
+		logrus.Infof("Looking for deployment %s", deploymentName)
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, deploymentName, 1, retryInterval, timeout)
+		require.NoError(t, err, "Error waiting for query deployment")
+	}
+
+	ProductionSmokeTest(jaegerInstanceName)
+}
+
+func changeNodeCount(name string, newNodeCount int) {
+	jaegerInstance := getJaegerInstance(name, namespace)
+	jaegerInstance.Spec.Storage.Elasticsearch.NodeCount = int32(newNodeCount)
+	err := fw.Client.Update(context.Background(), jaegerInstance)
+	require.NoError(t, err)
 }
 
 func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
@@ -105,14 +147,14 @@ func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
 	require.Equal(t, expectedEsOperatorImage, imageName)
 }
 
-func getJaegerSimpleProd() *v1.Jaeger {
+func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple-prod",
+			Name:      instanceName,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
