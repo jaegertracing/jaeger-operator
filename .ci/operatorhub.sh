@@ -14,6 +14,7 @@ OLD_PWD=$(pwd)
 VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 PKG_FILE=deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml
 CSV_FILE=deploy/olm-catalog/jaeger-operator/${VERSION}/jaeger-operator.v${VERSION}.clusterserviceversion.yaml
+CRD_FILE=deploy/crds/jaegertracing.io_jaegers_crd.yaml
 
 # once we get a clarification on the following item, we might not need to have different file names
 # https://github.com/operator-framework/community-operators/issues/701
@@ -33,8 +34,11 @@ git checkout -q master
 git rebase -q upstream/master
 
 for dest in upstream-community-operators community-operators; do
+    mkdir -p "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
+
     cp "${OLD_PWD}/${PKG_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${DEST_PKG_FILE}"
-    cp "${OLD_PWD}/${CSV_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${DEST_CSV_FILE}"
+    cp "${OLD_PWD}/${CSV_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}/${DEST_CSV_FILE}"
+    cp "${OLD_PWD}/${CRD_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
 
     git checkout -q master
 
@@ -45,7 +49,7 @@ for dest in upstream-community-operators community-operators; do
     fi
 
     git add "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/"
-    git commit -qm "Update Jaeger ${dest} to v${VERSION}"
+    git commit -sqm "Update Jaeger ${dest} to v${VERSION}"
     git push -q
 
     command -v hub > /dev/null
@@ -59,24 +63,32 @@ for dest in upstream-community-operators community-operators; do
 Update Jaeger ${dest} to v${VERSION}
 
 Thanks submitting your Operator. Please check below list before you create your Pull Request.
+*************************************************
+**Flat operator directory structure is obsolete from 23-rd of October 2019, only nested directory structure will be accepted.**
+*************************************************
 
 ### New Submissions
 
+* [x] Has you operator [nested directory structure](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#create-a-bundle)?
 * [x] Have you selected the Project *Community Operator Submissions* in your PR on the right-hand menu bar?
 * [x] Are you familiar with our [contribution guidelines](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md)?
 * [x] Have you [packaged and deployed](https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md) your Operator for Operator Framework?
 * [x] Have you tested your Operator with all Custom Resource Definitions?
 * [x] Have you tested your Operator in all supported [installation modes](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata)?
+* [x] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
 
 ### Updates to existing Operators
 
 * [x] Is your new CSV pointing to the previous version with the replaces property?
 * [x] Is your new CSV referenced in the [appropriate channel](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#bundle-format) defined in the package.yaml ?
 * [ ] Have you tested an update to your Operator when deployed via OLM?
+* [x] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
 
 ### Your submission should not
 
 * [x] Modify more than one operator
+* [x] Modify an Operator you don't own
+* [x] Rename an operator - please remove and add with a different name instead
 * [x] Submit operators to both upstream-community-operators and community-operators at once
 * [x] Modify any files outside the above mentioned folders
 * [x] Contain more than one commit. **Please squash your commits.**
