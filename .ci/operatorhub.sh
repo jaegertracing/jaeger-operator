@@ -34,8 +34,9 @@ git checkout -q master
 git rebase -q upstream/master
 
 for dest in upstream-community-operators community-operators; do
+    mkdir -p "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
+
     cp "${OLD_PWD}/${PKG_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${DEST_PKG_FILE}"
-    mkdir "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
     cp "${OLD_PWD}/${CSV_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}/${DEST_CSV_FILE}"
     cp "${OLD_PWD}/${CRD_FILE}" "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/jaeger/${VERSION}"
 
