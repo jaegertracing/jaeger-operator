@@ -49,7 +49,7 @@ for dest in upstream-community-operators community-operators; do
     fi
 
     git add "${COMMUNITY_OPERATORS_REPOSITORY}/${dest}/"
-    git commit -qm "Update Jaeger ${dest} to v${VERSION}"
+    git commit -sqm "Update Jaeger ${dest} to v${VERSION}"
     git push -q
 
     command -v hub > /dev/null
