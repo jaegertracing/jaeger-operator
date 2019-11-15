@@ -28,11 +28,6 @@ if [ "${GH_WRITE_TOKEN}x" == "x" ]; then
     exit 1
 fi
 
-operator-sdk olm-catalog gen-csv \
-    --csv-channel=stable \
-    --csv-version=${OPERATOR_VERSION} \
-    --from-version=${PREVIOUS_VERSION}
-
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
 
@@ -41,6 +36,14 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/
 
 # change the versions.txt
 sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
+
+operator-sdk olm-catalog gen-csv \
+    --csv-channel=stable \
+    --csv-version=${OPERATOR_VERSION} \
+    --from-version=${PREVIOUS_VERSION}
+
+# changes to deploy/olm-catalog/jaeger-operator/newversion/...
+sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
@@ -60,10 +63,7 @@ else
         exit 1
     fi
 
-    git config user.email "jaeger-release@jaegertracing.io"
-    git config user.name "Jaeger Release"
-
-    git commit -qm "Release ${TAG}"
+    git commit -qm "Release ${TAG}" --author "Jaeger Release <jaeger-release@jaegertracing.io>"
     git tag ${TAG}
     git push --repo=https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git --tags
     git push https://${GH_WRITE_TOKEN}@github.com/jaegertracing/jaeger-operator.git refs/tags/${TAG}:master
