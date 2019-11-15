@@ -1,15 +1,15 @@
 # Releasing the Jaeger Operator for Kubernetes
 
-1. Make sure you are using an operator-sdk newer than 0.10.0 (or master, if no released version exists)
+1. Make sure you are using an operator-sdk newer than 0.10.0
 
 1. Make sure the `versions.txt` file is up to date
 
 1. Make sure the new version is present at `pkg/upgrade/versions.go`
 
-1. Prepare a changelog and get it merged. A list of commits since the last release (`v1.8.0` in the following example) can be obtained via:
+1. Prepare a changelog and get it merged. A list of commits since the last release (`v1.15.1` in the following example) can be obtained via:
 
     ```
-    $ git log --format="format:* %s" v1.8.0...HEAD
+    $ git log --format="format:* %s" v1.15.1...HEAD
     ```
 
 1. Test!
@@ -24,11 +24,9 @@
 
     ```
     git checkout master ## it's only possible to release from master for now!
-    git tag release/v1.6.1
-    git push git@github.com:jaegertracing/jaeger-operator.git release/v1.6.1
+    git tag release/v1.16.0
+    git push git@github.com:jaegertracing/jaeger-operator.git release/v1.16.0
     ```
-
-1. Temporary step: run the release script manually, as the release workflow is temporarily disabled
 
 1. Apply generated OLM catalog files to operatorhub.io
 
