@@ -159,6 +159,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			{
 				ContainerPort: zkCompactTrft,
 				Name:          "zk-compact-trft",
+				Protocol:      corev1.ProtocolUDP,
 			},
 			{
 				ContainerPort: configRest,
@@ -167,10 +168,12 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			{
 				ContainerPort: jgCompactTrft,
 				Name:          "jg-compact-trft",
+				Protocol:      corev1.ProtocolUDP,
 			},
 			{
 				ContainerPort: jgBinaryTrft,
 				Name:          "jg-binary-trft",
+				Protocol:      corev1.ProtocolUDP,
 			},
 		},
 		Resources: commonSpec.Resources,
