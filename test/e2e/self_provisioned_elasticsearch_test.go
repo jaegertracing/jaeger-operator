@@ -108,26 +108,66 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	updateNodeCount := 2
-	changeNodeCount(jaegerInstanceName, updateNodeCount)
+	ProductionSmokeTest(jaegerInstanceName)
+
+	existingCollectorPodName, existingQueryPodName := getExistingPodNames(jaegerInstanceName)
+	updateESNodeCount := 2
+	updateCollectorCount := int32(2)
+	updateQueryCount := int32(2)
+
+	changeNodeCount(jaegerInstanceName, updateESNodeCount, updateCollectorCount, updateQueryCount)
 	updatedJaegerInstance := getJaegerInstance(jaegerInstanceName, namespace)
-	require.EqualValues(t, updateNodeCount, updatedJaegerInstance.Spec.Storage.Elasticsearch.NodeCount)
+	require.EqualValues(t, updateESNodeCount, updatedJaegerInstance.Spec.Storage.Elasticsearch.NodeCount)
+	require.EqualValues(t, updateCollectorCount, *updatedJaegerInstance.Spec.Collector.Replicas)
+	require.EqualValues(t, updateQueryCount, *updatedJaegerInstance.Spec.Query.Replicas)
 
 	// Make sure there are 2 ES deployments. Note: The deployment name is based on  "elasticsearch-cdm-" + namespace + jaegerInstanceName + "-1"
 	// with dashes in the namespace and  jaegerInstanceName removed
-	for i := 1; i <= updateNodeCount; i++ {
+	for i := 1; i <= updateESNodeCount; i++ {
 		deploymentName := "elasticsearch-cdm-" + strings.ReplaceAll(namespace, "-", "") + strings.ReplaceAll(jaegerInstanceName, "-", "") + "-" + strconv.Itoa(i)
 		logrus.Infof("Looking for deployment %s", deploymentName)
 		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, deploymentName, 1, retryInterval, timeout)
-		require.NoError(t, err, "Error waiting for query deployment")
+		require.NoError(t, err, "Error waiting for deployment: "+deploymentName)
 	}
+
+	/// Verify the number of Collector and Query pods
+	collectorPodCount := 0
+	queryPodCount := 0
+	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	require.NoError(t, err)
+	for _, pod := range pods.Items {
+		if strings.HasPrefix(pod.Name, jaegerInstanceName+"-collector") && pod.Name != existingCollectorPodName {
+			collectorPodCount++
+		} else if strings.HasPrefix(pod.Name, jaegerInstanceName+"-query") && pod.Name != existingQueryPodName {
+			queryPodCount++
+		}
+	}
+	require.EqualValues(t, updateCollectorCount, collectorPodCount)
+	require.EqualValues(t, updateQueryCount, queryPodCount)
 
 	ProductionSmokeTest(jaegerInstanceName)
 }
 
-func changeNodeCount(name string, newNodeCount int) {
+func getExistingPodNames(jaegerInstanceName string) (string, string) {
+	var existingCollectorPodName string
+	var existingQueryPodName string
+	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	require.NoError(t, err)
+	for _, pod := range pods.Items {
+		if strings.HasPrefix(pod.Name, jaegerInstanceName+"-collector") {
+			existingCollectorPodName = pod.Name
+		} else if strings.HasPrefix(pod.Name, jaegerInstanceName+"-query") {
+			existingQueryPodName = pod.Name
+		}
+	}
+	return existingCollectorPodName, existingQueryPodName
+}
+
+func changeNodeCount(name string, newESNodeCount int, newCollectorNodeCount, newQueryNodeCount int32) {
 	jaegerInstance := getJaegerInstance(name, namespace)
-	jaegerInstance.Spec.Storage.Elasticsearch.NodeCount = int32(newNodeCount)
+	jaegerInstance.Spec.Collector.Replicas = &newCollectorNodeCount
+	jaegerInstance.Spec.Query.Replicas = &newQueryNodeCount
+	jaegerInstance.Spec.Storage.Elasticsearch.NodeCount = int32(newESNodeCount)
 	err := fw.Client.Update(context.Background(), jaegerInstance)
 	require.NoError(t, err)
 }
