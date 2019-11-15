@@ -6,7 +6,7 @@ OPERATOR_VERSION=${OPERATOR_VERSION:-$(git describe --tags)}
 ## if we are on a release tag, let's extract the version number
 ## the other possible value, currently, is 'master' (or another branch name)
 ## if we are not running in the CI, it fallsback to the `git describe` above
-if [[ $OPERATOR_VERSION == release* ]]; then
+if [[ $OPERATOR_VERSION == v* ]]; then
     OPERATOR_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d\.]+)")
     MAJOR_MINOR=$(echo ${OPERATOR_VERSION} | awk -F. '{print $1"."$2}')
 fi
