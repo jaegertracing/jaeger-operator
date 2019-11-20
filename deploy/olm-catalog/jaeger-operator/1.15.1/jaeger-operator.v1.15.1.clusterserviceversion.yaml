@@ -10,55 +10,6 @@ metadata:
           "metadata": {
             "name": "jaeger-all-in-one-inmemory"
           }
-        },
-        {
-          "apiVersion": "jaegertracing.io/v1",
-          "kind": "Jaeger",
-          "metadata": {
-            "name": "jaeger-all-in-one-local-storage"
-          },
-          "spec": {
-            "storage": {
-              "options": {
-                "badger": {
-                  "directory-key": "/badger/key",
-                  "directory-value": "/badger/data",
-                  "ephemeral": false
-                }
-              },
-              "type": "badger",
-              "volumeMounts": [
-                {
-                  "mountPath": "/badger",
-                  "name": "data"
-                }
-              ],
-              "volumes": [
-                {
-                  "emptyDir": {},
-                  "name": "data"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "apiVersion": "jaegertracing.io/v1",
-          "kind": "Jaeger",
-          "metadata": {
-            "name": "jaeger-prod-elasticsearch"
-          },
-          "spec": {
-            "storage": {
-              "options": {
-                "es": {
-                  "server-urls": "http://elasticsearch.default.svc:9200"
-                }
-              },
-              "type": "elasticsearch"
-            },
-            "strategy": "production"
-          }
         }
       ]
     capabilities: Deep Insights
@@ -66,10 +17,10 @@ metadata:
     certified: "false"
     containerImage: docker.io/jaegertracing/jaeger-operator:1.15.1
     createdAt: "2019-09-04T13:28:40+00:00"
-    description: Provides tracing, monitoring and troubleshooting microservices-based
+    description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
-    support: Jaeger
+    support: Jaeger Community
   name: jaeger-operator.v1.15.1
   namespace: placeholder
 spec:
