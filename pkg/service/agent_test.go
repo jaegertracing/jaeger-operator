@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -26,10 +27,17 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 
 	for _, port := range svc.Spec.Ports {
 		ports[port.Port] = true
+		switch port.Port {
+		case
+			5775,
+			6831,
+			6832:
+			assert.Equal(t, corev1.ProtocolUDP, port.Protocol, "Expected port %v to be UDP, but wasn't", port)
+		}
 	}
 
 	for k, v := range ports {
-		assert.Equal(t, v, true, "Expected port %v to be specified, but wasn't", k)
+		assert.Equal(t, true, v, "Expected port %v to be specified, but wasn't", k)
 	}
 
 }
