@@ -30,13 +30,8 @@ TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../
 
 .DEFAULT_GOAL := build
 
-.PHONY: vendor
-vendor:
-	@echo Building vendor...
-	@${GO_FLAGS} go mod vendor
-
 .PHONY: check
-check: vendor
+check:
 	@echo Checking...
 	@go fmt $(PACKAGES) > $(FMT_LOG)
 	@.ci/import-order-cleanup.sh stdout > $(IMPORT_LOG)
@@ -47,7 +42,7 @@ ensure-generate-is-noop: generate
 	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go || (echo "Build failed: a model has been changed but the deep copy functions aren't up to date. Run 'make generate' and update your PR." && exit 1)
 
 .PHONY: format
-format: vendor
+format:
 	@echo Formatting code...
 	@.ci/import-order-cleanup.sh inplace
 	@go fmt $(PACKAGES)
@@ -63,7 +58,7 @@ security:
 	@${GOPATH}/bin/gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
 
 .PHONY: build
-build: vendor format
+build: format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 
@@ -243,7 +238,7 @@ ingress:
 	@minikube addons enable ingress
 
 .PHONY: generate
-generate: vendor
+generate:
 	@${GO_FLAGS} operator-sdk generate k8s
 
 .PHONY: test
@@ -271,7 +266,7 @@ install-tools:
 		github.com/securego/gosec/cmd/gosec
 
 .PHONY: install
-install: install-sdk install-tools vendor
+install: install-sdk install-tools
 
 .PHONY: operatorhub
 operatorhub: check-operatorhub-pr-template
