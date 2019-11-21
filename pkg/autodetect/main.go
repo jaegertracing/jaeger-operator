@@ -80,8 +80,10 @@ func (b *Background) Stop() {
 func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deployment {
 	instances := &v1.JaegerList{}
 	if err := b.cl.List(context.Background(), instances); err != nil {
+		log.WithError(err).Info("failed to retrieve the list of Jaeger instances")
 		return nil
 	}
+
 	requireUpdates := make([]*appsv1.Deployment, 0)
 	for i := 0; i < len(deps.Items); i++ {
 		dep := &deps.Items[i]
@@ -99,7 +101,15 @@ func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deplo
 		} else {
 			// Try to update the sidecar if is required
 			jaeger := inject.Select(dep, instances)
-			updated := inject.UpdateSideCar(jaeger, dep)
+			if jaeger == nil {
+				log.WithFields(log.Fields{
+					"deploymentName":      dep.Name,
+					"deploymentNamespace": dep.Namespace,
+				}).Debug("no suitable jaeger for this instance, skipping injection")
+				return nil
+			}
+
+			updated := inject.UpdateSidecar(jaeger, dep)
 			if updated {
 				if err := b.cl.Update(context.Background(), dep); err != nil {
 					return nil
