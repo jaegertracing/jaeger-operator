@@ -275,3 +275,8 @@ operatorhub: check-operatorhub-pr-template
 check-operatorhub-pr-template:
 	@curl https://raw.githubusercontent.com/operator-framework/community-operators/master/docs/pull_request_template.md -o .ci/.operatorhub-pr-template.md -s > /dev/null 2>&1
 	@git diff -s --exit-code .ci/.operatorhub-pr-template.md || (echo "Build failed: the PR template for OperatorHub has changed. Sync it and try again." && exit 1)
+
+.PHONY: local-jaeger-container
+local-jaeger-container:
+	@echo "Starting local container with Jaeger. Check http://localhost:16686"
+	@docker run -d --rm -p 16686:16686 -p 6831:6831/udp --name jaeger jaegertracing/all-in-one:1.15 > /dev/null
