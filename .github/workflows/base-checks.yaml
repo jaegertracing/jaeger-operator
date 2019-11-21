@@ -10,6 +10,14 @@ jobs:
       with:
         operator-sdk-version: v0.11.0
 
+    # from https://github.com/actions/cache/blob/master/examples.md#go---modules
+    - uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: "basic checks"
       run: ./.ci/script.sh
 

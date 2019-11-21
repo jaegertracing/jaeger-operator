@@ -21,6 +21,14 @@ jobs:
     - name: "start minikube"
       run: ./.ci/start-minikube.sh
 
+    # from https://github.com/actions/cache/blob/master/examples.md#go---modules
+    - uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: "running end to end test"
       env:
         CI: true
