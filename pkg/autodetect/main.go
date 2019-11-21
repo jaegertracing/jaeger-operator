@@ -106,7 +106,7 @@ func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deplo
 					"deploymentName":      dep.Name,
 					"deploymentNamespace": dep.Namespace,
 				}).Debug("no suitable jaeger for this instance, skipping injection")
-				return nil
+				continue
 			}
 
 			updated := inject.UpdateSidecar(jaeger, dep)

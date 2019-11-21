@@ -523,7 +523,7 @@ func TestRequireUpdates(t *testing.T) {
 	}
 
 	out := b.requireUpdates(deps)
-	assert.Nil(t, out)
+	assert.Len(t, out, 0)
 }
 
 type fakeClient struct {
