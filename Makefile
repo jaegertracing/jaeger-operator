@@ -33,9 +33,8 @@ TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../
 .PHONY: check
 check:
 	@echo Checking...
-	@go fmt $(PACKAGES) > $(FMT_LOG)
-	@.ci/import-order-cleanup.sh stdout > $(IMPORT_LOG)
-	@[ ! -s "$(FMT_LOG)" -a ! -s "$(IMPORT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) $(IMPORT_LOG) && false)
+	@.ci/format.sh > $(FMT_LOG)
+	@[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate
@@ -44,8 +43,7 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format:
 	@echo Formatting code...
-	@.ci/import-order-cleanup.sh inplace
-	@go fmt $(PACKAGES)
+	@.ci/format.sh
 
 .PHONY: lint
 lint:
@@ -263,7 +261,8 @@ install-sdk:
 install-tools:
 	@${GO_FLAGS} go get -u \
 		golang.org/x/lint/golint \
-		github.com/securego/gosec/cmd/gosec
+		github.com/securego/gosec/cmd/gosec \
+		golang.org/x/tools/cmd/goimports
 
 .PHONY: install
 install: install-sdk install-tools
