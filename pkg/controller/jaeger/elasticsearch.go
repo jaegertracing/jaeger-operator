@@ -2,12 +2,12 @@ package jaeger
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/global"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/global"
 	corev1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"

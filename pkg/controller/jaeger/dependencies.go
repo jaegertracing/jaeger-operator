@@ -3,11 +3,11 @@ package jaeger
 import (
 	"context"
 	"errors"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/api/key"
+	"go.opentelemetry.io/otel/global"
 	"google.golang.org/grpc/codes"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

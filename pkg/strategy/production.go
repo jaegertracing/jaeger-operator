@@ -2,10 +2,10 @@ package strategy
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/global"
 	"strings"
 
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 

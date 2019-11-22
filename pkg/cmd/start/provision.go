@@ -2,11 +2,11 @@ package start
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/api/key"
+	"go.opentelemetry.io/otel/global"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"

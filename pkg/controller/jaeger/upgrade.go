@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+
 	"go.opentelemetry.io/otel/global"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"

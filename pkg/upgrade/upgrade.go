@@ -2,11 +2,11 @@ package upgrade
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/global"
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/global"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"

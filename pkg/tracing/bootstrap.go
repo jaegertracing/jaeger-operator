@@ -1,10 +1,11 @@
 package tracing
 
 import (
+	"log"
+
 	"go.opentelemetry.io/otel/exporter/trace/jaeger"
 	"go.opentelemetry.io/otel/global"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"log"
 )
 
 var (
