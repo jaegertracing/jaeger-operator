@@ -77,10 +77,6 @@ func bootstrap(ctx context.Context) manager.Manager {
 	serveCRMetrics(ctx, cfg, namespace)
 	createMetricsService(ctx, cfg, namespace)
 
-	if viper.GetBool("provision-own-instance") {
-		provisionOwnJaeger(ctx, mgr.GetClient(), namespace)
-	}
-
 	return mgr
 }
 
