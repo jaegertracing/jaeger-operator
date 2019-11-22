@@ -30,6 +30,7 @@ fi
 
 # changes to deploy/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i deploy/operator.yaml
+sed "s~image: jaegertracing/jaeger-agent:.*~image: jaegertracing/jaeger-agent:${JAEGER_VERSION}~gi" -i deploy/operator.yaml
 
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml

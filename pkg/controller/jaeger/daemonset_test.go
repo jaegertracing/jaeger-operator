@@ -30,7 +30,7 @@ func TestDaemonSetsCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDaemonSets([]appsv1.DaemonSet{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
@@ -76,7 +76,7 @@ func TestDaemonSetsUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := appsv1.DaemonSet{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
@@ -119,7 +119,7 @@ func TestDaemonSetsDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -165,7 +165,7 @@ func TestDaemonSetsCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDaemonSets([]appsv1.DaemonSet{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,

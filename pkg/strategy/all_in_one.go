@@ -1,9 +1,11 @@
 package strategy
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -19,7 +21,11 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newAllInOneStrategy(jaeger *v1.Jaeger) S {
+func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "newAllInOneStrategy")
+	defer span.End()
+
 	c := S{typ: v1.DeploymentStrategyAllInOne}
 	jaeger.Logger().Debug("Creating all-in-one deployment")
 

@@ -1,9 +1,11 @@
 package strategy
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
@@ -20,7 +22,11 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newProductionStrategy(jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
+func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "newProductionStrategy")
+	defer span.End()
+
 	c := S{typ: v1.DeploymentStrategyProduction}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)

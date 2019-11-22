@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/global"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -15,6 +16,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 var (
@@ -22,7 +24,11 @@ var (
 	ErrKafkaUserRemoved = errors.New("kafka user has been removed")
 )
 
-func (r *ReconcileJaeger) applyKafkaUsers(jaeger v1.Jaeger, desired []kafkav1beta1.KafkaUser) error {
+func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta1.KafkaUser) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyKafkaUsers")
+	defer span.End()
+
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
@@ -33,8 +39,8 @@ func (r *ReconcileJaeger) applyKafkaUsers(jaeger v1.Jaeger, desired []kafkav1bet
 		}),
 	}
 	list := &kafkav1beta1.KafkaUserList{}
-	if err := r.client.List(context.Background(), list, opts...); err != nil {
-		return err
+	if err := r.client.List(ctx, list, opts...); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	inv := inventory.ForKafkaUsers(list.Items, desired)
@@ -43,8 +49,8 @@ func (r *ReconcileJaeger) applyKafkaUsers(jaeger v1.Jaeger, desired []kafkav1bet
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("creating kafka users")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -53,20 +59,20 @@ func (r *ReconcileJaeger) applyKafkaUsers(jaeger v1.Jaeger, desired []kafkav1bet
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("updating kafka user")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
 	// now, wait for all KafkaUsers to estabilize
 	for _, d := range inv.Create {
-		if err := r.waitForKafkaUserStability(d); err != nil {
-			return err
+		if err := r.waitForKafkaUserStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 	for _, d := range inv.Update {
-		if err := r.waitForKafkaUserStability(d); err != nil {
-			return err
+		if err := r.waitForKafkaUserStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -75,19 +81,23 @@ func (r *ReconcileJaeger) applyKafkaUsers(jaeger v1.Jaeger, desired []kafkav1bet
 			"kafka":     d.GetName(),
 			"namespace": d.GetNamespace(),
 		}).Debug("deleting kafka user")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
 	return nil
 }
 
-func (r *ReconcileJaeger) waitForKafkaUserStability(kafkaUser kafkav1beta1.KafkaUser) error {
+func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUser kafkav1beta1.KafkaUser) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "waitForKafkaUserStability")
+	defer span.End()
+
 	seen := false
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		k := &kafkav1beta1.KafkaUser{}
-		if err := r.client.Get(context.Background(), types.NamespacedName{Name: kafkaUser.GetName(), Namespace: kafkaUser.GetNamespace()}, k); err != nil {
+		if err := r.client.Get(ctx, types.NamespacedName{Name: kafkaUser.GetName(), Namespace: kafkaUser.GetNamespace()}, k); err != nil {
 			if k8serrors.IsNotFound(err) {
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
@@ -106,7 +116,7 @@ func (r *ReconcileJaeger) waitForKafkaUserStability(kafkaUser kafkav1beta1.Kafka
 				}).Debug("kafka user secret doesn't exist yet.")
 				return false, nil
 			}
-			return false, err
+			return false, tracing.HandleError(err, span)
 		}
 
 		seen = true

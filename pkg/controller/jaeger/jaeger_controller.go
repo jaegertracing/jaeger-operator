@@ -10,6 +10,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/api/key"
+	"go.opentelemetry.io/otel/global"
+	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +26,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 // Add creates a new Jaeger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -67,7 +71,7 @@ type ReconcileJaeger struct {
 	// that reads objects from the cache and writes to the apiserver
 	client          client.Client
 	scheme          *runtime.Scheme
-	strategyChooser func(*v1.Jaeger) strategy.S
+	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -76,8 +80,15 @@ type ReconcileJaeger struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	ctx := context.Background()
+
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "reconcile")
+	defer span.End()
+
 	execution := time.Now().UTC()
 
+	span.SetAttributes(key.String("name", request.Name), key.String("namespace", request.Namespace))
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
@@ -86,22 +97,25 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// Fetch the Jaeger instance
 	instance := &v1.Jaeger{}
-	err := r.client.Get(context.Background(), request.NamespacedName, instance)
+	err := r.client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			span.SetStatus(codes.NotFound)
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
+		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
 	logFields := instance.Logger().WithField("execution", execution)
 
 	if err := validate(instance); err != nil {
 		instance.Logger().WithError(err).Error("Failed to validate")
+		span.SetAttribute(key.String("error", err.Error()))
+		span.SetStatus(codes.InvalidArgument)
 		return reconcile.Result{}, err
 	}
 
@@ -123,11 +137,11 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		}
 
 		instance.Labels[v1.LabelOperatedBy] = identity
-		if err := r.client.Update(context.Background(), instance); err != nil {
+		if err := r.client.Update(ctx, instance); err != nil {
 			logFields.WithField(
 				"operator-identity", identity,
 			).WithError(err).Error("failed to set this operator as the manager of the instance")
-			return reconcile.Result{}, err
+			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 
 		logFields.WithField("operator-identity", identity).Debug("configured this operator as the owner of the CR")
@@ -145,23 +159,23 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
 	list := &corev1.SecretList{}
-	if err := r.client.List(context.Background(), list, opts); err != nil {
-		return reconcile.Result{}, err
+	if err := r.client.List(ctx, list, opts); err != nil {
+		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
-	str := r.runStrategyChooser(instance, list.Items)
+	str := r.runStrategyChooser(ctx, instance, list.Items)
 
-	updated, err := r.apply(*instance, str)
+	updated, err := r.apply(ctx, *instance, str)
 	if err != nil {
 		logFields.WithError(err).Error("failed to apply the changes")
-		return reconcile.Result{}, err
+		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 	instance = &updated
 
 	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
-		if err := r.client.Update(context.Background(), instance); err != nil {
+		if err := r.client.Update(ctx, instance); err != nil {
 			logFields.WithError(err).Error("failed to store back the current CustomResource")
-			return reconcile.Result{}, err
+			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 	}
 
@@ -169,7 +183,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		"namespace": request.Namespace,
 		"instance":  request.Name,
 		"execution": execution,
-	}).Debug("Reconciling Jaeger completed - reschedule in 5 seconds")
+	}).Debug("Reconciling Jaeger completed")
 
 	return reconcile.Result{}, nil
 }
@@ -184,33 +198,37 @@ func validate(jaeger *v1.Jaeger) error {
 	return nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
+func (r *ReconcileJaeger) runStrategyChooser(ctx context.Context, instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
 	if nil == r.strategyChooser {
-		return defaultStrategyChooser(instance, secrets)
+		return defaultStrategyChooser(ctx, instance, secrets)
 	}
 
-	return r.strategyChooser(instance)
+	return r.strategyChooser(ctx, instance)
 }
 
-func defaultStrategyChooser(instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
-	return strategy.For(context.Background(), instance, secrets)
+func defaultStrategyChooser(ctx context.Context, instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
+	return strategy.For(ctx, instance, secrets)
 }
 
-func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
-	jaeger, err := r.applyUpgrades(jaeger)
+func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "apply")
+	defer span.End()
+
+	jaeger, err := r.applyUpgrades(ctx, jaeger)
 	if err != nil {
-		return jaeger, err
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	// secrets have to be created before ES - they are mounted to the ES pod
-	if err := r.applySecrets(jaeger, str.Secrets()); err != nil {
-		return jaeger, err
+	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	elasticsearches := str.Elasticsearches()
 	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchYes) {
-		if err := r.applyElasticsearches(jaeger, elasticsearches); err != nil {
-			return jaeger, err
+		if err := r.applyElasticsearches(ctx, jaeger, elasticsearches); err != nil {
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(elasticsearches) > 0 {
 		log.WithFields(log.Fields{
@@ -222,12 +240,12 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, er
 	kafkas := str.Kafkas()
 	kafkaUsers := str.KafkaUsers()
 	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaYes) {
-		if err := r.applyKafkas(jaeger, kafkas); err != nil {
-			return jaeger, err
+		if err := r.applyKafkas(ctx, jaeger, kafkas); err != nil {
+			return jaeger, tracing.HandleError(err, span)
 		}
 
-		if err := r.applyKafkaUsers(jaeger, kafkaUsers); err != nil {
-			return jaeger, err
+		if err := r.applyKafkaUsers(ctx, jaeger, kafkaUsers); err != nil {
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(kafkas) > 0 || len(kafkaUsers) > 0 {
 		log.WithFields(log.Fields{
@@ -237,48 +255,48 @@ func (r *ReconcileJaeger) apply(jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, er
 	}
 
 	// storage dependencies have to be deployed after ES is ready
-	if err := r.handleDependencies(str); err != nil {
-		return jaeger, errors.Wrap(err, "failed to handler dependencies")
+	if err := r.handleDependencies(ctx, str); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyAccounts(jaeger, str.Accounts()); err != nil {
-		return jaeger, err
+	if err := r.applyAccounts(ctx, jaeger, str.Accounts()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyClusterRoleBindingBindings(jaeger, str.ClusterRoleBindings()); err != nil {
-		return jaeger, err
+	if err := r.applyClusterRoleBindingBindings(ctx, jaeger, str.ClusterRoleBindings()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyConfigMaps(jaeger, str.ConfigMaps()); err != nil {
-		return jaeger, err
+	if err := r.applyConfigMaps(ctx, jaeger, str.ConfigMaps()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyCronJobs(jaeger, str.CronJobs()); err != nil {
-		return jaeger, err
+	if err := r.applyCronJobs(ctx, jaeger, str.CronJobs()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyDaemonSets(jaeger, str.DaemonSets()); err != nil {
-		return jaeger, err
+	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	// seems counter intuitive to have services created *before* deployments,
 	// but some resources used by deployments are created by services, such as TLS certs
 	// for the oauth proxy, if one is used
-	if err := r.applyServices(jaeger, str.Services()); err != nil {
-		return jaeger, err
+	if err := r.applyServices(ctx, jaeger, str.Services()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyDeployments(jaeger, str.Deployments()); err != nil {
-		return jaeger, err
+	if err := r.applyDeployments(ctx, jaeger, str.Deployments()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformOpenShift) {
-		if err := r.applyRoutes(jaeger, str.Routes()); err != nil {
-			return jaeger, err
+		if err := r.applyRoutes(ctx, jaeger, str.Routes()); err != nil {
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else {
-		if err := r.applyIngresses(jaeger, str.Ingresses()); err != nil {
-			return jaeger, err
+		if err := r.applyIngresses(ctx, jaeger, str.Ingresses()); err != nil {
+			return jaeger, tracing.HandleError(err, span)
 		}
 	}
 

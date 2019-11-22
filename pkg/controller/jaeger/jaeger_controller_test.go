@@ -35,7 +35,7 @@ func TestNewJaegerInstance(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		jaeger.Spec.Strategy = "custom-strategy"
 		return strategy.S{}
 	}

@@ -1,6 +1,7 @@
 package strategy
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -19,7 +20,7 @@ func init() {
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
-	c := newAllInOneStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
+	c := newAllInOneStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, false)
 }
 
@@ -29,9 +30,9 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	name := "TestCreateAllInOneDeploymentOnOpenShift"
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 
-	c := newAllInOneStrategy(jaeger)
+	c := newAllInOneStrategy(context.Background(), jaeger)
 	assertDeploymentsAndServicesForAllInOne(t, name, c, false, true, false)
 }
 
@@ -41,7 +42,7 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newAllInOneStrategy(j)
+	c := newAllInOneStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForAllInOne(t, name, c, true, false, false)
 }
 
@@ -55,14 +56,14 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newAllInOneStrategy(j)
+	c := newAllInOneStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, true)
 }
 
 func TestDelegateAllInOneDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateAllInOneDependencies"})
-	c := newAllInOneStrategy(j)
+	c := newAllInOneStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -122,7 +123,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 
 func TestSparkDependenciesAllInOne(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newAllInOneStrategy(jaeger)
+		return newAllInOneStrategy(context.Background(), jaeger)
 	})
 }
 
@@ -161,7 +162,7 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 
 func TestEsIndexCleanerAllInOne(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newAllInOneStrategy(jaeger)
+		return newAllInOneStrategy(context.Background(), jaeger)
 	})
 }
 

@@ -3,29 +3,41 @@ module github.com/jaegertracing/jaeger-operator
 go 1.12
 
 require (
+	cloud.google.com/go v0.47.0 // indirect
 	github.com/go-openapi/spec v0.17.2
-	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/gobuffalo/flect v0.1.6 // indirect
+	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/googleapis/gnostic v0.2.0
+	github.com/grpc-ecosystem/grpc-gateway v1.11.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.10.2 // indirect
-	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/openshift/api v0.0.0-20180830153656-5ad8479f64f1
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
+	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/prometheus/client_golang v1.2.1 // indirect
+	github.com/rogpeppe/go-internal v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/viper v1.3.2
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.15.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
+	go.opencensus.io v0.22.1 // indirect
+	go.opentelemetry.io/otel v0.1.2
+	go.opentelemetry.io/otel/exporter/trace/jaeger v0.1.2
+	go.uber.org/multierr v1.2.0 // indirect
+	go.uber.org/zap v1.11.0 // indirect
+	golang.org/x/crypto v0.0.0-20191028145041-f83a4685e152 // indirect
+	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20191018095205-727590c5006e // indirect
-	golang.org/x/tools v0.0.0-20191018000036-341939e08647 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.4 // indirect
+	golang.org/x/sys v0.0.0-20191028145128-b67d8b46d239 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	golang.org/x/tools v0.0.0-20191028161607-c8a4b8d038a6 // indirect
+	google.golang.org/api v0.12.0 // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/grpc v1.24.0
 	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible

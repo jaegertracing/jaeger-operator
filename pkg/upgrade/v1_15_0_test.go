@@ -28,7 +28,7 @@ func TestUpgradeDeprecatedOptions(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -55,7 +55,7 @@ func TestRemoveDeprecatedFlagWithNoReplacement(t *testing.T) {
 	assert.Len(t, existing.Spec.Collector.Options.Map(), 1)
 
 	// test
-	updated, err := upgrade1_15_0(nil, *existing)
+	updated, err := upgrade1_15_0(context.Background(), nil, *existing)
 
 	// verify
 	assert.NoError(t, err)

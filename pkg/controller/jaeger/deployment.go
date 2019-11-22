@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -14,6 +15,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 var (
@@ -21,7 +23,11 @@ var (
 	ErrDeploymentRemoved = errors.New("deployment has been removed")
 )
 
-func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.Deployment) error {
+func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.Deployment) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyDeployments")
+	defer span.End()
+
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
@@ -30,8 +36,8 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 		}),
 	}
 	depList := &appsv1.DeploymentList{}
-	if err := r.client.List(context.Background(), depList, opts...); err != nil {
-		return err
+	if err := r.client.List(ctx, depList, opts...); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	// we now traverse the list, so that we end up with three lists:
@@ -44,8 +50,8 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 			"deployment": d.Name,
 			"namespace":  d.Namespace,
 		}).Debug("creating deployment")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -54,21 +60,21 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 			"deployment": d.Name,
 			"namespace":  d.Namespace,
 		}).Debug("updating deployment")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
 	// wait for the created and updated pods to stabilize, before we move on with
 	// the removal of the old deployments
 	for _, d := range depInventory.Create {
-		if err := r.waitForStability(d); err != nil {
-			return err
+		if err := r.waitForStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 	for _, d := range depInventory.Update {
-		if err := r.waitForStability(d); err != nil {
-			return err
+		if err := r.waitForStability(ctx, d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -77,22 +83,26 @@ func (r *ReconcileJaeger) applyDeployments(jaeger v1.Jaeger, desired []appsv1.De
 			"deployment": d.Name,
 			"namespace":  d.Namespace,
 		}).Debug("deleting deployment")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
 	return nil
 }
 
-func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
+func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deployment) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "waitForStability")
+	defer span.End()
+
 	// TODO: decide what's a good timeout... the first cold run might take a while to download
 	// the images, subsequent runs should take only a few seconds
 
 	seen := false
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
-		if err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
+		if err := r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
 			if k8serrors.IsNotFound(err) {
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
@@ -111,7 +121,7 @@ func (r *ReconcileJaeger) waitForStability(dep appsv1.Deployment) error {
 				}).Debug("Deployment doesn't exist yet.")
 				return false, nil
 			}
-			return false, err
+			return false, tracing.HandleError(err, span)
 		}
 
 		seen = true

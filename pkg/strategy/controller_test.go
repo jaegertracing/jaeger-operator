@@ -39,7 +39,7 @@ func TestNewControllerForProduction(t *testing.T) {
 func TestUnknownStorage(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
 	jaeger.Spec.Storage.Type = "unknown"
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
 }
 
@@ -68,7 +68,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 
 func TestDefaultName(t *testing.T) {
 	jaeger := &v1.Jaeger{}
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.NotEmpty(t, jaeger.Name)
 }
 
@@ -81,7 +81,7 @@ func TestIncompatibleMemoryStorageForProduction(t *testing.T) {
 			},
 		},
 	}
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
@@ -94,7 +94,7 @@ func TestIncompatibleBadgerStorageForProduction(t *testing.T) {
 			},
 		},
 	}
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
@@ -107,7 +107,7 @@ func TestIncompatibleStorageForStreaming(t *testing.T) {
 			},
 		},
 	}
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
@@ -136,14 +136,14 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneByDefault"})
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneWhenExplicitSettingToNone"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
@@ -152,7 +152,7 @@ func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToOAuthProxyByDefaultOnOpenShift"})
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 
 	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
@@ -161,7 +161,7 @@ func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneOnNonOpenShift"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
@@ -173,7 +173,7 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAcceptExplicitValueFromSecurityWhenOnOpenShift"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }

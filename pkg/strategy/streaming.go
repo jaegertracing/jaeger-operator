@@ -1,10 +1,12 @@
 package strategy
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -23,7 +25,11 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-func newStreamingStrategy(jaeger *v1.Jaeger) S {
+func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
+	defer span.End()
+
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
@@ -56,7 +62,7 @@ func newStreamingStrategy(jaeger *v1.Jaeger) S {
 	// when we know we've been the ones placing the broker information in the configuration
 	if (!pfound && !cfound) || provisioned {
 		jaeger.Logger().Info("Provisioning Kafka, this might take a while...")
-		manifest = autoProvisionKafka(jaeger, manifest)
+		manifest = autoProvisionKafka(ctx, jaeger, manifest)
 	}
 
 	// add the deployments
@@ -112,7 +118,11 @@ func newStreamingStrategy(jaeger *v1.Jaeger) S {
 	return manifest
 }
 
-func autoProvisionKafka(jaeger *v1.Jaeger, manifest S) S {
+func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "autoProvisionKafka")
+	defer span.End()
+
 	if jaeger.Annotations == nil {
 		jaeger.Annotations = map[string]string{}
 	}

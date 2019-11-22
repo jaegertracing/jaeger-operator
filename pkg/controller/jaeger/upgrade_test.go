@@ -1,6 +1,7 @@
 package jaeger
 
 import (
+	"context"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -24,7 +25,7 @@ func TestDirectNextMinor(t *testing.T) {
 	j.Status.Version = "1.12.0"
 
 	//test
-	j, err := r.applyUpgrades(j)
+	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify
 	assert.NoError(t, err)
@@ -40,7 +41,7 @@ func TestSetVersionOnNewInstance(t *testing.T) {
 	j := *v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 
 	//test
-	j, err := r.applyUpgrades(j)
+	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify
 	assert.NoError(t, err)

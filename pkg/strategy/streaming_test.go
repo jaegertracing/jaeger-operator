@@ -22,13 +22,13 @@ func init() {
 
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "my-instance"
-	c := newStreamingStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
+	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
 }
 
 func TestStreamingKafkaProvisioning(t *testing.T) {
 	name := "my-instance"
-	c := newStreamingStrategy(v1.NewJaeger(types.NamespacedName{Name: name}))
+	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 1)
@@ -41,7 +41,7 @@ func TestStreamingNoKafkaProvisioningWhenConsumerBrokersSet(t *testing.T) {
 	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{
 		"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
 	})
-	c := newStreamingStrategy(jaeger)
+	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 0)
@@ -53,7 +53,7 @@ func TestStreamingNoKafkaProvisioningWhenProducerBrokersSet(t *testing.T) {
 	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
 		"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
 	})
-	c := newStreamingStrategy(jaeger)
+	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 0)
@@ -65,9 +65,9 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	name := "my-instance"
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	normalize(jaeger)
+	normalize(context.Background(), jaeger)
 
-	c := newStreamingStrategy(jaeger)
+	c := newStreamingStrategy(context.Background(), jaeger)
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, true, false)
 }
 
@@ -77,7 +77,7 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newStreamingStrategy(j)
+	c := newStreamingStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForStreaming(t, name, c, true, false, false)
 }
 
@@ -91,7 +91,7 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newStreamingStrategy(j)
+	c := newStreamingStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, true)
 }
 
@@ -161,7 +161,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 func TestDelegateStreamingDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	c := newStreamingStrategy(j)
+	c := newStreamingStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -216,19 +216,19 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 
 func TestSparkDependenciesStreaming(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newStreamingStrategy(jaeger)
+		return newStreamingStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestEsIndexClenarStreaming(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newStreamingStrategy(jaeger)
+		return newStreamingStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	c := newStreamingStrategy(j)
+	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
@@ -245,7 +245,7 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
 
 	// test
-	autoProvisionKafka(jaeger, manifest)
+	autoProvisionKafka(context.Background(), jaeger, manifest)
 
 	// verify
 	assert.Equal(t, v1.AnnotationProvisionedKafkaValue, jaeger.Annotations[v1.AnnotationProvisionedKafkaKey])
@@ -297,7 +297,8 @@ func TestReplaceVolume(t *testing.T) {
 	}
 
 	// test
-	autoProvisionKafka(instance, newStreamingStrategy(instance))
+	ctx := context.Background()
+	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
 	assert.Len(t, instance.Spec.Volumes, 3)
@@ -333,7 +334,8 @@ func TestReplaceVolumeMount(t *testing.T) {
 	}
 
 	// test
-	autoProvisionKafka(instance, newStreamingStrategy(instance))
+	ctx := context.Background()
+	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
 	assert.Len(t, instance.Spec.VolumeMounts, 3)

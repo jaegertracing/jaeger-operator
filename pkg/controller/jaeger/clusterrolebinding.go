@@ -4,21 +4,27 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/global"
 	rbac "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-func (r *ReconcileJaeger) applyClusterRoleBindingBindings(jaeger v1.Jaeger, desired []rbac.ClusterRoleBinding) error {
+func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, jaeger v1.Jaeger, desired []rbac.ClusterRoleBinding) error {
+	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "applyClusterRoleBindingBindings")
+	defer span.End()
+
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
 	list := &rbac.ClusterRoleBindingList{}
-	if err := r.client.List(context.Background(), list, opts); err != nil {
-		return err
+	if err := r.client.List(ctx, list, opts); err != nil {
+		return tracing.HandleError(err, span)
 	}
 
 	inv := inventory.ForClusterRoleBindings(list.Items, desired)
@@ -27,8 +33,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(jaeger v1.Jaeger, desi
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,
 		}).Debug("creating cluster role binding")
-		if err := r.client.Create(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Create(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -37,8 +43,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(jaeger v1.Jaeger, desi
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,
 		}).Debug("updating cluster role binding")
-		if err := r.client.Update(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Update(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 
@@ -47,8 +53,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(jaeger v1.Jaeger, desi
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,
 		}).Debug("deleting cluster role binding")
-		if err := r.client.Delete(context.Background(), &d); err != nil {
-			return err
+		if err := r.client.Delete(ctx, &d); err != nil {
+			return tracing.HandleError(err, span)
 		}
 	}
 

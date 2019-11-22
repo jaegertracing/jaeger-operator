@@ -1,6 +1,8 @@
 package upgrade
 
 import (
+	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -8,7 +10,7 @@ import (
 
 type version struct {
 	v       string
-	upgrade func(client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error)
+	upgrade func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error)
 	next    *version
 }
 
@@ -32,6 +34,6 @@ var (
 	}
 )
 
-func noop(client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+func noop(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
 	return jaeger, nil
 }

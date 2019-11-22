@@ -33,7 +33,7 @@ func TestDeploymentCreate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
@@ -82,7 +82,7 @@ func TestDeploymentUpdate(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		depUpdated := appsv1.Deployment{}
 		depUpdated.Name = orig.Name
 		depUpdated.Namespace = orig.Namespace
@@ -126,7 +126,7 @@ func TestDeploymentDelete(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		return strategy.S{}
 	}
 
@@ -167,7 +167,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	dep.Status.ReadyReplicas = 1
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{dep})
 		return s
 	}
@@ -236,7 +236,7 @@ func TestDeploymentCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
-	r.strategyChooser = func(jaeger *v1.Jaeger) strategy.S {
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithDeployments([]appsv1.Deployment{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
