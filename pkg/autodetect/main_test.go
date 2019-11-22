@@ -495,6 +495,37 @@ func TestCleanDeployments(t *testing.T) {
 	assert.Contains(t, persisted2.Labels, inject.Label)
 }
 
+func TestRequireUpdates(t *testing.T) {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+	b := WithClients(cl, dcl)
+
+	deps := &appsv1.DeploymentList{
+		Items: []appsv1.Deployment{{
+			Spec: appsv1.DeploymentSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name: "my-business-container",
+							},
+							{
+								Name: "jaeger-agent", // manually added sidecar
+							},
+						},
+					},
+				},
+			},
+		}},
+	}
+
+	out := b.requireUpdates(deps)
+	assert.Len(t, out, 0)
+}
+
 type fakeClient struct {
 	client.Client
 	CreateFunc func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
