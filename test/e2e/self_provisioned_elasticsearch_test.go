@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 

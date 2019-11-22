@@ -23,6 +23,9 @@ jobs:
     - name: "start openshift"
       run: ./.ci/start-openshift.sh
 
+    - name: "install go tools"
+      run: make install-tools
+
     - name: "running end to end test"
       env:
         CI: true

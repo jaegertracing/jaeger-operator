@@ -21,6 +21,9 @@ jobs:
     - name: "start minikube"
       run: ./.ci/start-minikube.sh
 
+    - name: "install go tools"
+      run: make install-tools
+
     - name: "running end to end test"
       env:
         CI: true
