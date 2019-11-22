@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/api/key"
-	apitrace "go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/global"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
@@ -218,18 +217,18 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 
 	jaeger, err := r.applyUpgrades(ctx, jaeger)
 	if err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	// secrets have to be created before ES - they are mounted to the ES pod
 	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	elasticsearches := str.Elasticsearches()
 	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchYes) {
 		if err := r.applyElasticsearches(ctx, jaeger, elasticsearches); err != nil {
-			return handleErrorWithJaeger(jaeger, err, span)
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(elasticsearches) > 0 {
 		log.WithFields(log.Fields{
@@ -242,11 +241,11 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	kafkaUsers := str.KafkaUsers()
 	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaYes) {
 		if err := r.applyKafkas(ctx, jaeger, kafkas); err != nil {
-			return handleErrorWithJaeger(jaeger, err, span)
+			return jaeger, tracing.HandleError(err, span)
 		}
 
 		if err := r.applyKafkaUsers(ctx, jaeger, kafkaUsers); err != nil {
-			return handleErrorWithJaeger(jaeger, err, span)
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(kafkas) > 0 || len(kafkaUsers) > 0 {
 		log.WithFields(log.Fields{
@@ -257,53 +256,49 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 
 	// storage dependencies have to be deployed after ES is ready
 	if err := r.handleDependencies(ctx, str); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyAccounts(ctx, jaeger, str.Accounts()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyClusterRoleBindingBindings(ctx, jaeger, str.ClusterRoleBindings()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyConfigMaps(ctx, jaeger, str.ConfigMaps()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyCronJobs(ctx, jaeger, str.CronJobs()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	// seems counter intuitive to have services created *before* deployments,
 	// but some resources used by deployments are created by services, such as TLS certs
 	// for the oauth proxy, if one is used
 	if err := r.applyServices(ctx, jaeger, str.Services()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if err := r.applyDeployments(ctx, jaeger, str.Deployments()); err != nil {
-		return handleErrorWithJaeger(jaeger, err, span)
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformOpenShift) {
 		if err := r.applyRoutes(ctx, jaeger, str.Routes()); err != nil {
-			return handleErrorWithJaeger(jaeger, err, span)
+			return jaeger, tracing.HandleError(err, span)
 		}
 	} else {
 		if err := r.applyIngresses(ctx, jaeger, str.Ingresses()); err != nil {
-			return handleErrorWithJaeger(jaeger, err, span)
+			return jaeger, tracing.HandleError(err, span)
 		}
 	}
 
 	return jaeger, nil
-}
-
-func handleErrorWithJaeger(jaeger v1.Jaeger, err error, span apitrace.Span) (v1.Jaeger, error) {
-	return jaeger, tracing.HandleError(err, span)
 }

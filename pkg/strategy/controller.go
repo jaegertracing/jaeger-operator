@@ -31,7 +31,7 @@ var (
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "strategy")
+	ctx, span := tracer.Start(ctx, "strategyForInstance")
 	defer span.End()
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {

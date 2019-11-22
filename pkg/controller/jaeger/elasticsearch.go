@@ -51,7 +51,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 			return tracing.HandleError(err, span)
 		}
 		if err := waitForAvailableElastic(ctx, r.client, d); err != nil {
-			return tracing.HandleError(err, span)
+			return tracing.HandleError(errors.Wrap(err, "elasticsearch cluster didn't get to ready state"), span)
 		}
 	}
 
