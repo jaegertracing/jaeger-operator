@@ -251,3 +251,22 @@ func CleanSidecar(deployment *appsv1.Deployment) {
 		}
 	}
 }
+
+// IfNeeded inject the sidecar on deployment only if it is required
+func IfNeeded(instance *appsv1.Deployment, pods *v1.JaegerList) *appsv1.Deployment {
+	if Needed(instance) {
+		jaeger := Select(instance, pods)
+		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
+			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+			// Verified that jaeger instance was found and is not marked for deletion.
+			jaeger.Logger().WithFields(log.Fields{
+				"deploymentName":      instance.Name,
+				"deploymentNamespace": instance.Namespace,
+			}).Info("Injecting Jaeger Agent sidecar")
+			instance = Sidecar(jaeger, instance)
+			return instance
+		}
+		log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+	}
+	return nil
+}

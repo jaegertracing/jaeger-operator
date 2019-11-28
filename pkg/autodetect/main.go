@@ -78,61 +78,42 @@ func (b *Background) Stop() {
 	b.ticker.Stop()
 }
 
-func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deployment {
+// Detects when a deployment needs an update or an injection, this is related to deployment controller
+// the reason for this is because the operator might not be running when the deployment is created or updated.
+func (b *Background) detectDeploymentUpdates() error {
+	deps := &appsv1.DeploymentList{}
+	if err := b.clReader.List(context.Background(), deps); err != nil {
+		return err
+	}
 	instances := &v1.JaegerList{}
 	if err := b.clReader.List(context.Background(), instances); err != nil {
 		log.WithError(err).Info("failed to retrieve the list of Jaeger instances")
-		return nil
+		return err
 	}
-
-	requireUpdates := make([]*appsv1.Deployment, 0)
 	for i := 0; i < len(deps.Items); i++ {
 		dep := &deps.Items[i]
-		if inject.Needed(dep) { // If sidecar is not present and should be
-			jaeger := inject.Select(dep, instances)
-			if jaeger != nil { // Instance exists.
-				jaeger.Logger().WithFields(log.Fields{
-					"deploymentName":      dep.Name,
-					"deploymentNamespace": dep.Namespace,
-				}).Info("Injecting Jaeger Agent sidecar")
-				dep.Annotations[inject.Annotation] = jaeger.Name
-				newDep := inject.Sidecar(jaeger, dep)
-				requireUpdates = append(requireUpdates, newDep)
-			}
-		} else {
+		updatedDep := inject.IfNeeded(dep, instances)
+		if updatedDep == nil {
 			// Try to update the sidecar if is required
 			jaeger := inject.Select(dep, instances)
 			if jaeger == nil {
 				log.WithFields(log.Fields{
 					"deploymentName":      dep.Name,
 					"deploymentNamespace": dep.Namespace,
-				}).Debug("no suitable jaeger for this instance, skipping injection")
+				}).Debug("no suitable jaeger for this instance, skipping update")
 				continue
 			}
+			if inject.UpdateSidecar(jaeger, dep) {
+				updatedDep = dep
+			}
+		}
 
-			updated := inject.UpdateSidecar(jaeger, dep)
-			if updated {
-				if err := b.cl.Update(context.Background(), dep); err != nil {
-					return nil
-				}
+		if updatedDep != nil {
+			if err := b.cl.Update(context.Background(), dep); err != nil {
+				return err
 			}
 		}
 	}
-	return requireUpdates
-}
-
-func (b *Background) detectDeploymentUpdates() error {
-	deps := &appsv1.DeploymentList{}
-	if err := b.clReader.List(context.Background(), deps); err != nil {
-		return err
-	}
-	injectedDeps := b.requireUpdates(deps)
-	for _, d := range injectedDeps {
-		if err := b.cl.Update(context.Background(), d); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

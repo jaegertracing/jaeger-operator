@@ -3,6 +3,10 @@ package deployment
 import (
 	"context"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
+
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,9 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 // Add creates a new Deployment Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -80,33 +81,18 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	pods := &v1.JaegerList{}
+	err = r.client.List(context.Background(), pods)
+	if err != nil {
+		log.WithError(err).Error("failed to get the available Jaeger pods")
+		return reconcile.Result{}, err
+	}
 
-	if inject.Needed(instance) {
-		pods := &v1.JaegerList{}
-		opts := []client.ListOption{}
-		err := r.client.List(context.Background(), pods, opts...)
-		if err != nil {
-			log.WithError(err).Error("failed to get the available Jaeger pods")
+	injected := inject.IfNeeded(instance, pods)
+
+	if injected != nil {
+		if err := r.client.Update(context.Background(), injected); err != nil {
 			return reconcile.Result{}, err
-		}
-
-		jaeger := inject.Select(instance, pods)
-		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-			// Verified that jaeger instance was found and is not marked for deletion.
-			log.WithFields(log.Fields{
-				"deployment":       instance.Name,
-				"namespace":        instance.Namespace,
-				"jaeger":           jaeger.Name,
-				"jaeger-namespace": jaeger.Namespace,
-			}).Info("Injecting Jaeger Agent sidecar")
-			instance = inject.Sidecar(jaeger, instance)
-			if err := r.client.Update(context.Background(), instance); err != nil {
-				log.WithField("deployment", instance).WithError(err).Error("failed to update")
-				return reconcile.Result{}, err
-			}
-		} else {
-			log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 		}
 	}
 

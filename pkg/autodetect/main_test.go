@@ -23,6 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
@@ -496,34 +498,96 @@ func TestCleanDeployments(t *testing.T) {
 }
 
 func TestRequireUpdates(t *testing.T) {
+	jaeger1 := v1.NewJaeger(types.NamespacedName{
+		Name:      "Jaeger1",
+		Namespace: "TestNS",
+	})
+
+	jaeger2 := v1.NewJaeger(types.NamespacedName{
+		Name:      "Jaeger2",
+		Namespace: "TestNS",
+	})
+
 	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
 	b := WithClients(cl, dcl, cl)
 
-	deps := &appsv1.DeploymentList{
-		Items: []appsv1.Deployment{{
-			Spec: appsv1.DeploymentSpec{
-				Template: corev1.PodTemplateSpec{
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							{
-								Name: "my-business-container",
-							},
-							{
-								Name: "jaeger-agent", // manually added sidecar
-							},
+	dep := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name: "my-business-container",
 						},
 					},
 				},
 			},
-		}},
+		},
 	}
+	dep.Name = "my-business-container"
 
-	out := b.requireUpdates(deps)
-	assert.Len(t, out, 0)
+	dep2 := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name: "my-business-container-2",
+						},
+						{
+							Name: "jaeger-agent", // manually added sidecar
+						},
+					},
+				},
+			},
+		},
+	}
+	dep2.Name = "my-business-container-2"
+
+	err := cl.Create(context.TODO(), jaeger1)
+	require.NoError(t, err)
+	err = cl.Create(context.TODO(), jaeger2)
+	require.NoError(t, err)
+
+	dep.Annotations = map[string]string{inject.Annotation: jaeger1.Name}
+	err = cl.Create(context.TODO(), dep)
+	require.NoError(t, err)
+
+	err = cl.Create(context.TODO(), dep2)
+
+	require.NoError(t, err)
+	err = b.detectDeploymentUpdates()
+	require.NoError(t, err)
+	persisted := &appsv1.Deployment{}
+	err = cl.Get(context.Background(), types.NamespacedName{
+		Namespace: dep.Namespace,
+		Name:      dep.Name,
+	}, persisted)
+	assert.Equal(t, 2, len(persisted.Spec.Template.Spec.Containers))
+	err = cl.Get(context.Background(), types.NamespacedName{
+		Namespace: dep2.Namespace,
+		Name:      dep2.Name,
+	}, persisted)
+	assert.NoError(t, err)
+
+	dep.Annotations = map[string]string{inject.Annotation: jaeger2.Name}
+	err = cl.Update(context.Background(), dep)
+	require.NoError(t, err)
+
+	err = b.detectDeploymentUpdates()
+	err = cl.Get(context.Background(), types.NamespacedName{
+		Namespace: dep.Namespace,
+		Name:      dep.Name,
+	}, persisted)
+
+	reporterEndpoint := fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForHeadlessCollectorService(jaeger2), jaeger2.Namespace)
+	assert.Contains(t, persisted.Spec.Template.Spec.Containers[1].Args, reporterEndpoint)
+
 }
 
 type fakeClient struct {

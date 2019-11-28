@@ -435,6 +435,29 @@ func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 	assert.Equal(t, dep.Annotations["prometheus.io/port"], "9090")
 }
 
+func TestInjectIfNeeded(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my_jaeger"})
+
+	jaegerList := v1.JaegerList{
+		Items: []v1.Jaeger{*jaeger},
+	}
+
+	depNonExistJaeger := dep(map[string]string{
+		Annotation: "other_jaeger",
+	}, map[string]string{})
+
+	depNeedInjection := dep(map[string]string{
+		Annotation: "my_jaeger",
+	}, map[string]string{})
+
+	injectedDep1 := IfNeeded(depNonExistJaeger, &jaegerList)
+	assert.Nil(t, injectedDep1)
+	injectedDep2 := IfNeeded(depNeedInjection, &jaegerList)
+	assert.NotNil(t, injectedDep2)
+	assert.Len(t, injectedDep2.Spec.Template.Spec.Containers, 2)
+
+}
+
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
