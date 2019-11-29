@@ -43,8 +43,12 @@ func (in *FreeForm) DeepCopyInto(out *FreeForm) {
 	*out = *in
 	if in.json != nil {
 		in, out := &in.json, &out.json
-		*out = make([]byte, len(*in))
-		copy(*out, *in)
+		*out = new([]byte)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]byte, len(*in))
+			copy(*out, *in)
+		}
 	}
 	return
 }
@@ -387,7 +391,7 @@ func (in *JaegerIngressSpec) DeepCopyInto(out *JaegerIngressSpec) {
 		*out = new(bool)
 		**out = **in
 	}
-	out.OpenShift = in.OpenShift
+	out.Openshift = in.Openshift
 	if in.Hosts != nil {
 		in, out := &in.Hosts, &out.Hosts
 		*out = make([]string, len(*in))
@@ -601,8 +605,12 @@ func (in *Options) DeepCopyInto(out *Options) {
 	}
 	if in.json != nil {
 		in, out := &in.json, &out.json
-		*out = make([]byte, len(*in))
-		copy(*out, *in)
+		*out = new([]byte)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]byte, len(*in))
+			copy(*out, *in)
+		}
 	}
 	return
 }

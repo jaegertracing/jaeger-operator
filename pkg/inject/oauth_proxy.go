@@ -49,20 +49,20 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
 	}}
 
-	if len(jaeger.Spec.Ingress.OpenShift.HtpasswdFile) > 0 {
-		args = append(args, fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Ingress.OpenShift.HtpasswdFile))
+	if len(jaeger.Spec.Ingress.Openshift.HtpasswdFile) > 0 {
+		args = append(args, fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Ingress.Openshift.HtpasswdFile))
 		args = append(args, "--display-htpasswd-form=false")
 
 		// we can only get VolumeMounts from the top-level node
 		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
 	}
 
-	if len(jaeger.Spec.Ingress.OpenShift.SAR) > 0 {
-		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.OpenShift.SAR))
+	if len(jaeger.Spec.Ingress.Openshift.SAR) > 0 {
+		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.Openshift.SAR))
 	}
 
-	if len(jaeger.Spec.Ingress.OpenShift.DelegateURLs) > 0 && viper.GetBool("auth-delegator-available") {
-		args = append(args, fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.OpenShift.DelegateURLs))
+	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && viper.GetBool("auth-delegator-available") {
+		args = append(args, fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls))
 	}
 
 	sort.Strings(args)

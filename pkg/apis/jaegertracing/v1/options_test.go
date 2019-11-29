@@ -122,7 +122,7 @@ func TestExposedMap(t *testing.T) {
 func TestMarshallRaw(t *testing.T) {
 	json := []byte(`{"cassandra": {"servers": "cassandra:9042"}}`)
 	o := NewOptions(nil)
-	o.json = json
+	o.json = &json
 	bytes, err := o.MarshalJSON()
 	assert.NoError(t, err)
 	assert.Equal(t, bytes, json)

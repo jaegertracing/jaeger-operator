@@ -10,7 +10,7 @@ import (
 // Options defines a common options parameter to the different structs
 type Options struct {
 	opts map[string]string
-	json []byte
+	json *[]byte
 }
 
 // NewOptions build a new Options object based on the given map
@@ -47,18 +47,25 @@ func (o *Options) UnmarshalJSON(b []byte) error {
 	}
 
 	o.parse(entries)
-	o.json = b
+	o.json = &b
 	return nil
 }
 
 // MarshalJSON specifies how to convert this object into JSON
 func (o Options) MarshalJSON() ([]byte, error) {
-	if len(o.json) == 0 && len(o.opts) == 0 {
+	if nil != o.json {
+		return *o.json, nil
+	}
+
+	if len(o.opts) == 0 {
 		return []byte("{}"), nil
-	} else if len(o.json) == 0 && len(o.opts) > 0 {
+	}
+
+	if len(o.opts) > 0 {
 		return json.Marshal(o.opts)
 	}
-	return o.json, nil
+
+	return *o.json, nil
 }
 
 func (o *Options) parse(entries map[string]interface{}) {

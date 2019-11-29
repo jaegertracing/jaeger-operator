@@ -22,7 +22,7 @@ func TestGetClusterRoleBinding(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &trueVar
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -46,7 +46,7 @@ func TestIngressDisabled(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &falseVar
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
-	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -63,7 +63,7 @@ func TestNotOAuthProxy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &trueVar
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
-	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -83,7 +83,7 @@ func TestAuthDelegatorNotAvailable(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &trueVar
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.OpenShift.DelegateURLs = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)

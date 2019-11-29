@@ -25,7 +25,6 @@ SDK_VERSION=v0.12.0
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
-PACKAGES := $(shell go list ./cmd/... ./pkg/...  ./test/... |  grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
 UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
 TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing.io_jaegers_crd.yaml -root .
 
@@ -39,7 +38,7 @@ check:
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate
-	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.deepcopy.go || (echo "Build failed: a model has been changed but the deep copy functions aren't up to date. Run 'make generate' and update your PR." && exit 1)
+	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
 
 .PHONY: format
 format:
@@ -49,12 +48,12 @@ format:
 .PHONY: lint
 lint:
 	@echo Linting...
-	@${GOPATH}/bin/golint -set_exit_status=1 $(PACKAGES)
+	@./.ci/lint.sh
 
 .PHONY: security
 security:
 	@echo Security...
-	@${GOPATH}/bin/gosec -quiet -exclude=G104 $(PACKAGES) 2>/dev/null
+	@${GOPATH}/bin/gosec -quiet -exclude=G104  ./... 2>/dev/null
 
 .PHONY: build
 build: format
@@ -238,6 +237,7 @@ ingress:
 
 .PHONY: generate
 generate:
+	@${GO_FLAGS} operator-sdk generate openapi
 	@${GO_FLAGS} operator-sdk generate k8s
 
 .PHONY: test

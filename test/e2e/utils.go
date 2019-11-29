@@ -375,6 +375,7 @@ func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bo
 		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
 
 		url = fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
+		// #nosec
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
 		}
