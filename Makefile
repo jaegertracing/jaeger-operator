@@ -19,6 +19,7 @@ KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operat
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.14.0/strimzi-cluster-operator-0.14.0.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.2
+PROMETHEUS_OPERATOR_TAG ?= v0.34.0
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
 SDK_VERSION=v0.11.0
 GOPATH ?= "$(HOME)/go"
@@ -157,8 +158,8 @@ ifeq ($(OLM),true)
 	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
 else
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
-	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml
-	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml
+	@kubectl apply -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml
@@ -177,8 +178,8 @@ else
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
 	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} 2>&1 || true
 endif
 
