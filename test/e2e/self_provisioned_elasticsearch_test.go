@@ -228,3 +228,4 @@ func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace st
 	require.FailNowf(t, "Did not find elasticsearch-operator in namespace %s\n", namespace)
 	return ""
 }
+
