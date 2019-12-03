@@ -138,6 +138,13 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 		instance.Labels[v1.LabelOperatedBy] = identity
 		if err := r.client.Update(ctx, instance); err != nil {
+			// update the status to "Failed"
+			instance.Status.Phase = v1.JaegerPhaseFailed
+			if err := r.client.Status().Update(ctx, instance); err != nil {
+				// we let it return the real error later
+				logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after setting the identity")
+			}
+
 			logFields.WithField(
 				"operator-identity", identity,
 			).WithError(err).Error("failed to set this operator as the manager of the instance")
@@ -160,12 +167,24 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	})
 	list := &corev1.SecretList{}
 	if err := r.client.List(ctx, list, opts); err != nil {
+		instance.Status.Phase = v1.JaegerPhaseFailed
+		if err := r.client.Status().Update(ctx, instance); err != nil {
+			// we let it return the real error later
+			logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
+		}
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 	str := r.runStrategyChooser(ctx, instance, list.Items)
 
 	updated, err := r.apply(ctx, *instance, str)
 	if err != nil {
+		// update the status to "Failed"
+		instance.Status.Phase = v1.JaegerPhaseFailed
+		if err := r.client.Status().Update(ctx, instance); err != nil {
+			// we let it return the real error later
+			logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after the reconciliation")
+		}
+
 		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
@@ -175,6 +194,15 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		// we store back the changed CR, so that what is stored reflects what is being used
 		if err := r.client.Update(ctx, instance); err != nil {
 			logFields.WithError(err).Error("failed to store back the current CustomResource")
+			return reconcile.Result{}, tracing.HandleError(err, span)
+		}
+	}
+
+	// update the status to "Ready"
+	if instance.Status.Phase != v1.JaegerPhaseRunning {
+		instance.Status.Phase = v1.JaegerPhaseRunning
+		if err := r.client.Status().Update(ctx, instance); err != nil {
+			logFields.WithError(err).Error("failed to store the status into the current CustomResource")
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 	}

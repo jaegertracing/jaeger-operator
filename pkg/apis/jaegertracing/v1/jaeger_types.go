@@ -11,6 +11,10 @@ import (
 // +k8s:openapi-gen=true
 type IngressSecurityType string
 
+// JaegerPhase represents the current phase of Jaeger instances
+// +k8s:openapi-gen=true
+type JaegerPhase string
+
 const (
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	// +k8s:openapi-gen=true
@@ -67,6 +71,14 @@ const (
 	// AnnotationProvisionedKafkaValue is a label to be added to Kafkas that have been provisioned by Jaeger
 	// +k8s:openapi-gen=true
 	AnnotationProvisionedKafkaValue string = "true"
+
+	// JaegerPhaseFailed indicates that the Jaeger instance failed to be provisioned
+	// +k8s:openapi-gen=true
+	JaegerPhaseFailed JaegerPhase = "Failed"
+
+	// JaegerPhaseRunning indicates that the Jaeger instance is ready and running
+	// +k8s:openapi-gen=true
+	JaegerPhaseRunning JaegerPhase = "Running"
 )
 
 // JaegerSpec defines the desired state of Jaeger
@@ -110,12 +122,18 @@ type JaegerSpec struct {
 // +k8s:openapi-gen=true
 type JaegerStatus struct {
 	Version string `json:"version"`
+
+	// +kubebuilder:validation:Default=Pending
+	Phase JaegerPhase `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Jaeger is the Schema for the jaegers API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Instance's status"
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Jaeger Version"
 type Jaeger struct {
 	metav1.TypeMeta `json:",inline"`
 
