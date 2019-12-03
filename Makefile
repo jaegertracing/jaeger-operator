@@ -21,7 +21,7 @@ ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.2
 PROMETHEUS_OPERATOR_TAG ?= v0.34.0
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
-SDK_VERSION=v0.11.0
+SDK_VERSION=v0.12.0
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -260,7 +260,7 @@ install-sdk:
 
 .PHONY: install-tools
 install-tools:
-	@${GO_FLAGS} go get -u \
+	@${GO_FLAGS} go get \
 		golang.org/x/lint/golint \
 		github.com/securego/gosec/cmd/gosec \
 		golang.org/x/tools/cmd/goimports
