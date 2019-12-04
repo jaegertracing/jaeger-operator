@@ -439,7 +439,7 @@ func (in *JaegerIngressTLSSpec) DeepCopy() *JaegerIngressTLSSpec {
 func (in *JaegerList) DeepCopyInto(out *JaegerList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Jaeger, len(*in))
