@@ -202,7 +202,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	if instance.Status.Phase != v1.JaegerPhaseRunning {
 		instance.Status.Phase = v1.JaegerPhaseRunning
 		if err := r.client.Status().Update(ctx, instance); err != nil {
-			logFields.WithError(err).Error("failed to store the status into the current CustomResource")
+			logFields.WithError(err).Error("failed to store the running status into the current CustomResource")
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 	}

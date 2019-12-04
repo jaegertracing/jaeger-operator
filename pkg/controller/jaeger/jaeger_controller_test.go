@@ -146,8 +146,6 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 
 	// the only way to reliably test this is to verify that the operator didn't attempt to set the ownership field
 	assert.Equal(t, "another-identity", persisted.Labels[v1.LabelOperatedBy])
-
-	// condition shouldn't be touched when the object belongs to another operator
 	assert.Equal(t, v1.JaegerPhase(""), persisted.Status.Phase)
 }
 

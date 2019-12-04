@@ -121,10 +121,8 @@ type JaegerSpec struct {
 // JaegerStatus defines the observed state of Jaeger
 // +k8s:openapi-gen=true
 type JaegerStatus struct {
-	Version string `json:"version"`
-
-	// +kubebuilder:validation:Default=Pending
-	Phase JaegerPhase `json:"phase"`
+	Version string      `json:"version"`
+	Phase   JaegerPhase `json:"phase"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -132,7 +130,7 @@ type JaegerStatus struct {
 // Jaeger is the Schema for the jaegers API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Instance's status"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Jaeger instance's status"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Jaeger Version"
 type Jaeger struct {
 	metav1.TypeMeta `json:",inline"`
