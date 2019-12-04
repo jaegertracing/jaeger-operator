@@ -1,0 +1,52 @@
+# this is an example `operator.yaml` with all the bits required to get the Jaeger Operator
+# to generate spans for its own operations. See the operator documentation for more information about this feature.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger-operator
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: jaeger-operator
+  template:
+    metadata:
+      labels:
+        name: jaeger-operator
+    spec:
+      serviceAccountName: jaeger-operator
+      containers:
+      - name: jaeger-operator
+        image: jaegertracing/jaeger-operator:1.16.0 # operator tracing is available since 1.16.0
+        ports:
+        - containerPort: 8383
+          name: metrics
+        args: ["start", "--tracing-enabled=true"]
+        imagePullPolicy: Always
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: OPERATOR_NAME
+          value: "jaeger-operator"
+      - name: jaeger-agent
+        image: jaegertracing/jaeger-agent:1.15.1
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        args:
+        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(POD_NAMESPACE).svc.cluster.local:14250
+        ports:
+        - containerPort: 6831
+          name: jg-compact-trft
+          protocol: UDP
