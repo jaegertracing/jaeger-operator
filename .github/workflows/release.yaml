@@ -8,6 +8,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v1
     - uses: actions/setup-go@v1
       with:
         go-version: '1.13.3'
@@ -17,7 +18,6 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    - uses: actions/checkout@v1
     - uses: jpkrohling/setup-operator-sdk@v1-release
       with:
         operator-sdk-version: v0.12.0

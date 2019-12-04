@@ -8,6 +8,7 @@ jobs:
       matrix:
         TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2]
     steps:
+    - uses: actions/checkout@v1
     - uses: actions/setup-go@v1
       with:
         go-version: '1.13.3'
@@ -22,7 +23,6 @@ jobs:
     - uses: jpkrohling/setup-operator-sdk@v1-release
       with:
         operator-sdk-version: v0.12.0
-    - uses: actions/checkout@v1
 
     - name: "setup docker"
       run: ./.ci/setup-docker.sh
