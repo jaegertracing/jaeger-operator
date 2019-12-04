@@ -11,13 +11,6 @@ metadata:
   name: auto-provision-kafka
 spec:
   strategy: streaming
-  collector:
-    image: jaegertracing/jaeger-collector:latest # TLS configuration is supported starting from 1.15
-  ingester:
-    image: jaegertracing/jaeger-ingester:latest # TLS configuration is supported starting from 1.15
-    options:
-      ingester:
-        deadlockInterval: 0
   storage:
     type: elasticsearch
     options:
