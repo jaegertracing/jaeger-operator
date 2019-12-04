@@ -1,3 +1,4 @@
+name: "Publish images"
 on:
   push:
     branches:
