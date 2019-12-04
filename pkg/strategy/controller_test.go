@@ -208,7 +208,7 @@ func TestNormalizeRollover(t *testing.T) {
 		expected  v1.JaegerEsRolloverSpec
 	}{
 		{underTest: v1.JaegerEsRolloverSpec{},
-			expected: v1.JaegerEsRolloverSpec{Image: "hoo:0.0.0", Schedule: "*/30 * * * *"}},
+			expected: v1.JaegerEsRolloverSpec{Image: "hoo:0.0.0", Schedule: "0 3 * * *"}},
 		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
 			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"}},
 	}
