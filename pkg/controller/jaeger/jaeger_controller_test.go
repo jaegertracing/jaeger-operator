@@ -53,9 +53,10 @@ func TestNewJaegerInstance(t *testing.T) {
 	assert.NoError(t, err)
 
 	// these are filled with default values
-	// TODO(jpkroehling): enable the assertion when the following issue is fixed:
-	// https://github.com/jaegertracing/jaeger-operator/issues/231
-	// assert.Equal(t, "custom-strategy", persisted.Spec.Strategy)
+	assert.Equal(t, v1.DeploymentStrategyAllInOne, persisted.Spec.Strategy)
+
+	// the status object got updated as well
+	assert.Equal(t, v1.JaegerPhaseRunning, persisted.Status.Phase)
 }
 
 func TestDeletedInstance(t *testing.T) {
@@ -145,6 +146,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 
 	// the only way to reliably test this is to verify that the operator didn't attempt to set the ownership field
 	assert.Equal(t, "another-identity", persisted.Labels[v1.LabelOperatedBy])
+	assert.Equal(t, v1.JaegerPhase(""), persisted.Status.Phase)
 }
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
