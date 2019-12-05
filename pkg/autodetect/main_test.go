@@ -36,7 +36,7 @@ func TestStart(t *testing.T) {
 	// prepare
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	done := make(chan bool)
 	go func() {
@@ -71,7 +71,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	done := make(chan bool)
 	go func() {
@@ -123,7 +123,7 @@ func TestAutoDetectFallback(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// sanity check
 	assert.False(t, viper.IsSet("platform"))
@@ -149,7 +149,7 @@ func TestAutoDetectOpenShift(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -173,7 +173,7 @@ func TestAutoDetectKubernetes(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -189,7 +189,7 @@ func TestExplicitPlatform(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -205,7 +205,7 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -221,7 +221,7 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -245,7 +245,7 @@ func TestAutoDetectKafkaProvisionNoKafkaOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -261,7 +261,7 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -285,7 +285,7 @@ func TestAutoDetectKafkaExplicitYes(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -301,7 +301,7 @@ func TestAutoDetectKafkaExplicitNo(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -317,7 +317,7 @@ func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.autoDetectCapabilities()
@@ -333,7 +333,7 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
@@ -359,7 +359,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.detectClusterRoles()
@@ -377,7 +377,7 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.detectClusterRoles()
@@ -394,7 +394,7 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	// test
 	b.detectClusterRoles()
@@ -474,7 +474,7 @@ func TestCleanDeployments(t *testing.T) {
 	err = cl.Create(context.TODO(), jaeger2)
 	require.NoError(t, err)
 
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 	b.cleanDeployments()
 	persisted1 := &appsv1.Deployment{}
 	err = cl.Get(context.Background(), types.NamespacedName{
@@ -501,7 +501,7 @@ func TestRequireUpdates(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	b := WithClients(cl, dcl)
+	b := WithClients(cl, dcl, cl)
 
 	deps := &appsv1.DeploymentList{
 		Items: []appsv1.Deployment{{

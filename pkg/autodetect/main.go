@@ -22,9 +22,10 @@ import (
 
 // Background represents a procedure that runs in the background, periodically auto-detecting features
 type Background struct {
-	cl     client.Client
-	dcl    discovery.DiscoveryInterface
-	ticker *time.Ticker
+	cl       client.Client
+	clReader client.Reader
+	dcl      discovery.DiscoveryInterface
+	ticker   *time.Ticker
 
 	retryDetectKafka bool
 	retryDetectEs    bool
@@ -37,16 +38,16 @@ func New(mgr manager.Manager) (*Background, error) {
 		return nil, err
 	}
 
-	return WithClients(mgr.GetClient(), dcl), nil
+	return WithClients(mgr.GetClient(), dcl, mgr.GetAPIReader()), nil
 }
 
 // WithClients builds a new Background with the provided clients
-func WithClients(cl client.Client, dcl discovery.DiscoveryInterface) *Background {
+func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.Reader) *Background {
 	// whether we should keep adjusting depending on the environment
 	retryDetectEs := viper.GetString("es-provision") == v1.FlagProvisionElasticsearchAuto
 	retryDetectKafka := viper.GetString("kafka-provision") == v1.FlagProvisionKafkaAuto
 
-	return &Background{cl: cl, dcl: dcl, retryDetectKafka: retryDetectKafka, retryDetectEs: retryDetectEs}
+	return &Background{cl: cl, dcl: dcl, clReader: clr, retryDetectKafka: retryDetectKafka, retryDetectEs: retryDetectEs}
 }
 
 // Start initializes the auto-detection process that runs in the background
@@ -79,7 +80,7 @@ func (b *Background) Stop() {
 
 func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deployment {
 	instances := &v1.JaegerList{}
-	if err := b.cl.List(context.Background(), instances); err != nil {
+	if err := b.clReader.List(context.Background(), instances); err != nil {
 		log.WithError(err).Info("failed to retrieve the list of Jaeger instances")
 		return nil
 	}
@@ -122,7 +123,7 @@ func (b *Background) requireUpdates(deps *appsv1.DeploymentList) []*appsv1.Deplo
 
 func (b *Background) detectDeploymentUpdates() error {
 	deps := &appsv1.DeploymentList{}
-	if err := b.cl.List(context.Background(), deps); err != nil {
+	if err := b.clReader.List(context.Background(), deps); err != nil {
 		return err
 	}
 	injectedDeps := b.requireUpdates(deps)
@@ -257,12 +258,12 @@ func (b *Background) cleanDeployments() {
 
 	instancesMap := make(map[string]*v1.Jaeger)
 
-	if err := b.cl.List(context.Background(), deployments, deployOpts...); err != nil {
+	if err := b.clReader.List(context.Background(), deployments, deployOpts...); err != nil {
 		log.WithError(err).Error("error cleaning orphaned deployment")
 	}
 
 	// get all jaeger instances
-	if err := b.cl.List(context.Background(), instances, jaegerOpts...); err != nil {
+	if err := b.clReader.List(context.Background(), instances, jaegerOpts...); err != nil {
 		log.WithError(err).Error("error cleaning orphaned deployment")
 	}
 
