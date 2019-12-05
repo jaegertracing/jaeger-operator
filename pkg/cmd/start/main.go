@@ -83,7 +83,7 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	viper.BindPFlag("jaeger-agent-hostport", cmd.Flags().Lookup("jaeger-agent-hostport"))
 
-	cmd.Flags().Bool("tracing-enabled", true, "Whether the Operator should report its own spans to a Jaeger instance")
+	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
 	viper.BindPFlag("tracing-enabled", cmd.Flags().Lookup("tracing-enabled"))
 
 	return cmd
