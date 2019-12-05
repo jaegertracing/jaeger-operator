@@ -34,7 +34,7 @@ TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../
 .PHONY: check
 check:
 	@echo Checking...
-	@.ci/format.sh > $(FMT_LOG)
+	@GOPATH=${GOPATH} .ci/format.sh > $(FMT_LOG)
 	@[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 .PHONY: ensure-generate-is-noop
@@ -44,7 +44,7 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format:
 	@echo Formatting code...
-	@.ci/format.sh
+	@GOPATH=${GOPATH} .ci/format.sh
 
 .PHONY: lint
 lint:
