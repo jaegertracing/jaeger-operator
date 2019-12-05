@@ -28,7 +28,7 @@ func TestUpgradeDeprecatedOptions(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
 
 	// verify
 	persisted := &v1.Jaeger{}

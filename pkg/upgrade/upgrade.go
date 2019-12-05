@@ -14,7 +14,7 @@ import (
 )
 
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
-func ManagedInstances(ctx context.Context, c client.Client) error {
+func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader) error {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
@@ -24,7 +24,7 @@ func ManagedInstances(ctx context.Context, c client.Client) error {
 	opts := client.MatchingLabels(map[string]string{
 		v1.LabelOperatedBy: identity,
 	})
-	if err := c.List(ctx, list, opts); err != nil {
+	if err := reader.List(ctx, list, opts); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

@@ -203,7 +203,7 @@ func performUpgrades(ctx context.Context, mgr manager.Manager) {
 	defer span.End()
 
 	// upgrades all the instances managed by this operator
-	if err := upgrade.ManagedInstances(ctx, mgr.GetClient()); err != nil {
+	if err := upgrade.ManagedInstances(ctx, mgr.GetClient(), mgr.GetAPIReader()); err != nil {
 		log.WithError(err).Warn("failed to upgrade managed instances")
 	}
 }
