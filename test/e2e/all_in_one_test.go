@@ -141,25 +141,25 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	defer close(closeChan)
 
 	url := fmt.Sprintf("http://localhost:%s/%s/search", queryPort, basePath)
-	c := http.Client{Timeout: time.Second}
+	c := http.Client{Timeout: 3 * time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := c.Do(req)
-		if err != nil {
-			return false, err
+		if err != nil && strings.Contains(err.Error(), "Timeout exceeded") {
+			log.Infof("Retrying request after error %v", err)
+			return false, nil
 		}
+		require.NoError(t, err)
 
 		if res.StatusCode != 200 {
 			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
 		}
 
 		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		if len(body) == 0 {
 			return false, fmt.Errorf("empty body")
