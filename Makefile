@@ -44,7 +44,7 @@ ensure-generate-is-noop: generate
 .PHONY: format
 format:
 	@echo Formatting code...
-	@.ci/format.sh
+	@GOPATH=${GOPATH} .ci/format.sh
 
 .PHONY: lint
 lint:
