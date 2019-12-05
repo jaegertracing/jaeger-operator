@@ -72,6 +72,9 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Failed to create jaeger instance")
 	defer undeployJaegerInstance(j)
 
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
+
 	dep := getVertxDefinition(namespace)
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
