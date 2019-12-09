@@ -183,7 +183,7 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
 	spec.Image = util.ImageName(spec.Image, "jaeger-es-rollover-image")
 	if spec.Schedule == "" {
-		spec.Schedule = "*/30 * * * *"
+		spec.Schedule = "0 0 * * *"
 	}
 }
 
