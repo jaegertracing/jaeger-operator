@@ -50,8 +50,12 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		"linkerd.io/inject":       "disabled",
 	}
 
-	// TODO: should this be configurable? Would we ever think that 2 minutes is OK for this job to complete?
-	deadline := int64(120)
+	timeout := jaeger.Spec.Storage.CassandraCreateSchema.Timeout
+	if timeout == nil {
+		jaeger.Logger().Info("Timeout not specified. Using '120' for the cassandra-create-schema job.")
+		twoMinutes := int64(120)
+		timeout = &twoMinutes
+	}
 
 	return []batchv1.Job{
 		batchv1.Job{
@@ -81,7 +85,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds: &deadline,
+				ActiveDeadlineSeconds: timeout,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,

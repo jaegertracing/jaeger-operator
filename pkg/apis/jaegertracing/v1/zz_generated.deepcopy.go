@@ -131,6 +131,11 @@ func (in *JaegerCassandraCreateSchemaSpec) DeepCopyInto(out *JaegerCassandraCrea
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Timeout != nil {
+		in, out := &in.Timeout, &out.Timeout
+		*out = new(int64)
+		**out = **in
+	}
 	if in.TTLSecondsAfterFinished != nil {
 		in, out := &in.TTLSecondsAfterFinished, &out.TTLSecondsAfterFinished
 		*out = new(int32)

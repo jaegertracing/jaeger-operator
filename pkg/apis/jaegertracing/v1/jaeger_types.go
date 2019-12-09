@@ -400,6 +400,9 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Mode string `json:"mode,omitempty"`
 
 	// +optional
+	Timeout *int64 `json:"timeout,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
