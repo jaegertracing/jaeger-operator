@@ -39,6 +39,7 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetNamespace failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
+
 }
 
 func (suite *ExamplesTestSuite) TearDownSuite() {
@@ -92,6 +93,10 @@ func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 }
 
 func (suite *ExamplesTestSuite) TestWithCassandra() {
+	// make sure cassandra deployment has finished
+	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for cassandra")
+
 	yamlFileName := "../../deploy/examples/with-cassandra.yaml"
 	smokeTestAllInOneExample("with-cassandra", yamlFileName)
 }

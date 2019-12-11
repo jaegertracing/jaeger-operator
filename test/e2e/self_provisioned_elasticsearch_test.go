@@ -163,6 +163,7 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	})
 	require.EqualValues(t, updateCollectorCount, collectorPodCount)
 	require.EqualValues(t, updateQueryCount, queryPodCount)
+	require.NoError(t, err)
 
 	ProductionSmokeTest(jaegerInstanceName)
 }
