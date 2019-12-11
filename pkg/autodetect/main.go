@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -29,6 +30,7 @@ type Background struct {
 
 	retryDetectKafka bool
 	retryDetectEs    bool
+	watchNamespace   string
 }
 
 // New creates a new auto-detect runner
@@ -149,6 +151,14 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectKafka(apiList)
 	}
 
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		watchNamespace = "" // Fail silent, assume cluster scoped operator
+	}
+	b.watchNamespace = watchNamespace
+	if b.watchNamespace != "" {
+		log.Infof("Namespace scope on namespace %s", b.watchNamespace)
+	}
 	b.detectClusterRoles()
 	b.cleanDeployments()
 	b.detectDeploymentUpdates()
@@ -254,6 +264,12 @@ func (b *Background) cleanDeployments() {
 	}
 
 	jaegerOpts := []client.ListOption{}
+
+	if b.watchNamespace != "" {
+		jaegerOpts = append(jaegerOpts, client.InNamespace(b.watchNamespace))
+		deployOpts = append(deployOpts, client.InNamespace(b.watchNamespace))
+	}
+
 	instances := &v1.JaegerList{}
 
 	instancesMap := make(map[string]*v1.Jaeger)
