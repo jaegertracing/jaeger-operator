@@ -39,7 +39,6 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetNamespace failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
-
 }
 
 func (suite *ExamplesTestSuite) TearDownSuite() {
