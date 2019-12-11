@@ -19,6 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
@@ -96,7 +97,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
-	jaegerInstanceName := "simple-prod"
+	jaegerInstanceName := "simple-prod2"
 	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
@@ -110,7 +111,6 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 
 	ProductionSmokeTest(jaegerInstanceName)
 
-	existingCollectorPodName, existingQueryPodName := getExistingPodNames(jaegerInstanceName)
 	updateESNodeCount := 2
 	updateCollectorCount := int32(2)
 	updateQueryCount := int32(2)
@@ -120,6 +120,12 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.EqualValues(t, updateESNodeCount, updatedJaegerInstance.Spec.Storage.Elasticsearch.NodeCount)
 	require.EqualValues(t, updateCollectorCount, *updatedJaegerInstance.Spec.Collector.Replicas)
 	require.EqualValues(t, updateQueryCount, *updatedJaegerInstance.Spec.Query.Replicas)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", int(updateCollectorCount), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", int(updateQueryCount), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
 
 	// Make sure there are 2 ES deployments. Note: The deployment name is based on  "elasticsearch-cdm-" + namespace + jaegerInstanceName + "-1"
 	// with dashes in the namespace and  jaegerInstanceName removed
@@ -131,36 +137,34 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	}
 
 	/// Verify the number of Collector and Query pods
-	collectorPodCount := 0
-	queryPodCount := 0
-	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
-	require.NoError(t, err)
-	for _, pod := range pods.Items {
-		if strings.HasPrefix(pod.Name, jaegerInstanceName+"-collector") && pod.Name != existingCollectorPodName {
-			collectorPodCount++
-		} else if strings.HasPrefix(pod.Name, jaegerInstanceName+"-query") && pod.Name != existingQueryPodName {
-			queryPodCount++
+	var collectorPodCount int32
+	var queryPodCount int32
+
+	// Wait until pod counts equalize, otherwise we risk counting or port forwarding to a terminating pod
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		collectorPodCount = 0
+		queryPodCount = 0
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+		require.NoError(t, err)
+
+		for _, pod := range pods.Items {
+			if strings.HasPrefix(pod.Name, jaegerInstanceName+"-collector") {
+				collectorPodCount++
+			} else if strings.HasPrefix(pod.Name, jaegerInstanceName+"-query") {
+				queryPodCount++
+			}
 		}
-	}
+
+		if queryPodCount == updateQueryCount && collectorPodCount == updateCollectorCount {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	})
 	require.EqualValues(t, updateCollectorCount, collectorPodCount)
 	require.EqualValues(t, updateQueryCount, queryPodCount)
 
 	ProductionSmokeTest(jaegerInstanceName)
-}
-
-func getExistingPodNames(jaegerInstanceName string) (string, string) {
-	var existingCollectorPodName string
-	var existingQueryPodName string
-	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
-	require.NoError(t, err)
-	for _, pod := range pods.Items {
-		if strings.HasPrefix(pod.Name, jaegerInstanceName+"-collector") {
-			existingCollectorPodName = pod.Name
-		} else if strings.HasPrefix(pod.Name, jaegerInstanceName+"-query") {
-			existingQueryPodName = pod.Name
-		}
-	}
-	return existingCollectorPodName, existingQueryPodName
 }
 
 func changeNodeCount(name string, newESNodeCount int, newCollectorNodeCount, newQueryNodeCount int32) {
