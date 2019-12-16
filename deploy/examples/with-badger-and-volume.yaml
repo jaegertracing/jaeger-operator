@@ -10,9 +10,9 @@ spec:
         ephemeral: false
         directory-key: "/badger/key"
         directory-value: "/badger/data"
-    volumeMounts:
-    - name: data
-      mountPath: /badger
-    volumes:
-    - name: data
-      emptyDir: {}
+  volumeMounts:
+  - name: data
+    mountPath: /badger
+  volumes:
+  - name: data
+    emptyDir: {}
