@@ -291,8 +291,11 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyClusterRoleBindingBindings(ctx, jaeger, str.ClusterRoleBindings()); err != nil {
-		return jaeger, tracing.HandleError(err, span)
+	// only apply clusterolebindings when the list is not empty
+	if len(str.ClusterRoleBindings()) > 0 {
+		if err := r.applyClusterRoleBindingBindings(ctx, jaeger, str.ClusterRoleBindings()); err != nil {
+			return jaeger, tracing.HandleError(err, span)
+		}
 	}
 
 	if err := r.applyConfigMaps(ctx, jaeger, str.ConfigMaps()); err != nil {

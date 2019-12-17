@@ -3,7 +3,9 @@ package upgrade
 import (
 	"context"
 	"reflect"
+	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
@@ -21,11 +23,28 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 
 	list := &v1.JaegerList{}
 	identity := viper.GetString(v1.ConfigIdentity)
-	opts := client.MatchingLabels(map[string]string{
+	opts := []client.ListOption{}
+	opts = append(opts, client.MatchingLabels(map[string]string{
 		v1.LabelOperatedBy: identity,
-	})
-	if err := reader.List(ctx, list, opts); err != nil {
-		return tracing.HandleError(err, span)
+	}))
+	if err := reader.List(ctx, list, opts...); err != nil {
+		if strings.HasSuffix(err.Error(), "cluster scope") {
+			log.WithError(err).Warn("failed with cluster scope")
+			watchNs, e := k8sutil.GetWatchNamespace()
+			if e != nil {
+				return tracing.HandleError(e, span)
+			}
+			// retry with watchnamespace
+			opts = append(opts, client.InNamespace(watchNs))
+			log.WithFields(log.Fields{
+				"namespace": watchNs,
+			}).Info("try with namespaced scope")
+			if e := reader.List(ctx, list, opts...); e != nil {
+				return tracing.HandleError(e, span)
+			}
+		} else {
+			return tracing.HandleError(err, span)
+		}
 	}
 
 	for _, j := range list.Items {
