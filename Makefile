@@ -18,9 +18,9 @@ KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.14.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.14.0/strimzi-cluster-operator-0.14.0.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.2
+ES_OPERATOR_BRANCH ?= release-4.3
 PROMETHEUS_OPERATOR_TAG ?= v0.34.0
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.2
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.3
 SDK_VERSION=v0.12.0
 GOPATH ?= "$(HOME)/go"
 
