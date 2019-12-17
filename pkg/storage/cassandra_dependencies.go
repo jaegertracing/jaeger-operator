@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -50,11 +51,23 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		"linkerd.io/inject":       "disabled",
 	}
 
-	timeout := jaeger.Spec.Storage.CassandraCreateSchema.Timeout
-	if timeout == nil {
-		jaeger.Logger().Info("Timeout not specified. Using '120' for the cassandra-create-schema job.")
-		twoMinutes := int64(120)
-		timeout = &twoMinutes
+	// Default timeout set to 120s.
+	twoMinutes := int64(120)
+	timeout := &twoMinutes
+
+	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
+		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
+		if err == nil {
+			seconds := int64(dur.Seconds())
+			timeout = &seconds
+		} else {
+			jaeger.Logger().
+				WithError(err).
+				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.Timeout).
+				Error("Failed to parse cassandraCreateSchema.timeout to time.duration. Using '120s' by default.")
+		}
+	} else {
+		jaeger.Logger().Debug("Cassandra job's timeout not specified. Using '120s' for the cassandra-create-schema job.")
 	}
 
 	return []batchv1.Job{
