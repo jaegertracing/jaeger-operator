@@ -1,6 +1,30 @@
 Changes by Version
 ==================
 
+1.16.0 (2019-12-17)
+-------------------
+
+Breaking changes:
+* None
+
+Other noteworthy changes:
+* Fixed permissions for ServiceMonitor objects ([#831](https://github.com/jaegertracing/jaeger-operator/pull/831))
+* Add timeout for Cassandra Schema creation job ([#820](https://github.com/jaegertracing/jaeger-operator/pull/820))
+* Bump Eleasticserch operator version to 4.3 in deployment scripts ([#829](https://github.com/jaegertracing/jaeger-operator/pull/829))
+* Fixed the with-badger-and-volume example ([#827](https://github.com/jaegertracing/jaeger-operator/pull/827))
+* Run rollover cronjob by default daily at midnight ([#812](https://github.com/jaegertracing/jaeger-operator/pull/812))
+* Added basic status to CR{D} ([#802](https://github.com/jaegertracing/jaeger-operator/pull/802))
+* Disabled tracing by default ([#805](https://github.com/jaegertracing/jaeger-operator/pull/805))
+* Remove unnecessary options from auto-kafka-prov example ([#810](https://github.com/jaegertracing/jaeger-operator/pull/810))
+* Use APIReader for Get/List resources on the autodetect functions ([#814](https://github.com/jaegertracing/jaeger-operator/pull/814))
+* Updated Operator SDK to v0.12.0 ([#799](https://github.com/jaegertracing/jaeger-operator/pull/799))
+* Use specific prometheus operator tag ([#793](https://github.com/jaegertracing/jaeger-operator/pull/793))
+* Added OpenTelemetry instrumentation ([#738](https://github.com/jaegertracing/jaeger-operator/pull/738))
+* Fixed nil pointer when no Jaeger is suitable for sidecar injection ([#783](https://github.com/jaegertracing/jaeger-operator/pull/783))
+* CSV changes to be picked up for next release ([#772](https://github.com/jaegertracing/jaeger-operator/pull/772))
+* Correctly expose UDP container ports of injected sidecar containers ([#773](https://github.com/jaegertracing/jaeger-operator/pull/773))
+* Scan deployments for agent injection ([#454](https://github.com/jaegertracing/jaeger-operator/pull/454))
+
 1.15.0 (2019-11-09)
 -------------------
 
