@@ -180,11 +180,11 @@ func serveCRMetrics(ctx context.Context, cfg *rest.Config, operatorNs string) {
 	defer span.End()
 
 	// Below function returns filtered operator/CustomResource specific GVKs.
-	// For more control override the below GVK list with your own custom logic.
-	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	// this should list all the AddToScheme funcs for GKVs that are managed by this operator
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(v1.SchemeBuilder.AddToScheme)
 	if err != nil {
 		span.SetStatus(codes.Internal)
-		log.WithError(err).Warn("could not generate and serve custom resource metrics")
+		log.WithError(err).Warn("could not retrieve group/version/kind managed by this operator")
 		return
 	}
 

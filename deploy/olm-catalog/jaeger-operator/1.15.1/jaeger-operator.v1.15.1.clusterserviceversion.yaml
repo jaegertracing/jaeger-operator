@@ -80,6 +80,7 @@ spec:
           resources:
           - pods
           - services
+          - services/finalizers
           - endpoints
           - persistentvolumeclaims
           - events
@@ -208,6 +209,7 @@ spec:
           resources:
           - pods
           - services
+          - services/finalizers
           - endpoints
           - persistentvolumeclaims
           - events
@@ -235,6 +237,10 @@ spec:
         - apiGroups:
           - extensions
           resources:
+          - replicasets
+          - deployments
+          - daemonsets
+          - statefulsets
           - ingresses
           verbs:
           - '*'
@@ -246,6 +252,24 @@ spec:
           verbs:
           - '*'
         - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          verbs:
+          - '*'
+        - apiGroups:
+          - logging.openshift.io
+          resources:
+          - elasticsearches
+          verbs:
+          - '*'
+        - apiGroups:
+          - jaegertracing.io
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
           - rbac.authorization.k8s.io
           resources:
           - clusterrolebindings
@@ -253,12 +277,20 @@ spec:
           - '*'
         - apiGroups:
           - apps
+          - extensions
           resourceNames:
           - jaeger-operator
           resources:
           - deployments/finalizers
           verbs:
           - update
+        - apiGroups:
+          - kafka.strimzi.io
+          resources:
+          - kafkas
+          - kafkausers
+          verbs:
+          - '*'
         serviceAccountName: jaeger-operator
     strategy: deployment
   installModes:
