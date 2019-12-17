@@ -56,3 +56,31 @@ func TestCassandraCreateSchemaEnabledNil(t *testing.T) {
 	assert.Nil(t, jaeger.Spec.Storage.CassandraCreateSchema.Enabled)
 	assert.Len(t, cassandraDeps(jaeger), 1)
 }
+
+func TestCassandraCreateSchemaCustomTimeout(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaCustomTimeout"})
+
+	jaeger.Spec.Storage.CassandraCreateSchema.Timeout = "3m"
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Equal(t, int64(180), *b[0].Spec.ActiveDeadlineSeconds)
+}
+
+func TestCassandraCreateSchemaDefaultTimeout(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaDefaultTimeout"})
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Equal(t, int64(120), *b[0].Spec.ActiveDeadlineSeconds)
+}
+
+func TestCassandraCreateSchemaInvalidTimeout(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaInvalidTimeout"})
+
+	jaeger.Spec.Storage.CassandraCreateSchema.Timeout = "3mm"
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Equal(t, int64(120), *b[0].Spec.ActiveDeadlineSeconds)
+}

@@ -15,3 +15,4 @@ spec:
     cassandraCreateSchema:
       datacenter: "datacenter3"
       mode: "test"
+      timeout: "3m"

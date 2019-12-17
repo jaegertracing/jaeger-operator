@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -50,8 +51,24 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		"linkerd.io/inject":       "disabled",
 	}
 
-	// TODO: should this be configurable? Would we ever think that 2 minutes is OK for this job to complete?
-	deadline := int64(120)
+	// Default timeout set to 120s.
+	twoMinutes := int64(120)
+	timeout := &twoMinutes
+
+	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
+		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
+		if err == nil {
+			seconds := int64(dur.Seconds())
+			timeout = &seconds
+		} else {
+			jaeger.Logger().
+				WithError(err).
+				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.Timeout).
+				Error("Failed to parse cassandraCreateSchema.timeout to time.duration. Using '120s' by default.")
+		}
+	} else {
+		jaeger.Logger().Debug("Cassandra job's timeout not specified. Using '120s' for the cassandra-create-schema job.")
+	}
 
 	return []batchv1.Job{
 		batchv1.Job{
@@ -81,7 +98,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds: &deadline,
+				ActiveDeadlineSeconds: timeout,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,

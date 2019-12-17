@@ -399,6 +399,10 @@ type JaegerCassandraCreateSchemaSpec struct {
 	// +optional
 	Mode string `json:"mode,omitempty"`
 
+	// we parse it with time.ParseDuration
+	// +optional
+	Timeout string `json:"timeout,omitempty"`
+
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
