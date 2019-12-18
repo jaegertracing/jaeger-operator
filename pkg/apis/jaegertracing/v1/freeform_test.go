@@ -18,7 +18,7 @@ func TestFreeForm(t *testing.T) {
 	json, err := o.MarshalJSON()
 	assert.NoError(t, err)
 	assert.NotNil(t, json)
-	assert.Equal(t, uiconfig, string(o.json))
+	assert.Equal(t, uiconfig, string(*o.json))
 }
 
 func TestFreeFormUnmarhalMarshal(t *testing.T) {
@@ -28,7 +28,7 @@ func TestFreeFormUnmarhalMarshal(t *testing.T) {
 	json, err := o.MarshalJSON()
 	assert.NoError(t, err)
 	assert.NotNil(t, json)
-	assert.Equal(t, uiconfig, string(o.json))
+	assert.Equal(t, uiconfig, string(*o.json))
 }
 
 func TestFreeFormIsEmptyFalse(t *testing.T) {
@@ -58,7 +58,7 @@ func TestToMap(t *testing.T) {
 		expected map[string]interface{}
 		err      string
 	}{
-		{err: "unexpected end of JSON input"},
+		{expected: map[string]interface{}{}},
 		{m: map[string]interface{}{"foo": "bar$"}, expected: map[string]interface{}{"foo": "bar$"}},
 		{m: map[string]interface{}{"foo": true}, expected: map[string]interface{}{"foo": true}},
 	}

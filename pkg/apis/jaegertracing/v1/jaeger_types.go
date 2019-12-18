@@ -149,9 +149,11 @@ type Jaeger struct {
 // +k8s:openapi-gen=true
 type JaegerCommonSpec struct {
 	// +optional
+	// +listType=set
 	Volumes []v1.Volume `json:"volumes,omitempty"`
 
 	// +optional
+	// +listType=set
 	VolumeMounts []v1.VolumeMount `json:"volumeMounts,omitempty"`
 
 	// +optional
@@ -167,6 +169,7 @@ type JaegerCommonSpec struct {
 	Affinity *v1.Affinity `json:"affinity,omitempty"`
 
 	// +optional
+	// +listType=set
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
 	// +optional
@@ -221,12 +224,14 @@ type JaegerIngressSpec struct {
 	Security IngressSecurityType `json:"security,omitempty"`
 
 	// +optional
-	OpenShift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
+	Openshift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
 
 	// +optional
+	// +listType=set
 	Hosts []string `json:"hosts,omitempty"`
 
 	// +optional
+	// +listType=set
 	TLS []JaegerIngressTLSSpec `json:"tls,omitempty"`
 
 	// Deprecated in favor of the TLS property
@@ -241,6 +246,7 @@ type JaegerIngressSpec struct {
 // +k8s:openapi-gen=true
 type JaegerIngressTLSSpec struct {
 	// +optional
+	// +listType=set
 	Hosts []string `json:"hosts,omitempty"`
 
 	// +optional
@@ -255,7 +261,7 @@ type JaegerIngressOpenShiftSpec struct {
 	SAR string `json:"sar,omitempty"`
 
 	// +optional
-	DelegateURLs string `json:"delegateUrls,omitempty"`
+	DelegateUrls string `json:"delegateUrls,omitempty"`
 
 	// +optional
 	HtpasswdFile string `json:"htpasswdFile,omitempty"`

@@ -15,6 +15,7 @@ type KafkaUserSpec struct {
 // KafkaUserStatus defines the observed state of KafkaUser
 // +k8s:openapi-gen=true
 type KafkaUserStatus struct {
+	// +listType=set
 	Conditions []KafkaStatusCondition `json:"conditions,omitempty"`
 }
 
