@@ -3,15 +3,27 @@
 package e2e
 
 import (
+	"context"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type MiscTestSuite struct {
@@ -74,6 +86,136 @@ func (suite *MiscTestSuite) TestValidateBuildImage() {
 	} else {
 		validateBuildImageInTestNamespace(buildImage)
 	}
+}
+
+func (suite *MiscTestSuite) TestBasicOAuth() {
+	if !isOpenShift(t) {
+		t.Skip("This test only runs on Openshift")
+	}
+
+	username := "e2etestuser"
+	password := "befuddled"
+	// To update this, use the output from: htpasswd -nbs e2etestuser befuddled
+	userPasswordHash := "e2etestuser:{SHA}MfHY85GCR7WcTE7cQ2CGmXg9uTA="
+
+	userPasswordSecret := make(map[string][]byte)
+	userPasswordSecret["htpasswd"] = []byte(userPasswordHash)
+	secret := createSecret("test-oauth-secret", namespace, userPasswordSecret)
+
+	jaegerInstanceName := "test-oauth"
+	jaeger := jaegerWithPassword(namespace, jaegerInstanceName, secret.Name)
+	err := fw.Client.Create(context.Background(), jaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying jaeger")
+	defer undeployJaegerInstance(jaeger)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Jaeger deployment")
+
+	urlPattern := "%s/api/services"
+	route := findRoute(t, fw, jaegerInstanceName)
+	require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
+	url := fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	httpClient := http.Client{Timeout: 30 * time.Second, Transport: transport}
+	log.Infof("Using Query URL [%v]", url)
+
+	// A request without credentials should return a 403
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	require.NoError(t, err, "Failed to create httpRequest")
+	response, err := httpClient.Do(request)
+	require.Equal(t, response.StatusCode, 403)
+
+	// Add basic auth to the request and retry
+	request.SetBasicAuth(username, password)
+	response, err = httpClient.Do(request)
+	body, err := ioutil.ReadAll(response.Body)
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		response, err := httpClient.Do(request)
+		require.NoError(t, err)
+
+		body, err = ioutil.ReadAll(response.Body)
+		require.NoError(t, err)
+
+		resp := &services{}
+		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			return false, nil
+		}
+
+		for _, v := range resp.Data {
+			if v == "jaeger-query" {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
+	require.NoError(t, err, "Failed waiting for expected content")
+
+}
+
+func jaegerWithPassword(namespace string, instanceName, secretName string) *v1.Jaeger {
+	volumes := getVolumes(secretName)
+	volumeMounts := getVolumeMounts()
+
+	j := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instanceName,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Openshift: v1.JaegerIngressOpenShiftSpec{
+					SAR:          "{\"namespace\": " + "\"" + namespace + "\"" + ", \"resource\": \"pods\", \"verb\": \"get\"}",
+					HtpasswdFile: "/usr/local/data/htpasswd",
+				},
+			},
+			JaegerCommonSpec: v1.JaegerCommonSpec{
+				Volumes:      volumes,
+				VolumeMounts: volumeMounts,
+			},
+		},
+	}
+
+	return j
+}
+
+func getVolumeMounts() []corev1.VolumeMount {
+	htpasswdVolume := corev1.VolumeMount{
+		Name:      "htpasswd-volume",
+		MountPath: "/usr/local/data",
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		htpasswdVolume,
+	}
+
+	return volumeMounts
+}
+
+func getVolumes(secretName string) []corev1.Volume {
+	htpasswdSecretName := corev1.SecretVolumeSource{
+		SecretName: secretName,
+	}
+
+	htpasswdVolume := corev1.Volume{
+		Name: "htpasswd-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &htpasswdSecretName,
+		},
+	}
+
+	volumes := []corev1.Volume{
+		htpasswdVolume,
+	}
+
+	return volumes
 }
 
 func validateBuildImageInCluster(buildImage string) {
