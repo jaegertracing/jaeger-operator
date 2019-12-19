@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
+	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -149,6 +150,12 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectKafka(apiList)
 	}
 
+	if b.hasClusterRolePermission() {
+		viper.Set("has-cluster-permission", true)
+	} else {
+		viper.Set("has-cluster-permission", false)
+	}
+
 	b.detectClusterRoles()
 	b.cleanDeployments()
 	b.detectDeploymentUpdates()
@@ -162,6 +169,17 @@ func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
 	}
 
 	return apiList, nil
+}
+
+func (b *Background) hasClusterRolePermission() bool {
+	list := &rbac.ClusterRoleBindingList{}
+	opts := []client.ListOption{}
+	err := b.clReader.List(context.Background(), list, opts...)
+	if err != nil {
+		log.WithField("errormsg", err).Debug("Failed to list cluster role bindings")
+		return false
+	}
+	return true
 }
 
 func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
