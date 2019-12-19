@@ -291,8 +291,9 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// if does not have cluster scope permission, skip
-	if viper.GetBool("has-cluster-permission") {
+	// if set and np cluster scope permission, skip
+	// if not set, treat as true
+	if (viper.IsSet("has-cluster-permission") && viper.GetBool("has-cluster-permission")) || !viper.IsSet("has-cluster-permission") {
 		if err := r.applyClusterRoleBindingBindings(ctx, jaeger, str.ClusterRoleBindings()); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}
