@@ -230,11 +230,7 @@ func (b *Background) hasClusterRolePermission() bool {
 	err := b.clReader.List(context.Background(), list, opts...)
 	if err != nil {
 		log.WithField("errormsg", err).Debug("Failed to list cluster role bindings")
-		if strings.HasSuffix(err.Error(), "cluster scope") {
-			return false
-		}
-		// still return true if not scope issue
-		return true
+		return false
 	}
 	return true
 }
@@ -243,14 +239,6 @@ func (b *Background) detectClusterPermissions() {
 	if b.hasClusterRolePermission() {
 		viper.Set("has-cluster-permission", true)
 	} else {
-		watchNamespace, err := k8sutil.GetWatchNamespace()
-		if err != nil {
-			// fail silently
-			viper.Set("watch-ns", "")
-		} else {
-			log.Debugf("Namespace scope on namespace %s", watchNamespace)
-			viper.Set("watch-ns", watchNamespace)
-		}
 		viper.Set("has-cluster-permission", false)
 	}
 }
@@ -289,10 +277,15 @@ func (b *Background) cleanDeployments() {
 
 	jaegerOpts := []client.ListOption{}
 
-	viperWatchNs := viper.GetString("watch-ns")
-	if viperWatchNs != "" {
-		jaegerOpts = append(jaegerOpts, client.InNamespace(viperWatchNs))
-		deployOpts = append(deployOpts, client.InNamespace(viperWatchNs))
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		// fail silently
+		watchNamespace = ""
+	}
+
+	if watchNamespace != "" {
+		jaegerOpts = append(jaegerOpts, client.InNamespace(watchNamespace))
+		deployOpts = append(deployOpts, client.InNamespace(watchNamespace))
 	}
 
 	instances := &v1.JaegerList{}

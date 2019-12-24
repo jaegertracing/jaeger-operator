@@ -27,23 +27,28 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 	opts = append(opts, client.MatchingLabels(map[string]string{
 		v1.LabelOperatedBy: identity,
 	}))
-	if err := reader.List(ctx, list, opts...); err != nil {
-		if strings.HasSuffix(err.Error(), "cluster scope") {
-			log.WithError(err).Warn("failed with cluster scope")
-			watchNs, e := k8sutil.GetWatchNamespace()
-			if e != nil {
-				return tracing.HandleError(e, span)
+
+	// if set and np cluster scope permission, skip
+	// if not set, treat as true
+	if (viper.IsSet("has-cluster-permission") && viper.GetBool("has-cluster-permission")) || !viper.IsSet("has-cluster-permission") {
+		if err := reader.List(ctx, list, opts...); err != nil {
+			if strings.HasSuffix(err.Error(), "cluster scope") {
+				log.WithError(err).Warn("List indentity failed with cluster scope")
+				watchNs, e := k8sutil.GetWatchNamespace()
+				if e != nil {
+					return tracing.HandleError(e, span)
+				}
+				// retry with watchnamespace
+				opts = append(opts, client.InNamespace(watchNs))
+				log.WithFields(log.Fields{
+					"namespace": watchNs,
+				}).Info("retry with namespaced scope")
+				if e := reader.List(ctx, list, opts...); e != nil {
+					return tracing.HandleError(e, span)
+				}
+			} else {
+				return tracing.HandleError(err, span)
 			}
-			// retry with watchnamespace
-			opts = append(opts, client.InNamespace(watchNs))
-			log.WithFields(log.Fields{
-				"namespace": watchNs,
-			}).Info("try with namespaced scope")
-			if e := reader.List(ctx, list, opts...); e != nil {
-				return tracing.HandleError(e, span)
-			}
-		} else {
-			return tracing.HandleError(err, span)
 		}
 	}
 
