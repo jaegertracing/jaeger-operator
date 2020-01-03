@@ -42,6 +42,12 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		host = "cassandra" // this is the default in the image
 	}
 
+	keyspace := jaeger.Spec.Storage.Options.Map()["cassandra.keyspace"]
+	if keyspace == "" {
+		jaeger.Logger().Info("Cassandra keyspace not specified. Using 'jaeger_v1_test' for the cassandra-create-schema job.")
+		keyspace = "jaeger_v1_test" // this is default in the image
+	}
+
 	username := jaeger.Spec.Storage.Options.Map()["cassandra.username"]
 	password := jaeger.Spec.Storage.Options.Map()["cassandra.password"]
 
@@ -116,6 +122,9 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 							}, {
 								Name:  "DATACENTER",
 								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+							}, {
+								Name:  "KEYSPACE",
+								Value: keyspace,
 							}, {
 								Name:  "CASSANDRA_USERNAME",
 								Value: username,
