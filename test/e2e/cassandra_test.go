@@ -75,8 +75,8 @@ func (suite *CassandraTestSuite) TestCassandra() {
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies() {
 	storage := v1.JaegerStorageSpec{
 		Type:                  "cassandra",
-		Options:               v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
-		CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{Datacenter: "datacenter1", Mode: "prod"},
+		Options:               v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": cassandraKeyspace}),
+		CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{Datacenter: cassandraDatacenter, Mode: "prod"},
 	}
 	err := sparkTest(t, framework.Global, ctx, storage)
 	require.NoError(t, err, "SparkTest failed")
@@ -96,9 +96,9 @@ func getJaegerWithCassandra(s string) *v1.Jaeger {
 			Strategy: v1.DeploymentStrategyAllInOne,
 			Storage: v1.JaegerStorageSpec{
 				Type:    "cassandra",
-				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": "jaeger_v1_datacenter1"}),
+				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": cassandraKeyspace}),
 				CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{
-					Datacenter: "datacenter1",
+					Datacenter: cassandraDatacenter,
 				},
 			},
 		},

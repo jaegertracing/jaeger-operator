@@ -43,6 +43,8 @@ var (
 	usingOLM             = getBoolEnv("OLM", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
+	cassandraKeyspace    = "jaeger_v1_datacenter1"
+	cassandraDatacenter  = "datacenter1"
 	ctx                  *framework.TestCtx
 	fw                   *framework.Framework
 	namespace            string
