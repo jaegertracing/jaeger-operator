@@ -125,17 +125,16 @@ func (suite *MiscTestSuite) TestBasicOAuth() {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
 	response, err := httpClient.Do(request)
+	require.NoError(t, err)
 	require.Equal(t, response.StatusCode, 403)
 
 	// Add basic auth to the request and retry
 	request.SetBasicAuth(username, password)
-	response, err = httpClient.Do(request)
-	body, err := ioutil.ReadAll(response.Body)
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		response, err := httpClient.Do(request)
 		require.NoError(t, err)
 
-		body, err = ioutil.ReadAll(response.Body)
+		body, err := ioutil.ReadAll(response.Body)
 		require.NoError(t, err)
 
 		resp := &services{}
