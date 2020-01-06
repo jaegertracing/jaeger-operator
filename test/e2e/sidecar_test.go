@@ -1,4 +1,4 @@
-// +build smoke
+// +build smokey
 
 package e2e
 
