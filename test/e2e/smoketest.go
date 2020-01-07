@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/uber/jaeger-client-go/config"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -83,6 +84,10 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
 		require.NoError(t, err)
 
 		resp, err := c.Do(req)
+		if err != nil {
+			log.Infof("Retrying request after error %v", err)
+			return false, nil
+		}
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
