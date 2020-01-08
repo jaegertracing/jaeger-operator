@@ -202,8 +202,12 @@ kafka:
 ifeq ($(OLM),true)
 	@echo Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
+	@kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
+	@kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
+	@kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	@curl --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml
 	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
 	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
@@ -215,6 +219,9 @@ ifeq ($(OLM),true)
 	@echo Skiping kafka-operator undeploy
 else
 	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml 2>&1 || true
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-namespaced
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation
 endif
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
 

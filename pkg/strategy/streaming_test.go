@@ -239,7 +239,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 
 func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	name := "my-instance"
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name, Namespace: "project"})
 	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{})
 	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{})
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
@@ -250,14 +250,14 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	// verify
 	assert.Equal(t, v1.AnnotationProvisionedKafkaValue, jaeger.Annotations[v1.AnnotationProvisionedKafkaKey])
 
-	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.brokers")
+	assert.Equal(t, "my-instance-kafka-bootstrap.project.svc.cluster.local:9093", jaeger.Spec.Collector.Options.Map()["kafka.producer.brokers"])
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.authentication")
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.key")
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.cert")
 	assert.Contains(t, jaeger.Spec.Collector.Options.Map(), "kafka.producer.tls.ca")
 	assert.NotContains(t, jaeger.Spec.Collector.Options.Map(), "kafka.consumer.brokers")
 
-	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.brokers")
+	assert.Equal(t, "my-instance-kafka-bootstrap.project.svc.cluster.local:9093", jaeger.Spec.Ingester.Options.Map()["kafka.consumer.brokers"])
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.authentication")
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.key")
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.cert")
