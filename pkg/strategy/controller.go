@@ -47,7 +47,8 @@ func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	}
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
-		return newStreamingStrategy(ctx, jaeger)
+		es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}
+		return newStreamingStrategy(ctx, jaeger, es)
 	}
 
 	es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
@@ -104,25 +106,17 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.E
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
-		err := es.CreateCerts()
-		if err != nil {
-			jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
-		} else {
-			c.secrets = es.ExtractSecrets()
-			c.elasticsearches = append(c.elasticsearches, *es.Elasticsearch())
-
-			es.InjectStorageConfiguration(&queryDep.Spec.Template.Spec)
-			es.InjectStorageConfiguration(&cDep.Spec.Template.Spec)
-			if indexCleaner != nil {
-				es.InjectSecretsConfiguration(&indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
-			}
-			for i := range esRollover {
-				es.InjectSecretsConfiguration(&esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
-			}
-			for i := range c.dependencies {
-				es.InjectSecretsConfiguration(&c.dependencies[i].Spec.Template.Spec)
-			}
+		var jobs []*corev1.PodSpec
+		for i := range c.dependencies {
+			jobs = append(jobs, &c.dependencies[i].Spec.Template.Spec)
 		}
+		if indexCleaner != nil {
+			jobs = append(jobs, &indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+		}
+		for i := range esRollover {
+			jobs = append(jobs, &esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+		}
+		autoProvisionElasticsearch(&c, es, jobs, []*appsv1.Deployment{queryDep, cDep})
 	}
 
 	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
@@ -137,4 +131,20 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.E
 	c.deployments = []appsv1.Deployment{*cDep, *queryDep}
 
 	return c
+}
+
+func autoProvisionElasticsearch(manifest *S, es *storage.ElasticsearchDeployment, curatorPods []*corev1.PodSpec, deployments []*appsv1.Deployment) {
+	err := es.CreateCerts()
+	if err != nil {
+		es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+		return
+	}
+	for i := range deployments {
+		es.InjectStorageConfiguration(&deployments[i].Spec.Template.Spec)
+	}
+	for _, pod := range curatorPods {
+		es.InjectSecretsConfiguration(pod)
+	}
+	manifest.secrets = es.ExtractSecrets()
+	manifest.elasticsearches = append(manifest.elasticsearches, *es.Elasticsearch())
 }

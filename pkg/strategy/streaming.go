@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,7 +27,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
+func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
 	defer span.End()
@@ -65,13 +67,6 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		manifest = autoProvisionKafka(ctx, jaeger, manifest)
 	}
 
-	// add the deployments
-	manifest.deployments = []appsv1.Deployment{*collector.Get(), *inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))}
-
-	if d := ingester.Get(); d != nil {
-		manifest.deployments = append(manifest.deployments, *d)
-	}
-
 	// add the daemonsets
 	if ds := agent.Get(); ds != nil {
 		manifest.daemonSets = []appsv1.DaemonSet{*ds}
@@ -105,15 +100,59 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 	}
 
+	var indexCleaner *batchv1beta1.CronJob
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
-			manifest.cronJobs = append(manifest.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
+			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
 			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
 		}
 	}
 
+	var esRollover []batchv1beta1.CronJob
+	if storage.EnableRollover(jaeger.Spec.Storage) {
+		esRollover = cronjob.CreateRollover(jaeger)
+	}
+
+	// prepare the deployments, which may get changed by the elasticsearch routine
+	cDep := collector.Get()
+	queryDep := inject.Sidecar(jaeger, inject.OAuthProxy(jaeger, query.Get()))
+	var ingesterDep *appsv1.Deployment
+	if d := ingester.Get(); d != nil {
+		ingesterDep = d
+	}
 	manifest.dependencies = storage.Dependencies(jaeger)
+
+	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
+	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
+		var jobs []*corev1.PodSpec
+		for i := range manifest.dependencies {
+			jobs = append(jobs, &manifest.dependencies[i].Spec.Template.Spec)
+		}
+		if indexCleaner != nil {
+			jobs = append(jobs, &indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+		}
+		for i := range esRollover {
+			jobs = append(jobs, &esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+		}
+		deps := []*appsv1.Deployment{queryDep}
+		if ingesterDep != nil {
+			deps = append(deps, ingesterDep)
+		}
+		autoProvisionElasticsearch(&manifest, es, jobs, deps)
+	}
+	manifest.deployments = []appsv1.Deployment{*cDep, *queryDep}
+	if ingesterDep != nil {
+		manifest.deployments = append(manifest.deployments, *ingesterDep)
+	}
+
+	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
+	if indexCleaner != nil {
+		manifest.cronJobs = append(manifest.cronJobs, *indexCleaner)
+	}
+	if len(esRollover) > 0 {
+		manifest.cronJobs = append(manifest.cronJobs, esRollover...)
+	}
 
 	return manifest
 }
