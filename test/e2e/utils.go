@@ -395,3 +395,18 @@ func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bo
 
 	return url, httpClient
 }
+
+func createSecret(secretName, secretNamespace string, secretData map[string][]byte) *corev1.Secret {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: secretNamespace,
+		},
+		Data: secretData,
+	}
+
+	createdSecret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Create(secret)
+	require.NoError(t, err)
+	WaitForSecret(secretName, secretNamespace)
+	return createdSecret
+}
