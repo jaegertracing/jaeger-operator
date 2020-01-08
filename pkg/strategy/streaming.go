@@ -172,7 +172,7 @@ func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 	}
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, kuVolumeMount, kuCAVolumeMount)
 
-	brokers := fmt.Sprintf("%s-kafka-bootstrap.kafka.svc.cluster.local:9093", k.Name)
+	brokers := fmt.Sprintf("%s-kafka-bootstrap.%s.svc.cluster.local:9093", k.Name, k.Namespace)
 
 	collectorOpts := jaeger.Spec.Collector.Options.GenericMap()
 	ingesterOpts := jaeger.Spec.Ingester.Options.GenericMap()
