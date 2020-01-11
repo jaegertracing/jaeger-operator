@@ -9434,6 +9434,10 @@ spec:
                     sar:
                       type: string
                   type: object
+                options:
+                  description: Options defines a common options parameter to the different
+                    structs
+                  type: object
                 resources:
                   description: ResourceRequirements describes the compute resource
                     requirements.

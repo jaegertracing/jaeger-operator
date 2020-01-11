@@ -14,6 +14,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
+// #nosec   G101 (CWE-798): Potential hardcoded credentials
 const defaultProxySecret = "ncNDoqLGrayxXzxTn5ANbOXZp3qXd0LA"
 
 // OAuthProxy injects an appropriate proxy into the given deployment

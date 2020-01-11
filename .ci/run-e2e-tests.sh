@@ -42,12 +42,6 @@ then
 elif [ "${TEST_GROUP}" = "es-token-propagation" ]
 then
     echo "Running token propagation tests"
-    oc create user user-test-token
-    oc adm policy add-cluster-role-to-user cluster-admin user-test-token
-    # for ocp 4.2
-    htpasswd -c -B -b users.htpasswd user-test-token any
-    oc delete secret htpass-secret -n openshift-config
-    oc create secret generic htpass-secret --from-file=htpasswd=./users.htpasswd -n openshift-config
     make e2e-tests-token-propagation-es
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
