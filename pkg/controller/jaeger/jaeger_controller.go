@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -161,20 +163,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	originalInstance := *instance
 
-	opts := client.MatchingLabels(map[string]string{
-		"app.kubernetes.io/instance":   instance.Name,
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	})
-	list := &corev1.SecretList{}
-	if err := r.client.List(ctx, list, opts); err != nil {
-		instance.Status.Phase = v1.JaegerPhaseFailed
-		if err := r.client.Status().Update(ctx, instance); err != nil {
-			// we let it return the real error later
-			logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
-		}
-		return reconcile.Result{}, tracing.HandleError(err, span)
-	}
-	str := r.runStrategyChooser(ctx, instance, list.Items)
+	str := r.runStrategyChooser(ctx, instance)
 
 	updated, err := r.apply(ctx, *instance, str)
 	if err != nil {
@@ -226,16 +215,16 @@ func validate(jaeger *v1.Jaeger) error {
 	return nil
 }
 
-func (r *ReconcileJaeger) runStrategyChooser(ctx context.Context, instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
+func (r *ReconcileJaeger) runStrategyChooser(ctx context.Context, instance *v1.Jaeger) strategy.S {
 	if nil == r.strategyChooser {
-		return defaultStrategyChooser(ctx, instance, secrets)
+		return defaultStrategyChooser(ctx, instance)
 	}
 
 	return r.strategyChooser(ctx, instance)
 }
 
-func defaultStrategyChooser(ctx context.Context, instance *v1.Jaeger, secrets []corev1.Secret) strategy.S {
-	return strategy.For(ctx, instance, secrets)
+func defaultStrategyChooser(ctx context.Context, instance *v1.Jaeger) strategy.S {
+	return strategy.For(ctx, instance)
 }
 
 func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
@@ -246,6 +235,31 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	jaeger, err := r.applyUpgrades(ctx, jaeger)
 	if err != nil {
 		return jaeger, tracing.HandleError(err, span)
+	}
+
+	// ES cert handling requires secretes from environment
+	// therefore running this here and not in the strategy
+	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
+		opts := client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		})
+		secrets := &corev1.SecretList{}
+		if err := r.client.List(ctx, secrets, opts); err != nil {
+			jaeger.Status.Phase = v1.JaegerPhaseFailed
+			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
+				// we let it return the real error later
+				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
+			}
+			return jaeger, tracing.HandleError(err, span)
+		}
+		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secrets.Items}
+		err = es.CreateCerts()
+		if err != nil {
+			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+			return jaeger, err
+		}
+		str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
 	}
 
 	// secrets have to be created before ES - they are mounted to the ES pod

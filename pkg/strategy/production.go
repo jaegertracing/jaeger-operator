@@ -24,7 +24,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
+func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
@@ -116,7 +116,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.E
 		for i := range esRollover {
 			jobs = append(jobs, &esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
 		}
-		autoProvisionElasticsearch(&c, es, jobs, []*appsv1.Deployment{queryDep, cDep})
+		autoProvisionElasticsearch(&c, jaeger, jobs, []*appsv1.Deployment{queryDep, cDep})
 	}
 
 	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
@@ -133,18 +133,13 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.E
 	return c
 }
 
-func autoProvisionElasticsearch(manifest *S, es *storage.ElasticsearchDeployment, curatorPods []*corev1.PodSpec, deployments []*appsv1.Deployment) {
-	err := es.CreateCerts()
-	if err != nil {
-		es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
-		return
-	}
+func autoProvisionElasticsearch(manifest *S, jaeger *v1.Jaeger, curatorPods []*corev1.PodSpec, deployments []*appsv1.Deployment) {
+	es := &storage.ElasticsearchDeployment{Jaeger: jaeger}
 	for i := range deployments {
 		es.InjectStorageConfiguration(&deployments[i].Spec.Template.Spec)
 	}
 	for _, pod := range curatorPods {
 		es.InjectSecretsConfiguration(pod)
 	}
-	manifest.secrets = es.ExtractSecrets()
 	manifest.elasticsearches = append(manifest.elasticsearches, *es.Elasticsearch())
 }

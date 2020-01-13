@@ -29,7 +29,7 @@ var (
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance
-func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
+func For(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
@@ -47,12 +47,10 @@ func For(ctx context.Context, jaeger *v1.Jaeger, secrets []corev1.Secret) S {
 	}
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
-		es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}
-		return newStreamingStrategy(ctx, jaeger, es)
+		return newStreamingStrategy(ctx, jaeger)
 	}
 
-	es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: esCertGenerationScript, Secrets: secrets}
-	return newProductionStrategy(ctx, jaeger, es)
+	return newProductionStrategy(ctx, jaeger)
 }
 
 // normalize changes the incoming Jaeger object so that the defaults are applied when

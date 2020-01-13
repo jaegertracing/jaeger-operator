@@ -15,7 +15,7 @@ import (
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
@@ -23,7 +23,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsExplicitValue"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyDeprecatedAllInOne // same as 'all-in-one'
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
@@ -32,7 +32,7 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyProduction)
 }
 
@@ -51,7 +51,7 @@ func TestElasticsearchAsStorageOptions(t *testing.T) {
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	deps := ctrl.Deployments()
 	assert.Len(t, deps, 2) // query and collector, for a production setup
 	counter := 0
@@ -117,7 +117,7 @@ func TestDeprecatedAllInOneStrategy(t *testing.T) {
 			Strategy: v1.DeploymentStrategyDeprecatedAllInOne,
 		},
 	}
-	For(context.TODO(), jaeger, []corev1.Secret{})
+	For(context.TODO(), jaeger)
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 
@@ -130,7 +130,7 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 			},
 		},
 	}
-	For(context.TODO(), jaeger, []corev1.Secret{})
+	For(context.TODO(), jaeger)
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, jaeger.Spec.Strategy)
 }
 

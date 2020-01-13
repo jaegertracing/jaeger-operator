@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,13 +22,13 @@ func init() {
 
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "my-instance"
-	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}), &storage.ElasticsearchDeployment{})
+	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
 }
 
 func TestStreamingKafkaProvisioning(t *testing.T) {
 	name := "my-instance"
-	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}), &storage.ElasticsearchDeployment{})
+	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 1)
@@ -42,7 +41,7 @@ func TestStreamingNoKafkaProvisioningWhenConsumerBrokersSet(t *testing.T) {
 	jaeger.Spec.Ingester.Options = v1.NewOptions(map[string]interface{}{
 		"kafka.consumer.brokers": "my-cluster-kafka-brokers.kafka:9092",
 	})
-	c := newStreamingStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 0)
@@ -54,7 +53,7 @@ func TestStreamingNoKafkaProvisioningWhenProducerBrokersSet(t *testing.T) {
 	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
 		"kafka.producer.brokers": "my-cluster-kafka-brokers.kafka:9092",
 	})
-	c := newStreamingStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
 	assert.Len(t, c.Kafkas(), 0)
@@ -68,7 +67,7 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	normalize(context.Background(), jaeger)
 
-	c := newStreamingStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+	c := newStreamingStrategy(context.Background(), jaeger)
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, true, false)
 }
 
@@ -78,7 +77,7 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newStreamingStrategy(context.Background(), j, &storage.ElasticsearchDeployment{Jaeger: j})
+	c := newStreamingStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForStreaming(t, name, c, true, false, false)
 }
 
@@ -92,7 +91,7 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newStreamingStrategy(context.Background(), j, &storage.ElasticsearchDeployment{Jaeger: j})
+	c := newStreamingStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, true)
 }
 
@@ -132,7 +131,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
@@ -162,7 +161,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 func TestDelegateStreamingDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	c := newStreamingStrategy(context.Background(), j, &storage.ElasticsearchDeployment{Jaeger: j})
+	c := newStreamingStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -217,19 +216,19 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 
 func TestSparkDependenciesStreaming(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newStreamingStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+		return newStreamingStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestEsIndexClenarStreaming(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newStreamingStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+		return newStreamingStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	c := newStreamingStrategy(context.Background(), j, &storage.ElasticsearchDeployment{Jaeger: j})
+	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
@@ -299,7 +298,7 @@ func TestReplaceVolume(t *testing.T) {
 
 	// test
 	ctx := context.Background()
-	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance, &storage.ElasticsearchDeployment{Jaeger: instance}))
+	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
 	assert.Len(t, instance.Spec.Volumes, 3)
@@ -336,7 +335,7 @@ func TestReplaceVolumeMount(t *testing.T) {
 
 	// test
 	ctx := context.Background()
-	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance, &storage.ElasticsearchDeployment{Jaeger: instance}))
+	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
 	assert.Len(t, instance.Spec.VolumeMounts, 3)
@@ -359,11 +358,7 @@ func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &one
 	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
 
-	es := &storage.ElasticsearchDeployment{Jaeger: jaeger, CertScript: "../../scripts/cert_generation.sh"}
-	err := es.CleanCerts()
-	require.NoError(t, err)
-	defer es.CleanCerts()
-	c := newStreamingStrategy(context.Background(), jaeger, es)
+	c := newStreamingStrategy(context.Background(), jaeger)
 	// there should be index-cleaner, rollover, lookback
 	assert.Equal(t, 3, len(c.cronJobs))
 	assertEsInjectSecretsStreaming(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)

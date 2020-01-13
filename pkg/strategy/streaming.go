@@ -27,7 +27,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.ElasticsearchDeployment) S {
+func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
 	defer span.End()
@@ -139,7 +139,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger, es *storage.El
 		if ingesterDep != nil {
 			deps = append(deps, ingesterDep)
 		}
-		autoProvisionElasticsearch(&manifest, es, jobs, deps)
+		autoProvisionElasticsearch(&manifest, jaeger, jobs, deps)
 	}
 	manifest.deployments = []appsv1.Deployment{*cDep, *queryDep}
 	if ingesterDep != nil {
