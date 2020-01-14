@@ -258,7 +258,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
 			return jaeger, err
 		}
-		str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
+		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
 	}
 
 	// secrets have to be created before ES - they are mounted to the ES pod
