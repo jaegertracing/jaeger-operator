@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -27,6 +25,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -237,7 +236,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// ES cert handling requires secretes from environment
+	// ES cert handling requires secrets from environment
 	// therefore running this here and not in the strategy
 	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
 		opts := client.MatchingLabels(map[string]string{
