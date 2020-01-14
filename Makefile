@@ -115,6 +115,11 @@ e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: e2e-tests-self-provisioned-es-kafka
+e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator deploy-es-operator
+	@echo Running Self provisioned Elasticsearch and Kafka end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
@@ -195,8 +200,8 @@ storage:
 	@echo Creating namespace $(STORAGE_NAMESPACE)
 	@kubectl create namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
-.PHONY: kafka
-kafka:
+.PHONY: deploy-kafka-operator
+deploy-kafka-operator:
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 ifeq ($(OLM),true)
@@ -209,12 +214,9 @@ else
 	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
 	@kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
-	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
-	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
 
-.PHONY: undeploy-kafka
-undeploy-kafka:
-	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
+.PHONY: undeploy-kafka-operator
+undeploy-kafka-operator:
 ifeq ($(OLM),true)
 	@echo Skiping kafka-operator undeploy
 else
@@ -224,6 +226,17 @@ else
 	@kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation
 endif
 	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
+
+.PHONY: kafka
+kafka: deploy-kafka-operator
+	@echo Creating namespace $(KAFKA_NAMESPACE)
+	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
+	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
+
+.PHONY: undeploy-kafka
+undeploy-kafka: undeploy-kafka-operator
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator

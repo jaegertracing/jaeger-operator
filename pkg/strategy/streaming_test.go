@@ -131,7 +131,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := For(context.TODO(), jaeger, []corev1.Secret{})
+	ctrl := For(context.TODO(), jaeger)
 	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
@@ -347,4 +347,36 @@ func TestReplaceVolumeMount(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 2, found)
+}
+
+func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
+	verdad := true
+	one := int(1)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
+	jaeger.Spec.Storage.Type = "elasticsearch"
+	jaeger.Spec.Storage.EsIndexCleaner.Enabled = &verdad
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &one
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
+
+	c := newStreamingStrategy(context.Background(), jaeger)
+	// there should be index-cleaner, rollover, lookback
+	assert.Equal(t, 3, len(c.cronJobs))
+	assertEsInjectSecretsStreaming(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecretsStreaming(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecretsStreaming(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
+}
+
+func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
+	// first two volumes are from the common spec
+	assert.Equal(t, 3, len(p.Volumes))
+	assert.Equal(t, "certs", p.Volumes[2].Name)
+	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[2].Name)
+	envs := map[string]corev1.EnvVar{}
+	for _, e := range p.Containers[0].Env {
+		envs[e.Name] = e
+	}
+	assert.Contains(t, envs, "ES_TLS")
+	assert.Contains(t, envs, "ES_TLS_CA")
+	assert.Contains(t, envs, "ES_TLS_KEY")
+	assert.Contains(t, envs, "ES_TLS_CERT")
 }

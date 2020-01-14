@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,7 +22,7 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}), &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
 }
 
@@ -35,7 +34,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	normalize(context.Background(), jaeger)
 
-	c := newProductionStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), jaeger)
 	assertDeploymentsAndServicesForProduction(t, name, c, false, true, false)
 }
 
@@ -45,7 +44,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
-	c := newProductionStrategy(context.Background(), j, &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForProduction(t, name, c, true, false, false)
 }
 
@@ -59,7 +58,7 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 		},
 	})
 
-	c := newProductionStrategy(context.Background(), j, &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForProduction(t, name, c, false, false, true)
 }
 
@@ -86,7 +85,7 @@ func TestOptionsArePassed(t *testing.T) {
 		},
 	}
 
-	ctrl := For(context.Background(), jaeger, []corev1.Secret{})
+	ctrl := For(context.Background(), jaeger)
 	deployments := ctrl.Deployments()
 	for _, dep := range deployments {
 		args := dep.Spec.Template.Spec.Containers[0].Args
@@ -110,7 +109,7 @@ func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateProductionDependencies"})
 	j.Spec.Storage.Type = "cassandra"
-	c := newProductionStrategy(context.Background(), j, &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
@@ -165,19 +164,19 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 
 func TestSparkDependenciesProduction(t *testing.T) {
 	testSparkDependencies(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+		return newProductionStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestEsIndexCleanerProduction(t *testing.T) {
 	testEsIndexCleaner(t, func(jaeger *v1.Jaeger) S {
-		return newProductionStrategy(context.Background(), jaeger, &storage.ElasticsearchDeployment{Jaeger: jaeger})
+		return newProductionStrategy(context.Background(), jaeger)
 	})
 }
 
 func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction"})
-	c := newProductionStrategy(context.Background(), j, &storage.ElasticsearchDeployment{})
+	c := newProductionStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
@@ -194,11 +193,7 @@ func TestElasticsearchInject(t *testing.T) {
 	j.Spec.Storage.EsIndexCleaner.Enabled = &verdad
 	j.Spec.Storage.EsIndexCleaner.NumberOfDays = &one
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
-	es := &storage.ElasticsearchDeployment{Jaeger: j, CertScript: "../../scripts/cert_generation.sh"}
-	err := es.CleanCerts()
-	require.NoError(t, err)
-	defer es.CleanCerts()
-	c := newProductionStrategy(context.Background(), j, es)
+	c := newProductionStrategy(context.Background(), j)
 	// there should be index-cleaner, rollover, lookback
 	assert.Equal(t, 3, len(c.cronJobs))
 	assertEsInjectSecrets(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
