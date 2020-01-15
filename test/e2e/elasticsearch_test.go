@@ -237,7 +237,7 @@ func turnOnEsIndexCleaner(name string, exampleJaeger *v1.Jaeger) {
 	err = fw.Client.Update(context.Background(), exampleJaeger)
 	require.NoError(t, err)
 
-	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, 3*time.Minute)
+	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err, "Error waiting for Cron Job")
 
 	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
