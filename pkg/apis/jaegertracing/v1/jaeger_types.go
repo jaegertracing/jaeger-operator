@@ -182,10 +182,6 @@ type JaegerCommonSpec struct {
 // JaegerQuerySpec defines the options to be used when deploying the query
 // +k8s:openapi-gen=true
 type JaegerQuerySpec struct {
-	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
-	// +optional
-	Size int `json:"size,omitempty"`
-
 	// Replicas represents the number of replicas to create for this service.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
@@ -283,10 +279,6 @@ type JaegerAllInOneSpec struct {
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 // +k8s:openapi-gen=true
 type JaegerCollectorSpec struct {
-	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
-	// +optional
-	Size int `json:"size,omitempty"`
-
 	// Replicas represents the number of replicas to create for this service.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
@@ -304,10 +296,6 @@ type JaegerCollectorSpec struct {
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
 // +k8s:openapi-gen=true
 type JaegerIngesterSpec struct {
-	// Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.
-	// +optional
-	Size int `json:"size,omitempty"`
-
 	// Replicas represents the number of replicas to create for this service.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`

@@ -25,16 +25,6 @@ type Query struct {
 
 // NewQuery builds a new Query struct based on the given spec
 func NewQuery(jaeger *v1.Jaeger) *Query {
-	if jaeger.Spec.Query.Replicas == nil || *jaeger.Spec.Query.Replicas < 0 {
-		replicaSize := int32(1)
-		if jaeger.Spec.Query.Size > 0 {
-			jaeger.Logger().Warn("The 'size' property for the query is deprecated. Use 'replicas' instead.")
-			replicaSize = int32(jaeger.Spec.Query.Size)
-		}
-
-		jaeger.Spec.Query.Replicas = &replicaSize
-	}
-
 	return &Query{jaeger: jaeger}
 }
 
@@ -86,6 +76,12 @@ func (q *Query) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	replicaSize := q.jaeger.Spec.Query.Replicas
+	if replicaSize == nil || *replicaSize < 0 {
+		s := int32(1)
+		replicaSize = &s
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -107,7 +103,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: q.jaeger.Spec.Query.Replicas,
+			Replicas: replicaSize,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

@@ -19,15 +19,6 @@ func init() {
 	viper.SetDefault("jaeger-collector-image", "jaegertracing/all-in-one")
 }
 
-func TestNegativeSize(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNegativeSize"})
-	jaeger.Spec.Collector.Size = -1
-
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
-}
-
 func TestNegativeReplicas(t *testing.T) {
 	size := int32(-1)
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNegativeReplicas"})
@@ -54,26 +45,6 @@ func TestReplicaSize(t *testing.T) {
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
 	assert.Equal(t, int32(0), *dep.Spec.Replicas)
-}
-
-func TestSize(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSize"})
-	jaeger.Spec.Collector.Size = 2
-
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
-	assert.Equal(t, int32(2), *dep.Spec.Replicas)
-}
-
-func TestReplicaWinsOverSize(t *testing.T) {
-	size := int32(3)
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestReplicaWinsOverSize"})
-	jaeger.Spec.Collector.Size = 2
-	jaeger.Spec.Collector.Replicas = &size
-
-	collector := NewCollector(jaeger)
-	dep := collector.Get()
-	assert.Equal(t, int32(3), *dep.Spec.Replicas)
 }
 
 func TestName(t *testing.T) {
