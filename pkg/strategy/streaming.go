@@ -92,6 +92,9 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 	}
 
+	// add autoscalers
+	manifest.horizontalPodAutoscalers = collector.Autoscalers()
+
 	if isBoolTrue(jaeger.Spec.Storage.Dependencies.Enabled) {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			manifest.cronJobs = append(manifest.cronJobs, *cronjob.CreateSparkDependencies(jaeger))

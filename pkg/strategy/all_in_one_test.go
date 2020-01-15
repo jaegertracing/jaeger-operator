@@ -67,6 +67,12 @@ func TestDelegateAllInOneDependencies(t *testing.T) {
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
+func TestNoAutoscaleForAllInOne(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	c := newAllInOneStrategy(context.Background(), j)
+	assert.Len(t, c.HorizontalPodAutoscalers(), 0)
+}
+
 func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	// TODO(jpkroehling): this func deserves a refactoring already
 
