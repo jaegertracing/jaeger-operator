@@ -189,7 +189,7 @@ func WaitForCronJob(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 // WaitForDeployment waits for a deployment to finish and reports how long the operation took
 func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
 	start := time.Now()
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, replicas, retryInterval, timeout)
 	elapsed := time.Since(start)
 	logrus.Infof("Deployment of %s in namespace %s took %s\n", name, namespace, elapsed)
 	return err
