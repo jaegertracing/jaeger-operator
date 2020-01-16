@@ -152,6 +152,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
+					DNSPolicy:          commonSpec.DNSPolicy,
+					HostNetwork:        commonSpec.HostNetwork,
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, account.IngesterComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

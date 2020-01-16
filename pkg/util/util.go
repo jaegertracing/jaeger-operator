@@ -45,6 +45,23 @@ func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.Vo
 	return results
 }
 
+func mergeDNSPolicyAndHostNetwork(gPolicy, policy *corev1.DNSPolicy, gHostNetwork, hostNetwork *bool) {
+	if *gPolicy == "" {
+		*gPolicy = *policy
+	}
+
+	if !*gHostNetwork {
+		*gHostNetwork = *hostNetwork
+	}
+}
+
+func setDefaultDNSPolicy(gPolicy *corev1.DNSPolicy) corev1.DNSPolicy {
+	if *gPolicy == "" {
+		return "ClusterFirst"
+	}
+	return *gPolicy
+}
+
 // Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
 func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	annotations := make(map[string]string)
@@ -56,6 +73,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
+	var dnsPolicy corev1.DNSPolicy
+	var hostNetwork bool
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -83,6 +102,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			affinity = commonSpec.Affinity
 		}
 
+		mergeDNSPolicyAndHostNetwork(&dnsPolicy, &commonSpec.DNSPolicy, &hostNetwork, &commonSpec.HostNetwork)
+
 		tolerations = append(tolerations, commonSpec.Tolerations...)
 
 		if securityContext == nil {
@@ -100,6 +121,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:         removeDuplicatedVolumes(volumes),
 		Resources:       *resources,
+		DNSPolicy:       setDefaultDNSPolicy(&dnsPolicy),
+		HostNetwork:     hostNetwork,
 		Affinity:        affinity,
 		Tolerations:     tolerations,
 		SecurityContext: securityContext,

@@ -179,6 +179,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
+					DNSPolicy:          commonSpec.DNSPolicy,
+					HostNetwork:        commonSpec.HostNetwork,
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, account.CollectorComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

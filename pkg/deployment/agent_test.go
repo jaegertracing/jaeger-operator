@@ -158,6 +158,44 @@ func TestAgentLabels(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%s-agent", a.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
 
+func TestAgentDNSPolicyAndHostNetwork(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.DNSPolicy = "Default"
+	jaeger.Spec.Agent.HostNetwork = true
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, "Default", string(dep.Spec.Template.Spec.DNSPolicy))
+	assert.Equal(t, true, dep.Spec.Template.Spec.HostNetwork)
+
+}
+
+func TestAgentDNSPolicyAndHostNetwork1(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork1"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	// agent first
+	jaeger.Spec.DNSPolicy = "ClusterFirstWithHostNet"
+	jaeger.Spec.Agent.DNSPolicy = "Default"
+	// merge
+	jaeger.Spec.HostNetwork = true
+	jaeger.Spec.Agent.HostNetwork = false
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, "Default", string(dep.Spec.Template.Spec.DNSPolicy))
+	assert.Equal(t, true, dep.Spec.Template.Spec.HostNetwork)
+
+}
+
+func TestAgentDNSPolicyAndHostNetwork2(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork2"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, "ClusterFirst", string(dep.Spec.Template.Spec.DNSPolicy))
+	assert.Equal(t, false, dep.Spec.Template.Spec.HostNetwork)
+
+}
+
 func TestAgentOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentOrderOfArguments"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
