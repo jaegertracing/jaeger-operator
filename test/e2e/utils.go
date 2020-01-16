@@ -36,7 +36,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Minute * 2
+	timeout              = time.Minute * 5
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)

@@ -15,7 +15,6 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/uber/jaeger-client-go/config"
@@ -34,20 +33,21 @@ import (
 
 // Test parameters
 const name = "token-prop"
-const username = "user-test-token"
-const password = "any"
 const collectorPodImageName = "jaeger-collector"
 const testServiceName = "token-propagation"
-const test_account = "token-test-user"
+const testAccount = "token-test-user"
 
 type TokenTestSuite struct {
 	suite.Suite
-	exampleJaeger        *v1.Jaeger
-	queryName            string
-	collectorName        string
-	queryServiceEndPoint string
-	host                 string
-	token                string
+	exampleJaeger         *v1.Jaeger
+	queryName             string
+	collectorName         string
+	queryServiceEndPoint  string
+	host                  string
+	token                 string
+	testServiceAccount    *corev1.ServiceAccount
+	testRoleBinding       *rbac.ClusterRoleBinding
+	delegationRoleBinding *rbac.ClusterRoleBinding
 }
 
 func (suite *TokenTestSuite) SetupSuite() {
@@ -55,13 +55,13 @@ func (suite *TokenTestSuite) SetupSuite() {
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
 	}
-	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
+	require.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
 		},
 	}))
-	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &esv1.ElasticsearchList{
+	require.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &esv1.ElasticsearchList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Elasticsearch",
 			APIVersion: "logging.openshift.io/v1",
@@ -82,7 +82,27 @@ func (suite *TokenTestSuite) SetupSuite() {
 	suite.deployJaegerWithPropagationEnabled()
 }
 
+func (suite *TokenTestSuite) cleanAccountBindings() {
+	if !debugMode || !t.Failed() {
+		err := fw.Client.Delete(goctx.Background(), suite.testServiceAccount)
+		require.NoError(t, err, "Error deleting test service account")
+		err = e2eutil.WaitForDeletion(t, fw.Client.Client, suite.testServiceAccount, retryInterval, timeout)
+		require.NoError(t, err)
+
+		err = fw.Client.Delete(goctx.Background(), suite.testRoleBinding)
+		require.NoError(t, err, "Error deleting test service account bindings")
+		err = e2eutil.WaitForDeletion(t, fw.Client.Client, suite.testRoleBinding, retryInterval, timeout)
+		require.NoError(t, err)
+
+		err = fw.Client.Delete(goctx.Background(), suite.delegationRoleBinding)
+		require.NoError(t, err, "Error deleting delegation bindings")
+		err = e2eutil.WaitForDeletion(t, fw.Client.Client, suite.delegationRoleBinding, retryInterval, timeout)
+		require.NoError(t, err)
+	}
+}
+
 func (suite *TokenTestSuite) TearDownSuite() {
+	suite.cleanAccountBindings()
 	undeployJaegerInstance(suite.exampleJaeger)
 	handleSuiteTearDown()
 }
@@ -95,10 +115,18 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 	}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		req, err := http.NewRequest(http.MethodGet, suite.queryServiceEndPoint, nil)
+		if err != nil {
+			return false, err
+		}
 		resp, err := client.Do(req)
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-		return true, nil
+		if err != nil {
+			return false, err
+		}
+		if resp.StatusCode == http.StatusForbidden {
+			return true, nil
+		}
+		return false, errors.New(fmt.Sprintf("query service return http code: %d", resp.StatusCode))
 	})
 	require.NoError(t, err, "Token propagation test failed")
 }
@@ -127,19 +155,25 @@ func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
 	/* Try to reach query endpoint */
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		req, err := http.NewRequest(http.MethodGet, suite.queryServiceEndPoint, nil)
+		if err != nil {
+			return false, err
+		}
 		req.Header.Add("Authorization", "Bearer "+suite.token)
 		resp, err := client.Do(req)
 		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-		if resp.StatusCode != http.StatusOK {
-			return false, errors.New("Query service returns http code: " + string(resp.StatusCode))
+		if err != nil {
+			return false, err
 		}
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		bodyString := string(bodyBytes)
-		if !strings.Contains(bodyString, "errors\":null") {
-			return false, errors.New("query service returns errors: " + bodyString)
+		if resp.StatusCode == http.StatusOK {
+			bodyBytes, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			bodyString := string(bodyBytes)
+			if !strings.Contains(bodyString, "errors\":null") {
+				return false, errors.New("query service returns errors: " + bodyString)
+			}
+			return true, nil
 		}
-		return true, nil
+		return false, errors.New(fmt.Sprintf("query service return http code: %d", resp.StatusCode))
 	})
 	require.NoError(t, err, "Token propagation test failed")
 }
@@ -147,10 +181,11 @@ func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
 func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	queryName := fmt.Sprintf("%s-query", name)
 	collectorName := fmt.Sprintf("%s-collector", name)
-	bindOperatorWithAuthDelegator()
-	createTestServiceAccount()
+	suite.bindOperatorWithAuthDelegator()
+	suite.createTestServiceAccount()
 	suite.token = testAccountToken()
-
+	require.NotEmpty(t, suite.token)
+	println(suite.token)
 	suite.exampleJaeger = jaegerInstance()
 	err := fw.Client.Create(goctx.Background(),
 		suite.exampleJaeger,
@@ -177,8 +212,8 @@ func TestTokenSuite(t *testing.T) {
 	suite.Run(t, new(TokenTestSuite))
 }
 
-func bindOperatorWithAuthDelegator() {
-	roleBinding := rbac.ClusterRoleBinding{
+func (suite *TokenTestSuite) bindOperatorWithAuthDelegator() {
+	suite.delegationRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "jaeger-operator:system:auth-delegator",
 			Namespace: namespace,
@@ -194,7 +229,7 @@ func bindOperatorWithAuthDelegator() {
 		},
 	}
 	err := fw.Client.Create(goctx.Background(),
-		&roleBinding,
+		suite.delegationRoleBinding,
 		&framework.CleanupOptions{
 			TestContext:   ctx,
 			Timeout:       timeout,
@@ -203,16 +238,16 @@ func bindOperatorWithAuthDelegator() {
 	require.NoError(t, err, "Error binding operator service account with auth-delegator")
 }
 
-func createTestServiceAccount() {
+func (suite *TokenTestSuite) createTestServiceAccount() {
 
-	serviceAccount := corev1.ServiceAccount{
+	suite.testServiceAccount = &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      test_account,
+			Name:      testAccount,
 			Namespace: namespace,
 		},
 	}
 	err := fw.Client.Create(goctx.Background(),
-		&serviceAccount,
+		suite.testServiceAccount,
 		&framework.CleanupOptions{
 			TestContext:   ctx,
 			Timeout:       timeout,
@@ -220,14 +255,14 @@ func createTestServiceAccount() {
 		})
 	require.NoError(t, err, "Error deploying example Jaeger")
 
-	roleBinding := rbac.ClusterRoleBinding{
+	suite.testRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      test_account + "-bind",
+			Name:      testAccount + "-bind",
 			Namespace: namespace,
 		},
 		Subjects: []rbac.Subject{{
 			Kind:      "ServiceAccount",
-			Name:      serviceAccount.Name,
+			Name:      suite.testServiceAccount.Name,
 			Namespace: namespace,
 		}},
 		RoleRef: rbac.RoleRef{
@@ -237,7 +272,7 @@ func createTestServiceAccount() {
 	}
 
 	err = fw.Client.Create(goctx.Background(),
-		&roleBinding,
+		suite.testRoleBinding,
 		&framework.CleanupOptions{
 			TestContext:   ctx,
 			Timeout:       timeout,
@@ -253,13 +288,13 @@ func testAccountToken() string {
 		serviceAccount := corev1.ServiceAccount{}
 		e := fw.Client.Get(goctx.Background(), types.NamespacedName{
 			Namespace: namespace,
-			Name:      test_account,
+			Name:      testAccount,
 		}, &serviceAccount)
 		if e != nil {
 			return false, e
 		}
 		for _, s := range serviceAccount.Secrets {
-			if strings.HasPrefix(s.Name, test_account+"-token") {
+			if strings.HasPrefix(s.Name, testAccount+"-token") {
 				secretName = s.Name
 				return true, nil
 			}
