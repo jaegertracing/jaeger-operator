@@ -82,6 +82,8 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 			SecurityContext:    commonSpec.SecurityContext,
 			ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
 			Volumes:            commonSpec.Volumes,
+			DNSPolicy:          commonSpec.DNSPolicy,
+			HostNetwork:        commonSpec.HostNetwork,
 			Containers: []corev1.Container{
 				{
 					Name:         name,

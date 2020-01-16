@@ -158,6 +158,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
+					DNSPolicy:          commonSpec.DNSPolicy,
+					HostNetwork:        commonSpec.HostNetwork,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AgentComponent),
 				},
 			},

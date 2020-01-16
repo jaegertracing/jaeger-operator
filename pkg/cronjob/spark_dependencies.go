@@ -91,6 +91,8 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 								},
 							},
 							RestartPolicy:      corev1.RestartPolicyNever,
+							DNSPolicy:          commonSpec.DNSPolicy,
+							HostNetwork:        commonSpec.HostNetwork,
 							Affinity:           commonSpec.Affinity,
 							Tolerations:        commonSpec.Tolerations,
 							SecurityContext:    commonSpec.SecurityContext,

@@ -11,13 +11,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/kafka/v1beta1.Kafka":                schema_pkg_apis_kafka_v1beta1_Kafka(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaSpec":            schema_pkg_apis_kafka_v1beta1_KafkaSpec(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaStatus":          schema_pkg_apis_kafka_v1beta1_KafkaStatus(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaStatusCondition": schema_pkg_apis_kafka_v1beta1_KafkaStatusCondition(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaUser":            schema_pkg_apis_kafka_v1beta1_KafkaUser(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaUserSpec":        schema_pkg_apis_kafka_v1beta1_KafkaUserSpec(ref),
-		"./pkg/apis/kafka/v1beta1.KafkaUserStatus":      schema_pkg_apis_kafka_v1beta1_KafkaUserStatus(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.Kafka":                schema_pkg_apis_kafka_v1beta1_Kafka(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaSpec":            schema_pkg_apis_kafka_v1beta1_KafkaSpec(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatus":          schema_pkg_apis_kafka_v1beta1_KafkaStatus(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatusCondition": schema_pkg_apis_kafka_v1beta1_KafkaStatusCondition(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUser":            schema_pkg_apis_kafka_v1beta1_KafkaUser(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserSpec":        schema_pkg_apis_kafka_v1beta1_KafkaUserSpec(ref),
+		"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserStatus":      schema_pkg_apis_kafka_v1beta1_KafkaUserStatus(ref),
 	}
 }
 
@@ -49,19 +49,19 @@ func schema_pkg_apis_kafka_v1beta1_Kafka(ref common.ReferenceCallback) common.Op
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/kafka/v1beta1.KafkaSpec"),
+							Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/kafka/v1beta1.KafkaStatus"),
+							Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/kafka/v1beta1.KafkaSpec", "./pkg/apis/kafka/v1beta1.KafkaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaSpec", "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -103,7 +103,7 @@ func schema_pkg_apis_kafka_v1beta1_KafkaStatus(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/kafka/v1beta1.KafkaStatusCondition"),
+										Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatusCondition"),
 									},
 								},
 							},
@@ -113,7 +113,7 @@ func schema_pkg_apis_kafka_v1beta1_KafkaStatus(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/kafka/v1beta1.KafkaStatusCondition"},
+			"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatusCondition"},
 	}
 }
 
@@ -188,19 +188,19 @@ func schema_pkg_apis_kafka_v1beta1_KafkaUser(ref common.ReferenceCallback) commo
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/kafka/v1beta1.KafkaUserSpec"),
+							Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/kafka/v1beta1.KafkaUserStatus"),
+							Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/kafka/v1beta1.KafkaUserSpec", "./pkg/apis/kafka/v1beta1.KafkaUserStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserSpec", "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaUserStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -242,7 +242,7 @@ func schema_pkg_apis_kafka_v1beta1_KafkaUserStatus(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/kafka/v1beta1.KafkaStatusCondition"),
+										Ref: ref("github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatusCondition"),
 									},
 								},
 							},
@@ -252,6 +252,6 @@ func schema_pkg_apis_kafka_v1beta1_KafkaUserStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/kafka/v1beta1.KafkaStatusCondition"},
+			"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1.KafkaStatusCondition"},
 	}
 }

@@ -56,6 +56,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
+	var dnsPolicy corev1.DNSPolicy
+	var hostNetwork bool
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -83,6 +85,14 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			affinity = commonSpec.Affinity
 		}
 
+		if dnsPolicy == "" {
+			dnsPolicy = commonSpec.DNSPolicy
+		}
+
+		if !hostNetwork {
+			hostNetwork = commonSpec.HostNetwork
+		}
+
 		tolerations = append(tolerations, commonSpec.Tolerations...)
 
 		if securityContext == nil {
@@ -94,12 +104,18 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		}
 	}
 
+	if dnsPolicy == "" {
+		dnsPolicy = "ClusterFirst"
+	}
+
 	return &v1.JaegerCommonSpec{
 		Annotations:     annotations,
 		Labels:          labels,
 		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:         removeDuplicatedVolumes(volumes),
 		Resources:       *resources,
+		DNSPolicy:       dnsPolicy,
+		HostNetwork:     hostNetwork,
 		Affinity:        affinity,
 		Tolerations:     tolerations,
 		SecurityContext: securityContext,
