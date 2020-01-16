@@ -65,7 +65,11 @@ func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) 
 	if strings.EqualFold(util.FindItem("--es-archive.enabled", container.Args), "--es-archive.enabled=true") {
 		container.Args = append(container.Args,
 			"--es-archive.server-urls="+elasticsearchURL,
-			"--es-archive.tls=true",
+		)
+		if util.FindItem("--es-archive.tls=", container.Args) == "" {
+			container.Args = append(container.Args, "--es-archive.tls=true")
+		}
+		container.Args = append(container.Args,
 			"--es-archive.tls.ca="+caPath,
 			"--es-archive.tls.cert="+certPath,
 			"--es-archive.tls.key="+keyPath,
