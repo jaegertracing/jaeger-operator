@@ -90,6 +90,8 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
 							Volumes:            commonSpec.Volumes,
+							DNSPolicy:          commonSpec.DNSPolicy,
+							HostNetwork:        commonSpec.HostNetwork,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,
