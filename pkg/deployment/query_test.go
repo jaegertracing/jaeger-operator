@@ -18,15 +18,6 @@ func init() {
 	viper.SetDefault("jaeger-query-image", "jaegertracing/all-in-one")
 }
 
-func TestQueryNegativeSize(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryNegativeSize"})
-	jaeger.Spec.Query.Size = -1
-
-	query := NewQuery(jaeger)
-	dep := query.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
-}
-
 func TestQueryNegativeReplicas(t *testing.T) {
 	size := int32(-1)
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryNegativeReplicas"})
@@ -53,26 +44,6 @@ func TestQueryReplicaSize(t *testing.T) {
 	ingester := NewQuery(jaeger)
 	dep := ingester.Get()
 	assert.Equal(t, int32(0), *dep.Spec.Replicas)
-}
-
-func TestQuerySize(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQuerySize"})
-	jaeger.Spec.Query.Size = 2
-
-	query := NewQuery(jaeger)
-	dep := query.Get()
-	assert.Equal(t, int32(2), *dep.Spec.Replicas)
-}
-
-func TestQueryReplicaWinsOverSize(t *testing.T) {
-	size := int32(3)
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryReplicaWinsOverSize"})
-	jaeger.Spec.Query.Size = 2
-	jaeger.Spec.Query.Replicas = &size
-
-	query := NewQuery(jaeger)
-	dep := query.Get()
-	assert.Equal(t, int32(3), *dep.Spec.Replicas)
 }
 
 func TestDefaultQueryImage(t *testing.T) {

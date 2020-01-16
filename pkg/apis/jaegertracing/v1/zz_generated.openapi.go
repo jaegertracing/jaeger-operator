@@ -450,13 +450,6 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 				Description: "JaegerCollectorSpec defines the options to be used when deploying the collector",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"size": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas represents the number of replicas to create for this service.",
@@ -1031,13 +1024,6 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 				Description: "JaegerIngesterSpec defines the options to be used when deploying the ingester",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"size": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas represents the number of replicas to create for this service.",
@@ -1413,13 +1399,6 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 				Description: "JaegerQuerySpec defines the options to be used when deploying the query",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"size": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Size represents the number of replicas to create for this service. DEPRECATED, use `Replicas` instead.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas represents the number of replicas to create for this service.",

@@ -26,15 +26,6 @@ func TestIngesterNotDefined(t *testing.T) {
 	assert.Nil(t, ingester.Get())
 }
 
-func TestIngesterNegativeSize(t *testing.T) {
-	jaeger := newIngesterJaeger("TestIngesterNegativeSize")
-	jaeger.Spec.Ingester.Size = -1
-
-	ingester := NewIngester(jaeger)
-	dep := ingester.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
-}
-
 func TestIngesterNegativeReplicas(t *testing.T) {
 	size := int32(-1)
 	jaeger := newIngesterJaeger("TestIngesterNegativeReplicas")
@@ -61,26 +52,6 @@ func TestIngesterReplicaSize(t *testing.T) {
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
 	assert.Equal(t, int32(0), *dep.Spec.Replicas)
-}
-
-func TestIngesterSize(t *testing.T) {
-	jaeger := newIngesterJaeger("TestIngesterSize")
-	jaeger.Spec.Ingester.Size = 2
-
-	ingester := NewIngester(jaeger)
-	dep := ingester.Get()
-	assert.Equal(t, int32(2), *dep.Spec.Replicas)
-}
-
-func TestIngesterReplicaWinsOverSize(t *testing.T) {
-	size := int32(3)
-	jaeger := newIngesterJaeger("TestIngesterReplicaWinsOverSize")
-	jaeger.Spec.Ingester.Size = 2
-	jaeger.Spec.Ingester.Replicas = &size
-
-	ingester := NewIngester(jaeger)
-	dep := ingester.Get()
-	assert.Equal(t, int32(3), *dep.Spec.Replicas)
 }
 
 func TestIngesterName(t *testing.T) {

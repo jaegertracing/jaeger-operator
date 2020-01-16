@@ -5457,10 +5457,6 @@ spec:
                   type: object
                 serviceAccount:
                   type: string
-                size:
-                  description: Size represents the number of replicas to create for
-                    this service. DEPRECATED, use `Replicas` instead.
-                  type: integer
                 tolerations:
                   items:
                     description: The pod this Toleration is attached to tolerates
@@ -7508,10 +7504,6 @@ spec:
                   type: object
                 serviceAccount:
                   type: string
-                size:
-                  description: Size represents the number of replicas to create for
-                    this service. DEPRECATED, use `Replicas` instead.
-                  type: integer
                 tolerations:
                   items:
                     description: The pod this Toleration is attached to tolerates
@@ -11637,10 +11629,6 @@ spec:
                   type: object
                 serviceAccount:
                   type: string
-                size:
-                  description: Size represents the number of replicas to create for
-                    this service. DEPRECATED, use `Replicas` instead.
-                  type: integer
                 tolerations:
                   items:
                     description: The pod this Toleration is attached to tolerates

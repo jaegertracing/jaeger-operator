@@ -23,16 +23,6 @@ type Ingester struct {
 
 // NewIngester builds a new Ingester struct based on the given spec
 func NewIngester(jaeger *v1.Jaeger) *Ingester {
-	if jaeger.Spec.Ingester.Replicas == nil || *jaeger.Spec.Ingester.Replicas < 0 {
-		replicaSize := int32(1)
-		if jaeger.Spec.Ingester.Size > 0 {
-			jaeger.Logger().Warn("The 'size' property for the ingester is deprecated. Use 'replicas' instead.")
-			replicaSize = int32(jaeger.Spec.Ingester.Size)
-		}
-
-		jaeger.Spec.Ingester.Replicas = &replicaSize
-	}
-
 	return &Ingester{jaeger: jaeger}
 }
 
@@ -81,6 +71,12 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	replicaSize := i.jaeger.Spec.Ingester.Replicas
+	if replicaSize == nil || *replicaSize < 0 {
+		s := int32(1)
+		replicaSize = &s
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -101,7 +97,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: i.jaeger.Spec.Ingester.Replicas,
+			Replicas: replicaSize,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

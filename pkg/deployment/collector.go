@@ -25,16 +25,6 @@ type Collector struct {
 
 // NewCollector builds a new Collector struct based on the given spec
 func NewCollector(jaeger *v1.Jaeger) *Collector {
-	if jaeger.Spec.Collector.Replicas == nil || *jaeger.Spec.Collector.Replicas < 0 {
-		replicaSize := int32(1)
-		if jaeger.Spec.Collector.Size > 0 {
-			jaeger.Logger().Warn("The 'size' property for the collector is deprecated. Use 'replicas' instead.")
-			replicaSize = int32(jaeger.Spec.Collector.Size)
-		}
-
-		jaeger.Spec.Collector.Replicas = &replicaSize
-	}
-
 	return &Collector{jaeger: jaeger}
 }
 
@@ -87,6 +77,12 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	replicaSize := c.jaeger.Spec.Collector.Replicas
+	if replicaSize == nil || *replicaSize < 0 {
+		s := int32(1)
+		replicaSize = &s
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -108,7 +104,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: c.jaeger.Spec.Collector.Replicas,
+			Replicas: replicaSize,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
