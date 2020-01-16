@@ -39,12 +39,10 @@ type ElasticsearchDeployment struct {
 }
 
 func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
-	container.Args = append(container.Args,
-		"--es.server-urls="+elasticsearchURL)
+	container.Args = append(container.Args, "--es.server-urls="+elasticsearchURL)
 	if util.FindItem("--es.tls=", container.Args) == "" {
 		container.Args = append(container.Args, "--es.tls=true")
 	}
-
 	container.Args = append(container.Args,
 		"--es.tls.ca="+caPath,
 		"--es.tls.cert="+certPath,
