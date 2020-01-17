@@ -43,12 +43,12 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	}
 	defer undeployJaegerInstance(j)
 
-	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+timeout+1*time.Minute)
+	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+1*time.Minute)
 	if err != nil {
 		return errors.WithMessage(err, "Failed waiting for cron job")
 	}
 
-	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+timeout+1*time.Minute)
+	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+1*time.Minute)
 	if err != nil {
 		return errors.WithMessage(err, "Failed waiting for Job Of An Owner")
 	}
