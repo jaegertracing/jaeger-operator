@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -97,7 +98,7 @@ func (suite *ExamplesTestSuite) TestWithCassandra() {
 	require.NoError(t, err, "Error waiting for cassandra")
 
 	yamlFileName := "../../deploy/examples/with-cassandra.yaml"
-	smokeTestAllInOneExample("with-cassandra", yamlFileName)
+	smokeTestAllInOneExampleWithTimeout("with-cassandra", yamlFileName, timeout+1*time.Minute)
 }
 
 func (suite *ExamplesTestSuite) TestBusinessApp() {

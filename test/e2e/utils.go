@@ -312,10 +312,14 @@ func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
 }
 
 func smokeTestAllInOneExample(name, yamlFileName string) {
+	smokeTestAllInOneExample(name, yamlFileName)
+}
+
+func smokeTestAllInOneExampleWithTimeout(name, yamlFileName string, to time.Duration) {
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	err := WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err := WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, to)
 	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
 
 	AllInOneSmokeTest(name)
