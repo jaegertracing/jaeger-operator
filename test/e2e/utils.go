@@ -312,7 +312,7 @@ func createJaegerInstanceFromFile(name, filename string) *v1.Jaeger {
 }
 
 func smokeTestAllInOneExample(name, yamlFileName string) {
-	smokeTestAllInOneExample(name, yamlFileName)
+	smokeTestAllInOneExampleWithTimeout(name, yamlFileName, timeout+1*time.Minute)
 }
 
 func smokeTestAllInOneExampleWithTimeout(name, yamlFileName string, to time.Duration) {
