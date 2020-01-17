@@ -3,6 +3,8 @@
 package e2e
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -53,6 +55,13 @@ func (suite *ExamplesTestSuite2) TestSimplestExample() {
 }
 
 func (suite *ExamplesTestSuite2) TestWithBadgerExample() {
+	if isOpenShift(t) {
+		ocpVersion := os.Getenv("OCP_VERSION")
+		if len(ocpVersion) > 0 && strings.HasPrefix(ocpVersion, "4.1") {
+			t.Skip()
+		}
+	}
+
 	smokeTestAllInOneExample("with-badger", "../../deploy/examples/with-badger.yaml")
 }
 
