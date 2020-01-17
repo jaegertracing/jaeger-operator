@@ -3,21 +3,14 @@
 package e2e
 
 import (
-	"context"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type ExamplesTestSuite struct {
@@ -97,7 +90,7 @@ func (suite *ExamplesTestSuite) TestWithCassandra() {
 	require.NoError(t, err, "Error waiting for cassandra")
 
 	yamlFileName := "../../deploy/examples/with-cassandra.yaml"
-	smokeTestAllInOneExample("with-cassandra", yamlFileName)
+	smokeTestAllInOneExampleWithTimeout("with-cassandra", yamlFileName, timeout+1*time.Minute)
 }
 
 func (suite *ExamplesTestSuite) TestBusinessApp() {
