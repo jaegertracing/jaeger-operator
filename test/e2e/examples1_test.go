@@ -3,14 +3,21 @@
 package e2e
 
 import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/kubernetes/kubernetes/staging/src/k8s.io/apimachinery/pkg/util/intstr"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type ExamplesTestSuite struct {
