@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -134,11 +135,13 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	require.NoError(t, err, "Error waiting for jaeger deployment")
 	defer undeployJaegerInstance(j)
 
-	queryPort := randomPortNumber()
-	ports := []string{queryPort + ":16686"}
+	ports := []string{"0:16686"}
 	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
+	forwardedPorts, err := portForward.GetPorts()
+	require.NoError(t, err)
+	queryPort := strconv.Itoa(int(forwardedPorts[0].Local))
 
 	url := fmt.Sprintf("http://localhost:%s/%s/search", queryPort, basePath)
 	c := http.Client{Timeout: 3 * time.Second}

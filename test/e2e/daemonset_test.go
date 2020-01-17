@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -114,11 +115,13 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for VertX app to start")
 
-	queryPort := randomPortNumber()
-	ports := []string{queryPort + ":16686"}
+	ports := []string{"0:16686"}
 	portForw, closeChan := CreatePortForward(namespace, "agent-as-daemonset", "all-in-one", ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
+	forwardedPorts, err := portForw.GetPorts()
+	require.NoError(t, err)
+	queryPort := strconv.Itoa(int(forwardedPorts[0].Local))
 
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}

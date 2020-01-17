@@ -16,15 +16,17 @@ import (
 // AllInOneSmokeTest is for the all-in-one image, where query and collector use the same pod
 func AllInOneSmokeTest(resourceName string) {
 	allInOneImageName := "all-in-one"
-	queryPort := randomPortNumber()
-	collectorPort := randomPortNumber()
-	ports := []string{queryPort + ":16686", collectorPort + ":14268"}
+	ports := []string{"0:16686", "0:14268"}
 	portForw, closeChan := CreatePortForward(namespace, resourceName, allInOneImageName, ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
+	forwardedPorts, err := portForw.GetPorts()
+	require.NoError(t, err)
+	queryPort := forwardedPorts[0].Local
+	collectorPort := forwardedPorts[1].Local
 
-	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
-	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
+	apiTracesEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
 }
 
@@ -44,20 +46,24 @@ func productionSmokeTest(resourceName, smokeTestNamespace string) {
 	queryPodPrefix := resourceName + "-query"
 	collectorPodPrefix := resourceName + "-collector"
 
-	queryPort := randomPortNumber()
-	queryPorts := []string{queryPort + ":16686"}
+	queryPorts := []string{"0:16686"}
 	portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
+	forwardedQueryPorts, err := portForw.GetPorts()
+	require.NoError(t, err)
+	queryPort := forwardedQueryPorts[0].Local
 
-	collectorPort := randomPortNumber()
-	collectorPorts := []string{collectorPort + ":14268"}
+	collectorPorts := []string{"0:14268"}
 	portForwColl, closeChanColl := CreatePortForward(smokeTestNamespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
+	forwardedCollectorPorts, err := portForwColl.GetPorts()
+	require.NoError(t, err)
+	collectorPort := forwardedCollectorPorts[0].Local
 
-	apiTracesEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", queryPort)
-	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
+	apiTracesEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
 }
 

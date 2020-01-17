@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -138,11 +139,13 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	}
 
 	// Confirm that we've created some traces
-	queryPort := randomPortNumber()
-	ports := []string{queryPort + ":16686"}
+	ports := []string{"0:16686"}
 	portForward, closeChan := CreatePortForward(namespace, "simplest", "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
+	forwardedPorts, err := portForward.GetPorts()
+	require.NoError(t, err)
+	queryPort := strconv.Itoa(int(forwardedPorts[0].Local))
 
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	err = WaitAndPollForHTTPResponse(url, func(response *http.Response) (bool, error) {

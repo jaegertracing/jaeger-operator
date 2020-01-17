@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -224,9 +225,10 @@ func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 }
 
 func createEsPortForward() (portForwES *portforward.PortForwarder, closeChanES chan struct{}, esPort string) {
-	esPort = randomPortNumber()
-	portForwES, closeChanES = CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{esPort + ":9200"}, fw.KubeConfig)
-	return portForwES, closeChanES, esPort
+	portForwES, closeChanES = CreatePortForward(storageNamespace, "elasticsearch", "elasticsearch", []string{"0:9200"}, fw.KubeConfig)
+	forwardedPorts, err := portForwES.GetPorts()
+	require.NoError(t, err)
+	return portForwES, closeChanES, strconv.Itoa(int(forwardedPorts[0].Local))
 }
 
 func turnOnEsIndexCleaner(name string, exampleJaeger *v1.Jaeger) {
