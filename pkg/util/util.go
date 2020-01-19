@@ -46,20 +46,13 @@ func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.Vo
 }
 
 func mergeDNSPolicyAndHostNetwork(gPolicy, policy *corev1.DNSPolicy, gHostNetwork, hostNetwork *bool) {
-	if *gPolicy == "" {
+	if gPolicy != nil && *gPolicy == "" {
 		*gPolicy = *policy
 	}
 
-	if !*gHostNetwork {
+	if gHostNetwork != nil && !*gHostNetwork {
 		*gHostNetwork = *hostNetwork
 	}
-}
-
-func setDefaultDNSPolicy(gPolicy *corev1.DNSPolicy) corev1.DNSPolicy {
-	if *gPolicy == "" {
-		return "ClusterFirst"
-	}
-	return *gPolicy
 }
 
 // Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
@@ -121,7 +114,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
 		Volumes:         removeDuplicatedVolumes(volumes),
 		Resources:       *resources,
-		DNSPolicy:       setDefaultDNSPolicy(&dnsPolicy),
+		DNSPolicy:       dnsPolicy,
 		HostNetwork:     hostNetwork,
 		Affinity:        affinity,
 		Tolerations:     tolerations,

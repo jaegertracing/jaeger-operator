@@ -161,39 +161,55 @@ func TestAgentLabels(t *testing.T) {
 func TestAgentDNSPolicyAndHostNetwork(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
-	jaeger.Spec.Agent.DNSPolicy = "Default"
-	jaeger.Spec.Agent.HostNetwork = true
-	a := NewAgent(jaeger)
-	dep := a.Get()
-	assert.Equal(t, "Default", string(dep.Spec.Template.Spec.DNSPolicy))
-	assert.Equal(t, true, dep.Spec.Template.Spec.HostNetwork)
+	type dnsPolicyAndHostNetwork struct {
+		JaegerDNSPolicy   corev1.DNSPolicy
+		JaegerHostNetwork bool
+		AgentDNSPolicy    corev1.DNSPolicy
+		AgentHostNetwork  bool
+	}
+	type result struct {
+		DNSPolicy   corev1.DNSPolicy
+		HostNetwork bool
+	}
 
-}
+	tests := []dnsPolicyAndHostNetwork{
+		{}, // default
+		{
+			AgentDNSPolicy:   corev1.DNSDefault,
+			AgentHostNetwork: true,
+		},
+		{
+			JaegerDNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+			JaegerHostNetwork: true,
+			AgentDNSPolicy:    corev1.DNSDefault,
+			AgentHostNetwork:  false,
+		}, // merge
+	}
+	expected := []result{
+		{
+			DNSPolicy:   "",
+			HostNetwork: false,
+		},
+		{
+			DNSPolicy:   corev1.DNSDefault,
+			HostNetwork: true,
+		},
+		{
+			DNSPolicy:   corev1.DNSDefault,
+			HostNetwork: true,
+		},
+	}
 
-func TestAgentDNSPolicyAndHostNetwork1(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork1"})
-	jaeger.Spec.Agent.Strategy = "daemonset"
-	// agent first
-	jaeger.Spec.DNSPolicy = "ClusterFirstWithHostNet"
-	jaeger.Spec.Agent.DNSPolicy = "Default"
-	// merge
-	jaeger.Spec.HostNetwork = true
-	jaeger.Spec.Agent.HostNetwork = false
-	a := NewAgent(jaeger)
-	dep := a.Get()
-	assert.Equal(t, "Default", string(dep.Spec.Template.Spec.DNSPolicy))
-	assert.Equal(t, true, dep.Spec.Template.Spec.HostNetwork)
-
-}
-
-func TestAgentDNSPolicyAndHostNetwork2(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentDNSPolicyAndHostNetwork2"})
-	jaeger.Spec.Agent.Strategy = "daemonset"
-	a := NewAgent(jaeger)
-	dep := a.Get()
-	assert.Equal(t, "ClusterFirst", string(dep.Spec.Template.Spec.DNSPolicy))
-	assert.Equal(t, false, dep.Spec.Template.Spec.HostNetwork)
-
+	for idx, config := range tests {
+		jaeger.Spec.DNSPolicy = config.JaegerDNSPolicy
+		jaeger.Spec.HostNetwork = config.JaegerHostNetwork
+		jaeger.Spec.Agent.DNSPolicy = config.AgentDNSPolicy
+		jaeger.Spec.Agent.HostNetwork = config.AgentHostNetwork
+		a := NewAgent(jaeger)
+		dep := a.Get()
+		assert.Equal(t, expected[idx].DNSPolicy, dep.Spec.Template.Spec.DNSPolicy)
+		assert.Equal(t, expected[idx].HostNetwork, dep.Spec.Template.Spec.HostNetwork)
+	}
 }
 
 func TestAgentOrderOfArguments(t *testing.T) {
