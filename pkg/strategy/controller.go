@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -195,6 +194,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 	}
 	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
+	enableDocumentationLink(uiOpts, spec)
 	enableLogOut(uiOpts, spec)
 	if len(uiOpts) > 0 {
 		spec.UI.Options = v1.NewFreeForm(uiOpts)
@@ -233,40 +233,64 @@ func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsE
 	}
 }
 
+func enableDocumentationLink(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
+	if !viper.IsSet("documentation-url") {
+		return
+	}
+
+	// if a custom menu has been specified, do not add the link to the documentation
+	if _, ok := uiOpts["menu"]; ok {
+		return
+	}
+
+	e := map[string]interface{}{
+		"label": "About",
+		"items": []interface{}{map[string]interface{}{
+			"label": "Documentation",
+			"url":   viper.GetString("documentation-url"),
+		}},
+	}
+	uiOpts["menu"] = []interface{}{e}
+}
+
 func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	if (spec.Ingress.Enabled != nil && *spec.Ingress.Enabled == false) ||
 		spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
 		return
 	}
 
-	if _, ok := uiOpts["menu"]; ok {
+	if spec.Ingress.Openshift.SkipLogout != nil && *spec.Ingress.Openshift.SkipLogout == true {
 		return
 	}
 
-	docURL := viper.GetString("documentation-url")
+	var menuArray []interface{}
+	if m, ok := uiOpts["menu"]; ok {
+		menuArray = m.([]interface{})
+	}
 
-	menuStr := fmt.Sprintf(`[
-		{
-		  "label": "About",
-		  "items": [
-			{
-			  "label": "Documentation",
-			  "url": "%s"
-			}
-		  ]
-		},
-		{
-		  "label": "Log Out",
-		  "url": "/oauth/sign_in",
-		  "anchorTarget": "_self"
+	for _, v := range menuArray {
+		converted, ok := v.(map[string]interface{})
+		if !ok {
+			// not a map, skip
+			return
 		}
-	  ]`, docURL)
 
-	menuArray := make([]interface{}, 2)
+		// if it has a URL entry, and if the entry contains "/oauth/sign_in", skip
+		url := fmt.Sprintf("%v", converted["url"])
+		// this is very naive, but will work for most cases, as that's how the OpenShift OAuth Proxy
+		// build the URL. If needed, this can be a list of patterns in the future
+		if strings.Contains(url, "/oauth/sign_in") {
+			return
+		}
+	}
 
-	json.Unmarshal([]byte(menuStr), &menuArray)
+	logout := map[string]interface{}{
+		"label":        "Log Out",
+		"url":          "/oauth/sign_in",
+		"anchorTarget": "_self",
+	}
 
-	uiOpts["menu"] = menuArray
+	uiOpts["menu"] = append(menuArray, logout)
 }
 
 func unknownStorage(typ string) bool {

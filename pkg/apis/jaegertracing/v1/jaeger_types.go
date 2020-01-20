@@ -261,6 +261,10 @@ type JaegerIngressOpenShiftSpec struct {
 
 	// +optional
 	HtpasswdFile string `json:"htpasswdFile,omitempty"`
+
+	// SkipLogout tells the operator to not automatically add a Logout menu option to the custom Jaeger configuration
+	// +optional
+	SkipLogout *bool `json:"skipLogout,omitempty"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
