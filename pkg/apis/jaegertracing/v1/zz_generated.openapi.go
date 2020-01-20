@@ -452,7 +452,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"autoscale": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Autoscale turns on/off the autoscalign feature. By default, it's enabled if the Replicas field is not set.",
+							Description: "Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

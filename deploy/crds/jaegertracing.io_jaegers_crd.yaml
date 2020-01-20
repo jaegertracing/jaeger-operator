@@ -5311,8 +5311,8 @@ spec:
                     type: string
                   type: object
                 autoscale:
-                  description: Autoscale turns on/off the autoscalign feature. By
-                    default, it's enabled if the Replicas field is not set.
+                  description: Autoscale turns on/off the autoscale feature. By default,
+                    it's enabled if the Replicas field is not set.
                   type: boolean
                 image:
                   type: string

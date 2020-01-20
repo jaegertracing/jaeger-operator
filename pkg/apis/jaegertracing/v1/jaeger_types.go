@@ -279,7 +279,7 @@ type JaegerAllInOneSpec struct {
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 // +k8s:openapi-gen=true
 type JaegerCollectorSpec struct {
-	// Autoscale turns on/off the autoscalign feature. By default, it's enabled if the Replicas field is not set.
+	// Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.
 	// +optional
 	Autoscale *bool `json:"autoscale,omitempty"`
 

@@ -19,6 +19,14 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
+const (
+	// we need to have an upper bound, and 100 seems like a "good" max value
+	defaultMaxReplicas = int32(100)
+
+	// for both memory and cpu
+	defaultAvgUtilization = int32(90)
+)
+
 // Collector builds pods for jaegertracing/jaeger-collector
 type Collector struct {
 	jaeger *v1.Jaeger
@@ -209,7 +217,7 @@ func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
 		maxReplicas = *c.jaeger.Spec.Collector.MaxReplicas
 	}
 	if maxReplicas < 0 {
-		maxReplicas = int32(100) // we need to have an upper bound, and 100 seems like a "good" max value
+		maxReplicas = defaultMaxReplicas
 	}
 
 	labels := c.labels()
@@ -218,7 +226,7 @@ func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
 		Labels: labels,
 	}
 
-	avgUtilization := int32(90)
+	avgUtilization := defaultAvgUtilization
 	trueVar := true
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
