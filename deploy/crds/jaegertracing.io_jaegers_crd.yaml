@@ -9441,7 +9441,7 @@ spec:
                       type: string
                     skipLogout:
                       description: SkipLogout tells the operator to not automatically
-                        add a Logout menu option to the custom Jaeger configuration
+                        add a "Log Out" menu option to the custom Jaeger configuration
                       type: boolean
                   type: object
                 resources:
