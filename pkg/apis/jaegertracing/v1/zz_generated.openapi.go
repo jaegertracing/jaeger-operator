@@ -450,9 +450,30 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 				Description: "JaegerCollectorSpec defines the options to be used when deploying the collector",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"autoscale": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas represents the number of replicas to create for this service.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"minReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MinReplicas sets a lower bound to the autoscaling feature.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"maxReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxReplicas sets an upper bound to the autoscaling feature. When autoscaling is enabled and no value is provided, a default value is used.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},

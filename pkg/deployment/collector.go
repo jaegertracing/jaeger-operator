@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -16,6 +17,14 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+)
+
+const (
+	// we need to have an upper bound, and 100 seems like a "good" max value
+	defaultMaxReplicas = int32(100)
+
+	// for both memory and cpu
+	defaultAvgUtilization = int32(90)
 )
 
 // Collector builds pods for jaegertracing/jaeger-collector
@@ -188,6 +197,88 @@ func (c *Collector) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (c *Collector) Services() []*corev1.Service {
 	return service.NewCollectorServices(c.jaeger, c.labels())
+}
+
+// Autoscalers returns a list of HPAs based on this collector
+func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+	// fixed number of replicas is explicitly set, do not auto scale
+	if c.jaeger.Spec.Collector.Replicas != nil {
+		return []autoscalingv2beta2.HorizontalPodAutoscaler{}
+	}
+
+	// explicitly disabled, do not auto scale
+	if c.jaeger.Spec.Collector.Autoscale != nil && *c.jaeger.Spec.Collector.Autoscale == false {
+		return []autoscalingv2beta2.HorizontalPodAutoscaler{}
+	}
+
+	maxReplicas := int32(-1) // unset, or invalid value
+
+	if nil != c.jaeger.Spec.Collector.MaxReplicas {
+		maxReplicas = *c.jaeger.Spec.Collector.MaxReplicas
+	}
+	if maxReplicas < 0 {
+		maxReplicas = defaultMaxReplicas
+	}
+
+	labels := c.labels()
+	labels["app.kubernetes.io/component"] = "hpa-collector"
+	baseCommonSpec := v1.JaegerCommonSpec{
+		Labels: labels,
+	}
+
+	avgUtilization := defaultAvgUtilization
+	trueVar := true
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
+	// scale up when either CPU or memory is above 90%
+	return []autoscalingv2beta2.HorizontalPodAutoscaler{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        c.name(),
+			Namespace:   c.jaeger.Namespace,
+			Labels:      commonSpec.Labels,
+			Annotations: commonSpec.Annotations,
+			OwnerReferences: []metav1.OwnerReference{
+				metav1.OwnerReference{
+					APIVersion: c.jaeger.APIVersion,
+					Kind:       c.jaeger.Kind,
+					Name:       c.jaeger.Name,
+					UID:        c.jaeger.UID,
+					Controller: &trueVar,
+				},
+			},
+		},
+		Spec: autoscalingv2beta2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: autoscalingv2beta2.CrossVersionObjectReference{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       c.name(),
+			},
+			MinReplicas: c.jaeger.Spec.Collector.MinReplicas,
+			MaxReplicas: maxReplicas,
+			Metrics: []autoscalingv2beta2.MetricSpec{
+				{
+					Type: autoscalingv2beta2.ResourceMetricSourceType,
+					Resource: &autoscalingv2beta2.ResourceMetricSource{
+						Name: corev1.ResourceCPU,
+						Target: autoscalingv2beta2.MetricTarget{
+							Type:               autoscalingv2beta2.UtilizationMetricType,
+							AverageUtilization: &avgUtilization,
+						},
+					},
+				},
+				{
+					Type: autoscalingv2beta2.ResourceMetricSourceType,
+					Resource: &autoscalingv2beta2.ResourceMetricSource{
+						Name: corev1.ResourceMemory,
+						Target: autoscalingv2beta2.MetricTarget{
+							Type:               autoscalingv2beta2.UtilizationMetricType,
+							AverageUtilization: &avgUtilization,
+						},
+					},
+				},
+			},
+		},
+	}}
 }
 
 func (c *Collector) labels() map[string]string {

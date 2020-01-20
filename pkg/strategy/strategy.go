@@ -3,6 +3,7 @@ package strategy
 import (
 	osv1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -16,21 +17,22 @@ import (
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ                 v1.DeploymentStrategy
-	accounts            []corev1.ServiceAccount
-	clusterRoleBindings []rbac.ClusterRoleBinding
-	configMaps          []corev1.ConfigMap
-	cronJobs            []batchv1beta1.CronJob
-	daemonSets          []appsv1.DaemonSet
-	dependencies        []batchv1.Job
-	deployments         []appsv1.Deployment
-	elasticsearches     []esv1.Elasticsearch
-	ingresses           []v1beta1.Ingress
-	kafkas              []kafkav1beta1.Kafka
-	kafkaUsers          []kafkav1beta1.KafkaUser
-	routes              []osv1.Route
-	services            []corev1.Service
-	secrets             []corev1.Secret
+	typ                      v1.DeploymentStrategy
+	accounts                 []corev1.ServiceAccount
+	clusterRoleBindings      []rbac.ClusterRoleBinding
+	configMaps               []corev1.ConfigMap
+	cronJobs                 []batchv1beta1.CronJob
+	daemonSets               []appsv1.DaemonSet
+	dependencies             []batchv1.Job
+	deployments              []appsv1.Deployment
+	elasticsearches          []esv1.Elasticsearch
+	horizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
+	ingresses                []v1beta1.Ingress
+	kafkas                   []kafkav1beta1.Kafka
+	kafkaUsers               []kafkav1beta1.KafkaUser
+	routes                   []osv1.Route
+	services                 []corev1.Service
+	secrets                  []corev1.Secret
 }
 
 // New constructs a new strategy from scratch
@@ -94,6 +96,12 @@ func (s S) WithElasticsearches(es []esv1.Elasticsearch) S {
 // WithIngresses returns the strategy with the given list of dependencies
 func (s S) WithIngresses(i []v1beta1.Ingress) S {
 	s.ingresses = i
+	return s
+}
+
+// WithHorizontalPodAutoscaler returns the strategy with the given list of HPAs
+func (s S) WithHorizontalPodAutoscaler(i []autoscalingv2beta2.HorizontalPodAutoscaler) S {
+	s.horizontalPodAutoscalers = i
 	return s
 }
 
@@ -165,6 +173,11 @@ func (s S) Elasticsearches() []esv1.Elasticsearch {
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent
 func (s S) Ingresses() []v1beta1.Ingress {
 	return s.ingresses
+}
+
+// HorizontalPodAutoscalers returns the list of HPAs objects for this strategy.
+func (s S) HorizontalPodAutoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+	return s.horizontalPodAutoscalers
 }
 
 // Kafkas returns the list of Kafkas for this strategy.

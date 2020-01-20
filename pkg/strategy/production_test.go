@@ -113,6 +113,12 @@ func TestDelegateProductionDependencies(t *testing.T) {
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
 
+func TestAutoscaleForProduction(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	c := newProductionStrategy(context.Background(), j)
+	assert.Len(t, c.HorizontalPodAutoscalers(), 1)
+}
+
 func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	expectedNumObjs := 7
 

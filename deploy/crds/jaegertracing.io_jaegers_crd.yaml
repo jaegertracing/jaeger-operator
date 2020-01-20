@@ -5310,12 +5310,26 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                autoscale:
+                  description: Autoscale turns on/off the autoscale feature. By default,
+                    it's enabled if the Replicas field is not set.
+                  type: boolean
                 image:
                   type: string
                 labels:
                   additionalProperties:
                     type: string
                   type: object
+                maxReplicas:
+                  description: MaxReplicas sets an upper bound to the autoscaling
+                    feature. When autoscaling is enabled and no value is provided,
+                    a default value is used.
+                  format: int32
+                  type: integer
+                minReplicas:
+                  description: MinReplicas sets a lower bound to the autoscaling feature.
+                  format: int32
+                  type: integer
                 options:
                   description: Options defines a common options parameter to the different
                     structs
