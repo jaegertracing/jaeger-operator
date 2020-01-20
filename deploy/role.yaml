@@ -92,3 +92,9 @@ rules:
   - kafkausers
   verbs:
   - '*'
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - '*'

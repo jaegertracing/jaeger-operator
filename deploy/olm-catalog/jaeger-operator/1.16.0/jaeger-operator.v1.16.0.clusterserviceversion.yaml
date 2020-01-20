@@ -211,6 +211,12 @@ spec:
           - kafkausers
           verbs:
           - '*'
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - '*'
         serviceAccountName: jaeger-operator
       deployments:
       - name: jaeger-operator
@@ -338,6 +344,12 @@ spec:
           resources:
           - kafkas
           - kafkausers
+          verbs:
+          - '*'
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
           verbs:
           - '*'
         serviceAccountName: jaeger-operator
