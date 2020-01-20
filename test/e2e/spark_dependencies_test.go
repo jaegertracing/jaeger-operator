@@ -43,6 +43,13 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	}
 	defer undeployJaegerInstance(j)
 
+	if storage.Type == "cassandra" {
+		err = WaitForJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-cassandra-schema-job", name), retryInterval, timeout+1*time.Minute)
+		if err != nil {
+			return errors.WithMessage(err, "Failed waiting for cassandra schema  job")
+		}
+	}
+
 	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+1*time.Minute)
 	if err != nil {
 		return errors.WithMessage(err, "Failed waiting for cron job")

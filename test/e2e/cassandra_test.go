@@ -35,6 +35,9 @@ func (suite *CassandraTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetNamespace failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
+
+	err = WaitForStatefulset(t, fw.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for cassandra stateful set")
 }
 
 func (suite *CassandraTestSuite) TearDownSuite() {
