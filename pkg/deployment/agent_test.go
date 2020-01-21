@@ -158,6 +158,60 @@ func TestAgentLabels(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%s-agent", a.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
 
+func TestAgentDNSPolicyAndHostNetwork(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	type dnsPolicyAndHostNetwork struct {
+		JaegerDNSPolicy   corev1.DNSPolicy
+		JaegerHostNetwork bool
+		AgentDNSPolicy    corev1.DNSPolicy
+		AgentHostNetwork  bool
+	}
+	type result struct {
+		DNSPolicy   corev1.DNSPolicy
+		HostNetwork bool
+	}
+
+	tests := []dnsPolicyAndHostNetwork{
+		{}, // default
+		{
+			AgentDNSPolicy:   corev1.DNSDefault,
+			AgentHostNetwork: true,
+		},
+		{
+			JaegerDNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+			JaegerHostNetwork: true,
+			AgentDNSPolicy:    corev1.DNSDefault,
+			AgentHostNetwork:  false,
+		}, // merge
+	}
+	expected := []result{
+		{
+			DNSPolicy:   "",
+			HostNetwork: false,
+		},
+		{
+			DNSPolicy:   corev1.DNSDefault,
+			HostNetwork: true,
+		},
+		{
+			DNSPolicy:   corev1.DNSDefault,
+			HostNetwork: true,
+		},
+	}
+
+	for idx, config := range tests {
+		jaeger.Spec.DNSPolicy = config.JaegerDNSPolicy
+		jaeger.Spec.HostNetwork = config.JaegerHostNetwork
+		jaeger.Spec.Agent.DNSPolicy = config.AgentDNSPolicy
+		jaeger.Spec.Agent.HostNetwork = config.AgentHostNetwork
+		a := NewAgent(jaeger)
+		dep := a.Get()
+		assert.Equal(t, expected[idx].DNSPolicy, dep.Spec.Template.Spec.DNSPolicy)
+		assert.Equal(t, expected[idx].HostNetwork, dep.Spec.Template.Spec.HostNetwork)
+	}
+}
+
 func TestAgentOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentOrderOfArguments"})
 	jaeger.Spec.Agent.Strategy = "daemonset"

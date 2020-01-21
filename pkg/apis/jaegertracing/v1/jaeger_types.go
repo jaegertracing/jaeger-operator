@@ -153,6 +153,12 @@ type JaegerCommonSpec struct {
 	Volumes []v1.Volume `json:"volumes,omitempty"`
 
 	// +optional
+	DNSPolicy v1.DNSPolicy `json:"dnsPolicy,omitempty"`
+
+	// +optional
+	HostNetwork bool `json:"hostNetwork,omitempty"`
+
+	// +optional
 	// +listType=set
 	VolumeMounts []v1.VolumeMount `json:"volumeMounts,omitempty"`
 

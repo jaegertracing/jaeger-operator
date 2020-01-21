@@ -158,6 +158,8 @@ func (q *Query) Get() *appsv1.Deployment {
 						Resources: commonSpec.Resources,
 					}},
 					Volumes:            commonSpec.Volumes,
+					DNSPolicy:          commonSpec.DNSPolicy,
+					HostNetwork:        commonSpec.HostNetwork,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger, account.QueryComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

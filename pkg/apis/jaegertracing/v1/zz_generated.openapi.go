@@ -176,6 +176,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 							},
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -300,6 +312,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"volumeMounts": {
@@ -506,6 +530,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 							},
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -619,6 +655,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref common.ReferenceCallb
 									},
 								},
 							},
+						},
+					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"volumeMounts": {
@@ -796,6 +844,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 							},
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -947,6 +1007,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref common.Refere
 							},
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -1078,6 +1150,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"volumeMounts": {
@@ -1285,6 +1369,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 							},
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -1453,6 +1549,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 									},
 								},
 							},
+						},
+					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"volumeMounts": {
@@ -1639,6 +1747,18 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 									},
 								},
 							},
+						},
+					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"volumeMounts": {

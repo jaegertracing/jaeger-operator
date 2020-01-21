@@ -1219,6 +1219,11 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -3264,6 +3269,11 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -5314,6 +5324,11 @@ spec:
                   description: Autoscale turns on/off the autoscale feature. By default,
                     it's enabled if the Replicas field is not set.
                   type: boolean
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -6764,6 +6779,11 @@ spec:
                     type: object
                   type: array
               type: object
+            dnsPolicy:
+              description: DNSPolicy defines how a pod's DNS will be configured.
+              type: string
+            hostNetwork:
+              type: boolean
             ingester:
               description: JaegerIngesterSpec defines the options to be used when
                 deploying the ingester
@@ -7371,6 +7391,11 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -9418,7 +9443,12 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
                 enabled:
+                  type: boolean
+                hostNetwork:
                   type: boolean
                 hosts:
                   items:
@@ -11496,6 +11526,11 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                dnsPolicy:
+                  description: DNSPolicy defines how a pod's DNS will be configured.
+                  type: string
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -13734,11 +13769,16 @@ spec:
                       type: object
                     cassandraClientAuthEnabled:
                       type: boolean
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     elasticsearchClientNodeOnly:
                       type: boolean
                     elasticsearchNodesWanOnly:
                       type: boolean
                     enabled:
+                      type: boolean
+                    hostNetwork:
                       type: boolean
                     image:
                       type: string
@@ -15917,7 +15957,12 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
                     enabled:
+                      type: boolean
+                    hostNetwork:
                       type: boolean
                     image:
                       type: string
@@ -18050,6 +18095,11 @@ spec:
                       type: object
                     conditions:
                       type: string
+                    dnsPolicy:
+                      description: DNSPolicy defines how a pod's DNS will be configured.
+                      type: string
+                    hostNetwork:
+                      type: boolean
                     image:
                       type: string
                     labels:
