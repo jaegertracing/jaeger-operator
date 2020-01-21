@@ -36,10 +36,10 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("Failed waiting for statefulset after %s\n", time.Since(start))
+		t.Logf("Failed waiting for statefulset %s after %s\n", name, time.Since(start))
 		return err
 	}
-	t.Logf("Statefulset available after %s\n", time.Since(start))
+	t.Logf("Statefulset %s available after %s\n", name, time.Since(start))
 	return nil
 }
 
@@ -64,10 +64,10 @@ func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("Failed waiting for daemonset after %s\n", time.Since(start))
+		t.Logf("Failed waiting for daemonset %s after %s\n", name, time.Since(start))
 		return err
 	}
-	t.Logf("DaemonSet available after %s\n", time.Since(start))
+	t.Logf("DaemonSet %s available after %s\n", name, time.Since(start))
 	return nil
 }
 
@@ -121,10 +121,10 @@ func WaitForJob(t *testing.T, kubeclient kubernetes.Interface, namespace, name s
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("Failed waiting for job after %s\n", time.Since(start))
+		t.Logf("Failed waiting for job %s after %s\n", name, time.Since(start))
 		return err
 	}
-	t.Logf("Jobs succeeded after %s\n", time.Since(start))
+	t.Logf("Job %s succeeded after %s\n", name, time.Since(start))
 	return nil
 }
 
@@ -152,10 +152,10 @@ func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespac
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("Failed waiting for job of an owner after %s\n", time.Since(start))
+		t.Logf("Failed waiting for job of an owner %s after %s\n", ownerName, time.Since(start))
 		return err
 	}
-	t.Logf("Jobs succeeded after %s\n", time.Since(start))
+	t.Logf("Job of owner %s succeeded after %s\n", ownerName, time.Since(start))
 	return nil
 }
 
@@ -179,10 +179,10 @@ func WaitForCronJob(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("Failed waiting for cronjob after %s\n", time.Since(start))
+		t.Logf("Failed waiting for cronjob %s after %s\n", name, time.Since(start))
 		return err
 	}
-	t.Logf("CronJob succeeded after %s\n", time.Since(start))
+	t.Logf("CronJob %s succeeded after %s\n", name, time.Since(start))
 	return nil
 }
 
