@@ -1196,6 +1196,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressOpenShiftSpec(ref common.Refe
 							Format: "",
 						},
 					},
+					"skipLogout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SkipLogout tells the operator to not automatically add a \"Log Out\" menu option to the custom Jaeger configuration",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

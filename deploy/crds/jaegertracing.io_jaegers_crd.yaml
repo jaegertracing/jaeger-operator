@@ -9439,6 +9439,10 @@ spec:
                       type: string
                     sar:
                       type: string
+                    skipLogout:
+                      description: SkipLogout tells the operator to not automatically
+                        add a "Log Out" menu option to the custom Jaeger configuration
+                      type: boolean
                   type: object
                 resources:
                   description: ResourceRequirements describes the compute resource

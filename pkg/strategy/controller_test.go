@@ -13,14 +13,14 @@ import (
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsDefault"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 
 	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyAllInOne)
 }
 
 func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForAllInOneAsExplicitValue"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyDeprecatedAllInOne // same as 'all-in-one'
 
 	ctrl := For(context.TODO(), jaeger)
@@ -28,7 +28,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 }
 
 func TestNewControllerForProduction(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Storage.Type = "elasticsearch"
 
@@ -37,14 +37,14 @@ func TestNewControllerForProduction(t *testing.T) {
 }
 
 func TestUnknownStorage(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewControllerForProduction"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Storage.Type = "unknown"
 	normalize(context.Background(), jaeger)
 	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
 }
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestElasticsearchAsStorageOptions"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
 	jaeger.Spec.Storage.Type = "elasticsearch"
 	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
@@ -135,13 +135,13 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 }
 
 func TestSetSecurityToNoneByDefault(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneByDefault"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneWhenExplicitSettingToNone"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	normalize(context.Background(), jaeger)
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
@@ -151,14 +151,14 @@ func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToOAuthProxyByDefaultOnOpenShift"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	normalize(context.Background(), jaeger)
 
 	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
 
 func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSetSecurityToNoneOnNonOpenShift"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	normalize(context.Background(), jaeger)
@@ -170,7 +170,7 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAcceptExplicitValueFromSecurityWhenOnOpenShift"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 
 	normalize(context.Background(), jaeger)
@@ -404,31 +404,20 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 	}
 }
 
-func TestMenuWithSignOut(t *testing.T) {
-	viper.SetDefault("documentation-url", "https://www.jaegertracing.io/docs/latest")
-	defer viper.Reset()
-
+func TestMenuWithLogOut(t *testing.T) {
+	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}}
 	uiOpts := map[string]interface{}{}
-	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	enableLogOut(uiOpts, spec)
 	assert.Contains(t, uiOpts, "menu")
 
 	expected := []interface{}{
-		map[string]interface{}{
-			"label": "About",
-			"items": []interface{}{
-				map[string]interface{}{
-					"label": "Documentation",
-					"url":   "https://www.jaegertracing.io/docs/latest",
-				},
-			},
-		},
 		map[string]interface{}{
 			"label":        "Log Out",
 			"url":          "/oauth/sign_in",
 			"anchorTarget": "_self",
 		},
 	}
-	assert.Equal(t, uiOpts["menu"], expected)
+	assert.Equal(t, expected, uiOpts["menu"])
 }
 
 func TestMenuWithCustomDocURL(t *testing.T) {
@@ -438,7 +427,8 @@ func TestMenuWithCustomDocURL(t *testing.T) {
 	defer viper.Reset()
 
 	uiOpts := map[string]interface{}{}
-	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
+	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}}
+	enableDocumentationLink(uiOpts, spec)
 	assert.Contains(t, uiOpts, "menu")
 
 	expected := []interface{}{
@@ -451,28 +441,124 @@ func TestMenuWithCustomDocURL(t *testing.T) {
 				},
 			},
 		},
+	}
+	assert.Equal(t, expected, uiOpts["menu"])
+}
+
+func TestMenuNoLogOutIngressSecurityNone(t *testing.T) {
+	uiOpts := map[string]interface{}{}
+	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}}
+	enableLogOut(uiOpts, spec)
+	assert.NotContains(t, uiOpts, "menu")
+}
+
+func TestMenuNoLogOutExistingMenuWithSkipOption(t *testing.T) {
+	// prepare
+	internalLink := map[string]interface{}{
+		"label": "Some internal links",
+		"items": []interface{}{
+			map[string]interface{}{
+				"label": "The internal link",
+				"url":   "http://example.com/internal",
+			},
+		},
+	}
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{internalLink},
+	}
+	trueVar := true
+	spec := &v1.JaegerSpec{
+		Ingress: v1.JaegerIngressSpec{
+			Security: v1.IngressSecurityOAuthProxy,
+			Openshift: v1.JaegerIngressOpenShiftSpec{
+				SkipLogout: &trueVar,
+			},
+		},
+	}
+
+	// test
+	enableLogOut(uiOpts, spec)
+
+	// verify
+	assert.Len(t, uiOpts["menu"], 1)
+	expected := []interface{}{internalLink}
+	assert.Equal(t, expected, uiOpts["menu"])
+}
+
+func TestCustomMenuGetsLogOutAdded(t *testing.T) {
+	// prepare
+	internalLink := map[string]interface{}{
+		"label": "Some internal links",
+		"items": []interface{}{
+			map[string]interface{}{
+				"label": "The internal link",
+				"url":   "http://example.com/internal",
+			},
+		},
+	}
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{internalLink},
+	}
+	spec := &v1.JaegerSpec{
+		Ingress: v1.JaegerIngressSpec{
+			Security: v1.IngressSecurityOAuthProxy,
+		},
+	}
+
+	// test
+	enableLogOut(uiOpts, spec)
+
+	// verify
+	expected := []interface{}{
+		internalLink,
 		map[string]interface{}{
 			"label":        "Log Out",
 			"url":          "/oauth/sign_in",
 			"anchorTarget": "_self",
 		},
 	}
-	assert.Equal(t, uiOpts["menu"], expected)
+	assert.Len(t, uiOpts["menu"], 2)
+	assert.Equal(t, expected, uiOpts["menu"])
 }
 
-func TestMenuNoSignOutIngressSecurityNone(t *testing.T) {
-	uiOpts := map[string]interface{}{}
-	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}})
-	assert.NotContains(t, uiOpts, "menu")
-}
-
-func TestMenuNoSignOutExistingMenu(t *testing.T) {
-	uiOpts := map[string]interface{}{
-		"menu": []interface{}{},
+func TestCustomMenuGetsLogOutSkipped(t *testing.T) {
+	// prepare
+	internalLink := map[string]interface{}{
+		"label": "Some internal links",
+		"items": []interface{}{
+			map[string]interface{}{
+				"label": "The internal link",
+				"url":   "http://example.com/internal",
+			},
+		},
 	}
-	enableLogOut(uiOpts, &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}})
-	assert.Contains(t, uiOpts, "menu")
-	assert.Len(t, uiOpts["menu"], 0)
+	logout := map[string]interface{}{
+		"label":        "Custom Log Out",
+		"url":          "https://example.com/custom/path/to/oauth/sign_in",
+		"anchorTarget": "_self",
+	}
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{
+			internalLink,
+			logout,
+		},
+	}
+	spec := &v1.JaegerSpec{
+		Ingress: v1.JaegerIngressSpec{
+			Security: v1.IngressSecurityOAuthProxy,
+		},
+	}
+
+	// test
+	enableLogOut(uiOpts, spec)
+
+	// verify
+	expected := []interface{}{
+		internalLink,
+		logout,
+	}
+	assert.Len(t, uiOpts["menu"], 2)
+	assert.Equal(t, expected, uiOpts["menu"])
 }
 
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
