@@ -1375,11 +1375,16 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 							Format: "",
 						},
 					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

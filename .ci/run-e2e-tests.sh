@@ -39,6 +39,10 @@ elif [ "${TEST_GROUP}" = "examples2" ]
 then
     echo "Running Examples2 Tests"
     make e2e-tests-examples2
+elif [ "${TEST_GROUP}" = "es-token-propagation" ]
+then
+    echo "Running token propagation tests"
+    make e2e-tests-token-propagation-es
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi

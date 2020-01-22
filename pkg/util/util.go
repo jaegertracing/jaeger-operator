@@ -1,6 +1,8 @@
 package util
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -241,4 +243,18 @@ func CreateEnvsFromSecret(secretName string) []corev1.EnvFromSource {
 		})
 	}
 	return envs
+}
+
+// GenerateProxySecret generate random secret key for oauth proxy cookie.
+func GenerateProxySecret() (string, error) {
+	const secretLength = 16
+	randString := make([]byte, secretLength)
+	_, err := rand.Read(randString)
+	if err != nil {
+		// If we cannot generate random, return fixed.
+		return "", err
+	}
+	base64Secret := base64.StdEncoding.EncodeToString(randString)
+	return base64Secret, nil
+
 }

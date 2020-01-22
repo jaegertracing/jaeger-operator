@@ -236,6 +236,9 @@ type JaegerIngressSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	Options Options `json:"options,omitempty"`
 }
 
 // JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress

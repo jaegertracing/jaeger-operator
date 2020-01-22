@@ -14,6 +14,9 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
+// #nosec   G101 (CWE-798): Potential hardcoded credentials
+const defaultProxySecret = "ncNDoqLGrayxXzxTn5ANbOXZp3qXd0LA"
+
 // OAuthProxy injects an appropriate proxy into the given deployment
 func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	if jaeger.Spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
@@ -33,9 +36,14 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
+func proxyInitArguments(jaeger *v1.Jaeger) []string {
+	secret, err := util.GenerateProxySecret()
+	if err != nil {
+		jaeger.Logger().WithError(err).Warnf("Error generating secret: %s, fallback to fixed secret", secret)
+		secret = defaultProxySecret
+	}
 	args := []string{
-		"--cookie-secret=SECRET",
+		fmt.Sprintf("--cookie-secret=%s", secret),
 		"--https-address=:8443",
 		fmt.Sprintf("--openshift-service-account=%s", account.OAuthProxyAccountNameFor(jaeger)),
 		"--provider=openshift",
@@ -43,7 +51,11 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		"--tls-key=/etc/tls/private/tls.key",
 		"--upstream=http://localhost:16686",
 	}
+	return args
+}
 
+func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
+	args := proxyInitArguments(jaeger)
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: "/etc/tls/private",
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
@@ -64,6 +76,8 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && viper.GetBool("auth-delegator-available") {
 		args = append(args, fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls))
 	}
+
+	args = append(args, jaeger.Spec.Ingress.Options.ToArgs()...)
 
 	sort.Strings(args)
 
