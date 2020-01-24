@@ -439,6 +439,17 @@ func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 	assert.Equal(t, dep.Annotations["prometheus.io/port"], "9090")
 }
 
+func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentTagsWithMultipleContainers"})
+	dep := Sidecar(jaeger, depWithTwoContainers(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+}
+
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -459,6 +470,15 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 			},
 		},
 	}
+}
+
+func depWithTwoContainers(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
+	dep := dep(annotations, labels)
+	dep.Spec.Template.Spec.Containers[0].Name = "container_0"
+	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, corev1.Container{
+		Name: "container_1",
+	})
+	return dep
 }
 
 func containsEnvVarNamed(t *testing.T, envVars []corev1.EnvVar, key string) bool {
