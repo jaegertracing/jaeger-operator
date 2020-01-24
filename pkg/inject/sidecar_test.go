@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func setDefaults() {
@@ -308,6 +309,8 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTags, "container.name=only_container")
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
@@ -321,7 +324,8 @@ func TestSidecarExplicitTags(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags=key=val")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, []string{"key=val"}, agentTags)
 }
 
 func TestSidecarOverrideReporter(t *testing.T) {
@@ -447,7 +451,9 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{},
+						corev1.Container{
+							Name: "only_container",
+						},
 					},
 				},
 			},
@@ -473,4 +479,13 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 	}
 	assert.Fail(t, "list of arguments didn't have an option starting with '%s'", prefix)
 	return false
+}
+
+func agentTags(args []string) []string {
+	tagsArg := util.FindItem("--jaeger.tags=", args)
+	if tagsArg == "" {
+		return []string{}
+	}
+	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
+	return strings.Split(tagsParam, ",")
 }
