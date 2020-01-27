@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	log "github.com/sirupsen/logrus"
@@ -120,6 +121,39 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, kafkaNamespace)
 }
 
+func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
+	// Make sure ES instance is available
+	waitForElasticSearch()
+
+	// Now create a jaeger instance which will auto provision a kafka instance
+	jaegerInstanceName := "auto-provisioned"
+	jaegerInstanceNamespace := namespace
+	jaegerInstance := jaegerAutoProvisionedDefinition(jaegerInstanceNamespace, jaegerInstanceName)
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying jaeger")
+	defer undeployJaegerInstance(jaegerInstance)
+
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-zookeeper", retryInterval, timeout+1*time.Minute)
+	require.NoError(t, err)
+
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-kafka", retryInterval, timeout)
+	require.NoError(t, err)
+
+	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-entity-operator", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for ingester deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-ingester", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for ingester deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+
+	ProductionSmokeTestWithNamespace(jaegerInstanceName, jaegerInstanceNamespace)
+}
+
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	j := &v1.Jaeger{
@@ -206,6 +240,29 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 		},
 	}
 	return j
+}
+
+func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
+	jaegerInstance := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: v1.DeploymentStrategyStreaming,
+			Storage: v1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": esServerUrls,
+				}),
+			},
+		},
+	}
+	return jaegerInstance
 }
 
 func getKafkaUser(name, namespace string) *kafkav1beta1.KafkaUser {
