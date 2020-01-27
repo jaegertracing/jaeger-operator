@@ -64,6 +64,28 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
 }
 
+func TestInjectSidecarWithEnvVarsMultipleContainers(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsMultipleContainers"})
+	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{"app": "testapp"})
+
+	// test
+	dep = Sidecar(jaeger, dep)
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	checkStr := "container.name"
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 3)
+	// split args and analyze last one
+	args := strings.Split(dep.Spec.Template.Spec.Containers[1].Args[0], ",")
+	lastArg := strings.Split(args[len(args)-1], "=")[0]
+	assert.Equal(t, lastArg, checkStr)
+
+	args = strings.Split(dep.Spec.Template.Spec.Containers[2].Args[0], ",")
+	lastArg = strings.Split(args[len(args)-1], "=")[0]
+	assert.NotEqual(t, lastArg, checkStr)
+}
+
 func TestInjectSidecarWithEnvVarsK8sAppName(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVarsK8sAppName"})
