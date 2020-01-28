@@ -177,7 +177,7 @@ func TestSparkDependenciesResources(t *testing.T) {
 					Resources: parentResources,
 				},
 			}},
-			expected: parentResources,
+			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
