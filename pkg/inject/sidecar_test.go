@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func setDefaults() {
@@ -308,6 +309,8 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTags, "container.name=only_container")
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
@@ -321,7 +324,8 @@ func TestSidecarExplicitTags(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags=key=val")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, []string{"key=val"}, agentTags)
 }
 
 func TestSidecarOverrideReporter(t *testing.T) {
@@ -435,6 +439,17 @@ func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 	assert.Equal(t, dep.Annotations["prometheus.io/port"], "9090")
 }
 
+func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentTagsWithMultipleContainers"})
+	dep := Sidecar(jaeger, depWithTwoContainers(map[string]string{Annotation: jaeger.Name}, map[string]string{}))
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
+	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+}
+
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -447,12 +462,23 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{},
+						corev1.Container{
+							Name: "only_container",
+						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func depWithTwoContainers(annotations map[string]string, labels map[string]string) *appsv1.Deployment {
+	dep := dep(annotations, labels)
+	dep.Spec.Template.Spec.Containers[0].Name = "container_0"
+	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, corev1.Container{
+		Name: "container_1",
+	})
+	return dep
 }
 
 func containsEnvVarNamed(t *testing.T, envVars []corev1.EnvVar, key string) bool {
@@ -473,4 +499,13 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 	}
 	assert.Fail(t, "list of arguments didn't have an option starting with '%s'", prefix)
 	return false
+}
+
+func agentTags(args []string) []string {
+	tagsArg := util.FindItem("--jaeger.tags=", args)
+	if tagsArg == "" {
+		return []string{}
+	}
+	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
+	return strings.Split(tagsParam, ",")
 }

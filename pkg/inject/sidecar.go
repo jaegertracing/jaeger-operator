@@ -143,9 +143,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
 				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
 			)
-
-			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
 		}
+
+		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
