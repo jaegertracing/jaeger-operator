@@ -5,6 +5,7 @@ package e2e
 import (
 	goctx "context"
 	"testing"
+	"time"
 
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 
@@ -88,7 +89,16 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() 
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout*3)
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-zookeeper", retryInterval, timeout+1*time.Minute)
+	require.NoError(t, err)
+
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-kafka", retryInterval, timeout)
+	require.NoError(t, err)
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-entity-operator", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for entity-operator deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
