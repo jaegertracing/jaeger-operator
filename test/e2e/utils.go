@@ -63,28 +63,36 @@ func getBoolEnv(key string, defaultValue bool) bool {
 }
 
 // GetPod returns pod name
-func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) corev1.Pod {
-	pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		printTestStackTrace()
+func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface, expectedPodCount int) corev1.Pod {
+	target := corev1.Pod{}
+	podCount := 0
+	// Wait till there is only the expected number of pods
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 		require.NoError(t, err)
-	}
-	for _, pod := range pods.Items {
-		if strings.HasPrefix(pod.Name, namePrefix) {
-			for _, c := range pod.Spec.Containers {
-				if strings.Contains(c.Image, containsImage) {
-					return pod
+
+		podCount = 0
+		for _, pod := range pods.Items {
+			if strings.HasPrefix(pod.Name, namePrefix) {
+				for _, c := range pod.Spec.Containers {
+					if strings.Contains(c.Image, containsImage) {
+						podCount++
+						target = pod
+					}
 				}
 			}
 		}
+		if podCount == expectedPodCount {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil || podCount != expectedPodCount {
+		errorMessage := fmt.Sprintf("could not find pod in namespace %s with prefix %s and image %s", namespace, namePrefix, containsImage)
+		require.FailNow(t, errorMessage)
 	}
-
-	errorMessage := fmt.Sprintf("could not find pod in namespace %s with prefix %s and image %s", namespace, namePrefix, containsImage)
-	require.FailNow(t, errorMessage)
-
-	// We should never get here, but go requires a return statement
-	emptyPod := &corev1.Pod{}
-	return *emptyPod
+	return target
 }
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
@@ -108,6 +109,10 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	defer undeployJaegerInstance(jaegerInstance)
 	err := WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
 	require.NoError(t, err)
+
+	// Wait till it's really ready
+	pod := GetPod(namespace, "simplest", "all-in-one", fw.KubeClient, 1)
+	log.Debugf("AFTER first GetPod call, returned %s", pod.Name)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../deploy/examples/business-application-injected-sidecar.yaml")

@@ -15,13 +15,18 @@ import (
 
 // CreatePortForward listens for local connections and forwards them to a remote pod
 func CreatePortForward(namespace, podNamePrefix, containsImage string, ports []string, kConfig *rest.Config) (*portforward.PortForwarder, chan struct{}) {
+	return CreatePortForwardMultiReplica(namespace, podNamePrefix, containsImage, ports, kConfig, 1)
+}
+
+// CreatePortForwardMultiReplica listens for local connections and forwards them to a remote pod
+func CreatePortForwardMultiReplica(namespace, podNamePrefix, containsImage string, ports []string, kConfig *rest.Config, replicaCount int) (*portforward.PortForwarder, chan struct{}) {
 	roundTripper, upgrader, err := spdy.RoundTripperFor(kConfig)
 	if err != nil {
 		printTestStackTrace()
 		require.NoError(t, err)
 	}
 
-	pod := GetPod(namespace, podNamePrefix, containsImage, fw.KubeClient)
+	pod := GetPod(namespace, podNamePrefix, containsImage, fw.KubeClient, replicaCount)
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod.Name)
 	hostIP := strings.TrimLeft(kConfig.Host, "https://")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}

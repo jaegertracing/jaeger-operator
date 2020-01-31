@@ -32,22 +32,27 @@ func AllInOneSmokeTest(resourceName string) {
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
 func ProductionSmokeTest(resourceName string) {
-	productionSmokeTest(resourceName, namespace)
+	productionSmokeTest(resourceName, namespace, 1, 1)
+}
+
+// ProductionSmokeTestMultiReplicas is an overloaded version of ProductionSmokeTest that offers replica parameters
+func ProductionSmokeTestMultiReplicas(resourceName string, queryReplicas, collectorReplicas int) {
+	productionSmokeTest(resourceName, namespace, queryReplicas, collectorReplicas)
 }
 
 // ProductionSmokeTestWithNamespace is the same as ProductionSmokeTest but for when you can't use the default namespace
 func ProductionSmokeTestWithNamespace(resourceName, smokeTestNamespace string) {
-	productionSmokeTest(resourceName, smokeTestNamespace)
+	productionSmokeTest(resourceName, smokeTestNamespace, 1, 1)
 }
 
-func productionSmokeTest(resourceName, smokeTestNamespace string) {
+func productionSmokeTest(resourceName, smokeTestNamespace string, queryReplicas, collectorReplicas int) {
 	queryPodImageName := "jaeger-query"
 	collectorPodImageName := "jaeger-collector"
 	queryPodPrefix := resourceName + "-query"
 	collectorPodPrefix := resourceName + "-collector"
 
 	queryPorts := []string{"0:16686"}
-	portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
+	portForw, closeChan := CreatePortForwardMultiReplica(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig, queryReplicas)
 	defer portForw.Close()
 	defer close(closeChan)
 	forwardedQueryPorts, err := portForw.GetPorts()
@@ -55,7 +60,7 @@ func productionSmokeTest(resourceName, smokeTestNamespace string) {
 	queryPort := forwardedQueryPorts[0].Local
 
 	collectorPorts := []string{"0:14268"}
-	portForwColl, closeChanColl := CreatePortForward(smokeTestNamespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig)
+	portForwColl, closeChanColl := CreatePortForwardMultiReplica(smokeTestNamespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig, collectorReplicas)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
 	forwardedCollectorPorts, err := portForwColl.GetPorts()

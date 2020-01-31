@@ -165,7 +165,7 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.EqualValues(t, updateQueryCount, queryPodCount)
 	require.NoError(t, err)
 
-	ProductionSmokeTest(jaegerInstanceName)
+	ProductionSmokeTestMultiReplicas(jaegerInstanceName, int(updateQueryCount), int(updateCollectorCount))
 }
 
 func changeNodeCount(name string, newESNodeCount int, newCollectorNodeCount, newQueryNodeCount int32) {
