@@ -414,3 +414,14 @@ func createSecret(secretName, secretNamespace string, secretData map[string][]by
 	WaitForSecret(secretName, secretNamespace)
 	return createdSecret
 }
+
+func deletePersistentVolumeClaims(namespace string) {
+	pvcs, err := fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).List(metav1.ListOptions{})
+	require.NoError(t, err)
+
+	emptyDeleteOptions := metav1.DeleteOptions{}
+	for _, pvc := range pvcs.Items {
+		logrus.Infof("Deleting PVC %s from namespace %s", pvc.Name, namespace)
+		fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).Delete(pvc.Name, &emptyDeleteOptions)
+	}
+}
