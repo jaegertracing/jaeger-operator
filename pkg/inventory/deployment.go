@@ -29,7 +29,7 @@ func ForDeployments(existing []appsv1.Deployment, desired []appsv1.Deployment) D
 
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec
-			inject.PreserveOauthCookieSecret(&t.Spec, &tp.Spec)
+			tp.Spec = inject.PropagateOAuthCookieSecret(&t.Spec, &tp.Spec)
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
 
 			for k, v := range v.ObjectMeta.Annotations {

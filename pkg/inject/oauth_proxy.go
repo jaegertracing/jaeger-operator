@@ -3,7 +3,6 @@ package inject
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -99,34 +98,24 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	}
 }
 
-//PreserveOauthCookieSecret preserve the generated oauth cookie across multiple reconciliations
-func PreserveOauthCookieSecret(specSrc, specDst *appsv1.DeploymentSpec) {
-	secret := ""
-	// Find secret from old object
-containerLoop:
-	for index, container := range specSrc.Template.Spec.Containers {
+//PropagateOAuthCookieSecret preserve the generated oauth cookie across multiple reconciliations
+func PropagateOAuthCookieSecret(specSrc, specDst *appsv1.DeploymentSpec) appsv1.DeploymentSpec {
+	spec := specDst.DeepCopy()
+	secretArg := ""
+	// Find secretArg from old object
+	for _, container := range specSrc.Template.Spec.Containers {
 		if container.Name == "oauth-proxy" {
-			for argIndex, arg := range container.Args {
-				if strings.HasPrefix(arg, "--cookie-secret=") {
-					secret = specSrc.Template.Spec.Containers[index].Args[argIndex]
-					break containerLoop
-				}
-			}
+			secretArg = util.FindItem("--cookie-secret=", container.Args)
+			break
 		}
 	}
-
-	// Found the cooke secret parameter.
-	if secret != "" {
-	destinationLoop:
-		for index, container := range specDst.Template.Spec.Containers {
+	// Found the cooke secretArg parameter, replace argument.
+	if secretArg != "" {
+		for i, container := range spec.Template.Spec.Containers {
 			if container.Name == "oauth-proxy" {
-				for argIndex, arg := range container.Args {
-					if strings.HasPrefix(arg, "--cookie-secret=") {
-						specDst.Template.Spec.Containers[index].Args[argIndex] = secret
-						break destinationLoop
-					}
-				}
+				util.ReplaceArgument("--cookie-secret", secretArg, spec.Template.Spec.Containers[i].Args)
 			}
 		}
 	}
+	return *spec
 }
