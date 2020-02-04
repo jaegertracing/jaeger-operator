@@ -3,6 +3,7 @@ package inject
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -95,5 +96,37 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 			},
 		},
 		Resources: commonSpec.Resources,
+	}
+}
+
+//PreserveOauthCookieSecret preserve the generated oauth cookie across multiple reconciliations
+func PreserveOauthCookieSecret(specSrc, specDst *appsv1.DeploymentSpec) {
+	secret := ""
+	// Find secret from old object
+containerLoop:
+	for index, container := range specSrc.Template.Spec.Containers {
+		if container.Name == "oauth-proxy" {
+			for argIndex, arg := range container.Args {
+				if strings.HasPrefix(arg, "--cookie-secret=") {
+					secret = specSrc.Template.Spec.Containers[index].Args[argIndex]
+					break containerLoop
+				}
+			}
+		}
+	}
+
+	// Found the cooke secret parameter.
+	if secret != "" {
+	destinationLoop:
+		for index, container := range specDst.Template.Spec.Containers {
+			if container.Name == "oauth-proxy" {
+				for argIndex, arg := range container.Args {
+					if strings.HasPrefix(arg, "--cookie-secret=") {
+						specDst.Template.Spec.Containers[index].Args[argIndex] = secret
+						break destinationLoop
+					}
+				}
+			}
+		}
 	}
 }
