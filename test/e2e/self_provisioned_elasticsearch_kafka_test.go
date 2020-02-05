@@ -88,6 +88,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() 
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
+	defer deletePersistentVolumeClaims(namespace)
 
 	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-zookeeper", retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err)

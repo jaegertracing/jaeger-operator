@@ -132,6 +132,7 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(jaegerInstance)
+	defer deletePersistentVolumeClaims(namespace)
 
 	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-zookeeper", retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err)
