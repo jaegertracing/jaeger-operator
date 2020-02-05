@@ -34,6 +34,7 @@ const (
 	envVarServiceName = "JAEGER_SERVICE_NAME"
 	envVarPropagation = "JAEGER_PROPAGATION"
 	envVarPodName     = "POD_NAME"
+	envVarHostIP      = "HOST_IP"
 )
 
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
@@ -132,11 +133,12 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
-		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s",
+		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
 			"cluster", "undefined", // this value isn't currently available
 			"deployment.name", dep.Name,
 			"pod.namespace", dep.Namespace,
 			"pod.name", fmt.Sprintf("${%s:}", envVarPodName),
+			"host.ip", fmt.Sprintf("${%s:}", envVarHostIP),
 		)
 
 		if len(dep.Spec.Template.Spec.Containers) == 1 {
@@ -158,14 +160,24 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
 		Args:  args,
-		Env: []corev1.EnvVar{{
-			Name: envVarPodName,
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					FieldPath: "metadata.name",
+		Env: []corev1.EnvVar{
+			{
+				Name: envVarPodName,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.name",
+					},
 				},
 			},
-		}},
+			{
+				Name: envVarHostIP,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.hostIP",
+					},
+				},
+			},
+		},
 		Ports: []corev1.ContainerPort{
 			{
 				ContainerPort: zkCompactTrft,

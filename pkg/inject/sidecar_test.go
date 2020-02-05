@@ -59,6 +59,7 @@ func TestInjectSidecarWithEnvVars(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	containsEnvVarNamed(t, dep.Spec.Template.Spec.Containers[1].Env, envVarPodName)
+	containsEnvVarNamed(t, dep.Spec.Template.Spec.Containers[1].Env, envVarHostIP)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarPropagation, Value: "jaeger,b3"})
