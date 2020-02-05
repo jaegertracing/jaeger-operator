@@ -21,7 +21,7 @@ ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.3
 PROMETHEUS_OPERATOR_TAG ?= v0.34.0
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.3
-SDK_VERSION=v0.12.0
+SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -48,7 +48,7 @@ format:
 .PHONY: lint
 lint:
 	@echo Linting...
-	@./.ci/lint.sh
+	@GOPATH=${GOPATH} ./.ci/lint.sh
 
 .PHONY: security
 security:
@@ -262,8 +262,7 @@ ingress:
 
 .PHONY: generate
 generate:
-	@${GO_FLAGS} operator-sdk generate openapi
-	@${GO_FLAGS} operator-sdk generate k8s
+	@GOPATH=${GOPATH} ./.ci/generate.sh
 
 .PHONY: test
 test: unit-tests e2e-tests
@@ -285,10 +284,11 @@ install-sdk:
 
 .PHONY: install-tools
 install-tools:
-	@${GO_FLAGS} go get \
+	@${GO_FLAGS} go install \
 		golang.org/x/lint/golint \
 		github.com/securego/gosec/cmd/gosec \
-		golang.org/x/tools/cmd/goimports
+		golang.org/x/tools/cmd/goimports \
+		k8s.io/kube-openapi/cmd/openapi-gen
 
 .PHONY: install
 install: install-sdk install-tools

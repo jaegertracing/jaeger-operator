@@ -9,8 +9,8 @@ import (
 
 // Options defines a common options parameter to the different structs
 type Options struct {
-	opts map[string]string
-	json *[]byte
+	opts map[string]string `json:"-"`
+	json *[]byte           `json:"-"`
 }
 
 // NewOptions build a new Options object based on the given map
