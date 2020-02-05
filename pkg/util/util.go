@@ -177,13 +177,18 @@ func FindItem(prefix string, args []string) string {
 }
 
 // ReplaceArgument replace argument value with given value.
-func ReplaceArgument(prefix string, newValue string, args []string) {
+func ReplaceArgument(prefix string, newValue string, args []string, firstOccurrence bool) int {
+	found := 0
 	for argIndex, arg := range args {
 		if strings.HasPrefix(arg, prefix) {
 			args[argIndex] = newValue
-			return
+			found++
+			if firstOccurrence {
+				return found
+			}
 		}
 	}
+	return found
 }
 
 // GetPort returns a port, either from supplied default port, or extracted from supplied arg value

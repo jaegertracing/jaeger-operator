@@ -5,13 +5,15 @@ import (
 	"sort"
 	"testing"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 )
@@ -208,4 +210,26 @@ func TestOAuthProxyResourceLimits(t *testing.T) {
 	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
 	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
+}
+
+func findCookieSecret(containers []corev1.Container) (string, bool) {
+	for _, container := range containers {
+		if container.Name == "oauth-proxy" {
+			return util.FindItem("--cookie-secret=", container.Args), true
+		}
+	}
+	return "", false
+}
+
+func TestPropagateOAuthCookieSecret(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	depSrc := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+	depDst := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+	srcSecret, _ := findCookieSecret(depSrc.Spec.Template.Spec.Containers)
+	dstSecret, _ := findCookieSecret(depDst.Spec.Template.Spec.Containers)
+	assert.NotEqual(t, srcSecret, dstSecret)
+	resultSpec := PropagateOAuthCookieSecret(depSrc.Spec, depDst.Spec)
+	resultSecret, _ := findCookieSecret(resultSpec.Template.Spec.Containers)
+	assert.Equal(t, srcSecret, resultSecret)
 }

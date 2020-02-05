@@ -99,7 +99,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 }
 
 //PropagateOAuthCookieSecret preserve the generated oauth cookie across multiple reconciliations
-func PropagateOAuthCookieSecret(specSrc, specDst *appsv1.DeploymentSpec) appsv1.DeploymentSpec {
+func PropagateOAuthCookieSecret(specSrc, specDst appsv1.DeploymentSpec) appsv1.DeploymentSpec {
 	spec := specDst.DeepCopy()
 	secretArg := ""
 	// Find secretArg from old object
@@ -113,7 +113,7 @@ func PropagateOAuthCookieSecret(specSrc, specDst *appsv1.DeploymentSpec) appsv1.
 	if secretArg != "" {
 		for i, container := range spec.Template.Spec.Containers {
 			if container.Name == "oauth-proxy" {
-				util.ReplaceArgument("--cookie-secret", secretArg, spec.Template.Spec.Containers[i].Args)
+				util.ReplaceArgument("--cookie-secret", secretArg, spec.Template.Spec.Containers[i].Args, true)
 			}
 		}
 	}
