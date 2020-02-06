@@ -32,7 +32,7 @@ minikube config set WantNoneDriverWarning false
 minikube config set vm-driver none
 
 minikube version
-sudo ${MINIKUBE} start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
+sudo ${MINIKUBE} start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC --memory=8192
 sudo chown -R $USER $HOME/.kube $HOME/.minikube
 
 minikube update-context
