@@ -62,13 +62,22 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	// See https://github.com/jaegertracing/jaeger-kubernetes/issues/32 and
 	// https://github.com/jaegertracing/jaeger-kubernetes/pull/125
 	oneDaySeconds := int64(86400)
-	timeout := &oneDaySeconds
+	jobTimeout := &oneDaySeconds
+
+	// The schema creation code running in a container in this pod has a retry
+	// loop which is supposed to retry forever. However, if that retry loop
+	// does not yield success within ~5 minutes then restart the container in
+	// the pod, effectively restarting the inner retry loop. This guards
+	// against the unlikely case of the code running in the container being
+	// dead-locked for whichever reason. See jaeger-kubernetes/issues/32.
+	podTimeoutSeconds := int64(320)
+	podTimeout := &podTimeoutSeconds
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
 		if err == nil {
 			seconds := int64(dur.Seconds())
-			timeout = &seconds
+			jobTimeout = &seconds
 		} else {
 			jaeger.Logger().
 				WithError(err).
@@ -107,12 +116,13 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds: timeout,
+				ActiveDeadlineSeconds: jobTimeout,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,
 					},
 					Spec: corev1.PodSpec{
+						ActiveDeadlineSeconds: podTimeout,
 						Containers: []corev1.Container{{
 							Image: util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
 							Name:  fmt.Sprintf("%s-cassandra-schema", jaeger.Name),
