@@ -177,15 +177,12 @@ func FindItem(prefix string, args []string) string {
 }
 
 // ReplaceArgument replace argument value with given value.
-func ReplaceArgument(prefix string, newValue string, args []string, firstOccurrence bool) int {
+func ReplaceArgument(prefix string, newValue string, args []string) int {
 	found := 0
 	for argIndex, arg := range args {
 		if strings.HasPrefix(arg, prefix) {
 			args[argIndex] = newValue
 			found++
-			if firstOccurrence {
-				return found
-			}
 		}
 	}
 	return found

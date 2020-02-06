@@ -109,11 +109,11 @@ func PropagateOAuthCookieSecret(specSrc, specDst appsv1.DeploymentSpec) appsv1.D
 			break
 		}
 	}
-	// Found the cooke secretArg parameter, replace argument.
+	// Found the cookie secretArg parameter, replace argument.
 	if secretArg != "" {
 		for i, container := range spec.Template.Spec.Containers {
 			if container.Name == "oauth-proxy" {
-				util.ReplaceArgument("--cookie-secret", secretArg, spec.Template.Spec.Containers[i].Args, true)
+				util.ReplaceArgument("--cookie-secret", secretArg, spec.Template.Spec.Containers[i].Args)
 			}
 		}
 	}
