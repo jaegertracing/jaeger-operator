@@ -57,9 +57,12 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		"linkerd.io/inject":       "disabled",
 	}
 
-	// Default timeout set to 120s.
-	twoMinutes := int64(120)
-	timeout := &twoMinutes
+	// Set job deadline to 1 day by default. If the job does not succeed within
+	// that duration it transitions into a permanent error state.
+	// See https://github.com/jaegertracing/jaeger-kubernetes/issues/32 and
+	// https://github.com/jaegertracing/jaeger-kubernetes/pull/125
+	oneDaySeconds := int64(86400)
+	timeout := &oneDaySeconds
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
@@ -70,10 +73,10 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 			jaeger.Logger().
 				WithError(err).
 				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.Timeout).
-				Error("Failed to parse cassandraCreateSchema.timeout to time.duration. Using '120s' by default.")
+				Error("Failed to parse cassandraCreateSchema.timeout to time.duration. Using the default.")
 		}
 	} else {
-		jaeger.Logger().Debug("Cassandra job's timeout not specified. Using '120s' for the cassandra-create-schema job.")
+		jaeger.Logger().Debug("Timeout for cassandra-create-schema job not specified. Using default of 1 day.")
 	}
 
 	return []batchv1.Job{
