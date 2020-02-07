@@ -3,6 +3,9 @@ package deployment
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -68,8 +71,8 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	}).Debug("Reconciling Deployment")
 
 	// Fetch the Deployment instance
-	instance := &appsv1.Deployment{}
-	err := r.client.Get(context.Background(), request.NamespacedName, instance)
+	dep := &appsv1.Deployment{}
+	err := r.client.Get(context.Background(), request.NamespacedName, dep)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -81,32 +84,45 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		return reconcile.Result{}, err
 	}
 
-	if inject.Needed(instance) {
-		pods := &v1.JaegerList{}
+	ns := &corev1.Namespace{}
+	err = r.client.Get(context.Background(), types.NamespacedName{Name: request.Namespace}, ns)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	if inject.Needed(dep, ns) {
+		jaegers := &v1.JaegerList{}
 		opts := []client.ListOption{}
-		err := r.client.List(context.Background(), pods, opts...)
+		err := r.client.List(context.Background(), jaegers, opts...)
 		if err != nil {
 			log.WithError(err).Error("failed to get the available Jaeger pods")
 			return reconcile.Result{}, err
 		}
 
-		jaeger := inject.Select(instance, pods)
+		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
 			// Verified that jaeger instance was found and is not marked for deletion.
 			log.WithFields(log.Fields{
-				"deployment":       instance.Name,
-				"namespace":        instance.Namespace,
+				"deployment":       dep.Name,
+				"namespace":        dep.Namespace,
 				"jaeger":           jaeger.Name,
 				"jaeger-namespace": jaeger.Namespace,
 			}).Info("Injecting Jaeger Agent sidecar")
-			instance = inject.Sidecar(jaeger, instance)
-			if err := r.client.Update(context.Background(), instance); err != nil {
-				log.WithField("deployment", instance).WithError(err).Error("failed to update")
+			dep = inject.Sidecar(jaeger, dep)
+			if err := r.client.Update(context.Background(), dep); err != nil {
+				log.WithField("deployment", dep).WithError(err).Error("failed to update")
 				return reconcile.Result{}, err
 			}
 		} else {
-			log.WithField("deployment", instance.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+			log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 		}
 	}
 
