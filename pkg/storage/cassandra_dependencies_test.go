@@ -72,7 +72,7 @@ func TestCassandraCreateSchemaDefaultTimeout(t *testing.T) {
 
 	b := cassandraDeps(jaeger)
 	assert.Len(t, b, 1)
-	assert.Equal(t, int64(120), *b[0].Spec.ActiveDeadlineSeconds)
+	assert.Equal(t, int64(86400), *b[0].Spec.ActiveDeadlineSeconds)
 }
 
 func TestCassandraCreateSchemaInvalidTimeout(t *testing.T) {
@@ -82,5 +82,5 @@ func TestCassandraCreateSchemaInvalidTimeout(t *testing.T) {
 
 	b := cassandraDeps(jaeger)
 	assert.Len(t, b, 1)
-	assert.Equal(t, int64(120), *b[0].Spec.ActiveDeadlineSeconds)
+	assert.Equal(t, int64(86400), *b[0].Spec.ActiveDeadlineSeconds)
 }
