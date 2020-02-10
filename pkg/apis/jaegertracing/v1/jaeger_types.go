@@ -132,6 +132,9 @@ type JaegerStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Jaeger instance's status"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Jaeger Version"
+// +kubebuilder:printcolumn:name="Strategy",type="string",JSONPath=".spec.strategy",description="Jaeger deployment strategy"
+// +kubebuilder:printcolumn:name="Storage",type="string",JSONPath=".spec.storage.type",description="Jaeger storage type"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type Jaeger struct {
 	metav1.TypeMeta `json:",inline"`
 
