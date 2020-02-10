@@ -1,4 +1,4 @@
-// +build smokeX
+// +build smokeA
 
 package e2e
 
@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -18,18 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
-var ingressEnabled = true
-
-type SidecarTestSuite struct {
+type SidecarNamespaceTestSuite struct {
 	suite.Suite
 }
 
-func (suite *SidecarTestSuite) SetupSuite() {
+func (suite *SidecarNamespaceTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
@@ -46,24 +43,24 @@ func (suite *SidecarTestSuite) SetupSuite() {
 	addToFrameworkSchemeForSmokeTests(t)
 }
 
-func (suite *SidecarTestSuite) TearDownSuite() {
+func (suite *SidecarNamespaceTestSuite) TearDownSuite() {
 	handleSuiteTearDown()
 }
 
-func TestSidecarSuite(t *testing.T) {
-	suite.Run(t, new(SidecarTestSuite))
+func TestSidecarNamespaceSuite(t *testing.T) {
+	suite.Run(t, new(SidecarNamespaceTestSuite))
 }
 
-func (suite *SidecarTestSuite) SetupTest() {
+func (suite *SidecarNamespaceTestSuite) SetupTest() {
 	t = suite.T()
 }
 
-func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
+func (suite *SidecarNamespaceTestSuite) AfterTest(suiteName, testName string) {
 	handleTestFailure()
 }
 
 // Sidecar runs a test with the agent as sidecar
-func (suite *SidecarTestSuite) TestSidecar() {
+func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	jaegerInstanceName := "agent-as-sidecar"
@@ -75,12 +72,18 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
 
-	dep := getVertxDefinition(namespace)
+	dep := getVertxDefinition2(namespace)
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
+
+	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	require.NoError(t, err)
+	nss.Annotations[inject.Annotation] = "true"
+	_, err = fw.KubeClient.CoreV1().Namespaces().Update(nss)
+	require.NoError(t, err)
 
 	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -101,7 +104,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Failed waiting for expected content")
 }
 
-func getVertxDefinition(s string) *appsv1.Deployment {
+func getVertxDefinition2(s string) *appsv1.Deployment {
 	selector := map[string]string{"app": "vertx-create-span-sidecar"}
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -109,9 +112,8 @@ func getVertxDefinition(s string) *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "vertx-create-span-sidecar",
-			Namespace:   namespace,
-			Annotations: map[string]string{inject.Annotation: "true"},
+			Name:      "vertx-create-span-sidecar",
+			Namespace: namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -154,31 +156,4 @@ func getVertxDefinition(s string) *appsv1.Deployment {
 		},
 	}
 	return dep
-}
-
-func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
-	j := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Strategy: v1.DeploymentStrategyAllInOne,
-			AllInOne: v1.JaegerAllInOneSpec{},
-			Agent: v1.JaegerAgentSpec{
-				Options: v1.NewOptions(map[string]interface{}{
-					"log-level": "debug",
-				}),
-			},
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-		},
-	}
-	return j
 }

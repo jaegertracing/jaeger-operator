@@ -132,6 +132,21 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
 		t.Fatal(err)
 	}
+	crb = &rbac.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace + "jaeger-operator-cluster-admin",
+		},
+		Subjects: []rbac.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      "jaeger-operator",
+			Namespace: namespace,
+		}},
+		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator"},
+	}
+
+	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
+		t.Fatal(err)
+	}
 
 	t.Log("Initialized cluster resources. Namespace: " + namespace)
 

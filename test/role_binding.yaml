@@ -6,6 +6,6 @@ subjects:
 - kind: ServiceAccount
   name: jaeger-operator
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: jaeger-operator
   apiGroup: rbac.authorization.k8s.io

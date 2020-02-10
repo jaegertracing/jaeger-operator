@@ -26,7 +26,7 @@ GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
-TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing.io_jaegers_crd.yaml -root .
+TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/test/global-manifests.yaml -root .
 
 .DEFAULT_GOAL := build
 
@@ -82,23 +82,26 @@ unit-tests:
 e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: crd build docker push
+prepare-e2e-tests: prepare-global crd build docker push
 	@mkdir -p deploy/test
-	@cp test/role_binding.yaml deploy/test/namespace-manifests.yaml
-	@echo "---" >> deploy/test/namespace-manifests.yaml
-
-	@cat test/role.yaml >> deploy/test/namespace-manifests.yaml
-	@echo "---" >> deploy/test/namespace-manifests.yaml
-
-	@cat test/service_account.yaml >> deploy/test/namespace-manifests.yaml
+	@cp test/service_account.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
 	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
 
+.PHONY: prepare-global
+prepare-global: crd build docker push
+	@mkdir -p deploy/test
+	@cp deploy/role.yaml deploy/test/global-manifests.yaml
+	@echo "---" >> deploy/test/global-manifests.yaml
+
+	@cat deploy/crds/jaegertracing.io_jaegers_crd.yaml  >> deploy/test/global-manifests.yaml
+	@echo "---" >> deploy/test/global-manifests.yaml
+
 .PHONY: e2e-tests-smoke
 e2e-tests-smoke: prepare-e2e-tests
 	@echo Running Smoke end-to-end tests...
-	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
+	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smokeX ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra

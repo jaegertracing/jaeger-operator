@@ -3,7 +3,6 @@ kind: ClusterRole
 metadata:
   creationTimestamp: null
   name: jaeger-operator
-  namespace: observability
 rules:
 - apiGroups:
   - ""
@@ -17,6 +16,7 @@ rules:
   - configmaps
   - secrets
   - serviceaccounts
+  - namespaces
   verbs:
   - '*'
 - apiGroups:
