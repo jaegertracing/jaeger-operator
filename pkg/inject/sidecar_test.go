@@ -224,7 +224,7 @@ func TestHasSidecarAlready(t *testing.T) {
 	assert.False(t, Needed(dep, &corev1.Namespace{}))
 }
 
-func TestSelectSingleJaegerPod2(t *testing.T) {
+func TestSelect(t *testing.T) {
 	jTest := v1.NewJaeger(types.NamespacedName{Name: "test"})
 	jProd := v1.NewJaeger(types.NamespacedName{Name: "prod"})
 	tests := []struct {
@@ -282,6 +282,13 @@ func TestSelectSingleJaegerPod2(t *testing.T) {
 			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest, *jProd}},
 			expected: jProd,
 			cap:      "dep true, ns explicit",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
+			ns:       ns(map[string]string{}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest}},
+			expected: jTest,
+			cap:      "dep true, ns missing",
 		},
 		{
 			dep:      dep(map[string]string{}, map[string]string{}),
