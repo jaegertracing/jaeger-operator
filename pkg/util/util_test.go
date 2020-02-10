@@ -458,3 +458,62 @@ func TestCreateFromSecret(t *testing.T) {
 		assert.Equal(t, test.expected, exp)
 	}
 }
+
+func TestReplaceArgument(t *testing.T) {
+
+	newValue := "SECRET2"
+	prefix := "--cookie-secret="
+
+	tests := []struct {
+		input    []string
+		expected []string
+		count    int
+	}{
+		{
+			input: []string{
+				"--cookie-secret=SECRET1",
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			expected: []string{
+				"--cookie-secret=" + newValue,
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			count: 1,
+		},
+		{
+			input: []string{
+				"--cookie-secret=SECRET1",
+				"--cookie-secret=SECRET3",
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			expected: []string{
+				"--cookie-secret=" + newValue,
+				"--cookie-secret=" + newValue,
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			count: 2,
+		},
+		{
+			input: []string{
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			expected: []string{
+				"--https-address=:8443",
+				"--provider=openshift",
+			},
+			count: 0,
+		},
+	}
+
+	for _, test := range tests {
+		counter := ReplaceArgument(prefix, prefix+newValue, test.input)
+		assert.Equal(t, test.count, counter)
+		assert.Equal(t, test.expected, test.input)
+	}
+
+}
