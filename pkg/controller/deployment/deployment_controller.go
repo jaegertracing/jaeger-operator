@@ -2,7 +2,6 @@ package deployment
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/types"
 
@@ -86,9 +85,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	}
 
 	ns := &corev1.Namespace{}
-	fmt.Println("--> Getting namespaces \n\n\n\n\n")
 	err = r.client.Get(context.Background(), types.NamespacedName{Name: request.Namespace}, ns)
-	fmt.Println("--> After Getting namespaces \n\n\n\n\n")
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -97,14 +94,10 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		fmt.Println("\n\ncould not get namespaces")
-		fmt.Println(err)
 		return reconcile.Result{}, nil
 	}
 
-	fmt.Println(request.NamespacedName)
 	if inject.Needed(dep, ns) {
-		fmt.Println("Is needed \n\n\n")
 		jaegers := &v1.JaegerList{}
 		opts := []client.ListOption{}
 		err := r.client.List(context.Background(), jaegers, opts...)

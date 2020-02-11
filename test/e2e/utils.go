@@ -134,7 +134,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	}
 	crb = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace + "jaeger-operator-cluster-admin",
+			Name: namespace + "jaeger-operator",
 		},
 		Subjects: []rbac.Subject{{
 			Kind:      "ServiceAccount",

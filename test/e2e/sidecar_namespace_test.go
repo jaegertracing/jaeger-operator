@@ -1,4 +1,4 @@
-// +build smokeA
+// +build smoke
 
 package e2e
 
@@ -9,16 +9,14 @@ import (
 	"net/http"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -63,7 +61,7 @@ func (suite *SidecarNamespaceTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	jaegerInstanceName := "agent-as-sidecar"
+	jaegerInstanceName := "agent-as-sidecar-namespace"
 	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
@@ -72,18 +70,21 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
 
-	dep := getVertxDefinition2(namespace)
+	dep := getVertxDefinition(map[string]string{})
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
-	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
-
 	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	require.NoError(t, err)
+	if nss.Annotations == nil {
+		nss.Annotations = map[string]string{}
+	}
 	nss.Annotations[inject.Annotation] = "true"
 	_, err = fw.KubeClient.CoreV1().Namespaces().Update(nss)
 	require.NoError(t, err)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
+	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
 	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -102,58 +103,4 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 		return len(resp.Data) > 0, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-}
-
-func getVertxDefinition2(s string) *appsv1.Deployment {
-	selector := map[string]string{"app": "vertx-create-span-sidecar"}
-	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "vertx-create-span-sidecar",
-			Namespace: namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: selector,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: selector,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
-						Name:  "vertx-create-span-sidecar",
-						Ports: []corev1.ContainerPort{
-							{
-								ContainerPort: 8080,
-							},
-						},
-						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(8080),
-								},
-							},
-							InitialDelaySeconds: 1,
-						},
-						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(8080),
-								},
-							},
-							InitialDelaySeconds: 1,
-						},
-					}},
-				},
-			},
-		},
-	}
-	return dep
 }
