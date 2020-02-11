@@ -63,7 +63,9 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if dep.Annotations[Annotation] == "" && ns.Annotations[Annotation] == "" {
+	_, depExist := dep.Annotations[Annotation]
+	_, nsExist := ns.Annotations[Annotation]
+	if !depExist && !nsExist {
 		log.WithFields(log.Fields{
 			"namespace":  dep.Namespace,
 			"deployment": dep.Name,

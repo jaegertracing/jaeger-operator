@@ -2,7 +2,6 @@ package namespace
 
 import (
 	"context"
-	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -76,17 +75,14 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			fmt.Println("\n\nnot found")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		fmt.Println("\n\ncould not get namespaces")
-		fmt.Println(err)
 		return reconcile.Result{}, nil
 	}
 
 	opts := []client.ListOption{
-		client.InNamespace(request.Namespace),
+		client.InNamespace(request.Name),
 	}
 
 	// Fetch the Deployment instance

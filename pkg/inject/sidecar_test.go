@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -195,33 +196,48 @@ func TestSkipInjectSidecar(t *testing.T) {
 	assert.NotContains(t, dep.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
 }
 
-func TestSidecarNotNeeded(t *testing.T) {
-	dep := &appsv1.Deployment{
-		Spec: appsv1.DeploymentSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{},
-					},
-				},
-			},
+func TestSidecarNeeded(t *testing.T) {
+	depWithAgent := dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{})
+	depWithAgent.Spec.Template.Spec.Containers = append(depWithAgent.Spec.Template.Spec.Containers, corev1.Container{
+		Name: "jaeger-agent",
+	})
+
+	tests := []struct {
+		dep    *appsv1.Deployment
+		ns     *corev1.Namespace
+		needed bool
+	}{
+		{
+			dep:    &appsv1.Deployment{},
+			ns:     &corev1.Namespace{},
+			needed: false,
+		},
+		{
+			dep:    dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
+			ns:     ns(map[string]string{}),
+			needed: true,
+		},
+		{
+			dep:    dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
+			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
+			needed: true,
+		},
+		{
+			dep:    dep(map[string]string{}, map[string]string{}),
+			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
+			needed: true,
+		},
+		{
+			dep:    depWithAgent,
+			ns:     ns(map[string]string{}),
+			needed: false,
 		},
 	}
-
-	assert.False(t, Needed(dep, &corev1.Namespace{}))
-}
-
-func TestSidecarNeeded(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{})
-	assert.True(t, Needed(dep, &corev1.Namespace{}))
-}
-
-func TestHasSidecarAlready(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
-	assert.True(t, Needed(dep, &corev1.Namespace{}))
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestHasSidecarAlready"})
-	dep = Sidecar(jaeger, dep)
-	assert.False(t, Needed(dep, &corev1.Namespace{}))
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
+			assert.Equal(t, test.needed, Needed(test.dep, test.ns))
+		})
+	}
 }
 
 func TestSelect(t *testing.T) {
