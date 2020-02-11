@@ -276,7 +276,7 @@ func TestSelect(t *testing.T) {
 			ns:       ns(map[string]string{Annotation: "test"}),
 			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd, *jTest}},
 			expected: nil,
-			cap:      "dep explicit not exists, ns explicit",
+			cap:      "dep explicit does not exist, ns explicit",
 		},
 		{
 			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
