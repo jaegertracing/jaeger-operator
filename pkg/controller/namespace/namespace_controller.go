@@ -19,7 +19,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
-// Add creates a new Deployment Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new Namespace Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
@@ -38,7 +38,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to primary resource Deployment
 	err = c.Watch(&source.Kind{Type: &corev1.Namespace{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
@@ -49,7 +48,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileNamespace{}
 
-// ReconcileDeployment reconciles a Deployment object
+// ReconcileNamespace reconciles a Namespace object
 type ReconcileNamespace struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
@@ -57,8 +56,8 @@ type ReconcileNamespace struct {
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a Deployment object and makes changes based on the state read
-// and what is in the Deployment.Spec
+// Reconcile reads that state of the cluster for a Namespace object and makes changes based on the state read
+// and what is in the Namespace.Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
