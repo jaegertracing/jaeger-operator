@@ -74,6 +74,13 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
 
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, dep.Name, 1, retryInterval, timeout)
+	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
+
+	dep, err = fw.KubeClient.AppsV1().Deployments(namespace).Get(dep.Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.False(t, inject.HasJaegerAgent(dep))
+
 	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	require.NoError(t, err)
 	if nss.Annotations == nil {
@@ -83,8 +90,8 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	_, err = fw.KubeClient.CoreV1().Namespaces().Update(nss)
 	require.NoError(t, err)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
-	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, dep.Name, 1, retryInterval, timeout)
+	require.NoError(t, err, "Failed waiting for %s deployment", dep.Name)
 
 	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)

@@ -72,16 +72,7 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		}).Debug("annotation not present, not injecting")
 		return false
 	}
-
-	// this pod is annotated, it should have a sidecar
-	// but does it already have one?
-	for _, container := range dep.Spec.Template.Spec.Containers {
-		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
-			return false
-		}
-	}
-
-	return true
+	return !HasJaegerAgent(dep)
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
@@ -270,4 +261,16 @@ func CleanSidecar(deployment *appsv1.Deployment) {
 			break
 		}
 	}
+}
+
+// HasJaegerAgent checks whether deployment has Jaeger Agent container
+func HasJaegerAgent(dep *appsv1.Deployment) bool {
+	// this pod is annotated, it should have a sidecar
+	// but does it already have one?
+	for _, container := range dep.Spec.Template.Spec.Containers {
+		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
+			return true
+		}
+	}
+	return false
 }
