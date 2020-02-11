@@ -82,16 +82,17 @@ unit-tests:
 e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: prepare-global crd build docker push
+prepare-e2e-tests: e2e-tests-prepare-global-manifests crd build docker push
 	@mkdir -p deploy/test
 	@cp test/service_account.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
 	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
 
-.PHONY: prepare-global
-prepare-global: crd build docker push
+.PHONY: e2e-tetsts-prepare-global-manifests
+e2e-tests-prepare-global-manifests: crd build docker push
 	@mkdir -p deploy/test
+	# ClusterRoleBinding is created in test codebase because we don't know service account namespace
 	@cp deploy/role.yaml deploy/test/global-manifests.yaml
 	@echo "---" >> deploy/test/global-manifests.yaml
 

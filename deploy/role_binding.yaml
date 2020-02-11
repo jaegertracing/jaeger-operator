@@ -5,6 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: jaeger-operator
+  namespace: observability
 roleRef:
   kind: ClusterRole
   name: jaeger-operator

@@ -102,37 +102,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		t.Fatal(err)
 	}
 
-	roleName := namespace + "-jaeger-operator-cluster-role-crbs"
-	cr := &rbac.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: roleName,
-		},
-		Rules: []rbac.PolicyRule{{
-			APIGroups: []string{"rbac.authorization.k8s.io"},
-			Resources: []string{"clusterrolebindings"},
-			Verbs:     []string{"*"},
-		}},
-	}
-	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoles().Create(cr); err != nil {
-		t.Fatal(err)
-	}
-
 	crb := &rbac.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace + "-jaeger-operator-cluster-admin",
-		},
-		Subjects: []rbac.Subject{{
-			Kind:      "ServiceAccount",
-			Name:      "jaeger-operator",
-			Namespace: namespace,
-		}},
-		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: roleName},
-	}
-
-	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
-		t.Fatal(err)
-	}
-	crb = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace + "jaeger-operator",
 		},

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jaeger-operator
+  namespace: observability
 spec:
   replicas: 1
   selector:
@@ -15,7 +16,7 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
       - name: jaeger-operator
-        image: pavolloffay/jaeger-operator:latest
+        image: jaegertracing/jaeger-operator:latest
         ports:
         - containerPort: 8383
           name: metrics
