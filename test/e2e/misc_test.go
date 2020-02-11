@@ -48,10 +48,7 @@ func (suite *MiscTestSuite) SetupSuite() {
 }
 
 func (suite *MiscTestSuite) TearDownSuite() {
-	log.Info("Entering TearDownSuite()")
-	if !debugMode || !t.Failed() {
-		ctx.Cleanup()
-	}
+	handleSuiteTearDown()
 }
 
 func TestMiscSuite(t *testing.T) {

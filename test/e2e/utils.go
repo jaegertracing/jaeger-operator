@@ -87,8 +87,44 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 	return *emptyPod
 }
 
+func createNamespace(name string, f *framework.Framework) {
+	namespaceObj := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	_, err := f.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
+
+	require.NoError(t, err)
+}
+
+func deleteNamespace(t *testing.T, name string, f *framework.Framework) {
+	namespace, err := f.KubeClient.CoreV1().Namespaces().Get(name, metav1.GetOptions{})
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		return
+	}
+	require.NoError(t, err)
+
+	err = f.KubeClient.CoreV1().Namespaces().Delete(name, metav1.NewDeleteOptions(0))
+	require.NoError(t, err, "Got error %v trying to delete namespace %s", namespace)
+	err = e2eutil.WaitForDeletion(t, fw.Client.Client, namespace, retryInterval, timeout)
+	require.NoError(t, err)
+}
+
 func prepare(t *testing.T) (*framework.TestCtx, error) {
 	logrus.Infof("Debug Mode? %v", debugMode)
+	// get global framework variables
+	f := framework.Global
+
+	// As of release 0.15.1 the operator-sdk creates 46 character namespaces which causes problems on OpenShift
+	// So TESTNAMESPACE must be set and SINGLE_NAMESPACE must be set to -SingleNamespace
+	if isOpenShift(t) {
+		namespaceName := os.Getenv("TEST_NAMESPACE")
+		require.NotNil(t, namespaceName, "TEST_NAMESPACE must be set on OpenShift")
+		singleNamespace := os.Getenv("SINGLE_NAMESPACE")
+		require.NotNil(t, singleNamespace, "SINGLE_NAMESPACE must be set on OpenShift")
+
+		logrus.Infof("Running test in namespace %s", namespaceName)
+		deleteNamespace(t, namespaceName, f)
+		createNamespace(namespaceName, f)
+	}
+
 	ctx := framework.NewTestCtx(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	if !usingOLM {
@@ -135,8 +171,6 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 
 	t.Log("Initialized cluster resources. Namespace: " + namespace)
 
-	// get global framework variables
-	f := framework.Global
 	// wait for the operator to be ready
 	if !usingOLM {
 		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
@@ -268,6 +302,24 @@ func handleSuiteTearDown() {
 	logrus.Info("Entering TearDownSuite()")
 	if !debugMode || !t.Failed() {
 		ctx.Cleanup()
+		if isOpenShift(t) {
+			deleteNamespace(t, namespace, fw)
+
+			// Delete cluster rolesand rolebindging created in prepare  Required on OpenShift because we may reuse namespaces for multiple suites.
+			clusterRoleBindingName := namespace + "-jaeger-operator-cluster-admin"
+			fmt.Printf("Deleting clusterRoleBinding %s\n", clusterRoleBindingName)
+			err := fw.KubeClient.RbacV1().ClusterRoleBindings().Delete(clusterRoleBindingName, metav1.NewDeleteOptions(0))
+			if err != nil {
+				logrus.Warnf("Error %v deleting clusterRoleBinding %s", err, clusterRoleBindingName)
+			}
+
+			clusterRoleName := namespace + "-jaeger-operator-cluster-role-crbs"
+			fmt.Printf("Deleting clusterRole %s\n", clusterRoleName)
+			err = fw.KubeClient.RbacV1().ClusterRoles().Delete(clusterRoleName, metav1.NewDeleteOptions(0))
+			if err != nil {
+				logrus.Warnf("Error %v deleting clusterRole %s", err, clusterRoleName)
+			}
+		}
 	}
 }
 

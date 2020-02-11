@@ -23,10 +23,12 @@ PROMETHEUS_OPERATOR_TAG ?= v0.34.0
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.3
 SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
+TIMESTAMP ?= "$(shell date +%s)"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
-TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing.io_jaegers_crd.yaml -root .
+# For testing on OpenShift, set SINGLE_NAMESPACE to -singleNamespace
+TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/crds/jaegertracing.io_jaegers_crd.yaml $(SINGLE_NAMESPACE) -root .
 
 .DEFAULT_GOAL := build
 
@@ -98,47 +100,47 @@ prepare-e2e-tests: crd build docker push
 .PHONY: e2e-tests-smoke
 e2e-tests-smoke: prepare-e2e-tests
 	@echo Running Smoke end-to-end tests...
-	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
+	@BUILD_IMAGE=$(BUILD_IMAGE) TEST_NAMESPACE=smoke-$(TIMESTAMP) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra
 	@echo Running Cassandra end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) TEST_NAMESPACE=cassandra-$(TIMESTAMP) go test -tags=cassandra ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-es
 e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) TEST_NAMESPACE=elastic-$(TIMESTAMP) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) TEST_NAMESPACE=self-provisioned-$(TIMESTAMP) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-self-provisioned-es-kafka
 e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator deploy-es-operator
 	@echo Running Self provisioned Elasticsearch and Kafka end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) TEST_NAMESPACE=self-provisioned-kafka-$(TIMESTAMP) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-token-propagation-es
 e2e-tests-token-propagation-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Token Propagation Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) TEST_NAMESPACE=token-$(TIMESTAMP) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
 	@echo Running Streaming end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) TEST_NAMESPACE=streaming-$(TIMESTAMP) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-examples1
 e2e-tests-examples1: prepare-e2e-tests es cassandra deploy-es-operator
 	@echo Running Example end-to-end tests part 1...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) TEST_NAMESPACE=examples1-$(TIMESTAMP) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-examples2
 e2e-tests-examples2: prepare-e2e-tests es kafka deploy-es-operator
 	@echo Running Example end-to-end tests part 2...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) TEST_NAMESPACE=examples2-$(TIMESTAMP) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
