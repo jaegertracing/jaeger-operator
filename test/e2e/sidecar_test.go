@@ -169,8 +169,7 @@ func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyAllInOne,
 			JaegerCommonSpec: v1.JaegerCommonSpec{
-				// add inject annotation to jaeger deployment to non existing Jaeger instance
-				// we don't want to inject agent to jaeger deployment because the port collisions
+				// do not inject jaeger-agent into Jaeger deployment - it will result in port collision
 				Annotations: map[string]string{inject.Annotation: "doesNotExists"},
 			},
 			AllInOne: v1.JaegerAllInOneSpec{},
