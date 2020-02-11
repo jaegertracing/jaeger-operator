@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -195,77 +196,145 @@ func TestSkipInjectSidecar(t *testing.T) {
 	assert.NotContains(t, dep.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
 }
 
-func TestSidecarNotNeeded(t *testing.T) {
-	dep := &appsv1.Deployment{
-		Spec: appsv1.DeploymentSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{},
-					},
-				},
-			},
-		},
-	}
-
-	assert.False(t, Needed(dep))
-}
-
 func TestSidecarNeeded(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{})
-	assert.True(t, Needed(dep))
+	depWithAgent := dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{})
+	depWithAgent.Spec.Template.Spec.Containers = append(depWithAgent.Spec.Template.Spec.Containers, corev1.Container{
+		Name: "jaeger-agent",
+	})
+
+	tests := []struct {
+		dep    *appsv1.Deployment
+		ns     *corev1.Namespace
+		needed bool
+	}{
+		{
+			dep:    &appsv1.Deployment{},
+			ns:     &corev1.Namespace{},
+			needed: false,
+		},
+		{
+			dep:    dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
+			ns:     ns(map[string]string{}),
+			needed: true,
+		},
+		{
+			dep:    dep(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
+			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
+			needed: true,
+		},
+		{
+			dep:    dep(map[string]string{}, map[string]string{}),
+			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
+			needed: true,
+		},
+		{
+			dep:    depWithAgent,
+			ns:     ns(map[string]string{}),
+			needed: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
+			assert.Equal(t, test.needed, Needed(test.dep, test.ns))
+		})
+	}
 }
 
-func TestHasSidecarAlready(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "TestHasSidecarAlready"}, map[string]string{})
-	assert.True(t, Needed(dep))
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestHasSidecarAlready"})
-	dep = Sidecar(jaeger, dep)
-	assert.False(t, Needed(dep))
-}
-
-func TestSelectSingleJaegerPod(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1.JaegerList{
-		Items: []v1.Jaeger{
-			v1.Jaeger{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "the-only-jaeger-instance-available",
-				},
-			},
+func TestSelect(t *testing.T) {
+	jTest := v1.NewJaeger(types.NamespacedName{Name: "test"})
+	jProd := v1.NewJaeger(types.NamespacedName{Name: "prod"})
+	tests := []struct {
+		dep      *appsv1.Deployment
+		ns       *corev1.Namespace
+		jaegers  *v1.JaegerList
+		expected *v1.Jaeger
+		cap      string
+	}{
+		{
+			dep:      dep(map[string]string{Annotation: "prod"}, map[string]string{}),
+			ns:       ns(map[string]string{}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd}},
+			expected: jProd,
+			cap:      "dep explicit, ns empty",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "prod"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd}},
+			expected: jProd,
+			cap:      "dep explicit, ns true",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "prod"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "test"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd, *jTest}},
+			expected: jProd,
+			cap:      "dep explicit, ns explicit",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "doesNotExist"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "test"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd, *jTest}},
+			expected: nil,
+			cap:      "dep explicit does not exist, ns explicit",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd}},
+			expected: jProd,
+			cap:      "dep true, ns true",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest, *jProd}},
+			expected: nil,
+			cap:      "dep true, ns true, ambiguous",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "prod"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest, *jProd}},
+			expected: jProd,
+			cap:      "dep true, ns explicit",
+		},
+		{
+			dep:      dep(map[string]string{Annotation: "true"}, map[string]string{}),
+			ns:       ns(map[string]string{}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest}},
+			expected: jTest,
+			cap:      "dep true, ns missing",
+		},
+		{
+			dep:      dep(map[string]string{}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "prod"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTest, *jProd}},
+			expected: jProd,
+			cap:      "dep none, ns explicit",
+		},
+		{
+			dep:      dep(map[string]string{}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jProd}},
+			expected: jProd,
+			cap:      "dep none, ns true",
+		},
+		{
+			dep:      dep(map[string]string{}, map[string]string{}),
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{}},
+			expected: nil,
+			cap:      "dep none, ns true, no jaegers",
 		},
 	}
 
-	jaeger := Select(dep, jaegerPods)
-	assert.NotNil(t, jaeger)
-	assert.Equal(t, "the-only-jaeger-instance-available", jaeger.Name)
-}
-
-func TestCannotSelectFromMultipleJaegerPods(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaegerPods := &v1.JaegerList{
-		Items: []v1.Jaeger{
-			v1.Jaeger{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "the-first-jaeger-instance-available",
-				},
-			},
-			v1.Jaeger{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "the-second-jaeger-instance-available",
-				},
-			},
-		},
+	for _, test := range tests {
+		t.Run(test.cap, func(t *testing.T) {
+			jaeger := Select(test.dep, test.ns, test.jaegers)
+			assert.Equal(t, test.expected, jaeger)
+		})
 	}
-
-	jaeger := Select(dep, jaegerPods)
-	assert.Nil(t, jaeger)
-}
-
-func TestNoAvailableJaegerPods(t *testing.T) {
-	dep := dep(map[string]string{Annotation: "true"}, map[string]string{})
-	jaeger := Select(dep, &v1.JaegerList{})
-	assert.Nil(t, jaeger)
 }
 
 func TestSelectBasedOnName(t *testing.T) {
@@ -286,9 +355,10 @@ func TestSelectBasedOnName(t *testing.T) {
 		},
 	}
 
-	jaeger := Select(dep, jaegerPods)
+	jaeger := Select(dep, &corev1.Namespace{}, jaegerPods)
 	assert.NotNil(t, jaeger)
 	assert.Equal(t, "the-second-jaeger-instance-available", jaeger.Name)
+	assert.Equal(t, "the-second-jaeger-instance-available", dep.Annotations[Annotation])
 }
 
 func TestSidecarOrderOfArguments(t *testing.T) {
@@ -449,6 +519,15 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
 	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+}
+
+func ns(annotations map[string]string) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: annotations,
+		},
+		Spec: corev1.NamespaceSpec{},
+	}
 }
 
 func dep(annotations map[string]string, labels map[string]string) *appsv1.Deployment {

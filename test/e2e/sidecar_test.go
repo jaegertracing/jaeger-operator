@@ -75,7 +75,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
 
-	dep := getVertxDefinition(namespace)
+	dep := getVertxDefinition(map[string]string{inject.Annotation: "true"})
 	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
 
@@ -101,7 +101,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Failed waiting for expected content")
 }
 
-func getVertxDefinition(s string) *appsv1.Deployment {
+func getVertxDefinition(annotations map[string]string) *appsv1.Deployment {
 	selector := map[string]string{"app": "vertx-create-span-sidecar"}
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -111,7 +111,7 @@ func getVertxDefinition(s string) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "vertx-create-span-sidecar",
 			Namespace:   namespace,
-			Annotations: map[string]string{inject.Annotation: "true"},
+			Annotations: annotations,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -168,6 +168,10 @@ func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
 		},
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyAllInOne,
+			JaegerCommonSpec: v1.JaegerCommonSpec{
+				// do not inject jaeger-agent into Jaeger deployment - it will result in port collision
+				Annotations: map[string]string{inject.Annotation: "doesNotExists"},
+			},
 			AllInOne: v1.JaegerAllInOneSpec{},
 			Agent: v1.JaegerAgentSpec{
 				Options: v1.NewOptions(map[string]interface{}{

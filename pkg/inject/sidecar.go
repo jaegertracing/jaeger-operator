@@ -61,42 +61,38 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// UpdateSidecar modify the deployment side car with the latest parameters if it's required.
-func UpdateSidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) bool {
-	for i := range dep.Spec.Template.Spec.Containers {
-		if dep.Spec.Template.Spec.Containers[i].Name == "jaeger-agent" {
-			dep.Spec.Template.Spec.Containers[i] = container(jaeger, dep)
-			return true
-		}
-	}
-	return false
-}
-
 // Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment) bool {
-	if dep.Annotations[Annotation] == "" {
+func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+	_, depExist := dep.Annotations[Annotation]
+	_, nsExist := ns.Annotations[Annotation]
+	if !depExist && !nsExist {
 		log.WithFields(log.Fields{
 			"namespace":  dep.Namespace,
 			"deployment": dep.Name,
 		}).Debug("annotation not present, not injecting")
 		return false
 	}
-
-	// this pod is annotated, it should have a sidecar
-	// but does it already have one?
-	for _, container := range dep.Spec.Template.Spec.Containers {
-		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
-			return false
-		}
-	}
-
-	return true
+	return !HasJaegerAgent(dep)
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
-	jaegerName := target.Annotations[Annotation]
-	if strings.EqualFold(jaegerName, "true") && len(availableJaegerPods.Items) == 1 {
+func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+	jaegerNameDep := target.Annotations[Annotation]
+	jaegerNameNs := ns.Annotations[Annotation]
+
+	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
+		// name on the deployment has precedence
+		if jaeger := getJaeger(jaegerNameDep, availableJaegerPods); jaeger != nil {
+			return jaeger
+		}
+		return nil
+	}
+	if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
+		return jaeger
+	}
+
+	if (strings.EqualFold(jaegerNameDep, "true") || strings.EqualFold(jaegerNameNs, "true")) &&
+		len(availableJaegerPods.Items) == 1 {
 		// if there's only *one* jaeger within this namespace, then that's what
 		// we'll use -- otherwise, we should just not inject, as it's not clear which
 		// jaeger instance to use!
@@ -105,9 +101,12 @@ func Select(target *appsv1.Deployment, availableJaegerPods *v1.JaegerList) *v1.J
 		target.Annotations[Annotation] = jaeger.Name
 		return jaeger
 	}
+	return nil
+}
 
-	for _, p := range availableJaegerPods.Items {
-		if p.Name == jaegerName {
+func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
+	for _, p := range jaegers.Items {
+		if p.Name == name {
 			// matched the name!
 			return &p
 		}
@@ -262,4 +261,16 @@ func CleanSidecar(deployment *appsv1.Deployment) {
 			break
 		}
 	}
+}
+
+// HasJaegerAgent checks whether deployment has Jaeger Agent container
+func HasJaegerAgent(dep *appsv1.Deployment) bool {
+	// this pod is annotated, it should have a sidecar
+	// but does it already have one?
+	for _, container := range dep.Spec.Template.Spec.Containers {
+		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
+			return true
+		}
+	}
+	return false
 }
