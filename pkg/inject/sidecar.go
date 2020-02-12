@@ -41,7 +41,6 @@ const (
 func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("deployment", dep.Name)
-
 	if jaeger == nil || (dep.Annotations[Annotation] != jaeger.Name && dep.Annotations[AnnotationLegacy] != jaeger.Name) {
 		logFields.Trace("skipping sidecar injection")
 	} else {
