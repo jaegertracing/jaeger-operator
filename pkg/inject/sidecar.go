@@ -72,6 +72,11 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		}).Debug("annotation not present, not injecting")
 		return false
 	}
+	// do not inject jaeger due to port collision
+	// do not inject if deployment's Annotation value is false
+	if dep.Labels["app"] == "jaeger" || dep.Annotations[Annotation] == "false" {
+		return false
+	}
 	return !HasJaegerAgent(dep)
 }
 
@@ -98,6 +103,9 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 		// jaeger instance to use!
 		// first, we make sure we normalize the name:
 		jaeger := &availableJaegerPods.Items[0]
+		if target.Annotations == nil {
+			target.Annotations = map[string]string{}
+		}
 		target.Annotations[Annotation] = jaeger.Name
 		return jaeger
 	}
