@@ -140,7 +140,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
-	uuid := strings.Replace(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), "-", "", -1)
+	uuid := strings.Replace(util.Truncate(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), 63), "-", "", -1)
 	var res corev1.ResourceRequirements
 	if ed.Jaeger.Spec.Storage.Elasticsearch.Resources != nil {
 		res = *ed.Jaeger.Spec.Storage.Elasticsearch.Resources
@@ -151,8 +151,8 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 			Name:      esSecret.name,
 			Labels: map[string]string{
 				"app":                         "jaeger",
-				"app.kubernetes.io/name":      esSecret.name,
-				"app.kubernetes.io/instance":  ed.Jaeger.Name,
+				"app.kubernetes.io/name":      util.Truncate(esSecret.name, 63),
+				"app.kubernetes.io/instance":  util.Truncate(ed.Jaeger.Name, 63),
 				"app.kubernetes.io/component": "elasticsearch",
 				"app.kubernetes.io/part-of":   "jaeger",
 				// We cannot use jaeger-operator label because our controllers would try

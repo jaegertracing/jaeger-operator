@@ -15,8 +15,8 @@ JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
 OPERATOR_VERSION ?= "$(shell git describe --tags)"
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
-KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.14.0/examples/kafka/kafka-persistent-single.yaml"
-KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.14.0/strimzi-cluster-operator-0.14.0.yaml"
+KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.16.2/examples/kafka/kafka-persistent-single.yaml"
+KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.16.2/strimzi-cluster-operator-0.16.2.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.3
 PROMETHEUS_OPERATOR_TAG ?= v0.34.0
@@ -147,7 +147,7 @@ run: crd
 
 .PHONY: run-debug
 run-debug: run
-run-debug: CLI_FLAGS = "--log-level=debug"
+run-debug: CLI_FLAGS = --log-level=debug --tracing-enabled=true
 
 .PHONY: set-max-map-count
 set-max-map-count:

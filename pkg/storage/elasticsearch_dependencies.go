@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -20,7 +19,7 @@ func EnableRollover(spec v1.JaegerStorageSpec) bool {
 }
 
 func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
-	name := fmt.Sprintf("%s-es-rollover-create-mapping", jaeger.Name)
+	name := util.Truncate("%s-es-rollover-create-mapping", 63, jaeger.Name)
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	commonSpec := &v1.JaegerCommonSpec{
 		Annotations: map[string]string{

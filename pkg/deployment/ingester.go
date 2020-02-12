@@ -159,14 +159,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 }
 
 func (i *Ingester) labels() map[string]string {
-	return map[string]string{
-		"app":                          "jaeger", // TODO(jpkroehling): see collector.go in this package
-		"app.kubernetes.io/name":       i.name(),
-		"app.kubernetes.io/instance":   i.jaeger.Name,
-		"app.kubernetes.io/component":  "ingester",
-		"app.kubernetes.io/part-of":    "jaeger",
-		"app.kubernetes.io/managed-by": "jaeger-operator",
-	}
+	return util.Labels(i.name(), "ingester", *i.jaeger)
 }
 
 func (i *Ingester) name() string {

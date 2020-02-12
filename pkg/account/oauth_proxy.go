@@ -21,14 +21,7 @@ func OAuthProxy(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      OAuthProxyAccountNameFor(jaeger),
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       OAuthProxyAccountNameFor(jaeger),
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "service-account-oauth-proxy",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    util.Labels(OAuthProxyAccountNameFor(jaeger), "service-account-oauth-proxy", *jaeger),
 			Annotations: map[string]string{
 				"serviceaccounts.openshift.io/oauth-redirectreference.primary": getOAuthRedirectReference(jaeger),
 			},

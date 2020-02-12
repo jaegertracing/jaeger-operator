@@ -1,7 +1,6 @@
 package cronjob
 
 import (
-	"fmt"
 	"math/big"
 	"strconv"
 	"time"
@@ -30,7 +29,8 @@ func CreateRollover(jaeger *v1.Jaeger) []batchv1beta1.CronJob {
 }
 
 func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
-	name := fmt.Sprintf("%s-es-rollover", jaeger.Name)
+	// CronJob names are restricted to 52 chars
+	name := util.Truncate("%s-es-rollover", 52, jaeger.Name)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
 	if jaeger.Spec.Storage.EsRollover.Conditions != "" {
 		envs = append(envs, corev1.EnvVar{Name: "CONDITIONS", Value: jaeger.Spec.Storage.EsRollover.Conditions})
@@ -98,7 +98,8 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 }
 
 func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
-	name := fmt.Sprintf("%s-es-lookback", jaeger.Name)
+	// CronJob names are restricted to 52 chars
+	name := util.Truncate("%s-es-lookback", 52, jaeger.Name)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
 	if jaeger.Spec.Storage.EsRollover.ReadTTL != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.EsRollover.ReadTTL)

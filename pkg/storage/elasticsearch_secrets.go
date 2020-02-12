@@ -155,16 +155,9 @@ func createESCerts(script string, jaeger *v1.Jaeger) error {
 func createSecret(jaeger *v1.Jaeger, secretName string, data map[string][]byte) corev1.Secret {
 	return corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       secretName,
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "es-secret",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Name:            secretName,
+			Namespace:       jaeger.Namespace,
+			Labels:          util.Labels(secretName, "es-secret", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 		},
 		Type: corev1.SecretTypeOpaque,

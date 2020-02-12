@@ -50,10 +50,11 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 
+		jaegerName := util.Truncate(jaeger.Name, 63)
 		if dep.Labels == nil {
-			dep.Labels = map[string]string{Label: jaeger.Name}
+			dep.Labels = map[string]string{Label: jaegerName}
 		} else {
-			dep.Labels[Label] = jaeger.Name
+			dep.Labels[Label] = jaegerName
 		}
 	}
 
