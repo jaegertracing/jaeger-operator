@@ -52,7 +52,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
-					Name:       GetPortNameForQueryService(jaeger),
+					Name:       getPortNameForQueryService(jaeger),
 					Port:       int32(GetPortForQueryService(jaeger)),
 					TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
 				},
@@ -79,7 +79,7 @@ func GetPortForQueryService(jaeger *v1.Jaeger) int {
 	return 16686
 }
 
-func GetPortNameForQueryService(jaeger *v1.Jaeger) string {
+func getPortNameForQueryService(jaeger *v1.Jaeger) string {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return "https-query"
 	}
