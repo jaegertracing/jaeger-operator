@@ -73,7 +73,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 					Port: 14250,
 				},
 				{
-					Name: "http-c-tchan-trft",
+					Name: "c-tchan-trft",
 					Port: 14267,
 				},
 				{
