@@ -3,6 +3,7 @@ package autodetect
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -27,6 +28,7 @@ type Background struct {
 	dcl      discovery.DiscoveryInterface
 	ticker   *time.Ticker
 
+	firstRun         *sync.Once
 	retryDetectKafka bool
 	retryDetectEs    bool
 }
@@ -47,7 +49,14 @@ func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.
 	retryDetectEs := viper.GetString("es-provision") == v1.FlagProvisionElasticsearchAuto
 	retryDetectKafka := viper.GetString("kafka-provision") == v1.FlagProvisionKafkaAuto
 
-	return &Background{cl: cl, dcl: dcl, clReader: clr, retryDetectKafka: retryDetectKafka, retryDetectEs: retryDetectEs}
+	return &Background{
+		cl:               cl,
+		dcl:              dcl,
+		clReader:         clr,
+		retryDetectKafka: retryDetectKafka,
+		retryDetectEs:    retryDetectEs,
+		firstRun:         &sync.Once{},
+	}
 }
 
 // Start initializes the auto-detection process that runs in the background
@@ -65,7 +74,7 @@ func (b *Background) Start() {
 		for {
 			select {
 			case <-done:
-				log.Debug("finished the first auto-detection")
+				log.Trace("finished the first auto-detection")
 			case <-b.ticker.C:
 				b.autoDetectCapabilities()
 			}
@@ -81,12 +90,16 @@ func (b *Background) Stop() {
 func (b *Background) autoDetectCapabilities() {
 	apiList, err := b.availableAPIs()
 	if err != nil {
-		log.WithError(err).Info("Failed to determine the platform capabilities. Auto-detected properties will fallback to their default values.")
+		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will fallback to their default values.")
 		viper.Set("platform", v1.FlagPlatformKubernetes)
 		viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
 	} else {
-		// we could run all the detect* functions in parallel, but let's keep it simple for now
-		b.detectPlatform(apiList)
+
+		b.firstRun.Do(func() {
+			// the platform won't change during the execution of the operator, need to run it only once
+			b.detectPlatform(apiList)
+		})
+
 		b.detectElasticsearch(apiList)
 		b.detectKafka(apiList)
 	}
@@ -107,7 +120,7 @@ func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
 func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
-		log.Debug("Attempting to auto-detect the platform")
+		log.Trace("Attempting to auto-detect the platform")
 		if isOpenShift(apiList) {
 			viper.Set("platform", v1.FlagPlatformOpenShift)
 		} else {
@@ -123,7 +136,7 @@ func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
 func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
 	// detect whether the Elasticsearch operator is available
 	if b.retryDetectEs {
-		log.Debug("Determining whether we should enable the Elasticsearch Operator integration")
+		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
 		previous := viper.GetString("es-provision")
 		if isElasticsearchOperatorAvailable(apiList) {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
@@ -135,7 +148,7 @@ func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
 			log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")
 		}
 	} else {
-		log.WithField("es-provision", viper.GetString("es-provision")).Debug("The 'es-provision' option is explicitly set")
+		log.WithField("es-provision", viper.GetString("es-provision")).Trace("The 'es-provision' option is explicitly set")
 	}
 }
 
@@ -144,7 +157,7 @@ func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
 	// viper has a "IsSet" method that we could use, except that it returns "true" even
 	// when nothing is set but it finds a 'Default' value...
 	if b.retryDetectKafka {
-		log.Debug("Determining whether we should enable the Kafka Operator integration")
+		log.Trace("Determining whether we should enable the Kafka Operator integration")
 
 		previous := viper.GetString("kafka-provision")
 		if isKafkaOperatorAvailable(apiList) {
@@ -157,7 +170,7 @@ func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
 			log.WithField("kafka-provision", viper.GetString("kafka-provision")).Info("Automatically adjusted the 'kafka-provision' flag")
 		}
 	} else {
-		log.WithField("kafka-provision", viper.GetString("kafka-provision")).Debug("The 'kafka-provision' option is explicitly set")
+		log.WithField("kafka-provision", viper.GetString("kafka-provision")).Trace("The 'kafka-provision' option is explicitly set")
 	}
 }
 
@@ -187,7 +200,7 @@ func (b *Background) detectClusterRoles() {
 }
 
 func (b *Background) cleanDeployments() {
-	log.Debug("detecting orphaned deployments.")
+	log.Trace("detecting orphaned deployments.")
 	deployments := &appsv1.DeploymentList{}
 	deployOpts := []client.ListOption{
 		matchingLabelKeys(map[string]string{inject.Label: ""}),

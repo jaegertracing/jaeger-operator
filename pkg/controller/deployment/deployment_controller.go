@@ -65,14 +65,16 @@ type ReconcileDeployment struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	ctx := context.Background()
+
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Debug("Reconciling Deployment")
+	}).Trace("Reconciling Deployment")
 
 	// Fetch the Deployment instance
 	dep := &appsv1.Deployment{}
-	err := r.client.Get(context.Background(), request.NamespacedName, dep)
+	err := r.client.Get(ctx, request.NamespacedName, dep)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -85,7 +87,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	}
 
 	ns := &corev1.Namespace{}
-	err = r.client.Get(context.Background(), types.NamespacedName{Name: request.Namespace}, ns)
+	err = r.client.Get(ctx, types.NamespacedName{Name: request.Namespace}, ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -100,7 +102,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	if inject.Needed(dep, ns) {
 		jaegers := &v1.JaegerList{}
 		opts := []client.ListOption{}
-		err := r.client.List(context.Background(), jaegers, opts...)
+		err := r.client.List(ctx, jaegers, opts...)
 		if err != nil {
 			log.WithError(err).Error("failed to get the available Jaeger pods")
 			return reconcile.Result{}, err
@@ -117,7 +119,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 				"jaeger-namespace": jaeger.Namespace,
 			}).Info("Injecting Jaeger Agent sidecar")
 			dep = inject.Sidecar(jaeger, dep)
-			if err := r.client.Update(context.Background(), dep); err != nil {
+			if err := r.client.Update(ctx, dep); err != nil {
 				log.WithField("deployment", dep).WithError(err).Error("failed to update")
 				return reconcile.Result{}, err
 			}

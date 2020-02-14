@@ -43,13 +43,12 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	logFields := jaeger.Logger().WithField("deployment", dep.Name)
 
 	if jaeger == nil || (dep.Annotations[Annotation] != jaeger.Name && dep.Annotations[AnnotationLegacy] != jaeger.Name) {
-		logFields.Debug("skipping sidecar injection")
+		logFields.Trace("skipping sidecar injection")
 	} else {
 		decorate(dep)
+
 		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
-		// Add label to deployment
-		logFields.Debug("adding label to deployment")
 
 		if dep.Labels == nil {
 			dep.Labels = map[string]string{Label: jaeger.Name}
@@ -69,7 +68,7 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		log.WithFields(log.Fields{
 			"namespace":  dep.Namespace,
 			"deployment": dep.Name,
-		}).Debug("annotation not present, not injecting")
+		}).Trace("annotation not present, not injecting")
 		return false
 	}
 	return !HasJaegerAgent(dep)

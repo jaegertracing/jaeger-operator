@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -99,6 +100,7 @@ func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafka
 	defer span.End()
 
 	seen := false
+	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		k := &kafkav1beta1.Kafka{}
 		if err := r.client.Get(ctx, types.NamespacedName{Name: kafka.GetName(), Namespace: kafka.GetNamespace()}, k); err != nil {
@@ -126,12 +128,14 @@ func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafka
 		seen = true
 		readyCondition := getReadyCondition(k.Status.Conditions)
 		if !strings.EqualFold(readyCondition.Status, "true") {
-			log.WithFields(log.Fields{
-				"namespace":       k.GetNamespace(),
-				"name":            k.GetName(),
-				"conditionStatus": readyCondition.Status,
-				"conditionType":   readyCondition.Type,
-			}).Debug("Waiting for kafka to stabilize")
+			once.Do(func() {
+				log.WithFields(log.Fields{
+					"namespace":       k.GetNamespace(),
+					"name":            k.GetName(),
+					"conditionStatus": readyCondition.Status,
+					"conditionType":   readyCondition.Type,
+				}).Debug("Waiting for kafka to stabilize")
+			})
 			return false, nil
 		}
 

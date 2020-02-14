@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -67,6 +68,7 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 	}
 
 	seen := false
+	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
 		batch := &batchv1.Job{}
 		if err = r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
@@ -96,10 +98,12 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 		seen = true
 		// for now, we just assume each batch job has one pod
 		if batch.Status.Succeeded != 1 {
-			log.WithFields(log.Fields{
-				"namespace": dep.Namespace,
-				"name":      dep.Name,
-			}).Debug("Waiting for dependency to complete")
+			once.Do(func() {
+				log.WithFields(log.Fields{
+					"namespace": dep.Namespace,
+					"name":      dep.Name,
+				}).Debug("Waiting for dependency to complete")
+			})
 			return false, nil
 		}
 

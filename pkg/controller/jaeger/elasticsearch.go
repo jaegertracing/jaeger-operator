@@ -2,10 +2,10 @@ package jaeger
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/global"
 	corev1 "k8s.io/api/apps/v1"
@@ -89,6 +89,7 @@ func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elast
 	}
 
 	seen := false
+	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
 		depList := corev1.DeploymentList{}
 		labels := map[string]string{
@@ -147,15 +148,17 @@ func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elast
 			ssReplicas += *s.Spec.Replicas
 			ssAvailableRep += s.Status.ReadyReplicas
 		}
-		logrus.WithFields(logrus.Fields{
-			"namespace":                 es.Namespace,
-			"name":                      es.Name,
-			"desiredESNodes":            expectedSize,
-			"desiredStatefulSetNodes":   ssReplicas,
-			"availableStatefulSetNodes": ssAvailableRep,
-			"desiredDeploymentNodes":    expectedSize - ssReplicas,
-			"availableDeploymentNodes":  availableDep,
-		}).Debug("Waiting for Elasticsearch to be available")
+		once.Do(func() {
+			log.WithFields(log.Fields{
+				"namespace":                 es.Namespace,
+				"name":                      es.Name,
+				"desiredESNodes":            expectedSize,
+				"desiredStatefulSetNodes":   ssReplicas,
+				"availableStatefulSetNodes": ssAvailableRep,
+				"desiredDeploymentNodes":    expectedSize - ssReplicas,
+				"availableDeploymentNodes":  availableDep,
+			}).Debug("Waiting for Elasticsearch to be available")
+		})
 		return availableDep+ssAvailableRep == expectedSize, nil
 	})
 }
