@@ -62,13 +62,15 @@ type ReconcileNamespace struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	ctx := context.Background()
+
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Debug("Reconciling Namespace")
+	}).Trace("Reconciling Namespace")
 
 	ns := &corev1.Namespace{}
-	err := r.client.Get(context.Background(), request.NamespacedName, ns)
+	err := r.client.Get(ctx, request.NamespacedName, ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -86,7 +88,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 
 	// Fetch the Deployment instance
 	deps := &appsv1.DeploymentList{}
-	err = r.client.List(context.Background(), deps, opts...)
+	err = r.client.List(ctx, deps, opts...)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -103,7 +105,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 		if inject.Needed(dep, ns) {
 			jaegers := &v1.JaegerList{}
 			opts := []client.ListOption{}
-			err := r.client.List(context.Background(), jaegers, opts...)
+			err := r.client.List(ctx, jaegers, opts...)
 			if err != nil {
 				log.WithError(err).Error("failed to get the available Jaeger pods")
 				return reconcile.Result{}, err
@@ -120,7 +122,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
 				dep = inject.Sidecar(jaeger, dep)
-				if err := r.client.Update(context.Background(), dep); err != nil {
+				if err := r.client.Update(ctx, dep); err != nil {
 					log.WithField("deployment", dep).WithError(err).Error("failed to update")
 					return reconcile.Result{}, err
 				}

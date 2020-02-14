@@ -114,7 +114,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	logFields := instance.Logger().WithField("execution", execution)
 
 	if err := validate(instance); err != nil {
-		instance.Logger().WithError(err).Error("Failed to validate")
+		instance.Logger().WithError(err).Error("failed to validate")
 		span.SetAttribute(key.String("error", err.Error()))
 		span.SetStatus(codes.InvalidArgument)
 		return reconcile.Result{}, err
@@ -129,7 +129,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			log.WithFields(log.Fields{
 				"our-identity":   identity,
 				"owner-identity": val,
-			}).Debug("skipping CR as we are not owners")
+			}).Trace("skipping CR as we are not owners")
 			return reconcile.Result{}, nil
 		}
 	} else {

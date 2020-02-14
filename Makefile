@@ -89,7 +89,7 @@ prepare-e2e-tests: build docker push
 
 	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
 
-	# ClusterRoleBinding is created in test codebase because we don't know service account namespace
+	@# ClusterRoleBinding is created in test codebase because we don't know service account namespace
 	@cp deploy/role.yaml deploy/test/global-manifests.yaml
 	@echo "---" >> deploy/test/global-manifests.yaml
 

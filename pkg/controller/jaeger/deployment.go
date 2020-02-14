@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -100,6 +101,7 @@ func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deplo
 	// the images, subsequent runs should take only a few seconds
 
 	seen := false
+	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		d := &appsv1.Deployment{}
 		if err := r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
@@ -126,12 +128,14 @@ func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deplo
 
 		seen = true
 		if d.Status.ReadyReplicas != d.Status.Replicas {
-			log.WithFields(log.Fields{
-				"namespace": dep.Namespace,
-				"name":      dep.Name,
-				"ready":     d.Status.ReadyReplicas,
-				"desired":   d.Status.Replicas,
-			}).Debug("Waiting for deployment to stabilize")
+			once.Do(func() {
+				log.WithFields(log.Fields{
+					"namespace": dep.Namespace,
+					"name":      dep.Name,
+					"ready":     d.Status.ReadyReplicas,
+					"desired":   d.Status.Replicas,
+				}).Debug("Waiting for deployment to stabilize")
+			})
 			return false, nil
 		}
 
