@@ -52,7 +52,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "query",
+					Name:       "http-query",
 					Port:       int32(GetPortForQueryService(jaeger)),
 					TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
 				},
