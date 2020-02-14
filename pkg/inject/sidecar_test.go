@@ -237,11 +237,6 @@ func TestSidecarNeeded(t *testing.T) {
 			ns:     ns(map[string]string{Annotation: "true"}),
 			needed: false,
 		},
-		{
-			dep:    dep(map[string]string{Annotation: "false"}, map[string]string{}),
-			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
-			needed: false,
-		},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {

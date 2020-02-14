@@ -74,7 +74,7 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	}
 	// do not inject jaeger due to port collision
 	// do not inject if deployment's Annotation value is false
-	if dep.Labels["app"] == "jaeger" || dep.Annotations[Annotation] == "false" {
+	if dep.Labels["app"] == "jaeger" {
 		return false
 	}
 	return !HasJaegerAgent(dep)
