@@ -187,7 +187,7 @@ func TestSidecarDefaultPorts(t *testing.T) {
 func TestSkipInjectSidecar(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSkipInjectSidecar"})
-	dep := dep(map[string]string{Annotation: "non-existing-operator"}, map[string]string{})
+	dep := dep(map[string]string{}, map[string]string{Label: "non-existing-operator"})
 
 	// test
 	dep = Sidecar(jaeger, dep)
