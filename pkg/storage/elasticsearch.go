@@ -140,7 +140,10 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
-	uuid := strings.Replace(util.Truncate(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), 63), "-", "", -1)
+	// this might yield names like:
+	// elasticsearch-cdm-osdke2ee7864afba6854e498f316bd37347f666simpleprod-1
+	// for the above value to contain at most 63 chars, our uuid has to have at most 42 chars
+	uuid := strings.Replace(util.Truncate(util.DNSName(ed.Jaeger.Namespace+ed.Jaeger.Name), 42), "-", "", -1)
 	var res corev1.ResourceRequirements
 	if ed.Jaeger.Spec.Storage.Elasticsearch.Resources != nil {
 		res = *ed.Jaeger.Spec.Storage.Elasticsearch.Resources
