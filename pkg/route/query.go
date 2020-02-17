@@ -34,13 +34,23 @@ func (r *QueryRoute) Get() *corev1.Route {
 		termination = corev1.TLSTerminationEdge
 	}
 
+	var name string
+	if len(r.jaeger.Namespace) >= 63 {
+		// the route is doomed already, nothing we can do...
+		name = r.jaeger.Name
+		r.jaeger.Logger().WithField("name", name).Warn("the route's hostname will have more than 63 chars and will not be valid")
+	} else {
+		// -namespace is added to the host by OpenShift
+		name = util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace))
+	}
+
 	return &corev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
 			APIVersion: "route.openshift.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace)), // -namespace is added to the host by OpenShift
+			Name:      name,
 			Namespace: r.jaeger.Namespace,
 			Labels:    util.Labels(r.jaeger.Name, "query-route", *r.jaeger),
 			OwnerReferences: []metav1.OwnerReference{
