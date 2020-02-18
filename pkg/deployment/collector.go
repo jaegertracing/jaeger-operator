@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -81,6 +83,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(storageType)))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
+
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		tls.Update(c.jaeger, commonSpec, &options)
+	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

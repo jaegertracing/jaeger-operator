@@ -15,12 +15,14 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
+	tls "github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -70,6 +72,19 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
+		}
+
+		// For openshift platform, we want the clusterIP service to be annotated
+		// with the cert secret-name tag
+		for _, svc := range c.services {
+			if svc.Name == service.GetNameForCollectorService(jaeger) {
+				svc.Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector"
+
+				// Also annotate the deployment configmap
+				if cm := tls.NewTLSConfig(jaeger).Get(); cm != nil {
+					c.configMaps = append(c.configMaps, *cm)
+				}
+			}
 		}
 	} else {
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
