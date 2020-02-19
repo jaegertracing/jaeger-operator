@@ -9,28 +9,22 @@ import (
 var regex = regexp.MustCompile(`[a-z0-9]`)
 
 // DNSName returns a dns-safe string for the given name.
-// Any char that is not [a-z0-9] is replaced by "-".
-// If the final name starts with "-", "a" is added as prefix. Similarly, if it ends with "-", "z" is added.
+// Any char that is not [a-z0-9] is replaced by "-" or "a".
+// Replacement character "a" is used only at the beginning or at the end of the name.
+// The function does not change length of the string.
 func DNSName(name string) string {
 	var d []rune
 
-	first := true
-	for _, x := range strings.ToLower(name) {
+	for i, x := range strings.ToLower(name) {
 		if regex.Match([]byte(string(x))) {
 			d = append(d, x)
 		} else {
-			if first {
+			if i == 0 || i == utf8.RuneCountInString(name)-1 {
 				d = append(d, 'a')
-			}
-			d = append(d, '-')
-
-			if len(d) == utf8.RuneCountInString(name) {
-				// we had to replace the last char, so, it's "-". DNS names can't end with dash.
-				d = append(d, 'z')
+			} else {
+				d = append(d, '-')
 			}
 		}
-
-		first = false
 	}
 
 	return string(d)
