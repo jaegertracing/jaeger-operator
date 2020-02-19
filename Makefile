@@ -25,7 +25,7 @@ SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
-UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... |  grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
+UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... | grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
 TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/test/global-manifests.yaml -root .
 
 .DEFAULT_GOAL := build
@@ -53,7 +53,7 @@ lint:
 .PHONY: security
 security:
 	@echo Security...
-	@${GOPATH}/bin/gosec -quiet -exclude=G104  ./... 2>/dev/null
+	@${GOPATH}/bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
 
 .PHONY: build
 build: format
@@ -84,16 +84,21 @@ e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: build docker push
 	@mkdir -p deploy/test
-	@cp test/service_account.yaml deploy/test/namespace-manifests.yaml
+	@cp deploy/service_account.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@cat test/operator.yaml | sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" >> deploy/test/namespace-manifests.yaml
+	@cat deploy/role.yaml >> deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
 
 	@# ClusterRoleBinding is created in test codebase because we don't know service account namespace
-	@cp deploy/role.yaml deploy/test/global-manifests.yaml
-	@echo "---" >> deploy/test/global-manifests.yaml
+	@cat deploy/role_binding.yaml >> deploy/test/namespace-manifests.yaml
+	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@cat deploy/crds/jaegertracing.io_jaegers_crd.yaml  >> deploy/test/global-manifests.yaml
+	@sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" test/operator.yaml >> deploy/test/namespace-manifests.yaml
+
+	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml deploy/test/global-manifests.yaml
+	@echo "---" >> deploy/test/global-manifests.yaml
+	@cat deploy/cluster_role.yaml >> deploy/test/global-manifests.yaml
 
 .PHONY: e2e-tests-smoke
 e2e-tests-smoke: prepare-e2e-tests
@@ -182,14 +187,14 @@ undeploy-es-operator:
 ifeq ($(OLM),true)
 	@echo Skipping es-operator undeployment, as it should have been installed via OperatorHub
 else
-	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} || true
-	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} || true
-	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml || true
-	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml || true
-	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml || true
-	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml || true
-	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} 2>&1 || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/servicemonitor.crd.yaml --ignore-not-found=true || true
+	@kubectl delete -f https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/prometheusrule.crd.yaml --ignore-not-found=true || true
+	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true 2>&1 || true
 endif
 
 .PHONY: es
@@ -216,7 +221,7 @@ else
 	@kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	@kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	@curl --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml
-	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f -  2>&1 | grep -v "already exists" || true
+	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f - 2>&1 | grep -v "already exists" || true
 	@kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
 
@@ -225,19 +230,19 @@ undeploy-kafka-operator:
 ifeq ($(OLM),true)
 	@echo Skiping kafka-operator undeploy
 else
-	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml 2>&1 || true
-	@kubectl delete clusterrolebinding strimzi-cluster-operator-namespaced
-	@kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation
-	@kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation
+	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-namespaced --ignore-not-found=true || true
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --ignore-not-found=true || true
+	@kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --ignore-not-found=true || true
 endif
-	@kubectl delete namespace $(KAFKA_NAMESPACE) 2>&1 || true
+	@kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 
 .PHONY: kafka
 kafka: deploy-kafka-operator
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
-	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml  2>&1 | grep -v "already exists" || true
+	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
 undeploy-kafka: undeploy-kafka-operator
@@ -249,6 +254,11 @@ clean: undeploy-kafka undeploy-es-operator
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	@kubectl delete -f deploy/crds/jaegertracing.io_jaegers_crd.yaml --ignore-not-found=true || true
+	@kubectl delete -f deploy/operator.yaml --ignore-not-found=true || true
+	@kubectl delete -f deploy/role_binding.yaml --ignore-not-found=true || true
+	@kubectl delete -f deploy/role.yaml --ignore-not-found=true || true
+	@kubectl delete -f deploy/service_account.yaml --ignore-not-found=true || true
 
 .PHONY: crd
 crd:
@@ -256,8 +266,6 @@ crd:
 
 .PHONY: ingress
 ingress:
-	# see https://kubernetes.github.io/ingress-nginx/deploy/#verify-installation
-	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.18.0/deploy/mandatory.yaml
 	@minikube addons enable ingress
 
 .PHONY: generate
@@ -292,6 +300,13 @@ install-tools:
 
 .PHONY: install
 install: install-sdk install-tools
+
+.PHONY: deploy
+deploy: ingress crd
+	@kubectl apply -f deploy/service_account.yaml
+	@kubectl apply -f deploy/role.yaml
+	@kubectl apply -f deploy/role_binding.yaml
+	@sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml | kubectl apply -f -
 
 .PHONY: operatorhub
 operatorhub: check-operatorhub-pr-template

@@ -1,0 +1,54 @@
+## this is an extra set of permissions that the Jaeger Operator might make use of if granted
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jaeger-operator-cluster
+rules:
+
+## required for cluster-wide operators
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - '*'
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+
+## needed if support for injecting sidecars based on namespace annotation is required
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - 'get'
+  - 'list'
+  - 'watch'
+
+## needed if support for injecting sidecars based on deployment annotation is required, across all namespaces
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'watch'
+
+## needed only when .Spec.Ingress.Openshift.DelegateUrls is used
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'

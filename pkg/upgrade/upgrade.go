@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -21,11 +22,25 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 
 	list := &v1.JaegerList{}
 	identity := viper.GetString(v1.ConfigIdentity)
-	opts := client.MatchingLabels(map[string]string{
-		v1.LabelOperatedBy: identity,
-	})
-	if err := reader.List(ctx, list, opts); err != nil {
-		return tracing.HandleError(err, span)
+	opts := []client.ListOption{
+		client.MatchingLabels(map[string]string{
+			v1.LabelOperatedBy: identity,
+		}),
+	}
+
+	if watchNamespaces := viper.GetString(v1.ConfigWatchNamespace); watchNamespaces != v1.WatchAllNamespaces {
+		for _, namespace := range strings.Split(watchNamespaces, ",") {
+			nsOpts := append(opts, client.InNamespace(namespace))
+			nsList := &v1.JaegerList{}
+			if err := reader.List(ctx, nsList, nsOpts...); err != nil {
+				return tracing.HandleError(err, span)
+			}
+			list.Items = append(list.Items, nsList.Items...)
+		}
+	} else {
+		if err := reader.List(ctx, list, opts...); err != nil {
+			return tracing.HandleError(err, span)
+		}
 	}
 
 	for _, j := range list.Items {

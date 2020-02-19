@@ -88,7 +88,9 @@ func (b *Background) Stop() {
 }
 
 func (b *Background) autoDetectCapabilities() {
-	apiList, err := b.availableAPIs()
+	ctx := context.Background()
+
+	apiList, err := b.availableAPIs(ctx)
 	if err != nil {
 		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will fallback to their default values.")
 		viper.Set("platform", v1.FlagPlatformKubernetes)
@@ -97,18 +99,18 @@ func (b *Background) autoDetectCapabilities() {
 
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
-			b.detectPlatform(apiList)
+			b.detectPlatform(ctx, apiList)
 		})
 
-		b.detectElasticsearch(apiList)
-		b.detectKafka(apiList)
+		b.detectElasticsearch(ctx, apiList)
+		b.detectKafka(ctx, apiList)
 	}
 
-	b.detectClusterRoles()
-	b.cleanDeployments()
+	b.detectClusterRoles(ctx)
+	b.cleanDeployments(ctx)
 }
 
-func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
+func (b *Background) availableAPIs(ctx context.Context) (*metav1.APIGroupList, error) {
 	apiList, err := b.dcl.ServerGroups()
 	if err != nil {
 		return nil, err
@@ -117,7 +119,7 @@ func (b *Background) availableAPIs() (*metav1.APIGroupList, error) {
 	return apiList, nil
 }
 
-func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
+func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGroupList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
 		log.Trace("Attempting to auto-detect the platform")
@@ -133,7 +135,7 @@ func (b *Background) detectPlatform(apiList *metav1.APIGroupList) {
 	}
 }
 
-func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
+func (b *Background) detectElasticsearch(ctx context.Context, apiList *metav1.APIGroupList) {
 	// detect whether the Elasticsearch operator is available
 	if b.retryDetectEs {
 		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
@@ -153,7 +155,7 @@ func (b *Background) detectElasticsearch(apiList *metav1.APIGroupList) {
 }
 
 // detectKafka checks whether the Kafka Operator is available
-func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
+func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupList) {
 	// viper has a "IsSet" method that we could use, except that it returns "true" even
 	// when nothing is set but it finds a 'Default' value...
 	if b.retryDetectKafka {
@@ -174,13 +176,13 @@ func (b *Background) detectKafka(apiList *metav1.APIGroupList) {
 	}
 }
 
-func (b *Background) detectClusterRoles() {
+func (b *Background) detectClusterRoles(ctx context.Context) {
 	tr := &authenticationapi.TokenReview{
 		Spec: authenticationapi.TokenReviewSpec{
 			Token: "TEST",
 		},
 	}
-	if err := b.cl.Create(context.Background(), tr); err != nil {
+	if err := b.cl.Create(ctx, tr); err != nil {
 		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && viper.GetBool("auth-delegator-available")) {
 			// for the first run, we log this info, or when the previous value was true
 			log.Info("The service account running this operator does not have the role 'system:auth-delegator', consider granting it for additional capabilities")
@@ -199,31 +201,44 @@ func (b *Background) detectClusterRoles() {
 	}
 }
 
-func (b *Background) cleanDeployments() {
+func (b *Background) cleanDeployments(ctx context.Context) {
 	log.Trace("detecting orphaned deployments.")
+
+	instancesMap := make(map[string]*v1.Jaeger)
 	deployments := &appsv1.DeploymentList{}
 	deployOpts := []client.ListOption{
 		matchingLabelKeys(map[string]string{inject.Label: ""}),
 	}
 
-	jaegerOpts := []client.ListOption{}
-	instances := &v1.JaegerList{}
+	// if we are not watching all namespaces, we have to get items from each namespace being watched
+	if namespaces := viper.GetString(v1.ConfigWatchNamespace); namespaces != v1.WatchAllNamespaces {
+		for _, ns := range strings.Split(namespaces, ",") {
+			nsDeps := &appsv1.DeploymentList{}
+			if err := b.clReader.List(ctx, nsDeps, append(deployOpts, client.InNamespace(ns))...); err != nil {
+				log.WithField("namespace", ns).WithError(err).Error("error getting a list of deployments to analyze in namespace")
+			}
+			deployments.Items = append(deployments.Items, nsDeps.Items...)
 
-	instancesMap := make(map[string]*v1.Jaeger)
+			instances := &v1.JaegerList{}
+			if err := b.clReader.List(ctx, instances, client.InNamespace(ns)); err != nil {
+				log.WithField("namespace", ns).WithError(err).Error("error getting a list of existing jaeger instances in namespace")
+			}
+			for _, jaeger := range instances.Items {
+				instancesMap[jaeger.Name] = &jaeger
+			}
+		}
+	} else {
+		if err := b.clReader.List(ctx, deployments, deployOpts...); err != nil {
+			log.WithError(err).Error("error getting a list of deployments to analyze")
+		}
 
-	if err := b.clReader.List(context.Background(), deployments, deployOpts...); err != nil {
-		log.WithError(err).Error("error cleaning orphaned deployment")
-	}
-
-	// get all jaeger instances
-	if err := b.clReader.List(context.Background(), instances, jaegerOpts...); err != nil {
-		log.WithError(err).Error("error cleaning orphaned deployment")
-	}
-
-	/* map jaeger instances */
-	for i := 0; i < len(instances.Items); i++ {
-		jaeger := &instances.Items[i]
-		instancesMap[jaeger.Name] = jaeger
+		instances := &v1.JaegerList{}
+		if err := b.clReader.List(ctx, instances); err != nil {
+			log.WithError(err).Error("error getting a list of existing jaeger instances")
+		}
+		for _, jaeger := range instances.Items {
+			instancesMap[jaeger.Name] = &jaeger
+		}
 	}
 
 	// check deployments to see which one needs to be cleaned.
@@ -232,7 +247,7 @@ func (b *Background) cleanDeployments() {
 			_, instanceExists := instancesMap[instanceName]
 			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
 				inject.CleanSidecar(&dep)
-				if err := b.cl.Update(context.Background(), &dep); err != nil {
+				if err := b.cl.Update(ctx, &dep); err != nil {
 					log.WithFields(log.Fields{
 						"deploymentName":      dep.Name,
 						"deploymentNamespace": dep.Namespace,

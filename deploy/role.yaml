@@ -1,30 +1,50 @@
+## this is a set of basic permissions the Jaeger Operator needs when restricted to work in specific namespaces
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
-  creationTimestamp: null
   name: jaeger-operator
 rules:
+
+## our own custom resources
 - apiGroups:
-  - ""
+  - jaegertracing.io
   resources:
-  - pods
-  - services
-  - services/finalizers
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
-  - serviceaccounts
-  verbs:
   - '*'
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
   verbs:
   - 'get'
   - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+
+## for the operator's own deployment
+- apiGroups:
+  - apps
+  resourceNames:
+  - jaeger-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+
+## regular things the operator manages for an instance, as the result of processing CRs
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - persistentvolumeclaims
+  - pods
+  - secrets
+  - serviceaccounts
+  - services
+  - services/finalizers
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
   - 'watch'
 - apiGroups:
   - apps
@@ -34,74 +54,94 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
 - apiGroups:
   - extensions
   resources:
-  - replicasets
-  - deployments
-  - daemonsets
-  - statefulsets
   - ingresses
   verbs:
-  - '*'
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
 - apiGroups:
   - batch
   resources:
   - jobs
   - cronjobs
   verbs:
-  - '*'
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
 - apiGroups:
   - route.openshift.io
   resources:
   - routes
   verbs:
-  - '*'
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+
+## needed if you want the operator to create service monitors for the Jaeger instances
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+
+## for the Elasticsearch auto-provisioning
 - apiGroups:
   - logging.openshift.io
   resources:
   - elasticsearches
   verbs:
-  - '*'
-- apiGroups:
-  - jaegertracing.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  verbs:
-  - '*'
-- apiGroups:
-  - apps
-  - extensions
-  resourceNames:
-  - jaeger-operator
-  resources:
-  - deployments/finalizers
-  verbs:
-  - update
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
+
+## for the Kafka auto-provisioning
 - apiGroups:
   - kafka.strimzi.io
   resources:
   - kafkas
   - kafkausers
   verbs:
-  - '*'
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  verbs:
-  - '*'
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'

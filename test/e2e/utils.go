@@ -90,28 +90,28 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 }
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {
-	logrus.Infof("Debug Mode? %v", debugMode)
+	t.Logf("debug mode: %v", debugMode)
 	ctx := framework.NewTestCtx(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	if !usingOLM {
 		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 		if err != nil {
-			t.Fatalf("failed to initialize cluster resources: %v", err)
+			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
 	}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		t.Fatal(err)
+		t.Errorf("failed to get the operator's namespace: %v", err)
 	}
 
 	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	if err != nil {
-		t.Fatal()
+		t.Errorf("failed to get the namespaces details: %v", err)
 	}
 
 	crb := &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace + "jaeger-operator",
+			Name: namespace + "jaeger-operator-cluster",
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name:       ns.Name,
@@ -126,20 +126,20 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			Name:      "jaeger-operator",
 			Namespace: namespace,
 		}},
-		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator"},
+		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator-cluster"},
 	}
 
 	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
-		t.Fatal(err)
+		t.Errorf("failed to create cluster role binding: %v", err)
 	}
 
-	t.Log("Initialized cluster resources. Namespace: " + namespace)
+	t.Logf("initialized cluster resources on namespace %s", namespace)
 
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
 	if !usingOLM {
-		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
+		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 		if err != nil {
 			return nil, err
 		}
