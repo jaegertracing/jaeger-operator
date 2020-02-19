@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -42,14 +40,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetNameForCollectorService(jaeger),
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       GetNameForCollectorService(jaeger),
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "service-collector",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    util.Labels(GetNameForCollectorService(jaeger), "service-collector", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,
@@ -88,10 +79,10 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 
 // GetNameForCollectorService returns the service name for the collector in this Jaeger instance
 func GetNameForCollectorService(jaeger *v1.Jaeger) string {
-	return util.DNSName(fmt.Sprintf("%s-collector", jaeger.Name))
+	return util.DNSName(util.Truncate("%s-collector", 63, jaeger.Name))
 }
 
 // GetNameForHeadlessCollectorService returns the headless service name for the collector in this Jaeger instance
 func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
-	return util.DNSName(fmt.Sprintf("%s-collector-headless", jaeger.Name))
+	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
 }

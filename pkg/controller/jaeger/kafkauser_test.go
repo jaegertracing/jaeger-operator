@@ -42,10 +42,8 @@ func TestKafkaUserCreate(t *testing.T) {
 				Name:      jaeger.Name,
 				Namespace: jaeger.Namespace,
 				Labels: map[string]string{
-					"app.kubernetes.io/instance": nsn.Name,
-
-					// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-					"app.kubernetes.io/managed---by": "jaeger-operator",
+					"app.kubernetes.io/instance":   nsn.Name,
+					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
 			Status: kafkav1beta1.KafkaUserStatus{
@@ -91,10 +89,8 @@ func TestKafkaUserUpdate(t *testing.T) {
 			Namespace:   nsn.Namespace,
 			Annotations: map[string]string{"key": "value"},
 			Labels: map[string]string{
-				"app.kubernetes.io/instance": nsn.Name,
-
-				// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-				"app.kubernetes.io/managed---by": "jaeger-operator",
+				"app.kubernetes.io/instance":   nsn.Name,
+				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 		},
 		Status: kafkav1beta1.KafkaUserStatus{
@@ -118,10 +114,8 @@ func TestKafkaUserUpdate(t *testing.T) {
 				Namespace:   nsn.Namespace,
 				Annotations: map[string]string{"key": "new-value"},
 				Labels: map[string]string{
-					"app.kubernetes.io/instance": nsn.Name,
-
-					// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-					"app.kubernetes.io/managed---by": "jaeger-operator",
+					"app.kubernetes.io/instance":   nsn.Name,
+					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
 			Status: kafkav1beta1.KafkaUserStatus{
@@ -167,10 +161,8 @@ func TestKafkaUserDelete(t *testing.T) {
 			Name:      nsn.Name,
 			Namespace: nsn.Namespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/instance": nsn.Name,
-
-				// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-				"app.kubernetes.io/managed---by": "jaeger-operator",
+				"app.kubernetes.io/instance":   nsn.Name,
+				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 		},
 	}
@@ -222,10 +214,8 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
 				Labels: map[string]string{
-					"app.kubernetes.io/instance": nsnExisting.Name,
-
-					// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-					"app.kubernetes.io/managed---by": "jaeger-operator",
+					"app.kubernetes.io/instance":   nsnExisting.Name,
+					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
 			Status: kafkav1beta1.KafkaUserStatus{
@@ -248,10 +238,8 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
 				Labels: map[string]string{
-					"app.kubernetes.io/instance": nsn.Name,
-
-					// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-					"app.kubernetes.io/managed---by": "jaeger-operator",
+					"app.kubernetes.io/instance":   nsn.Name,
+					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
 			Status: kafkav1beta1.KafkaUserStatus{

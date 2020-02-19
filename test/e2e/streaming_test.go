@@ -134,23 +134,17 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 	defer undeployJaegerInstance(jaegerInstance)
 	defer deletePersistentVolumeClaims(namespace)
 
-	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-zookeeper", retryInterval, timeout+1*time.Minute)
-	require.NoError(t, err)
+	for _, n := range []string{"zookeeper", "kafka"} {
+		depName := fmt.Sprintf("%s-%s", jaegerInstanceName, n)
+		err = WaitForStatefulset(t, fw.KubeClient, namespace, depName, retryInterval, timeout+1*time.Minute)
+		require.NoError(t, err, fmt.Sprintf("Error waiting for statefulset: %s", depName))
+	}
 
-	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstanceName+"-kafka", retryInterval, timeout)
-	require.NoError(t, err)
-
-	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-entity-operator", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for ingester deployment")
-
-	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-ingester", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for ingester deployment")
-
-	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for collector deployment")
-
-	err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for query deployment")
+	for _, n := range []string{"entity-operator", "ingester", "collector", "query"} {
+		depName := fmt.Sprintf("%s-%s", jaegerInstanceName, n)
+		err = WaitForDeployment(t, fw.KubeClient, jaegerInstanceNamespace, depName, 1, retryInterval, timeout)
+		require.NoError(t, err, fmt.Sprintf("Error waiting for deployment: %s", depName))
+	}
 
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, jaegerInstanceNamespace)
 }

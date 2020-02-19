@@ -146,12 +146,17 @@ func AsOwner(jaeger *v1.Jaeger) metav1.OwnerReference {
 // Labels returns recommended labels
 func Labels(name, component string, jaeger v1.Jaeger) map[string]string {
 	return map[string]string{
-		"app":                          "jaeger",
-		"app.kubernetes.io/name":       name,
-		"app.kubernetes.io/instance":   jaeger.Name,
-		"app.kubernetes.io/component":  component,
+		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
+		"app.kubernetes.io/name":       Truncate(name, 63),
+		"app.kubernetes.io/instance":   Truncate(jaeger.Name, 63),
+		"app.kubernetes.io/component":  Truncate(component, 63),
 		"app.kubernetes.io/part-of":    "jaeger",
 		"app.kubernetes.io/managed-by": "jaeger-operator",
+
+		// the 'version' label is out for now for two reasons:
+		// 1. https://github.com/jaegertracing/jaeger-operator/issues/166
+		// 2. these labels are also used as selectors, and as such, need to be consistent... this
+		// might be a problem once we support updating the jaeger version
 	}
 }
 

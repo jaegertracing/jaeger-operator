@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx, storage v1.JaegerStorageSpec) error {
@@ -44,25 +45,27 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	defer undeployJaegerInstance(j)
 
 	if storage.Type == "cassandra" {
-		err = WaitForJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-cassandra-schema-job", name), retryInterval, timeout+1*time.Minute)
+		jobName := util.Truncate("%s-cassandra-schema-job", 52, name)
+		err = WaitForJob(t, fw.KubeClient, namespace, jobName, retryInterval, timeout+1*time.Minute)
 		if err != nil {
-			return errors.WithMessage(err, "Failed waiting for cassandra schema  job")
+			return errors.WithMessage(err, fmt.Sprintf("Failed waiting for cassandra schema job: %s", jobName))
 		}
 	}
 
-	err = WaitForCronJob(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+1*time.Minute)
+	jobName := util.Truncate("%s-spark-dependencies", 52, name)
+	err = WaitForCronJob(t, f.KubeClient, namespace, jobName, retryInterval, timeout+1*time.Minute)
 	if err != nil {
-		return errors.WithMessage(err, "Failed waiting for cron job")
+		return errors.WithMessage(err, fmt.Sprintf("Failed waiting for cronjob: %s", jobName))
 	}
 
-	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, fmt.Sprintf("%s-spark-dependencies", name), retryInterval, timeout+1*time.Minute)
+	err = WaitForJobOfAnOwner(t, f.KubeClient, namespace, jobName, retryInterval, timeout+1*time.Minute)
 	if err != nil {
-		return errors.WithMessage(err, "Failed waiting for Job Of An Owner")
+		return errors.WithMessage(err, fmt.Sprintf("Failed waiting for job from owner %s", jobName))
 	}
 
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, name, 1, retryInterval, timeout)
 	if err != nil {
-		return errors.WithMessage(err, "Failed waiting for deployment ")
+		return errors.WithMessage(err, fmt.Sprintf("Failed waiting for deployment %s", name))
 	}
 
 	return nil

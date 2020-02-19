@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -26,16 +24,9 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetNameForQueryService(jaeger),
-			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       GetNameForQueryService(jaeger),
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "service-query",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Name:        GetNameForQueryService(jaeger),
+			Namespace:   jaeger.Namespace,
+			Labels:      util.Labels(GetNameForQueryService(jaeger), "service-query", *jaeger),
 			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
@@ -63,12 +54,12 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 
 // GetNameForQueryService returns the query service name for this Jaeger instance
 func GetNameForQueryService(jaeger *v1.Jaeger) string {
-	return util.DNSName(fmt.Sprintf("%s-query", jaeger.Name))
+	return util.DNSName(util.Truncate("%s-query", 63, jaeger.Name))
 }
 
 // GetTLSSecretNameForQueryService returns the auto-generated TLS secret name for the Query Service for the given Jaeger instance
 func GetTLSSecretNameForQueryService(jaeger *v1.Jaeger) string {
-	return fmt.Sprintf("%s-ui-oauth-proxy-tls", jaeger.Name)
+	return util.DNSName(util.Truncate("%s-ui-oauth-proxy-tls", 63, jaeger.Name))
 }
 
 // GetPortForQueryService returns the query service name for this Jaeger instance

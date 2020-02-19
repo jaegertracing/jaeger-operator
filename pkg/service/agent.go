@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -13,6 +11,7 @@ import (
 // NewAgentService returns a new Kubernetes service for Jaeger Agent backed by the pods matching the selector
 func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
+	name := util.DNSName(util.Truncate("%s-agent", 63, jaeger.Name))
 
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -20,16 +19,9 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      util.DNSName(fmt.Sprintf("%s-agent", jaeger.Name)),
+			Name:      name,
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       fmt.Sprintf("%s-agent", jaeger.Name),
-				"app.kubernetes.io/instance":   jaeger.Name,
-				"app.kubernetes.io/component":  "service-agent",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    util.Labels(name, "service-agent", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,
