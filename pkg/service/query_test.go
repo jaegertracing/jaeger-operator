@@ -20,6 +20,7 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, "testqueryservicenameandports-query", svc.ObjectMeta.Name)
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
+	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Len(t, svc.Spec.ClusterIP, 0) // make sure we get a cluster IP
 }
@@ -45,5 +46,6 @@ func TestQueryServiceNameAndPortsWithOAuthProxy(t *testing.T) {
 	assert.Equal(t, "testqueryservicenameandportswithoauthproxy-query", svc.ObjectMeta.Name)
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(443), svc.Spec.Ports[0].Port)
+	assert.Equal(t, "https-query", svc.Spec.Ports[0].Name)
 	assert.Equal(t, intstr.FromInt(8443), svc.Spec.Ports[0].TargetPort)
 }

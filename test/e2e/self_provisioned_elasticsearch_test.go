@@ -3,9 +3,9 @@
 package e2e
 
 import (
+	"context"
 	goctx "context"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -127,13 +126,20 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", int(updateQueryCount), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	// Make sure there are 2 ES deployments. Note: The deployment name is based on  "elasticsearch-cdm-" + namespace + jaegerInstanceName + "-1"
-	// with dashes in the namespace and  jaegerInstanceName removed
-	for i := 1; i <= updateESNodeCount; i++ {
-		deploymentName := "elasticsearch-cdm-" + strings.ReplaceAll(namespace, "-", "") + strings.ReplaceAll(jaegerInstanceName, "-", "") + "-" + strconv.Itoa(i)
-		logrus.Infof("Looking for deployment %s", deploymentName)
-		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, deploymentName, 1, retryInterval, timeout)
-		require.NoError(t, err, "Error waiting for deployment: "+deploymentName)
+	// Make sure there are 2 ES deployments and wait for them to be available
+	listOptions := metav1.ListOptions{
+		LabelSelector: "component=elasticsearch",
+	}
+
+	deployments, err := fw.KubeClient.AppsV1().Deployments(namespace).List(listOptions)
+	require.NoError(t, err)
+	require.Equal(t, updateESNodeCount, len(deployments.Items))
+	for _, deployment := range deployments.Items {
+		if deployment.Namespace == namespace {
+			logrus.Infof("Looking for deployment %s with annotations %v", deployment.Name, deployment.Annotations)
+			err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, deployment.Name, 1, retryInterval, timeout)
+			require.NoError(t, err, "Error waiting for deployment: "+deployment.Name)
+		}
 	}
 
 	/// Verify the number of Collector and Query pods

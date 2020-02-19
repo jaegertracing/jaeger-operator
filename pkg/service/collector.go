@@ -56,7 +56,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
-					Name: "zipkin",
+					Name: "http-zipkin",
 					Port: 9411,
 				},
 				{
@@ -68,7 +68,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 					Port: 14267,
 				},
 				{
-					Name: "c-binary-trft",
+					Name: "http-c-binary-trft",
 					Port: 14268,
 				},
 			},
