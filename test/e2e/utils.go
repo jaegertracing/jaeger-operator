@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
+
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -360,8 +362,10 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 		t.Fatalf("Failed waiting for route: %v", err)
 	}
 
+	// Truncate the namespace name and use that to find the route
+	target := util.Truncate(name, 62-len(namespace))
 	for _, r := range routeList.Items {
-		if strings.HasPrefix(r.Spec.Host, name) {
+		if strings.HasPrefix(r.Spec.Host, target) {
 			return &r
 		}
 	}
