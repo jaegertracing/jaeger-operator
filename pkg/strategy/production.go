@@ -78,7 +78,13 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		// with the cert secret-name tag
 		for _, svc := range c.services {
 			if svc.Name == service.GetNameForCollectorService(jaeger) {
-				svc.Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector"
+				if svc.Annotations == nil {
+					svc.Annotations = map[string]string{
+						"service.beta.openshift.io/serving-cert-secret-name": "jaeger-collector",
+					}
+				} else {
+					svc.Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector"
+				}
 
 				// Also annotate the deployment configmap
 				if cm := tls.NewConfig(jaeger).Get(); cm != nil {
