@@ -59,14 +59,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-sampling-configuration", u.jaeger.Name),
 			Namespace: u.jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                          "jaeger",
-				"app.kubernetes.io/name":       fmt.Sprintf("%s-sampling-configuration", u.jaeger.Name),
-				"app.kubernetes.io/instance":   u.jaeger.Name,
-				"app.kubernetes.io/component":  "sampling-configuration",
-				"app.kubernetes.io/part-of":    "jaeger",
-				"app.kubernetes.io/managed-by": "jaeger-operator",
-			},
+			Labels:    util.Labels(fmt.Sprintf("%s-sampling-configuration", u.jaeger.Name), "sampling-configuration", *u.jaeger),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: u.jaeger.APIVersion,
@@ -136,5 +129,5 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 }
 
 func samplingConfigVolumeName(jaeger *v1.Jaeger) string {
-	return util.DNSName(fmt.Sprintf("%s-sampling-configuration-volume", jaeger.Name))
+	return util.DNSName(util.Truncate("%s-sampling-configuration-volume", 63, jaeger.Name))
 }

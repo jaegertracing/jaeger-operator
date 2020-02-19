@@ -31,14 +31,7 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 	trueVar := true
 
 	baseCommonSpec := v1.JaegerCommonSpec{
-		Labels: map[string]string{
-			"app":                          "jaeger",
-			"app.kubernetes.io/name":       fmt.Sprintf("%s-query", i.jaeger.Name),
-			"app.kubernetes.io/instance":   i.jaeger.Name,
-			"app.kubernetes.io/component":  "query-ingress",
-			"app.kubernetes.io/part-of":    "jaeger",
-			"app.kubernetes.io/managed-by": "jaeger-operator",
-		},
+		Labels: util.Labels(fmt.Sprintf("%s-query", i.jaeger.Name), "query-ingress", *i.jaeger),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})

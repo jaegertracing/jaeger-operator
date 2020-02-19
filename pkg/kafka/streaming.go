@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Persistent returns the custom resource for a persistent Kafka
@@ -15,16 +16,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Name,
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                         "jaeger",
-				"app.kubernetes.io/name":      jaeger.Name,
-				"app.kubernetes.io/instance":  jaeger.Name,
-				"app.kubernetes.io/component": "kafka",
-				"app.kubernetes.io/part-of":   "jaeger",
-
-				// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-				"app.kubernetes.io/managed---by": "jaeger-operator",
-			},
+			Labels:    util.Labels(jaeger.Name, "kafka", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,
@@ -80,21 +72,18 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 // credentials for this user
 func User(jaeger *v1.Jaeger) v1beta1.KafkaUser {
 	trueVar := true
+
+	labels := util.Labels(jaeger.Name, "kafkauser", *jaeger)
+
+	// based on this label, the Strimzi operator will create the TLS secrets for
+	// this user to access the target cluster
+	labels["strimzi.io/cluster"] = jaeger.Name
+
 	return v1beta1.KafkaUser{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Name,
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"app":                         "jaeger",
-				"app.kubernetes.io/name":      jaeger.Name,
-				"app.kubernetes.io/instance":  jaeger.Name,
-				"app.kubernetes.io/component": "kafkauser",
-				"app.kubernetes.io/part-of":   "jaeger",
-				"strimzi.io/cluster":          jaeger.Name,
-
-				// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-				"app.kubernetes.io/managed---by": "jaeger-operator",
-			},
+			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion: jaeger.APIVersion,

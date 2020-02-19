@@ -232,6 +232,11 @@ func TestSidecarNeeded(t *testing.T) {
 			ns:     ns(map[string]string{}),
 			needed: false,
 		},
+		{
+			dep:    dep(map[string]string{}, map[string]string{"app": "jaeger"}),
+			ns:     ns(map[string]string{Annotation: "true"}),
+			needed: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
@@ -534,6 +539,7 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
+			Labels:      labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{

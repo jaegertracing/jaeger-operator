@@ -50,10 +50,11 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		logFields.Debug("injecting sidecar")
 		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 
+		jaegerName := util.Truncate(jaeger.Name, 63)
 		if dep.Labels == nil {
-			dep.Labels = map[string]string{Label: jaeger.Name}
+			dep.Labels = map[string]string{Label: jaegerName}
 		} else {
-			dep.Labels[Label] = jaeger.Name
+			dep.Labels[Label] = jaegerName
 		}
 	}
 
@@ -69,6 +70,11 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 			"namespace":  dep.Namespace,
 			"deployment": dep.Name,
 		}).Trace("annotation not present, not injecting")
+		return false
+	}
+	// do not inject jaeger due to port collision
+	// do not inject if deployment's Annotation value is false
+	if dep.Labels["app"] == "jaeger" {
 		return false
 	}
 	return !HasJaegerAgent(dep)
@@ -97,6 +103,9 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 		// jaeger instance to use!
 		// first, we make sure we normalize the name:
 		jaeger := &availableJaegerPods.Items[0]
+		if target.Annotations == nil {
+			target.Annotations = map[string]string{}
+		}
 		target.Annotations[Annotation] = jaeger.Name
 		return jaeger
 	}

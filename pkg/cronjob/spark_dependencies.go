@@ -1,7 +1,6 @@
 package cronjob
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -36,7 +35,9 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	trueVar := true
 	one := int32(1)
-	name := fmt.Sprintf("%s-spark-dependencies", jaeger.Name)
+
+	// cron job names are restricted to 52 chars
+	name := util.Truncate("%s-spark-dependencies", 52, jaeger.Name)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -44,14 +45,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
-		Labels: map[string]string{
-			"app":                          "jaeger",
-			"app.kubernetes.io/name":       name,
-			"app.kubernetes.io/instance":   jaeger.Name,
-			"app.kubernetes.io/component":  "cronjob-es-index-cleaner",
-			"app.kubernetes.io/part-of":    "jaeger",
-			"app.kubernetes.io/managed-by": "jaeger-operator",
-		},
+		Labels: util.Labels(name, "spark-dependencies", *jaeger),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})

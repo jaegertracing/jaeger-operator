@@ -33,10 +33,8 @@ func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, des
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
-			"app.kubernetes.io/instance": jaeger.Name,
-
-			// workaround for https://github.com/strimzi/strimzi-kafka-operator/issues/2107
-			"app.kubernetes.io/managed---by": "jaeger-operator",
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
 		}),
 	}
 	list := &kafkav1beta1.KafkaList{}

@@ -1,7 +1,6 @@
 package cronjob
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -22,7 +21,9 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	esUrls := util.GetEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	one := int32(1)
-	name := fmt.Sprintf("%s-es-index-cleaner", jaeger.Name)
+
+	// CronJob names are restricted to 52 chars
+	name := util.Truncate("%s-es-index-cleaner", 52, jaeger.Name)
 
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
@@ -36,14 +37,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
-		Labels: map[string]string{
-			"app":                          "jaeger",
-			"app.kubernetes.io/name":       name,
-			"app.kubernetes.io/instance":   jaeger.Name,
-			"app.kubernetes.io/component":  "cronjob-es-index-cleaner",
-			"app.kubernetes.io/part-of":    "jaeger",
-			"app.kubernetes.io/managed-by": "jaeger-operator",
-		},
+		Labels: util.Labels(name, "cronjob-es-index-cleaner", *jaeger),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsIndexCleaner.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -75,7 +69,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Name:         name,
+									Name:         util.Truncate(name, 63),
 									Image:        jaeger.Spec.Storage.EsIndexCleaner.Image,
 									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
 									Env:          util.RemoveEmptyVars(envs),

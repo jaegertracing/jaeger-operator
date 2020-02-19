@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -88,6 +87,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		jaeger.Logger().Debug("Timeout for cassandra-create-schema job not specified. Using default of 1 day.")
 	}
 
+	truncatedName := util.Truncate("%s-cassandra-schema-job", 63, jaeger.Name)
 	return []batchv1.Job{
 		batchv1.Job{
 			TypeMeta: metav1.TypeMeta{
@@ -95,16 +95,11 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				Kind:       "Job",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-cassandra-schema-job", jaeger.Name),
+				// while the name itself isn't a problem, Kubernetes will create a job with a label "job-name" with this value
+				// so, this value has to be restricted to 63 chars
+				Name:      truncatedName,
 				Namespace: jaeger.Namespace,
-				Labels: map[string]string{
-					"app":                          "jaeger",
-					"app.kubernetes.io/name":       fmt.Sprintf("%s-cassandra-schema-job", jaeger.Name),
-					"app.kubernetes.io/instance":   jaeger.Name,
-					"app.kubernetes.io/component":  "cronjob-cassandra-schema",
-					"app.kubernetes.io/part-of":    "jaeger",
-					"app.kubernetes.io/managed-by": "jaeger-operator",
-				},
+				Labels:    util.Labels(truncatedName, "cronjob-cassandra-schema", *jaeger),
 				OwnerReferences: []metav1.OwnerReference{
 					metav1.OwnerReference{
 						APIVersion: jaeger.APIVersion,
@@ -125,7 +120,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 						ActiveDeadlineSeconds: podTimeout,
 						Containers: []corev1.Container{{
 							Image: util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
-							Name:  fmt.Sprintf("%s-cassandra-schema", jaeger.Name),
+							Name:  truncatedName,
 							Env: []corev1.EnvVar{{
 								Name:  "CQLSH_HOST",
 								Value: host,
