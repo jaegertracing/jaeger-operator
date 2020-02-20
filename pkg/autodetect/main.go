@@ -243,9 +243,6 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 
 	// check deployments to see which one needs to be cleaned.
 	for _, dep := range deployments.Items {
-		if dep.Labels == nil {
-			continue
-		}
 		if instanceName, ok := dep.Labels[inject.Label]; ok {
 			_, instanceExists := instancesMap[instanceName]
 			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.

@@ -16,6 +16,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -64,13 +65,20 @@ func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
 
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
+
+	agentAsSideCarDeleted := false
+
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	jaegerInstanceName := "agent-as-sidecar"
 	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
+	defer func() {
+		if !agentAsSideCarDeleted {
+			undeployJaegerInstance(j)
+		}
+	}()
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
-	defer undeployJaegerInstance(j)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
@@ -85,6 +93,46 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		res, err := httpClient.Do(req)
+		require.NoError(t, err)
+
+		body, err := ioutil.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		resp := &resp{}
+		err = json.Unmarshal(body, &resp)
+		require.NoError(t, err)
+
+		return len(resp.Data) > 0, nil
+	})
+	require.NoError(t, err, "Failed waiting for expected content")
+
+	/* Testing other instance */
+
+	otherJaegerInstanceName := "agent-as-sidecar2"
+	j2 := getJaegerAgentAsSidecarDefinition(otherJaegerInstanceName, namespace)
+	defer undeployJaegerInstance(j2)
+
+	err = fw.Client.Create(goctx.TODO(), j2, cleanupOptions)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
+
+	persisted := &appsv1.Deployment{}
+	err = fw.Client.Get(goctx.TODO(), types.NamespacedName{
+		Name:      "vertx-create-span-sidecar",
+		Namespace: namespace,
+	}, persisted)
+	require.NoError(t, err, "Error getting jaeger instance")
+	require.Equal(t, "agent-as-sidecar", persisted.Labels[inject.Label])
+
+	err = fw.Client.Delete(goctx.TODO(), j)
+	require.NoError(t, err, "Error deleting instance")
+	agentAsSideCarDeleted = true
+
+	url, httpClient = getQueryURLAndHTTPClient(otherJaegerInstanceName, "%s/api/traces?service=order", true)
+	req, err = http.NewRequest(http.MethodGet, url, nil)
+
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
