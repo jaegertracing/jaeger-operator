@@ -363,7 +363,7 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	}
 
 	// Truncate the namespace name and use that to find the route
-	target := util.Truncate(name, 62-len(namespace))
+	target := util.DNSName(util.Truncate(name, 62-len(namespace)))
 	for _, r := range routeList.Items {
 		if strings.HasPrefix(r.Spec.Host, target) {
 			return &r

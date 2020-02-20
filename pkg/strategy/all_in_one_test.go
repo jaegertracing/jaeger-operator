@@ -12,6 +12,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func init() {
@@ -110,7 +111,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		routes[fmt.Sprintf("%s", name)] = false
+		routes[fmt.Sprintf("%s", util.DNSName(name))] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
