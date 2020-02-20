@@ -113,7 +113,7 @@ Starting from operator-sdk v0.5.0, one can generate and update CSVs based on the
 The Jaeger CSV can be updated to version 1.9.0 with the following command:
 
 ```
-$ operator-sdk olm-catalog gen-csv --csv-version 1.9.0
+$ operator-sdk generate csv --csv-version 1.9.0
 INFO[0000] Generating CSV manifest version 1.9.0
 INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml 
 INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml 

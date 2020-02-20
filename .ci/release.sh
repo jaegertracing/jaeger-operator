@@ -38,7 +38,7 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/
 # change the versions.txt
 sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
 
-operator-sdk olm-catalog gen-csv \
+operator-sdk generate csv \
     --csv-channel=stable \
     --csv-version=${OPERATOR_VERSION} \
     --from-version=${PREVIOUS_VERSION}
