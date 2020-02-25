@@ -25,7 +25,7 @@ var (
 	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
 	PrometheusDefaultAnnotations = map[string]string{
 		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "5778",
+		"prometheus.io/port":   "14271",
 	}
 )
 
@@ -138,6 +138,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+	adminPort := util.GetPort("--admin-http-port=", args, 14271)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
 		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
@@ -204,6 +205,10 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 				ContainerPort: jgBinaryTrft,
 				Name:          "jg-binary-trft",
 				Protocol:      corev1.ProtocolUDP,
+			},
+			{
+				ContainerPort: adminPort,
+				Name:          "admin-http",
 			},
 		},
 		Resources: commonSpec.Resources,
