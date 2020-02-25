@@ -7,6 +7,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/api/core"
+	"go.opentelemetry.io/otel/api/key"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -15,7 +17,6 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	tls "github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
@@ -70,29 +71,27 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	// add the routes/ingresses
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		span.SetAttribute(key.String("Platform", v1.FlagPlatformOpenShift))
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
 		}
 
 		// For openshift platform, we want the clusterIP service to be annotated
 		// with the cert secret-name tag
-		for _, svc := range c.services {
-			if svc.Name == service.GetNameForCollectorService(jaeger) {
-				if svc.Annotations == nil {
-					svc.Annotations = map[string]string{
-						"service.beta.openshift.io/serving-cert-secret-name": "jaeger-collector",
+		for k := range c.services {
+			span.AddEvent(ctx, "Checking service", core.KeyValue{Key: "Servicename", Value: core.String(c.services[k].Name)})
+			if c.services[k].Name == service.GetNameForCollectorService(jaeger) {
+				if c.services[k].Annotations == nil {
+					c.services[k].Annotations = map[string]string{
+						"service.beta.openshift.io/serving-cert-secret-name": "jaeger-collector-tls",
 					}
 				} else {
-					svc.Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector"
-				}
-
-				// Also annotate the deployment configmap
-				if cm := tls.NewConfig(jaeger).Get(); cm != nil {
-					c.configMaps = append(c.configMaps, *cm)
+					c.services[k].Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector-tls"
 				}
 			}
 		}
 	} else {
+		span.SetAttribute(key.String("Platform", v1.FlagPlatformKubernetes))
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
 			c.ingresses = append(c.ingresses, *q)
 		}
