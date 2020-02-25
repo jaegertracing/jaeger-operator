@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi
+FROM registry.redhat.io/ubi8/ubi
 
 ENV OPERATOR=/usr/local/bin/jaeger-operator \
     USER_UID=1001 \
