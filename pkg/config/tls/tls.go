@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -20,7 +21,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 		Name: configurationVolumeName(jaeger),
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: "jaeger-collector-tls",
+				SecretName: fmt.Sprintf("%s-tls", service.GetNameForHeadlessCollectorService(jaeger)),
 			},
 		},
 	}

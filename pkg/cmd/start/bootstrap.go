@@ -70,6 +70,8 @@ func bootstrap(ctx context.Context) manager.Manager {
 		log.Fatal(err)
 	}
 
+	span.SetAttribute(key.String("Platform", viper.GetString("platform")))
+
 	mgr := createManager(ctx, cfg)
 
 	performUpgrades(ctx, mgr)

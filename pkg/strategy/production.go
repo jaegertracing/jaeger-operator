@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -71,7 +72,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	// add the routes/ingresses
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		span.SetAttribute(key.String("Platform", v1.FlagPlatformOpenShift))
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
 		}
@@ -80,13 +80,13 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		// with the cert secret-name tag
 		for k := range c.services {
 			span.AddEvent(ctx, "Checking service", core.KeyValue{Key: "Servicename", Value: core.String(c.services[k].Name)})
-			if c.services[k].Name == service.GetNameForCollectorService(jaeger) {
+			if c.services[k].Name == service.GetNameForHeadlessCollectorService(jaeger) {
 				if c.services[k].Annotations == nil {
 					c.services[k].Annotations = map[string]string{
-						"service.beta.openshift.io/serving-cert-secret-name": "jaeger-collector-tls",
+						"service.beta.openshift.io/serving-cert-secret-name": fmt.Sprintf("%s-tls", c.services[k].Name),
 					}
 				} else {
-					c.services[k].Annotations["service.beta.openshift.io/serving-cert-secret-name"] = "jaeger-collector-tls"
+					c.services[k].Annotations["service.beta.openshift.io/serving-cert-secret-name"] = fmt.Sprintf("%s-tls", c.services[k].Name)
 				}
 			}
 		}
