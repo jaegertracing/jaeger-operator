@@ -48,6 +48,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		// Enable tls by default for openshift platform
 		if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 			args = append(args, "--reporter.grpc.tls=true")
+			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
 		}
 	}
 
