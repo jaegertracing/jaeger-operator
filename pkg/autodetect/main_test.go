@@ -362,7 +362,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 	b := WithClients(cl, dcl, cl)
 
 	// test
-	b.detectClusterRoles()
+	b.detectClusterRoles(context.Background())
 
 	// verify
 	assert.False(t, viper.GetBool("auth-delegator-available"))
@@ -380,11 +380,11 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 	b := WithClients(cl, dcl, cl)
 
 	// test
-	b.detectClusterRoles()
+	b.detectClusterRoles(context.Background())
 	assert.False(t, viper.GetBool("auth-delegator-available"))
 
 	cl.CreateFunc = cl.Client.Create
-	b.detectClusterRoles()
+	b.detectClusterRoles(context.Background())
 	assert.True(t, viper.GetBool("auth-delegator-available"))
 }
 
@@ -397,102 +397,124 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	b := WithClients(cl, dcl, cl)
 
 	// test
-	b.detectClusterRoles()
+	b.detectClusterRoles(context.Background())
 	assert.True(t, viper.GetBool("auth-delegator-available"))
 
 	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
-	b.detectClusterRoles()
+	b.detectClusterRoles(context.Background())
 	assert.False(t, viper.GetBool("auth-delegator-available"))
 }
 
 func TestCleanDeployments(t *testing.T) {
-	cl := customFakeClient()
-	cl.CreateFunc = cl.Client.Create
-	dcl := &fakeDiscoveryClient{}
+	for _, tt := range []struct {
+		cap             string // caption for the test
+		watchNamespace  string // the value for WATCH_NAMESPACE
+		jaegerNamespace string // in which namespace the jaeger exists, empty for non existing
+		deleted         bool   // whether the sidecar should have been deleted
+	}{
+		{
+			cap:             "existing-same-namespace",
+			watchNamespace:  "observability",
+			jaegerNamespace: "observability",
+			deleted:         false,
+		},
+		{
+			cap:             "not-existing-same-namespace",
+			watchNamespace:  "observability",
+			jaegerNamespace: "",
+			deleted:         true,
+		},
+		{
+			cap:             "existing-watched-namespace",
+			watchNamespace:  "observability,other-observability",
+			jaegerNamespace: "other-observability",
+			deleted:         false,
+		},
+		{
+			cap:             "existing-non-watched-namespace",
+			watchNamespace:  "observability",
+			jaegerNamespace: "other-observability",
+			deleted:         true,
+		},
+		{
+			cap:             "existing-watching-all-namespaces",
+			watchNamespace:  v1.WatchAllNamespaces,
+			jaegerNamespace: "other-observability",
+			deleted:         false,
+		},
+	} {
+		t.Run(tt.cap, func(t *testing.T) {
+			// prepare the test data
+			viper.Set(v1.ConfigWatchNamespace, tt.watchNamespace)
+			defer viper.Reset()
 
-	jaeger1 := v1.NewJaeger(types.NamespacedName{
-		Name:      "TestDeletedInstance",
-		Namespace: "TestNS",
-	})
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Name:      "my-instance",
+				Namespace: "observability", // at first, it exists in the same namespace as the deployment
+			})
 
-	jaeger2 := v1.NewJaeger(types.NamespacedName{
-		Name:      "TestDeletedInstance2",
-		Namespace: "TestNS",
-	})
-
-	dep1 := &appsv1.Deployment{
-		Spec: appsv1.DeploymentSpec{
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name:  "C1",
-							Image: "image1",
+			dep := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "mydep",
+					Namespace:   "observability",
+					Annotations: map[string]string{inject.Annotation: jaeger.Name},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{},
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								corev1.Container{
+									Name:  "C1",
+									Image: "image1",
+								},
+							},
 						},
 					},
 				},
-			},
-		},
+			}
+			dep = inject.Sidecar(jaeger, dep)
+
+			// sanity check
+			require.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
+
+			// prepare the list of existing objects
+			objs := []runtime.Object{dep}
+			if len(tt.jaegerNamespace) > 0 {
+				jaeger.Namespace = tt.jaegerNamespace // now, it exists only in this namespace
+				objs = append(objs, jaeger)
+			}
+
+			// prepare the client
+			s := scheme.Scheme
+			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+			cl := fake.NewFakeClient(objs...)
+			b := WithClients(cl, &fakeDiscoveryClient{}, cl)
+
+			// test
+			b.cleanDeployments(context.Background())
+
+			// verify
+			persisted := &appsv1.Deployment{}
+			err := cl.Get(context.Background(), types.NamespacedName{
+				Namespace: dep.Namespace,
+				Name:      dep.Name,
+			}, persisted)
+			require.NoError(t, err)
+
+			// should the sidecar have been deleted?
+			if tt.deleted {
+				assert.Equal(t, 1, len(persisted.Spec.Template.Spec.Containers))
+				assert.NotContains(t, persisted.Labels, inject.Label)
+			} else {
+				assert.Equal(t, 2, len(persisted.Spec.Template.Spec.Containers))
+				assert.Contains(t, persisted.Labels, inject.Label)
+			}
+		})
 	}
-	dep2 := &appsv1.Deployment{
-		Spec: appsv1.DeploymentSpec{
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name:  "C1",
-							Image: "image1",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
-	dep1.Name = "mydep1"
-	dep1.Annotations = map[string]string{inject.Annotation: jaeger1.Name}
-	dep1 = inject.Sidecar(jaeger1, dep1)
-
-	dep2.Name = "mydep2"
-	dep2.Annotations = map[string]string{inject.Annotation: jaeger2.Name}
-	dep2 = inject.Sidecar(jaeger2, dep2)
-
-	require.Equal(t, len(dep1.Spec.Template.Spec.Containers), 2)
-	require.Equal(t, len(dep2.Spec.Template.Spec.Containers), 2)
-
-	err := cl.Create(context.TODO(), dep1)
-	require.NoError(t, err)
-	err = cl.Create(context.TODO(), dep2)
-	require.NoError(t, err)
-	err = cl.Create(context.TODO(), jaeger2)
-	require.NoError(t, err)
-
-	b := WithClients(cl, dcl, cl)
-	b.cleanDeployments()
-	persisted1 := &appsv1.Deployment{}
-	err = cl.Get(context.Background(), types.NamespacedName{
-		Namespace: dep1.Namespace,
-		Name:      dep1.Name,
-	}, persisted1)
-	require.NoError(t, err)
-	assert.Equal(t, len(persisted1.Spec.Template.Spec.Containers), 1)
-	assert.NotContains(t, persisted1.Labels, inject.Label)
-
-	persisted2 := &appsv1.Deployment{}
-	err = cl.Get(context.Background(), types.NamespacedName{
-		Namespace: dep2.Namespace,
-		Name:      dep2.Name,
-	}, persisted2)
-	require.NoError(t, err)
-	assert.Equal(t, len(persisted2.Spec.Template.Spec.Containers), 2)
-	assert.Contains(t, persisted2.Labels, inject.Label)
 }
 
 type fakeClient struct {
