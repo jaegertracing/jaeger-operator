@@ -14,7 +14,7 @@ func TestMigrateAllDeprecated(t *testing.T) {
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := *v1.NewJaeger(nsn)
 	existing.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
-		"migrate-from":  "value-not-migrated",
+		"migrate-from":  "value-to-migrate",
 		"to-be-removed": "value-will-disappear",
 	})
 
@@ -32,7 +32,7 @@ func TestMigrateAllDeprecated(t *testing.T) {
 	// verify
 	opts := upgraded.Spec.Collector.Options.Map()
 	assert.Contains(t, opts, "migrate-to")
-	assert.Equal(t, "value-not-migrated", opts["migrate-to"])
+	assert.Equal(t, "value-to-migrate", opts["migrate-to"])
 	assert.NotContains(t, opts, "migrate-from")
 	assert.NotContains(t, opts, "to-be-removed")
 }

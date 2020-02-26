@@ -19,6 +19,7 @@ func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
 	existing.Status.Version = "1.16.0"
 	existing.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
 		"collector.grpc.tls": true,
+		"reporter.grpc.tls":  true,
 	})
 	objs := []runtime.Object{existing}
 
@@ -39,4 +40,8 @@ func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
 	assert.Contains(t, opts, "collector.grpc.tls.enabled")
 	assert.Equal(t, "true", opts["collector.grpc.tls.enabled"])
 	assert.NotContains(t, opts, "collector.grpc.tls")
+
+	assert.Contains(t, opts, "reporter.grpc.tls.enabled")
+	assert.Equal(t, "true", opts["reporter.grpc.tls.enabled"])
+	assert.NotContains(t, opts, "reporter.grpc.tls")
 }
