@@ -8,6 +8,7 @@ Breaking changes:
 * Removed 'Size' property from components ([#850](https://github.com/jaegertracing/jaeger-operator/pull/850))
 
 Other noteworthy changes:
+* Use ubi as base image ([#924](https://github.com/jaegertracing/jaeger-operator/pull/924))
 * Changed the operator to gracefully degrade when not on cluster-wide scope ([#916](https://github.com/jaegertracing/jaeger-operator/pull/916))
 * Updated admin-port for the Agent ([#922](https://github.com/jaegertracing/jaeger-operator/pull/922))
 * Limit some properties to use at most 63 chars ([#904](https://github.com/jaegertracing/jaeger-operator/pull/904))
