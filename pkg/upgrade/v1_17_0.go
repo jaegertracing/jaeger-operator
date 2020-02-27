@@ -32,25 +32,36 @@ func upgrade1_17_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 	jaeger = migrateAllDeprecatedOptions(jaeger, d)
 
 	// for the collector and ingester, if we have TLS options but not ".enabled", we add the ".enabled" option
-	collectorOpts := jaeger.Spec.Collector.Options.GenericMap()
-	if collectorOpts["kafka.producer.authentication"] == "tls" {
-		collectorOpts["kafka.producer.tls.enabled"] = "true"
-		jaeger.Spec.Collector.Options = v1.NewOptions(collectorOpts)
+	if migrated, changed := upgrade1_17_0MigrateKafkaTLS(jaeger.Spec.Collector.Options); changed {
+		jaeger.Spec.Collector.Options = migrated
 	}
 
-	ingesterOpts := jaeger.Spec.Ingester.Options.GenericMap()
-	changed := false
-	if ingesterOpts["kafka.consumer.authentication"] == "tls" {
-		ingesterOpts["kafka.consumer.tls.enabled"] = "true"
-		changed = true
+	if migrated, changed := upgrade1_17_0MigrateKafkaTLS(jaeger.Spec.Ingester.Options); changed {
+		jaeger.Spec.Ingester.Options = migrated
 	}
-	if ingesterOpts["kafka.producer.authentication"] == "tls" {
-		ingesterOpts["kafka.producer.tls.enabled"] = "true"
-		changed = true
-	}
-	if changed {
-		jaeger.Spec.Ingester.Options = v1.NewOptions(ingesterOpts)
+
+	// the common storage block also influences the collector/ingester
+	if migrated, changed := upgrade1_17_0MigrateKafkaTLS(jaeger.Spec.Storage.Options); changed {
+		jaeger.Spec.Storage.Options = migrated
 	}
 
 	return jaeger, nil
+}
+
+func upgrade1_17_0MigrateKafkaTLS(opts v1.Options) (v1.Options, bool) {
+	optsMap := opts.GenericMap()
+	changed := false
+	if optsMap["kafka.consumer.authentication"] == "tls" {
+		optsMap["kafka.consumer.tls.enabled"] = "true"
+		changed = true
+	}
+	if optsMap["kafka.producer.authentication"] == "tls" {
+		optsMap["kafka.producer.tls.enabled"] = "true"
+		changed = true
+	}
+	if changed {
+		return v1.NewOptions(optsMap), true
+	}
+
+	return opts, false
 }

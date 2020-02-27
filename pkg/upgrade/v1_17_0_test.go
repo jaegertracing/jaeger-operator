@@ -62,6 +62,10 @@ func TestAddTLSOptionsForKafka_v1_17_0(t *testing.T) {
 		"kafka.producer.authentication": "tls",
 		"kafka.consumer.authentication": "tls",
 	})
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"kafka.producer.authentication": "tls",
+		"kafka.consumer.authentication": "tls",
+	})
 
 	result, err := upgrade1_17_0(context.Background(), nil, *jaeger)
 
@@ -69,4 +73,6 @@ func TestAddTLSOptionsForKafka_v1_17_0(t *testing.T) {
 	assert.Equal(t, "true", result.Spec.Collector.Options.Map()["kafka.producer.tls.enabled"])
 	assert.Equal(t, "true", result.Spec.Ingester.Options.Map()["kafka.producer.tls.enabled"])
 	assert.Equal(t, "true", result.Spec.Ingester.Options.Map()["kafka.consumer.tls.enabled"])
+	assert.Equal(t, "true", result.Spec.Storage.Options.Map()["kafka.producer.tls.enabled"])
+	assert.Equal(t, "true", result.Spec.Storage.Options.Map()["kafka.consumer.tls.enabled"])
 }
