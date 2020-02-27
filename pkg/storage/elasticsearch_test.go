@@ -154,7 +154,7 @@ func TestInject(t *testing.T) {
 					Args: []string{
 						"foo",
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.tls=true",
+						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
 						"--es.tls.key=" + keyPath,
@@ -184,7 +184,7 @@ func TestInject(t *testing.T) {
 						"--es.num-replicas=55",
 						"--es.timeout=99s",
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.tls=true",
+						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
 						"--es.tls.key=" + keyPath,
@@ -205,7 +205,7 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.tls=true",
+						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
 						"--es.tls.key=" + keyPath,
@@ -230,7 +230,7 @@ func TestInject(t *testing.T) {
 					Args: []string{
 						"--es-archive.enabled=true",
 						"--es.server-urls=" + elasticsearchURL,
-						"--es.tls=true",
+						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
 						"--es.tls.key=" + keyPath,
@@ -238,7 +238,7 @@ func TestInject(t *testing.T) {
 						"--es.num-shards=15",
 						"--es.num-replicas=14",
 						"--es-archive.server-urls=" + elasticsearchURL,
-						"--es-archive.tls=true",
+						"--es-archive.tls.enabled=true",
 						"--es-archive.tls.ca=" + caPath,
 						"--es-archive.tls.cert=" + certPath,
 						"--es-archive.tls.key=" + keyPath,
