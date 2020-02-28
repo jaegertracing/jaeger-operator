@@ -38,7 +38,7 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 		}),
 	}
 	list := &kafkav1beta1.KafkaUserList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

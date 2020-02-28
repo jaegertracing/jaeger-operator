@@ -37,7 +37,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 		}),
 	}
 	list := &esv1.ElasticsearchList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

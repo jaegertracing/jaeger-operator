@@ -110,7 +110,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 
 	// Fetch the Deployment instance
 	deps := &appsv1.DeploymentList{}
-	err = r.client.List(ctx, deps, opts...)
+	err = r.rClient.List(ctx, deps, opts...)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -132,7 +132,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 				opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
 			}
 
-			if err := r.client.List(ctx, jaegers, opts...); err != nil {
+			if err := r.rClient.List(ctx, jaegers, opts...); err != nil {
 				log.WithError(err).Error("failed to get the available Jaeger pods")
 				return reconcile.Result{}, tracing.HandleError(err, span)
 			}
