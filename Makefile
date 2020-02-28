@@ -296,6 +296,7 @@ install-tools:
 		golang.org/x/lint/golint \
 		github.com/securego/gosec/cmd/gosec \
 		golang.org/x/tools/cmd/goimports \
+		sigs.k8s.io/controller-tools/cmd/controller-gen \
 		k8s.io/kube-openapi/cmd/openapi-gen
 
 .PHONY: install
