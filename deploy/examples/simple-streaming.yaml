@@ -12,6 +12,9 @@ spec:
         producer:
           topic: jaeger-spans
           brokers: my-cluster-kafka-brokers.kafka:9092
+          batch-size: 128000
+          batch-linger: 1s
+          batch-max-messages: 100
   ingester:
     options:
       kafka:
