@@ -166,7 +166,7 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 				Options: v1.NewOptions(map[string]interface{}{
 					"kafka.producer.topic":   "jaeger-spans",
 					"kafka.producer.brokers": kafkaClusterURL,
-					// The following 3 flags are not required for this test, but are added to ensure we pass them passed correctly
+					// The following 3 flags are not required for this test, but are added to ensure we passed them passed correctly
 					"kafka.producer.batch-linger":       "1s",
 					"kafka.producer.batch-size":         "128000",
 					"kafka.producer.batch-max-messages": "100",
