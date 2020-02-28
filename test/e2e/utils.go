@@ -111,7 +111,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 
 	crb := &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace + "jaeger-operator-cluster",
+			Name: namespace + "jaeger-operator",
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name:       ns.Name,
@@ -126,7 +126,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			Name:      "jaeger-operator",
 			Namespace: namespace,
 		}},
-		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator-cluster"},
+		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator"},
 	}
 
 	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
