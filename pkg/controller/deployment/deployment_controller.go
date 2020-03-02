@@ -117,7 +117,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
 		}
 
-		if err := r.client.List(ctx, jaegers, opts...); err != nil {
+		if err := r.rClient.List(ctx, jaegers, opts...); err != nil {
 			log.WithError(err).Error("failed to get the available Jaeger pods")
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}

@@ -104,7 +104,7 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
 	cl := fake.NewFakeClient(jaeger)
-	r := &ReconcileJaeger{client: cl, scheme: s}
+	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
 
 	// test
@@ -165,5 +165,5 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	s.AddKnownTypes(v1beta1.SchemeGroupVersion, &v1beta1.Kafka{}, &v1beta1.KafkaList{}, &v1beta1.KafkaUser{}, &v1beta1.KafkaUserList{})
 
 	cl := fake.NewFakeClient(objs...)
-	return &ReconcileJaeger{client: cl, scheme: s}, cl
+	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl}, cl
 }

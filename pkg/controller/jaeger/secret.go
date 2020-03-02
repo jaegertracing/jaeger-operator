@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applySecrets(ctx context.Context, jaeger v1.Jaeger, de
 		}),
 	}
 	list := &corev1.SecretList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

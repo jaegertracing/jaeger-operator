@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 		}),
 	}
 	list := &batchv1beta1.CronJobList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

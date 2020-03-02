@@ -29,7 +29,7 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
 	list := &rbac.ClusterRoleBindingList{}
-	if err := r.client.List(ctx, list, opts); err != nil {
+	if err := r.rClient.List(ctx, list, opts); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

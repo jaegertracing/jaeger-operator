@@ -37,7 +37,7 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 		}),
 	}
 	depList := &appsv1.DeploymentList{}
-	if err := r.client.List(ctx, depList, opts...); err != nil {
+	if err := r.rClient.List(ctx, depList, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 
