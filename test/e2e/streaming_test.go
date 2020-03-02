@@ -151,6 +151,7 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
+	ingressEnabled := true
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -161,6 +162,10 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
@@ -192,6 +197,7 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName string) *v1.Jaeger {
 	volumes := getTLSVolumes(kafkaUserName)
 	volumeMounts := getTLSVolumeMounts()
+	ingressEnabled := true
 
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-bootstrap.%s.svc.cluster.local:9093", kafkaNamespace)
 	j := &v1.Jaeger{
@@ -204,6 +210,10 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
 				Options: v1.NewOptions(map[string]interface{}{
@@ -242,6 +252,7 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 }
 
 func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
+	ingressEnabled := true
 	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -252,6 +263,10 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",

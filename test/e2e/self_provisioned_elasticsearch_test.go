@@ -48,6 +48,7 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 			APIVersion: "logging.openshift.io/v1",
 		},
 	}))
+	addToFrameworkSchemeForSmokeTests(t)
 
 	var err error
 	ctx, err = prepare(t)
@@ -199,6 +200,7 @@ func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
 }
 
 func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
+	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -209,6 +211,10 @@ func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
