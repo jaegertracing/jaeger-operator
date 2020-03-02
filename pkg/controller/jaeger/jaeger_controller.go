@@ -99,7 +99,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// Fetch the Jaeger instance
 	instance := &v1.Jaeger{}
-	err := r.client.Get(ctx, request.NamespacedName, instance)
+	err := r.rClient.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
