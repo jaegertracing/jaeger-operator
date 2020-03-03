@@ -176,11 +176,12 @@ func TestSidecarDefaultPorts(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Ports, 4)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Ports, 5)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 5775, Name: "zk-compact-trft", Protocol: corev1.ProtocolUDP})
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 5778, Name: "config-rest"})
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 6831, Name: "jg-compact-trft", Protocol: corev1.ProtocolUDP})
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 6832, Name: "jg-binary-trft", Protocol: corev1.ProtocolUDP})
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 14271, Name: "admin-http"})
 }
 
 func TestSkipInjectSidecar(t *testing.T) {

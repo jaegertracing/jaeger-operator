@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -25,7 +26,7 @@ var (
 	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
 	PrometheusDefaultAnnotations = map[string]string{
 		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   "5778",
+		"prometheus.io/port":   "14271",
 	}
 )
 
@@ -134,10 +135,20 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		}
 	}
 
+	// Enable tls by default for openshift platform
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
+			args = append(args, "--reporter.grpc.tls=true")
+			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s", service.GetNameForHeadlessCollectorService(jaeger)))
+		}
+	}
+
 	zkCompactTrft := util.GetPort("--processor.zipkin-compact.server-host-port=", args, 5775)
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+	adminPort := util.GetPort("--admin-http-port=", args, 14271)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
 		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
@@ -204,6 +215,10 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 				ContainerPort: jgBinaryTrft,
 				Name:          "jg-binary-trft",
 				Protocol:      corev1.ProtocolUDP,
+			},
+			{
+				ContainerPort: adminPort,
+				Name:          "admin-http",
 			},
 		},
 		Resources: commonSpec.Resources,

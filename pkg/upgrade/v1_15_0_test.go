@@ -13,7 +13,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestUpgradeDeprecatedOptions(t *testing.T) {
+func TestUpgradeDeprecatedOptionsv1_15_0(t *testing.T) {
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.14.0"
@@ -41,7 +41,7 @@ func TestUpgradeDeprecatedOptions(t *testing.T) {
 	assert.NotContains(t, opts, "collector.host-port")
 }
 
-func TestRemoveDeprecatedFlagWithNoReplacement(t *testing.T) {
+func TestRemoveDeprecatedFlagWithNoReplacementv1_15_0(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)

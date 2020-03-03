@@ -221,12 +221,14 @@ func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 
 	collectorOpts["kafka.producer.brokers"] = brokers
 	collectorOpts["kafka.producer.authentication"] = "tls"
+	collectorOpts["kafka.producer.tls.enabled"] = "true"
 	collectorOpts["kafka.producer.tls.ca"] = fmt.Sprintf("%s/ca.crt", clusterCAPath)
 	collectorOpts["kafka.producer.tls.cert"] = fmt.Sprintf("%s/user.crt", clientCertPath)
 	collectorOpts["kafka.producer.tls.key"] = fmt.Sprintf("%s/user.key", clientCertPath)
 
 	ingesterOpts["kafka.consumer.brokers"] = brokers
 	ingesterOpts["kafka.consumer.authentication"] = "tls"
+	ingesterOpts["kafka.consumer.tls.enabled"] = "true"
 	ingesterOpts["kafka.consumer.tls.ca"] = fmt.Sprintf("%s/ca.crt", clusterCAPath)
 	ingesterOpts["kafka.consumer.tls.cert"] = fmt.Sprintf("%s/user.crt", clientCertPath)
 	ingesterOpts["kafka.consumer.tls.key"] = fmt.Sprintf("%s/user.key", clientCertPath)

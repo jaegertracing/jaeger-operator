@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	rbac "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -16,8 +18,12 @@ import (
 )
 
 func TestClusterRoleBindingsCreate(t *testing.T) {
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
+	viper.Set(v1.ConfigWatchNamespace, v1.WatchAllNamespaces)
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
-		Name: "TestClusterRoleBindingsCreate",
+		Name: "my-instance",
 	}
 
 	objs := []runtime.Object{
@@ -55,9 +61,56 @@ func TestClusterRoleBindingsCreate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestClusterRoleBindingsUpdate(t *testing.T) {
+func TestClusterRoleBindingsSkipped(t *testing.T) {
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeNamespace)
+	viper.Set(v1.ConfigWatchNamespace, "observability")
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
-		Name: "TestClusterRoleBindingsUpdate",
+		Name: "my-instance",
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithClusterRoleBindings([]rbac.ClusterRoleBinding{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: nsn.Name,
+			},
+		}})
+		return s
+	}
+
+	// test
+	res, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue, "We don't requeue for now")
+
+	persisted := &rbac.ClusterRoleBinding{}
+	persistedName := types.NamespacedName{
+		Name:      nsn.Name,
+		Namespace: nsn.Namespace,
+	}
+	err = cl.Get(context.Background(), persistedName, persisted)
+	assert.Equal(t, metav1.StatusReasonNotFound, errors.ReasonForError(err))
+}
+
+func TestClusterRoleBindingsUpdate(t *testing.T) {
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
+	viper.Set(v1.ConfigWatchNamespace, v1.WatchAllNamespaces)
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{
+		Name: "my-instance",
 	}
 
 	orig := rbac.ClusterRoleBinding{}
@@ -99,8 +152,12 @@ func TestClusterRoleBindingsUpdate(t *testing.T) {
 }
 
 func TestClusterRoleBindingsDelete(t *testing.T) {
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
+	viper.Set(v1.ConfigWatchNamespace, v1.WatchAllNamespaces)
+	defer viper.Reset()
+
 	nsn := types.NamespacedName{
-		Name: "TestClusterRoleBindingsDelete",
+		Name: "my-instance",
 	}
 
 	orig := rbac.ClusterRoleBinding{}

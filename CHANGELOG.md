@@ -1,6 +1,36 @@
 Changes by Version
 ==================
 
+1.17.0 (2019-02-26)
+-------------------
+
+Breaking changes:
+* Removed 'Size' property from components ([#850](https://github.com/jaegertracing/jaeger-operator/pull/850))
+
+Other noteworthy changes:
+* Use ubi as base image ([#924](https://github.com/jaegertracing/jaeger-operator/pull/924))
+* Changed the operator to gracefully degrade when not on cluster-wide scope ([#916](https://github.com/jaegertracing/jaeger-operator/pull/916))
+* Updated admin-port for the Agent ([#922](https://github.com/jaegertracing/jaeger-operator/pull/922))
+* Limit some properties to use at most 63 chars ([#904](https://github.com/jaegertracing/jaeger-operator/pull/904))
+* Add http- prefix to collector service port names ([#911](https://github.com/jaegertracing/jaeger-operator/pull/911))
+* Change query service portname to 'http-query' ([#909](https://github.com/jaegertracing/jaeger-operator/pull/909))
+* Disable agent injection to jaeger instances and when false value is used ([#903](https://github.com/jaegertracing/jaeger-operator/pull/903))
+* Per namespace agent injection ([#897](https://github.com/jaegertracing/jaeger-operator/pull/897))
+* Preserve generated cookie secret on the reconciliation process ([#883](https://github.com/jaegertracing/jaeger-operator/pull/883))
+* Add additional printer columns ([#898](https://github.com/jaegertracing/jaeger-operator/pull/898))
+* cassandra-create-schema job: set job deadline to 1 day, improve resilience ([#893](https://github.com/jaegertracing/jaeger-operator/pull/893))
+* Removed user_setup script ([#890](https://github.com/jaegertracing/jaeger-operator/pull/890))
+* Updated Operator SDK to v0.15.1 ([#891](https://github.com/jaegertracing/jaeger-operator/pull/891))
+* Auto-inject the IP tag for operator-injected agent ([#871](https://github.com/jaegertracing/jaeger-operator/pull/871))
+* Remove deployment updates from autodetect loop ([#869](https://github.com/jaegertracing/jaeger-operator/pull/869))
+* Auto-inject agent tags in multi-container pods ([#864](https://github.com/jaegertracing/jaeger-operator/pull/864))
+* Include the Log Out option when a custom menu is used ([#867](https://github.com/jaegertracing/jaeger-operator/pull/867))
+* Added auto-scale to the collector ([#856](https://github.com/jaegertracing/jaeger-operator/pull/856))
+* Support self provisioned ES in streaming strategy ([#842](https://github.com/jaegertracing/jaeger-operator/pull/842))
+* Fix hardcoded self provisioned kafka broker URL ([#841](https://github.com/jaegertracing/jaeger-operator/pull/841))
+* Configure keyspace in cassandra init job ([#837](https://github.com/jaegertracing/jaeger-operator/pull/837))
+* Added 'openapi' generated resources ([#819](https://github.com/jaegertracing/jaeger-operator/pull/819))
+
 1.16.0 (2019-12-17)
 -------------------
 

@@ -40,8 +40,8 @@ type ElasticsearchDeployment struct {
 
 func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
 	container.Args = append(container.Args, "--es.server-urls="+elasticsearchURL)
-	if util.FindItem("--es.tls=", container.Args) == "" {
-		container.Args = append(container.Args, "--es.tls=true")
+	if util.FindItem("--es.tls=", container.Args) == "" && util.FindItem("--es.tls.enabled=", container.Args) == "" {
+		container.Args = append(container.Args, "--es.tls.enabled=true")
 	}
 	container.Args = append(container.Args,
 		"--es.tls.ca="+caPath,
@@ -64,8 +64,8 @@ func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) 
 		container.Args = append(container.Args,
 			"--es-archive.server-urls="+elasticsearchURL,
 		)
-		if util.FindItem("--es-archive.tls=", container.Args) == "" {
-			container.Args = append(container.Args, "--es-archive.tls=true")
+		if util.FindItem("--es-archive.tls=", container.Args) == "" && util.FindItem("--es-archive.tls.enabled=", container.Args) == "" {
+			container.Args = append(container.Args, "--es-archive.tls.enabled=true")
 		}
 		container.Args = append(container.Args,
 			"--es-archive.tls.ca="+caPath,

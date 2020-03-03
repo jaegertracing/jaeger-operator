@@ -38,7 +38,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileJaeger{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileJaeger{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -71,6 +71,7 @@ type ReconcileJaeger struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client          client.Client
+	rClient         client.Reader
 	scheme          *runtime.Scheme
 	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
 }
@@ -244,7 +245,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			"app.kubernetes.io/managed-by": "jaeger-operator",
 		})
 		secrets := &corev1.SecretList{}
-		if err := r.client.List(ctx, secrets, opts); err != nil {
+		if err := r.rClient.List(ctx, secrets, opts); err != nil {
 			jaeger.Status.Phase = v1.JaegerPhaseFailed
 			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
 				// we let it return the real error later

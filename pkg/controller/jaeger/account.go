@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applyAccounts(ctx context.Context, jaeger v1.Jaeger, d
 		}),
 	}
 	list := &corev1.ServiceAccountList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

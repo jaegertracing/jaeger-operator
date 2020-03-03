@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -71,15 +72,61 @@ func bootstrap(ctx context.Context) manager.Manager {
 	}
 
 	span.SetAttribute(key.String("Platform", viper.GetString("platform")))
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		span.SetStatus(codes.Internal)
+		span.SetAttribute(key.String("error", err.Error()))
+		log.WithError(err).Fatal("failed to get watch namespace")
+	}
+
+	setOperatorScope(ctx, watchNamespace)
 
 	mgr := createManager(ctx, cfg)
 
+	detectNamespacePermissions(ctx, mgr)
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
 	serveCRMetrics(ctx, cfg, namespace)
 	createMetricsService(ctx, cfg, namespace)
 
 	return mgr
+}
+
+func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
+	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "detectNamespacePermissions")
+	defer span.End()
+
+	namespaces := &corev1.NamespaceList{}
+	opts := []client.ListOption{}
+	if err := mgr.GetAPIReader().List(ctx, namespaces, opts...); err != nil {
+		log.WithError(err).Trace("could not get a list of namespaces, disabling namespace controller")
+		tracing.HandleError(err, span)
+		span.SetAttribute(key.Bool(v1.ConfigEnableNamespaceController, false))
+		viper.Set(v1.ConfigEnableNamespaceController, false)
+	} else {
+		span.SetAttribute(key.Bool(v1.ConfigEnableNamespaceController, true))
+		viper.Set(v1.ConfigEnableNamespaceController, true)
+	}
+}
+
+func setOperatorScope(ctx context.Context, namespace string) {
+	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "setOperatorScope")
+	defer span.End()
+
+	// set what's the namespace to watch
+	viper.Set(v1.ConfigWatchNamespace, namespace)
+
+	// for now, the logic is simple: if we are watching all namespaces, then we are cluster-wide
+	if viper.GetString(v1.ConfigWatchNamespace) == v1.WatchAllNamespaces {
+		span.SetAttribute(key.String(v1.ConfigOperatorScope, v1.OperatorScopeCluster))
+		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
+	} else {
+		log.Info("Consider running the operator in a cluster-wide scope for extra features")
+		span.SetAttribute(key.String(v1.ConfigOperatorScope, v1.OperatorScopeNamespace))
+		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeNamespace)
+	}
 }
 
 func setLogLevel(ctx context.Context) {
@@ -111,6 +158,8 @@ func buildIdentity(ctx context.Context, podNamespace string) {
 	} else {
 		identity = fmt.Sprintf("%s", operatorName)
 	}
+
+	span.SetAttribute(key.String(v1.ConfigIdentity, identity))
 	viper.Set(v1.ConfigIdentity, identity)
 }
 
@@ -146,15 +195,8 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	ctx, span := tracer.Start(ctx, "createManager")
 	defer span.End()
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Fatal("failed to get watch namespace")
-	}
-
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          namespace,
+		Namespace:          viper.GetString(v1.ConfigWatchNamespace),
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", viper.GetString("metrics-host"), viper.GetInt32("metrics-port")),
 	})

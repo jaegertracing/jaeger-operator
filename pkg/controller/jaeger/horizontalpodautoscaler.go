@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 		}),
 	}
 	hpaList := &autoscalingv2beta2.HorizontalPodAutoscalerList{}
-	if err := r.client.List(ctx, hpaList, opts...); err != nil {
+	if err := r.rClient.List(ctx, hpaList, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

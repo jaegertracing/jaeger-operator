@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 		}),
 	}
 	list := &corev1.ConfigMapList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

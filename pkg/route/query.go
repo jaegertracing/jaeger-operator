@@ -43,7 +43,7 @@ func (r *QueryRoute) Get() *corev1.Route {
 		// -namespace is added to the host by OpenShift
 		name = util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace))
 	}
-
+	name = util.DNSName(name)
 	return &corev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",

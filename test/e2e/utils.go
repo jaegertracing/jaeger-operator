@@ -90,23 +90,23 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 }
 
 func prepare(t *testing.T) (*framework.TestCtx, error) {
-	logrus.Infof("Debug Mode? %v", debugMode)
+	t.Logf("debug mode: %v", debugMode)
 	ctx := framework.NewTestCtx(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	if !usingOLM {
 		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 		if err != nil {
-			t.Fatalf("failed to initialize cluster resources: %v", err)
+			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
 	}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		t.Fatal(err)
+		t.Errorf("failed to get the operator's namespace: %v", err)
 	}
 
 	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	if err != nil {
-		t.Fatal()
+		t.Errorf("failed to get the namespaces details: %v", err)
 	}
 
 	crb := &rbac.ClusterRoleBinding{
@@ -130,16 +130,16 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	}
 
 	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
-		t.Fatal(err)
+		t.Errorf("failed to create cluster role binding: %v", err)
 	}
 
-	t.Log("Initialized cluster resources. Namespace: " + namespace)
+	t.Logf("initialized cluster resources on namespace %s", namespace)
 
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
 	if !usingOLM {
-		err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
+		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +363,7 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	}
 
 	// Truncate the namespace name and use that to find the route
-	target := util.Truncate(name, 62-len(namespace))
+	target := util.DNSName(util.Truncate(name, 62-len(namespace)))
 	for _, r := range routeList.Items {
 		if strings.HasPrefix(r.Spec.Host, target) {
 			return &r

@@ -26,7 +26,7 @@ func (r *ReconcileJaeger) applyRoutes(ctx context.Context, jaeger v1.Jaeger, des
 		}),
 	}
 	list := &osv1.RouteList{}
-	if err := r.client.List(ctx, list, opts...); err != nil {
+	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
 

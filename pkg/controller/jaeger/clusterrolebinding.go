@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	rbac "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,12 +19,17 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 	ctx, span := tracer.Start(ctx, "applyClusterRoleBindingBindings")
 	defer span.End()
 
+	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {
+		jaeger.Logger().Trace("cluster role binding skipped, operator isn't cluster-wide")
+		return nil
+	}
+
 	opts := client.MatchingLabels(map[string]string{
 		"app.kubernetes.io/instance":   jaeger.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	})
 	list := &rbac.ClusterRoleBindingList{}
-	if err := r.client.List(ctx, list, opts); err != nil {
+	if err := r.rClient.List(ctx, list, opts); err != nil {
 		return tracing.HandleError(err, span)
 	}
 
