@@ -43,13 +43,15 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
 			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
-			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s", service.GetNameForHeadlessCollectorService(a.jaeger)))
 		}
+	}
 
-		// Enable tls by default for openshift platform
-		if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	// Enable tls by default for openshift platform
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls=true")
 			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s", service.GetNameForHeadlessCollectorService(a.jaeger)))
 		}
 	}
 
