@@ -121,6 +121,7 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureRo
 	transport := &http.Transport{}
 	if hasInsecureRoute {
 		insecure := true
+		// #nosec  G402: TLS InsecureSkipVerify set true
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 	}
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
