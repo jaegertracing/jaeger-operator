@@ -32,7 +32,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
-	*options = append(*options, "--collector.grpc.tls=true")
+	*options = append(*options, "--collector.grpc.tls.enabled=true")
 	*options = append(*options, "--collector.grpc.tls.cert=/etc/config/tls.crt")
 	*options = append(*options, "--collector.grpc.tls.key=/etc/config/tls.key")
 }
