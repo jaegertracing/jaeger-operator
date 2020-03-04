@@ -195,3 +195,33 @@ func TestAgentOverrideReporterType(t *testing.T) {
 	assert.Equal(t, "--reporter.thrift.host-port=collector:14267", dep.Spec.Template.Spec.Containers[0].Args[0])
 	assert.Equal(t, "--reporter.type=thrift", dep.Spec.Template.Spec.Containers[0].Args[1])
 }
+
+func TestAgentOrderOfArgumentsOpenshiftTLS(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	jaeger := v1.NewJaeger(types.NamespacedName{
+		Name:      "my-openshift-instance",
+		Namespace: "test",
+	})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"b-option": "b-value",
+		"a-option": "a-value",
+		"c-option": "c-value",
+	})
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 8)
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+
+	// the following are added automatically
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--reporter.grpc.host-port=dns:///my-openshift-instance-collector-headless.test:14250"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[4], "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[5], "--reporter.grpc.tls.server-name=my-openshift-instance-collector-headless.test.svc.cluster.local"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[6], "--reporter.grpc.tls=true"))
+	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[7], "--reporter.type=grpc"))
+}
