@@ -21,7 +21,7 @@ func TestUpdateWithTLSSecret(t *testing.T) {
 	assert.Len(t, commonSpec.Volumes, 1)
 	assert.Len(t, commonSpec.VolumeMounts, 1)
 	assert.Len(t, options, 3)
-	assert.Equal(t, "--collector.grpc.tls=true", options[0])
+	assert.Equal(t, "--collector.grpc.tls.enabled=true", options[0])
 	assert.Equal(t, "--collector.grpc.tls.cert=/etc/config/tls.crt", options[1])
 	assert.Equal(t, "--collector.grpc.tls.key=/etc/config/tls.key", options[2])
 }
