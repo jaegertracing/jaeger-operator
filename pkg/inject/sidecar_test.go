@@ -597,32 +597,30 @@ func agentTags(args []string) []string {
 	return strings.Split(tagsParam, ",")
 }
 
-func TestSidecarOrderOfArgumentsOpenshiftTLS(t *testing.T) {
+func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
 	jaeger := v1.NewJaeger(types.NamespacedName{
 		Name:      "TestQueryOrderOfArguments",
 		Namespace: "test",
 	})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"b-option": "b-value",
 		"a-option": "a-value",
-		"c-option": "c-value",
 	})
 
 	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 9)
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--a-option")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--b-option")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port=dns:///testqueryorderofarguments-collector-headless.test:14250")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.tls.server-name=testqueryorderofarguments-collector-headless.test.svc.cluster.local")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.tls=true")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type=grpc")
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 7)
+	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///testqueryorderofarguments-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=testqueryorderofarguments-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
 }

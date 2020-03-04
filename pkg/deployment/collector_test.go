@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func init() {
@@ -487,27 +488,25 @@ func TestAutoscalersDisabledByExplicitOption(t *testing.T) {
 	assert.Len(t, a, 0)
 }
 
-func TestCollectorOrderOfArgumentsOpenshiftTLS(t *testing.T) {
+func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
-		"b-option": "b-value",
 		"a-option": "a-value",
-		"c-option": "c-value",
 	})
 
 	a := NewCollector(jaeger)
 	dep := a.Get()
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 7)
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 
 	// the following are added automatically
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--collector.grpc.tls.cert=/etc/config/tls.crt"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[4], "--collector.grpc.tls.key=/etc/config/tls.key"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[5], "--collector.grpc.tls=true"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[6], "--sampling.strategies-file"))
+	assert.Greater(t, len(util.FindItem("--collector.grpc.tls=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert=/etc/config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 }
