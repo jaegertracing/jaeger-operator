@@ -374,20 +374,11 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	return nil
 }
 
-func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bool) (string, http.Client) {
-	var url string
-	var httpClient http.Client
-
+func getQueryURL(jaegerInstanceName, urlPattern string) (url string) {
 	if isOpenShift(t) {
 		route := findRoute(t, fw, jaegerInstanceName)
 		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
-
 		url = fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
-		// #nosec
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-		}
-		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
 	} else {
 		ingress, err := WaitForIngress(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", retryInterval, timeout)
 		require.NoError(t, err, "Failed waiting for ingress")
@@ -395,9 +386,28 @@ func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bo
 
 		address := ingress.Status.LoadBalancer.Ingress[0].IP
 		url = fmt.Sprintf("http://"+urlPattern, address)
+	}
+
+	return url
+}
+
+func getHTTPCLient(insecure bool) (httpClient http.Client) {
+	if isOpenShift(t) {
+		transport := &http.Transport{
+			// #nosec  G402: TLS InsecureSkipVerify set true
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+		}
+		httpClient = http.Client{Timeout: 30 * time.Second, Transport: transport}
+	} else {
 		httpClient = http.Client{Timeout: time.Second}
 	}
-	logrus.Infof("Using Query URL [%v]\n", url)
+
+	return httpClient
+}
+
+func getQueryURLAndHTTPClient(jaegerInstanceName, urlPattern string, insecure bool) (string, http.Client) {
+	url := getQueryURL(jaegerInstanceName, urlPattern)
+	httpClient := getHTTPCLient(insecure)
 
 	return url, httpClient
 }

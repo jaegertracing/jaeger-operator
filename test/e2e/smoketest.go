@@ -11,7 +11,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/require"
 	"github.com/uber/jaeger-client-go/config"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -31,10 +30,11 @@ func AllInOneSmokeTest(jaegerInstanceName string) {
 	queryPort := forwardedPorts[0].Local
 	collectorPort := forwardedPorts[1].Local
 
+	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	route, hasInsecureRoute := getInsecureRoute(jaegerInstanceName)
-	if hasInsecureRoute {
-		apiTracesEndpoint = fmt.Sprintf("https://%s/api/traces", route.Spec.Host)
+	hasInsecureRoute := hasInsecureRoute(jaegerInstanceName)
+	if !isOpenShift(t) || hasInsecureRoute {
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
 		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
 	}
@@ -58,10 +58,11 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	queryPodPrefix := jaegerInstanceName + "-query"
 	collectorPodPrefix := jaegerInstanceName + "-collector"
 
+	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	route, hasInsecureRoute := getInsecureRoute(jaegerInstanceName)
-	if hasInsecureRoute {
-		apiTracesEndpoint = fmt.Sprintf("https://%s/api/traces", route.Spec.Host)
+	hasInsecureRoute := hasInsecureRoute(jaegerInstanceName)
+	if !isOpenShift(t) || hasInsecureRoute {
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
 		queryPorts := []string{"0:16686"}
 		portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
@@ -85,24 +86,19 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, hasInsecureRoute)
 }
 
-func getInsecureRoute(jaegerInstanceName string) (*osv1.Route, bool) {
-	var route *osv1.Route
+func hasInsecureRoute(jaegerInstanceName string) bool {
 	hasInsecureRoute := false
 	if isOpenShift(t) {
-		route = findRoute(t, fw, jaegerInstanceName)
-		if route != nil {
-			jaeger := getJaegerInstance(jaegerInstanceName, namespace)
-			if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
-				hasInsecureRoute = true
-			}
+		jaeger := getJaegerInstance(jaegerInstanceName, namespace)
+		if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
+			hasInsecureRoute = true
 		}
 	}
 
-	return route, hasInsecureRoute
+	return hasInsecureRoute
 }
 
 func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureRoute bool) {
-	logrus.Infof("Using Query endpoint %s", apiTracesEndpoint)
 	serviceName := "smoketest"
 	cfg := config.Configuration{
 		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
@@ -124,9 +120,11 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureRo
 		// #nosec  G402: TLS InsecureSkipVerify set true
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 	}
+	tracesEndpoint := apiTracesEndpoint + "?service=" + serviceName
+	logrus.Infof("Using traces URL %s", tracesEndpoint)
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		c := http.Client{Timeout: 3 * time.Second, Transport: transport}
-		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+"?service="+serviceName, nil)
+		req, err := http.NewRequest(http.MethodGet, tracesEndpoint, nil)
 		require.NoError(t, err)
 
 		resp, err := c.Do(req)
