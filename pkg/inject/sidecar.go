@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -131,6 +132,15 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
 			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
+		}
+	}
+
+	// Enable tls by default for openshift platform
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
+			args = append(args, "--reporter.grpc.tls.enabled=true")
+			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
 		}
 	}
 

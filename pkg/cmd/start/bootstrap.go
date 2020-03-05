@@ -71,6 +71,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 		log.Fatal(err)
 	}
 
+	span.SetAttribute(key.String("Platform", viper.GetString("platform")))
 	watchNamespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		span.SetStatus(codes.Internal)
