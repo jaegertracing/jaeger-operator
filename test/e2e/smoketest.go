@@ -32,14 +32,14 @@ func AllInOneSmokeTest(jaegerInstanceName string) {
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	hasInsecureRoute := hasInsecureRoute(jaegerInstanceName)
-	if !isOpenShift(t) || hasInsecureRoute {
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	if insecureEndpoint {
 		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
 		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
 	}
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, hasInsecureRoute)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
 }
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
@@ -60,8 +60,8 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	hasInsecureRoute := hasInsecureRoute(jaegerInstanceName)
-	if !isOpenShift(t) || hasInsecureRoute {
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	if insecureEndpoint {
 		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
 		queryPorts := []string{"0:16686"}
@@ -83,22 +83,23 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	collectorPort := forwardedCollectorPorts[0].Local
 
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, hasInsecureRoute)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
 }
 
-func hasInsecureRoute(jaegerInstanceName string) bool {
-	hasInsecureRoute := false
-	if isOpenShift(t) {
+func hasInsecureEndpoint(jaegerInstanceName string) bool {
+	if !isOpenShift(t) {
+		return true
+	} else {
 		jaeger := getJaegerInstance(jaegerInstanceName, namespace)
 		if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
-			hasInsecureRoute = true
+			return true
+		} else {
+			return false
 		}
 	}
-
-	return hasInsecureRoute
 }
 
-func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureRoute bool) {
+func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEndpoint bool) {
 	serviceName := "smoketest"
 	cfg := config.Configuration{
 		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
@@ -115,7 +116,7 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureRo
 	closer.Close()
 
 	transport := &http.Transport{}
-	if hasInsecureRoute {
+	if hasInsecureEndpoint {
 		insecure := true
 		// #nosec  G402: TLS InsecureSkipVerify set true
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
