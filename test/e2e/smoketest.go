@@ -89,14 +89,13 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 func hasInsecureEndpoint(jaegerInstanceName string) bool {
 	if !isOpenShift(t) {
 		return true
-	} else {
-		jaeger := getJaegerInstance(jaegerInstanceName, namespace)
-		if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
-			return true
-		} else {
-			return false
-		}
 	}
+
+	jaeger := getJaegerInstance(jaegerInstanceName, namespace)
+	if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
+		return true
+	}
+	return false
 }
 
 func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEndpoint bool) {
