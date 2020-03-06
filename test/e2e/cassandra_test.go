@@ -58,18 +58,21 @@ func (suite *CassandraTestSuite) AfterTest(suiteName, testName string) {
 
 // Cassandra runs a test with Cassandra as the backing storage
 func (suite *CassandraTestSuite) TestCassandra() {
+	waitForCassandra()
+
+	jaegerInstanceName := "with-cassandra"
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
-	j := getJaegerWithCassandra(namespace)
+	j := getJaegerWithCassandra(jaegerInstanceName, namespace)
 
 	log.Infof("passing %v", j)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(j)
 
-	err = WaitForJob(t, fw.KubeClient, namespace, "with-cassandra-cassandra-schema-job", retryInterval, timeout)
+	err = WaitForJob(t, fw.KubeClient, namespace, jaegerInstanceName+"-cassandra-schema-job", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for startup")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "with-cassandra", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
 
 	AllInOneSmokeTest("with-cassandra")
@@ -85,7 +88,12 @@ func (suite *CassandraTestSuite) TestCassandraSparkDependencies() {
 	require.NoError(t, err, "SparkTest failed")
 }
 
-func getJaegerWithCassandra(s string) *v1.Jaeger {
+func waitForCassandra() {
+	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for cassandra")
+}
+
+func getJaegerWithCassandra(jaegerInstanceName, namespace string) *v1.Jaeger {
 	ingressEnabled := true
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -93,7 +101,7 @@ func getJaegerWithCassandra(s string) *v1.Jaeger {
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "with-cassandra",
+			Name:      jaegerInstanceName,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
