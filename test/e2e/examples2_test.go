@@ -62,7 +62,7 @@ func (suite *ExamplesTestSuite2) TestWithBadgerAndVolumeExample() {
 
 func (suite *ExamplesTestSuite2) TestSimpleProdWithVolumes() {
 	yamlFileName := "../../deploy/examples/simple-prod-with-volumes.yaml"
-	smokeTestProductionExample("simple-prod", yamlFileName)
+	smokeTestProductionExample("simple-prod-with-volumes", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdExample() {

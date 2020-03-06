@@ -2,7 +2,7 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: simple-prod
+  name: simple-prod-with-volumes
 spec:
   strategy: production
   storage:
