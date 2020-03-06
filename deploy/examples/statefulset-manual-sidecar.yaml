@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: example-statefulset
+  namespace: example-ns
   labels:
     app: example-app
 spec:
@@ -22,7 +23,7 @@ spec:
             - containerPort: 8080
               protocol: TCP
         - name: jaeger-agent
-          image: jaegertracing/jaeger-agent:1.17.0
+          image: jaegertracing/jaeger-agent:1.17.0  # The agent version should match the operator version
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5775
@@ -41,5 +42,5 @@ spec:
               name: admin-http
               protocol: TCP
           args:
-            - --reporter.grpc.host-port=dns:///jaeger-collector-headless.ephemeral-roles:14250
+            - --reporter.grpc.host-port=dns:///jaeger-collector-headless.example-ns:14250
             - --reporter.type=grpc
