@@ -139,7 +139,8 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	f := framework.Global
 	// wait for the operator to be ready
 	if !usingOLM {
-		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
+		// TODO replace 10*time.minute with timeout once #947 is fixed
+		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, 10*time.Minute)
 		if err != nil {
 			return nil, err
 		}
