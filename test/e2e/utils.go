@@ -104,6 +104,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	if err != nil {
 		t.Errorf("failed to get the operator's namespace: %v", err)
 	}
+	logrus.Infof("Using namespace %s", namespace)
 
 	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	if err != nil {
