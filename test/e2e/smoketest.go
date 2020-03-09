@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -8,16 +9,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/stretchr/testify/require"
 	"github.com/uber/jaeger-client-go/config"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 // AllInOneSmokeTest is for the all-in-one image, where query and collector use the same pod
-func AllInOneSmokeTest(resourceName string) {
+func AllInOneSmokeTest(jaegerInstanceName string) {
 	allInOneImageName := "all-in-one"
 	ports := []string{"0:16686", "0:14268"}
-	portForw, closeChan := CreatePortForward(namespace, resourceName, allInOneImageName, ports, fw.KubeConfig)
+	portForw, closeChan := CreatePortForward(namespace, jaegerInstanceName, allInOneImageName, ports, fw.KubeConfig)
 	defer portForw.Close()
 	defer close(closeChan)
 	forwardedPorts, err := portForw.GetPorts()
@@ -25,9 +30,16 @@ func AllInOneSmokeTest(resourceName string) {
 	queryPort := forwardedPorts[0].Local
 	collectorPort := forwardedPorts[1].Local
 
-	apiTracesEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	// Use ingress for k8s or on OpenShift if we have an insecure route
+	var apiTracesEndpoint string
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	if insecureEndpoint {
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
+	} else {
+		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	}
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
 }
 
 // ProductionSmokeTest should be used if query and collector are in separate pods
@@ -40,19 +52,27 @@ func ProductionSmokeTestWithNamespace(resourceName, smokeTestNamespace string) {
 	productionSmokeTest(resourceName, smokeTestNamespace)
 }
 
-func productionSmokeTest(resourceName, smokeTestNamespace string) {
+func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	queryPodImageName := "jaeger-query"
 	collectorPodImageName := "jaeger-collector"
-	queryPodPrefix := resourceName + "-query"
-	collectorPodPrefix := resourceName + "-collector"
+	queryPodPrefix := jaegerInstanceName + "-query"
+	collectorPodPrefix := jaegerInstanceName + "-collector"
 
-	queryPorts := []string{"0:16686"}
-	portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
-	defer portForw.Close()
-	defer close(closeChan)
-	forwardedQueryPorts, err := portForw.GetPorts()
-	require.NoError(t, err)
-	queryPort := forwardedQueryPorts[0].Local
+	// Use ingress for k8s or on OpenShift if we have an insecure route
+	var apiTracesEndpoint string
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	if insecureEndpoint {
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
+	} else {
+		queryPorts := []string{"0:16686"}
+		portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
+		defer portForw.Close()
+		defer close(closeChan)
+		forwardedQueryPorts, err := portForw.GetPorts()
+		require.NoError(t, err)
+		queryPort := forwardedQueryPorts[0].Local
+		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	}
 
 	collectorPorts := []string{"0:14268"}
 	portForwColl, closeChanColl := CreatePortForward(smokeTestNamespace, collectorPodPrefix, collectorPodImageName, collectorPorts, fw.KubeConfig)
@@ -62,12 +82,23 @@ func productionSmokeTest(resourceName, smokeTestNamespace string) {
 	require.NoError(t, err)
 	collectorPort := forwardedCollectorPorts[0].Local
 
-	apiTracesEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
-	executeSmokeTest(apiTracesEndpoint, collectorEndpoint)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
 }
 
-func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
+func hasInsecureEndpoint(jaegerInstanceName string) bool {
+	if !isOpenShift(t) {
+		return true
+	}
+
+	jaeger := getJaegerInstance(jaegerInstanceName, namespace)
+	if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
+		return true
+	}
+	return false
+}
+
+func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEndpoint bool) {
 	serviceName := "smoketest"
 	cfg := config.Configuration{
 		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
@@ -83,9 +114,17 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string) {
 		Finish()
 	closer.Close()
 
+	transport := &http.Transport{}
+	if hasInsecureEndpoint {
+		insecure := true
+		// #nosec  G402: TLS InsecureSkipVerify set true
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	}
+	tracesEndpoint := apiTracesEndpoint + "?service=" + serviceName
+	logrus.Infof("Using traces URL %s", tracesEndpoint)
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		c := http.Client{Timeout: 3 * time.Second}
-		req, err := http.NewRequest(http.MethodGet, apiTracesEndpoint+"?service="+serviceName, nil)
+		c := http.Client{Timeout: 3 * time.Second, Transport: transport}
+		req, err := http.NewRequest(http.MethodGet, tracesEndpoint, nil)
 		require.NoError(t, err)
 
 		resp, err := c.Do(req)

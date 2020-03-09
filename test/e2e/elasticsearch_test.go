@@ -155,6 +155,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 }
 
 func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
+	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -165,6 +166,10 @@ func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
@@ -179,6 +184,7 @@ func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 
 func getJaegerAllInOne(name string) *v1.Jaeger {
 	numberOfDays := 0
+	ingressEnabled := true
 	j := &v1.Jaeger{
 		TypeMeta: v12.TypeMeta{
 			Kind:       "Jaeger",
@@ -189,6 +195,10 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
 			Strategy: v1.DeploymentStrategyAllInOne,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",

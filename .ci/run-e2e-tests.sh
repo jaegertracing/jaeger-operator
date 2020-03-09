@@ -5,7 +5,8 @@ set -x
 
 ## Since we're running MiniKube with --vm-driver none, change imagePullPolicy to get the image locally
 sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' test/operator.yaml
-
+## remove this once #947 is fixed
+export VERBOSE='-v -timeout 20m'
 if [ "${TEST_GROUP}" = "es" ]; then
     echo "Running elasticsearch tests"
     make es
