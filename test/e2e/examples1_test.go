@@ -106,7 +106,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	// First deploy a Jaeger instance
 	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
-	err := WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout)
+	err := WaitForDeployment(t, fw.KubeClient, namespace, "simplest", 1, retryInterval, timeout+(1*time.Minute))
 	require.NoError(t, err)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
