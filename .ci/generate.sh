@@ -16,6 +16,14 @@ if [ $? != 0 ]; then
     fi
 fi
 
+CLIENTGEN=client-gen
+command -v ${CLIENTGEN} > /dev/null
+if [ $? != 0 ]; then
+    if [ -n ${GOPATH} ]; then
+        CLIENTGEN="${GOPATH}/bin/client-gen"
+    fi
+fi
+
 # generate the CRD(s)
 ${CONTROLLERGEN} crd paths=./pkg/apis/jaegertracing/... crd:maxDescLen=0,trivialVersions=true output:dir=./deploy/crds/
 RT=$?
@@ -40,5 +48,19 @@ operator-sdk generate k8s
 RT=$?
 if [ ${RT} != 0 ]; then
     echo "Failed to generate the Kubernetes stubs."
+    exit ${RT}
+fi
+
+# generate the clients
+${CLIENTGEN} \
+    --input "jaegertracing/v1" \
+    --input-base github.com/jaegertracing/jaeger-operator/pkg/apis \
+    --go-header-file /dev/null \
+    --output-package github.com/jaegertracing/jaeger-operator/pkg/client \
+    --clientset-name versioned \
+    --output-base ../../../
+RT=$?
+if [ ${RT} != 0 ]; then
+    echo "Failed to generate the Jaeger Tracing clients."
     exit ${RT}
 fi

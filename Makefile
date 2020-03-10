@@ -25,7 +25,9 @@ SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
-UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... | grep -v elasticsearch/v1 | grep -v kafka/v1beta1)
+
+UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... | grep -v elasticsearch/v1 | grep -v kafka/v1beta1 | grep -v client/versioned)
+
 TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/test/global-manifests.yaml -root .
 
 .DEFAULT_GOAL := build
@@ -37,8 +39,10 @@ check:
 	@[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 .PHONY: ensure-generate-is-noop
-ensure-generate-is-noop: generate
+ensure-generate-is-noop: generate format
 	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
+	@git diff -s --exit-code pkg/client/versioned || (echo "Build failed: the versioned clients aren't up to date. Run 'make generate'." && exit 1)
+
 
 .PHONY: format
 format:
@@ -269,8 +273,11 @@ crd:
 ingress:
 	@minikube addons enable ingress
 
-.PHONY: generate
-generate:
+.PHONY: generate 
+generate: internal-generate format
+
+.PHONY: internal-generate
+internal-generate:
 	@GOPATH=${GOPATH} ./.ci/generate.sh
 
 .PHONY: test
@@ -298,6 +305,7 @@ install-tools:
 		github.com/securego/gosec/cmd/gosec \
 		golang.org/x/tools/cmd/goimports \
 		sigs.k8s.io/controller-tools/cmd/controller-gen \
+		k8s.io/code-generator/cmd/client-gen \
 		k8s.io/kube-openapi/cmd/openapi-gen
 
 .PHONY: install
