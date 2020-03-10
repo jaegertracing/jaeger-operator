@@ -1,6 +1,9 @@
 package kafka
 
 import (
+	"fmt"
+
+	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -11,6 +14,20 @@ import (
 // Persistent returns the custom resource for a persistent Kafka
 // Reference: https://github.com/strimzi/strimzi-kafka-operator/blob/master/examples/kafka/kafka-persistent.yaml
 func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
+	var replicas, replFactor, minIst, storage uint
+	if viper.GetBool("kafka-provisioning-minimal") {
+		jaeger.Logger().Warn("usage of kafka-provisioning-minimal is not supported")
+		replicas = 1
+		replFactor = 1
+		minIst = 1
+		storage = 10
+	} else {
+		replicas = 3
+		replFactor = 3
+		minIst = 2
+		storage = 100
+	}
+
 	trueVar := true
 	return v1beta1.Kafka{
 		ObjectMeta: metav1.ObjectMeta{
@@ -30,15 +47,15 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 		Spec: v1beta1.KafkaSpec{
 			v1.NewFreeForm(map[string]interface{}{
 				"kafka": map[string]interface{}{
-					"replicas": 3,
+					"replicas": uint(replicas),
 					"listeners": map[string]interface{}{
 						"plain": map[string]interface{}{},
 						"tls":   map[string]interface{}{},
 					},
 					"config": map[string]interface{}{
-						"offsets.topic.replication.factor":         3,
-						"transaction.state.log.replication.factor": 3,
-						"transaction.state.log.min.isr":            2,
+						"offsets.topic.replication.factor":         replFactor,
+						"transaction.state.log.replication.factor": replFactor,
+						"transaction.state.log.min.isr":            minIst,
 						"log.message.format.version":               "2.3",
 					},
 					"storage": map[string]interface{}{
@@ -46,16 +63,16 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 						"volumes": []map[string]interface{}{{
 							"id":          0,
 							"type":        "persistent-claim",
-							"size":        "100Gi",
+							"size":        fmt.Sprintf("%dGi", storage),
 							"deleteClaim": false,
 						}},
 					},
 				},
 				"zookeeper": map[string]interface{}{
-					"replicas": 3,
+					"replicas": uint(replicas),
 					"storage": map[string]interface{}{
 						"type":        "persistent-claim",
-						"size":        "100Gi",
+						"size":        fmt.Sprintf("%dGi", storage),
 						"deleteClaim": false,
 					},
 				},
