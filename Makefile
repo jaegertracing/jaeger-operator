@@ -242,6 +242,7 @@ kafka: deploy-kafka-operator
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@curl --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml
+	@sed -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka
