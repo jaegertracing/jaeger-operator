@@ -7,6 +7,7 @@ import (
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -147,6 +148,35 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	// the only way to reliably test this is to verify that the operator didn't attempt to set the ownership field
 	assert.Equal(t, "another-identity", persisted.Labels[v1.LabelOperatedBy])
 	assert.Equal(t, v1.JaegerPhase(""), persisted.Status.Phase)
+}
+
+func TestGetResourceFromNonCachedClient(t *testing.T) {
+	// prepare
+	nsn := types.NamespacedName{Name: "my-instance"}
+	jaeger := v1.NewJaeger(nsn)
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+
+	// simulates the case where the cache is stale: the instance has been deleted (client) but the cache hasn't been updated (cachedClient)
+	// we trigger the reconciliation and expect it to finish without errors, while we expect to not have an instance afterwards
+	// if the code is using the cached client, we would end up either with an error (trying to update an instance that does not exist)
+	// or we'd end up with an instance
+	cachedClient := fake.NewFakeClient(jaeger)
+	client := fake.NewFakeClient()
+
+	r := &ReconcileJaeger{client: cachedClient, scheme: s, rClient: client}
+	req := reconcile.Request{NamespacedName: nsn}
+
+	// test
+	_, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	persisted := &v1.Jaeger{}
+	err = client.Get(context.Background(), req.NamespacedName, persisted)
+	assert.Error(t, err)
+	assert.True(t, errors.IsNotFound(err))
 }
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
