@@ -71,7 +71,7 @@ func TestDeletedInstance(t *testing.T) {
 	// no known objects
 	cl := fake.NewFakeClient()
 
-	r := &ReconcileJaeger{client: cl, scheme: s}
+	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -132,7 +132,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
 	cl := fake.NewFakeClient(jaeger)
-	r := &ReconcileJaeger{client: cl, scheme: s}
+	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
 
 	// test
