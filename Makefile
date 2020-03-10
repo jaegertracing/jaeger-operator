@@ -141,7 +141,7 @@ e2e-tests-examples1: prepare-e2e-tests es cassandra deploy-es-operator
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-examples2
-e2e-tests-examples2: prepare-e2e-tests es kafka deploy-es-operator
+e2e-tests-examples2: prepare-e2e-tests es kafka
 	@echo Running Example end-to-end tests part 2...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
 

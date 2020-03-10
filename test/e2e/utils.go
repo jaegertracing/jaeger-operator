@@ -93,8 +93,9 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	t.Logf("debug mode: %v", debugMode)
 	ctx := framework.NewTestCtx(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
+	start := time.Now()
 	if !usingOLM {
-		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: 10 * time.Minute, RetryInterval: retryInterval})
 		if err != nil {
 			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
@@ -103,6 +104,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	if err != nil {
 		t.Errorf("failed to get the operator's namespace: %v", err)
 	}
+	logrus.Infof("Using namespace %s", namespace)
 
 	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	if err != nil {
@@ -145,6 +147,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			return nil, err
 		}
 	}
+	logrus.Infof("Creation of Jaeger Operator in namespace %s took %v", namespace, time.Since(start))
 
 	return ctx, nil
 }
