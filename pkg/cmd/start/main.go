@@ -86,6 +86,9 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
 	viper.BindPFlag("tracing-enabled", cmd.Flags().Lookup("tracing-enabled"))
 
+	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
+	viper.BindPFlag("kafka-provisioning-minimal", cmd.Flags().Lookup("kafka-provisioning-minimal"))
+
 	return cmd
 }
 
