@@ -41,14 +41,26 @@ const (
 func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("deployment", dep.Name)
-	labelValue, hasLabel := dep.Labels[Label]
-	if jaeger == nil || (hasLabel && labelValue != jaeger.Name) {
-		logFields.Trace("skipping sidecar injection")
+
+	if jaeger == nil {
+		logFields.Trace("no Jaeger instance found, skipping sidecar injection")
+		return dep
+	}
+
+	if val, ok := dep.Labels[Label]; ok && val != jaeger.Name {
+		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
+		return dep
+	}
+
+	decorate(dep)
+	logFields.Debug("injecting sidecar")
+	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
+	jaegerName := util.Truncate(jaeger.Name, 63)
+
+	if dep.Labels == nil {
+		dep.Labels = map[string]string{Label: jaegerName}
 	} else {
-		decorate(dep)
-		logFields.Debug("injecting sidecar")
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
-		setInjectedInstanceLabel(dep, jaeger)
+		dep.Labels[Label] = jaegerName
 	}
 
 	return dep
@@ -71,15 +83,6 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		return false
 	}
 	return !HasJaegerAgent(dep)
-}
-
-func setInjectedInstanceLabel(target *appsv1.Deployment, jaeger *v1.Jaeger) {
-	jaegerName := util.Truncate(jaeger.Name, 63)
-	if target.Labels == nil {
-		target.Labels = map[string]string{Label: jaegerName}
-	} else {
-		target.Labels[Label] = jaegerName
-	}
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
