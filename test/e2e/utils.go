@@ -228,13 +228,20 @@ func printTestStackTrace() {
 	}
 }
 
-func undeployJaegerInstance(jaeger *v1.Jaeger) {
+func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	if !debugMode || !t.Failed() {
 		err := fw.Client.Delete(goctx.TODO(), jaeger)
-		require.NoError(t, err, "Error undeploying Jaeger")
-		err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout)
-		require.NoError(t, err)
+		if err := fw.Client.Delete(goctx.TODO(), jaeger); err != nil {
+			return false
+		}
+
+		if err = e2eutil.WaitForDeletion(t, fw.Client.Client, jaeger, retryInterval, timeout); err != nil {
+			return false
+		}
+		return true
 	}
+	// Always return true, we don't care
+	return true
 }
 
 func getJaegerInstance(name, namespace string) *v1.Jaeger {

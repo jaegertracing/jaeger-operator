@@ -66,17 +66,11 @@ func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
 
-	agentAsSideCarDeleted := false
-
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	jaegerInstanceName := "agent-as-sidecar"
 	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
-	defer func() {
-		if !agentAsSideCarDeleted {
-			undeployJaegerInstance(j)
-		}
-	}()
+	undeployJaegerInstance(j)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
 
@@ -128,7 +122,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 	err = fw.Client.Delete(goctx.TODO(), j)
 	require.NoError(t, err, "Error deleting instance")
-	agentAsSideCarDeleted = true
 
 	url, httpClient = getQueryURLAndHTTPClient(otherJaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err = http.NewRequest(http.MethodGet, url, nil)
