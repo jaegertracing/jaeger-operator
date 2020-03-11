@@ -48,9 +48,15 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		return dep
 	}
 
+
 	if val, ok := dep.Labels[Label]; ok && val != jaeger.Name {
 		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
 		return dep
+	}
+
+	// This is an update
+	if HasJaegerAgent(dep) {
+		deleteAgentContainer(dep)
 	}
 
 	decorate(dep)
@@ -83,7 +89,8 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	if dep.Labels["app"] == "jaeger" {
 		return false
 	}
-	return !HasJaegerAgent(dep)
+
+	return true
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
@@ -167,6 +174,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		}
 
 		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
+
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
@@ -283,6 +291,19 @@ func CleanSidecar(deployment *appsv1.Deployment) {
 			// delete jaeger-agent container
 			deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers[:c], deployment.Spec.Template.Spec.Containers[c+1:]...)
 			break
+		}
+	}
+}
+
+func deleteAgentContainer(dep *appsv1.Deployment) {
+	// but does it already have one?
+	for i, container := range dep.Spec.Template.Spec.Containers {
+		if container.Name == "jaeger-agent" {
+			if i < len(dep.Spec.Template.Spec.Containers)-1 {
+				copy(dep.Spec.Template.Spec.Containers[i:], dep.Spec.Template.Spec.Containers[i+1:])
+			}
+			dep.Spec.Template.Spec.Containers = dep.Spec.Template.Spec.Containers[:len(dep.Spec.Template.Spec.Containers)-1]
+			return
 		}
 	}
 }
