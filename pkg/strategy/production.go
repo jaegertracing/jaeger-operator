@@ -2,13 +2,11 @@ package strategy
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/core"
 	"go.opentelemetry.io/otel/api/key"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,7 +22,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
-	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -74,21 +71,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
-		}
-
-		// For openshift platform, we want the clusterIP service to be annotated
-		// with the cert secret-name tag
-		for k := range c.services {
-			span.AddEvent(ctx, "Checking service", core.KeyValue{Key: "Servicename", Value: core.String(c.services[k].Name)})
-			if c.services[k].Name == service.GetNameForHeadlessCollectorService(jaeger) {
-				if c.services[k].Annotations == nil {
-					c.services[k].Annotations = map[string]string{
-						"service.beta.openshift.io/serving-cert-secret-name": fmt.Sprintf("%s-tls", c.services[k].Name),
-					}
-				} else {
-					c.services[k].Annotations["service.beta.openshift.io/serving-cert-secret-name"] = fmt.Sprintf("%s-tls", c.services[k].Name)
-				}
-			}
 		}
 	} else {
 		span.SetAttribute(key.String("Platform", v1.FlagPlatformKubernetes))

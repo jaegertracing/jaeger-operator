@@ -27,14 +27,14 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 	}
 	volumeMount := corev1.VolumeMount{
 		Name:      configurationVolumeName(jaeger),
-		MountPath: "/etc/config",
+		MountPath: "/etc/tls-config",
 		ReadOnly:  true,
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 	*options = append(*options, "--collector.grpc.tls.enabled=true")
-	*options = append(*options, "--collector.grpc.tls.cert=/etc/config/tls.crt")
-	*options = append(*options, "--collector.grpc.tls.key=/etc/config/tls.key")
+	*options = append(*options, "--collector.grpc.tls.cert=/etc/tls-config/tls.crt")
+	*options = append(*options, "--collector.grpc.tls.key=/etc/tls-config/tls.key")
 }
 
 func configurationVolumeName(jaeger *v1.Jaeger) string {
