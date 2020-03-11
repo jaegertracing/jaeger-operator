@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +19,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/spf13/viper"
 )
 
 // AllInOne builds pods for jaegertracing/all-in-one
