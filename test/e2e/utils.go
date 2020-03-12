@@ -38,7 +38,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Minute * 2
+	timeout              = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
 	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
@@ -60,6 +60,18 @@ func getBoolEnv(key string, defaultValue bool) bool {
 			logrus.Warnf("Error [%v] received converting environment variable [%s] using [%v]", err, key, boolValue)
 		}
 		return boolValue
+	}
+	return defaultValue
+}
+
+func getIntEnv(key string, defaultValue int) int {
+	if value, ok := os.LookupEnv(key); ok {
+		intValue, err := strconv.Atoi(value)
+		if err != nil {
+			logrus.Warnf("Error [%v] received converting environment variable [%s] using [%v]", err, key, value)
+		}
+		logrus.Infof("Using test timeout of %d minute(s)", intValue)
+		return intValue
 	}
 	return defaultValue
 }
