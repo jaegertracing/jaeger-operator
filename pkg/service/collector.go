@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -20,7 +22,8 @@ func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *co
 	svc := collectorService(jaeger, selector)
 	svc.Name = GetNameForHeadlessCollectorService(jaeger)
 	svc.Annotations = map[string]string{
-		"prometheus.io/scrape": "false",
+		"prometheus.io/scrape":                               "false",
+		"service.beta.openshift.io/serving-cert-secret-name": fmt.Sprintf("%s-tls", svc.Name),
 	}
 	svc.Spec.ClusterIP = "None"
 	return svc

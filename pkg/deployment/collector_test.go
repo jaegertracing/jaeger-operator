@@ -506,7 +506,7 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 
 	// the following are added automatically
 	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert=/etc/config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 }

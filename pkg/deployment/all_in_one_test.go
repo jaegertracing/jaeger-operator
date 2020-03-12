@@ -1,7 +1,6 @@
 package deployment
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -11,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func init() {
@@ -275,11 +275,41 @@ func TestAllInOneOrderOfArguments(t *testing.T) {
 	dep := a.Get()
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+	assert.NotEmpty(t, util.FindItem("--a-option", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--b-option", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--c-option", dep.Spec.Template.Spec.Containers[0].Args))
 
 	// the following are added automatically
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
+	assert.NotEmpty(t, util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[0].Args))
+}
+
+func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
+		"a-option": "a-value",
+	})
+
+	// test
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+
+	// verify
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 9)
+	assert.NotEmpty(t, util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args))
+
+	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.ca", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.enabled", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.server-name", dep.Spec.Template.Spec.Containers[0].Args))
+	assert.Equal(t, "--reporter.type=grpc", util.FindItem("--reporter.type", dep.Spec.Template.Spec.Containers[0].Args))
 }
