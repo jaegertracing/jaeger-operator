@@ -70,7 +70,6 @@ func getIntEnv(key string, defaultValue int) int {
 		if err != nil {
 			logrus.Warnf("Error [%v] received converting environment variable [%s] using [%v]", err, key, value)
 		}
-		logrus.Infof("Using test timeout of %d minute(s)", intValue)
 		return intValue
 	}
 	return defaultValue
