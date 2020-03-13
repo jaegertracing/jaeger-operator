@@ -20,8 +20,8 @@ KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/downlo
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.3
 PROMETHEUS_OPERATOR_TAG ?= v0.34.0
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.3
-ES_PROXY_IMAGE ?= pavolloffay/elasticsearch-proxy:latest
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
+ES_PROXY_IMAGE ?= quay.io/openshift/origin-elasticsearch-proxy:latest
 SDK_VERSION=v0.15.1
 GOPATH ?= "$(HOME)/go"
 
@@ -190,7 +190,7 @@ else
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl set image deployment/elasticsearch-operator elasticsearch-operator=${ES_OPERATOR_IMAGE} -n ${ES_OPERATOR_NAMESPACE}
-	@kubectl set env deployment.apps/elasticsearch-operator ELASTICSEARCH_PROXY=${ES_PROXY_IMAGE} -n ${ES_OPERATOR_IMAGE}
+	@kubectl set env deployment.apps/elasticsearch-operator ELASTICSEARCH_PROXY=${ES_PROXY_IMAGE} -n ${ES_OPERATOR_NAMESPACE}
 endif
 
 .PHONY: undeploy-es-operator
