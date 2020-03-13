@@ -223,7 +223,7 @@ func TestSidecarNeeded(t *testing.T) {
 		{
 			dep:    depWithAgent,
 			ns:     ns(map[string]string{}),
-			needed: false,
+			needed: true,
 		},
 		{
 			dep:    dep(map[string]string{}, map[string]string{"app": "jaeger"}),
