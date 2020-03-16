@@ -202,7 +202,7 @@ func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	route := findRoute(t, fw, name)
+	route := findRoute(t, fw, name, namespace)
 
 	suite.host = route.Spec.Host
 	suite.queryServiceEndPoint = fmt.Sprintf("https://%s/api/traces?service=%s", suite.host, testServiceName)

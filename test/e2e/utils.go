@@ -368,7 +368,7 @@ func smokeTestProductionExample(name, yamlFileName string) {
 	ProductionSmokeTest(name)
 }
 
-func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
+func findRoute(t *testing.T, f *framework.Framework, name, namespace string) *osv1.Route {
 	routeList := &osv1.RouteList{}
 	err := wait.Poll(retryInterval, timeout, func() (bool, error) {
 		if err := f.Client.List(context.Background(), routeList); err != nil {
@@ -387,7 +387,7 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 	// Truncate the namespace name and use that to find the route
 	target := util.DNSName(util.Truncate(name, 62-len(namespace)))
 	for _, r := range routeList.Items {
-		if strings.HasPrefix(r.Spec.Host, target) {
+		if r.Namespace == namespace && strings.HasPrefix(r.Spec.Host, target) {
 			return &r
 		}
 	}
@@ -398,7 +398,7 @@ func findRoute(t *testing.T, f *framework.Framework, name string) *osv1.Route {
 
 func getQueryURL(jaegerInstanceName, urlPattern string) (url string) {
 	if isOpenShift(t) {
-		route := findRoute(t, fw, jaegerInstanceName)
+		route := findRoute(t, fw, jaegerInstanceName, namespace)
 		require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
 		url = fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
 	} else {

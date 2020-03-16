@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
@@ -64,8 +66,7 @@ func (suite *MiscTestSuite) SetupTest() {
 
 func (suite *MiscTestSuite) AfterTest(suiteName, testName string) {
 	if debugMode && t.Failed() {
-		log.Errorf("Test %s failed - terminating suite\n", t.Name())
-		os.Exit(1)
+		log.Errorf("Test %s failed", t.Name())
 	}
 }
 
@@ -86,6 +87,57 @@ func (suite *MiscTestSuite) TestValidateBuildImage() {
 	} else {
 		validateBuildImageInTestNamespace(buildImage)
 	}
+}
+
+// This is a test of the findRoute function, not a product test
+func (suite *MiscTestSuite) TestFindRoute() {
+	if !isOpenShift(t) {
+		t.Skip("This test only runs on Openshift")
+	}
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
+
+	jaegerInstanceName := "simplest"
+	jaegerInstance := getSimplestJaeger(jaegerInstanceName, namespace)
+	err := fw.Client.Create(context.Background(), jaegerInstance, cleanupOptions)
+	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(jaegerInstance)
+
+	// Create a second namespace and deploy another instance named "simplest"
+	secondContext, err := prepare(t)
+	if err != nil {
+		if secondContext != nil {
+			secondContext.Cleanup()
+		}
+		require.FailNow(t, "Failed in prepare with: "+err.Error())
+	}
+	defer secondContext.Cleanup()
+
+	secondJaegerInstanceName := jaegerInstanceName + "but-even-longer"
+	secondNamespace, err := secondContext.GetNamespace()
+	secondJaegerInstance := getSimplestJaeger(secondJaegerInstanceName, secondNamespace)
+	err = fw.Client.Create(context.Background(), secondJaegerInstance, cleanupOptions)
+	require.NoError(t, err, "Error deploying example Jaeger")
+	defer undeployJaegerInstance(secondJaegerInstance)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, secondNamespace, secondJaegerInstanceName, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for deployment")
+
+	// Make sure findRoute returns the correct routes for each namespace
+	route := findRoute(t, fw, jaegerInstanceName, namespace)
+	require.Equal(t, namespace, route.Namespace)
+	truncatedInstanceName := util.DNSName(util.Truncate(jaegerInstanceName, 62-len(namespace)))
+	require.True(t, strings.HasPrefix(route.Spec.Host, truncatedInstanceName))
+	require.True(t, strings.Contains(route.Spec.Host, namespace))
+
+	secondRoute := findRoute(t, fw, secondJaegerInstanceName, secondNamespace)
+	require.Equal(t, secondNamespace, secondRoute.Namespace)
+	secondTruncatedInstanceName := util.DNSName(util.Truncate(secondJaegerInstanceName, 62-len(secondNamespace)))
+	require.True(t, strings.HasPrefix(secondRoute.Spec.Host, secondTruncatedInstanceName))
+	require.True(t, strings.Contains(secondRoute.Spec.Host, secondNamespace))
+	require.False(t, secondTruncatedInstanceName == secondJaegerInstanceName)
 }
 
 func (suite *MiscTestSuite) TestBasicOAuth() {
@@ -112,7 +164,7 @@ func (suite *MiscTestSuite) TestBasicOAuth() {
 	require.NoError(t, err, "Error waiting for Jaeger deployment")
 
 	urlPattern := "%s/api/services"
-	route := findRoute(t, fw, jaegerInstanceName)
+	route := findRoute(t, fw, jaegerInstanceName, namespace)
 	require.Len(t, route.Status.Ingress, 1, "Wrong number of ingresses.")
 	url := fmt.Sprintf("https://"+urlPattern, route.Spec.Host)
 	transport := &http.Transport{
@@ -248,4 +300,19 @@ func validateBuildImageInTestNamespace(buildImage string) {
 	_, ok := imagesMap[buildImage]
 	require.Truef(t, ok, "Expected operator image %s not found in map %s\n", buildImage, imagesMap)
 	t.Logf("Using jaeger-operator image(s) %s\n", imagesMap)
+}
+
+func getSimplestJaeger(jaegerInstanceName, namespace string) *v1.Jaeger {
+	jaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jaegerInstanceName,
+			Namespace: namespace,
+		},
+	}
+
+	return jaeger
 }
