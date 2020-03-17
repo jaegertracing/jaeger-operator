@@ -1,7 +1,25 @@
 Changes by Version
 ==================
 
-1.17.0 (2019-02-26)
+1.17.1 (2020-03-17)
+-------------------
+
+Breaking changes:
+* None
+
+Other noteworthy changes:
+* No modify annotation when injecting ([#902](https://github.com/jaegertracing/jaeger-operator/pull/902), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add Jaeger client generated code through client-gen ([#921](https://github.com/jaegertracing/jaeger-operator/pull/921), [@rareddy](https://github.com/rareddy))
+* Use non-cached CR on reconciliation ([#940](https://github.com/jaegertracing/jaeger-operator/pull/940), [@jpkrohling](https://github.com/jpkrohling))
+* Update README.md ([#954](https://github.com/jaegertracing/jaeger-operator/pull/954), [@slikk66](https://github.com/slikk66))
+* Add example StatefulSet with manual sidecar definition ([#949](https://github.com/jaegertracing/jaeger-operator/pull/949), [@ewohltman](https://github.com/ewohltman))
+* [oc] Auto create TLS cert in collector deployment ([#914](https://github.com/jaegertracing/jaeger-operator/pull/914), [@annanay25](https://github.com/annanay25))
+* Reorganized cluster roles, added rules to watch all namespaces ([#936](https://github.com/jaegertracing/jaeger-operator/pull/936), [@jpkrohling](https://github.com/jpkrohling))
+* Replaced client.List with reader.List ([#937](https://github.com/jaegertracing/jaeger-operator/pull/937), [@jpkrohling](https://github.com/jpkrohling))
+* Removed descriptions from CRD ([#932](https://github.com/jaegertracing/jaeger-operator/pull/932), [@jpkrohling](https://github.com/jpkrohling))
+
+
+1.17.0 (2020-02-26)
 -------------------
 
 Breaking changes:
