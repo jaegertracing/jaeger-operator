@@ -331,3 +331,8 @@ check-operatorhub-pr-template:
 local-jaeger-container:
 	@echo "Starting local container with Jaeger. Check http://localhost:16686"
 	@docker run -d --rm -p 16686:16686 -p 6831:6831/udp --name jaeger jaegertracing/all-in-one:1.15 > /dev/null
+
+.PHONY: changelog
+changelog:
+	@echo "Set env variable OAUTH_TOKEN before invoking, https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token"
+	@docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --owner jaegertracing --repo jaeger-operator
