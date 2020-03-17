@@ -4,19 +4,17 @@
 
 1. Make sure the new version is present at `pkg/upgrade/versions.go`
 
-1. Prepare a changelog since last release and get it merged:
+1. Prepare a changelog since last release:
 
     ```
-    $ OAUTH_TOKEN=... make changelog
+    OAUTH_TOKEN=... make changelog
     ```
 
-1. Test!
+1. Commit version change and changelog and create a pull request:
 
-    ```
-    export BUILD_IMAGE_TEST="${USER}/jaeger-operator:latest"
-    export BUILD_IMAGE="${BUILD_IMAGE_TEST}"
-    make all
-    ```
+   ```
+   git commit -m "Preparing relase 1.16.0" -s
+   ```
 
 1. Tag and push
 
