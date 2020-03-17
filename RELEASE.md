@@ -1,15 +1,13 @@
 # Releasing the Jaeger Operator for Kubernetes
 
-1. Make sure you are using an operator-sdk newer than 0.10.0
-
-1. Make sure the `versions.txt` file is up to date
+1. Update Jaeger version in `versions.txt`
 
 1. Make sure the new version is present at `pkg/upgrade/versions.go`
 
-1. Prepare a changelog and get it merged. A list of commits since the last release (`v1.15.1` in the following example) can be obtained via:
+1. Prepare a changelog since last release and get it merged:
 
     ```
-    $ git log --format="format:* %s" v1.15.1...HEAD
+    $ OAUTH_TOKEN=... make changelog
     ```
 
 1. Test!

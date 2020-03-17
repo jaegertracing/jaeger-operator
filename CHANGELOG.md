@@ -1,7 +1,32 @@
 Changes by Version
 ==================
 
-1.17.0 (2019-02-26)
+1.17.1 (2020-03-17)
+-------------------
+
+Breaking changes:
+* None
+
+Other noteworthy changes:
+* No modify annotation when injecting ([#902](https://github.com/jaegertracing/jaeger-operator/pull/902), [@rubenvp8510](https://github.com/rubenvp8510))
+* Restore two minute timeout ([#962](https://github.com/jaegertracing/jaeger-operator/pull/962), [@kevinearls](https://github.com/kevinearls))
+* Added TLS configuration for collector in all-in-one ([#960](https://github.com/jaegertracing/jaeger-operator/pull/960), [@jpkrohling](https://github.com/jpkrohling))
+* Add Jaeger client generated code through client-gen ([#921](https://github.com/jaegertracing/jaeger-operator/pull/921), [@rareddy](https://github.com/rareddy))
+* Use non-cached CR on reconciliation ([#940](https://github.com/jaegertracing/jaeger-operator/pull/940), [@jpkrohling](https://github.com/jpkrohling))
+* Added kafka-provisioning-minimal flag ([#958](https://github.com/jaegertracing/jaeger-operator/pull/958), [@jpkrohling](https://github.com/jpkrohling))
+* Remove unneeded dependency and increase timeout ([#952](https://github.com/jaegertracing/jaeger-operator/pull/952), [@kevinearls](https://github.com/kevinearls))
+* Reduce pvc usage by standard kafka example ([#953](https://github.com/jaegertracing/jaeger-operator/pull/953), [@kevinearls](https://github.com/kevinearls))
+* Update README.md ([#954](https://github.com/jaegertracing/jaeger-operator/pull/954), [@slikk66](https://github.com/slikk66))
+* tracegen uses a versioned image ([#878](https://github.com/jaegertracing/jaeger-operator/pull/878), [@jkandasa](https://github.com/jkandasa))
+* Use routes instead of port-forwarding where possible to improve test … ([#941](https://github.com/jaegertracing/jaeger-operator/pull/941), [@kevinearls](https://github.com/kevinearls))
+* Add example StatefulSet with manual sidecar definition ([#949](https://github.com/jaegertracing/jaeger-operator/pull/949), [@ewohltman](https://github.com/ewohltman))
+* [oc] Auto create TLS cert in collector deployment ([#914](https://github.com/jaegertracing/jaeger-operator/pull/914), [@jpkrohling](https://github.com/jpkrohling))
+* Reorganized cluster roles, added rules to watch all namespaces ([#936](https://github.com/jaegertracing/jaeger-operator/pull/936), [@jpkrohling](https://github.com/jpkrohling))
+* Replaced client.List with reader.List ([#937](https://github.com/jaegertracing/jaeger-operator/pull/937), [@jpkrohling](https://github.com/jpkrohling))
+* Update tests to cover new Kafka CLI flags ([#933](https://github.com/jaegertracing/jaeger-operator/pull/933), [@kevinearls](https://github.com/kevinearls))
+* Removed descriptions from CRD ([#932](https://github.com/jaegertracing/jaeger-operator/pull/932), [@jpkrohling](https://github.com/jpkrohling))
+
+1.17.0 (2020-02-26)
 -------------------
 
 Breaking changes:
