@@ -36,7 +36,7 @@ items:
       matchLabels:
         app: cassandra
     serviceName: cassandra
-    replicas: 3
+    replicas: 1
     template:
       metadata:
         labels:
