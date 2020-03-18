@@ -4,7 +4,7 @@
 
 1. Make sure the new version is present at `pkg/upgrade/versions.go`
 
-1. Prepare a changelog since last release:
+1. Prepare a changelog since last release. Get the `OAUTH_TOKEN` from (Github)[https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token] and select `repo` scope.
 
     ```
     OAUTH_TOKEN=... make changelog
