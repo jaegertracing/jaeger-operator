@@ -103,6 +103,9 @@ func (suite *ExamplesTestSuite) TestWithCassandra() {
 }
 
 func (suite *ExamplesTestSuite) TestBusinessApp() {
+	if !isOpenShift(t) {
+		t.Skip("Skipping until issue #974 is fixed")
+	}
 	// First deploy a Jaeger instance
 	jaegerInstance := createJaegerInstanceFromFile("simplest", "../../deploy/examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
