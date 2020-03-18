@@ -24,7 +24,13 @@
     git push git@github.com:jaegertracing/jaeger-operator.git release/v1.16.0
     ```
 
-1. Apply generated OLM catalog files to operatorhub.io
+1. Wait until release CI job finishes and then pull the changes:
+
+    ```
+    git pull git@github.com:jaegertracing/jaeger-operator.git master
+    ```
+
+1. Apply generated OLM catalog files to [operatorhub.io](https://operatorhub.io)
 
     * Clone the [operatorhub](https://github.com/operator-framework/community-operators) repo
     * Run `make operatorhub`
