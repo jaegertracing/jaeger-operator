@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
@@ -26,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 type MiscTestSuite struct {
