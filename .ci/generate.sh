@@ -44,6 +44,11 @@ mv deploy/crds/jaegertracing.io_jaegers.yaml deploy/crds/jaegertracing.io_jaeger
 # the last option is the easiest to implement for now, also because `tail` is found everywhere
 echo "$(tail -n +3 deploy/crds/jaegertracing.io_jaegers_crd.yaml)" > deploy/crds/jaegertracing.io_jaegers_crd.yaml
 
+if ! [[ "$(head -n 1 deploy/crds/jaegertracing.io_jaegers_crd.yaml)" == "apiVersion"* ]]; then
+    echo "The generated CRD doesn't seem valid. Make sure the controller-gen is generating the CRD in the expected format. Aborting."
+    exit 1
+fi
+
 # generate the schema validation (openapi) stubs
 ${OPENAPIGEN} --logtostderr=true -o "" -i ./pkg/apis/jaegertracing/v1 -O zz_generated.openapi -p ./pkg/apis/jaegertracing/v1 -h /dev/null -r "-"
 RT=$?
