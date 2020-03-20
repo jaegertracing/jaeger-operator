@@ -27,6 +27,13 @@ func ForDeployments(existing []appsv1.Deployment, desired []appsv1.Deployment) D
 			tp := t.DeepCopy()
 			util.InitObjectMeta(tp)
 
+			// if we have a nil value for the replicas in the desired deployment
+			// but we have a specific value in the current deployment, we override the desired with the current
+			// as this might have been written by an HPA
+			if tp.Spec.Replicas != nil && v.Spec.Replicas == nil {
+				v.Spec.Replicas = tp.Spec.Replicas
+			}
+
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec
 			tp.Spec = inject.PropagateOAuthCookieSecret(t.Spec, v.Spec)

@@ -25,7 +25,7 @@ func TestQueryNegativeReplicas(t *testing.T) {
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Equal(t, size, *dep.Spec.Replicas)
 }
 
 func TestQueryDefaultSize(t *testing.T) {
@@ -33,7 +33,7 @@ func TestQueryDefaultSize(t *testing.T) {
 
 	query := NewQuery(jaeger)
 	dep := query.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Nil(t, dep.Spec.Replicas) // we let Kubernetes define the default
 }
 
 func TestQueryReplicaSize(t *testing.T) {

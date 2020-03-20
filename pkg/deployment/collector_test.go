@@ -27,7 +27,7 @@ func TestNegativeReplicas(t *testing.T) {
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Equal(t, size, *dep.Spec.Replicas)
 }
 
 func TestDefaultSize(t *testing.T) {
@@ -35,7 +35,7 @@ func TestDefaultSize(t *testing.T) {
 
 	collector := NewCollector(jaeger)
 	dep := collector.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Nil(t, dep.Spec.Replicas) // we let Kubernetes define the default
 }
 
 func TestReplicaSize(t *testing.T) {
@@ -486,6 +486,21 @@ func TestAutoscalersDisabledByExplicitOption(t *testing.T) {
 
 	// verify
 	assert.Len(t, a, 0)
+}
+
+func TestAutoscalersSetMaxReplicas(t *testing.T) {
+	// prepare
+	maxReplicas := int32(2)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Collector.MaxReplicas = &maxReplicas
+	c := NewCollector(jaeger)
+
+	// test
+	a := c.Autoscalers()
+
+	// verify
+	assert.Len(t, a, 1)
+	assert.Equal(t, maxReplicas, a[0].Spec.MaxReplicas)
 }
 
 func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {

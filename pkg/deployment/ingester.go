@@ -71,12 +71,6 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
-	replicaSize := i.jaeger.Spec.Ingester.Replicas
-	if replicaSize == nil || *replicaSize < 0 {
-		s := int32(1)
-		replicaSize = &s
-	}
-
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -97,7 +91,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: replicaSize,
+			Replicas: i.jaeger.Spec.Ingester.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

@@ -76,12 +76,6 @@ func (q *Query) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
-	replicaSize := q.jaeger.Spec.Query.Replicas
-	if replicaSize == nil || *replicaSize < 0 {
-		s := int32(1)
-		replicaSize = &s
-	}
-
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -103,7 +97,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: replicaSize,
+			Replicas: q.jaeger.Spec.Query.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

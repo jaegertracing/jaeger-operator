@@ -106,3 +106,37 @@ func TestDeploymentInventoryNewWithSameNameAsExisting(t *testing.T) {
 
 	assert.Len(t, inv.Delete, 0)
 }
+
+func TestDeploymentKeepReplicasWhenDesiredIsNil(t *testing.T) {
+	replicas := int32(2)
+	existing := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+		},
+	}}
+	desired := []appsv1.Deployment{{}}
+
+	inv := ForDeployments(existing, desired)
+	assert.Len(t, inv.Update, 1)
+	assert.Equal(t, replicas, *inv.Update[0].Spec.Replicas)
+}
+
+func TestDeploymentSetReplicasWhenDesiredIsNotNil(t *testing.T) {
+	replicas := int32(2)
+	existing := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+		},
+	}}
+
+	desiredReplicas := int32(1)
+	desired := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &desiredReplicas,
+		},
+	}}
+
+	inv := ForDeployments(existing, desired)
+	assert.Len(t, inv.Update, 1)
+	assert.Equal(t, desiredReplicas, *inv.Update[0].Spec.Replicas)
+}

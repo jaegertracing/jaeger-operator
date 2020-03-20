@@ -33,7 +33,7 @@ func TestIngesterNegativeReplicas(t *testing.T) {
 
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Equal(t, size, *dep.Spec.Replicas)
 }
 
 func TestIngesterDefaultSize(t *testing.T) {
@@ -41,7 +41,7 @@ func TestIngesterDefaultSize(t *testing.T) {
 
 	ingester := NewIngester(jaeger)
 	dep := ingester.Get()
-	assert.Equal(t, int32(1), *dep.Spec.Replicas)
+	assert.Nil(t, dep.Spec.Replicas) // we let Kubernetes define the default
 }
 
 func TestIngesterReplicaSize(t *testing.T) {
