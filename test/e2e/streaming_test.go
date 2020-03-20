@@ -352,7 +352,13 @@ func getTLSVolumes(kafkaUserName string) []corev1.Volume {
 func waitForKafkaInstance() {
 	kafkaInstance := &kafkav1beta1.Kafka{}
 
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-zookeeper", retryInterval, timeout+1*time.Minute)
+	require.NoError(t, err)
+
+	err = WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-kafka", retryInterval, timeout)
+	require.NoError(t, err)
+
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		err = fw.Client.Get(context.Background(), types.NamespacedName{Name: "my-cluster", Namespace: kafkaNamespace}, kafkaInstance)
 		require.NoError(t, err)
 
