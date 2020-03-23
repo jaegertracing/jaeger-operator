@@ -32,7 +32,7 @@ func AllInOneSmokeTest(jaegerInstanceName string) {
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, namespace)
 	if insecureEndpoint {
 		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
@@ -60,7 +60,7 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName)
+	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, smokeTestNamespace)
 	if insecureEndpoint {
 		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
 	} else {
@@ -86,12 +86,12 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
 }
 
-func hasInsecureEndpoint(jaegerInstanceName string) bool {
+func hasInsecureEndpoint(jaegerInstanceName, jaegerInstanceNamespace string) bool {
 	if !isOpenShift(t) {
 		return true
 	}
 
-	jaeger := getJaegerInstance(jaegerInstanceName, namespace)
+	jaeger := getJaegerInstance(jaegerInstanceName, jaegerInstanceNamespace)
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityNoneExplicit || jaeger.Spec.Ingress.Security == v1.IngressSecurityNone {
 		return true
 	}
