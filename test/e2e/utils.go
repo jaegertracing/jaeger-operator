@@ -259,9 +259,9 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	return true
 }
 
-func getJaegerInstance(name, jaegerInstanceNamespace string) *v1.Jaeger {
+func getJaegerInstance(name, namespace string) *v1.Jaeger {
 	jaegerInstance := &v1.Jaeger{}
-	key := types.NamespacedName{Name: name, Namespace: jaegerInstanceNamespace}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
 	err := fw.Client.Get(goctx.Background(), key, jaegerInstance)
 	require.NoError(t, err)
 	return jaegerInstance
