@@ -198,6 +198,12 @@ func TestSidecarNeeded(t *testing.T) {
 	}, map[string]string{})
 
 	depWithAgent = Sidecar(jaeger, depWithAgent)
+
+	explicitInjected := dep(map[string]string{}, map[string]string{})
+	explicitInjected.Spec.Template.Spec.Containers = append(explicitInjected.Spec.Template.Spec.Containers, corev1.Container{
+		Name: "jaeger-agent",
+	})
+
 	tests := []struct {
 		dep    *appsv1.Deployment
 		ns     *corev1.Namespace
@@ -233,10 +239,21 @@ func TestSidecarNeeded(t *testing.T) {
 			ns:     ns(map[string]string{Annotation: "true"}),
 			needed: false,
 		},
+		{
+			dep:    explicitInjected,
+			ns:     ns(map[string]string{}),
+			needed: false,
+		},
+		{
+			dep:    explicitInjected,
+			ns:     ns(map[string]string{Annotation: "true"}),
+			needed: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
 			assert.Equal(t, test.needed, Needed(test.dep, test.ns))
+			assert.LessOrEqual(t, len(test.dep.Spec.Template.Spec.Containers), 2)
 		})
 	}
 }

@@ -90,6 +90,16 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	if dep.Labels["app"] == "jaeger" {
 		return false
 	}
+
+	hasAgent, _ := HasJaegerAgent(dep)
+
+	if hasAgent {
+		// has already a sidecar injected and managed by the operator
+		// return true because could require an update.
+		_, hasLabel := dep.Labels[Label]
+		return hasLabel
+	}
+	// If no agent but has annotations
 	return true
 }
 
