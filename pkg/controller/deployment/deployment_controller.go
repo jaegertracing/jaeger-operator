@@ -20,9 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
-
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -90,7 +89,6 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	// Fetch the Deployment instance
 	dep := &appsv1.Deployment{}
 	err := r.rClient.Get(ctx, request.NamespacedName, dep)
-
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -134,11 +132,16 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 				"jaeger":           jaeger.Name,
 				"jaeger-namespace": jaeger.Namespace,
 			}).Info("Injecting Jaeger Agent sidecar")
-			dep = inject.Sidecar(jaeger, dep)
-			if err := r.client.Update(ctx, dep); err != nil {
-				log.WithField("deployment", dep).WithError(err).Error("failed to update")
-				return reconcile.Result{}, tracing.HandleError(err, span)
+
+			injectedDep := inject.Sidecar(jaeger, dep.DeepCopy())
+
+			if !inject.EqualSidecar(injectedDep, dep) {
+				if err := r.client.Update(ctx, injectedDep); err != nil {
+					log.WithField("deployment", injectedDep).WithError(err).Error("failed to update")
+					return reconcile.Result{}, tracing.HandleError(err, span)
+				}
 			}
+
 		} else {
 			log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 		}

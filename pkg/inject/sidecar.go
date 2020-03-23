@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -48,20 +49,20 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		return dep
 	}
 
-
 	if val, ok := dep.Labels[Label]; ok && val != jaeger.Name {
 		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
 		return dep
 	}
+	decorate(dep)
+	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
+	logFields.Debug("injecting sidecar")
+	if hasAgent { // This is an update
+		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep)
+	} else {
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 
-	// This is an update
-	if HasJaegerAgent(dep) {
-		deleteAgentContainer(dep)
 	}
 
-	decorate(dep)
-	logFields.Debug("injecting sidecar")
-	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
 	jaegerName := util.Truncate(jaeger.Name, 63)
 
 	if dep.Labels == nil {
@@ -89,7 +90,6 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	if dep.Labels["app"] == "jaeger" {
 		return false
 	}
-
 	return true
 }
 
@@ -174,7 +174,6 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		}
 
 		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
-
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
@@ -295,27 +294,26 @@ func CleanSidecar(deployment *appsv1.Deployment) {
 	}
 }
 
-func deleteAgentContainer(dep *appsv1.Deployment) {
-	// but does it already have one?
-	for i, container := range dep.Spec.Template.Spec.Containers {
-		if container.Name == "jaeger-agent" {
-			if i < len(dep.Spec.Template.Spec.Containers)-1 {
-				copy(dep.Spec.Template.Spec.Containers[i:], dep.Spec.Template.Spec.Containers[i+1:])
-			}
-			dep.Spec.Template.Spec.Containers = dep.Spec.Template.Spec.Containers[:len(dep.Spec.Template.Spec.Containers)-1]
-			return
-		}
-	}
-}
-
 // HasJaegerAgent checks whether deployment has Jaeger Agent container
-func HasJaegerAgent(dep *appsv1.Deployment) bool {
+func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	for _, container := range dep.Spec.Template.Spec.Containers {
+	for i, container := range dep.Spec.Template.Spec.Containers {
 		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
-			return true
+			return true, i
 		}
 	}
-	return false
+	return false, -1
+}
+
+// EqualSidecar check if two deployments sidecar are equal
+func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
+	depHasAgent, depAgentIndex := HasJaegerAgent(dep)
+	oldDepHasAgent, oldDepIndex := HasJaegerAgent(oldDep)
+	if depHasAgent != oldDepHasAgent {
+		return false
+	}
+	depContainer := dep.Spec.Template.Spec.Containers[depAgentIndex]
+	oldDepContainer := oldDep.Spec.Template.Spec.Containers[oldDepIndex]
+	return reflect.DeepEqual(depContainer, oldDepContainer)
 }
