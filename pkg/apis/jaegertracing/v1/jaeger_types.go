@@ -100,6 +100,7 @@ type JaegerSpec struct {
 	Ingester JaegerIngesterSpec `json:"ingester,omitempty"`
 
 	// +optional
+	// +nullable
 	Agent JaegerAgentSpec `json:"agent,omitempty"`
 
 	// +optional
@@ -159,12 +160,14 @@ type JaegerCommonSpec struct {
 	// +listType=set
 	VolumeMounts []v1.VolumeMount `json:"volumeMounts,omitempty"`
 
+	// +nullable
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 
+	// +nullable
 	// +optional
 	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 
