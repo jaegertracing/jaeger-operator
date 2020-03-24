@@ -94,7 +94,7 @@ func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 }
 
 func (suite *ExamplesTestSuite) TestWithCassandra() {
-	if isOpenShift(t) {
+	if skipCassandraTests {
 		t.Skip()
 	}
 	// make sure cassandra deployment has finished

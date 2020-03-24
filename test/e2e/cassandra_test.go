@@ -22,7 +22,7 @@ type CassandraTestSuite struct {
 
 func (suite *CassandraTestSuite) SetupSuite() {
 	t = suite.T()
-	if isOpenShift(t) {
+	if skipCassandraTests {
 		t.Skip()
 	}
 	var err error
