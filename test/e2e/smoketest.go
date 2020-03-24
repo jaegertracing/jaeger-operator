@@ -34,7 +34,7 @@ func AllInOneSmokeTest(jaegerInstanceName string) {
 	var apiTracesEndpoint string
 	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, namespace)
 	if insecureEndpoint {
-		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, namespace, "%s/api/traces")
 	} else {
 		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
 	}
@@ -62,7 +62,7 @@ func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	var apiTracesEndpoint string
 	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, smokeTestNamespace)
 	if insecureEndpoint {
-		apiTracesEndpoint = getQueryURL(jaegerInstanceName, "%s/api/traces")
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, smokeTestNamespace, "%s/api/traces")
 	} else {
 		queryPorts := []string{"0:16686"}
 		portForw, closeChan := CreatePortForward(smokeTestNamespace, queryPodPrefix, queryPodImageName, queryPorts, fw.KubeConfig)
