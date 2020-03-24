@@ -109,7 +109,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	defer undeployJaegerInstance(j2)
 
 	err = fw.Client.Create(goctx.TODO(), j2, cleanupOptions)
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, otherJaegerInstanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
 
 	persisted := &appsv1.Deployment{}
