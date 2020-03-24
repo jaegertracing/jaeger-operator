@@ -43,6 +43,7 @@ var (
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
+	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
