@@ -657,9 +657,10 @@ func TestEqualSidecar(t *testing.T) {
 
 	dep2 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	dep2 = Sidecar(jaeger, dep2)
-	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-
 	assert.False(t, EqualSidecar(dep1, dep2))
+
+	// When no agent is present on the deploy
+	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	assert.False(t, EqualSidecar(dep1, dep3))
 
 }
