@@ -309,6 +309,7 @@ spec:
                   type: object
               type: object
             agent:
+              nullable: true
               properties:
                 affinity:
                   properties:
@@ -575,6 +576,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 image:
                   type: string
@@ -585,6 +587,7 @@ spec:
                 options:
                   type: object
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -1535,6 +1538,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 image:
                   type: string
@@ -1545,6 +1549,7 @@ spec:
                 options:
                   type: object
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -2229,6 +2234,7 @@ spec:
             annotations:
               additionalProperties:
                 type: string
+              nullable: true
               type: object
             collector:
               properties:
@@ -2497,6 +2503,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 autoscale:
                   type: boolean
@@ -2518,6 +2525,7 @@ spec:
                   format: int32
                   type: integer
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -3466,6 +3474,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 image:
                   type: string
@@ -3479,6 +3488,7 @@ spec:
                   format: int32
                   type: integer
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -4427,6 +4437,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 enabled:
                   type: boolean
@@ -4452,6 +4463,7 @@ spec:
                 options:
                   type: object
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -5419,6 +5431,7 @@ spec:
                 annotations:
                   additionalProperties:
                     type: string
+                  nullable: true
                   type: object
                 image:
                   type: string
@@ -5432,6 +5445,7 @@ spec:
                   format: int32
                   type: integer
                 resources:
+                  nullable: true
                   properties:
                     limits:
                       additionalProperties:
@@ -6114,6 +6128,7 @@ spec:
                   type: array
               type: object
             resources:
+              nullable: true
               properties:
                 limits:
                   additionalProperties:
@@ -6467,6 +6482,7 @@ spec:
                     annotations:
                       additionalProperties:
                         type: string
+                      nullable: true
                       type: object
                     cassandraClientAuthEnabled:
                       type: boolean
@@ -6485,6 +6501,7 @@ spec:
                         type: string
                       type: object
                     resources:
+                      nullable: true
                       properties:
                         limits:
                           additionalProperties:
@@ -7475,6 +7492,7 @@ spec:
                     annotations:
                       additionalProperties:
                         type: string
+                      nullable: true
                       type: object
                     enabled:
                       type: boolean
@@ -7487,6 +7505,7 @@ spec:
                     numberOfDays:
                       type: integer
                     resources:
+                      nullable: true
                       properties:
                         limits:
                           additionalProperties:
@@ -8443,6 +8462,7 @@ spec:
                     annotations:
                       additionalProperties:
                         type: string
+                      nullable: true
                       type: object
                     conditions:
                       type: string
@@ -8455,6 +8475,7 @@ spec:
                     readTTL:
                       type: string
                     resources:
+                      nullable: true
                       properties:
                         limits:
                           additionalProperties:
