@@ -50,12 +50,12 @@ if ! [[ "$(head -n 1 deploy/crds/jaegertracing.io_jaegers_crd.yaml)" == "apiVers
 fi
 
 # generate the schema validation (openapi) stubs
-${OPENAPIGEN} --logtostderr=true -o "" -i ./pkg/apis/jaegertracing/v1 -O zz_generated.openapi -p ./pkg/apis/jaegertracing/v1 -h /dev/null -r "-"
-RT=$?
-if [ ${RT} != 0 ]; then
-    echo "Failed to generate the openapi (schema validation) stubs."
-    exit ${RT}
-fi
+# ${OPENAPIGEN} --logtostderr=true -o "" -i ./pkg/apis/jaegertracing/v1 -O zz_generated.openapi -p ./pkg/apis/jaegertracing/v1 -h /dev/null -r "-"
+# RT=$?
+# if [ ${RT} != 0 ]; then
+#     echo "Failed to generate the openapi (schema validation) stubs."
+#     exit ${RT}
+# fi
 
 # generate the Kubernetes stubs
 operator-sdk generate k8s
