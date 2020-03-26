@@ -135,8 +135,8 @@ func WaitForJobOfAnOwner(t *testing.T, kubeclient kubernetes.Interface, namespac
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		jobList, err := kubeclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				t.Logf("Waiting for availability of %s job owner\n", ownerName)
+			if apierrors.IsNotFound(err) || apierrors.IsUnauthorized(err) {
+				t.Logf("Waiting for availability of %s job owner ignoring error %v\n", ownerName, err)
 				return false, nil
 			}
 			return false, err
@@ -189,7 +189,17 @@ func WaitForCronJob(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 // WaitForDeployment waits for a deployment to finish and reports how long the operation took
 func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
 	start := time.Now()
-	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, replicas, retryInterval, timeout)
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, replicas, retryInterval, timeout)
+		if err != nil {
+			if apierrors.IsUnauthorized(err) {
+				t.Logf("Ignoring error %v in WaitForDeployment", err)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
 	elapsed := time.Since(start)
 	logrus.Infof("Deployment of %s in namespace %s took %s\n", name, namespace, elapsed)
 	return err
