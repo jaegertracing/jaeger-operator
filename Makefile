@@ -132,7 +132,7 @@ e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator dep
 .PHONY: e2e-tests-token-propagation-es
 e2e-tests-token-propagation-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Token Propagation Elasticsearch end-to-end tests...
-	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) TEST_TIMEOUT=5 ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-streaming
 e2e-tests-streaming: prepare-e2e-tests es kafka
