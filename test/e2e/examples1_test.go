@@ -94,6 +94,9 @@ func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
 }
 
 func (suite *ExamplesTestSuite) TestWithCassandra() {
+	if !isOpenShift(t) {
+		t.Skip("Skipping until issue #974 is fixed")
+	}
 	if skipCassandraTests {
 		t.Skip()
 	}
