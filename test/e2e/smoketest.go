@@ -135,6 +135,10 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 		bodyString := string(bodyBytes)
 
 		if !strings.Contains(bodyString, "errors\":null") {
+			if strings.Contains(bodyString, "<title>Log In</title>") {
+				logrus.Info("Ignoring redirect to login screen")
+				return false, nil
+			}
 			return false, errors.New("query service returns errors: " + bodyString)
 		}
 		return strings.Contains(bodyString, tStr), nil
