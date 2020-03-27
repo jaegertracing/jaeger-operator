@@ -85,14 +85,6 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	AllInOneSmokeTest(name)
 }
 
-func (suite *ExamplesTestSuite) TestSimpleProdDeployEsExample() {
-	if !isOpenShift(t) {
-		t.Skip("Only applies to openshift")
-	}
-	yamlFileName := "../../deploy/examples/openshift/simple-prod-deploy-es.yaml"
-	smokeTestProductionExample("simple-prod", yamlFileName)
-}
-
 func (suite *ExamplesTestSuite) TestWithCassandra() {
 	if skipCassandraTests {
 		t.Skip()
