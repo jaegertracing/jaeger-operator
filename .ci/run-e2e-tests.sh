@@ -31,6 +31,7 @@ then
 elif [ "${TEST_GROUP}" = "streaming" ]
 then
     echo "Running Streaming Tests"
+    export SKIP_CASSANDRA_TESTS=true
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "examples1" ]
 then
