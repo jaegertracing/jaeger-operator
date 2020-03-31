@@ -17,7 +17,7 @@ type ExamplesTestSuiteOCP struct {
 func (suite *ExamplesTestSuiteOCP) SetupSuite() {
 	t = suite.T()
 	if !isOpenShift(t) {
-		t.Skip("This wuite should only be run on OpenShift")
+		t.Skip("This suite should only be run on OpenShift")
 	}
 	var err error
 	ctx, err = prepare(t)
