@@ -26,6 +26,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
@@ -133,12 +134,16 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 
 func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
 	/* Create an span */
-	collectorPort := randomPortNumber()
-	collectorPorts := []string{collectorPort + ":14268"}
-	portForwColl, closeChanColl := CreatePortForward(namespace, suite.collectorName, collectorPodImageName, collectorPorts, fw.KubeConfig)
+	portForwColl, closeChanColl := CreatePortForward(namespace, suite.collectorName, collectorPodImageName, []string{"0:14268"}, fw.KubeConfig)
 	defer portForwColl.Close()
 	defer close(closeChanColl)
-	collectorEndpoint := fmt.Sprintf("http://localhost:%s/api/traces", collectorPort)
+
+	forwardedPorts, err := portForwColl.GetPorts()
+	require.NoError(t, err)
+	collectorPort := forwardedPorts[0].Local
+
+	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
+
 	cfg := config.Configuration{
 		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
 		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
@@ -181,12 +186,12 @@ func (suite *TokenTestSuite) TestTokenPropagationValidToken() {
 func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	queryName := fmt.Sprintf("%s-query", name)
 	collectorName := fmt.Sprintf("%s-collector", name)
+	suite.exampleJaeger = jaegerInstance()
+
 	suite.bindOperatorWithAuthDelegator()
 	suite.createTestServiceAccount()
 	suite.token = testAccountToken()
 	require.NotEmpty(t, suite.token)
-	println(suite.token)
-	suite.exampleJaeger = jaegerInstance()
 	err := fw.Client.Create(goctx.Background(),
 		suite.exampleJaeger,
 		&framework.CleanupOptions{
@@ -213,9 +218,10 @@ func TestTokenSuite(t *testing.T) {
 }
 
 func (suite *TokenTestSuite) bindOperatorWithAuthDelegator() {
+
 	suite.delegationRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "jaeger-operator:system:auth-delegator",
+			Name:      namespace + "jaeger-operator:system:auth-delegator",
 			Namespace: namespace,
 		},
 		Subjects: []rbac.Subject{{
@@ -236,13 +242,37 @@ func (suite *TokenTestSuite) bindOperatorWithAuthDelegator() {
 			RetryInterval: retryInterval,
 		})
 	require.NoError(t, err, "Error binding operator service account with auth-delegator")
+
+	suite.delegationRoleBinding = &rbac.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespace + "proxy:system:auth-delegator",
+			Namespace: namespace,
+		},
+		Subjects: []rbac.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      account.OAuthProxyAccountNameFor(suite.exampleJaeger),
+			Namespace: namespace,
+		}},
+		RoleRef: rbac.RoleRef{
+			Kind: "ClusterRole",
+			Name: "system:auth-delegator",
+		},
+	}
+	err = fw.Client.Create(goctx.Background(),
+		suite.delegationRoleBinding,
+		&framework.CleanupOptions{
+			TestContext:   ctx,
+			Timeout:       timeout,
+			RetryInterval: retryInterval,
+		})
+	require.NoError(t, err, "Error binding operator service account with auth-delegator")
 }
 
 func (suite *TokenTestSuite) createTestServiceAccount() {
 
 	suite.testServiceAccount = &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      testAccount,
+			Name:      namespace + testAccount,
 			Namespace: namespace,
 		},
 	}
@@ -257,7 +287,7 @@ func (suite *TokenTestSuite) createTestServiceAccount() {
 
 	suite.testRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      testAccount + "-bind",
+			Name:      namespace + testAccount + "-bind",
 			Namespace: namespace,
 		},
 		Subjects: []rbac.Subject{{
@@ -283,33 +313,32 @@ func (suite *TokenTestSuite) createTestServiceAccount() {
 }
 
 func testAccountToken() string {
-	var secretName string
+	token := ""
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		serviceAccount := corev1.ServiceAccount{}
 		e := fw.Client.Get(goctx.Background(), types.NamespacedName{
 			Namespace: namespace,
-			Name:      testAccount,
+			Name:      namespace + testAccount,
 		}, &serviceAccount)
 		if e != nil {
 			return false, e
 		}
 		for _, s := range serviceAccount.Secrets {
-			if strings.HasPrefix(s.Name, testAccount+"-token") {
-				secretName = s.Name
+			secret := corev1.Secret{}
+			err = fw.Client.Get(goctx.Background(), types.NamespacedName{
+				Namespace: namespace,
+				Name:      s.Name,
+			}, &secret)
+			if secret.Type == corev1.SecretTypeServiceAccountToken {
+				token = string(secret.Data["token"])
 				return true, nil
 			}
 		}
 		return false, nil
 	})
 	require.NoError(t, err, "Error getting service account token")
-	require.NotEmpty(t, secretName, "secret with token not found")
-	secret := corev1.Secret{}
-	err = fw.Client.Get(goctx.Background(), types.NamespacedName{
-		Namespace: namespace,
-		Name:      secretName,
-	}, &secret)
-	require.NoError(t, err, "Error deploying example Jaeger")
-	return string(secret.Data["token"])
+	return token
+
 }
 
 func jaegerInstance() *v1.Jaeger {
@@ -338,7 +367,7 @@ func jaegerInstance() *v1.Jaeger {
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.version":                     "5",
 					"query.bearer-token-propagation": "true",
-					"es.tls":                         "false",
+					"es.tls.enabled":                 "false",
 				}),
 			},
 			Ingress: v1.JaegerIngressSpec{
