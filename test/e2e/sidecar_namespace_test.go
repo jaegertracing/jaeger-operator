@@ -79,7 +79,9 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 
 	dep, err = fw.KubeClient.AppsV1().Deployments(namespace).Get(dep.Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.False(t, inject.HasJaegerAgent(dep))
+	hasAgent, _ := inject.HasJaegerAgent(dep)
+
+	require.False(t, hasAgent)
 
 	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 	require.NoError(t, err)

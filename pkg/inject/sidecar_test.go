@@ -190,8 +190,17 @@ func TestSkipInjectSidecar(t *testing.T) {
 }
 
 func TestSidecarNeeded(t *testing.T) {
-	depWithAgent := dep(map[string]string{}, map[string]string{})
-	depWithAgent.Spec.Template.Spec.Containers = append(depWithAgent.Spec.Template.Spec.Containers, corev1.Container{
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "some-jaeger-instance"})
+
+	depWithAgent := dep(map[string]string{
+		Annotation: "some-jaeger-instance",
+	}, map[string]string{})
+
+	depWithAgent = Sidecar(jaeger, depWithAgent)
+
+	explicitInjected := dep(map[string]string{}, map[string]string{})
+	explicitInjected.Spec.Template.Spec.Containers = append(explicitInjected.Spec.Template.Spec.Containers, corev1.Container{
 		Name: "jaeger-agent",
 	})
 
@@ -223,10 +232,20 @@ func TestSidecarNeeded(t *testing.T) {
 		{
 			dep:    depWithAgent,
 			ns:     ns(map[string]string{}),
-			needed: false,
+			needed: true,
 		},
 		{
 			dep:    dep(map[string]string{}, map[string]string{"app": "jaeger"}),
+			ns:     ns(map[string]string{Annotation: "true"}),
+			needed: false,
+		},
+		{
+			dep:    explicitInjected,
+			ns:     ns(map[string]string{}),
+			needed: false,
+		},
+		{
+			dep:    explicitInjected,
 			ns:     ns(map[string]string{Annotation: "true"}),
 			needed: false,
 		},
@@ -234,6 +253,7 @@ func TestSidecarNeeded(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
 			assert.Equal(t, test.needed, Needed(test.dep, test.ns))
+			assert.LessOrEqual(t, len(test.dep.Spec.Template.Spec.Containers), 2)
 		})
 	}
 }
@@ -615,4 +635,32 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=testqueryorderofarguments-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
+}
+
+func TestEqualSidecar(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{
+		Name:      "TestEqualSidecar",
+		Namespace: "test",
+	})
+
+	dep1 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	dep1 = Sidecar(jaeger, dep1)
+
+	dep1Equal := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	dep1Equal = Sidecar(jaeger, dep1Equal)
+	assert.True(t, EqualSidecar(dep1, dep1Equal))
+
+	// Change flags.
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
+		"--jaeger.tags": "changed-tag=newvalue",
+	})
+
+	dep2 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	dep2 = Sidecar(jaeger, dep2)
+	assert.False(t, EqualSidecar(dep1, dep2))
+
+	// When no agent is present on the deploy
+	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+	assert.False(t, EqualSidecar(dep1, dep3))
+
 }
