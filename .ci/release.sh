@@ -45,6 +45,12 @@ operator-sdk generate csv \
 
 # changes to deploy/olm-catalog/jaeger-operator/newversion/...
 sed "s~containerImage: docker.io/jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~containerImage: docker.io/jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+sed "s/createdAt: \".*\"/createdAt: \"${CREATED_AT}\"/g" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+sed "s~'>=1.13.0 <${PREVIOUS_VERSION}'~'>=1.13.0 <${OPERATOR_VERSION}'~i" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+
+# May be temporary - just need to remove the "replaces" field from the CSV as now using "olm.skipRange"
+sed "/replaces: jaeger-operator.v${PREVIOUS_VERSION}/d" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
