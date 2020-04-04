@@ -136,6 +136,7 @@ func TestAutoDetectWithError(t *testing.T) {
 
 	// Check initial value of "platform"
 	assert.Equal(t, "", viper.GetString("platform"))
+	assert.False(t, viper.GetBool("es-provision"))
 
 	// test
 	b.autoDetectCapabilities()
