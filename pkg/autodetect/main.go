@@ -92,9 +92,7 @@ func (b *Background) autoDetectCapabilities() {
 
 	apiList, err := b.availableAPIs(ctx)
 	if err != nil {
-		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will fallback to their default values.")
-		viper.Set("platform", v1.FlagPlatformKubernetes)
-		viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
+		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will remain the same until next cycle.")
 	} else {
 
 		b.firstRun.Do(func() {

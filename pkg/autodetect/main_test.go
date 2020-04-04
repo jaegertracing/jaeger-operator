@@ -117,7 +117,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 
 }
 
-func TestAutoDetectFallback(t *testing.T) {
+func TestAutoDetectWithError(t *testing.T) {
 	// prepare
 	defer viper.Reset()
 
@@ -134,11 +134,14 @@ func TestAutoDetectFallback(t *testing.T) {
 		return nil, fmt.Errorf("faked error")
 	}
 
+	// Check initial value of "platform"
+	assert.Equal(t, "", viper.GetString("platform"))
+
 	// test
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagPlatformKubernetes, viper.GetString("platform"))
+	assert.Equal(t, "", viper.GetString("platform"))
 	assert.False(t, viper.GetBool("es-provision"))
 }
 
@@ -163,6 +166,17 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
+	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
+
+	// set the error
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return nil, fmt.Errorf("faked error")
+	}
+
+	// run autodetect again with failure
+	b.autoDetectCapabilities()
+
+	// verify again
 	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
 }
 
