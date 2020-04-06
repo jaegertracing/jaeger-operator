@@ -4,6 +4,7 @@ import (
 	goctx "context"
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -43,6 +44,7 @@ var (
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
+	saveLogs             = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
@@ -245,6 +247,11 @@ func printTestStackTrace() {
 }
 
 func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
+	if saveLogs {
+		logFileName := strings.ReplaceAll(t.Name(), "/", "-") + ".log"
+		writePodLogToFile(jaeger.Namespace, "app=jaeger", "jaeger", logFileName)
+	}
+
 	if !debugMode || !t.Failed() {
 		err := fw.Client.Delete(goctx.TODO(), jaeger)
 		if err := fw.Client.Delete(goctx.TODO(), jaeger); err != nil {
@@ -258,6 +265,27 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	}
 	// Always return true, we don't care
 	return true
+}
+
+func writePodLogToFile(namespace, labelSelector, containerName, logFileName string) {
+	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		logrus.Warnf("Got error listing pods in namespace %s with selector %s: %v", namespace, labelSelector, err)
+		return
+	}
+
+	for _, pod := range pods.Items {
+		result := fw.KubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: containerName}).Do()
+		if result.Error() != nil {
+			logrus.Warnf("Error getting log content %v", result.Error())
+		} else {
+			log, _ := result.Raw()
+			err := ioutil.WriteFile(logFileName, log, 0644)
+			if err != nil {
+				logrus.Warnf("Error writing log content to file %s: %v\n", logFileName, err)
+			}
+		}
+	}
 }
 
 func getJaegerInstance(name, namespace string) *v1.Jaeger {
@@ -289,6 +317,12 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 
 func handleSuiteTearDown() {
 	logrus.Info("Entering TearDownSuite()")
+	if saveLogs && !usingOLM {
+		i := strings.Index(t.Name(), "/")
+		logFileName := t.Name()[:i] + "-operator.log"
+		writePodLogToFile(namespace, "name=jaeger-operator", "jaeger-operator", logFileName)
+	}
+
 	if !debugMode || !t.Failed() {
 		ctx.Cleanup()
 	}
