@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -24,6 +25,18 @@ type Ingester struct {
 // NewIngester builds a new Ingester struct based on the given spec
 func NewIngester(jaeger *v1.Jaeger) *Ingester {
 	return &Ingester{jaeger: jaeger}
+}
+
+// Autoscalers returns a list of HPAs based on this ingester
+func (i *Ingester) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+	return autoscalers(i.jaeger.Spec.Ingester.Replicas,
+		"hpa-ingester",
+		i.name(),
+		i.labels(),
+		i.jaeger.Spec.Ingester.AutoScaleSpec,
+		i.jaeger.Spec.Ingester.JaegerCommonSpec,
+		i.jaeger,
+	)
 }
 
 // Get returns a ingester pod

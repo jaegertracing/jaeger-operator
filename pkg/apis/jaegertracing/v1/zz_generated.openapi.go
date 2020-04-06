@@ -13,6 +13,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"./pkg/apis/jaegertracing/v1.AutoScaleSpec":                   schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref),
 		"./pkg/apis/jaegertracing/v1.ElasticsearchSpec":               schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref),
 		"./pkg/apis/jaegertracing/v1.Jaeger":                          schema_pkg_apis_jaegertracing_v1_Jaeger(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerAgentSpec":                 schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref),
@@ -32,6 +33,40 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"./pkg/apis/jaegertracing/v1.JaegerStatus":                    schema_pkg_apis_jaegertracing_v1_JaegerStatus(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerStorageSpec":               schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerUISpec":                    schema_pkg_apis_jaegertracing_v1_JaegerUISpec(ref),
+	}
+}
+
+func schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AutoScaleSpec defines the common elements used for create HPAs",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"autoscale": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"minReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MinReplicas sets a lower bound to the autoscaling feature.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"maxReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxReplicas sets an upper bound to the autoscaling feature. When autoscaling is enabled and no value is provided, a default value is used.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -459,13 +494,6 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"replicas": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Replicas represents the number of replicas to create for this service.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
 					"minReplicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MinReplicas sets a lower bound to the autoscaling feature.",
@@ -476,6 +504,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					"maxReplicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MaxReplicas sets an upper bound to the autoscaling feature. When autoscaling is enabled and no value is provided, a default value is used.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Replicas represents the number of replicas to create for this service.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -1047,6 +1082,27 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 				Description: "JaegerIngesterSpec defines the options to be used when deploying the ingester",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"autoscale": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"minReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MinReplicas sets a lower bound to the autoscaling feature.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"maxReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxReplicas sets an upper bound to the autoscaling feature. When autoscaling is enabled and no value is provided, a default value is used.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Replicas represents the number of replicas to create for this service.",
