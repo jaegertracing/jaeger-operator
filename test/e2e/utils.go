@@ -158,19 +158,9 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 		if err != nil {
 			logrus.Errorf("WaitForDeployment returned error %v", err)
-			// FIXME this is for debugging a github problem -- remove
-			cmd := exec.Command("oc", "get", "all", "--namespace", namespace)
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("oc command returned error %v\n", err)
-			} else {
-				fmt.Printf("%s\n", string(output))
-			}
 			return nil, err
 		}
 	}
-
-
 	logrus.Infof("Creation of Jaeger Operator in namespace %s took %v", namespace, time.Since(start))
 
 	return ctx, nil
