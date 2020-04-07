@@ -17,20 +17,24 @@ const (
 	defaultAvgUtilization = int32(90)
 )
 
+type component interface {
+	name() string
+	labels() map[string]string
+	replicas() *int32
+	spec() v1.JaegerCommonSpec
+	autoscalingSpec() v1.AutoScaleSpec
+	jaegerInstance() *v1.Jaeger
+}
+
 // Autoscalers returns a list of HPAs based on specs
-func autoscalers(
-	componentReplicas *int32,
-	label string,
-	componentName string,
-	componentLabels map[string]string,
-	autoScaleSpec v1.AutoScaleSpec,
-	componentSpec v1.JaegerCommonSpec,
-	jaeger *v1.Jaeger) []autoscalingv2beta2.HorizontalPodAutoscaler {
+func autoscalers(hpaLabel string, component component) []autoscalingv2beta2.HorizontalPodAutoscaler {
 
 	// fixed number of replicas is explicitly set, do not auto scale
-	if componentReplicas != nil {
+	if component.replicas() != nil {
 		return []autoscalingv2beta2.HorizontalPodAutoscaler{}
 	}
+
+	autoScaleSpec := component.autoscalingSpec()
 
 	// explicitly disabled, do not auto scale
 	if autoScaleSpec.Autoscale != nil && *autoScaleSpec.Autoscale == false {
@@ -46,19 +50,21 @@ func autoscalers(
 		maxReplicas = defaultMaxReplicas
 	}
 
-	componentLabels["app.kubernetes.io/component"] = label
+	componentLabels := component.labels()
+	componentLabels["app.kubernetes.io/component"] = hpaLabel
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Labels: componentLabels,
 	}
 
 	avgUtilization := defaultAvgUtilization
 	trueVar := true
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{componentSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	jaeger := component.jaegerInstance()
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{component.spec(), jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	// scale up when either CPU or memory is above 90%
 	return []autoscalingv2beta2.HorizontalPodAutoscaler{{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        componentName,
+			Name:        component.name(),
 			Namespace:   jaeger.Namespace,
 			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
@@ -76,9 +82,9 @@ func autoscalers(
 			ScaleTargetRef: autoscalingv2beta2.CrossVersionObjectReference{
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
-				Name:       componentName,
+				Name:       component.name(),
 			},
-			MinReplicas: jaeger.Spec.Ingester.MinReplicas,
+			MinReplicas: autoScaleSpec.MinReplicas,
 			MaxReplicas: maxReplicas,
 			Metrics: []autoscalingv2beta2.MetricSpec{
 				{

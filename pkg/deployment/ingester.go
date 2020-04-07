@@ -29,14 +29,7 @@ func NewIngester(jaeger *v1.Jaeger) *Ingester {
 
 // Autoscalers returns a list of HPAs based on this ingester
 func (i *Ingester) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
-	return autoscalers(i.jaeger.Spec.Ingester.Replicas,
-		"hpa-ingester",
-		i.name(),
-		i.labels(),
-		i.jaeger.Spec.Ingester.AutoScaleSpec,
-		i.jaeger.Spec.Ingester.JaegerCommonSpec,
-		i.jaeger,
-	)
+	return autoscalers("hpa-ingester", i)
 }
 
 // Get returns a ingester pod
@@ -171,4 +164,20 @@ func (i *Ingester) labels() map[string]string {
 
 func (i *Ingester) name() string {
 	return fmt.Sprintf("%s-ingester", i.jaeger.Name)
+}
+
+func (i *Ingester) spec() v1.JaegerCommonSpec {
+	return i.jaeger.Spec.Ingester.JaegerCommonSpec
+}
+
+func (i *Ingester) autoscalingSpec() v1.AutoScaleSpec {
+	return i.jaeger.Spec.Ingester.AutoScaleSpec
+}
+
+func (i *Ingester) jaegerInstance() *v1.Jaeger {
+	return i.jaeger
+}
+
+func (i *Ingester) replicas() *int32 {
+	return i.jaeger.Spec.Ingester.Replicas
 }

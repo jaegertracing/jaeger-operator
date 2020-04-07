@@ -189,14 +189,7 @@ func (c *Collector) Services() []*corev1.Service {
 
 // Autoscalers returns a list of HPAs based on this collector
 func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
-	return autoscalers(c.jaeger.Spec.Collector.Replicas,
-		"hpa-collector",
-		c.name(),
-		c.labels(),
-		c.jaeger.Spec.Collector.AutoScaleSpec,
-		c.jaeger.Spec.Collector.JaegerCommonSpec,
-		c.jaeger,
-	)
+	return autoscalers("hpa-collector", c)
 }
 
 func (c *Collector) labels() map[string]string {
@@ -205,4 +198,20 @@ func (c *Collector) labels() map[string]string {
 
 func (c *Collector) name() string {
 	return fmt.Sprintf("%s-collector", c.jaeger.Name)
+}
+
+func (c *Collector) spec() v1.JaegerCommonSpec {
+	return c.jaeger.Spec.Collector.JaegerCommonSpec
+}
+
+func (c *Collector) autoscalingSpec() v1.AutoScaleSpec {
+	return c.jaeger.Spec.Collector.AutoScaleSpec
+}
+
+func (c *Collector) jaegerInstance() *v1.Jaeger {
+	return c.jaeger
+}
+
+func (c *Collector) replicas() *int32 {
+	return c.jaeger.Spec.Collector.Replicas
 }
