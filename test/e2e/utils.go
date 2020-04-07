@@ -249,7 +249,7 @@ func printTestStackTrace() {
 func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	if saveLogs {
 		logFileName := strings.ReplaceAll(t.Name(), "/", "-") + ".log"
-		writePodLogToFile(jaeger.Namespace, "app=jaeger", "jaeger", logFileName)
+		writePodLogToFile(jaeger.Namespace, "app.kubernetes.io/part-of=jaeger", "jaeger", logFileName)
 	}
 
 	if !debugMode || !t.Failed() {
