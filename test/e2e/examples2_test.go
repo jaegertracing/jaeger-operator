@@ -5,6 +5,8 @@ package e2e
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -22,6 +24,7 @@ func (suite *ExamplesTestSuite2) SetupSuite() {
 		if ctx != nil {
 			ctx.Cleanup()
 		}
+		logrus.Errorf("Prepare returned error: %v", err)
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
