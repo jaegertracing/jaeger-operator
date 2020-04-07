@@ -159,7 +159,8 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		if err != nil {
 			logrus.Errorf("WaitForDeployment returned error %v", err)
 			// FIXME this is for debugging a github problem -- remove
-			cmd := exec.Command("oc", "get", "all", "--namespace", namespace)
+			// #nosec   G204: Subprocess launching should be audited
+			cmd := exec.Command("kubectl", "get", "all", "--namespace", namespace)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				fmt.Printf("oc command returned error %v\n", err)
@@ -169,7 +170,6 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			return nil, err
 		}
 	}
-
 
 	logrus.Infof("Creation of Jaeger Operator in namespace %s took %v", namespace, time.Since(start))
 
