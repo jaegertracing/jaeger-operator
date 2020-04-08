@@ -23,7 +23,7 @@ function generate_signing_ca() {
   if [ ! -f ${WORKING_DIR}/ca.crt ] || [ ! -f ${WORKING_DIR}/ca.key ] || ! openssl x509 -checkend 0 -noout -in ${WORKING_DIR}/ca.crt; then
     openssl req -x509 \
                 -new \
-                -newkey rsa:2048 \
+                -newkey rsa:4096 \
                 -keyout ${WORKING_DIR}/ca.key \
                 -nodes \
                 -days 1825 \
@@ -50,9 +50,9 @@ dir                     = ${WORKING_DIR}               # Top dir
 # certificate.
 
 [ req ]
-default_bits            = 2048                  # RSA key size
+default_bits            = 4096                  # RSA key size
 encrypt_key             = yes                   # Protect private key
-default_md              = sha1                  # MD to use
+default_md              = sha512                # MD to use
 utf8                    = yes                   # Input is UTF-8
 string_mask             = utf8only              # Emit UTF-8 strings
 prompt                  = no                    # Don't prompt for DN
@@ -87,7 +87,7 @@ crlnumber               = \$dir/ca.crl.srl # CRL number file
 database                = \$dir/ca.db # Index file
 unique_subject          = no                    # Require unique subject
 default_days            = 730                   # How long to certify for
-default_md              = sha1                  # MD to use
+default_md              = sha512                # MD to use
 policy                  = any_pol             # Default naming policy
 email_in_dn             = no                    # Add email to cert DN
 preserve                = no                    # Keep passed DN ordering
@@ -162,10 +162,10 @@ function generate_cert_config() {
   if [ "$extensions" != "" ]; then
     cat <<EOF > "${WORKING_DIR}/${component}.conf"
 [ req ]
-default_bits = 2048
+default_bits = 4096
 prompt = no
 encrypt_key = yes
-default_md = sha1
+default_md = sha512
 distinguished_name = dn
 req_extensions = req_ext
 [ dn ]
@@ -178,10 +178,10 @@ EOF
   else
     cat <<EOF > "${WORKING_DIR}/${component}.conf"
 [ req ]
-default_bits = 2048
+default_bits = 4096
 prompt = no
 encrypt_key = yes
-default_md = sha1
+default_md = sha512
 distinguished_name = dn
 [ dn ]
 CN = ${component}
@@ -196,7 +196,7 @@ function generate_request() {
 
   openssl req -new                                        \
           -out ${WORKING_DIR}/${component}.csr            \
-          -newkey rsa:2048                                \
+          -newkey rsa:4096                                \
           -keyout ${WORKING_DIR}/${component}.key         \
           -config ${WORKING_DIR}/${component}.conf        \
           -days 712                                       \
@@ -226,7 +226,7 @@ function generate_extensions() {
   local use_comma=0
 
   if [ "$add_localhost" == "true" ]; then
-    extension_names="IP.1:127.0.0.1,DNS.1:localhost"
+    extension_names="IP.1:127.0.0.1,IP.2:0:0:0:0:0:0:0:1,DNS.1:localhost"
     extension_index=2
     use_comma=1
   fi
@@ -261,5 +261,5 @@ generate_certs 'system.logging.curator'
 generate_certs 'user.jaeger'
 
 # TODO: get es SAN DNS, IP values from es service names
-generate_certs 'elasticsearch' "$(generate_extensions true true elasticsearch elasticsearch-infra elasticsearch-apps)"
-generate_certs 'logging-es' "$(generate_extensions false true {elasticsearch,elasticsearch-infra,elasticsearch-apps}{,-cluster}{,.${NAMESPACE}.svc.cluster.local})"
+generate_certs 'elasticsearch' "$(generate_extensions true true elasticsearch{,-cluster}{,.${NAMESPACE}.svc}{,.cluster.local})"
+generate_certs 'logging-es' "$(generate_extensions false true elasticsearch{,.${NAMESPACE}.svc}{,.cluster.local})"
