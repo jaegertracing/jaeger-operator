@@ -29,7 +29,7 @@ func NewIngester(jaeger *v1.Jaeger) *Ingester {
 
 // Autoscalers returns a list of HPAs based on this ingester
 func (i *Ingester) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
-	return autoscalers("hpa-ingester", i)
+	return autoscalers(i)
 }
 
 // Get returns a ingester pod
@@ -160,6 +160,12 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 func (i *Ingester) labels() map[string]string {
 	return util.Labels(i.name(), "ingester", *i.jaeger)
+}
+
+func (i *Ingester) hpaLabels() map[string]string {
+	labels := i.labels()
+	labels["app.kubernetes.io/component"] = "hpa-ingester"
+	return labels
 }
 
 func (i *Ingester) name() string {

@@ -189,11 +189,17 @@ func (c *Collector) Services() []*corev1.Service {
 
 // Autoscalers returns a list of HPAs based on this collector
 func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
-	return autoscalers("hpa-collector", c)
+	return autoscalers(c)
 }
 
 func (c *Collector) labels() map[string]string {
 	return util.Labels(c.name(), "collector", *c.jaeger)
+}
+
+func (c *Collector) hpaLabels() map[string]string {
+	labels := c.labels()
+	labels["app.kubernetes.io/component"] = "hpa-collector"
+	return labels
 }
 
 func (c *Collector) name() string {

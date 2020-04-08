@@ -19,7 +19,7 @@ const (
 
 type component interface {
 	name() string
-	labels() map[string]string
+	hpaLabels() map[string]string
 	replicas() *int32
 	spec() v1.JaegerCommonSpec
 	autoscalingSpec() v1.AutoScaleSpec
@@ -27,7 +27,7 @@ type component interface {
 }
 
 // Autoscalers returns a list of HPAs based on specs
-func autoscalers(hpaLabel string, component component) []autoscalingv2beta2.HorizontalPodAutoscaler {
+func autoscalers(component component) []autoscalingv2beta2.HorizontalPodAutoscaler {
 
 	// fixed number of replicas is explicitly set, do not auto scale
 	if component.replicas() != nil {
@@ -50,10 +50,8 @@ func autoscalers(hpaLabel string, component component) []autoscalingv2beta2.Hori
 		maxReplicas = defaultMaxReplicas
 	}
 
-	componentLabels := component.labels()
-	componentLabels["app.kubernetes.io/component"] = hpaLabel
 	baseCommonSpec := v1.JaegerCommonSpec{
-		Labels: componentLabels,
+		Labels: component.hpaLabels(),
 	}
 
 	avgUtilization := defaultAvgUtilization
