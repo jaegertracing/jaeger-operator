@@ -172,7 +172,7 @@ func (i *Ingester) name() string {
 	return fmt.Sprintf("%s-ingester", i.jaeger.Name)
 }
 
-func (i *Ingester) spec() v1.JaegerCommonSpec {
+func (i *Ingester) commonSpec() v1.JaegerCommonSpec {
 	return i.jaeger.Spec.Ingester.JaegerCommonSpec
 }
 

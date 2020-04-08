@@ -206,7 +206,7 @@ func (c *Collector) name() string {
 	return fmt.Sprintf("%s-collector", c.jaeger.Name)
 }
 
-func (c *Collector) spec() v1.JaegerCommonSpec {
+func (c *Collector) commonSpec() v1.JaegerCommonSpec {
 	return c.jaeger.Spec.Collector.JaegerCommonSpec
 }
 

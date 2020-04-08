@@ -21,7 +21,7 @@ type component interface {
 	name() string
 	hpaLabels() map[string]string
 	replicas() *int32
-	spec() v1.JaegerCommonSpec
+	commonSpec() v1.JaegerCommonSpec
 	autoscalingSpec() v1.AutoScaleSpec
 	jaegerInstance() *v1.Jaeger
 }
@@ -57,7 +57,7 @@ func autoscalers(component component) []autoscalingv2beta2.HorizontalPodAutoscal
 	avgUtilization := defaultAvgUtilization
 	trueVar := true
 	jaeger := component.jaegerInstance()
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{component.spec(), jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{component.commonSpec(), jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	// scale up when either CPU or memory is above 90%
 	return []autoscalingv2beta2.HorizontalPodAutoscaler{{
