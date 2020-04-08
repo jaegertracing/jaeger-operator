@@ -15,32 +15,20 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-export MINIKUBE_VERSION=v1.2.0
-export KUBERNETES_VERSION=v1.14.5
+minikube version
+kubectl version
 
-curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$KUBERNETES_VERSION/bin/linux/amd64/kubectl && \
-    chmod +x kubectl &&  \
-    sudo mv kubectl /usr/local/bin/
-curl -Lo minikube https://storage.googleapis.com/minikube/releases/$MINIKUBE_VERSION/minikube-linux-amd64 && \
-    chmod +x minikube && \
-    sudo mv minikube /usr/local/bin/
+export MINIKUBE_VERSION=v1.0.0
+export KUBERNETES_VERSION=v1.14.0
 
-MINIKUBE=/usr/local/bin/minikube # it's outside of the regular PATH, so, need the full path when calling with sudo
-
-# FIXME remove these two lines
-echo ${PATH}
-which minikube
+MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
 
 sudo mount --make-rshared /
 sudo mount --make-rshared /proc
 sudo mount --make-rshared /sys
 
-export MINIKUBE_HOME=$HOME
-export CHANGE_MINIKUBE_NONE_USER=true
 mkdir "${HOME}"/.kube || true
 touch "${HOME}"/.kube/config
-
-export KUBECONFIG=$HOME/.kube/config
 
 # minikube config
 minikube config set WantNoneDriverWarning false
