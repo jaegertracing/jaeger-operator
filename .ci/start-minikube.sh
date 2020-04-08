@@ -48,4 +48,4 @@ JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.ty
 
 sudo ${MINIKUBE} addons enable ingress
 
-eval $(minikube docker-env)
+eval $(${MINIKUBE}  docker-env)
