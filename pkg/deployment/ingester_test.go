@@ -359,6 +359,71 @@ func TestIngesterOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 }
 
+func TestIngesterAutoscalersOnByDefault(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	c := NewIngester(jaeger)
+
+	// test
+	a := c.Autoscalers()
+
+	// verify
+	assert.Len(t, a, 1)
+	assert.Len(t, a[0].Spec.Metrics, 2)
+
+	assert.Contains(t, []corev1.ResourceName{a[0].Spec.Metrics[0].Resource.Name, a[0].Spec.Metrics[1].Resource.Name}, corev1.ResourceCPU)
+	assert.Contains(t, []corev1.ResourceName{a[0].Spec.Metrics[0].Resource.Name, a[0].Spec.Metrics[1].Resource.Name}, corev1.ResourceMemory)
+
+	assert.Equal(t, int32(90), *a[0].Spec.Metrics[0].Resource.Target.AverageUtilization)
+	assert.Equal(t, int32(90), *a[0].Spec.Metrics[1].Resource.Target.AverageUtilization)
+}
+
+func TestIngesterAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
+	// prepare
+	tests := []int32{int32(0), int32(1)}
+
+	for _, test := range tests {
+		jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+		jaeger.Spec.Ingester.Replicas = &test
+		c := NewIngester(jaeger)
+
+		// test
+		a := c.Autoscalers()
+
+		// verify
+		assert.Len(t, a, 0)
+	}
+}
+
+func TestIngesterAutoscalersDisabledByExplicitOption(t *testing.T) {
+	// prepare
+	disabled := false
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingester.Autoscale = &disabled
+	c := NewIngester(jaeger)
+
+	// test
+	a := c.Autoscalers()
+
+	// verify
+	assert.Len(t, a, 0)
+}
+
+func TestIngesterAutoscalersSetMaxReplicas(t *testing.T) {
+	// prepare
+	maxReplicas := int32(2)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingester.MaxReplicas = &maxReplicas
+	c := NewIngester(jaeger)
+
+	// test
+	a := c.Autoscalers()
+
+	// verify
+	assert.Len(t, a, 1)
+	assert.Equal(t, maxReplicas, a[0].Spec.MaxReplicas)
+}
+
 func newIngesterJaeger(name string) *v1.Jaeger {
 	return &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{

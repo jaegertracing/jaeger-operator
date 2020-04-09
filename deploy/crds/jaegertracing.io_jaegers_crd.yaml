@@ -3476,12 +3476,20 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                autoscale:
+                  type: boolean
                 image:
                   type: string
                 labels:
                   additionalProperties:
                     type: string
                   type: object
+                maxReplicas:
+                  format: int32
+                  type: integer
+                minReplicas:
+                  format: int32
+                  type: integer
                 options:
                   type: object
                 replicas:

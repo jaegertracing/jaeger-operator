@@ -438,7 +438,7 @@ func TestCollectorOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
 }
 
-func TestAutoscalersOnByDefault(t *testing.T) {
+func TestCollectorAutoscalersOnByDefault(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := NewCollector(jaeger)
@@ -457,7 +457,7 @@ func TestAutoscalersOnByDefault(t *testing.T) {
 	assert.Equal(t, int32(90), *a[0].Spec.Metrics[1].Resource.Target.AverageUtilization)
 }
 
-func TestAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
+func TestCollectorAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
 	// prepare
 	tests := []int32{int32(0), int32(1)}
 
@@ -474,7 +474,7 @@ func TestAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
 	}
 }
 
-func TestAutoscalersDisabledByExplicitOption(t *testing.T) {
+func TestCollectorAutoscalersDisabledByExplicitOption(t *testing.T) {
 	// prepare
 	disabled := false
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -488,7 +488,7 @@ func TestAutoscalersDisabledByExplicitOption(t *testing.T) {
 	assert.Len(t, a, 0)
 }
 
-func TestAutoscalersSetMaxReplicas(t *testing.T) {
+func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 	// prepare
 	maxReplicas := int32(2)
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})

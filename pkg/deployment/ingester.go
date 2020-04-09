@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -24,6 +25,11 @@ type Ingester struct {
 // NewIngester builds a new Ingester struct based on the given spec
 func NewIngester(jaeger *v1.Jaeger) *Ingester {
 	return &Ingester{jaeger: jaeger}
+}
+
+// Autoscalers returns a list of HPAs based on this ingester
+func (i *Ingester) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+	return autoscalers(i)
 }
 
 // Get returns a ingester pod
@@ -156,6 +162,28 @@ func (i *Ingester) labels() map[string]string {
 	return util.Labels(i.name(), "ingester", *i.jaeger)
 }
 
+func (i *Ingester) hpaLabels() map[string]string {
+	labels := i.labels()
+	labels["app.kubernetes.io/component"] = "hpa-ingester"
+	return labels
+}
+
 func (i *Ingester) name() string {
 	return fmt.Sprintf("%s-ingester", i.jaeger.Name)
+}
+
+func (i *Ingester) commonSpec() v1.JaegerCommonSpec {
+	return i.jaeger.Spec.Ingester.JaegerCommonSpec
+}
+
+func (i *Ingester) autoscalingSpec() v1.AutoScaleSpec {
+	return i.jaeger.Spec.Ingester.AutoScaleSpec
+}
+
+func (i *Ingester) jaegerInstance() *v1.Jaeger {
+	return i.jaeger
+}
+
+func (i *Ingester) replicas() *int32 {
+	return i.jaeger.Spec.Ingester.Replicas
 }

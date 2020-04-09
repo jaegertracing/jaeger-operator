@@ -289,17 +289,12 @@ type JaegerAllInOneSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
-// JaegerCollectorSpec defines the options to be used when deploying the collector
+// AutoScaleSpec defines the common elements used for create HPAs
 // +k8s:openapi-gen=true
-type JaegerCollectorSpec struct {
+type AutoScaleSpec struct {
 	// Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.
 	// +optional
 	Autoscale *bool `json:"autoscale,omitempty"`
-
-	// Replicas represents the number of replicas to create for this service.
-	// +optional
-	Replicas *int32 `json:"replicas,omitempty"`
-
 	// MinReplicas sets a lower bound to the autoscaling feature.
 	// +optional
 	MinReplicas *int32 `json:"minReplicas,omitempty"`
@@ -307,6 +302,18 @@ type JaegerCollectorSpec struct {
 	// MaxReplicas sets an upper bound to the autoscaling feature. When autoscaling is enabled and no value is provided, a default value is used.
 	// +optional
 	MaxReplicas *int32 `json:"maxReplicas,omitempty"`
+}
+
+// JaegerCollectorSpec defines the options to be used when deploying the collector
+// +k8s:openapi-gen=true
+type JaegerCollectorSpec struct {
+
+	// +optional
+	AutoScaleSpec `json:",inline,omitempty"`
+
+	// Replicas represents the number of replicas to create for this service.
+	// +optional
+	Replicas *int32 `json:"replicas,omitempty"`
 
 	// +optional
 	Image string `json:"image,omitempty"`
@@ -321,6 +328,9 @@ type JaegerCollectorSpec struct {
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
 // +k8s:openapi-gen=true
 type JaegerIngesterSpec struct {
+	// +optional
+	AutoScaleSpec `json:",inline,omitempty"`
+
 	// Replicas represents the number of replicas to create for this service.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`

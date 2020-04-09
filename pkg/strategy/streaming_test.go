@@ -168,7 +168,7 @@ func TestDelegateStreamingDependencies(t *testing.T) {
 func TestAutoscaleForStreaming(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := newStreamingStrategy(context.Background(), j)
-	assert.Len(t, c.HorizontalPodAutoscalers(), 1)
+	assert.Len(t, c.HorizontalPodAutoscalers(), 2)
 }
 
 func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
