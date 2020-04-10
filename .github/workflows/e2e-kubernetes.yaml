@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2]
+        TEST_GROUP: [es]
     steps:
     - uses: actions/setup-go@v1
       with:

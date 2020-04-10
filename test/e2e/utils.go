@@ -44,7 +44,7 @@ var (
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
-	saveLogs             = getBoolEnv("SAVE_LOGS", false)
+	saveLogs             = getBoolEnv("SAVE_LOGS", true) // FIXME reset to false
 	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
@@ -268,6 +268,11 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 }
 
 func writePodLogToFile(namespace, labelSelector, containerName, logFileName string) {
+	// #nosec G204 (CWE-78): Subprocess launched with variable
+	cmd := exec.Command("kubectl", "get", "all", "--namespace", namespace)
+	output, _ := cmd.CombinedOutput()
+	fmt.Printf("%s\n", string(output))
+
 	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		logrus.Warnf("Got error listing pods in namespace %s with selector %s: %v", namespace, labelSelector, err)
@@ -280,6 +285,8 @@ func writePodLogToFile(namespace, labelSelector, containerName, logFileName stri
 			logrus.Warnf("Error getting log content %v", result.Error())
 		} else {
 			log, _ := result.Raw()
+			fmt.Printf(">>>>>>>>>>>>>>>>>>>>>> Writing to logfile %s\n", logFileName)
+			fmt.Printf(string(log))
 			err := ioutil.WriteFile(logFileName, log, 0644)
 			if err != nil {
 				logrus.Warnf("Error writing log content to file %s: %v\n", logFileName, err)
