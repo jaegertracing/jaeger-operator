@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -172,7 +173,21 @@ func (suite *MiscTestSuite) TestBasicOAuth() {
 	// A request without credentials should return a 403
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
-	response, err := httpClient.Do(request)
+	response := &http.Response{}
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		response, err = httpClient.Do(request)
+		require.NoError(t, err)
+
+		if response.StatusCode == 403 {
+			return true, nil
+		}
+		if response.StatusCode == 503 {
+			log.Info("Ignoring http response status 503")
+			return false, nil
+		}
+		require.Failf(t, "Expected status 403 or 503 but got %d", strconv.Itoa(response.StatusCode))
+		return false, nil
+	})
 	require.NoError(t, err)
 	require.Equal(t, 403, response.StatusCode)
 
