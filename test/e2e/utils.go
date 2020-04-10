@@ -248,8 +248,8 @@ func printTestStackTrace() {
 
 func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	if saveLogs {
-		logFileName := strings.ReplaceAll(t.Name(), "/", "-") + ".log"
-		writePodLogToFile(jaeger.Namespace, "app.kubernetes.io/part-of=jaeger", "jaeger", logFileName)
+		logFileNameBase := strings.ReplaceAll(t.Name(), "/", "-")
+		writePodLogsToFile(jaeger.Namespace, "app.kubernetes.io/part-of=jaeger", logFileNameBase)
 	}
 
 	if !debugMode || !t.Failed() {
@@ -267,22 +267,32 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	return true
 }
 
-func writePodLogToFile(namespace, labelSelector, containerName, logFileName string) {
+func writePodLogsToFile(namespace, labelSelector, logFileNameBase string) {
 	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		logrus.Warnf("Got error listing pods in namespace %s with selector %s: %v", namespace, labelSelector, err)
 		return
 	}
 
+	// Write logs for every container in every pod that we've matched.
 	for _, pod := range pods.Items {
-		result := fw.KubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: containerName}).Do()
-		if result.Error() != nil {
-			logrus.Warnf("Error getting log content %v", result.Error())
-		} else {
-			log, _ := result.Raw()
-			err := ioutil.WriteFile(logFileName, log, 0644)
-			if err != nil {
-				logrus.Warnf("Error writing log content to file %s: %v\n", logFileName, err)
+		for _, container := range pod.Spec.Containers {
+			result := fw.KubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Do()
+			if result.Error() != nil {
+				logrus.Warnf("Error getting log content for pod %s, container %s in namespace %s: %v", pod.Name, container.Name, namespace, result.Error())
+			} else {
+				log, _ := result.Raw()
+				var logFileName string
+				if container.Name == "jaeger-operator" {
+					logFileName = fmt.Sprintf("%s.log", logFileNameBase)
+				} else {
+					logFileName = fmt.Sprintf("%s-%s-%s.log", logFileNameBase, pod.Name, container.Name)
+				}
+				err := ioutil.WriteFile(logFileName, log, 0644)
+				if err != nil {
+					logrus.Warnf("Error writing log content to file %s: %v\n", logFileName, err)
+				}
+				logrus.Infof("Wrote %d bytes to logfile %s for pod %s", len(log), logFileName, pod.Name)
 			}
 		}
 	}
@@ -319,8 +329,8 @@ func handleSuiteTearDown() {
 	logrus.Info("Entering TearDownSuite()")
 	if saveLogs && !usingOLM {
 		i := strings.Index(t.Name(), "/")
-		logFileName := t.Name()[:i] + "-operator.log"
-		writePodLogToFile(namespace, "name=jaeger-operator", "jaeger-operator", logFileName)
+		logFileNameBase := t.Name()[:i] + "-operator"
+		writePodLogsToFile(namespace, "name=jaeger-operator", logFileNameBase)
 	}
 
 	if !debugMode || !t.Failed() {
