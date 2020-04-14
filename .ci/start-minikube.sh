@@ -42,7 +42,9 @@ JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.ty
 
 # waiting for kube-addon-manager to be ready
 #JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lcomponent=kube-addon-manager -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-addon-manager to be available"; kubectl get pods --all-namespaces; done
-kubectl wait --for=condition=Ready pod/kube-addon-manager-minikube  --namespace kube-system --timeout=60s
+#kubectl wait --for=condition=Ready pod/kube-addon-manager-minikube  --namespace kube-system --timeout=60s || true
+
+kubectl get all --namespace kube-system
 
 # Get the log from one of the dns pods
 export ONEDNSPOD=$(kubectl --namespace kube-system get pods -lk8s-app=kube-dns | grep coredns | head -1 | awk '{print $1}')
@@ -55,3 +57,7 @@ kubectl logs --namespace kube-system $ONEDNSPOD
 sudo ${MINIKUBE} addons enable ingress
 
 eval $(minikube docker-env)
+
+kubectl get namespaces
+kubectl get all --namespace default
+kubectl get all --namespace kube-system
