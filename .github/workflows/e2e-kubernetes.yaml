@@ -3,9 +3,9 @@ on: [push, pull_request]
 
 jobs:
   end-to-end:
-    runs-on: ubuntu-xenial
+    runs-on: ubuntu-16.04
     strategy:
-      matrix:
+      matrix: 
         TEST_GROUP: [es]
     steps:
     - uses: actions/setup-go@v1
