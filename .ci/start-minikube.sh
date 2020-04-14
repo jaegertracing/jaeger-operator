@@ -15,8 +15,8 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-export MINIKUBE_VERSION=v1.0.0
-export KUBERNETES_VERSION=v1.14.0
+export MINIKUBE_VERSION=v1.3.1
+export KUBERNETES_VERSION=v1.15.2
 
 MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
 
@@ -43,8 +43,14 @@ JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.ty
 # waiting for kube-addon-manager to be ready
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lcomponent=kube-addon-manager -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-addon-manager to be available"; kubectl get pods --all-namespaces; done
 
+
+# Get the log from one of the dns pods
+export ONEDNSPOD=$(kubectl --namespace kube-system get pods -lk8s-app=kube-dns | grep coredns | head -1 | awk '{print $1}')
+kubectl wait --for=condition=Ready pod/${ONEDNSPOD} --namespace kube-system --timeout=60s || true
+kubectl logs --namespace kube-system $ONEDNSPOD
+
 # waiting for kube-dns to be ready
-JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
+#JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
 
 sudo ${MINIKUBE} addons enable ingress
 
