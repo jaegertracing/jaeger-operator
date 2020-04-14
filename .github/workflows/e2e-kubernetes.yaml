@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-16.04
     strategy:
       matrix:
-        TEST_GROUP: [es]
+        TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2]
     steps:
     - uses: actions/setup-go@v1
       with:
