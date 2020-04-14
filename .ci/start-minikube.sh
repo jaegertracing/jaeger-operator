@@ -15,8 +15,8 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-export MINIKUBE_VERSION=v1.3.1
-export KUBERNETES_VERSION=v1.15.2
+export MINIKUBE_VERSION=v1.5.2
+export KUBERNETES_VERSION=v1.16.2
 
 MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
 
