@@ -10,10 +10,10 @@ jobs:
     steps:
     - uses: actions/setup-go@v1
       with:
-        go-version: '1.13.3'
+        go-version: '1.13.5'
     - uses: jpkrohling/setup-minikube@v1-release
       with:
-        minikube-version: v1.6.2
+        minikube-version: v1.3.1
     - uses: jpkrohling/setup-kubectl@v1-release
     - uses: jpkrohling/setup-operator-sdk@v1-release
       with:
