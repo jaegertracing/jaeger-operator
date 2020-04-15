@@ -129,10 +129,9 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 
 		resp, err := c.Do(req)
 		if err != nil {
-			logrus.Warnf(">>>>>>>>>>>>>>>>>>>>>>>>>> Ignoring error: %v", err)
+			logrus.Warnf("Ignoring error on request: %v", err)
 			return false, nil
 		}
-		//require.NoError(t, err)
 		defer resp.Body.Close()
 
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
