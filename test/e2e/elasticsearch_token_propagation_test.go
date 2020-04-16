@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -123,6 +125,10 @@ func (suite *TokenTestSuite) TestTokenPropagationNoToken() {
 		defer resp.Body.Close()
 		if err != nil {
 			return false, err
+		}
+		if resp.StatusCode == http.StatusServiceUnavailable {
+			logrus.Warnf("Ignoring http response %d", resp.StatusCode)
+			return false, nil
 		}
 		if resp.StatusCode == http.StatusForbidden {
 			return true, nil
