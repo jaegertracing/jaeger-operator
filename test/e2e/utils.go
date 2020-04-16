@@ -328,8 +328,15 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 func handleSuiteTearDown() {
 	logrus.Info("Entering TearDownSuite()")
 	if saveLogs && !usingOLM {
+		var logFileNameBase string
+		// Sometimes t.Name() returns just the suite name, other times it returns suite/lastTestRun.
+		// Here we just want the suite name
 		i := strings.Index(t.Name(), "/")
-		logFileNameBase := t.Name()[:i] + "-operator"
+		if i > 0 {
+			logFileNameBase = t.Name()[:i] + "-operator"
+		} else {
+			logFileNameBase = t.Name() + "-operator"
+		}
 		writePodLogsToFile(namespace, "name=jaeger-operator", logFileNameBase)
 	}
 
