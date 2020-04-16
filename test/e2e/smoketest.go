@@ -133,10 +133,17 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 			return false, nil
 		}
 		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			logrus.Infof("Status code was %d", resp.StatusCode)
+		}
 
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
 
+		if strings.Contains(bodyString, "<title>Log In</title>") {
+			logrus.Warn("Ignoring redirect to login page")
+			return false, nil
+		}
 		if !strings.Contains(bodyString, "errors\":null") {
 			return false, errors.New("query service returns errors: " + bodyString)
 		}
