@@ -26,6 +26,8 @@ spec:
               value: "0.0.0.0"
             - name: "transport.host"
               value: "127.0.0.1"
+            - name: "cluster.routing.allocation.disk.threshold_enabled"
+              value: "false"
           volumeMounts:
             - name: data
               mountPath: /usr/share/elasticsearch/data
