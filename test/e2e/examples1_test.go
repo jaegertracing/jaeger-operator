@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	log "github.com/sirupsen/logrus"
 
@@ -117,24 +120,30 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	require.NoError(t, err, "Failed waiting for myapp deployment")
 
 	// Add a liveliness probe to create some traces
-	vertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(vertxDeploymentName, metav1.GetOptions{})
-	require.NoError(t, err)
-
 	vertxPort := intstr.IntOrString{IntVal: 8080}
 	livelinessHandler := &corev1.HTTPGetAction{Path: "/", Port: vertxPort, Scheme: corev1.URISchemeHTTP}
 	handler := &corev1.Handler{HTTPGet: livelinessHandler}
 	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds: 1, FailureThreshold: 3, PeriodSeconds: 10, SuccessThreshold: 1, TimeoutSeconds: 1}
 
-	containers := vertxDeployment.Spec.Template.Spec.Containers
-	for index, container := range containers {
-		if container.Name == vertxDeploymentName {
-			vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
-			updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(vertxDeployment)
-			require.NoError(t, err)
-			log.Infof("Updated deployment %v", updatedVertxDeployment.Name)
-			break
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		vertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(vertxDeploymentName, metav1.GetOptions{})
+		require.NoError(t, err)
+		containers := vertxDeployment.Spec.Template.Spec.Containers
+		for index, container := range containers {
+			if container.Name == vertxDeploymentName {
+				vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
+				updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(vertxDeployment)
+				if err != nil {
+					log.Warnf("Error %v updating vertx app, retrying", err)
+					return false, nil
+				}
+				log.Infof("Updated deployment %v", updatedVertxDeployment.Name)
+				return true, nil
+			}
 		}
-	}
+		return false, errors.New("Vertx deployment not found")
+	})
+	require.NoError(t, err)
 
 	// Confirm that we've created some traces
 	ports := []string{"0:16686"}
