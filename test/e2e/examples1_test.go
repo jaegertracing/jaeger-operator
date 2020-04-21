@@ -134,7 +134,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 				vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
 				updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(vertxDeployment)
 				if err != nil {
-					log.Warnf(">>>>>>>>>>>>>>>>>> Error %v updating vertx app, retrying", err)
+					log.Warnf("Error %v updating vertx app, retrying", err)
 					return false, nil
 				}
 				log.Infof("Updated deployment %v", updatedVertxDeployment.Name)
