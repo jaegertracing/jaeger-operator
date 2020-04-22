@@ -55,6 +55,12 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("openshift-oauth-proxy-image", "openshift/oauth-proxy:latest", "The Docker image location definition for the OpenShift OAuth Proxy")
 	viper.BindPFlag("openshift-oauth-proxy-image", cmd.Flags().Lookup("openshift-oauth-proxy-image"))
 
+	cmd.Flags().String("openshift-oauth-proxy-imagestream-ns", "", "The namespace for the OpenShift OAuth Proxy imagestream")
+	viper.BindPFlag("openshift-oauth-proxy-imagestream-ns", cmd.Flags().Lookup("openshift-oauth-proxy-imagestream-ns"))
+
+	cmd.Flags().String("openshift-oauth-proxy-imagestream-name", "", "The name for the OpenShift OAuth Proxy imagestream")
+	viper.BindPFlag("openshift-oauth-proxy-imagestream-name", cmd.Flags().Lookup("openshift-oauth-proxy-imagestream-name"))
+
 	cmd.Flags().String("platform", "auto-detect", "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")
 	viper.BindPFlag("platform", cmd.Flags().Lookup("platform"))
 

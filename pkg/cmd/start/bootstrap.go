@@ -19,11 +19,14 @@ import (
 	"go.opentelemetry.io/otel/global"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	osimagev1 "github.com/openshift/api/image/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -88,8 +91,59 @@ func bootstrap(ctx context.Context) manager.Manager {
 	setupControllers(ctx, mgr)
 	serveCRMetrics(ctx, cfg, namespace)
 	createMetricsService(ctx, cfg, namespace)
+	detectOAuthProxyImageStream(ctx, mgr)
 
 	return mgr
+}
+
+func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
+	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
+	defer span.End()
+
+	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		log.Debug("Not running on OpenShift, so won't configure OAuthProxy imagestream.")
+		return
+	}
+
+	imageStreamNamespace := viper.GetString("openshift-oauth-proxy-imagestream-ns")
+	imageStreamName := viper.GetString("openshift-oauth-proxy-imagestream-name")
+	if imageStreamNamespace == "" || imageStreamName == "" {
+		log.WithFields(log.Fields{
+			"namespace": imageStreamNamespace,
+			"name":      imageStreamName,
+		}).Info("OAuthProxy ImageStream namespace and/or name not defined")
+		return
+	}
+
+	imageStream := &osimagev1.ImageStream{}
+	namespacedName := types.NamespacedName{
+		Name:      imageStreamName,
+		Namespace: imageStreamNamespace,
+	}
+	if err := mgr.GetAPIReader().Get(ctx, namespacedName, imageStream); err != nil {
+		log.WithFields(log.Fields{
+			"namespace": imageStreamNamespace,
+			"name":      imageStreamName,
+		}).WithError(err).Error("Failed to obtain OAuthProxy ImageStream")
+		tracing.HandleError(err, span)
+		return
+	}
+
+	if len(imageStream.Status.Tags) == 0 {
+		log.WithFields(log.Fields{
+			"namespace": imageStreamNamespace,
+			"name":      imageStreamName,
+		}).Error("OAuthProxy ImageStream has no tags")
+		return
+	}
+
+	image := fmt.Sprintf("%s:%s", imageStream.Status.DockerImageRepository, imageStream.Status.Tags[0].Tag)
+
+	viper.Set("openshift-oauth-proxy-image", image)
+	log.WithFields(log.Fields{
+		"image": image,
+	}).Info("Updated OAuth Proxy image flag")
 }
 
 func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {

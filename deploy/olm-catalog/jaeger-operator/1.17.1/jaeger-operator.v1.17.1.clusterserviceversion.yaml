@@ -209,6 +209,17 @@ spec:
           - delete
           - watch
         - apiGroups:
+          - image.openshift.io
+          resources:
+          - imagestreams
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - watch
+        - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
@@ -401,6 +412,17 @@ spec:
           - route.openshift.io
           resources:
           - routes
+          verbs:
+          - get
+          - list
+          - create
+          - update
+          - delete
+          - watch
+        - apiGroups:
+          - image.openshift.io
+          resources:
+          - imagestreams
           verbs:
           - get
           - list
