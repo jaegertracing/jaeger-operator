@@ -3,6 +3,7 @@ module github.com/jaegertracing/jaeger-operator
 go 1.13
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/go-openapi/spec v0.19.4
 	github.com/googleapis/gnostic v0.3.1

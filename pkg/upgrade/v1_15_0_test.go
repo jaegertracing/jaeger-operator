@@ -13,7 +13,14 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
+type version1_15_0 struct{}
+
+func (version1_15_0) JaegerVersion() string {
+	return "1.15.0"
+}
+
 func TestUpgradeDeprecatedOptionsv1_15_0(t *testing.T) {
+	latestVersion := version1_17_0{}
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.14.0"
@@ -28,12 +35,12 @@ func TestUpgradeDeprecatedOptionsv1_15_0(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, latestVersion.JaegerVersion(), persisted.Status.Version)
 
 	opts := persisted.Spec.Collector.Options.Map()
 	assert.Contains(t, opts, "reporter.tchannel.host-port")

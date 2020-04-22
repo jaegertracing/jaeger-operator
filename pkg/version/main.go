@@ -45,6 +45,11 @@ func (v Version) String() string {
 	)
 }
 
+// JaegerVersion returns the latest know version of jaeger by this operator
+func (v Version) JaegerVersion() string {
+	return v.Jaeger
+}
+
 // DefaultJaeger returns the default Jaeger to use when no versions are specified via CLI or configuration
 func DefaultJaeger() string {
 	if len(defaultJaeger) > 0 {

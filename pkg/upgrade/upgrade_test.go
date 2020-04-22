@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	opver "github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func TestVersionUpgradeToLatest(t *testing.T) {
@@ -28,12 +29,12 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
@@ -56,12 +57,12 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
@@ -84,12 +85,12 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestUnknownVersion(t *testing.T) {
@@ -106,7 +107,7 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -134,7 +135,7 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
 
 	// verify
 	persisted := &v1.Jaeger{}
