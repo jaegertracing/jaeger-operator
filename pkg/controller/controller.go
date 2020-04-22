@@ -1,9 +1,11 @@
 package controller
 
 import (
-	imagev1 "github.com/openshift/api/image/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	osimagev1 "github.com/openshift/api/image/v1"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager
@@ -14,7 +16,13 @@ func AddToManager(m manager.Manager) error {
 	if err := routev1.AddToScheme(m.GetScheme()); err != nil {
 		return err
 	}
-	if err := imagev1.AddToScheme(m.GetScheme()); err != nil {
+
+	// Registry just the ImageStream - adding osimagev1.AddToScheme(..) causes
+	// the SecretList to be registered again, which resulted in
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/362
+	var SchemeBuilder = &scheme.Builder{GroupVersion: osimagev1.SchemeGroupVersion}
+	SchemeBuilder.Register(&osimagev1.ImageStream{})
+	if err := SchemeBuilder.AddToScheme(m.GetScheme()); err != nil {
 		return err
 	}
 

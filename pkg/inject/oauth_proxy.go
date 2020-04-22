@@ -83,7 +83,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	fmt.Printf("CONFIGURING OAUTH PROXY WITH IMAGE: %s\r\n", viper.GetString("openshift-oauth-proxy-image"))
 	return corev1.Container{
 		Image:        viper.GetString("openshift-oauth-proxy-image"),
 		Name:         "oauth-proxy",
