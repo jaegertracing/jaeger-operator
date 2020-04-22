@@ -67,6 +67,25 @@ func (suite *MiscTestSuite) AfterTest(suiteName, testName string) {
 	}
 }
 
+// Confirms fix for https://github.com/jaegertracing/jaeger-operator/issues/670.  Deploy an
+// invalid CR, delete it, and make sure the operator responds properly.
+func (suite *MiscTestSuite) TestDeleteResource() {
+	jaegerInstanceName := "invalid-jaeger"
+	jaegerInstance := getInvalidJaeger(jaegerInstanceName, namespace)
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
+	err := fw.Client.Create(context.Background(), jaegerInstance, cleanupOptions)
+	require.NoError(t, err, "Error deploying invalid Jaeger")
+	time.Sleep(5 * time.Second)
+
+	undeployJaegerInstance(jaegerInstance)
+	time.Sleep(5 * time.Second) // Give operator long enough to write to its log
+
+	logs := getLogsForNamespace(namespace, "name=jaeger-operator", "operator")
+	operatorLog := logs["operator.log"]
+	require.Contains(t, operatorLog, "\"Deployment has been removed.\" name="+jaegerInstanceName)
+	require.Contains(t, operatorLog, "level=error msg=\"failed to apply the changes\" error=\"deployment has been removed\"")
+}
+
 // Make sure we're testing correct image
 func (suite *MiscTestSuite) TestValidateBuildImage() {
 	// TODO reinstate this if we come up with a good solution, but skip for now when using OLM installed operators
@@ -216,7 +235,6 @@ func (suite *MiscTestSuite) TestBasicOAuth() {
 		return false, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-
 }
 
 func jaegerWithPassword(namespace string, instanceName, secretName string) *v1.Jaeger {
@@ -322,6 +340,28 @@ func getSimplestJaeger(jaegerInstanceName, namespace string) *v1.Jaeger {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaegerInstanceName,
 			Namespace: namespace,
+		},
+	}
+
+	return jaeger
+}
+
+func getInvalidJaeger(jaegerInstanceName, namespace string) *v1.Jaeger {
+	jaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jaegerInstanceName,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			AllInOne: v1.JaegerAllInOneSpec{
+				Options: v1.NewOptions(map[string]interface{}{
+					"invalidoptions": "invalid",
+				}),
+			},
 		},
 	}
 

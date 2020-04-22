@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -99,7 +100,7 @@ func hasInsecureEndpoint(jaegerInstanceName, jaegerInstanceNamespace string) boo
 }
 
 func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEndpoint bool) {
-	serviceName := "smoketest"
+	serviceName := "smoketest" + strconv.Itoa(time.Now().Nanosecond())
 	cfg := config.Configuration{
 		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
 		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
