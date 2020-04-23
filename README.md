@@ -33,6 +33,7 @@ apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
+  namespace: observability
 EOF
 ```
 
