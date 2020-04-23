@@ -22,3 +22,7 @@ var (
 		v1_17_0.v: v1_17_0,
 	}
 )
+
+func noop(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+	return jaeger, nil
+}

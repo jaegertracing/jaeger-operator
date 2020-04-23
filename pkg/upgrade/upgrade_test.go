@@ -142,3 +142,34 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
+
+
+func TestSkipForInvalidSemVer(t *testing.T) {
+
+	// prepare
+	viper.Set(v1.ConfigIdentity, "the-identity")
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+
+	existing := v1.NewJaeger(nsn)
+	existing.Labels = map[string]string{
+		v1.LabelOperatedBy: "some-other-identity",
+	}
+	existing.Status.Version = "1.11.0"
+	objs := []runtime.Object{existing}
+	//versions["12...2"] = version{v: "12...2", upgrade: noop}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+
+	// test
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+
+	// verify
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, "1.11.0", persisted.Status.Version)
+}

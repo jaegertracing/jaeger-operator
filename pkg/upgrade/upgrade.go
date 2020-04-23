@@ -108,6 +108,7 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 				"namespace": jaeger.Namespace,
 				"to":        v,
 			}).WithError(err).Error("Unable to parse version")
+			return jaeger, err
 		}
 		versionLists = append(versionLists, v)
 	}
