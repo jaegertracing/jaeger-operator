@@ -3,9 +3,12 @@ package upgrade
 import (
 	"context"
 	"fmt"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,36 +36,25 @@ func upgrade1_18_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 		},
 	}
 
-	agentFlags := []string{
-		"collector.host-port",
-		"reporter.tchannel.discovery.conn-check-timeout",
-		"reporter.tchannel.discovery.min-peers",
-		"reporter.tchannel.host-port",
-		"reporter.tchannel.report-timeout",
+	collectorGrpcPort := "14250"
+	if port, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc-port"]; ok {
+		collectorGrpcPort = port
 	}
 
 	jaeger.Spec.Collector.Options = migrateDeprecatedOptions(&jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
-	jaeger.Spec.Collector.Options = transformCollectorPorts(&jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
+	jaeger.Spec.Collector.Options = transformCollectorPorts(jaeger.Logger(), jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
 
 	// Remove agent flags
-	deleteAgentFlags := []deprecationFlagMap{}
-	for _, item := range agentFlags {
-		deleteAgentFlags = append(deleteAgentFlags, deprecationFlagMap{
-			from: item,
-			to:   "",
-		})
-	}
-
-	jaeger.Spec.Agent.Options = migrateDeprecatedOptions(&jaeger, jaeger.Spec.Agent.Options, deleteAgentFlags)
+	jaeger.Spec.Agent.Options = migrateAgentOptions(&jaeger, collectorGrpcPort)
 
 	return jaeger, nil
 }
 
-func transformCollectorPorts(jaeger *v1.Jaeger, opts v1.Options, flagMap []deprecationFlagMap) v1.Options {
+func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFlagsMap []deprecationFlagMap) v1.Options {
 	// Transform port number to format :XXX
 	in := opts.GenericMap()
-	for _, d := range flagMap {
-		jaeger.Logger().WithFields(log.Fields{
+	for _, d := range collectorNewFlagsMap {
+		logger.WithFields(log.Fields{
 			"from": d.from,
 			"to":   d.to,
 		}).Debug("flag value migrated")
@@ -72,4 +64,33 @@ func transformCollectorPorts(jaeger *v1.Jaeger, opts v1.Options, flagMap []depre
 	}
 
 	return v1.NewOptions(in)
+}
+
+func migrateAgentOptions(jaeger *v1.Jaeger, collectorGrpcPort string) v1.Options {
+
+	agentRemovedFlags := []string{
+		"collector.host-port",
+		"reporter.tchannel.discovery.conn-check-timeout",
+		"reporter.tchannel.discovery.min-peers",
+		"reporter.tchannel.host-port",
+		"reporter.tchannel.report-timeout",
+	}
+	deleteAgentFlags := []deprecationFlagMap{}
+	for _, item := range agentRemovedFlags {
+		deleteAgentFlags = append(deleteAgentFlags, deprecationFlagMap{
+			from: item,
+			to:   "",
+		})
+	}
+	ops := migrateDeprecatedOptions(jaeger, jaeger.Spec.Agent.Options, deleteAgentFlags)
+	opsMap := ops.GenericMap()
+
+	// Removed support for tchannel, so we need to make sure grpc is enabled and properly configured.
+	if _, ok := opsMap["reporter.grpc.host-port"]; !ok {
+		opsMap["reporter.grpc.host-port"] = fmt.Sprintf("dns:///%s.%s:%s",
+			service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace, collectorGrpcPort)
+	}
+
+	return v1.NewOptions(opsMap)
+
 }
