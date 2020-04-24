@@ -85,7 +85,7 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 			Containers: []corev1.Container{
 				{
 					Name:         name,
-					Image:        jaeger.Spec.Storage.EsRollover.Image,
+					Image:        util.ImageName(jaeger.Spec.Storage.EsRollover.Image, "jaeger-es-rollover-image"),
 					Args:         []string{action, util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
 					Env:          util.RemoveEmptyVars(envs),
 					EnvFrom:      envFromSource,

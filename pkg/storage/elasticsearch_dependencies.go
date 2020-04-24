@@ -7,6 +7,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/spf13/viper"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -30,6 +32,11 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 		Labels: util.Labels(name, "job-es-rollover-create-mapping", *jaeger),
 	}
 	commonSpec = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, *commonSpec})
+	image := jaeger.Spec.Storage.Dependencies.Image
+	if image == "" {
+		// the version is not included, there is only one version - latest
+		image = viper.GetString("jaeger-spark-dependencies-image")
+	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
@@ -49,7 +56,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:         name,
-							Image:        jaeger.Spec.Storage.EsRollover.Image,
+							Image:        image,
 							Args:         []string{"init", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
 							Env:          util.RemoveEmptyVars(envVars(jaeger.Spec.Storage.Options)),
 							EnvFrom:      envFromSource,
