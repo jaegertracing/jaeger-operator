@@ -68,20 +68,14 @@ func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFla
 
 func migrateAgentOptions(jaeger *v1.Jaeger, collectorGrpcPort string) v1.Options {
 
-	agentRemovedFlags := []string{
-		"collector.host-port",
-		"reporter.tchannel.discovery.conn-check-timeout",
-		"reporter.tchannel.discovery.min-peers",
-		"reporter.tchannel.host-port",
-		"reporter.tchannel.report-timeout",
+	deleteAgentFlags := []deprecationFlagMap{
+		{from: "collector.host-port"},
+		{from: "reporter.tchannel.discovery.conn-check-timeout"},
+		{from: "reporter.tchannel.discovery.min-peers"},
+		{from: "reporter.tchannel.host-port"},
+		{from: "reporter.tchannel.report-timeout"},
 	}
-	deleteAgentFlags := []deprecationFlagMap{}
-	for _, item := range agentRemovedFlags {
-		deleteAgentFlags = append(deleteAgentFlags, deprecationFlagMap{
-			from: item,
-			to:   "",
-		})
-	}
+
 	ops := migrateDeprecatedOptions(jaeger, jaeger.Spec.Agent.Options, deleteAgentFlags)
 	opsMap := ops.GenericMap()
 
