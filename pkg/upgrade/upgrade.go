@@ -17,12 +17,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-type jaegerVersionInterface interface {
-	JaegerVersion() string
-}
-
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
-func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader, version jaegerVersionInterface) error {
+func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader, latestVersion string) error {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
@@ -63,7 +59,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			continue
 		}
 
-		jaeger, err := ManagedInstance(ctx, c, j, version.JaegerVersion())
+		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
 			continue
@@ -85,32 +81,38 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 }
 
 // ManagedInstance performs the necessary changes to bring the given Jaeger instance to the current version
-func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latest string) (v1.Jaeger, error) {
+func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string) (v1.Jaeger, error) {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
-	currentVersion, _ := semver.NewVersion(jaeger.Status.Version)
-	startVersion, _ := semver.NewVersion("1.11.0")
-	latestVersion, _ := semver.NewVersion(latest)
+	currentSemVersion, _ := semver.NewVersion(jaeger.Status.Version)
+	startSemVersion, _ := semver.NewVersion("1.11.0")
+	latestSemVersion, _ := semver.NewVersion(latestVersion)
 
-	if currentVersion.LessThan(startVersion) {
+	if currentSemVersion.LessThan(startSemVersion) {
 		// We don't know how to do an upgrade from versions lower than 1.11.0
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"to":        latestVersion,
+		}).Warn("Cannot automatically upgrade from versions lower than 1.11.0")
 		return jaeger, nil
 	}
 
-	versionLists := []*semver.Version{}
-
+	versionLists := make([]*semver.Version, len(versions))
+	versionIndex := 0
 	for v := range versions {
 		v, err := semver.NewVersion(v)
 		if err != nil {
 			jaeger.Logger().WithFields(log.Fields{
 				"instance":  jaeger.Name,
 				"namespace": jaeger.Namespace,
-				"to":        v,
+				"to":        latestVersion,
 			}).WithError(err).Error("Unable to parse version")
 			return jaeger, err
 		}
-		versionLists = append(versionLists, v)
+		versionLists[versionIndex] = v
+		versionIndex++
 	}
 
 	// apply the updates in order
@@ -118,7 +120,7 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 
 	for _, v := range versionLists {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
-		if v.GreaterThan(currentVersion) && (v.LessThan(latestVersion) || v.Equal(latestVersion)) {
+		if v.GreaterThan(currentSemVersion) && (v.LessThan(latestSemVersion) || v.Equal(latestSemVersion)) {
 			upgraded, err := versions[v.String()].upgrade(ctx, client, jaeger)
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -133,8 +135,8 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 			jaeger = upgraded
 		}
 	}
-	// Set to latest
-	jaeger.Status.Version = latestVersion.String()
+	// Set to latestVersion
+	jaeger.Status.Version = latestSemVersion.String()
 
 	return jaeger, nil
 }

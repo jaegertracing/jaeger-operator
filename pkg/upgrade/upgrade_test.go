@@ -29,7 +29,7 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -57,7 +57,7 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -85,7 +85,7 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -107,7 +107,7 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -135,7 +135,7 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -143,33 +143,30 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
 
-
 func TestSkipForInvalidSemVer(t *testing.T) {
+	invalidVersion := "xxx...xx"
 
 	// prepare
-	viper.Set(v1.ConfigIdentity, "the-identity")
-	defer viper.Reset()
-
 	nsn := types.NamespacedName{Name: "my-instance"}
 
 	existing := v1.NewJaeger(nsn)
-	existing.Labels = map[string]string{
-		v1.LabelOperatedBy: "some-other-identity",
-	}
-	existing.Status.Version = "1.11.0"
+	existing.Status.Version = "1.11.0" // this is the first version we have an upgrade function
 	objs := []runtime.Object{existing}
-	//versions["12...2"] = version{v: "12...2", upgrade: noop}
 
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
 	cl := fake.NewFakeClient(objs...)
-
+	versions[invalidVersion] = version{v: invalidVersion, upgrade: noop}
+	defer func() {
+		delete(versions, invalidVersion)
+	}()
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get()))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	print(persisted.Status.Version)
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }

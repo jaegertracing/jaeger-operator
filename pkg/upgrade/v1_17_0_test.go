@@ -14,14 +14,8 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-type version1_17_0 struct{}
-
-func (version1_17_0) JaegerVersion() string {
-	return "1.17.0"
-}
-
 func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
-	latestVersion := version1_17_0{}
+	latestVersion := "1.17.0"
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.16.0"
@@ -48,7 +42,7 @@ func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latestVersion.JaegerVersion(), persisted.Status.Version)
+	assert.Equal(t, latestVersion, persisted.Status.Version)
 
 	opts := persisted.Spec.Collector.Options.Map()
 	for _, prefix := range []string{"collector.grpc", "reporter.grpc", "es", "es-archive", "cassandra", "cassandra-archive", "kafka.consumer", "kafka.producer"} {
