@@ -178,3 +178,29 @@ func TestSkipForInvalidSemVer(t *testing.T) {
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
+
+func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
+
+	// prepare
+	nsn := types.NamespacedName{Name: "my-instance"}
+
+	existing := v1.NewJaeger(nsn)
+	existing.Status.Version = "999.999.9"
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+
+	// reset semver
+	semanticVersions = nil
+
+	// test
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+
+	// verify
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, existing.Status.Version, persisted.Status.Version)
+}

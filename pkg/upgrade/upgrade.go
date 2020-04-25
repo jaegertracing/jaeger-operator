@@ -104,6 +104,16 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 		return jaeger, nil
 	}
 
+	if currentSemVersion.GreaterThan(latestSemVersion) {
+		// This jaeger instance has a version greater than the latest know version of the operator
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"to":        latestVersion,
+		}).Warn("Jaeger instance has a version greater that the latest know version")
+		return jaeger, nil
+	}
+
 	for _, v := range versions {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
 		if v.GreaterThan(currentSemVersion) && (v.LessThan(latestSemVersion) || v.Equal(latestSemVersion)) {

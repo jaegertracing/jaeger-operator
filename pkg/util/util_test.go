@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -10,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {
@@ -394,7 +395,7 @@ func TestImageNameParamNoTag(t *testing.T) {
 	viper.Set("test-image", "org/custom-image")
 	defer viper.Reset()
 
-	assert.Equal(t, "org/custom-image:0.0.0", ImageName("", "test-image"))
+	assert.Equal(t, "org/custom-image:" + version.Get().Jaeger, ImageName("", "test-image"))
 }
 
 func TestImageNameParamWithTag(t *testing.T) {
@@ -415,7 +416,7 @@ func TestImageNameParamDefaultNoTag(t *testing.T) {
 	viper.SetDefault("test-image", "org/default-image")
 	defer viper.Reset()
 
-	assert.Equal(t, "org/default-image:0.0.0", ImageName("", "test-image"))
+	assert.Equal(t, "org/default-image:" + version.Get().Jaeger , ImageName("", "test-image"))
 }
 
 func TestImageNameParamDefaultWithTag(t *testing.T) {

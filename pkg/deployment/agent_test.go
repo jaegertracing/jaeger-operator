@@ -5,13 +5,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -46,7 +47,7 @@ func TestDefaultAgentImage(t *testing.T) {
 
 	d := NewAgent(jaeger).Get()
 	assert.Empty(t, jaeger.Spec.Agent.Image)
-	assert.Equal(t, "org/custom-agent-image:0.0.0", d.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "org/custom-agent-image:"  + version.Get().Jaeger , d.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestGetDefaultAgentDeployment(t *testing.T) {
