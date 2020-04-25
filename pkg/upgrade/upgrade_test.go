@@ -11,6 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	opver "github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -157,12 +159,19 @@ func TestSkipForInvalidSemVer(t *testing.T) {
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
 	cl := fake.NewFakeClient(objs...)
-	versions[invalidVersion] = version{v: invalidVersion, upgrade: noop}
+
+	// reset semver
+	semanticVersions = nil
+
+	upgrades[invalidVersion] = func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+		return jaeger, nil
+	}
 	defer func() {
-		delete(versions, invalidVersion)
+		delete(upgrades, invalidVersion)
 	}()
+
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	assert.Error(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
