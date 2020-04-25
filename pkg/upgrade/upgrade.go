@@ -102,16 +102,16 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	versionLists := make([]*semver.Version, len(versions))
 	versionIndex := 0
 	for v := range versions {
-		v, err := semver.NewVersion(v)
+		semv, err := semver.NewVersion(v)
 		if err != nil {
 			jaeger.Logger().WithFields(log.Fields{
 				"instance":  jaeger.Name,
 				"namespace": jaeger.Namespace,
-				"to":        latestVersion,
+				"to":        v,
 			}).WithError(err).Error("Unable to parse version")
 			return jaeger, err
 		}
-		versionLists[versionIndex] = v
+		versionLists[versionIndex] = semv
 		versionIndex++
 	}
 

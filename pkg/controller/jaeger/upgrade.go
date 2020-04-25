@@ -32,6 +32,6 @@ func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (
 
 	// at this point, the Jaeger we are managing is in sync with the Operator's version
 	// if this is a new object, no upgrade was made, so, we just set the version
-	jaeger.Status.Version = version.Get().Jaeger
+	jaeger.Status.Version = currentVersions.Jaeger
 	return jaeger, nil
 }

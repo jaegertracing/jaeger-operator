@@ -167,6 +167,5 @@ func TestSkipForInvalidSemVer(t *testing.T) {
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	print(persisted.Status.Version)
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
