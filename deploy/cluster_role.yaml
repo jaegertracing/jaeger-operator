@@ -75,6 +75,18 @@ rules:
   - 'update'
   - 'delete'
   - 'watch'
+# Ingress for kubernetes 1.14 or higher
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - 'get'
+  - 'list'
+  - 'create'
+  - 'update'
+  - 'delete'
+  - 'watch'
 - apiGroups:
   - batch
   resources:

@@ -8,7 +8,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -77,7 +77,7 @@ func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, na
 	start := time.Now()
 	var ingress *v1beta1.Ingress
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		ingress, err = kubeclient.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+		ingress, err = kubeclient.NetworkingV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s ingress\n", name)

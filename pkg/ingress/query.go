@@ -3,7 +3,7 @@ package ingress
 import (
 	"fmt"
 
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -23,7 +23,7 @@ func NewQueryIngress(jaeger *v1.Jaeger) *QueryIngress {
 }
 
 // Get returns an ingress specification for the current instance
-func (i *QueryIngress) Get() *extv1beta1.Ingress {
+func (i *QueryIngress) Get() *netv1beta1.Ingress {
 	if i.jaeger.Spec.Ingress.Enabled != nil && *i.jaeger.Spec.Ingress.Enabled == false {
 		return nil
 	}
@@ -36,8 +36,8 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
-	spec := extv1beta1.IngressSpec{}
-	backend := extv1beta1.IngressBackend{
+	spec := netv1beta1.IngressSpec{}
+	backend := netv1beta1.IngressBackend{
 		ServiceName: service.GetNameForQueryService(i.jaeger),
 		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
 	}
@@ -46,10 +46,10 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 
 	i.addTLSSpec(&spec)
 
-	return &extv1beta1.Ingress{
+	return &netv1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Ingress",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "networking.k8s.io/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-query", i.jaeger.Name),
@@ -70,7 +70,7 @@ func (i *QueryIngress) Get() *extv1beta1.Ingress {
 	}
 }
 
-func (i *QueryIngress) addRulesSpec(spec *extv1beta1.IngressSpec, backend *extv1beta1.IngressBackend) {
+func (i *QueryIngress) addRulesSpec(spec *netv1beta1.IngressSpec, backend *netv1beta1.IngressBackend) {
 	path := ""
 
 	if allInOneQueryBasePath, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
@@ -87,10 +87,10 @@ func (i *QueryIngress) addRulesSpec(spec *extv1beta1.IngressSpec, backend *extv1
 	}
 }
 
-func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
+func (i *QueryIngress) addTLSSpec(spec *netv1beta1.IngressSpec) {
 	if len(i.jaeger.Spec.Ingress.TLS) > 0 {
 		for _, tls := range i.jaeger.Spec.Ingress.TLS {
-			spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
+			spec.TLS = append(spec.TLS, netv1beta1.IngressTLS{
 				Hosts:      tls.Hosts,
 				SecretName: tls.SecretName,
 			})
@@ -99,31 +99,31 @@ func (i *QueryIngress) addTLSSpec(spec *extv1beta1.IngressSpec) {
 			i.jaeger.Logger().Warn("Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.")
 		}
 	} else if i.jaeger.Spec.Ingress.SecretName != "" {
-		spec.TLS = append(spec.TLS, extv1beta1.IngressTLS{
+		spec.TLS = append(spec.TLS, netv1beta1.IngressTLS{
 			SecretName: i.jaeger.Spec.Ingress.SecretName,
 		})
 		i.jaeger.Logger().Warn("'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.")
 	}
 }
 
-func getRules(path string, hosts []string, backend *extv1beta1.IngressBackend) []extv1beta1.IngressRule {
+func getRules(path string, hosts []string, backend *netv1beta1.IngressBackend) []netv1beta1.IngressRule {
 	if len(hosts) > 0 {
-		rules := make([]extv1beta1.IngressRule, len(hosts))
+		rules := make([]netv1beta1.IngressRule, len(hosts))
 		for i, host := range hosts {
 			rule := getRule(host, path, backend)
 			rules[i] = rule
 		}
 		return rules
 	}
-	return []extv1beta1.IngressRule{getRule("", path, backend)}
+	return []netv1beta1.IngressRule{getRule("", path, backend)}
 }
 
-func getRule(host string, path string, backend *extv1beta1.IngressBackend) extv1beta1.IngressRule {
-	rule := extv1beta1.IngressRule{}
+func getRule(host string, path string, backend *netv1beta1.IngressBackend) netv1beta1.IngressRule {
+	rule := netv1beta1.IngressRule{}
 	rule.Host = host
-	rule.HTTP = &extv1beta1.HTTPIngressRuleValue{
-		Paths: []extv1beta1.HTTPIngressPath{
-			extv1beta1.HTTPIngressPath{
+	rule.HTTP = &netv1beta1.HTTPIngressRuleValue{
+		Paths: []netv1beta1.HTTPIngressPath{
+			netv1beta1.HTTPIngressPath{
 				Path:    path,
 				Backend: *backend,
 			},
