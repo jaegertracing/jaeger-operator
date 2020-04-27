@@ -52,6 +52,9 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
+	// Cannot use util.ImageName to obtain the correct image, as the spark-dependencies
+	// image does not get tagged with the jaeger version, so the latest image must
+	// be used instead.
 	image := jaeger.Spec.Storage.Dependencies.Image
 	if image == "" {
 		// the version is not included, there is only one version - latest
