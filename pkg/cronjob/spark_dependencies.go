@@ -9,6 +9,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/spf13/viper"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -50,6 +52,12 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
+	image := jaeger.Spec.Storage.Dependencies.Image
+	if image == "" {
+		// the version is not included, there is only one version - latest
+		image = viper.GetString("jaeger-spark-dependencies-image")
+	}
+
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -76,7 +84,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Image: jaeger.Spec.Storage.Dependencies.Image,
+									Image: image,
 									Name:  name,
 									// let spark job use its default values
 									Env:       util.RemoveEmptyVars(envVars),

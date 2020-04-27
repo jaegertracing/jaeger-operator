@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -323,4 +324,25 @@ func TestEsRolloverLookbackResources(t *testing.T) {
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
+}
+
+func TestDefaultEsRolloverImage(t *testing.T) {
+	viper.SetDefault("jaeger-es-rollover-image", "jaegertracing/jaeger-es-rollover")
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsRolloverImage"})
+
+	cjob := lookback(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
+	assert.Equal(t, "jaegertracing/jaeger-es-rollover:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestCustomEsRolloverImage(t *testing.T) {
+	viper.Set("jaeger-es-rollover-image", "org/custom-es-rollover-image")
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsRolloverImage"})
+
+	cjob := lookback(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
+	assert.Equal(t, "org/custom-es-rollover-image:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }

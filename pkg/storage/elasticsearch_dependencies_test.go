@@ -51,7 +51,7 @@ func TestEnableRollover(t *testing.T) {
 func TestElasticsearchDependencies(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "eevee"})
 	j.Namespace = "kitchen"
-	j.Spec.Storage.Dependencies.Image = "wohooo"
+	j.Spec.Storage.EsRollover.Image = "wohooo"
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})
 
 	deps := elasticsearchDependencies(j)
@@ -62,7 +62,7 @@ func TestElasticsearchDependencies(t *testing.T) {
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, job.OwnerReferences)
 	assert.Equal(t, util.Labels("eevee-es-rollover-create-mapping", "job-es-rollover-create-mapping", *j), job.Labels)
 	assert.Equal(t, 1, len(job.Spec.Template.Spec.Containers))
-	assert.Equal(t, j.Spec.Storage.Dependencies.Image, job.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, j.Spec.Storage.EsRollover.Image, job.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"init", "foo"}, job.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}}, job.Spec.Template.Spec.Containers[0].Env)
 }
