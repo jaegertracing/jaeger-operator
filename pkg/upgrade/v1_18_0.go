@@ -13,6 +13,16 @@ import (
 )
 
 func upgrade1_18_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+
+	// Transform collector flags
+	jaeger.Spec.Collector.Options = migrateCollectorOptions(&jaeger)
+	// Remove agent flags
+	jaeger.Spec.Agent.Options = migrateAgentOptions(&jaeger)
+
+	return jaeger, nil
+}
+
+func migrateCollectorOptions(jaeger *v1.Jaeger) v1.Options {
 	collectorDeprecatedFlags := []deprecationFlagMap{
 		{
 			from: "collector.port",
@@ -35,30 +45,9 @@ func upgrade1_18_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 			to:   "admin.http.host-port",
 		},
 	}
+	opts := migrateDeprecatedOptions(jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
+	return transformCollectorPorts(jaeger.Logger(), opts, collectorDeprecatedFlags)
 
-	jaeger.Spec.Collector.Options = migrateDeprecatedOptions(&jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
-	jaeger.Spec.Collector.Options = transformCollectorPorts(jaeger.Logger(), jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
-
-	// Remove agent flags
-	jaeger.Spec.Agent.Options = migrateAgentOptions(&jaeger)
-
-	return jaeger, nil
-}
-
-func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFlagsMap []deprecationFlagMap) v1.Options {
-	// Transform port number to format :XXX
-	in := opts.GenericMap()
-	for _, d := range collectorNewFlagsMap {
-		logger.WithFields(log.Fields{
-			"from": d.from,
-			"to":   d.to,
-		}).Debug("flag value migrated")
-		if val, exists := in[d.to]; exists {
-			in[d.to] = fmt.Sprintf(":%s", val)
-		}
-	}
-
-	return v1.NewOptions(in)
 }
 
 func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
@@ -82,4 +71,20 @@ func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
 
 	return v1.NewOptions(opsMap)
 
+}
+
+func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFlagsMap []deprecationFlagMap) v1.Options {
+	// Transform port number to format :XXX
+	in := opts.GenericMap()
+	for _, d := range collectorNewFlagsMap {
+		logger.WithFields(log.Fields{
+			"from": d.from,
+			"to":   d.to,
+		}).Debug("flag value migrated")
+		if val, exists := in[d.to]; exists {
+			in[d.to] = fmt.Sprintf(":%s", val)
+		}
+	}
+
+	return v1.NewOptions(in)
 }
