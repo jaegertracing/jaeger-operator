@@ -36,16 +36,11 @@ func upgrade1_18_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 		},
 	}
 
-	collectorGrpcPort := "14250"
-	if port, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc-port"]; ok {
-		collectorGrpcPort = port
-	}
-
 	jaeger.Spec.Collector.Options = migrateDeprecatedOptions(&jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
 	jaeger.Spec.Collector.Options = transformCollectorPorts(jaeger.Logger(), jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
 
 	// Remove agent flags
-	jaeger.Spec.Agent.Options = migrateAgentOptions(&jaeger, collectorGrpcPort)
+	jaeger.Spec.Agent.Options = migrateAgentOptions(&jaeger)
 
 	return jaeger, nil
 }
@@ -66,7 +61,7 @@ func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFla
 	return v1.NewOptions(in)
 }
 
-func migrateAgentOptions(jaeger *v1.Jaeger, collectorGrpcPort string) v1.Options {
+func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
 
 	deleteAgentFlags := []deprecationFlagMap{
 		{from: "collector.host-port"},
@@ -81,8 +76,8 @@ func migrateAgentOptions(jaeger *v1.Jaeger, collectorGrpcPort string) v1.Options
 
 	// Removed support for tchannel, so we need to make sure grpc is enabled and properly configured.
 	if _, ok := opsMap["reporter.grpc.host-port"]; !ok {
-		opsMap["reporter.grpc.host-port"] = fmt.Sprintf("dns:///%s.%s:%s",
-			service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace, collectorGrpcPort)
+		opsMap["reporter.grpc.host-port"] = fmt.Sprintf("dns:///%s.%s:14250",
+			service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace)
 	}
 
 	return v1.NewOptions(opsMap)
