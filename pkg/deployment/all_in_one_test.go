@@ -1,8 +1,10 @@
 package deployment
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 	"testing"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -27,7 +28,7 @@ func TestDefaultAllInOneImage(t *testing.T) {
 
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
 	assert.Empty(t, jaeger.Spec.AllInOne.Image)
-	assert.Equal(t, "org/custom-all-in-one-image:" + version.Get().Jaeger, d.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "org/custom-all-in-one-image:"+version.Get().Jaeger, d.Spec.Template.Spec.Containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{

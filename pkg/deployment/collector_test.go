@@ -2,9 +2,10 @@ package deployment
 
 import (
 	"fmt"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 	"strings"
 	"testing"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -72,7 +73,7 @@ func TestDefaultCollectorImage(t *testing.T) {
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
 	assert.Empty(t, jaeger.Spec.Collector.Image)
-	assert.Equal(t, "org/custom-collector-image:" + version.Get().Jaeger, containers[0].Image)
+	assert.Equal(t, "org/custom-collector-image:"+version.Get().Jaeger, containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{

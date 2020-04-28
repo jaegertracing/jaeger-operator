@@ -22,11 +22,6 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
 
-	versions, err := Versions()
-	if err != nil {
-		return tracing.HandleError(err, span)
-	}
-
 	list := &v1.JaegerList{}
 	identity := viper.GetString(v1.ConfigIdentity)
 	opts := []client.ListOption{
@@ -63,7 +58,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			continue
 		}
 
-		jaeger, err := ManagedInstance(ctx, c, j, latestVersion, versions)
+		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
 			continue
@@ -85,16 +80,23 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 }
 
 // ManagedInstance performs the necessary changes to bring the given Jaeger instance to the current version
-func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string,
-	versions []*semver.Version) (v1.Jaeger, error) {
+func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string) (v1.Jaeger, error) {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
-	currentSemVersion, _ := semver.NewVersion(jaeger.Status.Version)
-	startSemVersion, _ := semver.NewVersion("1.11.0")
+
+	currentSemVersion, err := semver.NewVersion(jaeger.Status.Version)
+
+	if err != nil {
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"to":        latestVersion,
+		}).WithError(err).Warn("Skipped for update")
+	}
 	latestSemVersion, _ := semver.NewVersion(latestVersion)
 
-	if currentSemVersion.LessThan(startSemVersion) {
+	if currentSemVersion.LessThan(startUpdatesVersion) {
 		// We don't know how to do an upgrade from versions lower than 1.11.0
 		jaeger.Logger().WithFields(log.Fields{
 			"instance":  jaeger.Name,
@@ -114,7 +116,7 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 		return jaeger, nil
 	}
 
-	for _, v := range versions {
+	for _, v := range semanticVersions {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
 		if v.GreaterThan(currentSemVersion) && (v.LessThan(latestSemVersion) || v.Equal(latestSemVersion)) {
 			upgraded, err := upgrades[v.String()](ctx, client, jaeger)

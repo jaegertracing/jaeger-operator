@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -333,7 +335,7 @@ func TestDefaultEsRolloverImage(t *testing.T) {
 
 	cjob := lookback(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
-	assert.Equal(t, "jaegertracing/jaeger-es-rollover:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "jaegertracing/jaeger-es-rollover:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestCustomEsRolloverImage(t *testing.T) {
@@ -344,5 +346,5 @@ func TestCustomEsRolloverImage(t *testing.T) {
 
 	cjob := lookback(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
-	assert.Equal(t, "org/custom-es-rollover-image:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "org/custom-es-rollover-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }

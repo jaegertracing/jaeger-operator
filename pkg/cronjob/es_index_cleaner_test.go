@@ -3,6 +3,8 @@ package cronjob
 import (
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -201,7 +203,7 @@ func TestDefaultEsIndexCleanerImage(t *testing.T) {
 
 	cjob := CreateEsIndexCleaner(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
-	assert.Equal(t, "jaegertracing/jaeger-es-index-cleaner:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "jaegertracing/jaeger-es-index-cleaner:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestCustomEsIndexCleanerImage(t *testing.T) {
@@ -215,5 +217,5 @@ func TestCustomEsIndexCleanerImage(t *testing.T) {
 
 	cjob := CreateEsIndexCleaner(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
-	assert.Equal(t, "org/custom-es-index-cleaner-image:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "org/custom-es-index-cleaner-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }

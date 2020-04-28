@@ -145,38 +145,18 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
 
-func TestSkipForInvalidSemVer(t *testing.T) {
+func TestErrorForInvalidSemVer(t *testing.T) {
 	invalidVersion := "xxx...xx"
-
-	// prepare
-	nsn := types.NamespacedName{Name: "my-instance"}
-
-	existing := v1.NewJaeger(nsn)
-	existing.Status.Version = "1.11.0" // this is the first version we have an upgrade function
-	objs := []runtime.Object{existing}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
-
-	// reset semver
-	semanticVersions = nil
-
-	upgrades[invalidVersion] = func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+	testUpdates := map[string]upgradeFunction{}
+	for k, v := range upgrades {
+		testUpdates[k] = v
+	}
+	testUpdates[invalidVersion] = func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
 		return jaeger, nil
 	}
-	defer func() {
-		delete(upgrades, invalidVersion)
-	}()
-
+	_, err := versions(testUpdates)
 	// test
-	assert.Error(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
-
-	// verify
-	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, "1.11.0", persisted.Status.Version)
+	assert.Error(t, err)
 }
 
 func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
@@ -185,16 +165,13 @@ func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
 	nsn := types.NamespacedName{Name: "my-instance"}
 
 	existing := v1.NewJaeger(nsn)
-	existing.Status.Version = "999.999.9"
+	existing.Status.Version = "999.999"
 	objs := []runtime.Object{existing}
 
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
 	cl := fake.NewFakeClient(objs...)
-
-	// reset semver
-	semanticVersions = nil
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -203,4 +180,10 @@ func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, existing.Status.Version, persisted.Status.Version)
+}
+
+func TestUpgradeMapIsValid(t *testing.T) {
+	_, err := versions(upgrades)
+	assert.NoError(t, err)
+
 }
