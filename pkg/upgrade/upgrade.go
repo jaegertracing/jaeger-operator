@@ -105,12 +105,12 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	}
 
 	if currentSemVersion.GreaterThan(latestSemVersion) {
-		// This jaeger instance has a version greater than the latest know version of the operator
+		// This jaeger instance has a version greater than the latest version of the operator
 		jaeger.Logger().WithFields(log.Fields{
 			"instance":  jaeger.Name,
 			"namespace": jaeger.Namespace,
 			"to":        latestVersion,
-		}).Warn("Jaeger instance has a version greater that the latest know version")
+		}).Warn("Jaeger instance has a version greater that the latest version")
 		return jaeger, nil
 	}
 
