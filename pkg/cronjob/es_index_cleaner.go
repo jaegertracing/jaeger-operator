@@ -70,7 +70,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							Containers: []corev1.Container{
 								{
 									Name:         util.Truncate(name, 63),
-									Image:        jaeger.Spec.Storage.EsIndexCleaner.Image,
+									Image:        util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
 									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
 									Env:          util.RemoveEmptyVars(envs),
 									EnvFrom:      envFromSource,

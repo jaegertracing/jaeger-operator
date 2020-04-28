@@ -3,6 +3,7 @@ package cronjob
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -188,4 +189,31 @@ func TestEsIndexCleanerResources(t *testing.T) {
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
+}
+
+func TestDefaultEsIndexCleanerImage(t *testing.T) {
+	viper.SetDefault("jaeger-es-index-cleaner-image", "jaegertracing/jaeger-es-index-cleaner")
+
+	days := 0
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsIndexCleanerImage"})
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
+	assert.Equal(t, "jaegertracing/jaeger-es-index-cleaner:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestCustomEsIndexCleanerImage(t *testing.T) {
+	viper.Set("jaeger-es-index-cleaner-image", "org/custom-es-index-cleaner-image")
+	defer viper.Reset()
+
+	days := 0
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsIndexCleanerImage"})
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
+	assert.Equal(t, "org/custom-es-index-cleaner-image:0.0.0", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }

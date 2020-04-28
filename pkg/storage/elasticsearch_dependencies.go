@@ -49,7 +49,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:         name,
-							Image:        jaeger.Spec.Storage.EsRollover.Image,
+							Image:        util.ImageName(jaeger.Spec.Storage.EsRollover.Image, "jaeger-es-rollover-image"),
 							Args:         []string{"init", util.GetEsHostname(jaeger.Spec.Storage.Options.Map())},
 							Env:          util.RemoveEmptyVars(envVars(jaeger.Spec.Storage.Options)),
 							EnvFrom:      envFromSource,

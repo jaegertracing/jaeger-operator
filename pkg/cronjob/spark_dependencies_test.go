@@ -3,6 +3,7 @@ package cronjob
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -201,4 +202,25 @@ func TestSparkDependenciesResources(t *testing.T) {
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
+}
+
+func TestDefaultSparkDependenciesImage(t *testing.T) {
+	viper.SetDefault("jaeger-spark-dependencies-image", "jaegertracing/spark-dependencies")
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
+
+	cjob := CreateSparkDependencies(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
+	assert.Equal(t, "jaegertracing/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestCustomSparkDependenciesImage(t *testing.T) {
+	viper.Set("jaeger-spark-dependencies-image", "org/custom-spark-dependencies-image")
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
+
+	cjob := CreateSparkDependencies(jaeger)
+	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
+	assert.Equal(t, "org/custom-spark-dependencies-image", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }

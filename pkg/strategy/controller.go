@@ -15,7 +15,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
@@ -129,10 +128,6 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar
 	}
-	if spec.Dependencies.Image == "" {
-		// the version is not included, there is only one version - latest
-		spec.Dependencies.Image = viper.GetString("jaeger-spark-dependencies-image")
-	}
 	if spec.Dependencies.Schedule == "" {
 		spec.Dependencies.Schedule = "55 23 * * *"
 	}
@@ -144,7 +139,6 @@ func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
 		trueVar := true
 		spec.Enabled = &trueVar
 	}
-	spec.Image = util.ImageName(spec.Image, "jaeger-es-index-cleaner-image")
 	if spec.Schedule == "" {
 		spec.Schedule = "55 23 * * *"
 	}
@@ -179,7 +173,6 @@ func normalizeElasticsearch(spec *v1.ElasticsearchSpec) {
 }
 
 func normalizeRollover(spec *v1.JaegerEsRolloverSpec) {
-	spec.Image = util.ImageName(spec.Image, "jaeger-es-rollover-image")
 	if spec.Schedule == "" {
 		spec.Schedule = "0 0 * * *"
 	}
