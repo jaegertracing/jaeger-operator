@@ -15,6 +15,7 @@ import (
 )
 
 func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
+	latestVersion := "1.17.0"
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.16.0"
@@ -36,12 +37,12 @@ func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, latestVersion, persisted.Status.Version)
 
 	opts := persisted.Spec.Collector.Options.Map()
 	for _, prefix := range []string{"collector.grpc", "reporter.grpc", "es", "es-archive", "cassandra", "cassandra-archive", "kafka.consumer", "kafka.producer"} {

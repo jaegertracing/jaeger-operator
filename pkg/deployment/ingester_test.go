@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -72,7 +74,7 @@ func TestDefaultIngesterImage(t *testing.T) {
 	containers := dep.Spec.Template.Spec.Containers
 	assert.Len(t, containers, 1)
 	assert.Empty(t, jaeger.Spec.Ingester.Image)
-	assert.Equal(t, "org/custom-ingester-image:0.0.0", containers[0].Image)
+	assert.Equal(t, "org/custom-ingester-image:"+version.Get().Jaeger, containers[0].Image)
 
 	envvars := []corev1.EnvVar{
 		{

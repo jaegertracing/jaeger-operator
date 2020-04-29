@@ -11,7 +11,10 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	opver "github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func TestVersionUpgradeToLatest(t *testing.T) {
@@ -28,12 +31,12 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
@@ -56,12 +59,12 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
@@ -84,12 +87,12 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, latest.v, persisted.Status.Version)
+	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
 }
 
 func TestUnknownVersion(t *testing.T) {
@@ -106,7 +109,7 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -134,10 +137,52 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
+}
+
+func TestErrorForInvalidSemVer(t *testing.T) {
+	invalidVersion := "xxx...xx"
+	testUpdates := map[string]upgradeFunction{}
+	for k, v := range upgrades {
+		testUpdates[k] = v
+	}
+	testUpdates[invalidVersion] = func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+		return jaeger, nil
+	}
+	_, err := versions(testUpdates)
+	// test
+	assert.Error(t, err)
+}
+
+func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
+
+	// prepare
+	nsn := types.NamespacedName{Name: "my-instance"}
+
+	existing := v1.NewJaeger(nsn)
+	existing.Status.Version = "999.999"
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+
+	// test
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+
+	// verify
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, existing.Status.Version, persisted.Status.Version)
+}
+
+func TestVersionMapIsValid(t *testing.T) {
+	_, err := versions(upgrades)
+	assert.NoError(t, err)
 }

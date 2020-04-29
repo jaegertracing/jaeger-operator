@@ -3,6 +3,8 @@ package util
 import (
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -394,7 +396,7 @@ func TestImageNameParamNoTag(t *testing.T) {
 	viper.Set("test-image", "org/custom-image")
 	defer viper.Reset()
 
-	assert.Equal(t, "org/custom-image:0.0.0", ImageName("", "test-image"))
+	assert.Equal(t, "org/custom-image:"+version.Get().Jaeger, ImageName("", "test-image"))
 }
 
 func TestImageNameParamWithTag(t *testing.T) {
@@ -415,7 +417,7 @@ func TestImageNameParamDefaultNoTag(t *testing.T) {
 	viper.SetDefault("test-image", "org/default-image")
 	defer viper.Reset()
 
-	assert.Equal(t, "org/default-image:0.0.0", ImageName("", "test-image"))
+	assert.Equal(t, "org/default-image:"+version.Get().Jaeger, ImageName("", "test-image"))
 }
 
 func TestImageNameParamDefaultWithTag(t *testing.T) {

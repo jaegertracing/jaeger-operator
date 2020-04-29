@@ -3,6 +3,8 @@ package storage
 import (
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,7 +31,7 @@ func TestDefaultImage(t *testing.T) {
 	b := cassandraDeps(jaeger)
 	assert.Len(t, b, 1)
 	assert.Len(t, b[0].Spec.Template.Spec.Containers, 1)
-	assert.Equal(t, "jaegertracing/theimage:0.0.0", b[0].Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "jaegertracing/theimage:"+version.Get().Jaeger, b[0].Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestCassandraCreateSchemaDisabled(t *testing.T) {

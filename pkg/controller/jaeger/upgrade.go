@@ -22,7 +22,7 @@ func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (
 		if jaeger.Status.Version != currentVersions.Jaeger {
 			// in theory, the version from the Status could be higher than currentVersions.Jaeger, but we let the upgrade routine
 			// check/handle it
-			upgraded, err := upgrade.ManagedInstance(ctx, r.client, jaeger)
+			upgraded, err := upgrade.ManagedInstance(ctx, r.client, jaeger, currentVersions.Jaeger)
 			if err != nil {
 				return jaeger, tracing.HandleError(err, span)
 			}
@@ -32,6 +32,6 @@ func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (
 
 	// at this point, the Jaeger we are managing is in sync with the Operator's version
 	// if this is a new object, no upgrade was made, so, we just set the version
-	jaeger.Status.Version = version.Get().Jaeger
+	jaeger.Status.Version = currentVersions.Jaeger
 	return jaeger, nil
 }

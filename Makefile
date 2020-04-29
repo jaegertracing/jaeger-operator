@@ -80,7 +80,7 @@ endif
 .PHONY: unit-tests
 unit-tests:
 	@echo Running unit tests...
-	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out
+	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: e2e-tests
 e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift

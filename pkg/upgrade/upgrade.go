@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/Masterminds/semver"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
@@ -15,7 +17,7 @@ import (
 )
 
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
-func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader) error {
+func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader, latestVersion string) error {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
@@ -56,7 +58,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			continue
 		}
 
-		jaeger, err := ManagedInstance(ctx, c, j)
+		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
 			continue
@@ -78,29 +80,65 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 }
 
 // ManagedInstance performs the necessary changes to bring the given Jaeger instance to the current version
-func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
+func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string) (v1.Jaeger, error) {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
 
-	if v, ok := versions[jaeger.Status.Version]; ok {
+	currentSemVersion, err := semver.NewVersion(jaeger.Status.Version)
+
+	if err != nil {
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"current":   jaeger.Status.Version,
+		}).WithError(err).Warn("Failed to parse current Jaeger instance version. Unable to perform upgrade")
+		return jaeger, err
+	}
+	latestSemVersion := semver.MustParse(latestVersion)
+
+	if currentSemVersion.LessThan(startUpdatesVersion) {
+		// We don't know how to do an upgrade from versions lower than 1.11.0
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"version":   latestVersion,
+			"current":   jaeger.Status.Version,
+		}).Warn("Cannot automatically upgrade from versions lower than 1.11.0")
+		return jaeger, nil
+	}
+
+	if currentSemVersion.GreaterThan(latestSemVersion) {
+		// This jaeger instance has a version greater than the latest version of the operator
+		jaeger.Logger().WithFields(log.Fields{
+			"instance":  jaeger.Name,
+			"namespace": jaeger.Namespace,
+			"current":   jaeger.Status.Version,
+			"latest":    latestVersion,
+		}).Warn("Jaeger instance has a version greater that the latest version")
+		return jaeger, nil
+	}
+
+	for _, v := range semanticVersions {
 		// we don't need to run the upgrade function for the version 'v', only the next ones
-		for n := v.next; n != nil; n = n.next {
-			// performs the upgrade to version 'n'
-			upgraded, err := n.upgrade(ctx, client, jaeger)
+		if v.GreaterThan(currentSemVersion) && (v.LessThan(latestSemVersion) || v.Equal(latestSemVersion)) {
+			upgraded, err := upgrades[v.String()](ctx, client, jaeger)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"instance":  jaeger.Name,
 					"namespace": jaeger.Namespace,
-					"to":        n.v,
+					"to":        v.String(),
 				}).WithError(err).Warn("failed to upgrade managed instance")
 				return jaeger, tracing.HandleError(err, span)
 			}
 
-			upgraded.Status.Version = n.v
+			upgraded.Status.Version = v.String()
 			jaeger = upgraded
 		}
 	}
+
+	// Set to latestVersion
+	jaeger.Status.Version = latestSemVersion.String()
 
 	return jaeger, nil
 }
