@@ -15,17 +15,7 @@ import (
 )
 
 func TestUpgradeDeprecatedOptionsv1_18_0(t *testing.T) {
-	// Ugly hack to run 1.18.0 tests without assign latest version to 1.18
-	// we can remove once we migrate to semver or release 1.18
-	v1_17_1.next = &v1_18_0
-	versions["1.17.1"] = v1_17_0
-	latest = &v1_18_0
-	defer func() {
-		v1_17_1.next = nil
-		versions["1.17.1"] = v1_17_0
-		latest = &v1_17_0
-	}()
-
+	latestVersion := "1.18.0"
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.17.1"
@@ -55,7 +45,7 @@ func TestUpgradeDeprecatedOptionsv1_18_0(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
@@ -76,16 +66,7 @@ func TestUpgradeDeprecatedOptionsv1_18_0(t *testing.T) {
 }
 
 func TestUpgradeAgentWithTChannelEnablev1_18_0_(t *testing.T) {
-	// Ugly hack to run 1.18.0 tests without assign latest version to 1.18
-	// we can remove once we migrate to semver or release 1.18
-	v1_17_1.next = &v1_18_0
-	versions["1.17.1"] = v1_17_0
-	latest = &v1_18_0
-	defer func() {
-		v1_17_1.next = nil
-		versions["1.17.1"] = v1_17_0
-		latest = &v1_17_0
-	}()
+	latestVersion := "1.18.0"
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.17.1"
@@ -106,7 +87,7 @@ func TestUpgradeAgentWithTChannelEnablev1_18_0_(t *testing.T) {
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
 	cl := fake.NewFakeClient(objs...)
 
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
