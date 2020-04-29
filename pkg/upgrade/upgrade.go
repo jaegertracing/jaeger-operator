@@ -91,17 +91,19 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 		jaeger.Logger().WithFields(log.Fields{
 			"instance":  jaeger.Name,
 			"namespace": jaeger.Namespace,
-			"to":        latestVersion,
-		}).WithError(err).Warn("Skipped for update")
+			"current":   jaeger.Status.Version,
+		}).WithError(err).Warn("Failed to parse current Jaeger instance version. Unable to perform upgrade")
+		return jaeger, err
 	}
-	latestSemVersion, _ := semver.NewVersion(latestVersion)
+	latestSemVersion := semver.MustParse(latestVersion)
 
 	if currentSemVersion.LessThan(startUpdatesVersion) {
 		// We don't know how to do an upgrade from versions lower than 1.11.0
 		jaeger.Logger().WithFields(log.Fields{
 			"instance":  jaeger.Name,
 			"namespace": jaeger.Namespace,
-			"to":        latestVersion,
+			"version":   latestVersion,
+			"current":   jaeger.Status.Version,
 		}).Warn("Cannot automatically upgrade from versions lower than 1.11.0")
 		return jaeger, nil
 	}
@@ -111,6 +113,7 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 		jaeger.Logger().WithFields(log.Fields{
 			"instance":  jaeger.Name,
 			"namespace": jaeger.Namespace,
+			"current":   jaeger.Status.Version,
 			"to":        latestVersion,
 		}).Warn("Jaeger instance has a version greater that the latest version")
 		return jaeger, nil

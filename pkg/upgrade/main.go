@@ -12,8 +12,12 @@ func init() {
 
 func parseSemVer() {
 	// ignore errors, we shouldn't have semantic version parsing errors at runtime
-	semanticVersions, _ = versions(upgrades)
-	startUpdatesVersion, _ = semver.NewVersion("1.11.0")
+	semvers, err := versions(upgrades)
+	if err != nil {
+		panic(err)
+	}
+	semanticVersions = semvers
+	startUpdatesVersion = semver.MustParse("1.11.0")
 }
 
 // Versions return the list of semantic version sorted
@@ -32,5 +36,4 @@ func versions(versions map[string]upgradeFunction) ([]*semver.Version, error) {
 	// apply the updates in order
 	sort.Sort(semver.Collection(versionLists))
 	return versionLists, nil
-
 }
