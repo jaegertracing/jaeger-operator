@@ -181,3 +181,8 @@ func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, existing.Status.Version, persisted.Status.Version)
 }
+
+func TestVersionMapIsValid(t *testing.T) {
+	_, err := versions(upgrades)
+	assert.NoError(t, err)
+}
