@@ -115,5 +115,4 @@ func TestUpgradeAgentWithTChannelEnablev1_18_0_(t *testing.T) {
 	collectorOpts := persisted.Spec.Agent.Options.Map()
 
 	assert.Contains(t, collectorOpts, "reporter.grpc.host-port")
-
 }

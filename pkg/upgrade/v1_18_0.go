@@ -13,7 +13,6 @@ import (
 )
 
 func upgrade1_18_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
-
 	// Transform collector flags
 	jaeger.Spec.Collector.Options = migrateCollectorOptions(&jaeger)
 	// Remove agent flags
@@ -47,11 +46,9 @@ func migrateCollectorOptions(jaeger *v1.Jaeger) v1.Options {
 	}
 	opts := migrateDeprecatedOptions(jaeger, jaeger.Spec.Collector.Options, collectorDeprecatedFlags)
 	return transformCollectorPorts(jaeger.Logger(), opts, collectorDeprecatedFlags)
-
 }
 
 func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
-
 	deleteAgentFlags := []deprecationFlagMap{
 		{from: "collector.host-port"},
 		{from: "reporter.tchannel.discovery.conn-check-timeout"},
@@ -68,9 +65,7 @@ func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
 		opsMap["reporter.grpc.host-port"] = fmt.Sprintf("dns:///%s.%s:14250",
 			service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace)
 	}
-
 	return v1.NewOptions(opsMap)
-
 }
 
 func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFlagsMap []deprecationFlagMap) v1.Options {
@@ -85,6 +80,5 @@ func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFla
 			in[d.to] = fmt.Sprintf(":%s", val)
 		}
 	}
-
 	return v1.NewOptions(in)
 }
