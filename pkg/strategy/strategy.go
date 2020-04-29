@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
@@ -17,7 +18,8 @@ import (
 
 // S knows what type of deployments to build based on a given spec
 type S struct {
-	typ                      v1.DeploymentStrategy
+	typ v1.DeploymentStrategy
+	// When adding a new type here, remember to update All() too
 	accounts                 []corev1.ServiceAccount
 	clusterRoleBindings      []rbac.ClusterRoleBinding
 	configMaps               []corev1.ConfigMap
@@ -208,4 +210,74 @@ func (s S) Secrets() []corev1.Secret {
 // Dependencies returns the list of batches for this strategy that are considered dependencies
 func (s S) Dependencies() []batchv1.Job {
 	return s.dependencies
+}
+
+// All returns the list of all objects for this strategy
+func (s S) All() []runtime.Object {
+	var ret []runtime.Object
+
+	// Keep ordering close to
+	// https://github.com/kubernetes-sigs/kustomize/blob/master/api/resid/gvk.go#L77-L103
+
+	for _, o := range s.accounts {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.clusterRoleBindings {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.configMaps {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.cronJobs {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.elasticsearches {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.ingresses {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.horizontalPodAutoscalers {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.kafkas {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.kafkaUsers {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.routes {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.services {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.secrets {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.dependencies {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.daemonSets {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.deployments {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	return ret
 }

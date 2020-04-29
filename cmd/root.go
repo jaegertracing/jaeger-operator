@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/cmd/generate"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/start"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/version"
 )
@@ -37,6 +38,7 @@ func init() {
 
 	RootCmd.AddCommand(start.NewStartCommand())
 	RootCmd.AddCommand(version.NewVersionCommand())
+	RootCmd.AddCommand(generate.NewGenerateCommand())
 }
 
 // initConfig reads in config file and ENV variables if set.
