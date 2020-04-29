@@ -114,7 +114,7 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 			"instance":  jaeger.Name,
 			"namespace": jaeger.Namespace,
 			"current":   jaeger.Status.Version,
-			"to":        latestVersion,
+			"latest":    latestVersion,
 		}).Warn("Jaeger instance has a version greater that the latest version")
 		return jaeger, nil
 	}
