@@ -11,18 +11,17 @@ The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kube
 kubectl create namespace observability
 ```
 2) Load the CRD based on your version:
-- Kubernetes 1.12+:
+- Kubernetes 1.12 / Openshift 4.1 or newer:
 ```
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd.yaml
 ```
-- Kubernetes 1.11-: 
+- Kubernetes 1.11 / Openshift 3.11 or older: 
 ```
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd_ocp311.yaml
 ```
 
 3) To install the operator, run:
 ```
-kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role_binding.yaml
