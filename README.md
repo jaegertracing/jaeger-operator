@@ -17,7 +17,7 @@ kubectl create -n observability -f https://raw.githubusercontent.com/jaegertraci
 ```
 - Kubernetes 1.11 / Openshift 3.11 or older: 
 ```
-kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd_ocp311.yaml
+kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd.k8s1.11.yaml
 ```
 
 3) To install the operator, run:
