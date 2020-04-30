@@ -6,10 +6,22 @@
 The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
 ## Getting started
-
-To install the operator, run:
+1) Create the namespace: 
 ```
 kubectl create namespace observability
+```
+2) Load the CRD based on your version:
+- Kubernetes 1.12+:
+```
+kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd.yaml
+```
+- Kubernetes 1.11-: 
+```
+kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd_ocp311.yaml
+```
+
+3) To install the operator, run:
+```
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/crds/jaegertracing.io_jaegers_crd.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/service_account.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/role.yaml
@@ -17,7 +29,7 @@ kubectl create -n observability -f https://raw.githubusercontent.com/jaegertraci
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/operator.yaml
 ```
 
-The operator will activate extra features if given cluster-wide permissions. To enable that, run:
+4) The operator will activate extra features if given cluster-wide permissions. To enable that, run:
 ```
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/cluster_role.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/master/deploy/cluster_role_binding.yaml
