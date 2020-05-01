@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -137,14 +139,14 @@ func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGrou
 func (b *Background) detectIngressAPI() {
 	apiRes, err := b.dcl.ServerResourcesForGroupVersion("networking.k8s.io/v1beta1")
 	if err != nil {
-		viper.Set("ingress-api", "extension")
+		viper.Set("ingress-api", ingress.ExtensionAPI)
 		log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
 		return
 	}
 
 	for _, r := range apiRes.APIResources {
 		if r.Name == "ingresses" {
-			viper.Set("ingress-api", "network")
+			viper.Set("ingress-api", ingress.NetworkingAPI)
 			log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
 			break
 		}
