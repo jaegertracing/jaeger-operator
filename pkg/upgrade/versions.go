@@ -14,5 +14,6 @@ var (
 	upgrades = map[string]upgradeFunction{
 		"1.15.0": upgrade1_15_0,
 		"1.17.0": upgrade1_17_0,
+		"1.18.0": upgrade1_18_0,
 	}
 )
