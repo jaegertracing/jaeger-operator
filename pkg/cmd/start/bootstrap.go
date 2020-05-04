@@ -138,7 +138,23 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 		return
 	}
 
-	image := fmt.Sprintf("%s:%s", imageStream.Status.DockerImageRepository, imageStream.Status.Tags[0].Tag)
+	if len(imageStream.Status.Tags[0].Items) == 0 {
+		log.WithFields(log.Fields{
+			"namespace": imageStreamNamespace,
+			"name":      imageStreamName,
+		}).Error("OAuthProxy ImageStream tag has no items")
+		return
+	}
+
+	if len(imageStream.Status.Tags[0].Items[0].DockerImageReference) == 0 {
+		log.WithFields(log.Fields{
+			"namespace": imageStreamNamespace,
+			"name":      imageStreamName,
+		}).Error("OAuthProxy ImageStream tag has no DockerImageReference")
+		return
+	}
+
+	image := imageStream.Status.Tags[0].Items[0].DockerImageReference
 
 	viper.Set("openshift-oauth-proxy-image", image)
 	log.WithFields(log.Fields{
