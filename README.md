@@ -5,6 +5,15 @@
 
 The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
+Jaeger is used for monitoring and troubleshooting microservices-based distributed systems, including:
+* Distributed context propagation
+* Distributed transaction monitoring
+* Root cause analysis
+* Service dependency analysis
+* Performance / latency optimization
+
+To see everything else that Jaeger can do, check out the [features list](https://www.jaegertracing.io/docs/latest/features/).
+
 ## Getting started
 
 To install the operator, run:
