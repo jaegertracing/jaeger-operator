@@ -210,8 +210,8 @@ func getJaegerOperatorNamespace() string {
 		}
 	}
 
-	logrus.Warn("Did not find a jaeger operator instance")
-	return jaegerOperatorNamespace
+	require.Fail(t, "Did not find a jaeger operator instance")
+	return jaegerOperatorNamespace // We'll never get here, but need this to keep go happy
 }
 
 func isOpenShift(t *testing.T) bool {
