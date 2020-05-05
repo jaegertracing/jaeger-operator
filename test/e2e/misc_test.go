@@ -80,7 +80,7 @@ func (suite *MiscTestSuite) TestDeleteResource() {
 	undeployJaegerInstance(jaegerInstance)
 	time.Sleep(5 * time.Second) // Give operator long enough to write to its log
 
-	logs := getLogsForNamespace(namespace, "name=jaeger-operator", "operator")
+	logs := getLogsForNamespace(getJaegerOperatorNamespace(), "name=jaeger-operator", "operator")
 	operatorLog := logs["operator.log"]
 	require.Contains(t, operatorLog, "\"Deployment has been removed.\" name="+jaegerInstanceName)
 	require.Contains(t, operatorLog, "level=error msg=\"failed to apply the changes\" error=\"deployment has been removed\"")
