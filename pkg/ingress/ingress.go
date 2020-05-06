@@ -81,12 +81,15 @@ func (c *Client) fromNetToExt(ingress netv1beta.Ingress) extv1beta.Ingress {
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: ingress.ObjectMeta,
-		Spec: extv1beta.IngressSpec{
+	}
+
+	if ingress.Spec.Backend != nil {
+		oldIngress.Spec = extv1beta.IngressSpec{
 			Backend: &extv1beta.IngressBackend{
 				ServiceName: ingress.Spec.Backend.ServiceName,
 				ServicePort: ingress.Spec.Backend.ServicePort,
 			},
-		},
+		}
 	}
 
 	for _, tls := range ingress.Spec.TLS {
