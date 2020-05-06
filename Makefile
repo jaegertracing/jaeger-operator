@@ -83,7 +83,7 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: build docker push
@@ -108,6 +108,11 @@ prepare-e2e-tests: build docker push
 e2e-tests-smoke: prepare-e2e-tests
 	@echo Running Smoke end-to-end tests...
 	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-generate
+e2e-tests-generate: prepare-e2e-tests
+	@echo Running generate end-to-end tests...
+	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=generate ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-cassandra
 e2e-tests-cassandra: prepare-e2e-tests cassandra
