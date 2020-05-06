@@ -25,6 +25,10 @@ func Get(jaeger *v1.Jaeger) []*corev1.ServiceAccount {
 func getMain(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 	trueVar := true
 	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ServiceAccount",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      JaegerServiceAccountFor(jaeger, ""),
 			Namespace: jaeger.Namespace,
