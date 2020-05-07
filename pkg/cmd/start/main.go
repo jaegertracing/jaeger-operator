@@ -12,17 +12,10 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
-// NewStartCommand starts the Jaeger Operator
-func NewStartCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "Starts a new Jaeger Operator",
-		Long:  "Starts a new Jaeger Operator",
-		Run: func(cmd *cobra.Command, args []string) {
-			start(cmd, args)
-		},
-	}
-
+// AddGeneratorFlags adds all command line flags related to manifest
+// generation. They are shared between the operator and CLI `generate`
+// command.
+func AddGeneratorFlags(cmd *cobra.Command) {
 	cmd.Flags().String("jaeger-version", version.DefaultJaeger(), "Deprecated: the Jaeger version is now managed entirely by the operator. This option is currently no-op.")
 
 	cmd.Flags().String("jaeger-agent-image", "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
@@ -70,6 +63,28 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().String("kafka-provision", "auto", "Whether to auto-provision a Kafka cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'kafka.strimzi.io' is available, auto-provisioning is enabled.")
 	viper.BindPFlag("kafka-provision", cmd.Flags().Lookup("kafka-provision"))
 
+	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
+	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
+	viper.BindPFlag("documentation-url", cmd.Flags().Lookup("documentation-url"))
+
+	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
+	viper.BindPFlag("kafka-provisioning-minimal", cmd.Flags().Lookup("kafka-provisioning-minimal"))
+}
+
+// NewStartCommand starts the Jaeger Operator
+func NewStartCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "start",
+		Short: "Starts a new Jaeger Operator",
+		Long:  "Starts a new Jaeger Operator",
+		Run: func(cmd *cobra.Command, args []string) {
+			start(cmd, args)
+		},
+	}
+
+	AddGeneratorFlags(cmd)
+
+	// Operator specific flags here. Any flags affecting manifest generation should be added to AddGeneratorFlags instead
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
 	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 
@@ -82,18 +97,11 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
 	viper.BindPFlag("cr-metrics-port", cmd.Flags().Lookup("cr-metrics-port"))
 
-	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
-	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
-	viper.BindPFlag("documentation-url", cmd.Flags().Lookup("documentation-url"))
-
 	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	viper.BindPFlag("jaeger-agent-hostport", cmd.Flags().Lookup("jaeger-agent-hostport"))
 
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
 	viper.BindPFlag("tracing-enabled", cmd.Flags().Lookup("tracing-enabled"))
-
-	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
-	viper.BindPFlag("kafka-provisioning-minimal", cmd.Flags().Lookup("kafka-provisioning-minimal"))
 
 	return cmd
 }
