@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -97,15 +96,14 @@ func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
 	require.NoError(t, err, "Error waiting for Jaeger deployment")
 
 	// Check that deployment seems OK
-	ports := []string{"0:16686"}
+	ports := []string{"0:16686", "0:14268"}
 	portForward, closeChan := CreatePortForward(namespace, name, "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 	forwardedPorts, err := portForward.GetPorts()
 	require.NoError(t, err)
-	queryPort := strconv.Itoa(int(forwardedPorts[0].Local))
 
-	url := fmt.Sprintf("http://localhost:%s/search", queryPort)
+	url := fmt.Sprintf("http://localhost:%d/search", forwardedPorts[0].Local)
 	c := http.Client{Timeout: 3 * time.Second}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -133,4 +131,11 @@ func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
 		return true, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
+
+	queryPort := forwardedPorts[0].Local
+	collectorPort := forwardedPorts[1].Local
+
+	apiTracesEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
+	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, false)
 }
