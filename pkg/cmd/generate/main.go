@@ -3,6 +3,7 @@ package generate
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -53,7 +54,7 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
-	if err := decoder.Decode(&spec); err != nil {
+	if err := decoder.Decode(&spec); err != nil && err != io.EOF {
 		return nil, err
 	}
 
