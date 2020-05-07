@@ -191,6 +191,28 @@ func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) 
 	return imageNamesMap, nil
 }
 
+func getJaegerOperatorNamespace() string {
+	if !usingOLM {
+		return namespace
+	}
+
+	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	require.NoError(t, err)
+
+	for _, namespace := range namespaces.Items {
+		deployments, err := fw.KubeClient.AppsV1().Deployments(namespace.Name).List(metav1.ListOptions{})
+		require.NoError(t, err)
+		for _, deployment := range deployments.Items {
+			if deployment.Name == "jaeger-operator" {
+				return namespace.Name
+			}
+		}
+	}
+
+	require.Fail(t, "Did not find a jaeger operator instance")
+	return "" // We'll never get here, but need this to keep go happy
+}
+
 func isOpenShift(t *testing.T) bool {
 	apiList, err := availableAPIs(framework.Global.KubeConfig)
 	if err != nil {
