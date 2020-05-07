@@ -196,7 +196,6 @@ func getJaegerOperatorNamespace() string {
 		return namespace
 	}
 
-	var jaegerOperatorNamespace string
 	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
 	require.NoError(t, err)
 
@@ -211,7 +210,7 @@ func getJaegerOperatorNamespace() string {
 	}
 
 	require.Fail(t, "Did not find a jaeger operator instance")
-	return jaegerOperatorNamespace // We'll never get here, but need this to keep go happy
+	return "" // We'll never get here, but need this to keep go happy
 }
 
 func isOpenShift(t *testing.T) bool {
