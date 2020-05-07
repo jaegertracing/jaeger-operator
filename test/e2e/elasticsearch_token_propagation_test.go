@@ -29,13 +29,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 // Test parameters
-const name = "token-prop"
+const name = "tokenprop"
 const collectorPodImageName = "jaeger-collector"
 const testServiceName = "token-propagation"
 const testAccount = "token-test-user"
@@ -58,18 +56,6 @@ func (suite *TokenTestSuite) SetupSuite() {
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
 	}
-	require.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &v1.JaegerList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-	}))
-	require.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &esv1.ElasticsearchList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Elasticsearch",
-			APIVersion: "logging.openshift.io/v1",
-		},
-	}))
 	var err error
 	ctx, err = prepare(t)
 	if err != nil {
@@ -105,8 +91,8 @@ func (suite *TokenTestSuite) cleanAccountBindings() {
 }
 
 func (suite *TokenTestSuite) TearDownSuite() {
-	suite.cleanAccountBindings()
 	undeployJaegerInstance(suite.exampleJaeger)
+	suite.cleanAccountBindings()
 	handleSuiteTearDown()
 }
 
@@ -225,15 +211,17 @@ func TestTokenSuite(t *testing.T) {
 
 func (suite *TokenTestSuite) bindOperatorWithAuthDelegator() {
 
+	operatorNamespace := getJaegerOperatorNamespace()
+
 	suite.delegationRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespace + "jaeger-operator:system:auth-delegator",
-			Namespace: namespace,
+			Name:      operatorNamespace + "jaeger-operator:system:auth-delegator",
+			Namespace: operatorNamespace,
 		},
 		Subjects: []rbac.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      "jaeger-operator",
-			Namespace: namespace,
+			Namespace: operatorNamespace,
 		}},
 		RoleRef: rbac.RoleRef{
 			Kind: "ClusterRole",
@@ -251,13 +239,13 @@ func (suite *TokenTestSuite) bindOperatorWithAuthDelegator() {
 
 	suite.delegationRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespace + "proxy:system:auth-delegator",
-			Namespace: namespace,
+			Name:      operatorNamespace + "proxy:system:auth-delegator",
+			Namespace: operatorNamespace,
 		},
 		Subjects: []rbac.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      account.OAuthProxyAccountNameFor(suite.exampleJaeger),
-			Namespace: namespace,
+			Namespace: operatorNamespace,
 		}},
 		RoleRef: rbac.RoleRef{
 			Kind: "ClusterRole",
@@ -354,7 +342,7 @@ func jaegerInstance() *v1.Jaeger {
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "token-prop",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
