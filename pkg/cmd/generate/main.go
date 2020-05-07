@@ -36,9 +36,6 @@ Defaults to reading Jaeger CRD from standard input and writing the manifest file
 	cmd.Flags().String("output", "/dev/stdout", "Where to print the generated YAML documents")
 	viper.BindPFlag("output", cmd.Flags().Lookup("output"))
 
-	// TODO: jaeger-version -- now deprecated/nop. How to handle that. OK if running from a container with the config file? TODO test that
-	// TODO: Test with podman run
-
 	start.AddGeneratorFlags(cmd)
 
 	return cmd
