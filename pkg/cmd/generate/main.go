@@ -26,7 +26,7 @@ func NewGenerateCommand() *cobra.Command {
 		Short: "Generate YAML manifests from Jaeger CRD",
 		Long: `Generate YAML manifests from Jaeger CRD.
 
-Defaults to reading Jaeger CRD from standard input and writing it to standard output, override with --cr <filename> and --output <filename>.`,
+Defaults to reading Jaeger CRD from standard input and writing the manifest file to standard output, override with --cr <filename> and --output <filename>.`,
 		RunE: generate,
 	}
 
