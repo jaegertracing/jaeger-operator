@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -75,6 +77,16 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
+	otelConfg, err := a.jaeger.Spec.Agent.Config.GetMap()
+	if err != nil {
+		a.jaeger.Logger().WithField("error", err).
+			Errorf("Could not parse OTEL config, config map will not be created")
+	} else {
+		if otelconfig.ShouldCreate(a.jaeger.Spec.Agent.Options, otelConfg) {
+			otelconfig.Update(a.jaeger, "agent", commonSpec, &args)
+		}
+	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

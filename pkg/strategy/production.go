@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/spf13/viper"
@@ -51,6 +53,10 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the Sampling config map
 	if cm := sampling.NewConfig(jaeger).Get(); cm != nil {
 		c.configMaps = append(c.configMaps, *cm)
+	}
+
+	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
+		c.configMaps = append(c.configMaps, cm...)
 	}
 
 	// add the daemonsets

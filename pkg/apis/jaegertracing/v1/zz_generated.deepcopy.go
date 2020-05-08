@@ -127,6 +127,7 @@ func (in *JaegerAgentSpec) DeepCopyInto(out *JaegerAgentSpec) {
 	*out = *in
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
+	in.Config.DeepCopyInto(&out.Config)
 	return
 }
 
@@ -195,6 +196,7 @@ func (in *JaegerCollectorSpec) DeepCopyInto(out *JaegerCollectorSpec) {
 	}
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
+	in.Config.DeepCopyInto(&out.Config)
 	return
 }
 
@@ -387,6 +389,7 @@ func (in *JaegerIngesterSpec) DeepCopyInto(out *JaegerIngesterSpec) {
 	}
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
+	in.Config.DeepCopyInto(&out.Config)
 	return
 }
 

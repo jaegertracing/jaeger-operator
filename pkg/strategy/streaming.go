@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/spf13/viper"
@@ -54,6 +56,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the Sampling config map
 	if cm := sampling.NewConfig(jaeger).Get(); cm != nil {
 		manifest.configMaps = append(manifest.configMaps, *cm)
+	}
+
+	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
+		manifest.configMaps = append(manifest.configMaps, cm...)
 	}
 
 	_, pfound := jaeger.Spec.Collector.Options.GenericMap()["kafka.producer.brokers"]
