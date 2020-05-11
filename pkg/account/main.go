@@ -56,6 +56,12 @@ func JaegerServiceAccountFor(jaeger *v1.Jaeger, component Component) string {
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.AllInOne.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	case AgentComponent:
 		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case DependenciesComponent:
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case EsIndexCleanerComponent:
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsIndexCleaner.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
+	case EsRolloverComponent:
+		sa = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 	}
 
 	if sa == "" {

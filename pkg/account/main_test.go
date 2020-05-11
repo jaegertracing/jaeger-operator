@@ -39,6 +39,9 @@ func TestJaegerName(t *testing.T) {
 	jaeger.Spec.Query.ServiceAccount = "query-sa"
 	jaeger.Spec.Agent.ServiceAccount = "agent-sa"
 	jaeger.Spec.AllInOne.ServiceAccount = "aio-sa"
+	jaeger.Spec.Storage.Dependencies.ServiceAccount = "deps-sa"
+	jaeger.Spec.Storage.EsIndexCleaner.ServiceAccount = "esic-sa"
+	jaeger.Spec.Storage.EsRollover.ServiceAccount = "esro-sa"
 
 	assert.Equal(t, "foo", JaegerServiceAccountFor(jaeger, ""))
 	assert.Equal(t, "col-sa", JaegerServiceAccountFor(jaeger, CollectorComponent))
@@ -46,4 +49,7 @@ func TestJaegerName(t *testing.T) {
 	assert.Equal(t, "aio-sa", JaegerServiceAccountFor(jaeger, AllInOneComponent))
 	assert.Equal(t, "agent-sa", JaegerServiceAccountFor(jaeger, AgentComponent))
 	assert.Equal(t, "bar", JaegerServiceAccountFor(jaeger, IngesterComponent))
+	assert.Equal(t, "deps-sa", JaegerServiceAccountFor(jaeger, DependenciesComponent))
+	assert.Equal(t, "esic-sa", JaegerServiceAccountFor(jaeger, EsIndexCleanerComponent))
+	assert.Equal(t, "esro-sa", JaegerServiceAccountFor(jaeger, EsRolloverComponent))
 }
