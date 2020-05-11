@@ -21,8 +21,9 @@ const (
 )
 
 // ShouldCreate returns true if the OTEL config should be created.
-func ShouldCreate(opts v1.Options, otelCfg map[string]interface{}) bool {
+func ShouldCreate(jaeger *v1.Jaeger, opts v1.Options, otelCfg map[string]interface{}) bool {
 	if _, exists := opts.Map()["config"]; exists {
+		jaeger.Logger().Info("OpenTelemetry config will not be created. The config is explicitly provided in the options.")
 		return false
 	}
 	if len(otelCfg) == 0 {
@@ -35,23 +36,17 @@ func ShouldCreate(opts v1.Options, otelCfg map[string]interface{}) bool {
 // Get returns a OTEL config maps for a Jaeger instance.
 func Get(jaeger *v1.Jaeger) []corev1.ConfigMap {
 	var cms []corev1.ConfigMap
-	m, err := getMap(jaeger.Logger().WithField("component", "agent"), jaeger.Spec.Agent.Config)
-	if err == nil {
-		if ShouldCreate(jaeger.Spec.Agent.Options, m) {
-			cms = append(cms, create(jaeger, "agent", m))
-		}
+	c := createConfigMap(jaeger, "agent", jaeger.Spec.Agent.Options, jaeger.Spec.Agent.Config)
+	if c != nil {
+		cms = append(cms, *c)
 	}
-	m, err = getMap(jaeger.Logger().WithField("component", "collector"), jaeger.Spec.Collector.Config)
-	if err == nil {
-		if ShouldCreate(jaeger.Spec.Collector.Options, m) {
-			cms = append(cms, create(jaeger, "collector", m))
-		}
+	c = createConfigMap(jaeger, "collector", jaeger.Spec.Collector.Options, jaeger.Spec.Collector.Config)
+	if c != nil {
+		cms = append(cms, *c)
 	}
-	m, err = getMap(jaeger.Logger().WithField("component", "ingester"), jaeger.Spec.Ingester.Config)
-	if err == nil {
-		if ShouldCreate(jaeger.Spec.Ingester.Options, m) {
-			cms = append(cms, create(jaeger, "ingester", m))
-		}
+	c = createConfigMap(jaeger, "ingester", jaeger.Spec.Ingester.Options, jaeger.Spec.Ingester.Config)
+	if c != nil {
+		cms = append(cms, *c)
 	}
 	return cms
 }
@@ -65,7 +60,23 @@ func getMap(log *logrus.Entry, otelConfig v1.FreeForm) (map[string]interface{}, 
 	return m, err
 }
 
-func create(jaeger *v1.Jaeger, component string, otelConfig map[string]interface{}) corev1.ConfigMap {
+func createConfigMap(jaeger *v1.Jaeger, component string, opts v1.Options, otelConfig v1.FreeForm) *corev1.ConfigMap {
+	m, err := getMap(jaeger.Logger().WithField("component", component), otelConfig)
+	if err != nil {
+		return nil
+	}
+	if ShouldCreate(jaeger, opts, m) {
+		c, err := create(jaeger, component, m)
+		if err != nil {
+			return nil
+		} else {
+			return c
+		}
+	}
+	return nil
+}
+
+func create(jaeger *v1.Jaeger, component string, otelConfig map[string]interface{}) (*corev1.ConfigMap, error) {
 	cfgYml, err := yaml.Marshal(otelConfig)
 	if err != nil {
 		jaeger.Logger().
@@ -73,8 +84,9 @@ func create(jaeger *v1.Jaeger, component string, otelConfig map[string]interface
 			WithField("config", otelConfig).
 			WithField("err", err).
 			Errorf("Could not marshall collector config to yaml")
+		return nil, err
 	}
-	return corev1.ConfigMap{
+	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ConfigMap",
@@ -90,7 +102,7 @@ func create(jaeger *v1.Jaeger, component string, otelConfig map[string]interface
 		Data: map[string]string{
 			configMapKey: string(cfgYml),
 		},
-	}
+	}, nil
 }
 
 // Update injects required flags and objects to the common spec.

@@ -81,11 +81,10 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	otelConfg, err := a.jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		a.jaeger.Logger().WithField("error", err).
+			WithField("component", "agent").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		if otelconfig.ShouldCreate(a.jaeger.Spec.Agent.Options, otelConfg) {
-			otelconfig.Update(a.jaeger, "agent", commonSpec, &args)
-		}
+	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.Agent.Options, otelConfg) {
+		otelconfig.Update(a.jaeger, "agent", commonSpec, &args)
 	}
 
 	// ensure we have a consistent order of the arguments

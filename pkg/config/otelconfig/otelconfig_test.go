@@ -23,10 +23,15 @@ func TestShouldCreate(t *testing.T) {
 		{
 			expected: false,
 			opts:     v1.NewOptions(map[string]interface{}{"config": "/etc/config.yaml"}),
+			otelCfg:  v1.NewFreeForm(map[string]interface{}{"foo": "bar"}),
 		},
 		{
 			expected: true,
-			opts:     v1.NewOptions(map[string]interface{}{"jaeger-config": "/etc/config.yaml"}),
+			otelCfg:  v1.NewFreeForm(map[string]interface{}{"foo": "bar"}),
+		},
+		{
+			expected: true,
+			opts:     v1.NewOptions(map[string]interface{}{"someflag": "val"}),
 			otelCfg:  v1.NewFreeForm(map[string]interface{}{"foo": "bar"}),
 		},
 		{
@@ -38,7 +43,7 @@ func TestShouldCreate(t *testing.T) {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			m, err := test.otelCfg.GetMap()
 			require.NoError(t, err)
-			shouldCreate := ShouldCreate(test.opts, m)
+			shouldCreate := ShouldCreate(v1.NewJaeger(types.NamespacedName{}), test.opts, m)
 			assert.Equal(t, test.expected, shouldCreate)
 		})
 	}

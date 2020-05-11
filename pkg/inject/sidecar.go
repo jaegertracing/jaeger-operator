@@ -193,11 +193,10 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	otelConfg, err := jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		jaeger.Logger().WithField("error", err).
+			WithField("component", "agent").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		if otelconfig.ShouldCreate(jaeger.Spec.Agent.Options, otelConfg) {
-			otelconfig.Update(jaeger, "agent", commonSpec, &args)
-		}
+	} else if otelconfig.ShouldCreate(jaeger, jaeger.Spec.Agent.Options, otelConfg) {
+		otelconfig.Update(jaeger, "agent", commonSpec, &args)
 	}
 
 	// ensure we have a consistent order of the arguments

@@ -81,11 +81,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 	otelConfg, err := c.jaeger.Spec.Collector.Config.GetMap()
 	if err != nil {
 		c.jaeger.Logger().WithField("error", err).
+			WithField("component", "collector").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		if otelconfig.ShouldCreate(c.jaeger.Spec.Collector.Options, otelConfg) {
-			otelconfig.Update(c.jaeger, "collector", commonSpec, &options)
-		}
+	} else if otelconfig.ShouldCreate(c.jaeger, c.jaeger.Spec.Collector.Options, otelConfg) {
+		otelconfig.Update(c.jaeger, "collector", commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments
