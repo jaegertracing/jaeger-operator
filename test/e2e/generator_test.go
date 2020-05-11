@@ -117,16 +117,12 @@ func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
 		}
 		require.NoError(t, err)
 
-		if res.StatusCode != 200 {
-			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
-		}
+		require.Equal(t, 200, res.StatusCode)
 
 		body, err := ioutil.ReadAll(res.Body)
 		require.NoError(t, err)
 
-		if len(body) == 0 {
-			return false, fmt.Errorf("empty body")
-		}
+		require.NotEqual(t, 0, len(body), "Empty body")
 
 		return true, nil
 	})
