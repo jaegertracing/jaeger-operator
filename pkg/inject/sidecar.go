@@ -203,6 +203,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
+	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, commonSpec.Volumes...)
 	return corev1.Container{
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
@@ -250,7 +251,8 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 				Name:          "admin-http",
 			},
 		},
-		Resources: commonSpec.Resources,
+		Resources:    commonSpec.Resources,
+		VolumeMounts: commonSpec.VolumeMounts,
 	}
 }
 

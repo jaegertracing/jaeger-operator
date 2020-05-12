@@ -226,3 +226,15 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-openshift-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 }
+
+func TestAgentOTELConfig(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+
+	a := NewAgent(jaeger)
+	d := a.Get()
+	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
+	assert.True(t, hasVolume("instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+}
