@@ -36,15 +36,15 @@ func ShouldCreate(jaeger *v1.Jaeger, opts v1.Options, otelCfg map[string]interfa
 // Get returns a OTEL config maps for a Jaeger instance.
 func Get(jaeger *v1.Jaeger) []corev1.ConfigMap {
 	var cms []corev1.ConfigMap
-	c := createConfigMap(jaeger, "agent", jaeger.Spec.Agent.Options, jaeger.Spec.Agent.Config)
+	c := createIfNeeded(jaeger, "agent", jaeger.Spec.Agent.Options, jaeger.Spec.Agent.Config)
 	if c != nil {
 		cms = append(cms, *c)
 	}
-	c = createConfigMap(jaeger, "collector", jaeger.Spec.Collector.Options, jaeger.Spec.Collector.Config)
+	c = createIfNeeded(jaeger, "collector", jaeger.Spec.Collector.Options, jaeger.Spec.Collector.Config)
 	if c != nil {
 		cms = append(cms, *c)
 	}
-	c = createConfigMap(jaeger, "ingester", jaeger.Spec.Ingester.Options, jaeger.Spec.Ingester.Config)
+	c = createIfNeeded(jaeger, "ingester", jaeger.Spec.Ingester.Options, jaeger.Spec.Ingester.Config)
 	if c != nil {
 		cms = append(cms, *c)
 	}
@@ -60,7 +60,7 @@ func getMap(log *logrus.Entry, otelConfig v1.FreeForm) (map[string]interface{}, 
 	return m, err
 }
 
-func createConfigMap(jaeger *v1.Jaeger, component string, opts v1.Options, otelConfig v1.FreeForm) *corev1.ConfigMap {
+func createIfNeeded(jaeger *v1.Jaeger, component string, opts v1.Options, otelConfig v1.FreeForm) *corev1.ConfigMap {
 	m, err := getMap(jaeger.Logger().WithField("component", component), otelConfig)
 	if err != nil {
 		return nil
@@ -69,9 +69,8 @@ func createConfigMap(jaeger *v1.Jaeger, component string, opts v1.Options, otelC
 		c, err := create(jaeger, component, m)
 		if err != nil {
 			return nil
-		} else {
-			return c
 		}
+		return c
 	}
 	return nil
 }
