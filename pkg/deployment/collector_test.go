@@ -527,3 +527,41 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 }
+
+func TestCollectorOTELConfig(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger.Spec.Collector.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+
+	c := NewCollector(jaeger)
+	d := c.Get()
+	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
+	assert.True(t, hasVolume("instance-collector-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("instance-collector-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+}
+
+func hasVolume(name string, volumes []corev1.Volume) bool {
+	for _, v := range volumes {
+		if v.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
+	for _, v := range volumeMounts {
+		if v.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func hasArgument(arg string, args []string) bool {
+	for _, v := range args {
+		if v == arg {
+			return true
+		}
+	}
+	return false
+}

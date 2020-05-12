@@ -323,6 +323,9 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	Config FreeForm `json:"config,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -343,6 +346,9 @@ type JaegerIngesterSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	Config FreeForm `json:"config,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -360,6 +366,9 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	Config FreeForm `json:"config,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector

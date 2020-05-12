@@ -27,7 +27,7 @@ func TestRemoveDuplicatedVolumes(t *testing.T) {
 		VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/data3"}},
 	}}
 
-	assert.Len(t, removeDuplicatedVolumes(volumes), 2)
+	assert.Len(t, RemoveDuplicatedVolumes(volumes), 2)
 	assert.Equal(t, "volume1", volumes[0].Name)
 	assert.Equal(t, "/data1", volumes[0].VolumeSource.HostPath.Path)
 	assert.Equal(t, "volume2", volumes[1].Name)

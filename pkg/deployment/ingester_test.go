@@ -441,3 +441,15 @@ func newIngesterJaeger(name string) *v1.Jaeger {
 		},
 	}
 }
+
+func TestIngesterOTELConfig(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger.Spec.Ingester.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming
+
+	i := NewIngester(jaeger)
+	d := i.Get()
+	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
+	assert.True(t, hasVolume("instance-ingester-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("instance-ingester-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+}

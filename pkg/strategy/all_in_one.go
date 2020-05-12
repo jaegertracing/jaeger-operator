@@ -11,6 +11,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
@@ -47,6 +48,10 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the Sampling config map
 	if cm := sampling.NewConfig(jaeger).Get(); cm != nil {
 		c.configMaps = append(c.configMaps, *cm)
+	}
+
+	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
+		c.configMaps = append(c.configMaps, cm...)
 	}
 
 	// add the deployments

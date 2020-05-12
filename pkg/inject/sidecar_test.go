@@ -662,5 +662,46 @@ func TestEqualSidecar(t *testing.T) {
 	// When no agent is present on the deploy
 	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	assert.False(t, EqualSidecar(dep1, dep3))
+}
 
+func TestAgentOTELConfig(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+
+	d := Sidecar(jaeger, &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:      map[string]string{Label: "instance"},
+			Annotations: map[string]string{},
+		},
+	})
+	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
+	assert.True(t, hasVolume("instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+}
+
+func hasVolume(name string, volumes []corev1.Volume) bool {
+	for _, v := range volumes {
+		if v.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
+	for _, v := range volumeMounts {
+		if v.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func hasArgument(arg string, args []string) bool {
+	for _, v := range args {
+		if v == arg {
+			return true
+		}
+	}
+	return false
 }
