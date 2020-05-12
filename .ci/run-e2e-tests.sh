@@ -44,6 +44,10 @@ elif [ "${TEST_GROUP}" = "es-token-propagation" ]
 then
     echo "Running token propagation tests"
     make e2e-tests-token-propagation-es
+elif [ "${TEST_GROUP}" = "generate" ]
+then
+    echo "Running CLI manifest generatation tests"
+    make e2e-tests-generate
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
