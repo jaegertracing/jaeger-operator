@@ -23,7 +23,7 @@ import (
 func NewGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate",
-		Short: "Generate YAML manifests from Jaeger CRD",
+		Short: "(experimental) Generate YAML manifests from Jaeger CRD",
 		Long: `Generate YAML manifests from Jaeger CRD.
 
 Defaults to reading Jaeger CRD from standard input and writing the manifest file to standard output, override with --cr <filename> and --output <filename>.`,
