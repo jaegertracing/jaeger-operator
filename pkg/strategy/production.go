@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/spf13/viper"
@@ -17,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
