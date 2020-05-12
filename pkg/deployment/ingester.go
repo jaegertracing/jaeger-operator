@@ -75,12 +75,12 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	options := allArgs(i.jaeger.Spec.Ingester.Options,
 		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)))
 
-	otelConfg, err := i.jaeger.Spec.Ingester.Config.GetMap()
+	otelConf, err := i.jaeger.Spec.Ingester.Config.GetMap()
 	if err != nil {
 		i.jaeger.Logger().WithField("error", err).
 			WithField("component", "ingester").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(i.jaeger, i.jaeger.Spec.Ingester.Options, otelConfg) {
+	} else if otelconfig.ShouldCreate(i.jaeger, i.jaeger.Spec.Ingester.Options, otelConf) {
 		otelconfig.Update(i.jaeger, "ingester", commonSpec, &options)
 	}
 

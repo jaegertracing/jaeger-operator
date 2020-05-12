@@ -78,12 +78,12 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
-	otelConfg, err := a.jaeger.Spec.Agent.Config.GetMap()
+	otelConf, err := a.jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		a.jaeger.Logger().WithField("error", err).
 			WithField("component", "agent").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.Agent.Options, otelConfg) {
+	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.Agent.Options, otelConf) {
 		otelconfig.Update(a.jaeger, "agent", commonSpec, &args)
 	}
 
