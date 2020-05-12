@@ -12,10 +12,13 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
-// AddGeneratorFlags adds all command line flags related to manifest
+// AddFlags adds all command line flags related to manifest
 // generation. They are shared between the operator and CLI `generate`
 // command.
-func AddGeneratorFlags(cmd *cobra.Command) {
+func AddFlags(cmd *cobra.Command) {
+	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
+	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
+
 	cmd.Flags().String("jaeger-version", version.DefaultJaeger(), "Deprecated: the Jaeger version is now managed entirely by the operator. This option is currently no-op.")
 
 	cmd.Flags().String("jaeger-agent-image", "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
@@ -82,12 +85,9 @@ func NewStartCommand() *cobra.Command {
 		},
 	}
 
-	AddGeneratorFlags(cmd)
+	AddFlags(cmd)
 
-	// Operator specific flags here. Any flags affecting manifest generation should be added to AddGeneratorFlags instead
-	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
-	viper.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
-
+	// Operator specific flags here. Any flags affecting manifest generation should be added to AddFlags instead
 	cmd.Flags().String("metrics-host", "0.0.0.0", "The host to bind the metrics port")
 	viper.BindPFlag("metrics-host", cmd.Flags().Lookup("metrics-host"))
 

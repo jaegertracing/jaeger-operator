@@ -36,7 +36,7 @@ Defaults to reading Jaeger CRD from standard input and writing the manifest file
 	cmd.Flags().String("output", "/dev/stdout", "Where to print the generated YAML documents")
 	viper.BindPFlag("output", cmd.Flags().Lookup("output"))
 
-	start.AddGeneratorFlags(cmd)
+	start.AddFlags(cmd)
 
 	return cmd
 }
@@ -58,7 +58,7 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 	return &spec, nil
 }
 
-func generate(cmd *cobra.Command, args []string) error {
+func generate(_ *cobra.Command, _ []string) error {
 	level, err := log.ParseLevel(viper.GetString("log-level"))
 	if err != nil {
 		log.SetLevel(log.InfoLevel)
