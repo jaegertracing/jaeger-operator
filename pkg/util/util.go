@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -148,9 +147,9 @@ func AsOwner(jaeger *v1.Jaeger) metav1.OwnerReference {
 func Labels(name, component string, jaeger v1.Jaeger) map[string]string {
 	return map[string]string{
 		"app":                          "jaeger", // kept for backwards compatibility, remove by version 2.0
-		"app.kubernetes.io/name":       TrimNonAlphaNumeric(Truncate(name, 63)),
-		"app.kubernetes.io/instance":   TrimNonAlphaNumeric(Truncate(jaeger.Name, 63)),
-		"app.kubernetes.io/component":  TrimNonAlphaNumeric(Truncate(component, 63)),
+		"app.kubernetes.io/name":       Truncate(name, 63),
+		"app.kubernetes.io/instance":   Truncate(jaeger.Name, 63),
+		"app.kubernetes.io/component":  Truncate(component, 63),
 		"app.kubernetes.io/part-of":    "jaeger",
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 
@@ -275,12 +274,4 @@ func GenerateProxySecret() (string, error) {
 	base64Secret := base64.StdEncoding.EncodeToString(randString)
 	return base64Secret, nil
 
-}
-
-// TrimNonAlphaNumeric remove all non-alphanumeric values from start and end of the string
-func TrimNonAlphaNumeric(text string) string {
-	regEnd, _ := regexp.Compile("[^A-Za-z0-9]+$")
-	newText := regEnd.ReplaceAllString(text, "")
-	regStart, _ := regexp.Compile("^[^A-Za-z0-9]+")
-	return regStart.ReplaceAllString(newText, "")
 }

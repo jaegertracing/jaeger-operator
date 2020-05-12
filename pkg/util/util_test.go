@@ -519,35 +519,3 @@ func TestReplaceArgument(t *testing.T) {
 	}
 
 }
-
-func TestTrimNonAlphaNumeric(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{
-			input:    "-%$#ThisIsALabel",
-			expected: "ThisIsALabel",
-		},
-
-		{
-			input:    "label-invalid--_truncated-.",
-			expected: "label-invalid--_truncated",
-		},
-
-		{
-			input:    "--(label-invalid--_truncated-#.1.",
-			expected: "label-invalid--_truncated-#.1",
-		},
-
-		{
-			input:    "12ValidLabel3",
-			expected: "12ValidLabel3",
-		},
-	}
-
-	for _, test := range tests {
-		output := TrimNonAlphaNumeric(test.input)
-		assert.Equal(t, test.expected, output)
-	}
-}
