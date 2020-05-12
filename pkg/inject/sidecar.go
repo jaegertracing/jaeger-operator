@@ -190,20 +190,23 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
+	// Use a different common spec for volumes and mounts.
+	// We don't want to mount all Jaeger internal volumes into user's deployments
+	volumesAndMountsSpec := &v1.JaegerCommonSpec{}
 	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		jaeger.Logger().WithField("error", err).
 			WithField("component", "agent").
 			Errorf("Could not parse OTEL config, config map will not be created")
 	} else if otelconfig.ShouldCreate(jaeger, jaeger.Spec.Agent.Options, otelConf) {
-		otelconfig.Update(jaeger, "agent", commonSpec, &args)
+		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
 	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
-	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, commonSpec.Volumes...)
+	dep.Spec.Template.Spec.Volumes = util.RemoveDuplicatedVolumes(append(dep.Spec.Template.Spec.Volumes, volumesAndMountsSpec.Volumes...))
 	return corev1.Container{
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
@@ -252,7 +255,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			},
 		},
 		Resources:    commonSpec.Resources,
-		VolumeMounts: commonSpec.VolumeMounts,
+		VolumeMounts: volumesAndMountsSpec.VolumeMounts,
 	}
 }
 

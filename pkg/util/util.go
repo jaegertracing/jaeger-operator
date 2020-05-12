@@ -15,8 +15,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
-// removeDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
-func removeDuplicatedVolumes(volumes []corev1.Volume) []corev1.Volume {
+// RemoveDuplicatedVolumes returns a unique list of Volumes based on Volume names. Only the first item is kept.
+func RemoveDuplicatedVolumes(volumes []corev1.Volume) []corev1.Volume {
 	var results []corev1.Volume
 	existing := map[string]bool{}
 
@@ -100,7 +100,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		Annotations:     annotations,
 		Labels:          labels,
 		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
-		Volumes:         removeDuplicatedVolumes(volumes),
+		Volumes:         RemoveDuplicatedVolumes(volumes),
 		Resources:       *resources,
 		Affinity:        affinity,
 		Tolerations:     tolerations,
