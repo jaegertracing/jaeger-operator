@@ -55,7 +55,7 @@ func ProductionSmokeTestWithNamespace(resourceName, smokeTestNamespace string) {
 
 func productionSmokeTest(jaegerInstanceName, smokeTestNamespace string) {
 	queryPodImageName := "jaeger-query"
-	collectorPodImageName := "jaeger-collector"
+	collectorPodImageName := "collector"
 	queryPodPrefix := jaegerInstanceName + "-query"
 	collectorPodPrefix := jaegerInstanceName + "-collector"
 

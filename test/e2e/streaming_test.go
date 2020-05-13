@@ -60,28 +60,57 @@ func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {
+	jaegerInstanceName := "simple-streaming"
+	runStreamingTest(jaegerInstanceName, false)
+}
+
+func (suite *StreamingTestSuite) TestStreamingWithOTEL() {
+	if !testOtelCollector {
+		t.Skip("Skipping OTEL collecotor test")
+	}
+	jaegerInstanceName := "simple-streaming-with-otel"
+	runStreamingTest(jaegerInstanceName, true)
+}
+
+func runStreamingTest(jaegerInstanceName string, useOtelCollector bool) {
 	waitForElasticSearch()
 	waitForKafkaInstance()
 
-	j := jaegerStreamingDefinition(namespace, "simple-streaming")
+	j := jaegerStreamingDefinition(namespace, jaegerInstanceName, useOtelCollector)
 	log.Infof("passing %v", j)
 	err := fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(j)
 
-	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-ingester", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-ingester", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for ingester deployment")
 
-	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-collector", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
-	err = WaitForDeployment(t, fw.KubeClient, namespace, "simple-streaming-query", 1, retryInterval, timeout)
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	ProductionSmokeTest("simple-streaming")
+	ProductionSmokeTest(jaegerInstanceName)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithTLS() {
+	jaegerInstanceName := "tls-streaming"
+	runStreamingTestWithTLS(jaegerInstanceName, false)
+}
+
+func (suite *StreamingTestSuite) TestStreamingWithTLSWithOTEL() {
+	if !testOtelCollector {
+		t.Skip("Skipping OTEL collecotor test")
+	}
+	jaegerInstanceName := "tls-streaming-with-otel"
+	runStreamingTestWithTLS(jaegerInstanceName, true)
+}
+
+func runStreamingTestWithTLS(jaegerInstanceName string, useOtelCollector bool) {
 	if !usingOLM {
 		t.Skip("This test should only run when using OLM")
 	}
@@ -103,8 +132,7 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	}()
 
 	// Now create a jaeger instance with TLS enabled -- note it has to be deployed in the same namespace as the kafka instance
-	jaegerInstanceName := "tls-streaming"
-	jaegerInstance := jaegerStreamingDefinitionWithTLS(kafkaNamespace, jaegerInstanceName, kafkaUserName)
+	jaegerInstance := jaegerStreamingDefinitionWithTLS(kafkaNamespace, jaegerInstanceName, kafkaUserName, useOtelCollector)
 	err = fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(jaegerInstance)
@@ -119,16 +147,31 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, kafkaNamespace)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
+	jaegerInstanceName := "auto-provisioned"
+	runStreamingWithAutoProvisioningTest(jaegerInstanceName, false)
+}
+
+func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioningWithOTEL() {
+	if !testOtelCollector {
+		t.Skip("Skipping OTEL collecotor test")
+	}
+	jaegerInstanceName := "auto-provisioned-with-otel"
+	runStreamingWithAutoProvisioningTest(jaegerInstanceName, true)
+}
+
+func runStreamingWithAutoProvisioningTest(jaegerInstanceName string, useOtelCollector bool) {
 	// Make sure ES instance is available
 	waitForElasticSearch()
 
 	// Now create a jaeger instance which will auto provision a kafka instance
-	jaegerInstanceName := "auto-provisioned"
 	jaegerInstanceNamespace := namespace
-	jaegerInstance := jaegerAutoProvisionedDefinition(jaegerInstanceNamespace, jaegerInstanceName)
+	jaegerInstance := jaegerAutoProvisionedDefinition(jaegerInstanceNamespace, jaegerInstanceName, useOtelCollector)
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(jaegerInstance)
@@ -147,9 +190,12 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 	}
 
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, jaegerInstanceNamespace)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
 }
 
-func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
+func jaegerStreamingDefinition(namespace string, name string, useOtelCollector bool) *v1.Jaeger {
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	ingressEnabled := true
 	j := &v1.Jaeger{
@@ -158,7 +204,7 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple-streaming",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
@@ -191,10 +237,17 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelCollector {
+		log.Infof("Using OTEL collector for %s", name)
+		otelCollectorSpec := getOtelCollectorSpec(j.Spec.Collector)
+		j.Spec.Collector = otelCollectorSpec
+	}
+
 	return j
 }
 
-func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName string) *v1.Jaeger {
+func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName string, useOtelCollector bool) *v1.Jaeger {
 	volumes := getTLSVolumes(kafkaUserName)
 	volumeMounts := getTLSVolumeMounts()
 	ingressEnabled := true
@@ -248,10 +301,17 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 			},
 		},
 	}
+
+	if useOtelCollector {
+		log.Infof("Using OTEL collector for %s", name)
+		otelCollectorSpec := getOtelCollectorSpec(j.Spec.Collector)
+		j.Spec.Collector = otelCollectorSpec
+	}
+
 	return j
 }
 
-func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
+func jaegerAutoProvisionedDefinition(namespace string, name string, useOtelCollector bool) *v1.Jaeger {
 	ingressEnabled := true
 	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -276,6 +336,14 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelCollector {
+		log.Infof("Using OTEL collector for %s", name)
+		emptyCollectorSpec := &v1.JaegerCollectorSpec{}
+		otelCollectorSpec := getOtelCollectorSpec(*emptyCollectorSpec)
+		jaegerInstance.Spec.Collector = otelCollectorSpec
+	}
+
 	return jaegerInstance
 }
 

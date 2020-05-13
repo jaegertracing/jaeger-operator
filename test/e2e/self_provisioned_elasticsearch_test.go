@@ -80,9 +80,21 @@ func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
-	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
-	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
+	runSelfProvisionedESSmokeTest(jaegerInstanceName, false)
+}
+
+func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTestWithOTEL() {
+	if !testOtelCollector {
+		t.Skip("Skipping OTEL collecotor test")
+	}
+	jaegerInstanceName := "simple-prod-with-otel"
+	runSelfProvisionedESSmokeTest(jaegerInstanceName, true)
+}
+
+func runSelfProvisionedESSmokeTest(jaegerInstanceName string, useOtelCollector bool) {
+	// create jaeger custom resource
+	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName, useOtelCollector) // FIXME
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -94,11 +106,26 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTest(jaegerInstanceName)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
 }
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	jaegerInstanceName := "simple-prod2"
-	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
+	runIncreasingReplicasTest(jaegerInstanceName, false)
+}
+
+func (suite *SelfProvisionedTestSuite) TestIncreasingReplicasWithOTEL() {
+	if !testOtelCollector {
+		t.Skip("Skipping OTEL collecotor test")
+	}
+	jaegerInstanceName := "simple-prod2-with-otel"
+	runIncreasingReplicasTest(jaegerInstanceName, true)
+}
+
+func runIncreasingReplicasTest(jaegerInstanceName string, useOtelCollector bool) {
+	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName, useOtelCollector)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -173,6 +200,9 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.NoError(t, err)
 
 	ProductionSmokeTest(jaegerInstanceName)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
 }
 
 func changeNodeCount(name string, newESNodeCount int, newCollectorNodeCount, newQueryNodeCount int32) {
@@ -199,7 +229,7 @@ func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
 	require.Equal(t, expectedEsOperatorImage, imageName)
 }
 
-func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
+func getJaegerSimpleProd(instanceName string, useOtelCollector bool) *v1.Jaeger {
 	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -228,6 +258,14 @@ func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelCollector {
+		logrus.Infof("Using OTEL collector for %s", instanceName)
+		emptyCollectorSpec := &v1.JaegerCollectorSpec{}
+		otelCollectorSpec := getOtelCollectorSpec(*emptyCollectorSpec)
+		exampleJaeger.Spec.Collector = otelCollectorSpec
+	}
+
 	return exampleJaeger
 }
 
