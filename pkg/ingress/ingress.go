@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/spf13/viper"
+
 	extv1beta "k8s.io/api/extensions/v1beta1"
 	netv1beta "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,13 +21,19 @@ const NetworkingAPI = "networking"
 type Client struct {
 	client  client.Client
 	rClient client.Reader
+	usedApi string
 }
 
 // NewIngressClient Creates a new Ingress.client wrapper.
 func NewIngressClient(client client.Client, reader client.Reader) *Client {
+	usedApi := NetworkingAPI
+	if viper.Get("ingress-api") != nil {
+		usedApi = viper.Get("ingress-api").(string)
+	}
 	return &Client{
 		client:  client,
 		rClient: reader,
+		usedApi: usedApi,
 	}
 }
 
@@ -37,12 +44,15 @@ func (c *Client) fromExtToNet(ingress extv1beta.Ingress) netv1beta.Ingress {
 			APIVersion: "extensions/v1beta1",
 		},
 		ObjectMeta: ingress.ObjectMeta,
-		Spec: netv1beta.IngressSpec{
+	}
+
+	if ingress.Spec.Backend != nil {
+		oldIngress.Spec = netv1beta.IngressSpec{
 			Backend: &netv1beta.IngressBackend{
 				ServiceName: ingress.Spec.Backend.ServiceName,
 				ServicePort: ingress.Spec.Backend.ServicePort,
 			},
-		},
+		}
 	}
 
 	for _, tls := range ingress.Spec.TLS {
@@ -123,7 +133,7 @@ func (c *Client) fromNetToExt(ingress netv1beta.Ingress) extv1beta.Ingress {
 
 // List is a wrap function that calls k8s client List with extend or networking API.
 func (c *Client) List(ctx context.Context, list *netv1beta.IngressList, opts ...client.ListOption) error {
-	if viper.Get("ingress-api") == ExtensionAPI {
+	if c.usedApi == ExtensionAPI {
 		extIngressList := extv1beta.IngressList{}
 		err := c.rClient.List(ctx, &extIngressList, opts...)
 		if err != nil {
@@ -139,13 +149,9 @@ func (c *Client) List(ctx context.Context, list *netv1beta.IngressList, opts ...
 
 // Update is a wrap function that calls k8s client Update with extend or networking API.
 func (c *Client) Update(ctx context.Context, obj *netv1beta.Ingress, opts ...client.UpdateOption) error {
-	if viper.Get("ingress-api") == ExtensionAPI {
+	if c.usedApi == ExtensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
-		err := c.client.Update(ctx, &extIngressList, opts...)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.client.Update(ctx, &extIngressList, opts...)
 	}
 	return c.client.Update(ctx, obj, opts...)
 
@@ -153,26 +159,18 @@ func (c *Client) Update(ctx context.Context, obj *netv1beta.Ingress, opts ...cli
 
 // Delete is a wrap function that calls k8s client Delete with extend or networking API.
 func (c *Client) Delete(ctx context.Context, obj *netv1beta.Ingress, opts ...client.DeleteOption) error {
-	if viper.Get("ingress-api") == ExtensionAPI {
+	if c.usedApi == ExtensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
-		err := c.client.Delete(ctx, &extIngressList, opts...)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.client.Delete(ctx, &extIngressList, opts...)
 	}
 	return c.client.Delete(ctx, obj, opts...)
 }
 
 // Create is a wrap function that calls k8s client Create with extend or networking API.
 func (c *Client) Create(ctx context.Context, obj *netv1beta.Ingress, opts ...client.CreateOption) error {
-	if viper.Get("ingress-api") == ExtensionAPI {
+	if c.usedApi == ExtensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
-		err := c.client.Create(ctx, &extIngressList, opts...)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.client.Create(ctx, &extIngressList, opts...)
 	}
 	return c.client.Create(ctx, obj, opts...)
 }

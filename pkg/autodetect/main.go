@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,6 +16,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"

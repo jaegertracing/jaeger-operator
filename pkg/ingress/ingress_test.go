@@ -34,7 +34,6 @@ func getIngress() *netv1beta.Ingress {
 }
 
 func TestIngressNetworkingAPI(t *testing.T) {
-
 	viper.Set("ingress-api", NetworkingAPI)
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
@@ -90,7 +89,6 @@ func TestIngressNetworkingAPI(t *testing.T) {
 }
 
 func TestIngressExtensionAPI(t *testing.T) {
-
 	viper.Set("ingress-api", ExtensionAPI)
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
@@ -122,7 +120,7 @@ func TestIngressExtensionAPI(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(extIngressList.Items))
 
-	// Should return 0 (not using extension API)
+	// Should return 0 (not using networking API)
 	netIngressList := &netv1beta.IngressList{}
 	err = cl.List(context.Background(), netIngressList)
 	assert.NoError(t, err)
