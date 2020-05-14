@@ -14,6 +14,7 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,18 +85,22 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
 	// create jaeger custom resource
-	exampleJaeger := getJaegerSimpleProdWithServerUrls()
+	name := "simple-prod"
+	exampleJaeger := getJaegerSimpleProdWithServerUrls(name, testOtelCollector)
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-collector", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "simple-prod-query", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
-	ProductionSmokeTest("simple-prod")
+	ProductionSmokeTest(name)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(name, namespace, testOtelCollector)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
@@ -154,7 +159,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	indexWithPrefixExists("jaeger-", false)
 }
 
-func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
+func getJaegerSimpleProdWithServerUrls(name string, useOtelCollector bool) *v1.Jaeger {
 	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -162,7 +167,7 @@ func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple-prod",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{
@@ -179,6 +184,13 @@ func getJaegerSimpleProdWithServerUrls() *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelCollector {
+		logrus.Infof("Using OTEL collector for %s", name)
+		exampleJaeger.Spec.Collector.Image = otelCollectorImage
+		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+	}
+
 	return exampleJaeger
 }
 

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -85,7 +87,7 @@ func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
-	exampleJaeger := getJaegerSelfProvisionedESAndKafka(jaegerInstanceName)
+	exampleJaeger := getJaegerSelfProvisionedESAndKafka(jaegerInstanceName, testOtelCollector)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -110,11 +112,14 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() 
 	require.NoError(t, err, "Error waiting for ingester deployment")
 
 	ProductionSmokeTest(jaegerInstanceName)
+
+	// Make sure we were using the correct collector image
+	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
 }
 
-func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
+func getJaegerSelfProvisionedESAndKafka(instanceName string, useOtelCollector bool) *v1.Jaeger {
 	ingressEnabled := true
-	return &v1.Jaeger{
+	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
@@ -141,4 +146,12 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelCollector {
+		logrus.Infof("Using OTEL collector for %s", instanceName)
+		jaegerInstance.Spec.Collector.Image = otelCollectorImage
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+	}
+
+	return jaegerInstance
 }

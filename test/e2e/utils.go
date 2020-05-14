@@ -46,10 +46,12 @@ var (
 	usingOLM             = getBoolEnv("OLM", false)
 	saveLogs             = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
+	testOtelCollector    = getBoolEnv("USE_OTEL_COLLECTOR", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
+	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
 	ctx                  *framework.TestCtx
 	fw                   *framework.Framework
 	namespace            string
@@ -547,4 +549,34 @@ func deletePersistentVolumeClaims(namespace string) {
 		logrus.Infof("Deleting PVC %s from namespace %s", pvc.Name, namespace)
 		fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).Delete(pvc.Name, &emptyDeleteOptions)
 	}
+}
+
+func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
+	require.Equal(t, expected, wasUsingOtelCollector(jaegerInstanceName, namespace))
+}
+
+// Was this Jaeger Instance using the OTEL collector?
+func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
+	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(jaegerInstanceName+"-collector", metav1.GetOptions{})
+	require.NoError(t, err)
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "jaeger-collector" {
+			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
+			return strings.Contains(container.Image, "jaeger-opentelemetry-collector")
+		}
+	}
+
+	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
+	return false
+}
+
+func getOtelCollectorOptions() map[string]interface{} {
+	otelOptions := map[string]interface{}{
+		"extensions": map[string]interface{}{
+			"health_check": map[string]string{"port": "14269"},
+		},
+	}
+
+	return otelOptions
 }
