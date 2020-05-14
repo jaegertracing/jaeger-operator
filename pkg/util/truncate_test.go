@@ -39,7 +39,7 @@ func TestTruncate(t *testing.T) {
 			format:   "%s-%s-collector",
 			max:      63,
 			values:   []interface{}{"d0c1e62", "4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11ea-b174-c85b7644b6b5"},
-			expected: "-4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11ea-b174--collector",
+			expected: "4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11ea-b174--collector",
 			cap:      "first value gets dropped, second truncated",
 		},
 		{
@@ -51,5 +51,37 @@ func TestTruncate(t *testing.T) {
 		},
 	} {
 		assert.Equal(t, tt.expected, Truncate(tt.format, tt.max, tt.values...))
+	}
+}
+
+func TestTrimNonAlphaNumeric(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "-%$#ThisIsALabel",
+			expected: "ThisIsALabel",
+		},
+
+		{
+			input:    "label-invalid--_truncated-.",
+			expected: "label-invalid--_truncated",
+		},
+
+		{
+			input:    "--(label-invalid--_truncated-#.1.",
+			expected: "label-invalid--_truncated-#.1",
+		},
+
+		{
+			input:    "12ValidLabel3",
+			expected: "12ValidLabel3",
+		},
+	}
+
+	for _, test := range tests {
+		output := trimNonAlphaNumeric(test.input)
+		assert.Equal(t, test.expected, output)
 	}
 }
