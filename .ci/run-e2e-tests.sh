@@ -9,10 +9,17 @@ sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' test/operator.yaml
 export VERBOSE='-v -timeout 20m'
 if [ "${TEST_GROUP}" = "es" ]; then
     echo "Running elasticsearch tests"
+    export USE_OTEL_COLLECTOR=false
+    make es
+    make e2e-tests-es
+elif [ "${TEST_GROUP}" = "es-otel" ]; then
+    echo "Running elasticsearch tests with OTEL collector"
+    export USE_OTEL_COLLECTOR=true
     make es
     make e2e-tests-es
 elif [ "${TEST_GROUP}" = "es-self-provisioned" ]; then
     echo "Running self provisioned elasticsearch tests"
+    export USE_OTEL_COLLECTOR=false
     make e2e-tests-self-provisioned-es
     res=$?
     if [[ ${res} -ne 0 ]]; then
@@ -31,6 +38,12 @@ then
 elif [ "${TEST_GROUP}" = "streaming" ]
 then
     echo "Running Streaming Tests"
+    export USE_OTEL_COLLECTOR=false
+    make e2e-tests-streaming
+elif [ "${TEST_GROUP}" = "streaming-otel" ]
+then
+    echo "Running Streaming Tests with OTEL collector"
+    export USE_OTEL_COLLECTOR=true
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "examples1" ]
 then
@@ -46,7 +59,7 @@ then
     make e2e-tests-token-propagation-es
 elif [ "${TEST_GROUP}" = "generate" ]
 then
-    echo "Running CLI manifest generatation tests"
+    echo "Running CLI manifest generation tests"
     make e2e-tests-generate
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1

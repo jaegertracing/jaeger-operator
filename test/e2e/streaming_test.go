@@ -60,23 +60,11 @@ func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {
-	jaegerInstanceName := "simple-streaming"
-	runStreamingTest(jaegerInstanceName, false)
-}
-
-func (suite *StreamingTestSuite) TestStreamingWithOTEL() {
-	if !testOtelCollector {
-		t.Skip("Skipping OTEL collecotor test")
-	}
-	jaegerInstanceName := "simple-streaming-with-otel"
-	runStreamingTest(jaegerInstanceName, true)
-}
-
-func runStreamingTest(jaegerInstanceName string, useOtelCollector bool) {
 	waitForElasticSearch()
 	waitForKafkaInstance()
 
-	j := jaegerStreamingDefinition(namespace, jaegerInstanceName, useOtelCollector)
+	jaegerInstanceName := "simple-streaming"
+	j := jaegerStreamingDefinition(namespace, jaegerInstanceName, testOtelCollector)
 	log.Infof("passing %v", j)
 	err := fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
@@ -94,23 +82,10 @@ func runStreamingTest(jaegerInstanceName string, useOtelCollector bool) {
 	ProductionSmokeTest(jaegerInstanceName)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
+	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithTLS() {
-	jaegerInstanceName := "tls-streaming"
-	runStreamingTestWithTLS(jaegerInstanceName, false)
-}
-
-func (suite *StreamingTestSuite) TestStreamingWithTLSWithOTEL() {
-	if !testOtelCollector {
-		t.Skip("Skipping OTEL collecotor test")
-	}
-	jaegerInstanceName := "tls-streaming-with-otel"
-	runStreamingTestWithTLS(jaegerInstanceName, true)
-}
-
-func runStreamingTestWithTLS(jaegerInstanceName string, useOtelCollector bool) {
 	if !usingOLM {
 		t.Skip("This test should only run when using OLM")
 	}
@@ -132,7 +107,8 @@ func runStreamingTestWithTLS(jaegerInstanceName string, useOtelCollector bool) {
 	}()
 
 	// Now create a jaeger instance with TLS enabled -- note it has to be deployed in the same namespace as the kafka instance
-	jaegerInstance := jaegerStreamingDefinitionWithTLS(kafkaNamespace, jaegerInstanceName, kafkaUserName, useOtelCollector)
+	jaegerInstanceName := "tls-streaming"
+	jaegerInstance := jaegerStreamingDefinitionWithTLS(kafkaNamespace, jaegerInstanceName, kafkaUserName, testOtelCollector)
 	err = fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(jaegerInstance)
@@ -149,29 +125,17 @@ func runStreamingTestWithTLS(jaegerInstanceName string, useOtelCollector bool) {
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, kafkaNamespace)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
+	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
-	jaegerInstanceName := "auto-provisioned"
-	runStreamingWithAutoProvisioningTest(jaegerInstanceName, false)
-}
-
-func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioningWithOTEL() {
-	if !testOtelCollector {
-		t.Skip("Skipping OTEL collecotor test")
-	}
-	jaegerInstanceName := "auto-provisioned-with-otel"
-	runStreamingWithAutoProvisioningTest(jaegerInstanceName, true)
-}
-
-func runStreamingWithAutoProvisioningTest(jaegerInstanceName string, useOtelCollector bool) {
 	// Make sure ES instance is available
 	waitForElasticSearch()
 
 	// Now create a jaeger instance which will auto provision a kafka instance
+	jaegerInstanceName := "auto-provisioned"
 	jaegerInstanceNamespace := namespace
-	jaegerInstance := jaegerAutoProvisionedDefinition(jaegerInstanceNamespace, jaegerInstanceName, useOtelCollector)
+	jaegerInstance := jaegerAutoProvisionedDefinition(jaegerInstanceNamespace, jaegerInstanceName, testOtelCollector)
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying jaeger")
 	defer undeployJaegerInstance(jaegerInstance)
@@ -192,7 +156,7 @@ func runStreamingWithAutoProvisioningTest(jaegerInstanceName string, useOtelColl
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, jaegerInstanceNamespace)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, useOtelCollector)
+	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
 }
 
 func jaegerStreamingDefinition(namespace string, name string, useOtelCollector bool) *v1.Jaeger {
@@ -240,8 +204,8 @@ func jaegerStreamingDefinition(namespace string, name string, useOtelCollector b
 
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
-		otelCollectorSpec := getOtelCollectorSpec(j.Spec.Collector)
-		j.Spec.Collector = otelCollectorSpec
+		j.Spec.Collector.Image = otelCollectorImage
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
 	}
 
 	return j
@@ -304,8 +268,8 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
-		otelCollectorSpec := getOtelCollectorSpec(j.Spec.Collector)
-		j.Spec.Collector = otelCollectorSpec
+		j.Spec.Collector.Image = otelCollectorImage
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
 	}
 
 	return j
@@ -339,9 +303,8 @@ func jaegerAutoProvisionedDefinition(namespace string, name string, useOtelColle
 
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
-		emptyCollectorSpec := &v1.JaegerCollectorSpec{}
-		otelCollectorSpec := getOtelCollectorSpec(*emptyCollectorSpec)
-		jaegerInstance.Spec.Collector = otelCollectorSpec
+		jaegerInstance.Spec.Collector.Image = otelCollectorImage
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
 	}
 
 	return jaegerInstance

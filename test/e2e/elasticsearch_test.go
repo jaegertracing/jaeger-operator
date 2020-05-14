@@ -81,24 +81,12 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 }
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
-	jaegerInstanceName := "simple-prod"
-	runSimpleProdTest(jaegerInstanceName, false)
-}
-
-func (suite *ElasticSearchTestSuite) TestSimpleProdWithOTEL() {
-	if !testOtelCollector {
-		t.Skip("Skipping OTEL collecotor test")
-	}
-	jaegerInstanceName := "simple-prod-with-otel"
-	runSimpleProdTest(jaegerInstanceName, true)
-}
-
-func runSimpleProdTest(name string, useOtelCollector bool) {
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
 	// create jaeger custom resource
-	exampleJaeger := getJaegerSimpleProdWithServerUrls(name, useOtelCollector)
+	name := "simple-prod"
+	exampleJaeger := getJaegerSimpleProdWithServerUrls(name, testOtelCollector)
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -112,7 +100,7 @@ func runSimpleProdTest(name string, useOtelCollector bool) {
 	ProductionSmokeTest(name)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(name, namespace, useOtelCollector)
+	verifyCollectorImage(name, namespace, testOtelCollector)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
@@ -199,9 +187,12 @@ func getJaegerSimpleProdWithServerUrls(name string, useOtelCollector bool) *v1.J
 
 	if useOtelCollector {
 		logrus.Infof("Using OTEL collector for %s", name)
-		emptyCollectorSpec := &v1.JaegerCollectorSpec{}
-		otelCollectorSpec := getOtelCollectorSpec(*emptyCollectorSpec)
-		exampleJaeger.Spec.Collector = otelCollectorSpec
+		otelOptions := getOtelCollectorOptions()
+		otelCollectorSpec := &v1.JaegerCollectorSpec{
+			Image:  otelCollectorImage,
+			Config: v1.NewFreeForm(otelOptions),
+		}
+		exampleJaeger.Spec.Collector = *otelCollectorSpec
 	}
 
 	return exampleJaeger

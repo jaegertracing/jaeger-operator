@@ -45,12 +45,13 @@ var (
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
 	saveLogs             = getBoolEnv("SAVE_LOGS", false)
-	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	testOtelCollector    = getBoolEnv("RUN_OTEL_COLLECTOR_TESTS", true)
+	CassandraTests       = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
+	testOtelCollector    = getBoolEnv("USE_OTEL_COLLECTOR", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
+	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
 	ctx                  *framework.TestCtx
 	fw                   *framework.Framework
 	namespace            string
@@ -574,28 +575,22 @@ func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
 	return false
 }
 
-// Returns a collector spec which uses the Open Telementry Collector
-func getOtelCollectorSpec(collectorSpec v1.JaegerCollectorSpec) v1.JaegerCollectorSpec {
-	otelOptions := make(map[string]interface{})
-
-	processors := map[string]string{"queued_retry": ""}
-	otelOptions["processors"] = processors
-
-	port := map[string]string{"port": "14269"}
-	healthCheck := map[string]interface{}{"health_check": port}
-	otelOptions["extensions"] = healthCheck
-
-	traces := map[string]string{"processors": "queued_retry"}
-	pipelines := map[string]interface{}{"traces": traces}
-	service := map[string]interface{}{"pipelines": pipelines}
-
-	otelOptions["service"] = service
-
-	otelCollectorSpec := &v1.JaegerCollectorSpec{
-		Image:   "jaegertracing/jaeger-opentelemetry-collector:latest",
-		Config:  v1.NewFreeForm(otelOptions),
-		Options: collectorSpec.Options,
+func getOtelCollectorOptions() map[string]interface{} {
+	otelOptions := map[string]interface{}{
+		"processors": map[string]string{
+			"queued_retry": "",
+		},
+		"extensions": map[string]interface{}{
+			"health_check": map[string]string{"port": "14269"},
+		},
+		"service": map[string]interface{}{
+			"pipelines": map[string]interface{}{
+				"traces": map[string]string{
+					"processors": "queued_retry",
+				},
+			},
+		},
 	}
 
-	return *otelCollectorSpec
+	return otelOptions
 }
