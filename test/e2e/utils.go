@@ -552,11 +552,7 @@ func deletePersistentVolumeClaims(namespace string) {
 }
 
 func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
-	if expected {
-		require.True(t, wasUsingOtelCollector(jaegerInstanceName, namespace))
-	} else {
-		require.False(t, wasUsingOtelCollector(jaegerInstanceName, namespace))
-	}
+	require.Equal(t, expected, wasUsingOtelCollector(jaegerInstanceName, namespace))
 }
 
 // Was this Jaeger Instance using the OTEL collector?

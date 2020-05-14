@@ -149,12 +149,8 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string, useOtelCollector bo
 
 	if useOtelCollector {
 		logrus.Infof("Using OTEL collector for %s", instanceName)
-		otelOptions := getOtelCollectorOptions()
-		otelCollectorSpec := &v1.JaegerCollectorSpec{
-			Image:  otelCollectorImage,
-			Config: v1.NewFreeForm(otelOptions),
-		}
-		jaegerInstance.Spec.Collector = *otelCollectorSpec
+		jaegerInstance.Spec.Collector.Image = otelCollectorImage
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
 	}
 
 	return jaegerInstance
