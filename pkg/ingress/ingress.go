@@ -19,21 +19,17 @@ const NetworkingAPI = "networking"
 
 // Client wrap around k8s client, and decide which ingress API should be used, depending on cluster capabilities.
 type Client struct {
-	client  client.Client
-	rClient client.Reader
-	usedAPI string
+	client       client.Client
+	rClient      client.Reader
+	extensionAPI bool
 }
 
 // NewIngressClient Creates a new Ingress.client wrapper.
 func NewIngressClient(client client.Client, reader client.Reader) *Client {
-	usedAPI := NetworkingAPI
-	if viper.Get("ingress-api") != nil {
-		usedAPI = viper.Get("ingress-api").(string)
-	}
 	return &Client{
-		client:  client,
-		rClient: reader,
-		usedAPI: usedAPI,
+		client:       client,
+		rClient:      reader,
+		extensionAPI: viper.GetString("ingress-api") == ExtensionAPI,
 	}
 }
 
@@ -133,7 +129,7 @@ func (c *Client) fromNetToExt(ingress netv1beta.Ingress) extv1beta.Ingress {
 
 // List is a wrap function that calls k8s client List with extend or networking API.
 func (c *Client) List(ctx context.Context, list *netv1beta.IngressList, opts ...client.ListOption) error {
-	if c.usedAPI == ExtensionAPI {
+	if c.extensionAPI {
 		extIngressList := extv1beta.IngressList{}
 		err := c.rClient.List(ctx, &extIngressList, opts...)
 		if err != nil {
@@ -149,7 +145,7 @@ func (c *Client) List(ctx context.Context, list *netv1beta.IngressList, opts ...
 
 // Update is a wrap function that calls k8s client Update with extend or networking API.
 func (c *Client) Update(ctx context.Context, obj *netv1beta.Ingress, opts ...client.UpdateOption) error {
-	if c.usedAPI == ExtensionAPI {
+	if c.extensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
 		return c.client.Update(ctx, &extIngressList, opts...)
 	}
@@ -159,7 +155,7 @@ func (c *Client) Update(ctx context.Context, obj *netv1beta.Ingress, opts ...cli
 
 // Delete is a wrap function that calls k8s client Delete with extend or networking API.
 func (c *Client) Delete(ctx context.Context, obj *netv1beta.Ingress, opts ...client.DeleteOption) error {
-	if c.usedAPI == ExtensionAPI {
+	if c.extensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
 		return c.client.Delete(ctx, &extIngressList, opts...)
 	}
@@ -168,7 +164,7 @@ func (c *Client) Delete(ctx context.Context, obj *netv1beta.Ingress, opts ...cli
 
 // Create is a wrap function that calls k8s client Create with extend or networking API.
 func (c *Client) Create(ctx context.Context, obj *netv1beta.Ingress, opts ...client.CreateOption) error {
-	if c.usedAPI == ExtensionAPI {
+	if c.extensionAPI {
 		extIngressList := c.fromNetToExt(*obj)
 		return c.client.Create(ctx, &extIngressList, opts...)
 	}
