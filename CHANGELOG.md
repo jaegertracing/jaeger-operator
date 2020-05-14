@@ -33,7 +33,6 @@ Other noteworthy changes:
 * Restored the displayName in the CSV ([#987](https://github.com/jaegertracing/jaeger-operator/pull/987), [@jpkrohling](https://github.com/jpkrohling))
 * Change 'make generate' to write only a single CRD ([#978](https://github.com/jaegertracing/jaeger-operator/pull/978), [@jpkrohling](https://github.com/jpkrohling))
 * Prevent operator from overriding .Spec.Replicas ([#979](https://github.com/jaegertracing/jaeger-operator/pull/979), [@jpkrohling](https://github.com/jpkrohling))
-* Document waiting on release CI job ([#975](https://github.com/jaegertracing/jaeger-operator/pull/975), [@pavolloffay](https://github.com/pavolloffay))
 
 1.17.1 (2020-03-18)
 -------------------
