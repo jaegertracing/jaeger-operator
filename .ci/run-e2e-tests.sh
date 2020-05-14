@@ -36,7 +36,6 @@ then
 elif [ "${TEST_GROUP}" = "streaming" ]
 then
     echo "Running Streaming Tests"
-    export USE_OTEL_COLLECTOR=false
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "streaming-otel" ]
 then
