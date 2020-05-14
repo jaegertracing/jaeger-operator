@@ -100,11 +100,12 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
+			b.detectIngressAPI()
+
 		})
 
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
-		b.detectIngressAPI()
 	}
 
 	b.detectClusterRoles(ctx)
