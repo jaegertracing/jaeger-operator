@@ -577,18 +577,8 @@ func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
 
 func getOtelCollectorOptions() map[string]interface{} {
 	otelOptions := map[string]interface{}{
-		"processors": map[string]string{
-			"queued_retry": "",
-		},
 		"extensions": map[string]interface{}{
 			"health_check": map[string]string{"port": "14269"},
-		},
-		"service": map[string]interface{}{
-			"pipelines": map[string]interface{}{
-				"traces": map[string]string{
-					"processors": "queued_retry",
-				},
-			},
 		},
 	}
 
