@@ -45,7 +45,7 @@ var (
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
 	saveLogs             = getBoolEnv("SAVE_LOGS", false)
-	CassandraTests       = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
+	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	testOtelCollector    = getBoolEnv("USE_OTEL_COLLECTOR", false)
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
