@@ -8,7 +8,7 @@ Breaking changes:
 
 Other noteworthy changes:
 
-1.18.0 (2020-05-14)
+1.18.0 (2020-05-15)
 -------------------
 
 Breaking changes:
