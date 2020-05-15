@@ -15,6 +15,7 @@ Breaking changes:
 
 Other noteworthy changes:
 
+* Migrate Ingress from API extensions/v1beta1 to networking.k8s.io/v1beta1 ([#1039](https://github.com/jaegertracing/jaeger-operator/pull/1039), [@rubenvp8510](https://github.com/rubenvp8510))
 * Make sure truncated labels are valid ([#1055](https://github.com/jaegertracing/jaeger-operator/pull/1055), [@rubenvp8510](https://github.com/rubenvp8510))
 * Add CLI command to generate k8s manifests ([#1046](https://github.com/jaegertracing/jaeger-operator/pull/1046), [@chlunde](https://github.com/chlunde))
 * Add OTEL config to Jaeger CR ([#1056](https://github.com/jaegertracing/jaeger-operator/pull/1056), [@pavolloffay](https://github.com/pavolloffay))
