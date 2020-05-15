@@ -1,6 +1,40 @@
 Changes by Version
 ==================
 
+1.19.0 (unreleased)
+-------------------
+
+Breaking changes:
+
+Other noteworthy changes:
+
+1.18.0 (2020-05-15)
+-------------------
+
+Breaking changes:
+
+Other noteworthy changes:
+
+* Migrate Ingress from API extensions/v1beta1 to networking.k8s.io/v1beta1 ([#1039](https://github.com/jaegertracing/jaeger-operator/pull/1039), [@rubenvp8510](https://github.com/rubenvp8510))
+* Make sure truncated labels are valid ([#1055](https://github.com/jaegertracing/jaeger-operator/pull/1055), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add CLI command to generate k8s manifests ([#1046](https://github.com/jaegertracing/jaeger-operator/pull/1046), [@chlunde](https://github.com/chlunde))
+* Add OTEL config to Jaeger CR ([#1056](https://github.com/jaegertracing/jaeger-operator/pull/1056), [@pavolloffay](https://github.com/pavolloffay))
+* Missing components added to func JaegerServiceAccountFor() ([#1057](https://github.com/jaegertracing/jaeger-operator/pull/1057), [@AdrieVanDijk](https://github.com/AdrieVanDijk))
+* Fix typo in godoc ([#1052](https://github.com/jaegertracing/jaeger-operator/pull/1052), [@jjmengze](https://github.com/jjmengze))
+* Change source of oauth-proxy image from the imagestream ([#1049](https://github.com/jaegertracing/jaeger-operator/pull/1049), [@objectiser](https://github.com/objectiser))
+* Handle normalization of host:port addresses in operator upgrade for 1.18 ([#1033](https://github.com/jaegertracing/jaeger-operator/pull/1033), [@rubenvp8510](https://github.com/rubenvp8510))
+* Use semver on the upgrade process ([#1034](https://github.com/jaegertracing/jaeger-operator/pull/1034), [@rubenvp8510](https://github.com/rubenvp8510))
+* Do not set the default index cleaner, rollover and dependencies image in CR ([#1037](https://github.com/jaegertracing/jaeger-operator/pull/1037), [@objectiser](https://github.com/objectiser))
+* Allow oauth proxy imagestream to be used by specifying the namespace/… ([#1035](https://github.com/jaegertracing/jaeger-operator/pull/1035), [@objectiser](https://github.com/objectiser))
+* Added auto-scale to the ingester ([#1006](https://github.com/jaegertracing/jaeger-operator/pull/1006), [@rubenvp8510](https://github.com/rubenvp8510))
+* Synch changes in cert generation script with CLO ([#1008](https://github.com/jaegertracing/jaeger-operator/pull/1008), [@pavolloffay](https://github.com/pavolloffay))
+* Fix autodetect restarting platform from OpenShift to Kubernetes ([#1003](https://github.com/jaegertracing/jaeger-operator/pull/1003), [@objectiser](https://github.com/objectiser))
+* Update deployment sidecar when flags change ([#961](https://github.com/jaegertracing/jaeger-operator/pull/961), [@rubenvp8510](https://github.com/rubenvp8510))
+* Marked specific fields as nullable to keep backwards compatibility ([#985](https://github.com/jaegertracing/jaeger-operator/pull/985), [@jpkrohling](https://github.com/jpkrohling))
+* Restored the displayName in the CSV ([#987](https://github.com/jaegertracing/jaeger-operator/pull/987), [@jpkrohling](https://github.com/jpkrohling))
+* Change 'make generate' to write only a single CRD ([#978](https://github.com/jaegertracing/jaeger-operator/pull/978), [@jpkrohling](https://github.com/jpkrohling))
+* Prevent operator from overriding .Spec.Replicas ([#979](https://github.com/jaegertracing/jaeger-operator/pull/979), [@jpkrohling](https://github.com/jpkrohling))
+
 1.17.1 (2020-03-18)
 -------------------
 
