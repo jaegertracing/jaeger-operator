@@ -120,6 +120,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					HostNetwork: a.jaeger.Spec.Agent.HostNetWork,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
