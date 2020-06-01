@@ -138,6 +138,15 @@ e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator dep
 	@echo Running Self provisioned Elasticsearch and Kafka end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: prepare-e2e-tests-kafka-kerberos
+prepare-e2e-tests-kafka-kerberos: es
+	@kubectl create -n default -f ./test/kafka-kerberos.yml
+
+.PHONY: e2e-tests-kafka-kerberos-es
+e2e-tests-kafka-kerberos-es: prepare-e2e-tests
+	@echo Running Kafka with Kerberos authentication end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=kafka_kerberos ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: e2e-tests-token-propagation-es
 e2e-tests-token-propagation-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Token Propagation Elasticsearch end-to-end tests...
