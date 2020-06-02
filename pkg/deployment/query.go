@@ -12,6 +12,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
@@ -61,6 +62,8 @@ func (q *Query) Get() *appsv1.Deployment {
 		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
+	ca.Update(q.jaeger, commonSpec)
+
 	var envFromSource []corev1.EnvFromSource
 	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
 		envFromSource = append(envFromSource, corev1.EnvFromSource{

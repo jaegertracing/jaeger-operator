@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -59,6 +60,10 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: "/etc/tls/private",
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
+	}, {
+		Name:      ca.TrustedCAName(jaeger),
+		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		ReadOnly:  true,
 	}}
 
 	if len(jaeger.Spec.Ingress.Openshift.HtpasswdFile) > 0 {
