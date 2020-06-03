@@ -2,10 +2,3 @@ apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
-spec:
-  allInOne:
-    image: jaegertracing/opentelemetry-all-in-one:latest
-    config:
-      extensions:
-        health_check:
-          port: 14269
