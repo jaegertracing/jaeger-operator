@@ -277,14 +277,13 @@ func TestAllInOneOrderOfArguments(t *testing.T) {
 	dep := a.Get()
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
 	assert.NotEmpty(t, util.FindItem("--a-option", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--b-option", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--c-option", dep.Spec.Template.Spec.Containers[0].Args))
 
 	// the following are added automatically
 	assert.NotEmpty(t, util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[0].Args))
 }
 
 func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
@@ -303,7 +302,7 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 9)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 8)
 	assert.NotEmpty(t, util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args))
@@ -313,5 +312,15 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.ca", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.enabled", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.server-name", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.Equal(t, "--reporter.type=grpc", util.FindItem("--reporter.type", dep.Spec.Template.Spec.Containers[0].Args))
+}
+
+func TestAllInOneOTELConfig(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger.Spec.AllInOne.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+
+	c := NewAllInOne(jaeger)
+	d := c.Get()
+	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
+	assert.True(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
