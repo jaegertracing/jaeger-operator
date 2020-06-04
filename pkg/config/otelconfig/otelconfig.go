@@ -26,11 +26,7 @@ func ShouldCreate(jaeger *v1.Jaeger, opts v1.Options, otelCfg map[string]interfa
 		jaeger.Logger().Info("OpenTelemetry config will not be created. The config is explicitly provided in the options.")
 		return false
 	}
-	if len(otelCfg) == 0 {
-		return false
-	}
-	return true
-
+	return len(otelCfg) > 0
 }
 
 // Get returns a OTEL config maps for a Jaeger instance.
@@ -45,6 +41,10 @@ func Get(jaeger *v1.Jaeger) []corev1.ConfigMap {
 		cms = append(cms, *c)
 	}
 	c = createIfNeeded(jaeger, "ingester", jaeger.Spec.Ingester.Options, jaeger.Spec.Ingester.Config)
+	if c != nil {
+		cms = append(cms, *c)
+	}
+	c = createIfNeeded(jaeger, "all-in-one", jaeger.Spec.AllInOne.Options, jaeger.Spec.AllInOne.Config)
 	if c != nil {
 		cms = append(cms, *c)
 	}

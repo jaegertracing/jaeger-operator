@@ -286,6 +286,9 @@ type JaegerAllInOneSpec struct {
 	Options Options `json:"options,omitempty"`
 
 	// +optional
+	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 

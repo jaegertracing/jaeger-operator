@@ -1542,6 +1542,8 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                config:
+                  type: object
                 image:
                   type: string
                 labels:
