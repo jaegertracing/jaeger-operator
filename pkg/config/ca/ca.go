@@ -2,6 +2,7 @@ package ca
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,11 @@ import (
 func Get(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	// Only configure the trusted CA if running in OpenShift
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		return nil
+	}
+
+	if !deployTrustedCA(jaeger) {
+		jaeger.Logger().Debug("CA: Skip deploying the Jaeger instance's trustedCABundle configmap")
 		return nil
 	}
 
@@ -56,6 +62,11 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 		return
 	}
 
+	if !deployTrustedCA(jaeger) {
+		jaeger.Logger().Debug("CA: Skip adding the Jaeger instance's trustedCABundle volume")
+		return
+	}
+
 	volume := corev1.Volume{
 		Name: TrustedCAName(jaeger),
 		VolumeSource: corev1.VolumeSource{
@@ -73,6 +84,37 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 		},
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
+}
+
+// AddVolumeMount optionally adds the trusted CA if path not already defined
+func AddVolumeMount(jaeger *v1.Jaeger, volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+	// Only configure the trusted CA if running in OpenShift
+	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		return volumeMounts
+	}
+
+	if !deployTrustedCA(jaeger) {
+		jaeger.Logger().Debug("CA: Skip adding the Jaeger instance's trustedCABundle volumeMount")
+		return volumeMounts
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      TrustedCAName(jaeger),
+		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		ReadOnly:  true,
+	}
+	return append(volumeMounts, volumeMount)
+}
+
+func deployTrustedCA(jaeger *v1.Jaeger) bool {
+	for _, vm := range jaeger.Spec.JaegerCommonSpec.VolumeMounts {
+		if strings.HasPrefix(vm.MountPath, "/etc/pki/ca-trust/extracted/pem") {
+			// Volume Mount already exists, so don't create specific
+			// one for this Jaeger instance
+			return false
+		}
+	}
+	return true
 }
 
 // TrustedCAName returns the name of the trusted CA

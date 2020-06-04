@@ -60,10 +60,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: "/etc/tls/private",
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
-	}, {
-		Name:      ca.TrustedCAName(jaeger),
-		MountPath: "/etc/pki/ca-trust/extracted/pem",
-		ReadOnly:  true,
 	}}
 
 	if len(jaeger.Spec.Ingress.Openshift.HtpasswdFile) > 0 {
@@ -73,6 +69,8 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		// we can only get VolumeMounts from the top-level node
 		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
 	}
+
+	ca.AddVolumeMount(jaeger, volumeMounts)
 
 	if len(jaeger.Spec.Ingress.Openshift.SAR) > 0 {
 		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.Openshift.SAR))
