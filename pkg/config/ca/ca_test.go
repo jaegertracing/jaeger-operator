@@ -57,6 +57,7 @@ func TestUpdateWithoutTrustedCA(t *testing.T) {
 
 	Update(jaeger, &commonSpec)
 	assert.Len(t, commonSpec.Volumes, 0)
+	assert.Len(t, commonSpec.VolumeMounts, 0)
 }
 
 func TestUpdateWithTrustedCA(t *testing.T) {
@@ -70,6 +71,8 @@ func TestUpdateWithTrustedCA(t *testing.T) {
 	Update(jaeger, &commonSpec)
 	assert.Len(t, commonSpec.Volumes, 1)
 	assert.Equal(t, commonSpec.Volumes[0].Name, TrustedCAName(jaeger))
+	assert.Len(t, commonSpec.VolumeMounts, 1)
+	assert.Equal(t, commonSpec.VolumeMounts[0].Name, TrustedCAName(jaeger))
 }
 
 func TestUpdateWithExistingTrustedCA(t *testing.T) {
@@ -86,38 +89,5 @@ func TestUpdateWithExistingTrustedCA(t *testing.T) {
 
 	Update(jaeger, &commonSpec)
 	assert.Len(t, commonSpec.Volumes, 0)
-}
-
-func TestAddVolumeMountWithoutTrustedCA(t *testing.T) {
-	viper.Set("platform", "other")
-	defer viper.Reset()
-
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAddVolumeMountWithExistingTrustedCA"})
-
-	volumeMounts := []corev1.VolumeMount{}
-	assert.Len(t, AddVolumeMount(jaeger, volumeMounts), 0)
-}
-
-func TestAddVolumeMountWithTrustedCA(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
-	defer viper.Reset()
-
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAddVolumeMountWithExistingTrustedCA"})
-
-	volumeMounts := []corev1.VolumeMount{}
-	assert.Len(t, AddVolumeMount(jaeger, volumeMounts), 1)
-}
-
-func TestAddVolumeMountWithExistingTrustedCA(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
-	defer viper.Reset()
-
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAddVolumeMountWithExistingTrustedCA"})
-	jaeger.Spec.JaegerCommonSpec.VolumeMounts = []corev1.VolumeMount{{
-		MountPath: "/etc/pki/ca-trust/extracted/pem",
-		Name:      "ExistingTrustedCA",
-	}}
-
-	volumeMounts := []corev1.VolumeMount{}
-	assert.Len(t, AddVolumeMount(jaeger, volumeMounts), 0)
+	assert.Len(t, commonSpec.VolumeMounts, 0)
 }

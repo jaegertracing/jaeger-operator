@@ -10,7 +10,6 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -69,8 +68,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		// we can only get VolumeMounts from the top-level node
 		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
 	}
-
-	ca.AddVolumeMount(jaeger, volumeMounts)
 
 	if len(jaeger.Spec.Ingress.Openshift.SAR) > 0 {
 		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.Openshift.SAR))

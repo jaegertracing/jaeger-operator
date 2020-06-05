@@ -225,6 +225,9 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-openshift-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
 }
 
 func TestAgentOTELConfig(t *testing.T) {

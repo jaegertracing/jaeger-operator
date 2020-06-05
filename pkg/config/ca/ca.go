@@ -55,7 +55,7 @@ func Get(jaeger *v1.Jaeger) *corev1.ConfigMap {
 }
 
 // Update will modify the supplied common spec, to include
-// trusted CA bundle volume, if running on OpenShift
+// trusted CA bundle volume and volumeMount, if running on OpenShift
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 	// Only configure the trusted CA if running in OpenShift
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
@@ -84,26 +84,13 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 		},
 	}
 	commonSpec.Volumes = append(commonSpec.Volumes, volume)
-}
-
-// AddVolumeMount optionally adds the trusted CA if path not already defined
-func AddVolumeMount(jaeger *v1.Jaeger, volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
-	// Only configure the trusted CA if running in OpenShift
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
-		return volumeMounts
-	}
-
-	if !deployTrustedCA(jaeger) {
-		jaeger.Logger().Debug("CA: Skip adding the Jaeger instance's trustedCABundle volumeMount")
-		return volumeMounts
-	}
 
 	volumeMount := corev1.VolumeMount{
 		Name:      TrustedCAName(jaeger),
 		MountPath: "/etc/pki/ca-trust/extracted/pem",
 		ReadOnly:  true,
 	}
-	return append(volumeMounts, volumeMount)
+	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 }
 
 func deployTrustedCA(jaeger *v1.Jaeger) bool {
