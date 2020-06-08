@@ -185,7 +185,7 @@ type JaegerCommonSpec struct {
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
 	// +optional
-	HostNetWork bool `json:"hostNetWork,omitempty"`
+	HostNetWork *bool `json:"hostNetWork,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
