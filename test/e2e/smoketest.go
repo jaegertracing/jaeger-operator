@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -138,8 +137,9 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
 
-		if !strings.Contains(bodyString, "errors\":null") {
-			return false, errors.New("query service returns errors: " + bodyString)
+		// The first requests to newly created ES might fail
+		if !strings.Contains(bodyString, "errors\":null") && !strings.Contains(bodyString, "all shards failed") {
+			return false, fmt.Errorf("query service returns errors: %s", bodyString)
 		}
 		return strings.Contains(bodyString, tStr), nil
 	})
