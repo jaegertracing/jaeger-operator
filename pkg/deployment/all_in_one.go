@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -60,19 +62,24 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	sampling.Update(a.jaeger, commonSpec, &options)
 	tls.Update(a.jaeger, commonSpec, &options)
 
-	if len(util.FindItem("--reporter.type=", options)) == 0 {
-		options = append(options, "--reporter.type=grpc")
-	}
-
 	// Enable tls by default for openshift platform
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
 	// as it might receive connections from external agents
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.type=grpc", options)) > 0 && len(util.FindItem("--reporter.grpc.tls.enabled=true", options)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=true", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")
 			options = append(options, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
 		}
+	}
+
+	otelConf, err := a.jaeger.Spec.AllInOne.Config.GetMap()
+	if err != nil {
+		a.jaeger.Logger().WithField("error", err).
+			WithField("component", "all-in-one").
+			Errorf("Could not parse OTEL config, config map will not be created")
+	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.AllInOne.Options, otelConf) {
+		otelconfig.Update(a.jaeger, "all-in-one", commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments

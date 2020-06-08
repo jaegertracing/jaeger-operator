@@ -5,6 +5,7 @@ package e2e
 import (
 	"context"
 	goctx "context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -130,6 +131,10 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", int(updateQueryCount), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
 
+	// wait for second ES node to come up
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, esDeploymentName(namespace, jaegerInstanceName, 2), 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Elasticsearch deployment")
+
 	// Make sure there are 2 ES deployments and wait for them to be available
 	listOptions := metav1.ListOptions{
 		LabelSelector: "component=elasticsearch",
@@ -179,6 +184,11 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 
 	// Make sure we were using the correct collector image
 	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
+}
+
+func esDeploymentName(ns, jaegerName string, instances int) string {
+	nsAndName := strings.ReplaceAll(ns, "-", "") + strings.ReplaceAll(jaegerName, "-", "")
+	return fmt.Sprintf("elasticsearch-cdm-%s-%d", nsAndName[:36], instances)
 }
 
 func changeNodeCount(name string, newESNodeCount int, newCollectorNodeCount, newQueryNodeCount int32) {
