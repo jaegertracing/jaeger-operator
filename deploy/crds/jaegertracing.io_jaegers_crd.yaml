@@ -1567,6 +1567,8 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                config:
+                  type: Any
                 hostNetWork:
                   type: boolean
                 image:
