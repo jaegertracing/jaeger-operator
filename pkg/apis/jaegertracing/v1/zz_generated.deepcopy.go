@@ -260,6 +260,11 @@ func (in *JaegerCommonSpec) DeepCopyInto(out *JaegerCommonSpec) {
 		*out = new(corev1.PodSecurityContext)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.HostNetWork != nil {
+		in, out := &in.HostNetWork, &out.HostNetWork
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
