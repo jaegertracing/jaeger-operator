@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Get returns a trusted CA bundle configmap if platform is OpenShift
@@ -26,6 +27,10 @@ func Get(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	jaeger.Logger().Debug("CA: Creating the trustedCABundle configmap")
 	trueVar := true
 
+	name := TrustedCAName(jaeger)
+	labels := util.Labels(name, "ca-configmap", *jaeger)
+	labels["config.openshift.io/inject-trusted-cabundle"] = "true"
+
 	// See https://docs.openshift.com/container-platform/4.4/networking/configuring-a-custom-pki.html#certificate-injection-using-operators_configuring-a-custom-pki
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -33,20 +38,16 @@ func Get(jaeger *v1.Jaeger) *corev1.ConfigMap {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      TrustedCAName(jaeger),
+			Name:      name,
 			Namespace: jaeger.Namespace,
-			Labels: map[string]string{
-				"config.openshift.io/inject-trusted-cabundle": "true",
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: jaeger.APIVersion,
-					Kind:       jaeger.Kind,
-					Name:       jaeger.Name,
-					UID:        jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: jaeger.APIVersion,
+				Kind:       jaeger.Kind,
+				Name:       jaeger.Name,
+				UID:        jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Data: map[string]string{
 			"ca-bundle.crt": "",
@@ -74,12 +75,10 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: TrustedCAName(jaeger),
 				},
-				Items: []corev1.KeyToPath{
-					corev1.KeyToPath{
-						Key:  "ca-bundle.crt",
-						Path: "tls-ca-bundle.pem",
-					},
-				},
+				Items: []corev1.KeyToPath{{
+					Key:  "ca-bundle.crt",
+					Path: "tls-ca-bundle.pem",
+				}},
 			},
 		},
 	}

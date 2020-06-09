@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -55,11 +56,23 @@ func proxyInitArguments(jaeger *v1.Jaeger) []string {
 }
 
 func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
+	ca.Update(jaeger, commonSpec)
+
 	args := proxyInitArguments(jaeger)
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: "/etc/tls/private",
 		Name:      service.GetTLSSecretNameForQueryService(jaeger),
 	}}
+
+	// if we have the trusted-ca volume, we mount it in the oauth proxy as well
+	trustedCAVolumeName := ca.TrustedCAName(jaeger)
+	for _, v := range commonSpec.VolumeMounts {
+		if v.Name == trustedCAVolumeName {
+			jaeger.Logger().Debug("found a volume mount with the trusted-ca")
+			volumeMounts = append(volumeMounts, v)
+		}
+	}
 
 	if len(jaeger.Spec.Ingress.Openshift.HtpasswdFile) > 0 {
 		args = append(args, fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Ingress.Openshift.HtpasswdFile))
@@ -80,8 +93,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	args = append(args, jaeger.Spec.Ingress.Options.ToArgs()...)
 
 	sort.Strings(args)
-
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	return corev1.Container{
 		Image:        viper.GetString("openshift-oauth-proxy-image"),
