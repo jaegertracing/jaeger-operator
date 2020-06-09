@@ -28,12 +28,11 @@ Note that you'll need to download and customize the `cluster_role_binding.yaml` 
 Once the `jaeger-operator` deployment in the namespace `observability` is ready, create a Jaeger instance, like:
 
 ```
-kubectl apply -f - <<EOF
+kubectl apply -n observability -f - <<EOF
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
-  namespace: observability
 EOF
 ```
 
