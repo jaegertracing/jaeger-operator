@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: (devel)
   creationTimestamp: null
   name: jaegers.jaegertracing.io
 spec:
@@ -579,7 +579,9 @@ spec:
                   nullable: true
                   type: object
                 config:
-                  type: object
+                  type: Any
+                hostNetWork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -587,17 +589,25 @@ spec:
                     type: string
                   type: object
                 options:
-                  type: object
+                  type: Any
                 resources:
                   nullable: true
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 securityContext:
@@ -671,6 +681,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -691,6 +702,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -848,7 +860,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -864,7 +880,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -1089,7 +1109,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -1272,6 +1296,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
             allInOne:
               properties:
@@ -1542,6 +1567,8 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                hostNetWork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -1549,17 +1576,25 @@ spec:
                     type: string
                   type: object
                 options:
-                  type: object
+                  type: Any
                 resources:
                   nullable: true
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 securityContext:
@@ -1631,6 +1666,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -1651,6 +1687,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -1808,7 +1845,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -1824,7 +1865,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -2049,7 +2094,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -2232,6 +2281,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
             annotations:
               additionalProperties:
@@ -2510,7 +2560,9 @@ spec:
                 autoscale:
                   type: boolean
                 config:
-                  type: object
+                  type: Any
+                hostNetWork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -2524,7 +2576,7 @@ spec:
                   format: int32
                   type: integer
                 options:
-                  type: object
+                  type: Any
                 replicas:
                   format: int32
                   type: integer
@@ -2533,11 +2585,19 @@ spec:
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 securityContext:
@@ -2609,6 +2669,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -2629,6 +2690,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -2786,7 +2848,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -2802,7 +2868,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -3027,7 +3097,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -3210,7 +3284,10 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
+            hostNetWork:
+              type: boolean
             ingester:
               properties:
                 affinity:
@@ -3483,7 +3560,9 @@ spec:
                 autoscale:
                   type: boolean
                 config:
-                  type: object
+                  type: Any
+                hostNetWork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -3497,7 +3576,7 @@ spec:
                   format: int32
                   type: integer
                 options:
-                  type: object
+                  type: Any
                 replicas:
                   format: int32
                   type: integer
@@ -3506,11 +3585,19 @@ spec:
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 securityContext:
@@ -3582,6 +3669,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -3602,6 +3690,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -3759,7 +3848,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -3775,7 +3868,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -4000,7 +4097,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -4183,6 +4284,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
             ingress:
               properties:
@@ -4455,10 +4557,13 @@ spec:
                   type: object
                 enabled:
                   type: boolean
+                hostNetWork:
+                  type: boolean
                 hosts:
                   items:
                     type: string
                   type: array
+                  x-kubernetes-list-type: set
                 labels:
                   additionalProperties:
                     type: string
@@ -4475,17 +4580,25 @@ spec:
                       type: boolean
                   type: object
                 options:
-                  type: object
+                  type: Any
                 resources:
                   nullable: true
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 secretName:
@@ -4552,10 +4665,12 @@ spec:
                         items:
                           type: string
                         type: array
+                        x-kubernetes-list-type: set
                       secretName:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 tolerations:
                   items:
                     properties:
@@ -4572,6 +4687,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -4592,6 +4708,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -4749,7 +4866,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -4765,7 +4886,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -4990,7 +5115,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -5173,6 +5302,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
             labels:
               additionalProperties:
@@ -5447,6 +5577,8 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                hostNetWork:
+                  type: boolean
                 image:
                   type: string
                 labels:
@@ -5454,7 +5586,7 @@ spec:
                     type: string
                   type: object
                 options:
-                  type: object
+                  type: Any
                 replicas:
                   format: int32
                   type: integer
@@ -5463,11 +5595,19 @@ spec:
                   properties:
                     limits:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                     requests:
                       additionalProperties:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                       type: object
                   type: object
                 securityContext:
@@ -5539,6 +5679,7 @@ spec:
                         type: string
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumeMounts:
                   items:
                     properties:
@@ -5559,6 +5700,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
                 volumes:
                   items:
                     properties:
@@ -5716,7 +5858,11 @@ spec:
                                     containerName:
                                       type: string
                                     divisor:
-                                      type: string
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
                                     resource:
                                       type: string
                                   required:
@@ -5732,7 +5878,11 @@ spec:
                           medium:
                             type: string
                           sizeLimit:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         type: object
                       fc:
                         properties:
@@ -5957,7 +6107,11 @@ spec:
                                               containerName:
                                                 type: string
                                               divisor:
-                                                type: string
+                                                anyOf:
+                                                - type: integer
+                                                - type: string
+                                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                x-kubernetes-int-or-string: true
                                               resource:
                                                 type: string
                                             required:
@@ -6140,23 +6294,32 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: set
               type: object
             resources:
               nullable: true
               properties:
                 limits:
                   additionalProperties:
-                    type: string
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
                   type: object
                 requests:
                   additionalProperties:
-                    type: string
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
                   type: object
               type: object
             sampling:
               properties:
                 options:
-                  type: object
+                  type: Any
               type: object
             securityContext:
               properties:
@@ -6506,6 +6669,8 @@ spec:
                       type: boolean
                     enabled:
                       type: boolean
+                    hostNetWork:
+                      type: boolean
                     image:
                       type: string
                     javaOpts:
@@ -6519,11 +6684,19 @@ spec:
                       properties:
                         limits:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                         requests:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                       type: object
                     schedule:
@@ -6602,6 +6775,7 @@ spec:
                             type: string
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     ttlSecondsAfterFinished:
                       format: int32
                       type: integer
@@ -6625,6 +6799,7 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     volumes:
                       items:
                         properties:
@@ -6782,7 +6957,11 @@ spec:
                                         containerName:
                                           type: string
                                         divisor:
-                                          type: string
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
                                         resource:
                                           type: string
                                       required:
@@ -6798,7 +6977,11 @@ spec:
                               medium:
                                 type: string
                               sizeLimit:
-                                type: string
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
                             type: object
                           fc:
                             properties:
@@ -7023,7 +7206,11 @@ spec:
                                                   containerName:
                                                     type: string
                                                   divisor:
-                                                    type: string
+                                                    anyOf:
+                                                    - type: integer
+                                                    - type: string
+                                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                    x-kubernetes-int-or-string: true
                                                   resource:
                                                     type: string
                                                 required:
@@ -7206,6 +7393,7 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                   type: object
                 elasticsearch:
                   properties:
@@ -7224,17 +7412,29 @@ spec:
                       properties:
                         limits:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                         requests:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                       type: object
                     storage:
                       properties:
                         size:
-                          type: string
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                         storageClassName:
                           type: string
                       type: object
@@ -7510,6 +7710,8 @@ spec:
                       type: object
                     enabled:
                       type: boolean
+                    hostNetWork:
+                      type: boolean
                     image:
                       type: string
                     labels:
@@ -7523,11 +7725,19 @@ spec:
                       properties:
                         limits:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                         requests:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                       type: object
                     schedule:
@@ -7604,6 +7814,7 @@ spec:
                             type: string
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     ttlSecondsAfterFinished:
                       format: int32
                       type: integer
@@ -7627,6 +7838,7 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     volumes:
                       items:
                         properties:
@@ -7784,7 +7996,11 @@ spec:
                                         containerName:
                                           type: string
                                         divisor:
-                                          type: string
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
                                         resource:
                                           type: string
                                       required:
@@ -7800,7 +8016,11 @@ spec:
                               medium:
                                 type: string
                               sizeLimit:
-                                type: string
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
                             type: object
                           fc:
                             properties:
@@ -8025,7 +8245,11 @@ spec:
                                                   containerName:
                                                     type: string
                                                   divisor:
-                                                    type: string
+                                                    anyOf:
+                                                    - type: integer
+                                                    - type: string
+                                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                    x-kubernetes-int-or-string: true
                                                   resource:
                                                     type: string
                                                 required:
@@ -8208,6 +8432,7 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                   type: object
                 esRollover:
                   properties:
@@ -8480,6 +8705,8 @@ spec:
                       type: object
                     conditions:
                       type: string
+                    hostNetWork:
+                      type: boolean
                     image:
                       type: string
                     labels:
@@ -8493,11 +8720,19 @@ spec:
                       properties:
                         limits:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                         requests:
                           additionalProperties:
-                            type: string
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           type: object
                       type: object
                     schedule:
@@ -8574,6 +8809,7 @@ spec:
                             type: string
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     ttlSecondsAfterFinished:
                       format: int32
                       type: integer
@@ -8597,6 +8833,7 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                     volumes:
                       items:
                         properties:
@@ -8754,7 +8991,11 @@ spec:
                                         containerName:
                                           type: string
                                         divisor:
-                                          type: string
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
                                         resource:
                                           type: string
                                       required:
@@ -8770,7 +9011,11 @@ spec:
                               medium:
                                 type: string
                               sizeLimit:
-                                type: string
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
                             type: object
                           fc:
                             properties:
@@ -8995,7 +9240,11 @@ spec:
                                                   containerName:
                                                     type: string
                                                   divisor:
-                                                    type: string
+                                                    anyOf:
+                                                    - type: integer
+                                                    - type: string
+                                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                                    x-kubernetes-int-or-string: true
                                                   resource:
                                                     type: string
                                                 required:
@@ -9178,9 +9427,10 @@ spec:
                         - name
                         type: object
                       type: array
+                      x-kubernetes-list-type: set
                   type: object
                 options:
-                  type: object
+                  type: Any
                 secretName:
                   type: string
                 type:
@@ -9204,10 +9454,11 @@ spec:
                     type: string
                 type: object
               type: array
+              x-kubernetes-list-type: set
             ui:
               properties:
                 options:
-                  type: object
+                  type: Any
               type: object
             volumeMounts:
               items:
@@ -9229,6 +9480,7 @@ spec:
                 - name
                 type: object
               type: array
+              x-kubernetes-list-type: set
             volumes:
               items:
                 properties:
@@ -9386,7 +9638,11 @@ spec:
                                 containerName:
                                   type: string
                                 divisor:
-                                  type: string
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
                                 resource:
                                   type: string
                               required:
@@ -9402,7 +9658,11 @@ spec:
                       medium:
                         type: string
                       sizeLimit:
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
                     type: object
                   fc:
                     properties:
@@ -9627,7 +9887,11 @@ spec:
                                           containerName:
                                             type: string
                                           divisor:
-                                            type: string
+                                            anyOf:
+                                            - type: integer
+                                            - type: string
+                                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                            x-kubernetes-int-or-string: true
                                           resource:
                                             type: string
                                         required:
@@ -9810,6 +10074,7 @@ spec:
                 - name
                 type: object
               type: array
+              x-kubernetes-list-type: set
           type: object
         status:
           properties:
@@ -9831,5 +10096,5 @@ status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: []
-  storedVersions: []
+  conditions: null
+  storedVersions: null
