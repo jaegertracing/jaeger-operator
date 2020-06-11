@@ -125,7 +125,7 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, kafkaNamespace)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
+	verifyCollectorImage(jaegerInstanceName, kafkaNamespace, testOtelCollector)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
