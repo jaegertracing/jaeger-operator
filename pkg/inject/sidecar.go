@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 
 	log "github.com/sirupsen/logrus"
@@ -201,6 +202,8 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	} else if otelconfig.ShouldCreate(jaeger, jaeger.Spec.Agent.Options, otelConf) {
 		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
 	}
+
+	ca.Update(jaeger, volumesAndMountsSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

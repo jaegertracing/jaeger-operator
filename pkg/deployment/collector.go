@@ -15,6 +15,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -77,6 +78,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	sampling.Update(c.jaeger, commonSpec, &options)
 	tls.Update(c.jaeger, commonSpec, &options)
+	ca.Update(c.jaeger, commonSpec)
 
 	otelConf, err := c.jaeger.Spec.Collector.Config.GetMap()
 	if err != nil {

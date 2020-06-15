@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 
 	"github.com/spf13/viper"
@@ -232,4 +233,35 @@ func TestPropagateOAuthCookieSecret(t *testing.T) {
 	resultSpec := PropagateOAuthCookieSecret(depSrc.Spec, depDst.Spec)
 	resultSecret, _ := findCookieSecret(resultSpec.Template.Spec.Containers)
 	assert.Equal(t, srcSecret, resultSecret)
+}
+
+func TestTrustedCAVolumeIsUsed(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer func() {
+		viper.Reset()
+		setDefaults()
+	}()
+
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
+	// test
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	// verify
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+
+	// get the oauth proxy container, and verify that the volumemount was added
+	for _, c := range dep.Spec.Template.Spec.Containers {
+		if c.Name == "oauth-proxy" {
+			for _, v := range c.VolumeMounts {
+				if v.Name == ca.TrustedCAName(jaeger) {
+					return
+				}
+			}
+		}
+	}
+
+	assert.Fail(t, "couldn't find the OAuth Proxy container")
 }

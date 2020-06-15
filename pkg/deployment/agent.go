@@ -16,6 +16,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -77,6 +78,8 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+
+	ca.Update(a.jaeger, commonSpec)
 
 	otelConf, err := a.jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {

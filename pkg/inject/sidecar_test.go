@@ -38,6 +38,8 @@ func TestInjectSidecar(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 0)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
@@ -704,4 +706,17 @@ func hasArgument(arg string, args []string) bool {
 		}
 	}
 	return false
+}
+
+func TestInjectSidecarOnOpenShift(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarOnOpenShift"})
+	dep := dep(map[string]string{}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
 }
