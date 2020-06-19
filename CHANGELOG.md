@@ -8,6 +8,20 @@ Breaking changes:
 
 Other noteworthy changes:
 
+1.18.1 (2020-06-19)
+-------------------
+
+Breaking changes:
+
+* None
+
+Other noteworthy changes:
+
+* Add trusted CA bundle support for OpenShift ([#1079](https://github.com/jaegertracing/jaeger-operator/pull/1079), [@objectiser](https://github.com/objectiser))
+* create Jaeger resource in the watched namespace ([#1036](https://github.com/jaegertracing/jaeger-operator/pull/1036), [@therealmitchconnors](https://github.com/therealmitchconnors))
+* Set correct branch for ES 4.4 ([#1081](https://github.com/jaegertracing/jaeger-operator/pull/1081), [@pavolloffay](https://github.com/pavolloffay))
+* Add OTEL config to all-in-one ([#1080](https://github.com/jaegertracing/jaeger-operator/pull/1080), [@pavolloffay](https://github.com/pavolloffay))
+
 1.18.0 (2020-05-15)
 -------------------
 
