@@ -138,7 +138,7 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 		bodyString := string(bodyBytes)
 
 		// The first requests to newly created ES might fail
-		if !strings.Contains(bodyString, "errors\":null") && !strings.Contains(bodyString, "all shards failed") {
+		if !strings.Contains(bodyString, "errors\":null") {
 			return false, fmt.Errorf("query service returns errors: %s", bodyString)
 		}
 		return strings.Contains(bodyString, tStr), nil
