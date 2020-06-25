@@ -154,6 +154,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger, account.QueryComponent),
 					Affinity:           commonSpec.Affinity,

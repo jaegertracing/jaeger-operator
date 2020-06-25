@@ -161,6 +161,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, account.IngesterComponent),
 					Affinity:           commonSpec.Affinity,

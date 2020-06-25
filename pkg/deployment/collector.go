@@ -184,6 +184,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, account.CollectorComponent),
 					Affinity:           commonSpec.Affinity,

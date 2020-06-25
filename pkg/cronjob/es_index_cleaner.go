@@ -81,6 +81,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									VolumeMounts: commonSpec.VolumeMounts,
 								},
 							},
+							ImagePullSecrets:   commonSpec.ImagePullSecrets,
 							RestartPolicy:      corev1.RestartPolicyNever,
 							Affinity:           commonSpec.Affinity,
 							Tolerations:        commonSpec.Tolerations,

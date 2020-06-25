@@ -47,6 +47,22 @@ func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.Vo
 	return results
 }
 
+// RemoveDuplicatedImagePullSecrets returns a unique list of ImagePullSecrets based on ImagePullSecrets names. Only the first item is kept.
+func RemoveDuplicatedImagePullSecrets(imagePullSecrets []corev1.LocalObjectReference) []corev1.LocalObjectReference {
+	var results []corev1.LocalObjectReference
+	existing := map[string]bool{}
+
+	for _, imagePullSecret := range imagePullSecrets {
+		if existing[imagePullSecret.Name] {
+			continue
+		}
+		results = append(results, imagePullSecret)
+		existing[imagePullSecret.Name] = true
+	}
+	// Return the new slice
+	return results
+}
+
 // Merge returns a merged version of the list of JaegerCommonSpec instances with most specific first
 func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	annotations := make(map[string]string)
@@ -58,6 +74,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
+	var imagePullSecrets []corev1.LocalObjectReference
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -94,18 +111,21 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		if serviceAccount == "" {
 			serviceAccount = commonSpec.ServiceAccount
 		}
+
+		imagePullSecrets = append(imagePullSecrets, commonSpec.ImagePullSecrets...)
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:     annotations,
-		Labels:          labels,
-		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
-		Volumes:         RemoveDuplicatedVolumes(volumes),
-		Resources:       *resources,
-		Affinity:        affinity,
-		Tolerations:     tolerations,
-		SecurityContext: securityContext,
-		ServiceAccount:  serviceAccount,
+		Annotations:      annotations,
+		Labels:           labels,
+		VolumeMounts:     removeDuplicatedVolumeMounts(volumeMounts),
+		Volumes:          RemoveDuplicatedVolumes(volumes),
+		Resources:        *resources,
+		Affinity:         affinity,
+		Tolerations:      tolerations,
+		SecurityContext:  securityContext,
+		ServiceAccount:   serviceAccount,
+		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
 	}
 }
 

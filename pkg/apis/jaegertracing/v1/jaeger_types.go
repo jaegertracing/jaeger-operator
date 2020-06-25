@@ -183,6 +183,9 @@ type JaegerCommonSpec struct {
 
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// +optional
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -433,6 +436,9 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 	// +optional
 	Image string `json:"image,omitempty"`
+
+	// +optional
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
 	Datacenter string `json:"datacenter,omitempty"`
