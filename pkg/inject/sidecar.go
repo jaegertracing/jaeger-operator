@@ -192,9 +192,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	// Use a different common spec for volumes and mounts.
+	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
-	volumesAndMountsSpec := &v1.JaegerCommonSpec{}
+	volumesAndMountsSpec := &jaeger.Spec.Agent.JaegerCommonSpec
 	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		jaeger.Logger().WithField("error", err).
