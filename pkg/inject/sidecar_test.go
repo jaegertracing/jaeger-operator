@@ -158,6 +158,36 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
 }
 
+func TestInjectSidecarWithVolumeMounts(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithVolumes"})
+	dep := dep(map[string]string{}, map[string]string{})
+
+	volume := corev1.Volume{
+		Name: "test-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret",
+			},
+		},
+	}
+	volumeMount := corev1.VolumeMount{
+		Name:      "test-volume",
+		MountPath: "/test-volume",
+		ReadOnly:  true,
+	}
+	jaeger.Spec.Agent.Volumes = append(jaeger.Spec.Agent.Volumes, volume)
+	jaeger.Spec.Agent.VolumeMounts = append(jaeger.Spec.Agent.VolumeMounts, volumeMount)
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Contains(t, dep.Spec.Template.Spec.Volumes, volume)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, volumeMount)
+}
+
 func TestSidecarDefaultPorts(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarPorts"})
