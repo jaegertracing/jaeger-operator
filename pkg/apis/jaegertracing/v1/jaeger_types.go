@@ -200,6 +200,26 @@ type JaegerQuerySpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	OauthProxy JaegerQueryOauthProxySpec `json:"oauthProxy,omitempty"`
+}
+
+// JaegerQueryOauthProxySpec define the options to be used when deploying a sidecar to the query
+// +k8s:openapi-gen=true
+type JaegerQueryOauthProxySpec struct {
+    // +optional
+    Enabled *bool `json:"enabled,omitempty"`
+
+    // +optional
+    Image string `json:"image,omitempty"`
+
+    // +optional
+    Name string `json:"name,omitempty"`
+
+    // +optional
+    // +listType=set
+    Args []string `json:"args,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI

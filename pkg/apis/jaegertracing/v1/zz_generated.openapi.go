@@ -27,6 +27,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec":      schema_pkg_apis_jaegertracing_v1_JaegerIngressOpenShiftSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerIngressSpec":               schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec":            schema_pkg_apis_jaegertracing_v1_JaegerIngressTLSSpec(ref),
+		"./pkg/apis/jaegertracing/v1.JaegerQueryOauthProxySpec":       schema_pkg_apis_jaegertracing_v1_JaegerQueryOauthProxySpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerQuerySpec":                 schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerSamplingSpec":              schema_pkg_apis_jaegertracing_v1_JaegerSamplingSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerSpec":                      schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref),
@@ -1503,6 +1504,55 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressTLSSpec(ref common.ReferenceC
 	}
 }
 
+func schema_pkg_apis_jaegertracing_v1_JaegerQueryOauthProxySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "JaegerQueryOauthProxySpec define the options to be used when deploying a sidecar to the query",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"image": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"args": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1628,11 +1678,16 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 							Format: "",
 						},
 					},
+					"oauthProxy": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerQueryOauthProxySpec"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"./pkg/apis/jaegertracing/v1.JaegerQueryOauthProxySpec", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

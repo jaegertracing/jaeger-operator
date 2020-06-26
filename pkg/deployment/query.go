@@ -75,6 +75,70 @@ func (q *Query) Get() *appsv1.Deployment {
 		})
 	}
 
+
+    var queryContainers []corev1.Container
+    queryContainers = append(queryContainers, corev1.Container{
+        Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
+        Name:  "jaeger-query",
+        Args:  options,
+        Env: []corev1.EnvVar{
+            corev1.EnvVar{
+                Name:  "SPAN_STORAGE_TYPE",
+                Value: q.jaeger.Spec.Storage.Type,
+            },
+        },
+        VolumeMounts: commonSpec.VolumeMounts,
+        EnvFrom:      envFromSource,
+        Ports: []corev1.ContainerPort{
+            {
+                ContainerPort: 16686,
+                Name:          "query",
+            },
+            {
+                ContainerPort: adminPort,
+                Name:          "admin-http",
+            },
+        },
+        LivenessProbe: &corev1.Probe{
+            Handler: corev1.Handler{
+                HTTPGet: &corev1.HTTPGetAction{
+                    Path: "/",
+                    Port: intstr.FromInt(int(adminPort)),
+                },
+            },
+            InitialDelaySeconds: 5,
+            PeriodSeconds:       15,
+            FailureThreshold:    5,
+        },
+        ReadinessProbe: &corev1.Probe{
+            Handler: corev1.Handler{
+                HTTPGet: &corev1.HTTPGetAction{
+                    Path: "/",
+                    Port: intstr.FromInt(int(adminPort)),
+                },
+            },
+            InitialDelaySeconds: 1,
+        },
+        Resources: commonSpec.Resources,
+    })
+
+    if q.jaeger.Spec.Query.OauthProxy.Enabled != nil && *q.jaeger.Spec.Query.OauthProxy.Enabled == true {
+        queryContainers = append(queryContainers, corev1.Container{
+            Image: util.ImageName(q.jaeger.Spec.Query.OauthProxy.Image, "oauth-proxy-image"),
+            Name:  "oauth-proxy",
+            Args:  q.jaeger.Spec.Query.OauthProxy.Args,
+            Ports: []corev1.ContainerPort{
+                {
+                    ContainerPort: 16685,
+                    Name:          "oauth-proxy",
+                },
+            },
+            Resources: commonSpec.Resources,
+        })
+    }
+
+
+
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
@@ -110,50 +174,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
-						Name:  "jaeger-query",
-						Args:  options,
-						Env: []corev1.EnvVar{
-							corev1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: q.jaeger.Spec.Storage.Type,
-							},
-						},
-						VolumeMounts: commonSpec.VolumeMounts,
-						EnvFrom:      envFromSource,
-						Ports: []corev1.ContainerPort{
-							{
-								ContainerPort: 16686,
-								Name:          "query",
-							},
-							{
-								ContainerPort: adminPort,
-								Name:          "admin-http",
-							},
-						},
-						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
-						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 1,
-						},
-						Resources: commonSpec.Resources,
-					}},
+					Containers:         queryContainers,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger, account.QueryComponent),
 					Affinity:           commonSpec.Affinity,
