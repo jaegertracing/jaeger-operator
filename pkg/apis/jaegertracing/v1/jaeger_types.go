@@ -185,6 +185,7 @@ type JaegerCommonSpec struct {
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
 	// +optional
+	// +listType=set
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
@@ -438,6 +439,7 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +listType=set
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
