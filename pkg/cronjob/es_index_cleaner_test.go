@@ -219,3 +219,27 @@ func TestCustomEsIndexCleanerImage(t *testing.T) {
 	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
 	assert.Equal(t, "org/custom-es-index-cleaner-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
+
+func TestEsIndexCleanerImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	esIndexCleanerImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "esIndexCleanerImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Storage.EsIndexCleaner.ImagePullSecrets = esIndexCleanerImagePullSecrets
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+
+	assert.Len(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name, "esIndexCleanerImagePullSecret")
+	assert.Equal(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}

@@ -139,6 +139,27 @@ func TestCollectorSecrets(t *testing.T) {
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
+func TestCollectorImagePullSecrets(t *testing.T) {
+	name := "my-instance"
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	collectorImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "collectorImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Collector.ImagePullSecrets = collectorImagePullSecrets
+	podSpec := NewCollector(jaeger).Get().Spec.Template.Spec
+
+	assert.Len(t, podSpec.ImagePullSecrets, 2)
+	assert.Equal(t, podSpec.ImagePullSecrets[0].Name, "collectorImagePullSecret")
+	assert.Equal(t, podSpec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "my-instance"
 

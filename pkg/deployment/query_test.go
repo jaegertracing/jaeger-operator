@@ -128,6 +128,28 @@ func TestQueryServices(t *testing.T) {
 	assert.Len(t, svcs, 1)
 }
 
+func TestQueryImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	queryImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "queryImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Query.ImagePullSecrets = queryImagePullSecrets
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "queryImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestQueryVolumeMountsWithVolumes"
 

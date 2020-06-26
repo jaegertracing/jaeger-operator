@@ -102,6 +102,28 @@ func TestAllInOneNumberOfServices(t *testing.T) {
 	}
 }
 
+func TestAllInOneImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	allInOneImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "allInOneImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.AllInOne.ImagePullSecrets = allInOneImagePullSecrets
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "allInOneImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithVolumes"
 

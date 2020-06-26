@@ -224,3 +224,24 @@ func TestCustomSparkDependenciesImage(t *testing.T) {
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
 	assert.Equal(t, "org/custom-spark-dependencies-image", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
+
+func TestSparkDependenciesImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	sparkDependenciesImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "sparkDependenciesImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Storage.Dependencies.ImagePullSecrets = sparkDependenciesImagePullSecrets
+
+	cjob := CreateSparkDependencies(jaeger)
+
+	assert.Len(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name, "sparkDependenciesImagePullSecret")
+	assert.Equal(t, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}

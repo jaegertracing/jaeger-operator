@@ -51,6 +51,20 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 	assert.Equal(t, "data2", volumeMounts[1].Name)
 }
 
+func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
+	imagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "secret1",
+	}, {
+		Name: "secret2",
+	}, {
+		Name: "secret1",
+	}}
+
+	assert.Len(t, RemoveDuplicatedImagePullSecrets(imagePullSecrets), 2)
+	assert.Equal(t, "secret1", imagePullSecrets[0].Name)
+	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
+}
+
 func TestMergeAnnotations(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -270,6 +284,24 @@ func TestMergeTolerations(t *testing.T) {
 	assert.Equal(t, "toleration1", merged.Tolerations[0].Key)
 	assert.Equal(t, "toleration2", merged.Tolerations[1].Key)
 	assert.Equal(t, "toleration1", merged.Tolerations[2].Key)
+}
+
+func TestMergeImagePullSecrets(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{{
+			Name: "imagePullSecret1",
+		}},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{{
+			Name: "imagePullSecret2",
+		}},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Equal(t, "imagePullSecret2", merged.ImagePullSecrets[0].Name)
+	assert.Equal(t, "imagePullSecret1", merged.ImagePullSecrets[1].Name)
 }
 
 func TestGetEsHostname(t *testing.T) {

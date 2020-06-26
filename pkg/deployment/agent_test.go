@@ -161,6 +161,29 @@ func TestAgentLabels(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%s-agent", a.jaeger.Name), dep.Spec.Template.Labels["app.kubernetes.io/name"])
 }
 
+func TestAgentImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	agentImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "agentImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Agent.ImagePullSecrets = agentImagePullSecrets
+
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "agentImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestAgentOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentOrderOfArguments"})
 	jaeger.Spec.Agent.Strategy = "daemonset"

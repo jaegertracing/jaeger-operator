@@ -85,6 +85,28 @@ func TestDefaultIngesterImage(t *testing.T) {
 	assert.Equal(t, envvars, containers[0].Env)
 }
 
+func TestIngesterImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	ingesterImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "ingesterImagePullSecret",
+	}}
+
+	jaeger := newIngesterJaeger("TestIngesterImagePullSecrets")
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Ingester.ImagePullSecrets = ingesterImagePullSecrets
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "ingesterImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestIngesterAnnotations(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterAnnotations")
 	jaeger.Spec.Annotations = map[string]string{

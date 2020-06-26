@@ -435,6 +435,28 @@ func TestSidecarOverrideReporter(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type=thrift")
 }
 
+func TestSidecarImagePullSecrets(t *testing.T) {
+
+	globalImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "globalImagePullSecret",
+	}}
+
+	sidecarImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "sidecarImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarImagePullSecrets"})
+	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
+	jaeger.Spec.Agent.ImagePullSecrets = sidecarImagePullSecrets
+
+	dep := dep(map[string]string{}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "sidecarImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+}
+
 func TestSidecarAgentResources(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarAgentResources"})
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
