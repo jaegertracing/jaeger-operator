@@ -1170,13 +1170,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -2146,13 +2139,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -3138,13 +3124,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -4132,13 +4111,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -4523,6 +4495,13 @@ spec:
                 hosts:
                   items:
                     type: string
+                  type: array
+                imagePullSecrets:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                    type: object
                   type: array
                 labels:
                   additionalProperties:
@@ -5129,13 +5108,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -6110,13 +6082,6 @@ spec:
                             type: string
                           image:
                             type: string
-                          imagePullSecrets:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                              type: object
-                            type: array
                           keyring:
                             type: string
                           monitors:
@@ -7197,13 +7162,6 @@ spec:
                                 type: string
                               image:
                                 type: string
-                              imagePullSecrets:
-                                items:
-                                  properties:
-                                    name:
-                                      type: string
-                                  type: object
-                                type: array
                               keyring:
                                 type: string
                               monitors:
@@ -7318,13 +7276,6 @@ spec:
                   properties:
                     image:
                       type: string
-                    imagePullSecrets:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                        type: object
-                      type: array
                     nodeCount:
                       format: int32
                       type: integer
@@ -8220,13 +8171,6 @@ spec:
                                 type: string
                               image:
                                 type: string
-                              imagePullSecrets:
-                                items:
-                                  properties:
-                                    name:
-                                      type: string
-                                  type: object
-                                type: array
                               keyring:
                                 type: string
                               monitors:
@@ -9204,13 +9148,6 @@ spec:
                                 type: string
                               image:
                                 type: string
-                              imagePullSecrets:
-                                items:
-                                  properties:
-                                    name:
-                                      type: string
-                                  type: object
-                                type: array
                               keyring:
                                 type: string
                               monitors:
@@ -9843,13 +9780,6 @@ spec:
                         type: string
                       image:
                         type: string
-                      imagePullSecrets:
-                        items:
-                          properties:
-                            name:
-                              type: string
-                          type: object
-                        type: array
                       keyring:
                         type: string
                       monitors:
