@@ -163,29 +163,48 @@ func TestInjectSidecarWithVolumeMounts(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithVolumes"})
 	dep := dep(map[string]string{}, map[string]string{})
 
-	volume := corev1.Volume{
-		Name: "test-volume",
+	agentVolume := corev1.Volume{
+		Name: "test-volume1",
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: "test-secret",
+				SecretName: "test-secret1",
 			},
 		},
 	}
-	volumeMount := corev1.VolumeMount{
-		Name:      "test-volume",
-		MountPath: "/test-volume",
+	agentVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume1",
+		MountPath: "/test-volume1",
 		ReadOnly:  true,
 	}
-	jaeger.Spec.Agent.Volumes = append(jaeger.Spec.Agent.Volumes, volume)
-	jaeger.Spec.Agent.VolumeMounts = append(jaeger.Spec.Agent.VolumeMounts, volumeMount)
+
+	commonVolume := corev1.Volume{
+		Name: "test-volume2",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret2",
+			},
+		},
+	}
+	commonVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume2",
+		MountPath: "/test-volume2",
+		ReadOnly:  true,
+	}
+
+	jaeger.Spec.Agent.Volumes = append(jaeger.Spec.Agent.Volumes, agentVolume)
+	jaeger.Spec.Agent.VolumeMounts = append(jaeger.Spec.Agent.VolumeMounts, agentVolumeMount)
+	jaeger.Spec.Volumes = append(jaeger.Spec.Volumes, commonVolume)
+	jaeger.Spec.VolumeMounts = append(jaeger.Spec.VolumeMounts, commonVolumeMount)
 
 	// test
 	dep = Sidecar(jaeger, dep)
 
 	// verify
-	assert.Contains(t, dep.Spec.Template.Spec.Volumes, volume)
+	assert.Contains(t, dep.Spec.Template.Spec.Volumes, agentVolume)
+	assert.NotContains(t, dep.Spec.Template.Spec.Volumes, commonVolume)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, volumeMount)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, agentVolumeMount)
+	assert.NotContains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, commonVolumeMount)
 }
 
 func TestSidecarDefaultPorts(t *testing.T) {
