@@ -17,7 +17,7 @@ func TestGetWithoutTrustedCA(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithoutTrustedCA"})
 
-	cm := Get(jaeger)
+	cm := GetTrustedCABundle(jaeger)
 	assert.Nil(t, cm)
 }
 
@@ -27,7 +27,7 @@ func TestGetWithTrustedCA(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithTrustedCA"})
 
-	cm := Get(jaeger)
+	cm := GetTrustedCABundle(jaeger)
 	assert.NotNil(t, cm)
 	assert.Equal(t, "true", cm.Labels["config.openshift.io/inject-trusted-cabundle"])
 	assert.Equal(t, "", cm.Data["ca-bundle.crt"])
@@ -43,7 +43,7 @@ func TestGetWithExistingTrustedCA(t *testing.T) {
 		Name:      "ExistingTrustedCA",
 	}}
 
-	cm := Get(jaeger)
+	cm := GetTrustedCABundle(jaeger)
 	assert.Nil(t, cm)
 }
 
