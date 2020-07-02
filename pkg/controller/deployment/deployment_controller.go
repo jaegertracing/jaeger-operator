@@ -139,6 +139,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 					}).Debug("creating Trusted CA bundle config maps")
 					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
 						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
+						return reconcile.Result{}, tracing.HandleError(err, span)
 					}
 				}
 			}
