@@ -127,9 +127,9 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			if jaeger.Namespace != request.Namespace {
 				log.WithFields(log.Fields{
-					"jaeger namespace": jaeger.Namespace,
-					"app namespace":    request.Namespace,
-				}).Info("different namespaces, so check whether trusted CA bundle configmap should be created")
+					"jaeger-namespace": jaeger.Namespace,
+					"app-namespace":    request.Namespace,
+				}).Debug("different namespaces, so check whether trusted CA bundle configmap should be created")
 				if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
 					// Update the namespace to be the same as the Deployment being injected
 					cm.Namespace = request.Namespace
@@ -139,7 +139,6 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 					}).Debug("creating Trusted CA bundle config maps")
 					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
 						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
-						return reconcile.Result{}, tracing.HandleError(err, span)
 					}
 				}
 			}
