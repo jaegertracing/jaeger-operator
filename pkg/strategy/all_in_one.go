@@ -52,7 +52,7 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	}
 
 	// add the optional OpenShift trusted CA config map
-	if cm := ca.Get(jaeger); cm != nil {
+	if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
 		c.configMaps = append(c.configMaps, *cm)
 	}
 

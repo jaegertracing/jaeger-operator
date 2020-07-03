@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -124,6 +125,25 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 
 		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
+			if jaeger.Namespace != request.Namespace {
+				log.WithFields(log.Fields{
+					"jaeger-namespace": jaeger.Namespace,
+					"app-namespace":    request.Namespace,
+				}).Debug("different namespaces, so check whether trusted CA bundle configmap should be created")
+				if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
+					// Update the namespace to be the same as the Deployment being injected
+					cm.Namespace = request.Namespace
+					jaeger.Logger().WithFields(log.Fields{
+						"configMap": cm.Name,
+						"namespace": cm.Namespace,
+					}).Debug("creating Trusted CA bundle config maps")
+					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
+						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
+						return reconcile.Result{}, tracing.HandleError(err, span)
+					}
+				}
+			}
+
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
 			// Verified that jaeger instance was found and is not marked for deletion.
 			log.WithFields(log.Fields{

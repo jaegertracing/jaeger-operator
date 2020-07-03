@@ -265,7 +265,7 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 		if instanceName, ok := dep.Labels[inject.Label]; ok {
 			_, instanceExists := instancesMap[instanceName]
 			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
-				inject.CleanSidecar(&dep)
+				inject.CleanSidecar(instanceName, &dep)
 				if err := b.cl.Update(ctx, &dep); err != nil {
 					log.WithFields(log.Fields{
 						"deploymentName":      dep.Name,
