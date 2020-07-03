@@ -80,8 +80,6 @@ func getPortNameForQueryService(jaeger *v1.Jaeger) string {
 func getTargetPortForQueryService(jaeger *v1.Jaeger) int {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return 8443
-	} else if jaeger.Spec.Query.OauthProxy.Enabled != nil && *jaeger.Spec.Query.OauthProxy.Enabled == true {
-	    return 16685
 	}
 	return 16686
 }
