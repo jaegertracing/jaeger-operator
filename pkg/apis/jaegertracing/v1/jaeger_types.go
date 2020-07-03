@@ -365,6 +365,10 @@ type JaegerAgentSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +listType=set
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	// +optional
 	Options Options `json:"options,omitempty"`
 
 	// +optional

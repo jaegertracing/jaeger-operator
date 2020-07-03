@@ -51,6 +51,20 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 	assert.Equal(t, "data2", volumeMounts[1].Name)
 }
 
+func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
+	imagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "secret1",
+	}, {
+		Name: "secret2",
+	}, {
+		Name: "secret1",
+	}}
+
+	assert.Len(t, RemoveDuplicatedImagePullSecrets(imagePullSecrets), 2)
+	assert.Equal(t, "secret1", imagePullSecrets[0].Name)
+	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
+}
+
 func TestMergeAnnotations(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
