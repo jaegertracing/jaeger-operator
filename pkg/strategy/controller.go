@@ -90,14 +90,12 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
-	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
+	// we set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
+    if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	} else {
-		// cases:
-		// - omitted on Kubernetes
-		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
+	}
+	if jaeger.Spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
+        jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
 	// note that the order normalization matters - UI norm expects all normalized properties

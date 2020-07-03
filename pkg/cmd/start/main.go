@@ -48,6 +48,9 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("jaeger-es-rollover-image", "jaegertracing/jaeger-es-rollover", "The Docker image for the Jaeger Elasticsearch Rollover")
 	viper.BindPFlag("jaeger-es-rollover-image", cmd.Flags().Lookup("jaeger-es-rollover-image"))
 
+	cmd.Flags().String("oauth-proxy-image", "quay.io/keycloak/keycloak-gatekeeper:10.0.0", "The Docker image location definition for the Default OAuth Proxy")
+	viper.BindPFlag("oauth-proxy-image", cmd.Flags().Lookup("oauth-proxy-image"))
+
 	cmd.Flags().String("openshift-oauth-proxy-image", "openshift/oauth-proxy:latest", "The Docker image location definition for the OpenShift OAuth Proxy")
 	viper.BindPFlag("openshift-oauth-proxy-image", cmd.Flags().Lookup("openshift-oauth-proxy-image"))
 

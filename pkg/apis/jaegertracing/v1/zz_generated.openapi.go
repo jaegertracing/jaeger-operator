@@ -1511,45 +1511,28 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQueryOauthProxySpec(ref common.Refer
 				Description: "JaegerQueryOauthProxySpec define the options to be used when deploying a sidecar to the query",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"enabled": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
 						},
 					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"args": {
+					"options": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "set",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
+							Description: "Args []string `json:\"args,omitempty\"`",
+							Ref:         ref("./pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"./pkg/apis/jaegertracing/v1.Options"},
 	}
 }
 
