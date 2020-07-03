@@ -75,6 +75,9 @@ func (q *Query) Get() *appsv1.Deployment {
 		})
 	}
 
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(options)
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
