@@ -42,6 +42,21 @@ func TestInjectSidecar(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
 }
 
+func TestInjectSidecarOpenShift(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarOpenShift"})
+	dep := dep(map[string]string{}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
+}
+
 func TestInjectSidecarWithEnvVars(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithEnvVars"})
@@ -156,6 +171,55 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, traceContextEnvVar)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
+}
+
+func TestInjectSidecarWithVolumeMounts(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithVolumes"})
+	dep := dep(map[string]string{}, map[string]string{})
+
+	agentVolume := corev1.Volume{
+		Name: "test-volume1",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret1",
+			},
+		},
+	}
+	agentVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume1",
+		MountPath: "/test-volume1",
+		ReadOnly:  true,
+	}
+
+	commonVolume := corev1.Volume{
+		Name: "test-volume2",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret2",
+			},
+		},
+	}
+	commonVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume2",
+		MountPath: "/test-volume2",
+		ReadOnly:  true,
+	}
+
+	jaeger.Spec.Agent.Volumes = append(jaeger.Spec.Agent.Volumes, agentVolume)
+	jaeger.Spec.Agent.VolumeMounts = append(jaeger.Spec.Agent.VolumeMounts, agentVolumeMount)
+	jaeger.Spec.Volumes = append(jaeger.Spec.Volumes, commonVolume)
+	jaeger.Spec.VolumeMounts = append(jaeger.Spec.VolumeMounts, commonVolumeMount)
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Contains(t, dep.Spec.Template.Spec.Volumes, agentVolume)
+	assert.NotContains(t, dep.Spec.Template.Spec.Volumes, commonVolume)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, agentVolumeMount)
+	assert.NotContains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, commonVolumeMount)
 }
 
 func TestSidecarDefaultPorts(t *testing.T) {
@@ -493,15 +557,36 @@ func TestSidecarAgentResources(t *testing.T) {
 }
 
 func TestCleanSidecars(t *testing.T) {
+	instanceName := "TestCleanSideCars"
 	nsn := types.NamespacedName{
-		Name:      "TestCleanSideCars",
+		Name:      instanceName,
 		Namespace: "Test",
 	}
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
-	CleanSidecar(dep1)
-	assert.Equal(t, len(dep1.Spec.Template.Spec.Containers), 1)
+	assert.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
+	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
+	CleanSidecar(instanceName, dep1)
+	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Containers))
+	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
+}
 
+func TestCleanSidecarsOpenShift(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	instanceName := "TestCleanSidecarsOpenShift"
+	nsn := types.NamespacedName{
+		Name:      instanceName,
+		Namespace: "Test",
+	}
+	jaeger := v1.NewJaeger(nsn)
+	dep1 := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
+	assert.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
+	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Volumes))
+	CleanSidecar(instanceName, dep1)
+	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Containers))
+	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
 }
 
 func TestSidecarWithLabel(t *testing.T) {

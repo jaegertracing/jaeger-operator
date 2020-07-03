@@ -12,8 +12,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// Get returns a trusted CA bundle configmap if platform is OpenShift
-func Get(jaeger *v1.Jaeger) *corev1.ConfigMap {
+// GetTrustedCABundle returns a trusted CA bundle configmap if platform is OpenShift
+func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	// Only configure the trusted CA if running in OpenShift
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
 		return nil
@@ -82,13 +82,14 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 			},
 		},
 	}
-	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 
 	volumeMount := corev1.VolumeMount{
 		Name:      TrustedCAName(jaeger),
 		MountPath: "/etc/pki/ca-trust/extracted/pem",
 		ReadOnly:  true,
 	}
+
+	commonSpec.Volumes = append(commonSpec.Volumes, volume)
 	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
 }
 
@@ -105,5 +106,10 @@ func deployTrustedCA(jaeger *v1.Jaeger) bool {
 
 // TrustedCAName returns the name of the trusted CA
 func TrustedCAName(jaeger *v1.Jaeger) string {
-	return fmt.Sprintf("%s-trusted-ca", jaeger.Name)
+	return TrustedCANameFromString(jaeger.Name)
+}
+
+// TrustedCANameFromString returns the name of the trusted CA
+func TrustedCANameFromString(name string) string {
+	return fmt.Sprintf("%s-trusted-ca", name)
 }

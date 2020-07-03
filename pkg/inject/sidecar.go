@@ -6,8 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	// Commented out waiting for https://github.com/jaegertracing/jaeger-operator/issues/1092 fix
-	//"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 
 	log "github.com/sirupsen/logrus"
@@ -192,9 +191,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	// Use a different common spec for volumes and mounts.
+	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
-	volumesAndMountsSpec := &v1.JaegerCommonSpec{}
+	volumesAndMountsSpec := &jaeger.Spec.Agent.JaegerCommonSpec
 	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		jaeger.Logger().WithField("error", err).
@@ -204,8 +203,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
 	}
 
-	// Commented out until https://github.com/jaegertracing/jaeger-operator/issues/1092 is fixed
-	//ca.Update(jaeger, volumesAndMountsSpec)
+	ca.Update(jaeger, volumesAndMountsSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
@@ -315,13 +313,24 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 }
 
 // CleanSidecar of  deployments  associated with the jaeger instance.
-func CleanSidecar(deployment *appsv1.Deployment) {
+func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	delete(deployment.Labels, Label)
 	for c := 0; c < len(deployment.Spec.Template.Spec.Containers); c++ {
 		if deployment.Spec.Template.Spec.Containers[c].Name == "jaeger-agent" {
 			// delete jaeger-agent container
 			deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers[:c], deployment.Spec.Template.Spec.Containers[c+1:]...)
 			break
+		}
+	}
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		name := ca.TrustedCANameFromString(instanceName)
+		// Remove TrustedCABundle if present
+		for v := 0; v < len(deployment.Spec.Template.Spec.Volumes); v++ {
+			if deployment.Spec.Template.Spec.Volumes[v].Name == name {
+				// delete trusted CA volume
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes[:v], deployment.Spec.Template.Spec.Volumes[v+1:]...)
+				break
+			}
 		}
 	}
 }
