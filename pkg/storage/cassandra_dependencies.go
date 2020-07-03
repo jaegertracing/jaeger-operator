@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -72,6 +73,21 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	podTimeoutSeconds := int64(320)
 	podTimeout := &podTimeoutSeconds
 
+	// TTL for trace data, in seconds (default: 172800, 2 days)
+	// see: https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/schema/create.sh
+	traceTTLSeconds := "172800"
+	if jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL != "" {
+		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL)
+		if err != nil {
+			jaeger.Logger().
+				WithError(err).
+				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL).
+				Error("Failed to parse cassandraCreateSchema.traceTTL to time.duration. Using the default.")
+		} else {
+			traceTTLSeconds = fmt.Sprintf("%.0f", dur.Seconds())
+		}
+	}
+
 	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
 		if err == nil {
@@ -89,7 +105,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 
 	truncatedName := util.Truncate("%s-cassandra-schema-job", 63, jaeger.Name)
 	return []batchv1.Job{
-		batchv1.Job{
+		{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "batch/v1",
 				Kind:       "Job",
@@ -101,7 +117,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				Namespace: jaeger.Namespace,
 				Labels:    util.Labels(truncatedName, "cronjob-cassandra-schema", *jaeger),
 				OwnerReferences: []metav1.OwnerReference{
-					metav1.OwnerReference{
+					{
 						APIVersion: jaeger.APIVersion,
 						Kind:       jaeger.Kind,
 						Name:       jaeger.Name,
@@ -130,6 +146,9 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 							}, {
 								Name:  "DATACENTER",
 								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+							}, {
+								Name:  "TRACE_TTL",
+								Value: traceTTLSeconds,
 							}, {
 								Name:  "KEYSPACE",
 								Value: keyspace,

@@ -431,16 +431,33 @@ type JaegerCassandraCreateSchemaSpec struct {
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
 
+	// Image specifies the container image to use to create the cassandra schema.
+	// The Image is used by a Kubernetes Job, defaults to the image provided through the cli flag "jaeger-cassandra-schema-image" (default: jaegertracing/jaeger-cassandra-schema).
+	// See here for the jaeger-provided image: https://github.com/jaegertracing/jaeger/tree/master/plugin/storage/cassandra
 	// +optional
 	Image string `json:"image,omitempty"`
 
+	// Datacenter is a collection of racks in the cassandra topology.
+	// defaults to "test"
 	// +optional
 	Datacenter string `json:"datacenter,omitempty"`
 
+	// Mode controls the replication factor of your cassandra schema.
+	// Set it to "prod" (which is the default) to use the NetworkTopologyStrategy with a replication factor of 2, effectively meaning
+	// that at least 3 nodes are required in the cassandra cluster.
+	// When set to "test" the schema uses the SimpleStrategy with a replication factor of 1. You never want to do this in a production setup.
 	// +optional
 	Mode string `json:"mode,omitempty"`
 
-	// we parse it with time.ParseDuration
+	// TraceTTL sets the TTL for your trace data
+	// +optional
+	TraceTTL string `json:"traceTTL,omitempty"`
+
+	// Timeout controls the Job deadline, it defaults to 1 day.
+	// specify it with a value which can be parsed by time.ParseDuration, e.g. 24h or 120m.
+	// If the job does not succeed within that duration it transitions into a permanent error state.
+	// See https://github.com/jaegertracing/jaeger-kubernetes/issues/32 and
+	// https://github.com/jaegertracing/jaeger-kubernetes/pull/125
 	// +optional
 	Timeout string `json:"timeout,omitempty"`
 

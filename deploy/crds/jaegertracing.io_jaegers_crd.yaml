@@ -6227,6 +6227,8 @@ spec:
                       type: string
                     timeout:
                       type: string
+                    traceTTL:
+                      type: string
                     ttlSecondsAfterFinished:
                       format: int32
                       type: integer

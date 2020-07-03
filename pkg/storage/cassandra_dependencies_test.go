@@ -22,6 +22,40 @@ func TestCassandraCustomImage(t *testing.T) {
 	assert.Equal(t, "mynamespace/image:version", b[0].Spec.Template.Spec.Containers[0].Image)
 }
 
+func TestCassandraCustomTraceTTL(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL = "168h" // 7d
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Len(t, b[0].Spec.Template.Spec.Containers, 1)
+	foundValue := ""
+	for _, e := range b[0].Spec.Template.Spec.Containers[0].Env {
+		if e.Name == "TRACE_TTL" {
+			foundValue = e.Value
+		}
+	}
+	assert.Equal(t, "604800", foundValue, "unexpected TRACE_TTL environment var value")
+}
+
+func TestCassandraCustomTraceTTLParseError(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	// this does not work. time.ParseDuration can not handle "days"
+	// TRACE_TTL should fallback to default value
+	jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL = "7d"
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Len(t, b[0].Spec.Template.Spec.Containers, 1)
+	foundValue := ""
+	for _, e := range b[0].Spec.Template.Spec.Containers[0].Env {
+		if e.Name == "TRACE_TTL" {
+			foundValue = e.Value
+		}
+	}
+	assert.Equal(t, "172800", foundValue, "unexpected TRACE_TTL environment var value")
+}
+
 func TestDefaultImage(t *testing.T) {
 	viper.Set("jaeger-cassandra-schema-image", "jaegertracing/theimage")
 	defer viper.Reset()
