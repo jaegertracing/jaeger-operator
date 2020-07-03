@@ -158,6 +158,55 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
 }
 
+func TestInjectSidecarWithVolumeMounts(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestInjectSidecarWithVolumes"})
+	dep := dep(map[string]string{}, map[string]string{})
+
+	agentVolume := corev1.Volume{
+		Name: "test-volume1",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret1",
+			},
+		},
+	}
+	agentVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume1",
+		MountPath: "/test-volume1",
+		ReadOnly:  true,
+	}
+
+	commonVolume := corev1.Volume{
+		Name: "test-volume2",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "test-secret2",
+			},
+		},
+	}
+	commonVolumeMount := corev1.VolumeMount{
+		Name:      "test-volume2",
+		MountPath: "/test-volume2",
+		ReadOnly:  true,
+	}
+
+	jaeger.Spec.Agent.Volumes = append(jaeger.Spec.Agent.Volumes, agentVolume)
+	jaeger.Spec.Agent.VolumeMounts = append(jaeger.Spec.Agent.VolumeMounts, agentVolumeMount)
+	jaeger.Spec.Volumes = append(jaeger.Spec.Volumes, commonVolume)
+	jaeger.Spec.VolumeMounts = append(jaeger.Spec.VolumeMounts, commonVolumeMount)
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Contains(t, dep.Spec.Template.Spec.Volumes, agentVolume)
+	assert.NotContains(t, dep.Spec.Template.Spec.Volumes, commonVolume)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, agentVolumeMount)
+	assert.NotContains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, commonVolumeMount)
+}
+
 func TestSidecarDefaultPorts(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarPorts"})
