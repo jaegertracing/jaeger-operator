@@ -437,24 +437,23 @@ func TestSidecarOverrideReporter(t *testing.T) {
 
 func TestSidecarImagePullSecrets(t *testing.T) {
 
-	globalImagePullSecrets := []corev1.LocalObjectReference{{
-		Name: "globalImagePullSecret",
+	commonImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "commonImagePullSecret",
 	}}
 
-	sidecarImagePullSecrets := []corev1.LocalObjectReference{{
-		Name: "sidecarImagePullSecret",
+	agentImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "agentImagePullSecret",
 	}}
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarImagePullSecrets"})
-	jaeger.Spec.ImagePullSecrets = globalImagePullSecrets
-	jaeger.Spec.Agent.ImagePullSecrets = sidecarImagePullSecrets
+	jaeger.Spec.ImagePullSecrets = commonImagePullSecrets
+	jaeger.Spec.Agent.ImagePullSecrets = agentImagePullSecrets
 
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 
-	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
-	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "sidecarImagePullSecret")
-	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "globalImagePullSecret")
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 1)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "agentImagePullSecret")
 }
 
 func TestSidecarAgentResources(t *testing.T) {
