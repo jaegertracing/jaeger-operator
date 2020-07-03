@@ -501,7 +501,8 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref common
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Datacenter is a collection of racks in the cassandra topology. defaults to \"test\"",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -513,9 +514,8 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref common
 					},
 					"datacenter": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Datacenter is a collection of racks in the cassandra topology. defaults to \"test\"",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"mode": {
