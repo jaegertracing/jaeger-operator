@@ -224,6 +224,10 @@ func TestInjectSidecarWithVolumeMounts(t *testing.T) {
 
 func TestSidecarImagePullSecrets(t *testing.T) {
 
+	deploymentImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "deploymentImagePullSecret",
+	}}
+
 	agentImagePullSecrets := []corev1.LocalObjectReference{{
 		Name: "agentImagePullSecret",
 	}}
@@ -232,10 +236,12 @@ func TestSidecarImagePullSecrets(t *testing.T) {
 	jaeger.Spec.Agent.ImagePullSecrets = agentImagePullSecrets
 
 	dep := dep(map[string]string{}, map[string]string{})
+	dep.Spec.Template.Spec.ImagePullSecrets = deploymentImagePullSecrets
 	dep = Sidecar(jaeger, dep)
 
-	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 1)
-	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "agentImagePullSecret")
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "deploymentImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "agentImagePullSecret")
 }
 
 func TestSidecarDefaultPorts(t *testing.T) {
