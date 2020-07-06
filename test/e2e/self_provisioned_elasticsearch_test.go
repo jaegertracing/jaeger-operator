@@ -101,6 +101,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 }
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
+	t.Skip("Skip this until TRACING-1290 is fixed")
 	jaegerInstanceName := "simple-prod2"
 	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName, testOtelCollector)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
