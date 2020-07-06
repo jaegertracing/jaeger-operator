@@ -191,6 +191,23 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 							Format: "",
 						},
 					},
+					"imagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.LocalObjectReference"),
+									},
+								},
+							},
+						},
+					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
@@ -305,7 +322,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

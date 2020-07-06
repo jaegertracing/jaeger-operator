@@ -222,6 +222,28 @@ func TestInjectSidecarWithVolumeMounts(t *testing.T) {
 	assert.NotContains(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, commonVolumeMount)
 }
 
+func TestSidecarImagePullSecrets(t *testing.T) {
+
+	deploymentImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "deploymentImagePullSecret",
+	}}
+
+	agentImagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "agentImagePullSecret",
+	}}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarImagePullSecrets"})
+	jaeger.Spec.Agent.ImagePullSecrets = agentImagePullSecrets
+
+	dep := dep(map[string]string{}, map[string]string{})
+	dep.Spec.Template.Spec.ImagePullSecrets = deploymentImagePullSecrets
+	dep = Sidecar(jaeger, dep)
+
+	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "deploymentImagePullSecret")
+	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "agentImagePullSecret")
+}
+
 func TestSidecarDefaultPorts(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarPorts"})
