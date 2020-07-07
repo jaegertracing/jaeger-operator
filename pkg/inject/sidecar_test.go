@@ -734,14 +734,13 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 7)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 6)
 	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///testqueryorderofarguments-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///testqueryorderofarguments-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=testqueryorderofarguments-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
 }
