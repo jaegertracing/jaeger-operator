@@ -2,12 +2,14 @@ package service
 
 import (
 	"fmt"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/spf13/viper"
 )
 
 // NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
@@ -44,15 +46,13 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 			Name:      GetNameForCollectorService(jaeger),
 			Namespace: jaeger.Namespace,
 			Labels:    util.Labels(GetNameForCollectorService(jaeger), "service-collector", *jaeger),
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: jaeger.APIVersion,
-					Kind:       jaeger.Kind,
-					Name:       jaeger.Name,
-					UID:        jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: jaeger.APIVersion,
+				Kind:       jaeger.Kind,
+				Name:       jaeger.Name,
+				UID:        jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:  selector,
@@ -63,7 +63,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 					Port: 9411,
 				},
 				{
-					Name: "grpc",
+					Name: GetPortNameForGRPC(jaeger),
 					Port: 14250,
 				},
 				{
@@ -88,4 +88,36 @@ func GetNameForCollectorService(jaeger *v1.Jaeger) string {
 // GetNameForHeadlessCollectorService returns the headless service name for the collector in this Jaeger instance
 func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
+}
+
+// GetPortNameForGRPC returns the port name for 'grpc'. It may either be http-grpc or https-grpc, based on whether
+// TLS is enabled for the agent-collector gRPC communication
+func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		// we always have TLS certs when running on OpenShift, so, TLS is always enabled
+		return "https-grpc"
+	}
+
+	// if we don't have a jaeger provided, it's certainly not TLS...
+	if nil == jaeger {
+		return "http-grpc"
+	}
+
+	// perhaps the user has provisioned the certs and configured the CR manually?
+	// for that, we check whether the CLI option `collector.grpc.tls.enabled` was set for the collector
+	if val, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc.tls.enabled"]; ok {
+		enabled, err := strconv.ParseBool(val)
+		if err != nil {
+			return "http-grpc" // not "true", defaults to false
+		}
+
+		if enabled {
+			return "https-grpc" // explicit true
+		}
+
+		return "http-grpc" // explicit false
+	}
+
+	// doesn't look like we have TLS enabled
+	return "http-grpc"
 }
