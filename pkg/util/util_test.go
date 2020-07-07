@@ -45,7 +45,7 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 		ReadOnly: true,
 	}}
 
-	assert.Len(t, removeDuplicatedVolumeMounts(volumeMounts), 2)
+	assert.Len(t, RemoveDuplicatedVolumeMounts(volumeMounts), 2)
 	assert.Equal(t, "data1", volumeMounts[0].Name)
 	assert.Equal(t, false, volumeMounts[0].ReadOnly)
 	assert.Equal(t, "data2", volumeMounts[1].Name)

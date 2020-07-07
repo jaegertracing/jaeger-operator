@@ -89,8 +89,8 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 		ReadOnly:  true,
 	}
 
-	commonSpec.Volumes = append(commonSpec.Volumes, volume)
-	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
+	commonSpec.Volumes = util.RemoveDuplicatedVolumes(append(commonSpec.Volumes, volume))
+	commonSpec.VolumeMounts = util.RemoveDuplicatedVolumeMounts(append(commonSpec.VolumeMounts, volumeMount))
 }
 
 func deployTrustedCA(jaeger *v1.Jaeger) bool {
