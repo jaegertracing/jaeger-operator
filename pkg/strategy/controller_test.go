@@ -157,7 +157,7 @@ func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
 }
 
-func TestSetSecurityOnNonOpenShift(t *testing.T) {
+func TestSetExplicitSecurity(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 

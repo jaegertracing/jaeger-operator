@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+	"strings"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
@@ -29,7 +30,6 @@ func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
 func TestNoneOpenShiftOAuthProxyContainerIsAdded(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-    viper.Set("platform", "kubernetes")
     defer viper.Reset()
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -241,7 +241,7 @@ func TestNoneOpenShiftOAuthProxyDefaultImageIsKeycloakGatekeeper(t *testing.T) {
 
     assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
     assert.Equal(t, "", jaeger.Spec.Query.OauthProxy.Image)
-    assert.Equal(t, "quay.io/keycloak/keycloak-gatekeeper:10.0.0", dep.Spec.Template.Spec.Containers[1].Image)
+    assert.Equal(t, "quay.io/keycloak/keycloak-gatekeeper", strings.Split(dep.Spec.Template.Spec.Containers[1].Image, ":")[0])
 }
 
 func TestNoneOpenShiftOAuthProxySetImageOtherThanDefault(t *testing.T) {

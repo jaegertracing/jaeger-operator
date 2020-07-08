@@ -4,22 +4,6 @@ kind: Jaeger
     name: jaeger
     namespace: default
   spec:
-    agent:
-      config: {}
-      options: {}
-      resources: {}
-    allInOne:
-      config: {}
-      options: {}
-      resources: {}
-    collector:
-      config: {}
-      options: {}
-      resources: {}
-    ingester:
-      config: {}
-      options: {}
-      resources: {}
     ingress:
       enabled: true
       security: "oauth-proxy"
@@ -27,35 +11,36 @@ kind: Jaeger
       oauthProxy:
         options:
           #        Client ID for OpenID server
-          - --client-id=jaeger-client
+          client-id: jaeger-client
           #        Client secret for OpenID server.
           #        Confidential access type is for server-side clients that need to perform a browser login and require a client
           #        secret when they turn an access code into an access token, (see Access Token Request in the OAuth 2.0 spec for
           #        more details). This type should be used for server-side applications.
           #        see https://www.keycloak.org/docs/6.0/server_admin/
-          - --client-secret=12345678-9abc-def0-1234-56789abcdef0
+          client-secret: 12345678-9abc-def0-1234-56789abcdef0
           #        URL for OpenID autoconfiguration
-          - --discovery-url=https://keycloak.example.com/auth/realms/jaeger-realm
-          - --enable-default-deny=false
-          - --enable-json-logging=true
-          - --enable-logging=true
-          - --enable-request-id=true
-          - --enable-security-filter=true
-          - --http-only-cookie=true
+          discovery-url: https://keycloak.example.com/auth/realms/jaeger-realm
+          #        Enables a default denial on all requests, you have to explicitly say what is permitted (recommended)
+          enable-default-deny: true
           #        The interface definition you wish the proxy to listen, all interfaces is specified as ':<port>', unix sockets as unix://<REL_PATH>|</ABS PATH>
-          - --listen=:9091
-          - --preserve-host=true
+          listen: ":9091"
+          #        Preserve the host header of the proxied request in the upstream request
+          preserve-host: true
           #        The redirection url, essentially the site url, note: /oauth/callback is added at the end
-          - --redirection-url=https://jaeger-gatekeeper.example.com
+          redirection-url: "https://jaeger-gatekeeper.example.com"
           #        Role restrictions for URL. User must have specified role in order to access.
-          - --resources=uri=/*|roles=jaeger-user
-          - --resources=uri=/metrics|roles=metrics_role
-          #        - --resources=uri=/metrics/*|white-listed=true
-          - --skip-upstream-tls-verify=true
-          - --skip-openid-provider-tls-verify=true
-          - --secure-cookie=false
+          resources: "uri:/admin/*|white-listed=true"
+          #        Skip the verification of any upstream TLS
+          skip-upstream-tls-verify: false
+          #        Skip the verification of any TLS communication with the openid provider
+          skip-openid-provider-tls-verify: false
           #        URL of the service to proxy
-          - --upstream-url=http://127.0.0.1:9090
-          #        - --tls-cert=/certs/tls.pem
-          #        - --tls-private-key=/certs/tls-key.pem
+          upstream-url: "http://127.0.0.1:9090"
+          #        Path to ths TLS certificate
+          tls-cert: "/certs/tls.pem"
+          #        Path to the private key for TLS
+          tls-private-key: "/certs/tls-key.pem"
+          enable-self-signed-tls: true
+          self-signed-tls-expiration: "87600h0m0s"
+          self-signed-tls-hostnames: "localhost"
       resources: {}

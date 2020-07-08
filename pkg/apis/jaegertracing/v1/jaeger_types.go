@@ -212,8 +212,6 @@ type JaegerQueryOauthProxySpec struct {
     Image string `json:"image,omitempty"`
 
     // +optional
-    // +listType=set
-    //Args []string `json:"args,omitempty"`
     Options Options `json:"options,omitempty"`
 }
 

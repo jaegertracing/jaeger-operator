@@ -46,9 +46,6 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
     args := jaeger.Spec.Query.OauthProxy.Options.ToArgs()
     sort.Strings(args)
 
-    //viper.SetDefault("oauth-proxy-image", "quay.io/keycloak/keycloak-gatekeeper:10.0.0")
-    //defer viper.Reset()
-
     return corev1.Container{
         Image:        util.ImageName(jaeger.Spec.Query.OauthProxy.Image, "oauth-proxy-image"),
         Name:         "oauth-proxy",
