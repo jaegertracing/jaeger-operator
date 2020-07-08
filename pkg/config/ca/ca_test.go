@@ -12,82 +12,145 @@ import (
 )
 
 func TestGetWithoutTrustedCA(t *testing.T) {
+	// prepare
 	viper.Set("platform", "other")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithoutTrustedCA"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 
-	cm := GetTrustedCABundle(jaeger)
-	assert.Nil(t, cm)
+	// test
+	trusted := GetTrustedCABundle(jaeger)
+	service := GetServiceCABundle(jaeger)
+
+	// verify
+	assert.Nil(t, trusted)
+	assert.Nil(t, service)
 }
 
 func TestGetWithTrustedCA(t *testing.T) {
+	// prepare
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithTrustedCA"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 
+	// test
 	cm := GetTrustedCABundle(jaeger)
+
+	// verify
 	assert.NotNil(t, cm)
 	assert.Equal(t, "true", cm.Labels["config.openshift.io/inject-trusted-cabundle"])
 	assert.Equal(t, "", cm.Data["ca-bundle.crt"])
 }
 
-func TestGetWithExistingTrustedCA(t *testing.T) {
+func TestGetWithServiceCA(t *testing.T) {
+	// prepare
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestGetWithExistingTrustedCA"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+
+	// test
+	cm := GetServiceCABundle(jaeger)
+
+	// verify
+	assert.NotNil(t, cm)
+	assert.Equal(t, "true", cm.Annotations["service.beta.openshift.io/inject-cabundle"])
+}
+
+func TestGetWithExistingTrustedCA(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.JaegerCommonSpec.VolumeMounts = []corev1.VolumeMount{{
-		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		MountPath: caBundleMountPath,
 		Name:      "ExistingTrustedCA",
 	}}
 
+	// test
 	cm := GetTrustedCABundle(jaeger)
+
+	// verify
 	assert.Nil(t, cm)
 }
 
-func TestUpdateWithoutTrustedCA(t *testing.T) {
+func TestGetWithExistingServiceCA(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.JaegerCommonSpec.VolumeMounts = []corev1.VolumeMount{{
+		MountPath: serviceCAMountPath,
+		Name:      "ExistingServiceCA",
+	}}
+
+	// test
+	cm := GetServiceCABundle(jaeger)
+
+	// verify
+	assert.Nil(t, cm)
+}
+
+func TestUpdateWithoutCAs(t *testing.T) {
+	// prepare
 	viper.Set("platform", "other")
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithoutTrustedCA"})
-
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	commonSpec := v1.JaegerCommonSpec{}
 
+	// test
 	Update(jaeger, &commonSpec)
+	AddServiceCA(jaeger, &commonSpec)
+
+	// verify
 	assert.Len(t, commonSpec.Volumes, 0)
 	assert.Len(t, commonSpec.VolumeMounts, 0)
 }
 
 func TestUpdateWithTrustedCA(t *testing.T) {
+	// prepare
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithTrustedCA"})
-
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	commonSpec := v1.JaegerCommonSpec{}
 
+	// test
 	Update(jaeger, &commonSpec)
-	assert.Len(t, commonSpec.Volumes, 1)
-	assert.Equal(t, commonSpec.Volumes[0].Name, TrustedCAName(jaeger))
-	assert.Len(t, commonSpec.VolumeMounts, 1)
-	assert.Equal(t, commonSpec.VolumeMounts[0].Name, TrustedCAName(jaeger))
+	AddServiceCA(jaeger, &commonSpec)
+
+	// verify
+	assert.Len(t, commonSpec.Volumes, 2)
+	assert.Len(t, commonSpec.VolumeMounts, 2)
 }
 
 func TestUpdateWithExistingTrustedCA(t *testing.T) {
+	// prepare
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithExistingTrustedCA"})
-	jaeger.Spec.JaegerCommonSpec.VolumeMounts = []corev1.VolumeMount{{
-		MountPath: "/etc/pki/ca-trust/extracted/pem",
-		Name:      "ExistingTrustedCA",
-	}}
-
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.JaegerCommonSpec.VolumeMounts = []corev1.VolumeMount{
+		{
+			MountPath: caBundleMountPath,
+			Name:      "ExistingTrustedCA",
+		},
+		{
+			MountPath: serviceCAMountPath,
+			Name:      "ExistingServiceCA",
+		},
+	}
 	commonSpec := v1.JaegerCommonSpec{}
 
+	// test
 	Update(jaeger, &commonSpec)
+	AddServiceCA(jaeger, &commonSpec)
+
+	// verify
 	assert.Len(t, commonSpec.Volumes, 0)
 	assert.Len(t, commonSpec.VolumeMounts, 0)
 }

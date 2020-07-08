@@ -142,6 +142,19 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 						return reconcile.Result{}, tracing.HandleError(err, span)
 					}
 				}
+
+				if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+					// Update the namespace to be the same as the Deployment being injected
+					cm.Namespace = request.Namespace
+					jaeger.Logger().WithFields(log.Fields{
+						"configMap": cm.Name,
+						"namespace": cm.Namespace,
+					}).Debug("creating service CA config map")
+					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
+						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
+						return reconcile.Result{}, tracing.HandleError(err, span)
+					}
+				}
 			}
 
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then

@@ -63,6 +63,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	sampling.Update(a.jaeger, commonSpec, &options)
 	tls.Update(a.jaeger, commonSpec, &options)
 	ca.Update(a.jaeger, commonSpec)
+	ca.AddServiceCA(a.jaeger, commonSpec)
 
 	// Enable tls by default for openshift platform
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
@@ -70,7 +71,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if len(util.FindItem("--reporter.grpc.tls.enabled=true", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")
-			options = append(options, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
 		}
 	}
@@ -109,15 +110,13 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Namespace:   a.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: a.jaeger.APIVersion,
-					Kind:       a.jaeger.Kind,
-					Name:       a.jaeger.Name,
-					UID:        a.jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: a.jaeger.APIVersion,
+				Kind:       a.jaeger.Kind,
+				Name:       a.jaeger.Name,
+				UID:        a.jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -134,11 +133,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						Name:  "jaeger",
 						Args:  options,
 						Env: []corev1.EnvVar{
-							corev1.EnvVar{
+							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: a.jaeger.Spec.Storage.Type,
 							},
-							corev1.EnvVar{
+							{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 								Value: "9411",
 							},

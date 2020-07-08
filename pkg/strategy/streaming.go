@@ -63,6 +63,11 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		manifest.configMaps = append(manifest.configMaps, *cm)
 	}
 
+	// add the service CA config map
+	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+		manifest.configMaps = append(manifest.configMaps, *cm)
+	}
+
 	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
 		manifest.configMaps = append(manifest.configMaps, cm...)
 	}

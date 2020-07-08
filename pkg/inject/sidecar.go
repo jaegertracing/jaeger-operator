@@ -160,7 +160,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
-			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 		}
 	}
 
@@ -203,6 +203,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	}
 
 	ca.Update(jaeger, volumesAndMountsSpec)
+	ca.AddServiceCA(jaeger, volumesAndMountsSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
@@ -322,13 +323,16 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 		}
 	}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		name := ca.TrustedCANameFromString(instanceName)
-		// Remove TrustedCABundle if present
+		names := map[string]bool{
+			ca.TrustedCANameFromString(instanceName): true,
+			ca.ServiceCANameFromString(instanceName): true,
+		}
+		// Remove the managed volumes, if present
 		for v := 0; v < len(deployment.Spec.Template.Spec.Volumes); v++ {
-			if deployment.Spec.Template.Spec.Volumes[v].Name == name {
-				// delete trusted CA volume
+			if _, ok := names[deployment.Spec.Template.Spec.Volumes[v].Name]; ok {
+				// delete managed volume
 				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes[:v], deployment.Spec.Template.Spec.Volumes[v+1:]...)
-				break
+				v--
 			}
 		}
 	}
