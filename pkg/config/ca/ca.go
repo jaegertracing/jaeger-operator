@@ -64,9 +64,9 @@ func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	}
 }
 
-// GetServiceCABundle returns a trusted CA bundle configmap if platform is OpenShift
+// GetServiceCABundle returns a service CA configmap if platform is OpenShift
 func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
-	// Only configure the trusted CA if running in OpenShift
+	// Only configure the service CA if running in OpenShift
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
 		return nil
 	}
