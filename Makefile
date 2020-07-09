@@ -164,7 +164,7 @@ e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
-	@bash -c 'trap "exit 0" INT; POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start ${CLI_FLAGS}'
+	@POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} operator-sdk run local --watch-namespace="${WATCH_NAMESPACE}" --operator-flags "start ${CLI_FLAGS}" --go-ldflags ${LD_FLAGS}
 
 .PHONY: run-debug
 run-debug: run
