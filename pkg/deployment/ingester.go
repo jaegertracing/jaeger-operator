@@ -100,15 +100,13 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			Name:      i.name(),
 			Namespace: i.jaeger.Namespace,
 			Labels:    commonSpec.Labels,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: i.jaeger.APIVersion,
-					Kind:       i.jaeger.Kind,
-					Name:       i.jaeger.Name,
-					UID:        i.jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: i.jaeger.APIVersion,
+				Kind:       i.jaeger.Kind,
+				Name:       i.jaeger.Name,
+				UID:        i.jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: i.jaeger.Spec.Ingester.Replicas,
@@ -125,12 +123,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						Image: util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
 						Name:  "jaeger-ingester",
 						Args:  options,
-						Env: []corev1.EnvVar{
-							corev1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: i.jaeger.Spec.Storage.Type,
-							},
-						},
+						Env: []corev1.EnvVar{{
+							Name:  "SPAN_STORAGE_TYPE",
+							Value: i.jaeger.Spec.Storage.Type,
+						}},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{

@@ -53,7 +53,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
-			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
 		}
 	}
@@ -80,6 +80,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.Agent.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	ca.Update(a.jaeger, commonSpec)
+	ca.AddServiceCA(a.jaeger, commonSpec)
 
 	otelConf, err := a.jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
@@ -103,15 +104,13 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			Name:      fmt.Sprintf("%s-agent-daemonset", a.jaeger.Name),
 			Namespace: a.jaeger.Namespace,
 			Labels:    commonSpec.Labels,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: a.jaeger.APIVersion,
-					Kind:       a.jaeger.Kind,
-					Name:       a.jaeger.Name,
-					UID:        a.jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: a.jaeger.APIVersion,
+				Kind:       a.jaeger.Kind,
+				Name:       a.jaeger.Name,
+				UID:        a.jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
