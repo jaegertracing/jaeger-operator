@@ -29,7 +29,7 @@ kind: Jaeger
           #        The redirection url, essentially the site url, note: /oauth/callback is added at the end
           redirection-url: "https://jaeger-gatekeeper.example.com"
           #        Role restrictions for URL. User must have specified role in order to access.
-          resources: "uri:/admin/*|white-listed=true"
+          resources: "uri:/search*|white-listed=true"
           #        Skip the verification of any upstream TLS
           skip-upstream-tls-verify: false
           #        Skip the verification of any TLS communication with the openid provider
@@ -40,6 +40,7 @@ kind: Jaeger
           tls-cert: "/certs/tls.pem"
           #        Path to the private key for TLS
           tls-private-key: "/certs/tls-key.pem"
+          #        Create self signed certificates for the proxy
           enable-self-signed-tls: true
           self-signed-tls-expiration: "87600h0m0s"
           self-signed-tls-hostnames: "localhost"

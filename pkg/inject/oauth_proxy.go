@@ -52,7 +52,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
         Args:         args,
         Ports: []corev1.ContainerPort{
             {
-                ContainerPort: 8443,
+                ContainerPort: 9091,
                 Name:          "public",
             },
         },
