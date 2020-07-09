@@ -3,6 +3,7 @@ package start
 import (
 	"context"
 	"fmt"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -108,6 +109,10 @@ func NewStartCommand() *cobra.Command {
 
 func start(cmd *cobra.Command, args []string) {
 	mgr := bootstrap(context.Background())
+
 	// Start the Cmd
-	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Fatal(err, "Manager exited non-zero")
+		os.Exit(1)
+	}
 }

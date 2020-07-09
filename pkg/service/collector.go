@@ -7,9 +7,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/spf13/viper"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
-	"github.com/spf13/viper"
 )
 
 // NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector

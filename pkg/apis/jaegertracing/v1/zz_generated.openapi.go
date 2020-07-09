@@ -194,7 +194,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					"imagePullSecrets": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -216,7 +216,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -233,7 +233,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -288,7 +288,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -352,7 +352,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -369,7 +369,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -424,7 +424,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -566,7 +566,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -583,7 +583,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -638,7 +638,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -686,7 +686,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref common.ReferenceCallb
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -703,7 +703,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref common.ReferenceCallb
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -758,7 +758,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref common.ReferenceCallb
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -861,7 +861,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -878,7 +878,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -933,7 +933,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1012,7 +1012,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref common.Refere
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1029,7 +1029,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref common.Refere
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1084,7 +1084,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref common.Refere
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1166,7 +1166,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1183,7 +1183,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1238,7 +1238,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1341,7 +1341,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					"hosts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1359,7 +1359,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					"tls": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1383,7 +1383,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1400,7 +1400,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1455,7 +1455,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1503,7 +1503,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressTLSSpec(ref common.ReferenceC
 					"hosts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1558,7 +1558,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1575,7 +1575,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1630,7 +1630,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1744,7 +1744,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1761,7 +1761,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -1816,7 +1816,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{

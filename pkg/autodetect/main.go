@@ -197,6 +197,7 @@ func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupLi
 
 func (b *Background) detectClusterRoles(ctx context.Context) {
 	tr := &authenticationapi.TokenReview{
+		ObjectMeta: metav1.ObjectMeta{Name: "jaeger-operator-TEST"},
 		Spec: authenticationapi.TokenReviewSpec{
 			Token: "TEST",
 		},
