@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"fmt"
 	"testing"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -27,10 +26,7 @@ func SimplestJaeger(t *testing.T) {
 }
 
 func simplest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
+	namespace := ctx.GetID()
 
 	// create jaeger custom resource
 	exampleJaeger := &v1.Jaeger{
@@ -44,7 +40,7 @@ func simplest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) erro
 		},
 		Spec: v1.JaegerSpec{},
 	}
-	err = f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := f.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	if err != nil {
 		return err
 	}

@@ -28,8 +28,8 @@ func (suite *ExamplesTestSuite2) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
 }

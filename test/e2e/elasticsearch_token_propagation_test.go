@@ -13,10 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/uber/jaeger-client-go/config"
@@ -24,9 +23,8 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -65,8 +63,8 @@ func (suite *TokenTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 	addToFrameworkSchemeForSmokeTests(t)
 	suite.deployJaegerWithPropagationEnabled()
 }

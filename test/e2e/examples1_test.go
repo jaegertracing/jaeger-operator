@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -13,17 +14,14 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	log "github.com/sirupsen/logrus"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type ExamplesTestSuite struct {
@@ -41,8 +39,8 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
 }
@@ -126,13 +124,13 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds: 1, FailureThreshold: 3, PeriodSeconds: 10, SuccessThreshold: 1, TimeoutSeconds: 1}
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		vertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(vertxDeploymentName, metav1.GetOptions{})
+		vertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), vertxDeploymentName, metav1.GetOptions{})
 		require.NoError(t, err)
 		containers := vertxDeployment.Spec.Template.Spec.Containers
 		for index, container := range containers {
 			if container.Name == vertxDeploymentName {
 				vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
-				updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(vertxDeployment)
+				updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(context.Background(), vertxDeployment, metav1.UpdateOptions{})
 				if err != nil {
 					log.Warnf("Error %v updating vertx app, retrying", err)
 					return false, nil

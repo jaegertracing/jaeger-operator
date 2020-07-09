@@ -43,8 +43,8 @@ func (suite *MiscTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare with: "+err.Error())
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
 }
@@ -129,7 +129,7 @@ func (suite *MiscTestSuite) TestFindRoute() {
 	defer secondContext.Cleanup()
 
 	secondJaegerInstanceName := jaegerInstanceName + "but-even-longer"
-	secondNamespace, err := secondContext.GetNamespace()
+	secondNamespace := secondContext.GetID()
 	secondJaegerInstance := getSimplestJaeger(secondJaegerInstanceName, secondNamespace)
 	err = fw.Client.Create(context.Background(), secondJaegerInstance, cleanupOptions)
 	require.NoError(t, err, "Error deploying example Jaeger")
@@ -301,7 +301,7 @@ func getVolumes(secretName string) []corev1.Volume {
 
 func validateBuildImageInCluster(buildImage string) {
 	emptyOptions := new(metav1.ListOptions)
-	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(*emptyOptions)
+	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(context.Background(), *emptyOptions)
 	require.NoError(t, err)
 	found := false
 	for _, item := range namespaces.Items {

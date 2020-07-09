@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-openapi/spec v0.19.4
+	github.com/go-openapi/spec v0.19.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20200701144905-de5b010b2b38
 	github.com/operator-framework/operator-sdk v0.18.2
@@ -21,9 +21,13 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	sigs.k8s.io/controller-runtime v0.6.0
-	github.com/stretchr/testify v1.5.1
-	gopkg.in/yaml.v2 v2.2.8
+
+	// testing
+
+	github.com/uber/jaeger-client-go v2.20.1+incompatible
 	github.com/googleapis/gnostic v0.3.1
+	gopkg.in/yaml.v2 v2.2.8
+	github.com/stretchr/testify v1.5.1
 )
 
 replace (
