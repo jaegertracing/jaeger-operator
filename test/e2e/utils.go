@@ -385,6 +385,9 @@ func handleSuiteTearDown() {
 }
 
 func handleTestFailure() {
+	if t.Failed() {
+		logWarningEvents()
+	}
 	if debugMode && t.Failed() {
 		logrus.Errorf("Test %s failed\n", t.Name())
 		// FIXME find a better way to terminate tests than os.Exit(1)
@@ -579,4 +582,19 @@ func getOtelCollectorOptions() map[string]interface{} {
 	}
 
 	return otelOptions
+}
+
+func logWarningEvents() {
+	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(metav1.ListOptions{})
+	require.NoError(t, err)
+	firstWarning := true
+	for _, event := range eventList.Items {
+		if event.Type != "Normal" {
+			if firstWarning {
+				logrus.Infof("Warning events for test %s", t.Name())
+				firstWarning = false
+			}
+			logrus.Warnf("Event Warning: Reason: %s Message: %s", event.Reason, event.Message)
+		}
+	}
 }
