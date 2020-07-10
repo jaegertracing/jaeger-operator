@@ -592,7 +592,7 @@ func logWarningEvents() {
 	}
 	for _, event := range eventList.Items {
 		if event.Type != "Normal" {
-			logrus.Warnf("Type: %s Reason: %s Message: %s", event.Type, event.Reason, event.Message)
+			logrus.Warnf("Event Warning: Reason: %s Message: %s", event.Reason, event.Message)
 		}
 	}
 }
