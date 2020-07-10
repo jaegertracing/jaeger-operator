@@ -582,7 +582,7 @@ func getOtelCollectorOptions() map[string]interface{} {
 }
 
 func logWarningEvents() {
-	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(metav1.ListOptions{})
+	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err)
 	firstWarning := true
 	for _, event := range eventList.Items {
