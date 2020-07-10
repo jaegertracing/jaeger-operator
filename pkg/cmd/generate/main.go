@@ -27,16 +27,15 @@ func NewGenerateCommand() *cobra.Command {
 		Long: `Generate YAML manifests from Jaeger CRD.
 
 Defaults to reading Jaeger CRD from standard input and writing the manifest file to standard output, override with --cr <filename> and --output <filename>.`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 		RunE: generate,
 	}
 
-	cmd.Flags().String("cr", "/dev/stdin", "Input Jaeger CRD")
-	viper.BindPFlag("cr", cmd.Flags().Lookup("cr"))
-
-	cmd.Flags().String("output", "/dev/stdout", "Where to print the generated YAML documents")
-	viper.BindPFlag("output", cmd.Flags().Lookup("output"))
-
 	start.AddFlags(cmd)
+	cmd.Flags().String("cr", "/dev/stdin", "Input Jaeger CRD")
+	cmd.Flags().String("output", "/dev/stdout", "Where to print the generated YAML documents")
 
 	return cmd
 }
