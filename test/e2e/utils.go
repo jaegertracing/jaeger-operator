@@ -587,11 +587,13 @@ func getOtelCollectorOptions() map[string]interface{} {
 func logWarningEvents() {
 	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	require.NoError(t, err)
-	if len(eventList.Items) > 0 {
-		logrus.Infof("Warning events for test %s", t.Name())
-	}
+	firstWarning := true
 	for _, event := range eventList.Items {
 		if event.Type != "Normal" {
+			if firstWarning {
+				logrus.Infof("Warning events for test %s", t.Name())
+				firstWarning = false
+			}
 			logrus.Warnf("Event Warning: Reason: %s Message: %s", event.Reason, event.Message)
 		}
 	}
