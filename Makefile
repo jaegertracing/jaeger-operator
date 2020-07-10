@@ -65,6 +65,8 @@ security:
 build: format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
+# compile the tests without running them
+	@${GO_FLAGS} go test -c ./test/e2e/...
 
 .PHONY: docker
 docker:
