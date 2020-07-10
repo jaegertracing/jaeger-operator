@@ -129,11 +129,12 @@ spec:
           resources:
           - '*'
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - apps
@@ -154,11 +155,12 @@ spec:
           - services
           - services/finalizers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - apps
@@ -168,33 +170,36 @@ spec:
           - replicasets
           - statefulsets
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - extensions
           resources:
           - ingresses
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - networking.k8s.io
           resources:
           - ingresses
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - batch
@@ -202,55 +207,60 @@ spec:
           - jobs
           - cronjobs
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - route.openshift.io
           resources:
           - routes
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - monitoring.coreos.com
           resources:
           - servicemonitors
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - logging.openshift.io
           resources:
           - elasticsearches
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - kafka.strimzi.io
@@ -258,11 +268,12 @@ spec:
           - kafkas
           - kafkausers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - ""
@@ -279,7 +290,7 @@ spec:
           verbs:
           - get
           - list
-          - create
+          - patch
           - update
           - watch
         - apiGroups:
@@ -287,11 +298,12 @@ spec:
           resources:
           - clusterrolebindings
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         serviceAccountName: jaeger-operator
       deployments:
@@ -340,11 +352,12 @@ spec:
           resources:
           - '*'
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - apps
@@ -365,11 +378,12 @@ spec:
           - services
           - services/finalizers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - apps
@@ -379,33 +393,36 @@ spec:
           - replicasets
           - statefulsets
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - extensions
           resources:
           - ingresses
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - networking.k8s.io
           resources:
           - ingresses
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - batch
@@ -413,66 +430,72 @@ spec:
           - jobs
           - cronjobs
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - route.openshift.io
           resources:
           - routes
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - image.openshift.io
           resources:
           - imagestreams
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - monitoring.coreos.com
           resources:
           - servicemonitors
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - logging.openshift.io
           resources:
           - elasticsearches
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         - apiGroups:
           - kafka.strimzi.io
@@ -480,11 +503,12 @@ spec:
           - kafkas
           - kafkausers
           verbs:
+          - create
+          - delete
           - get
           - list
-          - create
+          - patch
           - update
-          - delete
           - watch
         serviceAccountName: jaeger-operator
     strategy: deployment

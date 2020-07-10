@@ -3,21 +3,21 @@
 package e2e
 
 import (
+	"context"
 	goctx "context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 type SidecarNamespaceTestSuite struct {
@@ -35,8 +35,8 @@ func (suite *SidecarNamespaceTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
 }
@@ -77,19 +77,19 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, dep.Name, 1, retryInterval, timeout)
 	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
 
-	dep, err = fw.KubeClient.AppsV1().Deployments(namespace).Get(dep.Name, metav1.GetOptions{})
+	dep, err = fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), dep.Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	hasAgent, _ := inject.HasJaegerAgent(dep)
 
 	require.False(t, hasAgent)
 
-	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 	require.NoError(t, err)
 	if nss.Annotations == nil {
 		nss.Annotations = map[string]string{}
 	}
 	nss.Annotations[inject.Annotation] = "true"
-	_, err = fw.KubeClient.CoreV1().Namespaces().Update(nss)
+	_, err = fw.KubeClient.CoreV1().Namespaces().Update(context.Background(), nss, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, dep.Name, 1, retryInterval, timeout)

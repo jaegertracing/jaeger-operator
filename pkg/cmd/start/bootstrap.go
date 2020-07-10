@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
+	osimagev1 "github.com/openshift/api/image/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/api/core"
@@ -22,11 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-
-	osimagev1 "github.com/openshift/api/image/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -265,11 +265,23 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	ctx, span := tracer.Start(ctx, "createManager")
 	defer span.End()
 
-	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          viper.GetString(v1.ConfigWatchNamespace),
-		MapperProvider:     restmapper.NewDynamicRESTMapper,
+	namespace := viper.GetString(v1.ConfigWatchNamespace)
+	options := manager.Options{
+		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", viper.GetString("metrics-host"), viper.GetInt32("metrics-port")),
-	})
+	}
+
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
+	// Also note that you may face performance issues when using this with a high number of namespaces.
+	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+	if strings.Contains(namespace, ",") {
+		options.Namespace = ""
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+	}
+
+	// Create a new manager to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		span.SetStatus(codes.Internal)
 		span.SetAttribute(key.String("error", err.Error()))
@@ -293,8 +305,9 @@ func serveCRMetrics(ctx context.Context, cfg *rest.Config, operatorNs string) {
 	ctx, span := tracer.Start(ctx, "serveCRMetrics")
 	defer span.End()
 
-	// Below function returns filtered operator/CustomResource specific GVKs.
-	// this should list all the AddToScheme funcs for GKVs that are managed by this operator
+	// The function below returns a list of filtered operator/CR specific GVKs. For more control, override the GVK list below
+	// with your own custom logic. Note that if you are adding third party API schemas, probably you will need to
+	// customize this implementation to avoid permissions issues.
 	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(v1.SchemeBuilder.AddToScheme)
 	if err != nil {
 		span.SetStatus(codes.Internal)
@@ -302,7 +315,16 @@ func serveCRMetrics(ctx context.Context, cfg *rest.Config, operatorNs string) {
 		return
 	}
 
-	ns := []string{operatorNs}
+	// The metrics will be generated from the namespaces which are returned here.
+	// NOTE that passing nil or an empty list of namespaces in GenerateAndServeCRMetrics will result in an error.
+	ns, err := kubemetrics.GetNamespacesForMetrics(operatorNs)
+	if err != nil {
+		span.SetStatus(codes.Internal)
+		span.SetAttribute(key.String("error", err.Error()))
+		log.WithError(err).Warn("could not obtain the namespaces for metrics")
+		return
+	}
+
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, viper.GetString("metrics-host"), viper.GetInt32("cr-metrics-port"))
 	if err != nil {
 		span.SetStatus(codes.Internal)

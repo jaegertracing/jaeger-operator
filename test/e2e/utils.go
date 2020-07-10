@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	goctx "context"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
-
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -23,7 +21,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +32,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 var (
@@ -82,7 +80,7 @@ func getIntEnv(key string, defaultValue int) int {
 
 // GetPod returns pod name
 func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.Interface) corev1.Pod {
-	pods, err := kubeclient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	pods, err := kubeclient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		printTestStackTrace()
 		require.NoError(t, err)
@@ -116,20 +114,19 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
 	}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		t.Errorf("failed to get the operator's namespace: %v", err)
-	}
+
+	namespace := ctx.GetID()
 	logrus.Infof("Using namespace %s", namespace)
 
-	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("failed to get the namespaces details: %v", err)
 	}
 
 	crb := &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace + "jaeger-operator",
+			Name:      namespace + "jaeger-operator",
+			Namespace: namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name:       ns.Name,
@@ -147,7 +144,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		RoleRef: rbac.RoleRef{Kind: "ClusterRole", Name: "jaeger-operator"},
 	}
 
-	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(crb); err != nil {
+	if _, err := framework.Global.KubeClient.RbacV1().ClusterRoleBindings().Create(context.Background(), crb, metav1.CreateOptions{}); err != nil {
 		t.Errorf("failed to create cluster role binding: %v", err)
 	}
 
@@ -171,7 +168,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) (map[string]string, error) {
 	imageNamesMap := make(map[string]string)
 
-	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("jaeger-operator", metav1.GetOptions{})
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(context.Background(), "jaeger-operator", metav1.GetOptions{})
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
 			return imageNamesMap, nil
@@ -198,11 +195,11 @@ func getJaegerOperatorNamespace() string {
 		return namespace
 	}
 
-	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaces, err := fw.KubeClient.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err)
 
 	for _, namespace := range namespaces.Items {
-		deployments, err := fw.KubeClient.AppsV1().Deployments(namespace.Name).List(metav1.ListOptions{})
+		deployments, err := fw.KubeClient.AppsV1().Deployments(namespace.Name).List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		for _, deployment := range deployments.Items {
 			if deployment.Name == "jaeger-operator" {
@@ -277,8 +274,8 @@ func undeployJaegerInstance(jaeger *v1.Jaeger) bool {
 	}
 
 	if !debugMode || !t.Failed() {
-		err := fw.Client.Delete(goctx.TODO(), jaeger)
-		if err := fw.Client.Delete(goctx.TODO(), jaeger); err != nil {
+		err := fw.Client.Delete(context.TODO(), jaeger)
+		if err := fw.Client.Delete(context.TODO(), jaeger); err != nil {
 			return false
 		}
 
@@ -307,7 +304,7 @@ func writePodLogsToFile(namespace, labelSelector, logFileNameBase string) {
 }
 
 func getLogsForNamespace(namespace, labelSelector, nameBase string) map[string]string {
-	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
+	pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		logrus.Warnf("Got error listing pods in namespace %s with selector %s: %v", namespace, labelSelector, err)
 		return nil
@@ -317,7 +314,7 @@ func getLogsForNamespace(namespace, labelSelector, nameBase string) map[string]s
 	logs := make(map[string]string)
 	for _, pod := range pods.Items {
 		for _, container := range pod.Spec.Containers {
-			result := fw.KubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Do()
+			result := fw.KubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Do(context.Background())
 			if result.Error() != nil {
 				logrus.Warnf("Error getting log content for pod %s, container %s in namespace %s: %v", pod.Name, container.Name, namespace, result.Error())
 			} else {
@@ -340,7 +337,7 @@ func getLogsForNamespace(namespace, labelSelector, nameBase string) map[string]s
 func getJaegerInstance(name, namespace string) *v1.Jaeger {
 	jaegerInstance := &v1.Jaeger{}
 	key := types.NamespacedName{Name: name, Namespace: namespace}
-	err := fw.Client.Get(goctx.Background(), key, jaegerInstance)
+	err := fw.Client.Get(context.Background(), key, jaegerInstance)
 	require.NoError(t, err)
 	return jaegerInstance
 }
@@ -537,20 +534,20 @@ func createSecret(secretName, secretNamespace string, secretData map[string][]by
 		Data: secretData,
 	}
 
-	createdSecret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Create(secret)
+	createdSecret, err := fw.KubeClient.CoreV1().Secrets(secretNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	require.NoError(t, err)
 	WaitForSecret(secretName, secretNamespace)
 	return createdSecret
 }
 
 func deletePersistentVolumeClaims(namespace string) {
-	pvcs, err := fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).List(metav1.ListOptions{})
+	pvcs, err := fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err)
 
 	emptyDeleteOptions := metav1.DeleteOptions{}
 	for _, pvc := range pvcs.Items {
 		logrus.Infof("Deleting PVC %s from namespace %s", pvc.Name, namespace)
-		fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).Delete(pvc.Name, &emptyDeleteOptions)
+		fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).Delete(context.Background(), pvc.Name, emptyDeleteOptions)
 	}
 }
 
@@ -560,7 +557,7 @@ func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
 
 // Was this Jaeger Instance using the OTEL collector?
 func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(jaegerInstanceName+"-collector", metav1.GetOptions{})
+	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-collector", metav1.GetOptions{})
 	require.NoError(t, err)
 	containers := deployment.Spec.Template.Spec.Containers
 	for _, container := range containers {
@@ -585,7 +582,7 @@ func getOtelCollectorOptions() map[string]interface{} {
 }
 
 func logWarningEvents() {
-	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(metav1.ListOptions{})
+	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err)
 	firstWarning := true
 	for _, event := range eventList.Items {

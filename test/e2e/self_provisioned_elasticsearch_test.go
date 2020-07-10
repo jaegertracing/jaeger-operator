@@ -60,8 +60,8 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {
@@ -140,7 +140,7 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 		LabelSelector: "component=elasticsearch",
 	}
 
-	deployments, err := fw.KubeClient.AppsV1().Deployments(namespace).List(listOptions)
+	deployments, err := fw.KubeClient.AppsV1().Deployments(namespace).List(context.Background(), listOptions)
 	require.NoError(t, err)
 	require.Equal(t, updateESNodeCount, len(deployments.Items))
 	for _, deployment := range deployments.Items {
@@ -159,7 +159,7 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		collectorPodCount = 0
 		queryPodCount = 0
-		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 
 		for _, pod := range pods.Items {
@@ -255,7 +255,7 @@ func getJaegerSimpleProd(instanceName string, useOtelCollector bool) *v1.Jaeger 
 }
 
 func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) string {
-	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get("elasticsearch-operator", metav1.GetOptions{})
+	deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(context.Background(), "elasticsearch-operator", metav1.GetOptions{})
 	require.NoErrorf(t, err, "Did not find elasticsearch-operator in namespace %s\n", namespace)
 
 	containers := deployment.Spec.Template.Spec.Containers

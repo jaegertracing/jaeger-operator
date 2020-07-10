@@ -153,11 +153,11 @@ type Jaeger struct {
 // +k8s:openapi-gen=true
 type JaegerCommonSpec struct {
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	Volumes []v1.Volume `json:"volumes,omitempty"`
 
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	VolumeMounts []v1.VolumeMount `json:"volumeMounts,omitempty"`
 
 	// +nullable
@@ -175,7 +175,7 @@ type JaegerCommonSpec struct {
 	Affinity *v1.Affinity `json:"affinity,omitempty"`
 
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
 	// +optional
@@ -229,11 +229,11 @@ type JaegerIngressSpec struct {
 	Openshift JaegerIngressOpenShiftSpec `json:"openshift,omitempty"`
 
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	Hosts []string `json:"hosts,omitempty"`
 
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	TLS []JaegerIngressTLSSpec `json:"tls,omitempty"`
 
 	// Deprecated in favor of the TLS property
@@ -251,7 +251,7 @@ type JaegerIngressSpec struct {
 // +k8s:openapi-gen=true
 type JaegerIngressTLSSpec struct {
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	Hosts []string `json:"hosts,omitempty"`
 
 	// +optional
@@ -365,7 +365,7 @@ type JaegerAgentSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
-	// +listType=set
+	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
