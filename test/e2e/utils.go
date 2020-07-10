@@ -588,7 +588,7 @@ func logWarningEvents() {
 	eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	require.NoError(t, err)
 	if len(eventList.Items) > 0 {
-		logrus.Infof("Events for test %s", t.Name())
+		logrus.Infof("Warning events for test %s", t.Name())
 	}
 	for _, event := range eventList.Items {
 		if event.Type != "Normal" {
