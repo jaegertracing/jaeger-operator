@@ -87,8 +87,6 @@ func TestIngressNetworkingAPI(t *testing.T) {
 }
 
 func TestIngressExtensionAPI(t *testing.T) {
-	t.Skip("test skipped after migrating to Operator SDK 1.18.2")
-
 	viper.Set("ingress-api", ExtensionAPI)
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
@@ -127,12 +125,14 @@ func TestIngressExtensionAPI(t *testing.T) {
 	assert.Equal(t, 0, len(netIngressList.Items))
 
 	// Update
-	updatedIngress := &netv1beta.Ingress{}
-	err = cl.Get(context.Background(), types.NamespacedName{Name: ingress.GetName(), Namespace: ingress.GetNamespace()}, updatedIngress)
+	updatedIngressExt := &extv1beta.Ingress{}
+
+	err = cl.Get(context.Background(), types.NamespacedName{Name: ingress.GetName(), Namespace: ingress.GetNamespace()}, updatedIngressExt)
 	require.NoError(t, err)
+	updatedIngress := ingressClient.fromExtToNet(*updatedIngressExt)
 
 	updatedIngress.Spec.Backend.ServiceName = "updated-srv"
-	err = ingressClient.Update(context.Background(), updatedIngress)
+	err = ingressClient.Update(context.Background(), &updatedIngress)
 	require.NoError(t, err)
 
 	err = cl.Get(context.Background(), types.NamespacedName{Name: ingress.GetName(), Namespace: ingress.GetNamespace()}, extIngress)
