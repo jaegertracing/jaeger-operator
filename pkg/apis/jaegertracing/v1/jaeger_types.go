@@ -200,6 +200,9 @@ type JaegerQuerySpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
