@@ -1518,21 +1518,32 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQueryOauthProxySpec(ref common.Refer
 						},
 					},
 					"options": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+						},
+					},
+					"volumeMounts": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "set",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Args []string `json:\"args,omitempty\"`",
-							Ref:         ref("./pkg/apis/jaegertracing/v1.Options"),
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.VolumeMount"),
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.Options"},
+			"./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

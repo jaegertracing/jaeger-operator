@@ -519,6 +519,13 @@ func (in *JaegerList) DeepCopyObject() runtime.Object {
 func (in *JaegerQueryOauthProxySpec) DeepCopyInto(out *JaegerQueryOauthProxySpec) {
 	*out = *in
 	in.Options.DeepCopyInto(&out.Options)
+	if in.VolumeMounts != nil {
+		in, out := &in.VolumeMounts, &out.VolumeMounts
+		*out = make([]corev1.VolumeMount, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
@@ -542,7 +549,11 @@ func (in *JaegerQuerySpec) DeepCopyInto(out *JaegerQuerySpec) {
 	}
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
-	in.OauthProxy.DeepCopyInto(&out.OauthProxy)
+	if in.OauthProxy != nil {
+		in, out := &in.OauthProxy, &out.OauthProxy
+		*out = new(JaegerQueryOauthProxySpec)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

@@ -37,20 +37,21 @@ func TestNoneOpenShiftOAuthProxyContainerIsAdded(t *testing.T) {
 }
 
 func TestOpenShiftOAuthProxyContainerIsAdded(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, "oauth-proxy", dep.Spec.Template.Spec.Containers[1].Name)
 }
 
 func TestOpenShiftOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 	assert.Equal(t, dep.Spec.Template.Spec.Volumes[1].Name, service.GetTLSSecretNameForQueryService(jaeger))
@@ -64,10 +65,11 @@ func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
 
 func TestOpenShiftOAuthProxyConsistentServiceAccountName(t *testing.T) {
 	// see https://github.com/openshift/oauth-proxy/issues/95
+	viper.Set("platform", "openshift")
+    defer viper.Reset()
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	viper.Set("platform", "openshift")
-	defer viper.Reset()
+
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
@@ -80,10 +82,10 @@ func TestOpenShiftOAuthProxyConsistentServiceAccountName(t *testing.T) {
 }
 
 func TestOpenShiftOAuthProxyWithCustomSAR(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	jaeger.Spec.Ingress.Openshift.SAR = `{"namespace": "default", "resource": "pods", "verb": "get"}`
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
@@ -97,10 +99,10 @@ func TestOpenShiftOAuthProxyWithCustomSAR(t *testing.T) {
 }
 
 func TestOpenShiftOAuthProxyWithHtpasswdFile(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	jaeger.Spec.Ingress.Openshift.HtpasswdFile = "/etc/htpasswd"
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
@@ -113,11 +115,43 @@ func TestOpenShiftOAuthProxyWithHtpasswdFile(t *testing.T) {
 	assert.True(t, found)
 }
 
+func TestNoneOpenShiftVolumesNotMountedByDefault(t *testing.T) {
+    jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+    jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+    jaeger.Spec.Query.OauthProxy = new(v1.JaegerQueryOauthProxySpec)
+
+    dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+    assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 0)
+}
+
+func TestNoneOpenShiftMountVolume(t *testing.T) {
+    jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+    jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
+    jaeger.Spec.Query.OauthProxy = new(v1.JaegerQueryOauthProxySpec)
+    jaeger.Spec.Query.OauthProxy.VolumeMounts = []corev1.VolumeMount{{
+        Name: "the-volume",
+    }}
+
+    dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+    found := false
+    for _, a := range dep.Spec.Template.Spec.Containers[1].VolumeMounts {
+        if a.Name == "the-volume" {
+            found = true
+        }
+    }
+    assert.True(t, found)
+    assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 1)
+}
+
+
 func TestOpenShiftMountVolumeSpecifiedAtMainSpec(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	jaeger.Spec.Ingress.Openshift.HtpasswdFile = "/etc/passwd"
 	jaeger.Spec.VolumeMounts = []corev1.VolumeMount{{
 		Name: "the-volume",
@@ -134,10 +168,10 @@ func TestOpenShiftMountVolumeSpecifiedAtMainSpec(t *testing.T) {
 }
 
 func TestOpenShiftDoNotMountWhenNotNeeded(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	jaeger.Spec.VolumeMounts = []corev1.VolumeMount{{
 		Name: "the-volume",
 	}}
@@ -196,6 +230,7 @@ func TestOpenShiftOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *te
 func TestOAuthProxyOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.OauthProxy = new(v1.JaegerQueryOauthProxySpec)
     o := v1.NewOptions(map[string]interface{}{
         "upstream-url": "http://127.0.0.1:9090",
         "client-id": "jaeger-client",
@@ -216,10 +251,10 @@ func TestOAuthProxyOrderOfArguments(t *testing.T) {
 }
 
 func TestOpenShiftOAuthProxyOrderOfArguments(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	viper.Set("platform", "openshift")
 	defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	sortedArgs := make([]string, len(dep.Spec.Template.Spec.Containers[1].Args))
@@ -234,9 +269,8 @@ func TestOpenShiftOAuthProxyOrderOfArguments(t *testing.T) {
 func TestNoneOpenShiftOAuthProxyDefaultImageIsKeycloakGatekeeper(t *testing.T) {
     jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
     jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+    jaeger.Spec.Query.OauthProxy = new(v1.JaegerQueryOauthProxySpec)
     viper.SetDefault("oauth-proxy-image", "quay.io/keycloak/keycloak-gatekeeper:10.0.0")
-    viper.Set("platform", "kubernetes")
-    defer viper.Reset()
     dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
     assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
@@ -247,9 +281,8 @@ func TestNoneOpenShiftOAuthProxyDefaultImageIsKeycloakGatekeeper(t *testing.T) {
 func TestNoneOpenShiftOAuthProxySetImageOtherThanDefault(t *testing.T) {
     jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
     jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+    jaeger.Spec.Query.OauthProxy = new(v1.JaegerQueryOauthProxySpec)
     jaeger.Spec.Query.OauthProxy.Image = "quay.io/anotherImage:1.0.0"
-    viper.Set("platform", "kubernetes")
-    defer viper.Reset()
 
     dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
@@ -258,69 +291,49 @@ func TestNoneOpenShiftOAuthProxySetImageOtherThanDefault(t *testing.T) {
 }
 
 func TestOAuthProxyResourceLimits(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
-		},
-	}
-	jaeger.Spec.Ingress.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
-		},
-	}
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
-}
+    var platformTests = []struct {
+        platform string
+    }{
+        {"default"},
+        {"openshift"},
+    }
 
-func TestOpenShiftOAuthProxyResourceLimits(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
-			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
-		},
-	}
-	jaeger.Spec.Ingress.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
-			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
-		},
-	}
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-    viper.Set("platform", "openshift")
-    defer viper.Reset()
-	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
-	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
-	assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
-	assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
+    for _, pftest := range platformTests {
+        if pftest.platform != "default" {
+            viper.Set("platform", pftest.platform)
+            defer viper.Reset()
+        }
+
+        jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+        jaeger.Spec.Resources = corev1.ResourceRequirements{
+            Limits: corev1.ResourceList{
+                corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+                corev1.ResourceLimitsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+            },
+            Requests: corev1.ResourceList{
+                corev1.ResourceRequestsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
+                corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
+            },
+        }
+        jaeger.Spec.Ingress.Resources = corev1.ResourceRequirements{
+            Limits: corev1.ResourceList{
+                corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+                corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+            },
+            Requests: corev1.ResourceList{
+                corev1.ResourceRequestsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
+                corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
+            },
+        }
+        jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+        dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+        assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
+        assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
+        assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsMemory])
+        assert.Equal(t, *resource.NewQuantity(123, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsMemory])
+        assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsEphemeralStorage])
+        assert.Equal(t, *resource.NewQuantity(512, resource.DecimalSI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsEphemeralStorage])
+    }
 }
 
 func findCookieSecret(containers []corev1.Container) (string, bool) {
@@ -333,10 +346,11 @@ func findCookieSecret(containers []corev1.Container) (string, bool) {
 }
 
 func TestOpenShiftPropagateOAuthCookieSecret(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
     viper.Set("platform", "openshift")
     defer viper.Reset()
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
 	depSrc := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	depDst := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	srcSecret, _ := findCookieSecret(depSrc.Spec.Template.Spec.Containers)

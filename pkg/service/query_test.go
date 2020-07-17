@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+    "github.com/spf13/viper"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
@@ -36,16 +38,31 @@ func TestQueryDottedServiceName(t *testing.T) {
 }
 
 func TestQueryServiceNameAndPortsWithOAuthProxy(t *testing.T) {
-	name := "TestQueryServiceNameAndPortsWithOAuthProxy"
-	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
+    var platformTests = []struct {
+        platform string
+        port int
+        targetPort int
+    }{
+        {"default", 80, 9091},
+        {"openshift", 443, 8443},
+    }
+    for _, pftest := range platformTests {
+        if pftest.platform != "default" {
+            viper.Set("platform", pftest.platform)
+            defer viper.Reset()
+        }
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	svc := NewQueryService(jaeger, selector)
+        name := "TestQueryServiceNameAndPortsWithOAuthProxy"
+        selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
 
-	assert.Equal(t, "testqueryservicenameandportswithoauthproxy-query", svc.ObjectMeta.Name)
-	assert.Len(t, svc.Spec.Ports, 1)
-	assert.Equal(t, int32(443), svc.Spec.Ports[0].Port)
-	assert.Equal(t, "https-query", svc.Spec.Ports[0].Name)
-	assert.Equal(t, intstr.FromInt(8443), svc.Spec.Ports[0].TargetPort)
+        jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+        jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+        svc := NewQueryService(jaeger, selector)
+
+        assert.Equal(t, "testqueryservicenameandportswithoauthproxy-query", svc.ObjectMeta.Name)
+        assert.Len(t, svc.Spec.Ports, 1)
+        assert.Equal(t, int32(pftest.port), svc.Spec.Ports[0].Port)
+        assert.Equal(t, "https-query", svc.Spec.Ports[0].Name)
+        assert.Equal(t, intstr.FromInt(pftest.targetPort), svc.Spec.Ports[0].TargetPort)
+    }
 }

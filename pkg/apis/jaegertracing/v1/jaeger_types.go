@@ -202,7 +202,7 @@ type JaegerQuerySpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
-    OauthProxy JaegerQueryOauthProxySpec `json:"oauthProxy,omitempty"`
+    OauthProxy *JaegerQueryOauthProxySpec `json:"oauthProxy,omitempty"`
 }
 
 // JaegerQueryOauthProxySpec define the options to be used when deploying a sidecar to the query
@@ -213,6 +213,10 @@ type JaegerQueryOauthProxySpec struct {
 
     // +optional
     Options Options `json:"options,omitempty"`
+
+	// +optional
+	// +listType=set
+	VolumeMounts []v1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI

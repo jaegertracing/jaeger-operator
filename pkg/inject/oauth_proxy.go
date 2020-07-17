@@ -43,6 +43,23 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
     commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Ingress.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
+    ports := []corev1.ContainerPort{
+        {
+            ContainerPort: 9091,
+            Name:          "public",
+        },
+    }
+
+    // If there is nothing set for the oauth-proxy, then return the default
+    if jaeger.Spec.Query.OauthProxy == nil {
+        return corev1.Container{
+            Image:        viper.GetString("oauth-proxy-image"),
+            Name:         "oauth-proxy",
+            Ports:        ports,
+            Resources: commonSpec.Resources,
+        }
+    }
+
     args := jaeger.Spec.Query.OauthProxy.Options.ToArgs()
     sort.Strings(args)
 
@@ -50,13 +67,9 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
         Image:        util.ImageName(jaeger.Spec.Query.OauthProxy.Image, "oauth-proxy-image"),
         Name:         "oauth-proxy",
         Args:         args,
-        Ports: []corev1.ContainerPort{
-            {
-                ContainerPort: 9091,
-                Name:          "public",
-            },
-        },
-        Resources: commonSpec.Resources,
+        Ports:        ports,
+        Resources:    commonSpec.Resources,
+        VolumeMounts: jaeger.Spec.Query.OauthProxy.VolumeMounts,
     }
 }
 

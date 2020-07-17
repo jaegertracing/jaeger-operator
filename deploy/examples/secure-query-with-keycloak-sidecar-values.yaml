@@ -8,40 +8,58 @@ kind: Jaeger
       enabled: true
       security: "oauth-proxy"
     query:
+      volumes:
+        #       A volume to add the configuration file for the oauth-proxy
+        - name: gatekeeper-secrets
+          #     You need to create a secret that includes the configurations for the oauth-proxy with the set name
+          #     `kubectl create secret generic gatekeeper --from-file= ./gatekeeper.yaml -n my-namespace`
+          secret:
+            secretName: gatekeeper
       oauthProxy:
+        #       Mount the volume to the oauth-proxy
+        volumeMounts:
+          - name: gatekeeper-secrets
+            mountPath: /etc/secrets
         options:
+          #       Configuration file as an alternative or as an additional part
+          #       link the mounted configuration file:
+          config: "/etc/secrets/gatekeeper.yaml"
+          #
+          #
+          #
+          ###      Add more configurations or override configurations in the config-file
           #        Client ID for OpenID server
-          client-id: jaeger-client
+          #client-id: jaeger-client
           #        Client secret for OpenID server.
           #        Confidential access type is for server-side clients that need to perform a browser login and require a client
           #        secret when they turn an access code into an access token, (see Access Token Request in the OAuth 2.0 spec for
           #        more details). This type should be used for server-side applications.
           #        see https://www.keycloak.org/docs/6.0/server_admin/
-          client-secret: 12345678-9abc-def0-1234-56789abcdef0
+          #client-secret: 12345678-9abc-def0-1234-56789abcdef0
           #        URL for OpenID autoconfiguration
-          discovery-url: https://keycloak.example.com/auth/realms/jaeger-realm
+          #discovery-url: https://keycloak.example.com/auth/realms/jaeger-realm
           #        Enables a default denial on all requests, you have to explicitly say what is permitted (recommended)
-          enable-default-deny: true
+          #enable-default-deny: true
           #        The interface definition you wish the proxy to listen, all interfaces is specified as ':<port>', unix sockets as unix://<REL_PATH>|</ABS PATH>
-          listen: ":9091"
+          #listen: ":9091"
           #        Preserve the host header of the proxied request in the upstream request
-          preserve-host: true
+          #preserve-host: true
           #        The redirection url, essentially the site url, note: /oauth/callback is added at the end
-          redirection-url: "https://jaeger-gatekeeper.example.com"
+          #redirection-url: "https://jaeger-gatekeeper.example.com"
           #        Role restrictions for URL. User must have specified role in order to access.
-          resources: "uri:/search*|white-listed=true"
+          #resources: "uri:/search*|white-listed=true"
           #        Skip the verification of any upstream TLS
-          skip-upstream-tls-verify: false
+          #skip-upstream-tls-verify: false
           #        Skip the verification of any TLS communication with the openid provider
-          skip-openid-provider-tls-verify: false
+          #skip-openid-provider-tls-verify: false
           #        URL of the service to proxy
-          upstream-url: "http://127.0.0.1:9090"
+          #upstream-url: "http://127.0.0.1:9090"
           #        Path to ths TLS certificate
-          tls-cert: "/certs/tls.pem"
+          #tls-cert: "/certs/tls.pem"
           #        Path to the private key for TLS
-          tls-private-key: "/certs/tls-key.pem"
+          #tls-private-key: "/certs/tls-key.pem"
           #        Create self signed certificates for the proxy
-          enable-self-signed-tls: true
-          self-signed-tls-expiration: "87600h0m0s"
-          self-signed-tls-hostnames: "localhost"
+          #enable-self-signed-tls: true
+          #self-signed-tls-expiration: "87600h0m0s"
+          #self-signed-tls-hostnames: "localhost"
       resources: {}
