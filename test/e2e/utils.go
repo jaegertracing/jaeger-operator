@@ -103,9 +103,9 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 	return *emptyPod
 }
 
-func prepare(t *testing.T) (*framework.TestCtx, error) {
+func prepare(t *testing.T) (*framework.Context, error) {
 	t.Logf("debug mode: %v", debugMode)
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	start := time.Now()
 	if !usingOLM {
