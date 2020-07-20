@@ -13,12 +13,13 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v1.0.0
-	github.com/spf13/viper v1.4.0
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
 	github.com/uber/jaeger-client-go v2.20.1+incompatible
 	go.opentelemetry.io/otel v0.1.2
 	go.opentelemetry.io/otel/exporter/trace/jaeger v0.1.2
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	google.golang.org/grpc v1.30.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.18.3
