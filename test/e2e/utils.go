@@ -113,6 +113,10 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 		if err != nil {
 			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
+	} else {
+		// Hacky - as of Operator SDK 0.18.2 calling getOperatorNamespace is required to actually create the namespace
+		_, err := ctx.GetOperatorNamespace()
+		require.NoError(t, err)
 	}
 
 	namespace := ctx.GetID()
