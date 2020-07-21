@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
@@ -82,6 +84,9 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			c.routes = append(c.routes, *q)
+			if link := consolelink.Get(jaeger, q); link != nil {
+				c.consoleLinks = append(c.consoleLinks, *link)
+			}
 		}
 	} else {
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {

@@ -3,6 +3,7 @@ package strategy
 import (
 	"testing"
 
+	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,6 +26,12 @@ func TestWithAccounts(t *testing.T) {
 func TestWithClusterRoleBindings(t *testing.T) {
 	c := New().WithClusterRoleBindings([]rbac.ClusterRoleBinding{{}})
 	assert.Len(t, c.ClusterRoleBindings(), 1)
+	assert.Len(t, c.All(), 1)
+}
+
+func TestWithConsoleLinks(t *testing.T) {
+	c := New().WithConsoleLinks([]osconsolev1.ConsoleLink{{}})
+	assert.Len(t, c.ConsoleLinks(), 1)
 	assert.Len(t, c.All(), 1)
 }
 

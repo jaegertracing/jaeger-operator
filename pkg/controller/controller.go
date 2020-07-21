@@ -1,6 +1,7 @@
 package controller
 
 import (
+	consolev1 "github.com/openshift/api/console/v1"
 	routev1 "github.com/openshift/api/route/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -14,6 +15,10 @@ var AddToManagerFuncs []func(manager.Manager) error
 // AddToManager adds all Controllers to the Manager
 func AddToManager(m manager.Manager) error {
 	if err := routev1.AddToScheme(m.GetScheme()); err != nil {
+		return err
+	}
+
+	if err := consolev1.Install(m.GetScheme()); err != nil {
 		return err
 	}
 
