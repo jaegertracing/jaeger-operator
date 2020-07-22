@@ -38,6 +38,7 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 }
 
 // UpdateHref returns an ConsoleLink with the href value derived from the route
-func UpdateHref(link *consolev1.ConsoleLink, route routev1.Route) {
+func UpdateHref(link consolev1.ConsoleLink, route routev1.Route) consolev1.ConsoleLink {
 	link.Spec.Href = fmt.Sprintf("https://%s", route.Spec.Host)
+	return link
 }

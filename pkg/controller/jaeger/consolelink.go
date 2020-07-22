@@ -18,7 +18,7 @@ import (
 
 func (r *ReconcileJaeger) updateHref(ctx context.Context,
 	jaeger v1.Jaeger, links []osconsolev1.ConsoleLink) []osconsolev1.ConsoleLink {
-
+	var updated []osconsolev1.ConsoleLink
 	for i, cl := range links {
 		routeName := cl.Annotations[consolelink.RouteAnnotation]
 		route := osroutev1.Route{}
@@ -28,9 +28,10 @@ func (r *ReconcileJaeger) updateHref(ctx context.Context,
 				"namespace":   cl.Namespace,
 			}).Warn("updating console link href")
 		}
-		consolelink.UpdateHref(&links[i], route)
+		undatedLink := consolelink.UpdateHref(links[i], route)
+		updated = append(updated, undatedLink)
 	}
-	return links
+	return updated
 }
 
 func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {

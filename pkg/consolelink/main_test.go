@@ -53,7 +53,7 @@ func TestUpdateHref(t *testing.T) {
 	assert.Equal(t, link.Spec.Href, "")
 
 	route.Spec.Host = "namespace.somehostname"
-	UpdateHref(link, *route)
-	assert.Equal(t, "https://"+route.Spec.Host, link.Spec.Href)
+	newLink := UpdateHref(*link, *route)
+	assert.Equal(t, "https://"+route.Spec.Host, newLink.Spec.Href)
 
 }
