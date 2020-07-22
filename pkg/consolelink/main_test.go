@@ -28,9 +28,9 @@ func TestConsoleLinkGet(t *testing.T) {
 	}
 
 	link := Get(jaeger, route)
-	assert.Equal(t, link.Name, jaeger.Namespace+".jaeger-consolelink-"+jaeger.Name)
+	assert.Equal(t, jaeger.Namespace+".jaeger-consolelink-"+jaeger.Name, link.Name)
 	assert.Contains(t, link.Annotations, RouteAnnotation)
-	assert.Equal(t, link.Annotations[RouteAnnotation], routerNamer)
+	assert.Equal(t, routerNamer, link.Annotations[RouteAnnotation])
 }
 
 func TestUpdateHref(t *testing.T) {
@@ -54,6 +54,6 @@ func TestUpdateHref(t *testing.T) {
 
 	route.Spec.Host = "namespace.somehostname"
 	UpdateHref(link, *route)
-	assert.Equal(t, link.Spec.Href, "https://"+route.Spec.Host)
+	assert.Equal(t, "https://"+route.Spec.Host, link.Spec.Href)
 
 }

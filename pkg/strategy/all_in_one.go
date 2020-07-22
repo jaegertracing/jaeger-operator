@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
-
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"

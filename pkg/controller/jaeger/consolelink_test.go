@@ -19,9 +19,10 @@ import (
 func TestConsoleLinkCreate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestCronJobsCreate",
+		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	defer viper.Reset()
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
@@ -61,9 +62,10 @@ func TestConsoleLinkCreate(t *testing.T) {
 func TestConsoleLinkUpdate(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestConsoleLinkUpdate",
+		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	defer viper.Reset()
 
 	orig := osconsolev1.ConsoleLink{}
 	orig.Name = nsn.Name
@@ -106,9 +108,10 @@ func TestConsoleLinkUpdate(t *testing.T) {
 func TestConsoleLinkDelete(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name: "TestCronJobsDelete",
+		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	defer viper.Reset()
 
 	orig := osconsolev1.ConsoleLink{}
 	orig.Name = nsn.Name
@@ -145,14 +148,15 @@ func TestConsoleLinkDelete(t *testing.T) {
 func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{
-		Name:      "TestCronJobsCreateExistingNameInAnotherNamespace",
+		Name:      "my-instance-1",
 		Namespace: "tenant1",
 	}
 	nsnExisting := types.NamespacedName{
-		Name:      "TestCronJobsCreateExistingNameInAnotherNamespace",
+		Name:      "my-instance-2",
 		Namespace: "tenant2",
 	}
 	viper.Set("platform", "openshift")
+	defer viper.Reset()
 
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),

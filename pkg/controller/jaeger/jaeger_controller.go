@@ -336,9 +336,8 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		if err := r.applyRoutes(ctx, jaeger, str.Routes()); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}
-		if err := r.applyConsoleLink(ctx, jaeger, str.ConsoleLinks()); err != nil {
+		if err := r.applyConsoleLinks(ctx, jaeger, str.ConsoleLinks()); err != nil {
 			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
-			return jaeger, nil
 		}
 	} else {
 		if err := r.applyIngresses(ctx, jaeger, str.Ingresses()); err != nil {

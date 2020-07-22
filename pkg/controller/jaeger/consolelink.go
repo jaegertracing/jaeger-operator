@@ -33,9 +33,9 @@ func (r *ReconcileJaeger) updateHref(ctx context.Context,
 	return links
 }
 
-func (r *ReconcileJaeger) applyConsoleLink(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {
+func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyConsoleLink")
+	ctx, span := tracer.Start(ctx, "applyConsoleLinks")
 	defer span.End()
 
 	opts := []client.ListOption{
