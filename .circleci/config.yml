@@ -1,0 +1,30 @@
+version: 2.1
+jobs:
+  build:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          command: >-
+            curl -Lo minikube https://github.com/kubernetes/minikube/releases/download/v1.12.1/minikube-linux-amd64 &&
+              chmod +x minikube &&
+              sudo mv minikube /usr/local/bin/
+          name: Install minikube
+
+      - run:
+          command: >-
+            curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.3/bin/linux/amd64/kubectl &&
+              chmod +x kubectl &&
+              sudo mv kubectl /usr/local/bin/ &&
+              mkdir -p ${HOME}/.kube && touch ${HOME}/.kube/config
+          name: Install kubectl
+
+      - run:
+          command: >-
+            sudo -E minikube start --vm-driver=none --kubernetes-version=v1.17.9
+          name: Start minikube
+
+      - run: make install-sdk
+      - run: make install-tools
+      - run: TEST_GROUP=smoke ./.ci/run-e2e-tests.sh
