@@ -50,8 +50,7 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 		return tracing.HandleError(err, span)
 	}
 
-	desiredWithHref := r.updateHref(ctx, jaeger, desired)
-	inv := inventory.ForConsoleLinks(list.Items, desiredWithHref)
+	inv := inventory.ForConsoleLinks(list.Items, desired)
 	for _, d := range inv.Create {
 		jaeger.Logger().WithFields(log.Fields{
 			"consoleLink": d.Name,
