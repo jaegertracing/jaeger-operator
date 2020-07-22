@@ -6,8 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	// Commented out waiting for https://github.com/jaegertracing/jaeger-operator/issues/1092 fix
-	//"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 
 	log "github.com/sirupsen/logrus"
@@ -153,7 +152,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
-			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
+			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s.svc:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
 		}
 	}
 
@@ -161,8 +160,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
-			args = append(args, "--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
-			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 		}
 	}
 
@@ -192,9 +190,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
-	// Use a different common spec for volumes and mounts.
+	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
-	volumesAndMountsSpec := &v1.JaegerCommonSpec{}
+	volumesAndMountsSpec := &jaeger.Spec.Agent.JaegerCommonSpec
 	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
 	if err != nil {
 		jaeger.Logger().WithField("error", err).
@@ -204,13 +202,14 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
 	}
 
-	// Commented out until https://github.com/jaegertracing/jaeger-operator/issues/1092 is fixed
-	//ca.Update(jaeger, volumesAndMountsSpec)
+	ca.Update(jaeger, volumesAndMountsSpec)
+	ca.AddServiceCA(jaeger, volumesAndMountsSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
+	dep.Spec.Template.Spec.ImagePullSecrets = util.RemoveDuplicatedImagePullSecrets(append(dep.Spec.Template.Spec.ImagePullSecrets, jaeger.Spec.Agent.ImagePullSecrets...))
 	dep.Spec.Template.Spec.Volumes = util.RemoveDuplicatedVolumes(append(dep.Spec.Template.Spec.Volumes, volumesAndMountsSpec.Volumes...))
 	return corev1.Container{
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
@@ -314,13 +313,27 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 }
 
 // CleanSidecar of  deployments  associated with the jaeger instance.
-func CleanSidecar(deployment *appsv1.Deployment) {
+func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	delete(deployment.Labels, Label)
 	for c := 0; c < len(deployment.Spec.Template.Spec.Containers); c++ {
 		if deployment.Spec.Template.Spec.Containers[c].Name == "jaeger-agent" {
 			// delete jaeger-agent container
 			deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers[:c], deployment.Spec.Template.Spec.Containers[c+1:]...)
 			break
+		}
+	}
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		names := map[string]bool{
+			ca.TrustedCANameFromString(instanceName): true,
+			ca.ServiceCANameFromString(instanceName): true,
+		}
+		// Remove the managed volumes, if present
+		for v := 0; v < len(deployment.Spec.Template.Spec.Volumes); v++ {
+			if _, ok := names[deployment.Spec.Template.Spec.Volumes[v].Name]; ok {
+				// delete managed volume
+				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes[:v], deployment.Spec.Template.Spec.Volumes[v+1:]...)
+				v--
+			}
 		}
 	}
 }

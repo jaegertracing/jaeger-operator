@@ -45,10 +45,24 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 		ReadOnly: true,
 	}}
 
-	assert.Len(t, removeDuplicatedVolumeMounts(volumeMounts), 2)
+	assert.Len(t, RemoveDuplicatedVolumeMounts(volumeMounts), 2)
 	assert.Equal(t, "data1", volumeMounts[0].Name)
 	assert.Equal(t, false, volumeMounts[0].ReadOnly)
 	assert.Equal(t, "data2", volumeMounts[1].Name)
+}
+
+func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
+	imagePullSecrets := []corev1.LocalObjectReference{{
+		Name: "secret1",
+	}, {
+		Name: "secret2",
+	}, {
+		Name: "secret1",
+	}}
+
+	assert.Len(t, RemoveDuplicatedImagePullSecrets(imagePullSecrets), 2)
+	assert.Equal(t, "secret1", imagePullSecrets[0].Name)
+	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
 }
 
 func TestMergeAnnotations(t *testing.T) {

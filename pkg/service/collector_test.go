@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -52,4 +53,80 @@ func TestCollectorServiceWithClusterIPEmptyAndNone(t *testing.T) {
 	assert.NotEqual(t, svcs[0].Name, svcs[1].Name) // they can't have the same name
 	assert.Equal(t, "None", svcs[0].Spec.ClusterIP)
 	assert.Len(t, svcs[1].Spec.ClusterIP, 0)
+}
+
+func TestCollectorGRPCPortName(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		input       *v1.Jaeger
+		expected    string
+		inOpenShift bool
+	}{
+		{
+			"nil",
+			nil,
+			"http-grpc",
+			false, // in openshift?
+		},
+		{
+			"no-tls",
+			&v1.Jaeger{},
+			"http-grpc",
+			false, // in openshift?
+		},
+		{
+			"with-tls-disabled",
+			&v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Collector: v1.JaegerCollectorSpec{
+						Options: v1.NewOptions(map[string]interface{}{"collector.grpc.tls.enabled": "false"}),
+					},
+				},
+			},
+			"http-grpc",
+			false, // in openshift?
+		},
+		{
+			"with-tls-invalid",
+			&v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Collector: v1.JaegerCollectorSpec{
+						Options: v1.NewOptions(map[string]interface{}{"collector.grpc.tls.enabled": "abc"}),
+					},
+				},
+			},
+			"http-grpc",
+			false, // in openshift?
+		},
+		{
+			"with-tls-enabled",
+			&v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Collector: v1.JaegerCollectorSpec{
+						Options: v1.NewOptions(map[string]interface{}{"collector.grpc.tls.enabled": "true"}),
+					},
+				},
+			},
+			"https-grpc",
+			false, // in openshift?
+		},
+		{
+			"in-openshift",
+			&v1.Jaeger{},
+			"https-grpc",
+			true, // in openshift?
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			// prepare
+			if tt.inOpenShift {
+				viper.Set("platform", v1.FlagPlatformOpenShift)
+				defer viper.Reset()
+			}
+
+			// test
+			portName := GetPortNameForGRPC(tt.input)
+			assert.Equal(t, tt.expected, portName)
+		})
+	}
 }

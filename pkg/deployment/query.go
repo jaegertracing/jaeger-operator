@@ -89,15 +89,13 @@ func (q *Query) Get() *appsv1.Deployment {
 			Namespace:   q.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: q.jaeger.APIVersion,
-					Kind:       q.jaeger.Kind,
-					Name:       q.jaeger.Name,
-					UID:        q.jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: q.jaeger.APIVersion,
+				Kind:       q.jaeger.Kind,
+				Name:       q.jaeger.Name,
+				UID:        q.jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: q.jaeger.Spec.Query.Replicas,
@@ -114,12 +112,10 @@ func (q *Query) Get() *appsv1.Deployment {
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
 						Args:  options,
-						Env: []corev1.EnvVar{
-							corev1.EnvVar{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: q.jaeger.Spec.Storage.Type,
-							},
-						},
+						Env: []corev1.EnvVar{{
+							Name:  "SPAN_STORAGE_TYPE",
+							Value: q.jaeger.Spec.Storage.Type,
+						}},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{

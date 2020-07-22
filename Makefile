@@ -65,6 +65,8 @@ security:
 build: format
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
+# compile the tests without running them
+	@${GO_FLAGS} go test -c ./test/e2e/...
 
 .PHONY: docker
 docker:
@@ -164,7 +166,7 @@ e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
-	@bash -c 'trap "exit 0" INT; POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} KUBERNETES_CONFIG=${KUBERNETES_CONFIG} WATCH_NAMESPACE=${WATCH_NAMESPACE} go run -ldflags ${LD_FLAGS} main.go start ${CLI_FLAGS}'
+	@POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} operator-sdk run local --watch-namespace="${WATCH_NAMESPACE}" --operator-flags "start ${CLI_FLAGS}" --go-ldflags ${LD_FLAGS}
 
 .PHONY: run-debug
 run-debug: run
@@ -259,7 +261,7 @@ kafka: deploy-kafka-operator
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
 	@sed -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
-	@kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=client -f deploy/test/kafka-example.yaml
+	@kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 
 .PHONY: undeploy-kafka

@@ -7,12 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -22,6 +19,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -64,8 +62,8 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 		require.FailNow(t, "Failed in prepare")
 	}
 	fw = framework.Global
-	namespace, _ = ctx.GetNamespace()
-	require.NotNil(t, namespace, "GetNamespace failed")
+	namespace = ctx.GetID()
+	require.NotNil(t, namespace, "GetID failed")
 }
 
 func (suite *SelfProvisionedTestSuite) TearDownSuite() {

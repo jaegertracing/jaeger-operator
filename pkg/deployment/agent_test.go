@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -52,20 +53,20 @@ func TestDefaultAgentImage(t *testing.T) {
 }
 
 func TestGetDefaultAgentDeployment(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewAgent"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	agent := NewAgent(jaeger)
 	assert.Nil(t, agent.Get()) // it's not implemented yet
 }
 
 func TestGetSidecarDeployment(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewAgent"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "sidecar"
 	agent := NewAgent(jaeger)
 	assert.Nil(t, agent.Get()) // it's not implemented yet
 }
 
 func TestGetDaemonSetDeployment(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestNewAgent"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	agent := NewAgent(jaeger)
 
@@ -74,7 +75,7 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 }
 
 func TestDaemonSetAgentAnnotations(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDaemonSetAgentAnnotations"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
@@ -96,7 +97,7 @@ func TestDaemonSetAgentAnnotations(t *testing.T) {
 }
 
 func TestDaemonSetAgentLabels(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDaemonSetAgentLabels"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Labels = map[string]string{
 		"name":  "operator",
@@ -116,7 +117,7 @@ func TestDaemonSetAgentLabels(t *testing.T) {
 }
 
 func TestDaemonSetAgentResources(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDaemonSetAgentResources"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
@@ -151,7 +152,7 @@ func TestDaemonSetAgentResources(t *testing.T) {
 }
 
 func TestAgentLabels(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentLabels"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	a := NewAgent(jaeger)
 	dep := a.Get()
@@ -162,7 +163,7 @@ func TestAgentLabels(t *testing.T) {
 }
 
 func TestAgentOrderOfArguments(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentOrderOfArguments"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"b-option": "b-value",
@@ -185,7 +186,7 @@ func TestAgentOrderOfArguments(t *testing.T) {
 }
 
 func TestAgentOverrideReporterType(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentOrderOfArguments"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"reporter.type":             "thrift",
@@ -204,7 +205,7 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "my-openshift-instance",
+		Name:      "my-instance",
 		Namespace: "test",
 	})
 	jaeger.Spec.Agent.Strategy = "daemonset"
@@ -221,23 +222,23 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 
 	// the following are added automatically
 	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-openshift-instance-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca=/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-openshift-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
+	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
 }
 
 func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 
 	a := NewAgent(jaeger)
 	d := a.Get()
 	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
+	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }

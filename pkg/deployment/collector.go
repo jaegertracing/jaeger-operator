@@ -103,15 +103,13 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Namespace:   c.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
 			Annotations: commonSpec.Annotations,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					APIVersion: c.jaeger.APIVersion,
-					Kind:       c.jaeger.Kind,
-					Name:       c.jaeger.Name,
-					UID:        c.jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: c.jaeger.APIVersion,
+				Kind:       c.jaeger.Kind,
+				Name:       c.jaeger.Name,
+				UID:        c.jaeger.UID,
+				Controller: &trueVar,
+			}},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: c.jaeger.Spec.Collector.Replicas,
@@ -129,11 +127,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Name:  "jaeger-collector",
 						Args:  options,
 						Env: []corev1.EnvVar{
-							corev1.EnvVar{
+							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: storageType,
 							},
-							corev1.EnvVar{
+							{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 								Value: "9411",
 							},

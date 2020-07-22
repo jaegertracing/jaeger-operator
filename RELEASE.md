@@ -36,3 +36,4 @@
     * Run `make operatorhub`
       - If you have [`hub`](https://hub.github.com/) installed and configured, it will open the necessary PRs for you automatically. Hint: `dnf install hub` works fine on Fedora.
       - If you don't have it, the branches will be pushed to `origin` and you should be able to open the PR from there
+

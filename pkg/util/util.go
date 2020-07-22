@@ -31,8 +31,8 @@ func RemoveDuplicatedVolumes(volumes []corev1.Volume) []corev1.Volume {
 	return results
 }
 
-// removeDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
-func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
+// RemoveDuplicatedVolumeMounts returns a unique list based on the item names. Only the first item is kept.
+func RemoveDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.VolumeMount {
 	var results []corev1.VolumeMount
 	existing := map[string]bool{}
 
@@ -44,6 +44,22 @@ func removeDuplicatedVolumeMounts(volumeMounts []corev1.VolumeMount) []corev1.Vo
 		existing[volumeMount.Name] = true
 	}
 	// Return the new slice.
+	return results
+}
+
+// RemoveDuplicatedImagePullSecrets returns a unique list of ImagePullSecrets based on ImagePullSecrets names. Only the first item is kept.
+func RemoveDuplicatedImagePullSecrets(imagePullSecrets []corev1.LocalObjectReference) []corev1.LocalObjectReference {
+	var results []corev1.LocalObjectReference
+	existing := map[string]bool{}
+
+	for _, imagePullSecret := range imagePullSecrets {
+		if existing[imagePullSecret.Name] {
+			continue
+		}
+		results = append(results, imagePullSecret)
+		existing[imagePullSecret.Name] = true
+	}
+	// Return the new slice
 	return results
 }
 
@@ -99,7 +115,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	return &v1.JaegerCommonSpec{
 		Annotations:     annotations,
 		Labels:          labels,
-		VolumeMounts:    removeDuplicatedVolumeMounts(volumeMounts),
+		VolumeMounts:    RemoveDuplicatedVolumeMounts(volumeMounts),
 		Volumes:         RemoveDuplicatedVolumes(volumes),
 		Resources:       *resources,
 		Affinity:        affinity,
