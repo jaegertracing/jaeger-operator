@@ -23,7 +23,7 @@ PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_RULES_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
 PROMETHEUS_SERVICE_MONITORS_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
-SDK_VERSION=v0.15.1
+SDK_VERSION=v0.18.2
 GOPATH ?= "$(HOME)/go"
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
