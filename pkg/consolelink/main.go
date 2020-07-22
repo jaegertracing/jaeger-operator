@@ -30,7 +30,7 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 			Location:        consolev1.ApplicationMenu,
 			ApplicationMenu: &consolev1.ApplicationMenuSpec{},
 			Link: consolev1.Link{
-				Text: "Jaeger [" + jaeger.Namespace + "]",
+				Text: "Jaeger [" + jaeger.Name + "." + jaeger.Namespace + "]",
 			},
 		},
 	}
