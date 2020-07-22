@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run:
           command: >-
-            curl -L https://golang.org/dl/go1.14.6.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/ &&
+            curl -L https://golang.org/dl/go1.14.3.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/ &&
             sudo chown -R $(whoami): /usr/local/go &&
             echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV &&
             go version
