@@ -202,8 +202,10 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
+	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[name] = false
+		consoleLinks[".jaeger-consolelink-"+name] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
@@ -217,7 +219,7 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesStreaming(t *testing.T) {

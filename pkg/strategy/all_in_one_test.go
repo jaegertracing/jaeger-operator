@@ -110,8 +110,11 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 	// the ingress rule, if we are not on openshift
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
+	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[fmt.Sprintf("%s", util.DNSName(name))] = false
+		consoleLinks[".jaeger-consolelink-"+name] = false
+
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
@@ -125,7 +128,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesAllInOne(t *testing.T) {

@@ -151,8 +151,10 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
+	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[util.DNSName(name)] = false
+		consoleLinks[".jaeger-consolelink-"+name] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
@@ -166,7 +168,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesProduction(t *testing.T) {

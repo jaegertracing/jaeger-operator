@@ -555,7 +555,7 @@ func TestCustomMenuGetsLogOutSkipped(t *testing.T) {
 	assert.Equal(t, expected, uiOpts["menu"])
 }
 
-func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool) {
+func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool, consoleLinks map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true
 	}
@@ -584,6 +584,10 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 		configMaps[o.Name] = true
 	}
 
+	for _, o := range s.ConsoleLinks() {
+		consoleLinks[o.Name] = true
+	}
+
 	for k, v := range deployments {
 		assert.True(t, v, "Expected %s to have been returned from the list of deployments", k)
 	}
@@ -610,5 +614,9 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 
 	for k, v := range configMaps {
 		assert.True(t, v, "Expected %s to have been returned from the list of config maps", k)
+	}
+
+	for k, v := range consoleLinks {
+		assert.True(t, v, "Expected %s to have been returned from the list of console links", k)
 	}
 }
