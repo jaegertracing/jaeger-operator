@@ -7,9 +7,9 @@ jobs:
       - checkout
       - run:
           command: >-
-            curl -L https://golang.org/dl/go1.14.6.linux-amd64.tar.gz | tar xzf - &&
-            sudo mv go/bin/go /usr/local/bin/ &&
-            sudo mv go/bin/gofmt /usr/local/bin/ && 
+            curl -L https://golang.org/dl/go1.14.6.linux-amd64.tar.gz | sudo tar -xz -C /usr/local/ &&
+            sudo chown -R $(whoami): /usr/local/go &&
+            echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV &&
             go version
           name: Install recent go
 
@@ -33,6 +33,6 @@ jobs:
             sudo -E minikube start --vm-driver=none --kubernetes-version=v1.17.9
           name: Start minikube
 
-      - run: SDK_VERSION=0.18.2 make install-sdk
+      - run: make install-sdk SDK_VERSION=0.18.2 
       - run: make install-tools
-      - run: TEST_GROUP=smoke ./.ci/run-e2e-tests.sh
+      - run: ./.ci/run-e2e-tests.sh TEST_GROUP=smoke 
