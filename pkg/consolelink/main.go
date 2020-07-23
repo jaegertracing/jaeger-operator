@@ -18,6 +18,7 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 	return &consolev1.ConsoleLink{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jaeger.Namespace + ".jaeger-consolelink-" + jaeger.Name,
+			Namespace:jaeger.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/instance":   jaeger.Name,
 				"app.kubernetes.io/managed-by": "jaeger-operator",
