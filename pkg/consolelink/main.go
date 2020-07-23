@@ -15,6 +15,11 @@ var RouteAnnotation = "consolelink.jaegertracing.io/route"
 
 // Get returns an ConsoleLink specification for the current instance
 func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
+	// If ingress is not enable there is no reason for create a console link
+	if jaeger.Spec.Ingress.Enabled != nil && *jaeger.Spec.Ingress.Enabled == false {
+		return nil
+	}
+
 	return &consolev1.ConsoleLink{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Namespace + ".jaeger-consolelink-" + jaeger.Name,
@@ -39,11 +44,23 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 			},
 		},
 	}
-
 }
 
 // UpdateHref returns an ConsoleLink with the href value derived from the route
-func UpdateHref(link consolev1.ConsoleLink, route routev1.Route) consolev1.ConsoleLink {
-	link.Spec.Href = fmt.Sprintf("https://%s", route.Spec.Host)
-	return link
+func UpdateHref(routes []routev1.Route, links []consolev1.ConsoleLink) []consolev1.ConsoleLink {
+	var updated []consolev1.ConsoleLink
+	mapRoutes := make(map[string]string)
+	for _, route := range routes {
+		mapRoutes[route.Name] = route.Spec.Host
+	}
+	for _, cl := range links {
+		routeName := cl.Annotations[RouteAnnotation]
+		// Only append it if we can found the route
+		if host, ok := mapRoutes[routeName]; ok {
+			cl.Spec.Href = fmt.Sprintf("https://%s", host)
+			updated = append(updated, cl)
+		}
+		//TODO: log if not found the route associated with the link
+	}
+	return updated
 }

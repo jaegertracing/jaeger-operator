@@ -584,7 +584,7 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 		configMaps[o.Name] = true
 	}
 
-	for _, o := range s.ConsoleLinks() {
+	for _, o := range s.ConsoleLinks(s.routes) {
 		consoleLinks[o.Name] = true
 	}
 

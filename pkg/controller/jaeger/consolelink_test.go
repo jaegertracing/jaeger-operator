@@ -4,7 +4,12 @@ import (
 	"context"
 	"testing"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	osconsolev1 "github.com/openshift/api/console/v1"
+	osroutev1 "github.com/openshift/api/route/v1"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -37,6 +41,16 @@ func TestConsoleLinkCreate(t *testing.T) {
 		s := strategy.New().WithConsoleLinks([]osconsolev1.ConsoleLink{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
+				Annotations: map[string]string{
+					consolelink.RouteAnnotation: "my-route",
+				},
+			},
+		}}).WithRoutes([]osroutev1.Route{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-route",
+			},
+			Spec: osroutev1.RouteSpec{
+				Host: "myhost",
 			},
 		}})
 		return s
@@ -56,6 +70,8 @@ func TestConsoleLinkCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
+	assert.Equal(t, persisted.Spec.Href, "https://myhost")
+
 	assert.NoError(t, err)
 }
 
@@ -84,9 +100,19 @@ func TestConsoleLinkUpdate(t *testing.T) {
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		updated := osconsolev1.ConsoleLink{}
 		updated.Name = orig.Name
-		updated.Annotations = map[string]string{"key": "new-value"}
+		updated.Annotations = map[string]string{
+			"key":                       "new-value",
+			consolelink.RouteAnnotation: "my-route",
+		}
 
-		s := strategy.New().WithConsoleLinks([]osconsolev1.ConsoleLink{updated})
+		s := strategy.New().WithConsoleLinks([]osconsolev1.ConsoleLink{updated}).WithRoutes([]osroutev1.Route{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "my-route",
+			},
+			Spec: osroutev1.RouteSpec{
+				Host: "myhost",
+			},
+		}})
 		return s
 	}
 
@@ -165,6 +191,23 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
+				Annotations: map[string]string{
+					consolelink.RouteAnnotation: "my-route-1",
+				},
+			},
+			Spec: osconsolev1.ConsoleLinkSpec{
+				Link: osconsolev1.Link{
+					Href: "https://host1",
+				},
+			},
+		},
+		&osroutev1.Route{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-route-1",
+				Namespace: nsnExisting.Namespace,
+			},
+			Spec: osroutev1.RouteSpec{
+				Host: "host1",
 			},
 		},
 	}
@@ -179,6 +222,17 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
+				Annotations: map[string]string{
+					consolelink.RouteAnnotation: "my-route-1",
+				},
+			},
+		}}).WithRoutes([]osroutev1.Route{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-route-1",
+				Namespace: nsn.Namespace,
+			},
+			Spec: osroutev1.RouteSpec{
+				Host: "host2",
 			},
 		}})
 		return s
@@ -196,10 +250,13 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
+	assert.Equal(t, "https://host2", persisted.Spec.Href)
 
 	persistedExisting := &osconsolev1.ConsoleLink{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
+	assert.Equal(t, "https://host1", persistedExisting.Spec.Href)
+
 }

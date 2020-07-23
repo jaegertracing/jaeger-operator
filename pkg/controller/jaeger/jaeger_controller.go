@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	osv1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -336,7 +337,13 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		if err := r.applyRoutes(ctx, jaeger, str.Routes()); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}
-		if err := r.applyConsoleLinks(ctx, jaeger, r.updateHref(ctx, jaeger, str.ConsoleLinks())); err != nil {
+		routes := osv1.RouteList{}
+		err = r.rClient.List(ctx, &routes)
+		if err == nil {
+			if err := r.applyConsoleLinks(ctx, jaeger, str.ConsoleLinks(routes.Items)); err != nil {
+				jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
+			}
+		} else {
 			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
 		}
 	} else {

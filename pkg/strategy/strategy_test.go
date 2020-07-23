@@ -31,7 +31,7 @@ func TestWithClusterRoleBindings(t *testing.T) {
 
 func TestWithConsoleLinks(t *testing.T) {
 	c := New().WithConsoleLinks([]osconsolev1.ConsoleLink{{}})
-	assert.Len(t, c.ConsoleLinks(), 1)
+	assert.Len(t, c.ConsoleLinks([]osv1.Route{{}}), 1)
 	assert.Len(t, c.All(), 1)
 }
 

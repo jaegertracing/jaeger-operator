@@ -3,6 +3,7 @@ package consolelink
 import (
 	"testing"
 
+	consolev1 "github.com/openshift/api/console/v1"
 	corev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,9 +38,8 @@ func TestUpdateHref(t *testing.T) {
 	jaegerName := "TestConsoleLinkJaeger"
 	jaegerNamespace := "TestNS"
 	routerNamer := "TestConsoleLinkRoute"
-
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: jaegerName, Namespace: jaegerNamespace})
-	route := &corev1.Route{
+	route := corev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
 			APIVersion: "route.openshift.io/v1",
@@ -49,11 +49,10 @@ func TestUpdateHref(t *testing.T) {
 		},
 	}
 
-	link := Get(jaeger, route)
+	link := Get(jaeger, &route)
 	assert.Equal(t, link.Spec.Href, "")
-
 	route.Spec.Host = "namespace.somehostname"
-	newLink := UpdateHref(*link, *route)
-	assert.Equal(t, "https://"+route.Spec.Host, newLink.Spec.Href)
+	newLinks := UpdateHref([]corev1.Route{route}, []consolev1.ConsoleLink{*link})
+	assert.Equal(t, "https://"+route.Spec.Host, newLinks[0].Spec.Href)
 
 }

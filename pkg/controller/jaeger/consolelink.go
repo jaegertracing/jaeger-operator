@@ -4,35 +4,14 @@ import (
 	"context"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
-	osroutev1 "github.com/openshift/api/route/v1"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/global"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
-
-func (r *ReconcileJaeger) updateHref(ctx context.Context,
-	jaeger v1.Jaeger, links []osconsolev1.ConsoleLink) []osconsolev1.ConsoleLink {
-	var updated []osconsolev1.ConsoleLink
-	for i, cl := range links {
-		routeName := cl.Annotations[consolelink.RouteAnnotation]
-		route := osroutev1.Route{}
-		if err := r.rClient.Get(ctx, types.NamespacedName{Name: routeName, Namespace: cl.Namespace}, &route); err != nil {
-			jaeger.Logger().WithError(err).WithFields(log.Fields{
-				"consoleLink": cl.Name,
-				"namespace":   cl.Namespace,
-			}).Warn("updating console link href")
-		}
-		undatedLink := consolelink.UpdateHref(links[i], route)
-		updated = append(updated, undatedLink)
-	}
-	return updated
-}
 
 func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {
 	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)

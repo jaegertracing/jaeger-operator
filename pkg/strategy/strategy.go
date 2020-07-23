@@ -12,6 +12,8 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
@@ -161,8 +163,8 @@ func (s S) ConfigMaps() []corev1.ConfigMap {
 }
 
 // ConsoleLinks returns the console links for this strategy
-func (s S) ConsoleLinks() []osconsolev1.ConsoleLink {
-	return s.consoleLinks
+func (s S) ConsoleLinks(routes []osv1.Route) []osconsolev1.ConsoleLink {
+	return consolelink.UpdateHref(routes, s.consoleLinks)
 }
 
 // CronJobs returns the list of cron jobs for this strategy
