@@ -17,8 +17,8 @@ var RouteAnnotation = "consolelink.jaegertracing.io/route"
 func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 	return &consolev1.ConsoleLink{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: jaeger.Namespace + ".jaeger-consolelink-" + jaeger.Name,
-			Namespace:jaeger.Namespace,
+			Name:      jaeger.Namespace + ".jaeger-consolelink-" + jaeger.Name,
+			Namespace: jaeger.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/instance":   jaeger.Name,
 				"app.kubernetes.io/managed-by": "jaeger-operator",
@@ -28,10 +28,14 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 			},
 		},
 		Spec: consolev1.ConsoleLinkSpec{
-			Location:        consolev1.ApplicationMenu,
-			ApplicationMenu: &consolev1.ApplicationMenuSpec{},
+			Location: consolev1.NamespaceDashboard,
 			Link: consolev1.Link{
-				Text: "Jaeger [" + jaeger.Name + "." + jaeger.Namespace + "]",
+				Text: "Jaeger [" + jaeger.Name + "]",
+			},
+			NamespaceDashboard: &consolev1.NamespaceDashboardSpec{
+				Namespaces: []string{
+					jaeger.Namespace,
+				},
 			},
 		},
 	}
