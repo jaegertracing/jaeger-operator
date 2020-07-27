@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -45,6 +46,10 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 				},
 				Spec: corev1.PodSpec{
 					RestartPolicy: corev1.RestartPolicyOnFailure,
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
+					SecurityContext:    commonSpec.SecurityContext,
+					ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
 					Volumes:       commonSpec.Volumes,
 					Containers: []corev1.Container{
 						{
