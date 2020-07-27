@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -11,6 +10,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 )
 
 // EnableRollover returns true if rollover should be enabled
