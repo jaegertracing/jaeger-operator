@@ -351,6 +351,13 @@ func TestSidecarNeeded(t *testing.T) {
 func TestSelect(t *testing.T) {
 	jTest := v1.NewJaeger(types.NamespacedName{Name: "test"})
 	jProd := v1.NewJaeger(types.NamespacedName{Name: "prod"})
+
+	depNsProd := dep(map[string]string{Annotation: "true"}, map[string]string{})
+	depNsProd.Namespace = "nsprod"
+
+	jTestNsTest := v1.NewJaeger(types.NamespacedName{Name: "test", Namespace: "nstest"})
+	jProdNsProd := v1.NewJaeger(types.NamespacedName{Name: "prod", Namespace: "nsprod"})
+
 	tests := []struct {
 		dep      *appsv1.Deployment
 		ns       *corev1.Namespace
@@ -434,6 +441,20 @@ func TestSelect(t *testing.T) {
 			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{}},
 			expected: nil,
 			cap:      "dep none, ns true, no jaegers",
+		},
+		{
+			dep:      depNsProd,
+			ns:       ns(map[string]string{}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTestNsTest, *jProdNsProd}},
+			expected: jProdNsProd,
+			cap:      "dep true, two jaeger instances one in the same ns",
+		},
+		{
+			dep:      depNsProd,
+			ns:       ns(map[string]string{Annotation: "true"}),
+			jaegers:  &v1.JaegerList{Items: []v1.Jaeger{*jTestNsTest, *jProdNsProd}},
+			expected: jProdNsProd,
+			cap:      "dep none, ns true, two jaeger instances one in the same ns",
 		},
 	}
 
