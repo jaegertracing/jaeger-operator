@@ -15,7 +15,7 @@ import (
 func TestConsoleLinkGet(t *testing.T) {
 	jaegerName := "TestConsoleLinkJaeger"
 	jaegerNamespace := "TestNS"
-	routerNamer := "TestConsoleLinkRoute"
+	routerName := "TestConsoleLinkRoute"
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: jaegerName, Namespace: jaegerNamespace})
 	route := &corev1.Route{
@@ -24,14 +24,14 @@ func TestConsoleLinkGet(t *testing.T) {
 			APIVersion: "route.openshift.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: routerNamer,
+			Name: routerName,
 		},
 	}
 
 	link := Get(jaeger, route)
 	assert.Equal(t, "jaeger-"+jaeger.Namespace+"-"+jaeger.Name, link.Name)
 	assert.Contains(t, link.Annotations, RouteAnnotation)
-	assert.Equal(t, routerNamer, link.Annotations[RouteAnnotation])
+	assert.Equal(t, routerName, link.Annotations[RouteAnnotation])
 }
 
 func TestUpdateHref(t *testing.T) {

@@ -179,20 +179,27 @@ func TestConsoleLinkDelete(t *testing.T) {
 }
 
 func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
-	// prepare
+	// This test validate that creating a new jaeger instance with the same
+	// name as another existing instance but in a different namespace does not interfere each other
+	// Prepare
+	// New instance to be created.
 	nsn := types.NamespacedName{
 		Name:      "my-instance-1",
 		Namespace: "tenant1",
 	}
+
+	// Existing one
 	nsnExisting := types.NamespacedName{
-		Name:      "my-instance-2",
+		Name:      "my-instance-1",
 		Namespace: "tenant2",
 	}
+
 	viper.Set("platform", "openshift")
 	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 
 	defer viper.Reset()
 
+	// Existing console link and route
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
@@ -226,20 +233,25 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	}
 
 	r, cl := getReconciler(objs)
+	// New console link but in different namespace.
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
 		s := strategy.New().WithConsoleLinks([]osconsolev1.ConsoleLink{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
+				// Same route name and anotation
 				Annotations: map[string]string{
 					consolelink.RouteAnnotation: "my-route-1",
 				},
 			},
 		}}).WithRoutes([]osroutev1.Route{{
+			// Same route name as existing BUT different namespace
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-route-1",
 				Namespace: nsn.Namespace,
 			},
+			// Set different host from existing, just for validate that the new link
+			// will be associated with the correct route.
 			Spec: osroutev1.RouteSpec{
 				Host: "host2",
 			},
@@ -259,6 +271,7 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
+	// New instance should have Href=host2
 	assert.Equal(t, "https://host2", persisted.Spec.Href)
 
 	persistedExisting := &osconsolev1.ConsoleLink{}
@@ -266,6 +279,7 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
+	// Existing should have Href=host1, reconciliation should not touch existing instances.
 	assert.Equal(t, "https://host1", persistedExisting.Spec.Href)
 
 }
