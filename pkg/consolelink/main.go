@@ -13,7 +13,7 @@ import (
 // RouteAnnotation used to annotate the link with the route name
 var RouteAnnotation = "consolelink.jaegertracing.io/route"
 
-// Get returns an ConsoleLink specification for the current instance
+// Get returns a ConsoleLink specification for the current instance
 func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 	// If ingress is not enable there is no reason for create a console link
 	if jaeger.Spec.Ingress.Enabled != nil && *jaeger.Spec.Ingress.Enabled == false {
@@ -22,10 +22,12 @@ func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 
 	return &consolev1.ConsoleLink{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jaeger.Namespace + ".jaeger-consolelink-" + jaeger.Name,
-			Namespace: jaeger.Namespace,
+			Name:      "jaeger-" + jaeger.Namespace + "-" + jaeger.Name,
+			Namespace: jaeger.Namespace, // Prevent warning at creation time.
 			Labels: map[string]string{
-				"app.kubernetes.io/instance":   jaeger.Name,
+				"app.kubernetes.io/instance": jaeger.Name,
+				// Allow distinction between same jaeger instances in different namespaces
+				"app.kubernetes.io/namespace":  jaeger.Namespace,
 				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 			Annotations: map[string]string{

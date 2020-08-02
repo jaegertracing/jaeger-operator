@@ -18,6 +18,7 @@ import (
 
 func init() {
 	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+
 }
 
 func TestCreateStreamingDeployment(t *testing.T) {
@@ -205,7 +206,7 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[name] = false
-		consoleLinks[".jaeger-consolelink-"+name] = false
+		consoleLinks["jaeger--"+name] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}

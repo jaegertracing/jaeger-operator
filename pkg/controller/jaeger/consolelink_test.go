@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
@@ -26,6 +28,7 @@ func TestConsoleLinkCreate(t *testing.T) {
 		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	defer viper.Reset()
 
 	objs := []runtime.Object{
@@ -81,6 +84,7 @@ func TestConsoleLinkUpdate(t *testing.T) {
 		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	defer viper.Reset()
 
 	orig := osconsolev1.ConsoleLink{}
@@ -88,6 +92,7 @@ func TestConsoleLinkUpdate(t *testing.T) {
 	orig.Annotations = map[string]string{"key": "value"}
 	orig.Labels = map[string]string{
 		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/namespace":  orig.Namespace,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
@@ -137,12 +142,14 @@ func TestConsoleLinkDelete(t *testing.T) {
 		Name: "my-instance",
 	}
 	viper.Set("platform", "openshift")
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	defer viper.Reset()
 
 	orig := osconsolev1.ConsoleLink{}
 	orig.Name = nsn.Name
 	orig.Labels = map[string]string{
 		"app.kubernetes.io/instance":   orig.Name,
+		"app.kubernetes.io/namespace":  orig.Namespace,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
@@ -182,6 +189,8 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 	viper.Set("platform", "openshift")
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
+
 	defer viper.Reset()
 
 	objs := []runtime.Object{
@@ -259,4 +268,62 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 	assert.Equal(t, "https://host1", persistedExisting.Spec.Href)
 
+}
+
+func TestConsoleLinksSkipped(t *testing.T) {
+	namespace := "observability"
+	viper.Set("platform", "openshift")
+	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeNamespace)
+	viper.Set(v1.ConfigWatchNamespace, namespace)
+	defer viper.Reset()
+
+	nsn := types.NamespacedName{
+		Name:      "my-instance",
+		Namespace: namespace,
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
+		s := strategy.New().WithConsoleLinks([]osconsolev1.ConsoleLink{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsn.Name,
+				Namespace: nsn.Namespace,
+				Annotations: map[string]string{
+					consolelink.RouteAnnotation: "my-route-1",
+				},
+			},
+		}}).WithRoutes([]osroutev1.Route{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-route-1",
+				Namespace: nsn.Namespace,
+			},
+			Spec: osroutev1.RouteSpec{
+				Host: "host",
+			},
+		}})
+		return s
+	}
+
+	// test
+	res, err := r.Reconcile(req)
+
+	// verify
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue, "We don't requeue for now")
+
+	persisted := &osconsolev1.ConsoleLink{}
+	persistedName := types.NamespacedName{
+		Name:      nsn.Name,
+		Namespace: nsn.Namespace,
+	}
+	err = cl.Get(context.Background(), persistedName, persisted)
+	assert.Equal(t, metav1.StatusReasonNotFound, errors.ReasonForError(err))
 }

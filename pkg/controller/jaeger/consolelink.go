@@ -5,6 +5,7 @@ import (
 
 	osconsolev1 "github.com/openshift/api/console/v1"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -18,10 +19,15 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 	ctx, span := tracer.Start(ctx, "applyConsoleLinks")
 	defer span.End()
 
+	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {
+		jaeger.Logger().Trace("console link skipped, operator isn't cluster-wide")
+		return nil
+	}
+
 	opts := []client.ListOption{
-		client.InNamespace(jaeger.Namespace),
 		client.MatchingLabels(map[string]string{
 			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/namespace":  jaeger.Namespace,
 			"app.kubernetes.io/managed-by": "jaeger-operator",
 		}),
 	}

@@ -338,13 +338,13 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			return jaeger, tracing.HandleError(err, span)
 		}
 		routes := osv1.RouteList{}
-		err = r.rClient.List(ctx, &routes)
+		err = r.rClient.List(ctx, &routes, client.InNamespace(jaeger.Namespace))
 		if err == nil {
 			if err := r.applyConsoleLinks(ctx, jaeger, str.ConsoleLinks(routes.Items)); err != nil {
 				jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
 			}
 		} else {
-			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
+			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to obtain a list of routes to reconcile consolelinks")
 		}
 	} else {
 		if err := r.applyIngresses(ctx, jaeger, str.Ingresses()); err != nil {

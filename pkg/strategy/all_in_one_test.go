@@ -113,7 +113,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[fmt.Sprintf("%s", util.DNSName(name))] = false
-		consoleLinks[".jaeger-consolelink-"+name] = false
+		consoleLinks["jaeger--"+name] = false
 
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
