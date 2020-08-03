@@ -6,11 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -21,8 +23,9 @@ func init() {
 
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
-	c := newAllInOneStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
-	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, false)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	c := newAllInOneStrategy(context.Background(), jaeger)
+	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
@@ -34,7 +37,7 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	normalize(context.Background(), jaeger)
 
 	c := newAllInOneStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForAllInOne(t, name, c, false, true, false)
+	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, true, false)
 }
 
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -44,7 +47,7 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, name, c, true, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
@@ -58,7 +61,7 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 	})
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, name, c, false, false, true)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, true)
 }
 
 func TestDelegateAllInOneDependencies(t *testing.T) {
@@ -74,9 +77,9 @@ func TestNoAutoscaleForAllInOne(t *testing.T) {
 	assert.Len(t, c.HorizontalPodAutoscalers(), 0)
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	// TODO(jpkroehling): this func deserves a refactoring already
-
+	name := instance.Name
 	expectedNumObjs := 7
 
 	if hasDaemonSet {
@@ -113,7 +116,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, name string, s S, has
 	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[fmt.Sprintf("%s", util.DNSName(name))] = false
-		consoleLinks["jaeger--"+name] = false
+		consoleLinks[consolelink.Name(instance)] = false
 
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -23,8 +25,9 @@ func init() {
 
 func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
-	c := newProductionStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
-	assertDeploymentsAndServicesForProduction(t, name, c, false, false, false)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	c := newProductionStrategy(context.Background(), jaeger)
+	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, false, false)
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
@@ -36,7 +39,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	normalize(context.Background(), jaeger)
 
 	c := newProductionStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForProduction(t, name, c, false, true, false)
+	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, true, false)
 }
 
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -46,7 +49,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newProductionStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForProduction(t, name, c, true, false, false)
+	assertDeploymentsAndServicesForProduction(t, j, c, true, false, false)
 }
 
 func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
@@ -60,7 +63,7 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 	})
 
 	c := newProductionStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForProduction(t, name, c, false, false, true)
+	assertDeploymentsAndServicesForProduction(t, j, c, false, false, true)
 }
 
 func TestOptionsArePassed(t *testing.T) {
@@ -120,7 +123,8 @@ func TestAutoscaleForProduction(t *testing.T) {
 	assert.Len(t, c.HorizontalPodAutoscalers(), 1)
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+	name := instance.Name
 	expectedNumObjs := 7
 
 	if hasDaemonSet {
@@ -154,7 +158,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, name string, s S, h
 	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[util.DNSName(name)] = false
-		consoleLinks["jaeger--"+name] = false
+		consoleLinks[consolelink.Name(instance)] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}

@@ -239,7 +239,7 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
-				// Same route name and anotation
+				// Same route name and annotation
 				Annotations: map[string]string{
 					consolelink.RouteAnnotation: "my-route-1",
 				},

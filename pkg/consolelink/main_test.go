@@ -1,6 +1,7 @@
 package consolelink
 
 import (
+	"fmt"
 	"testing"
 
 	consolev1 "github.com/openshift/api/console/v1"
@@ -29,7 +30,7 @@ func TestConsoleLinkGet(t *testing.T) {
 	}
 
 	link := Get(jaeger, route)
-	assert.Equal(t, "jaeger-"+jaeger.Namespace+"-"+jaeger.Name, link.Name)
+	assert.Equal(t, Name(jaeger), link.Name)
 	assert.Contains(t, link.Annotations, RouteAnnotation)
 	assert.Equal(t, routerName, link.Annotations[RouteAnnotation])
 }
@@ -53,6 +54,5 @@ func TestUpdateHref(t *testing.T) {
 	assert.Equal(t, link.Spec.Href, "")
 	route.Spec.Host = "namespace.somehostname"
 	newLinks := UpdateHref([]corev1.Route{route}, []consolev1.ConsoleLink{*link})
-	assert.Equal(t, "https://"+route.Spec.Host, newLinks[0].Spec.Href)
-
+	assert.Equal(t, fmt.Sprintf("https://%s", route.Spec.Host), newLinks[0].Spec.Href)
 }
