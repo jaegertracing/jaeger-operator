@@ -1,6 +1,7 @@
 package strategy
 
 import (
+	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
@@ -10,6 +11,8 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
@@ -23,6 +26,7 @@ type S struct {
 	accounts                 []corev1.ServiceAccount
 	clusterRoleBindings      []rbac.ClusterRoleBinding
 	configMaps               []corev1.ConfigMap
+	consoleLinks             []osconsolev1.ConsoleLink
 	cronJobs                 []batchv1beta1.CronJob
 	daemonSets               []appsv1.DaemonSet
 	dependencies             []batchv1.Job
@@ -56,6 +60,12 @@ func (s S) WithAccounts(accs []corev1.ServiceAccount) S {
 // WithClusterRoleBindings returns the strategy with the given list of config maps
 func (s S) WithClusterRoleBindings(c []rbac.ClusterRoleBinding) S {
 	s.clusterRoleBindings = c
+	return s
+}
+
+// WithConsoleLinks returns the strategy with the given list of console links
+func (s S) WithConsoleLinks(c []osconsolev1.ConsoleLink) S {
+	s.consoleLinks = c
 	return s
 }
 
@@ -152,6 +162,11 @@ func (s S) ConfigMaps() []corev1.ConfigMap {
 	return s.configMaps
 }
 
+// ConsoleLinks returns the console links for this strategy
+func (s S) ConsoleLinks(routes []osv1.Route) []osconsolev1.ConsoleLink {
+	return consolelink.UpdateHref(routes, s.consoleLinks)
+}
+
 // CronJobs returns the list of cron jobs for this strategy
 func (s S) CronJobs() []batchv1beta1.CronJob {
 	return s.cronJobs
@@ -224,6 +239,10 @@ func (s S) All() []runtime.Object {
 	}
 
 	for _, o := range s.clusterRoleBindings {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.consoleLinks {
 		ret = append(ret, o.DeepCopy())
 	}
 
