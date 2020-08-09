@@ -111,7 +111,12 @@ func TestExtractSecretsToFile(t *testing.T) {
 
 func TestExtractSecretsToFile_Err(t *testing.T) {
 	err := extractSecretToFile("/root", map[string][]byte{"foo": {}}, secret{keyFileNameMap: map[string]string{"foo": "foo"}})
-	assert.EqualError(t, err, "open /root/foo: permission denied")
+	assert.Error(t, err)
+
+	// Avoid assertions on OS-dependent error messages which may differ between OSes.
+	patherr, ok := err.(*os.PathError)
+	assert.Error(t, patherr)
+	assert.True(t, ok)
 }
 
 func TestExtractSecretsToFile_FileExists(t *testing.T) {
@@ -141,13 +146,13 @@ func TestWriteToWorkingDir(t *testing.T) {
 	tests := []struct {
 		dir  string
 		file string
-		err  string
+		err  bool
 	}{
 		{
-			dir: "/foo", file: "", err: "mkdir /foo: permission denied",
+			dir: "/foo", file: "", err: true,
 		},
 		{
-			dir: "/root", file: "bla", err: "open /root/bla: permission denied",
+			dir: "/root", file: "bla", err: true,
 		},
 		{
 			// file exists
@@ -160,8 +165,13 @@ func TestWriteToWorkingDir(t *testing.T) {
 	}
 	for _, test := range tests {
 		err := writeToFile(test.dir, test.file, []byte("random"))
-		if test.err != "" {
-			assert.EqualError(t, err, test.err)
+		if test.err {
+			assert.Error(t, err)
+
+			// Avoid assertions on OS-dependent error messages which may differ between OSes.
+			patherr, ok := err.(*os.PathError)
+			assert.Error(t, patherr)
+			assert.True(t, ok)
 		} else {
 			assert.NoError(t, err)
 			stat, err := os.Stat(fmt.Sprintf("%s/%s", test.dir, test.file))
