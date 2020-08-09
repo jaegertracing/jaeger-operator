@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -144,15 +145,15 @@ func TestWriteToWorkingDir(t *testing.T) {
 	_, testFile, _, _ := runtime.Caller(0)
 	defer os.RemoveAll(os.TempDir() + "/foo")
 	tests := []struct {
-		dir  string
-		file string
-		err  bool
+		dir         string
+		file        string
+		wantErrType reflect.Type
 	}{
 		{
-			dir: "/foo", file: "", err: true,
+			dir: "/foo", file: "", wantErrType: reflect.TypeOf((*os.PathError)(nil)),
 		},
 		{
-			dir: "/root", file: "bla", err: true,
+			dir: "/root", file: "bla", wantErrType: reflect.TypeOf((*os.PathError)(nil)),
 		},
 		{
 			// file exists
@@ -165,13 +166,12 @@ func TestWriteToWorkingDir(t *testing.T) {
 	}
 	for _, test := range tests {
 		err := writeToFile(test.dir, test.file, []byte("random"))
-		if test.err {
+		if test.wantErrType != nil {
 			assert.Error(t, err)
 
 			// Avoid assertions on OS-dependent error messages which may differ between OSes.
-			patherr, ok := err.(*os.PathError)
-			assert.Error(t, patherr)
-			assert.True(t, ok)
+			errType := reflect.TypeOf(err)
+			assert.True(t, test.wantErrType == errType)
 		} else {
 			assert.NoError(t, err)
 			stat, err := os.Stat(fmt.Sprintf("%s/%s", test.dir, test.file))
