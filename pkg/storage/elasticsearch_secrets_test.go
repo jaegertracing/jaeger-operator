@@ -112,7 +112,6 @@ func TestExtractSecretsToFile(t *testing.T) {
 
 func TestExtractSecretsToFile_Err(t *testing.T) {
 	err := extractSecretToFile("/root", map[string][]byte{"foo": {}}, secret{keyFileNameMap: map[string]string{"foo": "foo"}})
-	assert.Error(t, err)
 
 	// Avoid assertions on OS-dependent error messages which may differ between OSes.
 	patherr, ok := err.(*os.PathError)
@@ -167,8 +166,6 @@ func TestWriteToWorkingDir(t *testing.T) {
 	for _, test := range tests {
 		err := writeToFile(test.dir, test.file, []byte("random"))
 		if test.wantErrType != nil {
-			assert.Error(t, err)
-
 			// Avoid assertions on OS-dependent error messages which may differ between OSes.
 			errType := reflect.TypeOf(err)
 			assert.True(t, test.wantErrType == errType)
