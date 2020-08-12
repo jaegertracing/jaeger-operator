@@ -37,7 +37,6 @@ func NewAllInOne(jaeger *v1.Jaeger) *AllInOne {
 // Get returns a pod for the current all-in-one configuration
 func (a *AllInOne) Get() *appsv1.Deployment {
 	a.jaeger.Logger().Debug("Assembling an all-in-one deployment")
-	labels := a.labels()
 	trueVar := true
 
 	args := append(a.jaeger.Spec.AllInOne.Options.ToArgs())
@@ -51,7 +50,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
-		Labels: labels,
+		Labels: a.labels(),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
