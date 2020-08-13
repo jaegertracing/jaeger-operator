@@ -19,12 +19,12 @@ KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operat
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.16.2/strimzi-cluster-operator-0.16.2.yaml"
 ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.4
-PROMETHEUS_OPERATOR_TAG ?= v0.39.0
-PROMETHEUS_RULES_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-PROMETHEUS_SERVICE_MONITORS_CRD ?= https://raw.githubusercontent.com/coreos/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
 GOPATH ?= "$(HOME)/go"
+
+PROMETHEUS_OPERATOR_TAG ?= v0.39.0
+PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
@@ -185,13 +185,11 @@ set-node-os-linux:
 	@kubectl label nodes --all kubernetes.io/os=linux --overwrite
 
 .PHONY: deploy-es-operator
-deploy-es-operator: set-node-os-linux set-max-map-count
+deploy-es-operator: set-node-os-linux set-max-map-count deploy-prometheus-operator
 ifeq ($(OLM),true)
 	@echo Skipping es-operator deployment, assuming it has been installed via OperatorHub
 else
 	@kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
-	@kubectl apply -f ${PROMETHEUS_RULES_CRD}
-	@kubectl apply -f ${PROMETHEUS_SERVICE_MONITORS_CRD}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml
 	@kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml
@@ -210,8 +208,6 @@ else
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml --ignore-not-found=true || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml --ignore-not-found=true || true
 	@kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	@kubectl delete -f ${PROMETHEUS_SERVICE_MONITORS_CRD} --ignore-not-found=true || true
-	@kubectl delete -f ${PROMETHEUS_RULES_CRD} --ignore-not-found=true || true
 	@kubectl delete namespace ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true 2>&1 || true
 endif
 
@@ -268,8 +264,25 @@ kafka: deploy-kafka-operator
 undeploy-kafka: undeploy-kafka-operator
 	@kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
 
+
+.PHONY: deploy-prometheus-operator
+deploy-prometheus-operator:
+ifeq ($(OLM),true)
+	@echo Skipping prometheus-operator deployment, assuming it has been installed via OperatorHub
+else
+	@kubectl apply -f ${PROMETHEUS_BUNDLE}
+endif
+
+.PHONY: undeploy-prometheus-operator
+undeploy-prometheus-operator:
+ifeq ($(OLM),true)
+	@echo Skipping prometheus-operator undeployment, as it should have been installed via OperatorHub
+else
+	@kubectl delete -f ${PROMETHEUS_BUNDLE} --ignore-not-found=true || true
+endif
+
 .PHONY: clean
-clean: undeploy-kafka undeploy-es-operator
+clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator
 	@rm -f deploy/test/*.yaml 
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -329,8 +342,8 @@ install: install-sdk install-tools
 .PHONY: deploy
 deploy: ingress crd
 	@kubectl apply -f deploy/service_account.yaml
-	@kubectl apply -f deploy/role.yaml
-	@kubectl apply -f deploy/role_binding.yaml
+	@kubectl apply -f deploy/cluster_role.yaml
+	@kubectl apply -f deploy/cluster_role_binding.yaml
 	@sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml | kubectl apply -f -
 
 .PHONY: operatorhub
