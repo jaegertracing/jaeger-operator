@@ -122,16 +122,36 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 		return jaeger
 	}
 
-	if (strings.EqualFold(jaegerNameDep, "true") || strings.EqualFold(jaegerNameNs, "true")) &&
-		len(availableJaegerPods.Items) == 1 {
-		// if there's only *one* jaeger within this namespace, then that's what
-		// we'll use -- otherwise, we should just not inject, as it's not clear which
-		// jaeger instance to use!
-		// first, we make sure we normalize the name:
-		jaeger := &availableJaegerPods.Items[0]
-		return jaeger
+	if strings.EqualFold(jaegerNameDep, "true") || strings.EqualFold(jaegerNameNs, "true") {
+		// If there is only *one* available instance in all watched namespaces
+		// then that's what we'll use
+		if len(availableJaegerPods.Items) == 1 {
+			jaeger := &availableJaegerPods.Items[0]
+			return jaeger
+		}
+		// If there is more than one available instance in all watched namespaces
+		// then we should find if there is only *one* on the same namespace
+		// if that is the case. we should use it.
+		instancesInNamespace := getJaegerFromNamespace(target.Namespace, availableJaegerPods)
+		if len(instancesInNamespace) == 1 {
+			jaeger := instancesInNamespace[0]
+			return jaeger
+		}
+		// At this point, we have more than one instance that could be used to inject
+		// we should just not inject, as it's not clear which one should be used.
 	}
 	return nil
+}
+
+func getJaegerFromNamespace(namespace string, jaegers *v1.JaegerList) []*v1.Jaeger {
+	var instances []*v1.Jaeger
+	for _, p := range jaegers.Items {
+		if p.Namespace == namespace {
+			// matched the namespace!
+			instances = append(instances, &p)
+		}
+	}
+	return instances
 }
 
 func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {

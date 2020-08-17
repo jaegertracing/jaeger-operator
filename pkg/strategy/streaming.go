@@ -19,6 +19,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
@@ -101,6 +102,9 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			manifest.routes = append(manifest.routes, *q)
+			if link := consolelink.Get(jaeger, q); link != nil {
+				manifest.consoleLinks = append(manifest.consoleLinks, *link)
+			}
 		}
 	} else {
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {

@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -44,8 +45,12 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Labels:      commonSpec.Labels,
 				},
 				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyOnFailure,
-					Volumes:       commonSpec.Volumes,
+					RestartPolicy:      corev1.RestartPolicyOnFailure,
+					Affinity:           commonSpec.Affinity,
+					Tolerations:        commonSpec.Tolerations,
+					SecurityContext:    commonSpec.SecurityContext,
+					ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
+					Volumes:            commonSpec.Volumes,
 					Containers: []corev1.Container{
 						{
 							Name:         name,

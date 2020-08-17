@@ -42,6 +42,7 @@ var (
 	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
 	debugMode            = getBoolEnv("DEBUG_MODE", false)
 	usingOLM             = getBoolEnv("OLM", false)
+	usingJaegerViaOLM    = getBoolEnv("JAEGER_OLM", false)
 	saveLogs             = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	testOtelCollector    = getBoolEnv("USE_OTEL_COLLECTOR", false)
@@ -103,16 +104,20 @@ func GetPod(namespace, namePrefix, containsImage string, kubeclient kubernetes.I
 	return *emptyPod
 }
 
-func prepare(t *testing.T) (*framework.TestCtx, error) {
+func prepare(t *testing.T) (*framework.Context, error) {
 	t.Logf("debug mode: %v", debugMode)
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	// Install jaeger-operator unless we've installed it from OperatorHub
 	start := time.Now()
-	if !usingOLM {
+	if !usingJaegerViaOLM {
 		err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: 10 * time.Minute, RetryInterval: retryInterval})
 		if err != nil {
 			t.Errorf("failed to initialize cluster resources: %v", err)
 		}
+	} else {
+		// Hacky - as of Operator SDK 0.18.2 calling getOperatorNamespace is required to actually create the namespace
+		_, err := ctx.GetOperatorNamespace()
+		require.NoError(t, err)
 	}
 
 	namespace := ctx.GetID()
@@ -153,7 +158,7 @@ func prepare(t *testing.T) (*framework.TestCtx, error) {
 	// get global framework variables
 	f := framework.Global
 	// wait for the operator to be ready
-	if !usingOLM {
+	if !usingJaegerViaOLM {
 		err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "jaeger-operator", 1, retryInterval, timeout)
 		if err != nil {
 			logrus.Errorf("WaitForDeployment returned error %v", err)
@@ -191,7 +196,7 @@ func getJaegerOperatorImages(kubeclient kubernetes.Interface, namespace string) 
 }
 
 func getJaegerOperatorNamespace() string {
-	if !usingOLM {
+	if !usingJaegerViaOLM {
 		return namespace
 	}
 
@@ -363,7 +368,7 @@ func WaitAndPollForHTTPResponse(targetURL string, condition ValidateHTTPResponse
 
 func handleSuiteTearDown() {
 	logrus.Info("Entering TearDownSuite()")
-	if saveLogs && !usingOLM {
+	if saveLogs && !usingJaegerViaOLM {
 		var logFileNameBase string
 		// Sometimes t.Name() returns just the suite name, other times it returns suite/lastTestRun.
 		// Here we just want the suite name

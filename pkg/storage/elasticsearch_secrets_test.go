@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -111,7 +112,11 @@ func TestExtractSecretsToFile(t *testing.T) {
 
 func TestExtractSecretsToFile_Err(t *testing.T) {
 	err := extractSecretToFile("/root", map[string][]byte{"foo": {}}, secret{keyFileNameMap: map[string]string{"foo": "foo"}})
-	assert.EqualError(t, err, "open /root/foo: permission denied")
+
+	// Avoid assertions on OS-dependent error messages which may differ between OSes.
+	patherr, ok := err.(*os.PathError)
+	assert.Error(t, patherr)
+	assert.True(t, ok)
 }
 
 func TestExtractSecretsToFile_FileExists(t *testing.T) {
@@ -139,15 +144,15 @@ func TestWriteToWorkingDir(t *testing.T) {
 	_, testFile, _, _ := runtime.Caller(0)
 	defer os.RemoveAll(os.TempDir() + "/foo")
 	tests := []struct {
-		dir  string
-		file string
-		err  string
+		dir         string
+		file        string
+		wantErrType reflect.Type
 	}{
 		{
-			dir: "/foo", file: "", err: "mkdir /foo: permission denied",
+			dir: "/foo", file: "", wantErrType: reflect.TypeOf((*os.PathError)(nil)),
 		},
 		{
-			dir: "/root", file: "bla", err: "open /root/bla: permission denied",
+			dir: "/root", file: "bla", wantErrType: reflect.TypeOf((*os.PathError)(nil)),
 		},
 		{
 			// file exists
@@ -160,8 +165,10 @@ func TestWriteToWorkingDir(t *testing.T) {
 	}
 	for _, test := range tests {
 		err := writeToFile(test.dir, test.file, []byte("random"))
-		if test.err != "" {
-			assert.EqualError(t, err, test.err)
+		if test.wantErrType != nil {
+			// Avoid assertions on OS-dependent error messages which may differ between OSes.
+			errType := reflect.TypeOf(err)
+			assert.True(t, test.wantErrType == errType)
 		} else {
 			assert.NoError(t, err)
 			stat, err := os.Stat(fmt.Sprintf("%s/%s", test.dir, test.file))

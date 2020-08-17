@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -184,6 +185,9 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 
 	// OpenShift Route
 	osv1.Install(s)
+
+	// OpenShift ConsoleLink
+	osconsolev1.Install(s)
 
 	// Jaeger
 	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})

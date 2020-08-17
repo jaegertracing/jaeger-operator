@@ -83,6 +83,11 @@ func TestAllInOneLabels(t *testing.T) {
 	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+
+	// Deployment selectors should be the same as the template labels.
+	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
+	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
+	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
 }
 
 func TestAllInOneHasOwner(t *testing.T) {

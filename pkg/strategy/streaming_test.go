@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -22,8 +24,9 @@ func init() {
 
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "my-instance"
-	c := newStreamingStrategy(context.Background(), v1.NewJaeger(types.NamespacedName{Name: name}))
-	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, false)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	c := newStreamingStrategy(context.Background(), jaeger)
+	assertDeploymentsAndServicesForStreaming(t, jaeger, c, false, false, false)
 }
 
 func TestStreamingKafkaProvisioning(t *testing.T) {
@@ -68,7 +71,7 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	normalize(context.Background(), jaeger)
 
 	c := newStreamingStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForStreaming(t, name, c, false, true, false)
+	assertDeploymentsAndServicesForStreaming(t, jaeger, c, false, true, false)
 }
 
 func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -78,7 +81,7 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newStreamingStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForStreaming(t, name, c, true, false, false)
+	assertDeploymentsAndServicesForStreaming(t, j, c, true, false, false)
 }
 
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
@@ -92,7 +95,7 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 	})
 
 	c := newStreamingStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForStreaming(t, name, c, false, false, true)
+	assertDeploymentsAndServicesForStreaming(t, j, c, false, false, true)
 }
 
 func TestStreamingOptionsArePassed(t *testing.T) {
@@ -171,7 +174,8 @@ func TestAutoscaleForStreaming(t *testing.T) {
 	assert.Len(t, c.HorizontalPodAutoscalers(), 2)
 }
 
-func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func assertDeploymentsAndServicesForStreaming(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+	name := instance.Name
 	expectedNumObjs := 7
 
 	if hasDaemonSet {
@@ -202,8 +206,10 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
+	consoleLinks := map[string]bool{}
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		routes[name] = false
+		consoleLinks[consolelink.Name(instance)] = false
 	} else {
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
@@ -217,7 +223,7 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, name string, s S, ha
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesStreaming(t *testing.T) {
