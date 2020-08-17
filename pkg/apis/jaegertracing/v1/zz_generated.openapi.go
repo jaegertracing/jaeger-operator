@@ -1657,7 +1657,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 					},
 					"serviceType": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Service type represents the type of Service to create. Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName. The default, if omitted, is ClusterIP. See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+							Description: "ServiceType represents the type of Service to create. Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName. The default, if omitted, is ClusterIP. See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
 							Type:        []string{"string"},
 							Format:      "",
 						},

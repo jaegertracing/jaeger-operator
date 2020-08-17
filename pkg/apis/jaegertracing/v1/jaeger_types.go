@@ -202,7 +202,7 @@ type JaegerQuerySpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
-	// Service type represents the type of Service to create.
+	// ServiceType represents the type of Service to create.
 	// Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName.
 	// The default, if omitted, is ClusterIP.
 	// See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
