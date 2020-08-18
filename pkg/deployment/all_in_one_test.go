@@ -345,3 +345,10 @@ func TestAllInOneOTELConfig_error(t *testing.T) {
 	assert.False(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
 	assert.False(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
+
+func TestAllInOneServiceLinks(t *testing.T) {
+	a := NewAllInOne(v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneServiceLinks"}))
+	dep := a.Get()
+	falseVar := false
+	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}

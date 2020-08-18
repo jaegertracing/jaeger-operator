@@ -45,6 +45,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	labels := i.labels()
 	trueVar := true
+	falseVar := false
 
 	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
 
@@ -162,6 +163,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
+					EnableServiceLinks: &falseVar,
 				},
 			},
 		},

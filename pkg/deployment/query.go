@@ -34,6 +34,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	q.jaeger.Logger().Debug("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
+	falseVar := false
 
 	args := append(q.jaeger.Spec.Query.Options.ToArgs())
 
@@ -155,6 +156,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
+					EnableServiceLinks: &falseVar,
 				},
 			},
 		},

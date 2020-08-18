@@ -453,3 +453,10 @@ func TestIngesterOTELConfig(t *testing.T) {
 	assert.True(t, hasVolume("instance-ingester-otel-config", d.Spec.Template.Spec.Volumes))
 	assert.True(t, hasVolumeMount("instance-ingester-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
+
+func TestIngesterServiceLinks(t *testing.T) {
+	ingester := NewIngester(newIngesterJaeger("TestIngesterServiceLinks"))
+	dep := ingester.Get()
+	falseVar := false
+	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}

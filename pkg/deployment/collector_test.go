@@ -539,6 +539,13 @@ func TestCollectorOTELConfig(t *testing.T) {
 	assert.True(t, hasVolumeMount("instance-collector-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
+func TestCollectorServiceLinks(t *testing.T) {
+	c := NewCollector(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	dep := c.Get()
+	falseVar := false
+	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}
+
 func hasVolume(name string, volumes []corev1.Volume) bool {
 	for _, v := range volumes {
 		if v.Name == name {
