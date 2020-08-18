@@ -86,7 +86,7 @@ func (suite *StreamingTestSuite) TestStreaming() {
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithTLS() {
-	if !usingOLM {
+	if !usingJaegerViaOLM {
 		t.Skip("This test should only run when using OLM")
 	}
 	// Make sure ES and the kafka instance are available
