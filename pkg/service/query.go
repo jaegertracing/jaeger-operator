@@ -39,8 +39,8 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			},
 		},
 		Spec: corev1.ServiceSpec{
-			Selector:  selector,
-			ClusterIP: "",
+			Selector: selector,
+			Type:     getTypeForQueryService(jaeger),
 			Ports: []corev1.ServicePort{
 				{
 					Name:       getPortNameForQueryService(jaeger),
@@ -82,4 +82,11 @@ func getTargetPortForQueryService(jaeger *v1.Jaeger) int {
 		return 8443
 	}
 	return 16686
+}
+
+func getTypeForQueryService(jaeger *v1.Jaeger) corev1.ServiceType {
+	if jaeger.Spec.Query.ServiceType != "" {
+		return jaeger.Spec.Query.ServiceType
+	}
+	return corev1.ServiceTypeClusterIP
 }
