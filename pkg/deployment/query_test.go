@@ -315,3 +315,10 @@ func TestQueryOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 }
+
+func TestQueryServiceLinks(t *testing.T) {
+	query := NewQuery(v1.NewJaeger(types.NamespacedName{Name: "TestQueryServiceLinks"}))
+	dep := query.Get()
+	falseVar := false
+	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}

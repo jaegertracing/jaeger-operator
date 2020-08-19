@@ -39,6 +39,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	labels := c.labels()
 	trueVar := true
+	falseVar := false
 
 	args := append(c.jaeger.Spec.Collector.Options.ToArgs())
 
@@ -187,6 +188,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
+					EnableServiceLinks: &falseVar,
 				},
 			},
 		},

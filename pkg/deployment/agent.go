@@ -65,6 +65,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	adminPort := util.GetPort("--admin-http-port=", args, 14271)
 
 	trueVar := true
+	falseVar := false
 	labels := util.Labels(a.name(), "agent", *a.jaeger)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
@@ -184,6 +185,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AgentComponent),
+					EnableServiceLinks: &falseVar,
 				},
 			},
 		},

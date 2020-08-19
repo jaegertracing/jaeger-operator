@@ -242,3 +242,12 @@ func TestAgentOTELConfig(t *testing.T) {
 	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
 	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
+
+func TestAgentServiceLinks(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	falseVar := false
+	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}

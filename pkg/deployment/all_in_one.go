@@ -38,6 +38,7 @@ func NewAllInOne(jaeger *v1.Jaeger) *AllInOne {
 func (a *AllInOne) Get() *appsv1.Deployment {
 	a.jaeger.Logger().Debug("Assembling an all-in-one deployment")
 	trueVar := true
+	falseVar := false
 
 	args := append(a.jaeger.Spec.AllInOne.Options.ToArgs())
 
@@ -215,6 +216,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
+					EnableServiceLinks: &falseVar,
 				},
 			},
 		},
