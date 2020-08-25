@@ -502,13 +502,12 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 6)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--a-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--b-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type")
 	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
 }
@@ -528,20 +527,18 @@ func TestSidecarExplicitTags(t *testing.T) {
 	assert.Equal(t, []string{"key=val"}, agentTags)
 }
 
-func TestSidecarOverrideReporter(t *testing.T) {
+func TestSidecarCustomReporterPort(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"reporter.type":             "thrift",
-		"reporter.thrift.host-port": "collector:14267",
+		"reporter.grpc.host-port": "collector:5000",
 	})
 
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 3)
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.thrift.host-port=collector:14267")
-	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.type=thrift")
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port=collector:5000")
 }
 
 func TestSidecarAgentResources(t *testing.T) {
@@ -762,10 +759,9 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 6)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
 	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)

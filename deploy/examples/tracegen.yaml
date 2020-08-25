@@ -28,7 +28,6 @@ spec:
         image: jaegertracing/jaeger-agent:1.17
         args:
         - --reporter.grpc.host-port=dns:///simple-prod-collector-headless.default:14250
-        - --reporter.type=grpc
         env:
         - name: POD_NAME
           valueFrom:
