@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -119,4 +120,17 @@ func TestCassandraCreateSchemaInvalidTimeout(t *testing.T) {
 	b := cassandraDeps(jaeger)
 	assert.Len(t, b, 1)
 	assert.Equal(t, int64(86400), *b[0].Spec.ActiveDeadlineSeconds)
+}
+
+func TestCassandraCreateSchemaSecurityContext(t *testing.T) {
+	var user, group int64 = 111, 222
+	expectedSecurityContext := &corev1.PodSecurityContext{RunAsUser: &user, RunAsGroup: &group}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaSecurityContext"})
+	jaeger.Spec.JaegerCommonSpec.SecurityContext = expectedSecurityContext
+
+	b := cassandraDeps(jaeger)
+
+	assert.Len(t, b, 1)
+	assert.Equal(t, b[0].Spec.Template.Spec.SecurityContext, expectedSecurityContext)
 }
