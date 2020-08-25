@@ -43,4 +43,3 @@ spec:
               protocol: TCP
           args:
             - --reporter.grpc.host-port=dns:///jaeger-collector-headless.example-ns:14250
-            - --reporter.type=grpc

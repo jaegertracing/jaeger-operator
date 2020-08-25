@@ -167,18 +167,14 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
-	if len(util.FindItem("--reporter.type=", args)) == 0 {
-		args = append(args, "--reporter.type=grpc")
-
-		// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
-		if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
-			args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s.svc:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
-		}
+	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
+	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
+		args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s.svc:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
 	}
 
 	// Enable tls by default for openshift platform
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.type=grpc", args)) > 0 && len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 		}

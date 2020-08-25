@@ -175,29 +175,26 @@ func TestAgentOrderOfArguments(t *testing.T) {
 	dep := a.Get()
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 4)
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
 
 	// the following are added automatically
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--reporter.grpc.host-port"))
-	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[4], "--reporter.type"))
 }
 
-func TestAgentOverrideReporterType(t *testing.T) {
+func TestAgentCustomReporterPort(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"reporter.type":             "thrift",
-		"reporter.thrift.host-port": "collector:14267",
+		"reporter.grpc.host-port": "collector:5000",
 	})
 
 	a := NewAgent(jaeger)
 	dep := a.Get()
 
-	assert.Equal(t, "--reporter.thrift.host-port=collector:14267", dep.Spec.Template.Spec.Containers[0].Args[0])
-	assert.Equal(t, "--reporter.type=thrift", dep.Spec.Template.Spec.Containers[0].Args[1])
+	assert.Equal(t, "--reporter.grpc.host-port=collector:5000", dep.Spec.Template.Spec.Containers[0].Args[0])
 }
 
 func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
@@ -217,11 +214,10 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	dep := a.Get()
 
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 6)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
 	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 
 	// the following are added automatically
-	assert.Greater(t, len(util.FindItem("--reporter.type=grpc", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[0].Args)), 0)
