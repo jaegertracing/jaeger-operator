@@ -53,7 +53,7 @@ else
     git add \
       deploy/operator.yaml \
       deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml \
-      deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION} \
+      deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml \
       test/operator.yaml \
       versions.txt
 
