@@ -1,12 +1,47 @@
 Changes by Version
 ==================
 
-1.19.0 (unreleased)
+1.20.0 (unreleased)
+-------------------
+
+1.19.0 (2020-08-27)
 -------------------
 
 Breaking changes:
 
+* None
+
 Other noteworthy changes:
+
+* Remove explicitly setting agent's reporter type ([#1168](https://github.com/jaegertracing/jaeger-operator/pull/1168), [@pavolloffay](https://github.com/pavolloffay))
+* Apply the securityContext to the cassandraCreateSchema job ([#1167](https://github.com/jaegertracing/jaeger-operator/pull/1167), [@chgl](https://github.com/chgl))
+* Disabled service links ([#1161](https://github.com/jaegertracing/jaeger-operator/pull/1161), [@mikelorant](https://github.com/mikelorant))
+* Use the correct OLM flag when determining if test should run ([#1159](https://github.com/jaegertracing/jaeger-operator/pull/1159), [@kevinearls](https://github.com/kevinearls))
+* Create option to specify type for Query service ([#1132](https://github.com/jaegertracing/jaeger-operator/pull/1132), [@Aneurysm9](https://github.com/Aneurysm9))
+* Added missing metrics port to operator's deployment ([#1157](https://github.com/jaegertracing/jaeger-operator/pull/1157), [@jpkrohling](https://github.com/jpkrohling))
+* Support custom labels in Jaeger all-in-one deployments (#629) ([#1153](https://github.com/jaegertracing/jaeger-operator/pull/1153), [@albertteoh](https://github.com/albertteoh))
+* Added interactive flag for docker to fix issue 1150 ([#1154](https://github.com/jaegertracing/jaeger-operator/pull/1154), [@sundar-cs](https://github.com/sundar-cs))
+* Avoid error message assertions on OS dependent errors (#716) ([#1151](https://github.com/jaegertracing/jaeger-operator/pull/1151), [@albertteoh](https://github.com/albertteoh))
+* Add link to openshift console ([#1142](https://github.com/jaegertracing/jaeger-operator/pull/1142), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add common field to  jaeger-es-rollover-create-mapping ([#1144](https://github.com/jaegertracing/jaeger-operator/pull/1144), [@lighteness](https://github.com/lighteness))
+* Refined Jaeger instance injection logic ([#1146](https://github.com/jaegertracing/jaeger-operator/pull/1146), [@rubenvp8510](https://github.com/rubenvp8510))
+* Update downloaded SDK version and update deprecated struct name ([#1133](https://github.com/jaegertracing/jaeger-operator/pull/1133), [@chlunde](https://github.com/chlunde))
+* Add support for JAEGER_OLM EV ([#1140](https://github.com/jaegertracing/jaeger-operator/pull/1140), [@kevinearls](https://github.com/kevinearls))
+* Update tests to work properly when using OLM installed Jaeger Operator ([#1139](https://github.com/jaegertracing/jaeger-operator/pull/1139), [@kevinearls](https://github.com/kevinearls))
+* Update x/crypto version ([#1136](https://github.com/jaegertracing/jaeger-operator/pull/1136), [@objectiser](https://github.com/objectiser))
+* Fixed binding of command line flags ([#1129](https://github.com/jaegertracing/jaeger-operator/pull/1129), [@jpkrohling](https://github.com/jpkrohling))
+* Updated Operator SDK to v0.18.2 ([#1126](https://github.com/jaegertracing/jaeger-operator/pull/1126), [@jpkrohling](https://github.com/jpkrohling))
+* Log warning events on failed tests to help debug PVC and other issues ([#1127](https://github.com/jaegertracing/jaeger-operator/pull/1127), [@kevinearls](https://github.com/kevinearls))
+* Create and mount service CA via ConfigMap ([#1124](https://github.com/jaegertracing/jaeger-operator/pull/1124), [@jpkrohling](https://github.com/jpkrohling))
+* Set the grpc port name to include http(s) prefix. ([#1122](https://github.com/jaegertracing/jaeger-operator/pull/1122), [@jpkrohling](https://github.com/jpkrohling))
+* Fix duplicate mount path for /etc/pki/ca-trust/extracted/pem ([#1121](https://github.com/jaegertracing/jaeger-operator/pull/1121), [@objectiser](https://github.com/objectiser))
+* Adjusted gRPC options for OpenShift when TLS is enabled ([#1119](https://github.com/jaegertracing/jaeger-operator/pull/1119), [@jpkrohling](https://github.com/jpkrohling))
+* Add support for imagePullSecrets to sidecar's Deployment ([#1115](https://github.com/jaegertracing/jaeger-operator/pull/1115), [@Saad-Hussain1](https://github.com/Saad-Hussain1))
+* Add TraceTTL to cassandra schema spec ([#1111](https://github.com/jaegertracing/jaeger-operator/pull/1111), [@moolen](https://github.com/moolen))
+* Deploy trusted CA config map in OpenShift when agent injected into a … ([#1110](https://github.com/jaegertracing/jaeger-operator/pull/1110), [@objectiser](https://github.com/objectiser))
+* Mount volumes from agent spec ([#1102](https://github.com/jaegertracing/jaeger-operator/pull/1102), [@Saad-Hussain1](https://github.com/Saad-Hussain1))
+* Remove ES error shards toleration from smoke test ([#1100](https://github.com/jaegertracing/jaeger-operator/pull/1100), [@pavolloffay](https://github.com/pavolloffay))
+* Added missing displayName to CSV 1.18.1 ([#1095](https://github.com/jaegertracing/jaeger-operator/pull/1095), [@jpkrohling](https://github.com/jpkrohling))
 
 1.18.1 (2020-06-19)
 -------------------
