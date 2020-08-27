@@ -44,7 +44,7 @@ operator-sdk generate csv \
     --from-version=${PREVIOUS_VERSION}
 
 # changes to deploy/olm-catalog/jaeger-operator/newversion/...
-sed "s~containerImage: docker.io/jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~containerImage: docker.io/jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+sed "s~containerImage: docker.io/jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~containerImage: docker.io/jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 
 git diff -s --exit-code
 if [[ $? == 0 ]]; then
