@@ -36,25 +36,31 @@ import (
 )
 
 var (
-	retryInterval        = time.Second * 5
-	timeout              = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
-	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
-	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
-	debugMode            = getBoolEnv("DEBUG_MODE", false)
-	usingOLM             = getBoolEnv("OLM", false)
-	usingJaegerViaOLM    = getBoolEnv("JAEGER_OLM", false)
-	saveLogs             = getBoolEnv("SAVE_LOGS", false)
-	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	testOtelCollector    = getBoolEnv("USE_OTEL_COLLECTOR", false)
+	retryInterval      = time.Second * 5
+	timeout            = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
+	storageNamespace   = os.Getenv("STORAGE_NAMESPACE")
+	kafkaNamespace     = os.Getenv("KAFKA_NAMESPACE")
+	debugMode          = getBoolEnv("DEBUG_MODE", false)
+	usingOLM           = getBoolEnv("OLM", false)
+	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
+	saveLogs           = getBoolEnv("SAVE_LOGS", false)
+	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
+	testOtelCollector  = getBoolEnv("USE_OTEL_COLLECTOR", false)
+	testOtelAgent      = getBoolEnv("USE_OTEL_AGENT", false)
+	testOtelAllInOne   = getBoolEnv("USE_OTEL_ALL_IN_ONE", false)
+
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
 	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
-	ctx                  *framework.TestCtx
-	fw                   *framework.Framework
-	namespace            string
-	t                    *testing.T
+	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
+	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
+
+	ctx       *framework.TestCtx
+	fw        *framework.Framework
+	namespace string
+	t         *testing.T
 )
 
 func getBoolEnv(key string, defaultValue bool) bool {
@@ -576,7 +582,91 @@ func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
 	return false
 }
 
+func verifyAllInOneImage(jaegerInstanceName, namespace string, expected bool) {
+	require.Equal(t, expected, wasUsingOtelAllInOne(jaegerInstanceName, namespace))
+}
+
+func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
+	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName, metav1.GetOptions{})
+	require.NoError(t, err)
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "jaeger" {
+			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
+			return strings.Contains(container.Image, "opentelemetry-all-in-one")
+		}
+	}
+
+	return false
+}
+
+func verifyAgentImage(appName, namespace string, expected bool) {
+	require.Equal(t, expected, wasUsingOtelAgent(appName, namespace))
+}
+
+// Was this Jaeger Instance using the OTEL agent?
+func wasUsingOtelAgent(appName, namespace string) bool {
+	var pods *corev1.PodList
+	var pod corev1.Pod
+
+	// Sometimes the app gets redeployed twice and we can get three pods, wait till there are either 1 or 2
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		pods, err = fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "app=" + appName})
+		require.NoError(t, err)
+		if len(pods.Items) > 0 && len(pods.Items) < 3 {
+			return true, nil
+		}
+		return false, nil
+	})
+	require.NoError(t, err)
+
+	if len(pods.Items) == 1 {
+		logrus.Infof("Found 1 pod %s", pods.Items[0].Name)
+		pod = pods.Items[0]
+	} else {
+		for _, p := range pods.Items {
+			if p.DeletionTimestamp == nil {
+				logrus.Infof("Using pod %s", p.Name)
+				pod = p
+			} else {
+				logrus.Infof("Skipping pod %s with deletionTimestamp %v", p.Name, p.DeletionTimestamp)
+			}
+		}
+	}
+
+	containers := pod.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "jaeger-agent" {
+			logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
+			return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+		}
+	}
+
+	require.Failf(t, "Did not find an agent image for %s in namespace %s", appName, namespace)
+	return false
+}
+
 func getOtelCollectorOptions() map[string]interface{} {
+	otelOptions := map[string]interface{}{
+		"extensions": map[string]interface{}{
+			"health_check": map[string]string{"port": "14269"},
+		},
+	}
+
+	return otelOptions
+}
+
+func getOtelAgentOptions() map[string]interface{} {
+	otelOptions := map[string]interface{}{
+		"extensions": map[string]interface{}{
+			"health_check": map[string]string{"port": "14269"},
+		},
+	}
+
+	return otelOptions
+}
+
+func getOtelAllInOneOptions() map[string]interface{} {
 	otelOptions := map[string]interface{}{
 		"extensions": map[string]interface{}{
 			"health_check": map[string]string{"port": "14269"},
