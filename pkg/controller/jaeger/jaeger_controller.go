@@ -354,7 +354,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, nil
 	}
 
-	// we apply the daemonsets after everything else, to increase the changes of having services and deployments
+	// we apply the daemonsets after everything else, to increase the chances of having services and deployments
 	// ready by the time the daemonset is started, so that it gets at least one collector to connect to
 	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
