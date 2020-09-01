@@ -318,10 +318,6 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {
-		return jaeger, tracing.HandleError(err, span)
-	}
-
 	// seems counter intuitive to have services created *before* deployments,
 	// but some resources used by deployments are created by services, such as TLS certs
 	// for the oauth proxy, if one is used
@@ -356,6 +352,12 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		// we don't want to fail the whole reconciliation when this fails
 		jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile pod autoscalers")
 		return jaeger, nil
+	}
+
+	// we apply the daemonsets after everything else, to increase the changes of having services and deployments
+	// ready by the time the daemonset is started, so that it gets at least one collector to connect to
+	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {
+		return jaeger, tracing.HandleError(err, span)
 	}
 
 	return jaeger, nil
