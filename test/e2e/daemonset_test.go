@@ -228,6 +228,7 @@ func jaegerAgentAsDaemonsetDefinition(namespace string, name string) *v1.Jaeger 
 			Strategy: v1.DeploymentStrategyAllInOne,
 			AllInOne: v1.JaegerAllInOneSpec{},
 			Agent: v1.JaegerAgentSpec{
+				Image:    "quay.io/jpkroehling/jaeger-agent:pr1176", // Remove once https://github.com/jaegertracing/jaeger-operator/issues/1175 is fixed
 				Strategy: "DaemonSet",
 				Options: v1.NewOptions(map[string]interface{}{
 					"log-level": "debug",
