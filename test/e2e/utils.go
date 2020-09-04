@@ -646,34 +646,12 @@ func wasUsingOtelAgent(appName, namespace string) bool {
 	return false
 }
 
-func getOtelCollectorOptions() map[string]interface{} {
-	otelOptions := map[string]interface{}{
+func getOtelConfigOptions(healthCheckPort string) map[string]interface{} {
+	return map[string]interface{}{
 		"extensions": map[string]interface{}{
 			"health_check": map[string]string{"port": "14269"},
 		},
 	}
-
-	return otelOptions
-}
-
-func getOtelAgentOptions() map[string]interface{} {
-	otelOptions := map[string]interface{}{
-		"extensions": map[string]interface{}{
-			"health_check": map[string]string{"port": "14269"},
-		},
-	}
-
-	return otelOptions
-}
-
-func getOtelAllInOneOptions() map[string]interface{} {
-	otelOptions := map[string]interface{}{
-		"extensions": map[string]interface{}{
-			"health_check": map[string]string{"port": "14269"},
-		},
-	}
-
-	return otelOptions
 }
 
 func logWarningEvents() {
