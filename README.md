@@ -7,6 +7,8 @@ The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kube
 
 ## Getting started
 
+Firstly, ensure an [ingress-controller is deployed](https://kubernetes.github.io/ingress-nginx/deploy/).
+
 To install the operator, run:
 ```
 kubectl create namespace observability
@@ -39,7 +41,7 @@ EOF
 This will create a Jaeger instance named `simplest`. The Jaeger UI is served via the `Ingress`, like:
 
 ```console
-$ kubectl get ingress
+$ kubectl get -n observability ingress
 NAME             HOSTS     ADDRESS          PORTS     AGE
 simplest-query   *         192.168.122.34   80        3m
 ```
