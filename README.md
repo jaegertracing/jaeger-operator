@@ -7,7 +7,7 @@ The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kube
 
 ## Getting started
 
-Firstly, ensure an [ingress-controller is deployed](https://kubernetes.github.io/ingress-nginx/deploy/).
+Firstly, ensure an [ingress-controller is deployed](https://kubernetes.github.io/ingress-nginx/deploy/). When using `minikube`, you can use the `ingress` add-on: `minikube start --addons=ingress`
 
 To install the operator, run:
 ```
