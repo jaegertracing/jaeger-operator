@@ -40,6 +40,7 @@ sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
 
 operator-sdk generate csv \
     --csv-channel=stable \
+    --make-manifests=false \
     --csv-version=${OPERATOR_VERSION} \
     --from-version=${PREVIOUS_VERSION}
 
