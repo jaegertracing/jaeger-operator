@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -65,26 +67,23 @@ func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
 
 // Sidecar runs a test with the agent as sidecar
 func (suite *SidecarTestSuite) TestSidecar() {
-
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	jaegerInstanceName := "agent-as-sidecar"
-	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
-	undeployJaegerInstance(j)
-	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.NoError(t, err, "Failed to create jaeger instance")
+	firstJaegerInstanceName := "agent-as-sidecar"
+	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace, testOtelAgent, testOtelAllInOne)
+	defer undeployJaegerInstance(firstJaegerInstance)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
+	verifyAllInOneImage(firstJaegerInstanceName, namespace, testOtelAllInOne)
 
-	dep := getVertxDefinition(map[string]string{inject.Annotation: "true"})
-	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
+	vertxDeploymentName := "vertx-create-span-sidecar"
+	dep := getVertxDefinition(vertxDeploymentName, map[string]string{inject.Annotation: "true"})
+	err := fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, vertxDeploymentName, 1, retryInterval, timeout)
+	// TODO add a check to make sure the sidecar has been injected
+	require.NoError(t, err, "Failed waiting for"+vertxDeploymentName+" deployment")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "vertx-create-span-sidecar", 1, retryInterval, timeout)
-	require.NoError(t, err, "Failed waiting for vertx-create-span-sidecar deployment")
-
-	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
+	url, httpClient := getQueryURLAndHTTPClient(firstJaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err, "Failed to create httpRequest")
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
@@ -103,29 +102,25 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Failed waiting for expected content")
 
 	/* Testing other instance */
-
-	otherJaegerInstanceName := "agent-as-sidecar2"
-	j2 := getJaegerAgentAsSidecarDefinition(otherJaegerInstanceName, namespace)
-	defer undeployJaegerInstance(j2)
-
-	err = fw.Client.Create(goctx.TODO(), j2, cleanupOptions)
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, otherJaegerInstanceName, 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
+	secondJaegerInstanceName := "agent-as-sidecar2"
+	secondJaegerInstance := createJaegerAgentAsSidecarInstance(secondJaegerInstanceName, namespace, testOtelAgent, testOtelAllInOne)
+	defer undeployJaegerInstance(secondJaegerInstance)
 
 	persisted := &appsv1.Deployment{}
 	err = fw.Client.Get(goctx.TODO(), types.NamespacedName{
-		Name:      "vertx-create-span-sidecar",
+		Name:      vertxDeploymentName,
 		Namespace: namespace,
 	}, persisted)
 	require.NoError(t, err, "Error getting jaeger instance")
 	require.Equal(t, "agent-as-sidecar", persisted.Labels[inject.Label])
 
-	err = fw.Client.Delete(goctx.TODO(), j)
+	err = fw.Client.Delete(goctx.TODO(), firstJaegerInstance)
 	require.NoError(t, err, "Error deleting instance")
+	err = e2eutil.WaitForDeletion(t, fw.Client.Client, firstJaegerInstance, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for jaeger instance deletion")
 
-	url, httpClient = getQueryURLAndHTTPClient(otherJaegerInstanceName, "%s/api/traces?service=order", true)
+	url, httpClient = getQueryURLAndHTTPClient(secondJaegerInstanceName, "%s/api/traces?service=order", true)
 	req, err = http.NewRequest(http.MethodGet, url, nil)
-
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
 		require.NoError(t, err)
@@ -140,17 +135,18 @@ func (suite *SidecarTestSuite) TestSidecar() {
 		return len(resp.Data) > 0, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
+	verifyAgentImage(vertxDeploymentName, namespace, testOtelAgent)
 }
 
-func getVertxDefinition(annotations map[string]string) *appsv1.Deployment {
-	selector := map[string]string{"app": "vertx-create-span-sidecar"}
+func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {
+	selector := map[string]string{"app": deploymentName}
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "vertx-create-span-sidecar",
+			Name:        deploymentName,
 			Namespace:   namespace,
 			Annotations: annotations,
 		},
@@ -165,7 +161,7 @@ func getVertxDefinition(annotations map[string]string) *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
 						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
-						Name:  "vertx-create-span-sidecar",
+						Name:  deploymentName,
 						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 8080,
@@ -197,7 +193,9 @@ func getVertxDefinition(annotations map[string]string) *appsv1.Deployment {
 	return dep
 }
 
-func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
+func createJaegerAgentAsSidecarInstance(name, namespace string, useOtelAgent, useOtelAllInOne bool) *v1.Jaeger {
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
+
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -225,5 +223,24 @@ func getJaegerAgentAsSidecarDefinition(name, namespace string) *v1.Jaeger {
 			},
 		},
 	}
+
+	if useOtelAllInOne {
+		logrus.Infof("Using OTEL AllInOne image for %s", name)
+		j.Spec.AllInOne.Image = otelAllInOneImage
+		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+	}
+
+	if useOtelAgent {
+		logrus.Infof("Using OTEL Agent for %s", name)
+		j.Spec.Agent.Image = otelAgentImage
+		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+	}
+
+	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
+	require.NoError(t, err, "Failed to create jaeger instance")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
+
 	return j
 }

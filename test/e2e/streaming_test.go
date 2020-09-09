@@ -205,7 +205,7 @@ func jaegerStreamingDefinition(namespace string, name string, useOtelCollector b
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
 		j.Spec.Collector.Image = otelCollectorImage
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return j
@@ -269,7 +269,7 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
 		j.Spec.Collector.Image = otelCollectorImage
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return j
@@ -304,7 +304,7 @@ func jaegerAutoProvisionedDefinition(namespace string, name string, useOtelColle
 	if useOtelCollector {
 		log.Infof("Using OTEL collector for %s", name)
 		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return jaegerInstance

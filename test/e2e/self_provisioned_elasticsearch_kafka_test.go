@@ -148,7 +148,7 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string, useOtelCollector bo
 	if useOtelCollector {
 		logrus.Infof("Using OTEL collector for %s", instanceName)
 		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return jaegerInstance

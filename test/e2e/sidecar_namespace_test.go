@@ -62,16 +62,11 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	jaegerInstanceName := "agent-as-sidecar-namespace"
-	j := getJaegerAgentAsSidecarDefinition(jaegerInstanceName, namespace)
-	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
-	require.NoError(t, err, "Failed to create jaeger instance")
+	j := createJaegerAgentAsSidecarInstance(jaegerInstanceName, namespace, testOtelAgent, testOtelAllInOne)
 	defer undeployJaegerInstance(j)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
-
-	dep := getVertxDefinition(map[string]string{})
-	err = fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
+	dep := getVertxDefinition(namespace, map[string]string{})
+	err := fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
 	require.NoError(t, err, "Failed to create vertx instance")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, dep.Name, 1, retryInterval, timeout)
@@ -80,7 +75,6 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	dep, err = fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), dep.Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	hasAgent, _ := inject.HasJaegerAgent(dep)
-
 	require.False(t, hasAgent)
 
 	nss, err := fw.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})

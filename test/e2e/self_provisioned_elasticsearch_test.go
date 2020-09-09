@@ -248,7 +248,7 @@ func getJaegerSimpleProd(instanceName string, useOtelCollector bool) *v1.Jaeger 
 	if useOtelCollector {
 		logrus.Infof("Using OTEL collector for %s", instanceName)
 		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelCollectorOptions())
+		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return exampleJaeger
