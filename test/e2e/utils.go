@@ -646,10 +646,10 @@ func wasUsingOtelAgent(appName, namespace string) bool {
 	return false
 }
 
-func getOtelConfigOptions(healthCheckPort string) map[string]interface{} {
+func getOtelConfigForHealthCheckPort(healthCheckPort string) map[string]interface{} {
 	return map[string]interface{}{
 		"extensions": map[string]interface{}{
-			"health_check": map[string]string{"port": "14269"},
+			"health_check": map[string]string{"port": healthCheckPort},
 		},
 	}
 }

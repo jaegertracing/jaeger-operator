@@ -227,13 +227,13 @@ func createJaegerAgentAsSidecarInstance(name, namespace string, useOtelAgent, us
 	if useOtelAllInOne {
 		logrus.Infof("Using OTEL AllInOne image for %s", name)
 		j.Spec.AllInOne.Image = otelAllInOneImage
-		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigOptions("14269"))
+		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	if useOtelAgent {
 		logrus.Infof("Using OTEL Agent for %s", name)
 		j.Spec.Agent.Image = otelAgentImage
-		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigOptions("14269"))
+		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
