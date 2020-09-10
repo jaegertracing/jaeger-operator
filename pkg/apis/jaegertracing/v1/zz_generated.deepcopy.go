@@ -133,6 +133,11 @@ func (in *JaegerAgentSpec) DeepCopyInto(out *JaegerAgentSpec) {
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	in.Config.DeepCopyInto(&out.Config)
+	if in.SidecarSecurityContext != nil {
+		in, out := &in.SidecarSecurityContext, &out.SidecarSecurityContext
+		*out = new(corev1.SecurityContext)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
