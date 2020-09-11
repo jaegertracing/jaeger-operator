@@ -305,7 +305,7 @@ func decorate(dep *appsv1.Deployment) {
 			if !hasEnv(envVarPropagation, dep.Spec.Template.Spec.Containers[i].Env) {
 				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarPropagation,
-					Value: "jaeger,b3",
+					Value: "jaeger,b3,w3c",
 				})
 			}
 		}
