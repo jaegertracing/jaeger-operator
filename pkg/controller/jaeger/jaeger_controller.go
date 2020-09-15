@@ -297,12 +297,12 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		}).Warn("A Kafka cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
 	}
 
-	// storage dependencies have to be deployed after ES is ready
-	if err := r.handleDependencies(ctx, str); err != nil {
+	if err := r.applyAccounts(ctx, jaeger, str.Accounts()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if err := r.applyAccounts(ctx, jaeger, str.Accounts()); err != nil {
+	// storage dependencies have to be deployed after ES is ready
+	if err := r.handleDependencies(ctx, str); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}
 
