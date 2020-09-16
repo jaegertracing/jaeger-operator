@@ -58,6 +58,12 @@ elif [ "${TEST_GROUP}" = "generate" ]
 then
     echo "Running CLI manifest generation tests"
     make e2e-tests-generate
+elif [ "${TEST_GROUP}" = "autoscale" ]
+then
+    echo "Running Autoscale tests"
+    export QUIT_ON_FIRST_SCALE=true
+    export TEST_DURATION_IN_MINUTES=10
+    make e2e-tests-autoscale
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi

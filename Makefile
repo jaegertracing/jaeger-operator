@@ -163,6 +163,11 @@ e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 	@echo Running OpenShift Example end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples_openshift ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: e2e-tests-autoscale
+e2e-tests-autoscale: prepare-e2e-tests es
+	@echo Running Autoscale end-to-end tests...
+	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
