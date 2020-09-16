@@ -63,6 +63,7 @@ then
     echo "Running Autoscale tests"
     export QUIT_ON_FIRST_SCALE=true
     export TEST_DURATION_IN_MINUTES=10
+    make es
     make e2e-tests-autoscale
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1

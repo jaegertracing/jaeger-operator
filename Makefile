@@ -166,7 +166,7 @@ e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 .PHONY: e2e-tests-autoscale
 e2e-tests-autoscale: prepare-e2e-tests es
 	@echo Running Autoscale end-to-end tests...
-	@BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
