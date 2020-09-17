@@ -4,7 +4,10 @@ package e2e
 
 import (
 	"context"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"strconv"
+	"testing"
+	"time"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
@@ -14,17 +17,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
-	"testing"
-	"time"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 var (
-	testDurationInMinutes = getIntEnv("TEST_DURATION_IN_MINUTES", 30)
-	quitOnFirstScale = getBoolEnv("QUIT_ON_FIRST_SCALE", false)
-	cpuResourceLimit = "100m"
-	memoryResourceLimit = "128Mi"
-	replicas int32 = 20
+	testDurationInMinutes       = getIntEnv("TEST_DURATION_IN_MINUTES", 30)
+	quitOnFirstScale            = getBoolEnv("QUIT_ON_FIRST_SCALE", false)
+	cpuResourceLimit            = "100m"
+	memoryResourceLimit         = "128Mi"
+	replicas              int32 = 10
 )
 
 type AutoscaleTestSuite struct {
@@ -97,27 +99,45 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	logrus.Infof("Tracegen deployed in %s", namespace)
 	maxCollectorCount := -1
 	lastIterationTimestamp := time.Now()
-	for i:=0; i< testDurationInMinutes; i++ {
-		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/name=simple-prod-collector",})
+	for i := 0; i < testDurationInMinutes; i++ {
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/name=simple-prod-collector"}) //FIXME use jaegerInstanceName
 		require.NoError(t, err)
 
 		collectorCount := len(pods.Items)
+		logrus.Infof("Iteration %d found %d pods", i, collectorCount)
 		if collectorCount > maxCollectorCount {
 			maxCollectorCount = collectorCount
-			if quitOnFirstScale && i > 1 {  // TODO is this hacky?  we could just check collector count
+			if quitOnFirstScale && i > 1 { // TODO is this hacky?  we could just check collector count
 				break
 			}
 		}
-		logrus.Infof("Iteration %d found %d pods", i, collectorCount)
 
 		// Print events since last iteration.  TODO replace this with Events(namespace).Watch
 		eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		for _, event := range eventList.Items {
-			if (event.LastTimestamp.After(lastIterationTimestamp)) {
+			if event.LastTimestamp.After(lastIterationTimestamp) {
 				logrus.Warnf("Event Type: %s Reason: %s Message: %s Time %v", event.Type, event.Reason, event.Message, event.LastTimestamp)
 			}
 		}
+
+		// FIXME mucking about with hpa info.  Either get the correct info or remove this
+		/*
+			hpas, err := fw.KubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(namespace).List(context.Background(), metav1.ListOptions{
+				LabelSelector: "app.kubernetes.io/name=" + jaegerInstanceName + "-collector",
+			})
+			require.NoError(t, err)
+			require.Equal(t, len(hpas.Items), 1)
+			currentMetrics := hpas.Items[0].Status.CurrentMetrics
+			for _, f := range currentMetrics {
+				if f.Resource == nil {
+					logrus.Infof("Resource is nil")
+				} else {
+					logrus.Infof("Resource.Current is %v ", f.Resource)
+				}
+			}
+
+		*/
 
 		lastIterationTimestamp = time.Now()
 		time.Sleep(1 * time.Minute)
@@ -127,7 +147,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 }
 
 // Create a simple-prod instance with autoscale, replicas, and resources set.
-func getSimpleProd(name, namespace,  cpuResourceLimit, memoryResourceLimit string) *v1.Jaeger {
+func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string) *v1.Jaeger {
 	ingressEnabled := true
 	autoscale := true
 	var minReplicas int32 = 1
@@ -152,7 +172,7 @@ func getSimpleProd(name, namespace,  cpuResourceLimit, memoryResourceLimit strin
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: corev1.ResourceRequirements{
 						Limits: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse(cpuResourceLimit),
+							corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
 							corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
 						},
 					},
@@ -188,17 +208,17 @@ func getSimpleProd(name, namespace,  cpuResourceLimit, memoryResourceLimit strin
 +  -workers int Number of workers (goroutines) to run (default 1)
 +*/
 // TODO pass a randomized service name to simplify checking traces?  What other parameters should there be?
-func getTracegenDeployment(jaegerInstanceName, namespace string, testDuration int, replicas int32 ) *appsv1.Deployment{
+func getTracegenDeployment(jaegerInstanceName, namespace string, testDuration int, replicas int32) *appsv1.Deployment {
 	annotations := make(map[string]string)
 	annotations["sidecar.jaegertracing.io/inject"] = jaegerInstanceName
 	matchLabels := make(map[string]string)
 	matchLabels["app"] = "tracegen"
 
 	duration := strconv.Itoa(testDuration) + "m"
-	tracegenArgs := []string {"-duration", duration, "-workers", "10"}
+	tracegenArgs := []string{"-duration", duration, "-workers", "10"} // TODO pass in number of workers
 
 	var jaegerAgentArgs []string
-	jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.host-port=dns:///" + jaegerInstanceName + "-collector-headless." + namespace + ":14250")
+	jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.host-port=dns:///"+jaegerInstanceName+"-collector-headless."+namespace+":14250")
 	if isOpenShift(t) {
 		jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.tls.skip-host-verify")
 		jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.tls.enabled=true")
@@ -210,8 +230,8 @@ func getTracegenDeployment(jaegerInstanceName, namespace string, testDuration in
 			FieldRef: &corev1.ObjectFieldSelector{
 				APIVersion: "v1",
 				FieldPath:  "metadata.name",
-				},
 			},
+		},
 	}
 	sidecarEnvs := []corev1.EnvVar{*sidecarEnv}
 
@@ -221,40 +241,40 @@ func getTracegenDeployment(jaegerInstanceName, namespace string, testDuration in
 		ContainerPort: 6831,
 		Protocol:      "UDP",
 		HostIP:        "",
-		}
+	}
 	sidecarPorts := []corev1.ContainerPort{*sidecarPort}
 
 	tracegenInstance := &appsv1.Deployment{
-		TypeMeta:   metav1.TypeMeta{
-			Kind: "Deployment",
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "tracegen",
-			Namespace: namespace,
+			Name:        "tracegen",
+			Namespace:   namespace,
 			Annotations: annotations,
 		},
-		Spec:       appsv1.DeploymentSpec{
+		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels:      matchLabels,
+				MatchLabels: matchLabels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      matchLabels,
+					Labels: matchLabels,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name: "tracegen",
-							Image: "jaegertracing/jaeger-tracegen:1.19",  // FIXME where should we get this from?
-							Args: tracegenArgs,
+							Name:  "tracegen",
+							Image: "jaegertracing/jaeger-tracegen:1.19", // FIXME where should we get this from?
+							Args:  tracegenArgs,
 						},
 						{
-							Name: "jaeger-agent",
+							Name:  "jaeger-agent",
 							Image: "jaegertracing/jaeger-agent:1.19",
-							Args: jaegerAgentArgs,
-							Env: sidecarEnvs,
+							Args:  jaegerAgentArgs,
+							Env:   sidecarEnvs,
 							Ports: sidecarPorts,
 						},
 					},
@@ -265,4 +285,3 @@ func getTracegenDeployment(jaegerInstanceName, namespace string, testDuration in
 
 	return tracegenInstance
 }
-
