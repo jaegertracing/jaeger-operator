@@ -16,6 +16,13 @@ spec:
       containers:
       - name: jaeger-operator
         image: jaegertracing/jaeger-operator:1.19.0
+        resources:
+          limits:
+            cpu: "4"
+            memory: "8192Mi"
+          requests:
+            cpu: "1"
+            memory: "1024Mi"
         ports:
         - containerPort: 8383
           name: http-metrics
