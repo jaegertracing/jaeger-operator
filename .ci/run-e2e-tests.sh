@@ -58,6 +58,13 @@ elif [ "${TEST_GROUP}" = "generate" ]
 then
     echo "Running CLI manifest generation tests"
     make e2e-tests-generate
+elif [ "${TEST_GROUP}" = "smoke-otel" ]
+then
+    echo "Running Smoke Tests with OTEL collector"
+    export USE_OTEL_COLLECTOR=true
+    export USE_OTEL_AGENT=true
+    export USE_OTEL_ALL_IN_ONE=true
+    make e2e-tests-smoke
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
