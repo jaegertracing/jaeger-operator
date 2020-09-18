@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -667,4 +669,33 @@ func logWarningEvents() {
 			logrus.Warnf("Event Warning: Reason: %s Message: %s", event.Reason, event.Message)
 		}
 	}
+}
+
+func waitForKafkaInstance() {
+	kafkaInstance := &v1beta1.Kafka{}
+
+	err := WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-zookeeper", retryInterval, timeout+1*time.Minute)
+	require.NoError(t, err)
+
+	err = WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-kafka", retryInterval, timeout)
+	require.NoError(t, err)
+
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		err = fw.Client.Get(context.Background(), types.NamespacedName{Name: "my-cluster", Namespace: kafkaNamespace}, kafkaInstance)
+		require.NoError(t, err)
+
+		for _, condition := range kafkaInstance.Status.Conditions {
+			if strings.EqualFold(condition.Type, "ready") && strings.EqualFold(condition.Status, "true") {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
+	require.NoError(t, err)
+}
+
+func waitForElasticSearch() {
+	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for elasticsearch")
 }
