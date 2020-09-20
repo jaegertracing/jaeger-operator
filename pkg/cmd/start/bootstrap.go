@@ -11,7 +11,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/api/core"
@@ -21,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -90,7 +88,6 @@ func bootstrap(ctx context.Context) manager.Manager {
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
 	serveCRMetrics(ctx, cfg, namespace)
-	createMetricsService(ctx, cfg, namespace)
 	detectOAuthProxyImageStream(ctx, mgr)
 
 	return mgr
@@ -372,48 +369,4 @@ func getNamespace(ctx context.Context) string {
 	}
 
 	return podNamespace
-}
-
-func createMetricsService(ctx context.Context, cfg *rest.Config, namespace string) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "createMetricsService")
-	defer span.End()
-
-	metricsPort := viper.GetInt32("metrics-port")
-	operatorMetricsPort := viper.GetInt32("cr-metrics-port")
-
-	// Add to the below struct any other metrics ports you want to expose.
-	servicePorts := []corev1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
-	}
-	// Create Service object to expose the metrics port(s).
-	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Warn("could not create metrics Service")
-	}
-
-	createServiceMonitor(ctx, cfg, namespace, service)
-}
-
-func createServiceMonitor(ctx context.Context, cfg *rest.Config, namespace string, service *corev1.Service) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "createServiceMonitor")
-	defer span.End()
-
-	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
-	// necessary to configure Prometheus to scrape metrics from this operator.
-	services := []*corev1.Service{service}
-	_, err := metrics.CreateServiceMonitors(cfg, namespace, services)
-	if err != nil {
-		if err == metrics.ErrServiceMonitorNotPresent {
-			log.WithError(err).Info("Install prometheus-operator in your cluster to create ServiceMonitor objects")
-		} else {
-			span.SetStatus(codes.Internal)
-			span.SetAttribute(key.String("error", err.Error()))
-			log.WithError(err).Warn("could not create ServiceMonitor object")
-		}
-	}
 }
