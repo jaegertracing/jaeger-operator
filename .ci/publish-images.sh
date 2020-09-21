@@ -18,17 +18,11 @@ if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 fi
 
-echo "Building image ${BUILD_IMAGE}"
-make install-tools build docker BUILD_IMAGE="${BUILD_IMAGE}"
-
-# see https://github.com/jaegertracing/jaeger-operator/issues/555
-echo "Pushing image ${BUILD_IMAGE}"
-docker push "${BUILD_IMAGE}"
+IMAGE_TAGS="--tag ${BUILD_IMAGE}"
 
 if [ "${MAJOR_MINOR}x" != "x" ]; then
     MAJOR_MINOR_IMAGE="${BASE_BUILD_IMAGE}:${MAJOR_MINOR}"
-    docker tag "${BUILD_IMAGE}" "${MAJOR_MINOR_IMAGE}"
-    docker push "${MAJOR_MINOR_IMAGE}"
+    IMAGE_TAGS="${IMAGE_TAGS} --tag ${MAJOR_MINOR_IMAGE}"
 fi
 
 ## now, push to quay.io
@@ -37,14 +31,12 @@ if [ "${QUAY_PASSWORD}x" != "x" -a "${QUAY_USERNAME}x" != "x" ]; then
     echo "${QUAY_PASSWORD}" | docker login -u "${QUAY_USERNAME}" quay.io --password-stdin
 
     echo "Tagging ${BUILD_IMAGE} as quay.io/${BUILD_IMAGE}"
-    docker tag "${BUILD_IMAGE}" "quay.io/${BUILD_IMAGE}"
-
-    echo "Pushing 'quay.io/${BUILD_IMAGE}'"
-    docker push "quay.io/${BUILD_IMAGE}"
+    IMAGE_TAGS="${IMAGE_TAGS} --tag quay.io/${BUILD_IMAGE}"
 
     if [ "${MAJOR_MINOR_IMAGE}x" != "x" ]; then
-        echo "Pushing 'quay.io/${MAJOR_MINOR_IMAGE}' to quay.io"
-        docker tag "${MAJOR_MINOR_IMAGE}" "quay.io/${MAJOR_MINOR_IMAGE}"
-        docker push "quay.io/${MAJOR_MINOR_IMAGE}"
+        IMAGE_TAGS="${IMAGE_TAGS} --tag quay.io/${MAJOR_MINOR_IMAGE}"
     fi
 fi
+
+echo "Building with tags ${IMAGE_TAGS}"
+docker buildx build --push --build-arg=GOPROXY=${GOPROXY} --platform=linux/amd64,linux/arm64 ${IMAGE_TAGS} --file build/Dockerfile .

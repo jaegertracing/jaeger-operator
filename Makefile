@@ -1,5 +1,5 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on
+GO_FLAGS ?= GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) CGO_ENABLED=0 GO111MODULE=on
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= "build/_output/bin"
@@ -63,6 +63,10 @@ security:
 
 .PHONY: build
 build: format
+	$(MAKE) gobuild
+
+.PHONY: gobuild
+gobuild:
 	@echo Building...
 	@${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
 # compile the tests without running them
@@ -70,7 +74,7 @@ build: format
 
 .PHONY: docker
 docker:
-	@[ ! -z "$(PIPELINE)" ] || docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+	@[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --file build/Dockerfile -t "$(BUILD_IMAGE)" .
 
 .PHONY: push
 push:
