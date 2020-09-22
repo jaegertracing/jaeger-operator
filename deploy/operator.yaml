@@ -19,10 +19,10 @@ spec:
         resources:
           limits:
             cpu: "4"
-            memory: "8192Mi"
+            memory: "1024Mi"
           requests:
             cpu: "1"
-            memory: "1024Mi"
+            memory: "128Mi"
         ports:
         - containerPort: 8383
           name: http-metrics
