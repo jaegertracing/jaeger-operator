@@ -96,6 +96,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	colletorPodListOptions := metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=" + jaegerInstanceName + "-collector",
 	}
+
 	lastIterationTimestamp := time.Now()
 	for i := 1; i <= tracegenDurationInMinutes; i++ {
 		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), colletorPodListOptions)
@@ -110,16 +111,19 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 			}
 		}
 
-		// Print events since last iteration.
 		eventList, err := fw.KubeClient.CoreV1().Events(namespace).List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
+		var eventsFound = false
 		for _, event := range eventList.Items {
 			if event.LastTimestamp.After(lastIterationTimestamp) {
 				logrus.Warnf("Event Type: %s Reason: %s Message: %s Time %v", event.Type, event.Reason, event.Message, event.LastTimestamp)
+				eventsFound = true
+				lastIterationTimestamp = event.LastTimestamp.Time
 			}
 		}
-
-		lastIterationTimestamp = time.Now()
+		if !eventsFound {
+			lastIterationTimestamp = time.Now()
+		}
 		time.Sleep(1 * time.Minute)
 	}
 	require.Greater(t, maxCollectorCount, 1, "Collector never scaled")
@@ -198,33 +202,6 @@ func createTracegenDeployment(jaegerInstanceName, namespace, componentName strin
 	duration := strconv.Itoa(testDuration) + "m"
 	tracegenArgs := []string{"-duration", duration, "-workers", "10", "-service", serviceName}
 
-	var jaegerAgentArgs []string
-	jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.host-port=dns:///"+jaegerInstanceName+"-"+componentName+"."+namespace+":14250")
-	if isOpenShift(t) {
-		jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.tls.skip-host-verify")
-		jaegerAgentArgs = append(jaegerAgentArgs, "--reporter.grpc.tls.enabled=true")
-	}
-	sidecarEnv := &corev1.EnvVar{
-		Name:  "POD_NAME",
-		Value: "",
-		ValueFrom: &corev1.EnvVarSource{
-			FieldRef: &corev1.ObjectFieldSelector{
-				APIVersion: "v1",
-				FieldPath:  "metadata.name",
-			},
-		},
-	}
-	sidecarEnvs := []corev1.EnvVar{*sidecarEnv}
-
-	sidecarPort := &corev1.ContainerPort{
-		Name:          "jg-compact-trft",
-		HostPort:      0,
-		ContainerPort: 6831,
-		Protocol:      "UDP",
-		HostIP:        "",
-	}
-	sidecarPorts := []corev1.ContainerPort{*sidecarPort}
-
 	tracegenInstance := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -250,13 +227,6 @@ func createTracegenDeployment(jaegerInstanceName, namespace, componentName strin
 							Name:  "tracegen",
 							Image: "jaegertracing/jaeger-tracegen:1.19",
 							Args:  tracegenArgs,
-						},
-						{
-							Name:  "jaeger-agent",
-							Image: "jaegertracing/jaeger-agent:1.19",
-							Args:  jaegerAgentArgs,
-							Env:   sidecarEnvs,
-							Ports: sidecarPorts,
 						},
 					},
 				},
