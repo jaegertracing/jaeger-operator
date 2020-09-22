@@ -155,6 +155,29 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			} else {
 				log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 			}
+		} else {
+			// Don't need injection, may be need to remove the sidecar?
+			// If deployment don't have the annotation and has an agent, this may be injected by the namespace
+			// we need to clean it.
+			agent, _ := inject.HasJaegerAgent(dep)
+			_, depAnnotation := dep.Annotations[inject.Annotation]
+			if agent && !depAnnotation{
+				jaegerInstance, label := dep.Labels[inject.Label]
+				if label {
+					log.WithFields(log.Fields{
+						"deployment":       dep.Name,
+						"namespace":        dep.Namespace,
+						"jaeger":           jaegerInstance,
+					}).Info("Removing Jaeger Agent sidecar")
+					inject.CleanSidecar(jaegerInstance, dep)
+					if err := r.client.Update(ctx, dep); err != nil {
+						log.WithFields(log.Fields{
+							"deploymentName":      dep.Name,
+							"deploymentNamespace": dep.Namespace,
+						}).WithError(err).Error("error cleaning orphaned deployment")
+					}
+				}
+			}
 		}
 	}
 
