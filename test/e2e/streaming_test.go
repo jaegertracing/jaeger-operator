@@ -5,7 +5,6 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -15,8 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
@@ -378,33 +375,4 @@ func getTLSVolumes(kafkaUserName string) []corev1.Volume {
 	}
 
 	return volumes
-}
-
-func waitForKafkaInstance() {
-	kafkaInstance := &kafkav1beta1.Kafka{}
-
-	err := WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-zookeeper", retryInterval, timeout+1*time.Minute)
-	require.NoError(t, err)
-
-	err = WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-kafka", retryInterval, timeout)
-	require.NoError(t, err)
-
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		err = fw.Client.Get(context.Background(), types.NamespacedName{Name: "my-cluster", Namespace: kafkaNamespace}, kafkaInstance)
-		require.NoError(t, err)
-
-		for _, condition := range kafkaInstance.Status.Conditions {
-			if strings.EqualFold(condition.Type, "ready") && strings.EqualFold(condition.Status, "true") {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	})
-	require.NoError(t, err)
-}
-
-func waitForElasticSearch() {
-	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "elasticsearch", retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for elasticsearch")
 }
