@@ -136,7 +136,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 				log.WithError(err).Error("failed to get the available Jaeger pods")
 				return reconcile.Result{}, tracing.HandleError(err, span)
 			}
-
+			patch := client.MergeFrom(dep.DeepCopy())
 			jaeger := inject.Select(dep, ns, jaegers)
 			if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
@@ -148,7 +148,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 					"jaeger-namespace": jaeger.Namespace,
 				}).Info("Injecting Jaeger Agent sidecar")
 				dep = inject.Sidecar(jaeger, dep)
-				if err := r.client.Update(ctx, dep); err != nil {
+				if err := r.client.Patch(ctx, dep, patch); err != nil {
 					log.WithField("deployment", dep).WithError(err).Error("failed to update")
 					return reconcile.Result{}, tracing.HandleError(err, span)
 				}
