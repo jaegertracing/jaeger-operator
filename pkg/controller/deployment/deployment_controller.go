@@ -157,24 +157,34 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 				}
 			}
 
-			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-			// Verified that jaeger instance was found and is not marked for deletion.
-			log.WithFields(log.Fields{
-				"deployment":       dep.Name,
-				"namespace":        dep.Namespace,
-				"jaeger":           jaeger.Name,
-				"jaeger-namespace": jaeger.Namespace,
-			}).Info("Injecting Jaeger Agent sidecar")
-
-			injectedDep := inject.Sidecar(jaeger, dep.DeepCopy())
-
-			if !inject.EqualSidecar(injectedDep, dep) {
-				if err := r.client.Update(ctx, injectedDep); err != nil {
+			depHasAgent, depAgentIndex := inject.HasJaegerAgent(dep)
+			patch := client.MergeFrom(dep.DeepCopy())
+			if !depHasAgent {
+				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+				// Verified that jaeger instance was found and is not marked for deletion.
+				log.WithFields(log.Fields{
+					"deployment":       dep.Name,
+					"namespace":        dep.Namespace,
+					"jaeger":           jaeger.Name,
+					"jaeger-namespace": jaeger.Namespace,
+				}).Info("Injecting Jaeger Agent sidecar")
+				injectedDep := inject.Sidecar(jaeger, dep)
+				if err := r.client.Patch(ctx, injectedDep, patch); err != nil {
+					log.WithField("deployment", injectedDep).WithError(err).Error("failed to update")
+					return reconcile.Result{}, tracing.HandleError(err, span)
+				}
+			} else {
+				// This could be an update, re-inject the sidecar in case the parameters changed.
+				// if any change is detected the cluster will create a new version of the deployment
+				// otherwise it will do nothing.
+				containers := dep.Spec.Template.Spec.Containers
+				dep.Spec.Template.Spec.Containers = append(containers[:depAgentIndex], containers[depAgentIndex+1:]...)
+				injectedDep := inject.Sidecar(jaeger, dep)
+				if err := r.client.Patch(ctx, injectedDep, patch); err != nil {
 					log.WithField("deployment", injectedDep).WithError(err).Error("failed to update")
 					return reconcile.Result{}, tracing.HandleError(err, span)
 				}
 			}
-
 		} else {
 			log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
 		}
