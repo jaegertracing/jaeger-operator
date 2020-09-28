@@ -850,3 +850,16 @@ func TestInjectSidecarOnOpenShift(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 }
+
+func TestSidecarWithSecurityContext(t *testing.T) {
+	var user, group int64 = 111, 222
+	expectedSecurityContext := &corev1.SecurityContext{RunAsUser: &user, RunAsGroup: &group}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSidecarWithSecurityContext"})
+	jaeger.Spec.Agent.SidecarSecurityContext = expectedSecurityContext
+
+	dep := dep(map[string]string{}, map[string]string{})
+	dep = Sidecar(jaeger, dep)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].SecurityContext, expectedSecurityContext)
+}

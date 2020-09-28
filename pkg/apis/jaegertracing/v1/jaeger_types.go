@@ -383,6 +383,9 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	SidecarSecurityContext *v1.SecurityContext `json:"sidecarSecurityContext,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
