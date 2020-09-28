@@ -274,8 +274,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 				Name:          "admin-http",
 			},
 		},
-		Resources:    commonSpec.Resources,
-		VolumeMounts: volumesAndMountsSpec.VolumeMounts,
+		Resources:       commonSpec.Resources,
+		SecurityContext: jaeger.Spec.Agent.SidecarSecurityContext,
+		VolumeMounts:    volumesAndMountsSpec.VolumeMounts,
 	}
 }
 
