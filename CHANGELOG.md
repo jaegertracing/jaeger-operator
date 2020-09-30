@@ -1,8 +1,32 @@
 Changes by Version
 ==================
 
-1.20.0 (unreleased)
+1.20.0 (2020-09-30)
 -------------------
+
+* Bump google.golang.org/grpc from 1.30.0 to 1.32.0 ([#1219](https://github.com/jaegertracing/jaeger-operator/pull/1219), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Added configuration for the agent's securityContext ([#1190](https://github.com/jaegertracing/jaeger-operator/pull/1190), [@chgl](https://github.com/chgl))
+* Bump sigs.k8s.io/controller-runtime from 0.6.0 to 0.6.3 ([#1218](https://github.com/jaegertracing/jaeger-operator/pull/1218), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Completely replace the sidecar on each reconciliation, call patch instead of update. ([#1212](https://github.com/jaegertracing/jaeger-operator/pull/1212), [@rubenvp8510](https://github.com/rubenvp8510))
+* Bump gopkg.in/yaml.v2 from 2.2.8 to 2.3.0 ([#1214](https://github.com/jaegertracing/jaeger-operator/pull/1214), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Bump github.com/spf13/viper from 1.4.0 to 1.7.1 ([#1217](https://github.com/jaegertracing/jaeger-operator/pull/1217), [@dependabot[bot]](https://github.com/apps/dependabot))
+* 'go mod tidy' + replaced a dependency that isn't resolvable ([#1210](https://github.com/jaegertracing/jaeger-operator/pull/1210), [@jpkrohling](https://github.com/jpkrohling))
+* Remove sidecars of annotated namespaces when annotation is deleted ([#1209](https://github.com/jaegertracing/jaeger-operator/pull/1209), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add new autoscale tests ([#1200](https://github.com/jaegertracing/jaeger-operator/pull/1200), [@kevinearls](https://github.com/kevinearls))
+* Add mergify ([#1206](https://github.com/jaegertracing/jaeger-operator/pull/1206), [@jpkrohling](https://github.com/jpkrohling))
+* Added dependabot ([#1205](https://github.com/jaegertracing/jaeger-operator/pull/1205), [@jpkrohling](https://github.com/jpkrohling))
+* Run the smoke tests with otel agent and all-in-one ([#1199](https://github.com/jaegertracing/jaeger-operator/pull/1199), [@kevinearls](https://github.com/kevinearls))
+* Create service accounts before storage dependencies/init schemas ([#1196](https://github.com/jaegertracing/jaeger-operator/pull/1196), [@pavolloffay](https://github.com/pavolloffay))
+* Added 'w3c' to the injected JAEGER_PROPAGATION env var ([#1192](https://github.com/jaegertracing/jaeger-operator/pull/1192), [@chgl](https://github.com/chgl))
+* Add otel test options ([#1173](https://github.com/jaegertracing/jaeger-operator/pull/1173), [@kevinearls](https://github.com/kevinearls))
+* Make the generate-csv command generate the old-style manifests ([#1185](https://github.com/jaegertracing/jaeger-operator/pull/1185), [@jpkrohling](https://github.com/jpkrohling))
+* Create daemonsets after services and deployments. ([#1176](https://github.com/jaegertracing/jaeger-operator/pull/1176), [@jpkrohling](https://github.com/jpkrohling))
+* Add note on ingress-controller and include namespace in README ([#1182](https://github.com/jaegertracing/jaeger-operator/pull/1182), [@albertteoh](https://github.com/albertteoh))
+* Add consolelink permissions to cluster role ([#1177](https://github.com/jaegertracing/jaeger-operator/pull/1177), [@rubenvp8510](https://github.com/rubenvp8510))
+* Changed agent-as-daemonset image for the jaeger-agent ([#1180](https://github.com/jaegertracing/jaeger-operator/pull/1180), [@jpkrohling](https://github.com/jpkrohling))
+* Temporary workaround for intermittent daemonset test failures ([#1178](https://github.com/jaegertracing/jaeger-operator/pull/1178), [@kevinearls](https://github.com/kevinearls))
+* Use CSV from 1.18.1 + version bump ([#1172](https://github.com/jaegertracing/jaeger-operator/pull/1172), [@jpkrohling](https://github.com/jpkrohling))
+* Updated operatorhub.sh to use the new CSV location ([#1171](https://github.com/jaegertracing/jaeger-operator/pull/1171), [@jpkrohling](https://github.com/jpkrohling))
 
 1.19.0 (2020-08-27)
 -------------------
