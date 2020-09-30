@@ -28,6 +28,11 @@ spec:
               value: "127.0.0.1"
             - name: "cluster.routing.allocation.disk.threshold_enabled"
               value: "false"
+          ports:
+            - name: elasticsearch
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
           volumeMounts:
             - name: data
               mountPath: /usr/share/elasticsearch/data
