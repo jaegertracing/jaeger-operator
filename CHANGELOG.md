@@ -1,8 +1,16 @@
 Changes by Version
 ==================
 
-1.20.0 (unreleased)
+1.20.0 (2020-09-30)
 -------------------
+
+* Added configuration for the agent's securityContext ([#1190](https://github.com/jaegertracing/jaeger-operator/pull/1190), [@chgl](https://github.com/chgl))
+* Completely replace the sidecar on each reconciliation, call patch instead of update. ([#1212](https://github.com/jaegertracing/jaeger-operator/pull/1212), [@rubenvp8510](https://github.com/rubenvp8510))
+* Remove sidecars of annotated namespaces when annotation is deleted ([#1209](https://github.com/jaegertracing/jaeger-operator/pull/1209), [@rubenvp8510](https://github.com/rubenvp8510))
+* Create service accounts before storage dependencies/init schemas ([#1196](https://github.com/jaegertracing/jaeger-operator/pull/1196), [@pavolloffay](https://github.com/pavolloffay))
+* Added 'w3c' to the injected JAEGER_PROPAGATION env var ([#1192](https://github.com/jaegertracing/jaeger-operator/pull/1192), [@chgl](https://github.com/chgl))
+* Create daemonsets after services and deployments. ([#1176](https://github.com/jaegertracing/jaeger-operator/pull/1176), [@jpkrohling](https://github.com/jpkrohling))
+* Add consolelink permissions to cluster role ([#1177](https://github.com/jaegertracing/jaeger-operator/pull/1177), [@rubenvp8510](https://github.com/rubenvp8510))
 
 1.19.0 (2020-08-27)
 -------------------
