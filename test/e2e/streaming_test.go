@@ -159,6 +159,15 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 func jaegerStreamingDefinition(namespace string, name string, useOtelCollector bool) *v1.Jaeger {
 	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	ingressEnabled := true
+	collectorOptions := make(map[string]interface{})
+	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
+	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
+	if !useOtelCollector {
+		collectorOptions["kafka.producer.batch-linger"] = "1s"
+		collectorOptions["kafka.producer.batch-size"] = "128000"
+		collectorOptions["kafka.producer.batch-max-messages"] = "100"
+	}
+
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -175,14 +184,7 @@ func jaegerStreamingDefinition(namespace string, name string, useOtelCollector b
 			},
 			Strategy: v1.DeploymentStrategyStreaming,
 			Collector: v1.JaegerCollectorSpec{
-				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.producer.topic":   "jaeger-spans",
-					"kafka.producer.brokers": kafkaClusterURL,
-					// The following 3 flags are not required for this test, but are added to ensure we passed them correctly
-					"kafka.producer.batch-linger":       "1s",
-					"kafka.producer.batch-size":         "128000",
-					"kafka.producer.batch-max-messages": "100",
-				}),
+				Options: v1.NewOptions(collectorOptions),
 			},
 			Ingester: v1.JaegerIngesterSpec{
 				Options: v1.NewOptions(map[string]interface{}{
