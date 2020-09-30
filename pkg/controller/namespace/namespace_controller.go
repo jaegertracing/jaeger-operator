@@ -165,9 +165,9 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 				jaegerInstance, hasLabel := dep.Labels[inject.Label]
 				if hasLabel {
 					log.WithFields(log.Fields{
-						"deployment":       dep.Name,
-						"namespace":        dep.Namespace,
-						"jaeger":           jaegerInstance,
+						"deployment": dep.Name,
+						"namespace":  dep.Namespace,
+						"jaeger":     jaegerInstance,
 					}).Info("Removing Jaeger Agent sidecar")
 					patch := client.MergeFrom(dep.DeepCopy())
 					inject.CleanSidecar(jaegerInstance, dep)
