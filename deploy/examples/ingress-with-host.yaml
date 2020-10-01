@@ -6,7 +6,7 @@ spec:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx #annotations here 
+      kubernetes.io/ingress.class: nginx # Ingress annotations here 
     hosts:
       - mesh-jaeger.xxx.com #your domain name.
 
