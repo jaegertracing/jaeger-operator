@@ -9,4 +9,3 @@ spec:
       kubernetes.io/ingress.class: nginx #annotations here 
     hosts:
       - mesh-jaeger.xxx.com #your domain name.
-

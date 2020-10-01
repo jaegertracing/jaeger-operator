@@ -1,19 +1,11 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: jaeger
+  name: ingress-with-annotations
 spec:
-  strategy: allInOne 
-  storage:
-    type: memory 
-    options: 
-      memory: 
-        max-traces: 1000000
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: nginx #annotations here 
     hosts:
       - mesh-jaeger.xxx.com #your domain name.
-  agent:
-    strategy: DaemonSet
