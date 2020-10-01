@@ -3,9 +3,17 @@ kind: Jaeger
 metadata:
   name: ingress-with-annotations
 spec:
+  strategy: allInOne 
+  storage:
+    type: memory 
+    options: 
+      memory: 
+        max-traces: 1000000
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx #annotations here 
+      kubernetes.io/ingress.class: nginx
     hosts:
       - mesh-jaeger.xxx.com #your domain name.
+  agent:
+    strategy: DaemonSet
