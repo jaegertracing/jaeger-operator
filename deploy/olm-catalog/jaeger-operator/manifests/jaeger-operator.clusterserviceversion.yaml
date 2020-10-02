@@ -538,7 +538,7 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.20.0
+  replaces: jaeger-operator.v1.19.0
   selector:
     matchLabels:
       name: jaeger-operator

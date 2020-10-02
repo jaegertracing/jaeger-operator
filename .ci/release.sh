@@ -47,7 +47,7 @@ operator-sdk generate csv \
 # changes to deploy/olm-catalog/jaeger-operator/manifests
 sed "s~containerImage: docker.io/jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~containerImage: docker.io/jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 sed "s~image: jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~image: jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
-sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
+sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${PREVIOUS_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 sed "s~version: ${PREVIOUS_VERSION}~version: ${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 sed "s~name: jaeger-operator.v${PREVIOUS_VERSION}~name: jaeger-operator.v${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 
