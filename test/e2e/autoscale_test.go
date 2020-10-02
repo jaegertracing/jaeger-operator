@@ -188,7 +188,7 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: corev1.ResourceRequirements{
 						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit), // FIXME this might need to change
+							corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
 							corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
 						},
 					},
