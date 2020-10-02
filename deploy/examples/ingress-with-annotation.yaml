@@ -1,0 +1,9 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: ingress-with-annotations
+spec:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx # Ingress annotations here
