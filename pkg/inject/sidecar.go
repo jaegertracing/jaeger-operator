@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
@@ -227,7 +228,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	dep.Spec.Template.Spec.ImagePullSecrets = util.RemoveDuplicatedImagePullSecrets(append(dep.Spec.Template.Spec.ImagePullSecrets, jaeger.Spec.Agent.ImagePullSecrets...))
 	dep.Spec.Template.Spec.Volumes = util.RemoveDuplicatedVolumes(append(dep.Spec.Template.Spec.Volumes, volumesAndMountsSpec.Volumes...))
-	return corev1.Container{
+	containerDefinition := corev1.Container{
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
 		Args:  args,
@@ -278,6 +279,29 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		SecurityContext: jaeger.Spec.Agent.SidecarSecurityContext,
 		VolumeMounts:    volumesAndMountsSpec.VolumeMounts,
 	}
+	if isContainerPortAvailable(adminPort, dep) {
+		containerDefinition.LivenessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/",
+					Port: intstr.FromInt(int(adminPort)),
+				},
+			},
+			InitialDelaySeconds: 5,
+			PeriodSeconds:       15,
+			FailureThreshold:    5,
+		}
+		containerDefinition.ReadinessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/",
+					Port: intstr.FromInt(int(adminPort)),
+				},
+			},
+			InitialDelaySeconds: 1,
+		}
+	}
+	return containerDefinition
 }
 
 func decorate(dep *appsv1.Deployment) {
@@ -365,6 +389,18 @@ func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
 		}
 	}
 	return false, -1
+}
+
+// isContainerPortAvailable checks whether deployment is already using some port
+func isContainerPortAvailable(port int32, dep *appsv1.Deployment) bool {
+	for _, container := range dep.Spec.Template.Spec.Containers {
+		for _, containerPort := range container.Ports {
+			if port == containerPort.ContainerPort {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // EqualSidecar check if two deployments sidecar are equal
