@@ -164,7 +164,7 @@ e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples_openshift ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-autoscale
-e2e-tests-autoscale: prepare-e2e-tests es
+e2e-tests-autoscale: prepare-e2e-tests es kafka
 	@echo Running Autoscale end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
 
