@@ -78,7 +78,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	waitForElasticSearch()
 
 	jaegerInstanceName := "simple-prod"
-	jaegerInstance := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit, true)
+	jaegerInstance := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit)
 	createAndWaitFor(jaegerInstance, jaegerInstanceName)
 	defer undeployJaegerInstance(jaegerInstance)
 
@@ -120,7 +120,7 @@ func createAndWaitFor(jaegerInstance *v1.Jaeger, jaegerInstanceName string) {
 }
 
 func waitUntilScales(jaegerInstanceName, podSelector string) {
-	maxCollectorCount := -1
+	maxPodCount := -1
 	podListOptions := metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=" + jaegerInstanceName + "-" + podSelector,
 	}
@@ -132,8 +132,8 @@ func waitUntilScales(jaegerInstanceName, podSelector string) {
 
 		podCount := len(pods.Items)
 		logrus.Infof("Iteration %d found %d pods", i, podCount)
-		if podCount > maxCollectorCount {
-			maxCollectorCount = podCount
+		if podCount > maxPodCount {
+			maxPodCount = podCount
 			if quitOnFirstScale && i > 1 {
 				break
 			}
@@ -154,12 +154,11 @@ func waitUntilScales(jaegerInstanceName, podSelector string) {
 		}
 		time.Sleep(1 * time.Minute)
 	}
-	require.Greater(t, maxCollectorCount, 1, "Collector never scaled")
+	require.Greater(t, maxPodCount, 1, "Collector never scaled")
 }
 
 func getSimpleStreaming(name, namespace string) *v1.Jaeger {
-	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace) // FIXME this may need to change
-	ingressEnabled := true
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
 	collectorOptions := make(map[string]interface{})
 	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
 	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
@@ -212,10 +211,6 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 					"es.server-urls": esServerUrls,
 				}),
 			},
-			Ingress: v1.JaegerIngressSpec{ // FIXME do we need this?
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
 		},
 	}
 
@@ -223,8 +218,7 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 }
 
 // Create a simple-prod instance with optional values for autoscaling the collector
-func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string, autoscaleCollector bool) *v1.Jaeger { // FIXME remove autoscaleCOlletor option
-	ingressEnabled := true
+func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string) *v1.Jaeger {
 	autoscale := true
 	var minReplicas int32 = 1
 	var maxReplicas int32 = 5
@@ -249,11 +243,6 @@ func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string
 					},
 				},
 			},
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
@@ -264,23 +253,21 @@ func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string
 		},
 	}
 
-	if autoscaleCollector {
-		autoscaleCommonSpec := v1.JaegerCommonSpec{
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
-					corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
-				},
+	autoscaleCommonSpec := v1.JaegerCommonSpec{
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
+				corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
 			},
-		}
-		autoscaleCollectorSpec := v1.AutoScaleSpec{
-			Autoscale:   &autoscale,
-			MinReplicas: &minReplicas,
-			MaxReplicas: &maxReplicas,
-		}
-		jaeger.Spec.Collector.JaegerCommonSpec = autoscaleCommonSpec
-		jaeger.Spec.Collector.AutoScaleSpec = autoscaleCollectorSpec
+		},
 	}
+	autoscaleCollectorSpec := v1.AutoScaleSpec{
+		Autoscale:   &autoscale,
+		MinReplicas: &minReplicas,
+		MaxReplicas: &maxReplicas,
+	}
+	jaeger.Spec.Collector.JaegerCommonSpec = autoscaleCommonSpec
+	jaeger.Spec.Collector.AutoScaleSpec = autoscaleCollectorSpec
 
 	return jaeger
 }
