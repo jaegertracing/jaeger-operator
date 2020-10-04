@@ -171,7 +171,7 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
+						Image: "quay.io/maistra/jaeger-vertx-create-span:0.0-ibm-z",
 						Name:  "vertx-create-span",
 						Env: []corev1.EnvVar{
 							corev1.EnvVar{
@@ -196,6 +196,7 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 								},
 							},
 							InitialDelaySeconds: 1,
+							TimeoutSeconds:      3,
 						},
 						LivenessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
@@ -205,6 +206,7 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 								},
 							},
 							InitialDelaySeconds: 1,
+							TimeoutSeconds:      3,
 						},
 					}},
 				},
