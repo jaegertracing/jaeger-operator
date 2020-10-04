@@ -1,5 +1,5 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GO_FLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on
+GO_FLAGS ?= GOOS=linux GOARCH=s390x CGO_ENABLED=0 GO111MODULE=on
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= "build/_output/bin"
@@ -8,7 +8,7 @@ FMT_LOG=fmt.log
 
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
-BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+BUILD_IMAGE ?= "quay.io/maistra/jaeger-rhel7-operator:1.17.6-ibm"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
