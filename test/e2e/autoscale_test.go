@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ import (
 
 var (
 	tracegenDurationInMinutes = getIntEnv("TRACEGEN_DURATION_IN_MINUTES", 30)
-	quitOnFirstScale          = getBoolEnv("QUIT_ON_FIRST_SCALE", false)
+	quitOnFirstScale          = getBoolEnv("QUIT_ON_FIRST_SCALE", true)
 	cpuResourceLimit          = "100m"
 	memoryResourceLimit       = "128Mi"
 	replicas                  = int32(getIntEnv("TRACEGEN_REPLICAS", 10))
@@ -77,35 +78,62 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	waitForElasticSearch()
 
 	jaegerInstanceName := "simple-prod"
-	exampleJaeger := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit, true)
-	err := fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	jaegerInstance := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit)
+	createAndWaitFor(jaegerInstance, jaegerInstanceName)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	tracegen := createTracegenDeployment(jaegerInstanceName, namespace, tracegenDurationInMinutes, replicas)
+	defer deleteTracegenDeployment(tracegen)
+
+	waitUntilScales(jaegerInstanceName, "collector")
+}
+
+func (suite *AutoscaleTestSuite) TestAutoScaleIngester() {
+	if !isOpenShift(t) {
+		t.Skip("This test is currently only supported on OpenShift")
+	}
+	waitForElasticSearch()
+	waitForKafkaInstance()
+
+	jaegerInstanceName := "simple-streaming"
+	jaegerInstance := getSimpleStreaming(jaegerInstanceName, namespace)
+	createAndWaitFor(jaegerInstance, jaegerInstanceName)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	tracegenReplicas := int32(1)
+	tracegen := createTracegenDeployment(jaegerInstanceName, namespace, tracegenDurationInMinutes, tracegenReplicas)
+	defer deleteTracegenDeployment(tracegen)
+
+	waitUntilScales(jaegerInstanceName, "ingester")
+}
+
+func createAndWaitFor(jaegerInstance *v1.Jaeger, jaegerInstanceName string) {
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
-	defer undeployJaegerInstance(exampleJaeger)
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
-	logrus.Infof("Jaeger deploy finished, deploying tracegen in %s", namespace)
+	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstanceName, namespace)
+}
 
-	tracegen := createTracegenDeployment(jaegerInstanceName, namespace, "collector-headless", tracegenDurationInMinutes, replicas)
-	defer deleteTracegenDeployment(tracegen)
-
-	maxCollectorCount := -1
-	colletorPodListOptions := metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/name=" + jaegerInstanceName + "-collector",
+func waitUntilScales(jaegerInstanceName, podSelector string) {
+	maxPodCount := -1
+	podListOptions := metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/name=" + jaegerInstanceName + "-" + podSelector,
 	}
 
 	lastIterationTimestamp := time.Now()
 	for i := 1; i <= tracegenDurationInMinutes; i++ {
-		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), colletorPodListOptions)
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), podListOptions)
 		require.NoError(t, err)
 
-		collectorCount := len(pods.Items)
-		logrus.Infof("Iteration %d found %d pods", i, collectorCount)
-		if collectorCount > maxCollectorCount {
-			maxCollectorCount = collectorCount
+		podCount := len(pods.Items)
+		logrus.Infof("Iteration %d found %d pods", i, podCount)
+		if podCount > maxPodCount {
+			maxPodCount = podCount
 			if quitOnFirstScale && i > 1 {
 				break
 			}
@@ -126,12 +154,71 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 		}
 		time.Sleep(1 * time.Minute)
 	}
-	require.Greater(t, maxCollectorCount, 1, "Collector never scaled")
+	require.Greater(t, maxPodCount, 1, "Collector never scaled")
+}
+
+func getSimpleStreaming(name, namespace string) *v1.Jaeger {
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
+	collectorOptions := make(map[string]interface{})
+	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
+	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
+	collectorOptions["kafka.producer.batch-linger"] = "1s"
+	collectorOptions["kafka.producer.batch-size"] = "128000"
+	collectorOptions["kafka.producer.batch-max-messages"] = "100"
+
+	autoscale := true
+	var minReplicas int32 = 1
+	var maxReplicas int32 = 5
+
+	jaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: v1.DeploymentStrategyStreaming,
+			Collector: v1.JaegerCollectorSpec{
+				Options: v1.NewOptions(collectorOptions),
+			},
+			Ingester: v1.JaegerIngesterSpec{
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
+							corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
+						},
+					},
+				},
+				Options: v1.NewOptions(map[string]interface{}{
+					"kafka.consumer.topic":      "jaeger-spans",
+					"kafka.consumer.brokers":    kafkaClusterURL,
+					"ingester.deadlockInterval": "0",
+					"ingester.parallelism":      "6900",
+				}),
+				AutoScaleSpec: v1.AutoScaleSpec{
+					Autoscale:   &autoscale,
+					MinReplicas: &minReplicas,
+					MaxReplicas: &maxReplicas,
+				},
+			},
+			Storage: v1.JaegerStorageSpec{
+				Type: "elasticsearch",
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": esServerUrls,
+				}),
+			},
+		},
+	}
+
+	return jaeger
 }
 
 // Create a simple-prod instance with optional values for autoscaling the collector
-func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string, autoscaleCollector bool) *v1.Jaeger {
-	ingressEnabled := true
+func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string) *v1.Jaeger {
 	autoscale := true
 	var minReplicas int32 = 1
 	var maxReplicas int32 = 5
@@ -156,11 +243,6 @@ func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string
 					},
 				},
 			},
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
 				Type: "elasticsearch",
@@ -171,28 +253,26 @@ func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string
 		},
 	}
 
-	if autoscaleCollector {
-		autoscaleCommonSpec := v1.JaegerCommonSpec{
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
-					corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
-				},
+	autoscaleCommonSpec := v1.JaegerCommonSpec{
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(cpuResourceLimit),
+				corev1.ResourceMemory: resource.MustParse(memoryResourceLimit),
 			},
-		}
-		autoscaleCollectorSpec := v1.AutoScaleSpec{
-			Autoscale:   &autoscale,
-			MinReplicas: &minReplicas,
-			MaxReplicas: &maxReplicas,
-		}
-		jaeger.Spec.Collector.JaegerCommonSpec = autoscaleCommonSpec
-		jaeger.Spec.Collector.AutoScaleSpec = autoscaleCollectorSpec
+		},
 	}
+	autoscaleCollectorSpec := v1.AutoScaleSpec{
+		Autoscale:   &autoscale,
+		MinReplicas: &minReplicas,
+		MaxReplicas: &maxReplicas,
+	}
+	jaeger.Spec.Collector.JaegerCommonSpec = autoscaleCommonSpec
+	jaeger.Spec.Collector.AutoScaleSpec = autoscaleCollectorSpec
 
 	return jaeger
 }
 
-func createTracegenDeployment(jaegerInstanceName, namespace, componentName string, testDuration int, replicas int32) *appsv1.Deployment {
+func createTracegenDeployment(jaegerInstanceName, namespace string, testDuration int, replicas int32) *appsv1.Deployment {
 	annotations := make(map[string]string)
 	annotations["sidecar.jaegertracing.io/inject"] = jaegerInstanceName
 	matchLabels := make(map[string]string)
