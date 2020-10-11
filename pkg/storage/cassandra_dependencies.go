@@ -42,6 +42,12 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		host = "cassandra" // this is the default in the image
 	}
 
+	port := jaeger.Spec.Storage.Options.Map()["cassandra.port"]
+	if port == "" {
+		jaeger.Logger().Info("Cassandra port not specified. Using '9042' for the cassandra-create-schema job.")
+		port = "9042" // this is the default in the image
+	}
+
 	keyspace := jaeger.Spec.Storage.Options.Map()["cassandra.keyspace"]
 	if keyspace == "" {
 		jaeger.Logger().Info("Cassandra keyspace not specified. Using 'jaeger_v1_test' for the cassandra-create-schema job.")
@@ -141,6 +147,9 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 							Env: []corev1.EnvVar{{
 								Name:  "CQLSH_HOST",
 								Value: host,
+							}, {
+								Name:  "CQLSH_PORT",
+								Value: port,
 							}, {
 								Name:  "MODE",
 								Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
