@@ -62,6 +62,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
 	tls.Update(a.jaeger, commonSpec, &options)
+	storage.Update(a.jaeger, commonSpec, &options)
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
 
@@ -128,6 +129,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: storage.GetInitContainers(a.jaeger, commonSpec),
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",

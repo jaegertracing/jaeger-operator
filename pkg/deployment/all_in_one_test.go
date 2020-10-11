@@ -146,6 +146,23 @@ func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[1].Name)
 }
 
+func TestAllInOneAddsInitContainers(t *testing.T) {
+	name := "TestAllInOneAddsInitContainers"
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.Storage = v1.JaegerStorageSpec{
+		Type: "grpc-plugin",
+		GRPCPlugin: v1.GRPCStoragePluginSpec{
+			Image:             "image",
+			ConfigurationFile: "/etc/config",
+			Binary:            "/plugin/start",
+		},
+	}
+	podSpec := NewAllInOne(jaeger).Get().Spec.Template.Spec
+
+	assert.NotEmpty(t, podSpec.InitContainers, "gRPC-plugin init container not set up")
+}
+
 func TestAllInOneSecrets(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneSecrets"})
 	secret := "mysecret"

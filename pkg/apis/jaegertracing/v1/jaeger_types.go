@@ -391,7 +391,7 @@ type JaegerAgentSpec struct {
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
 // +k8s:openapi-gen=true
 type JaegerStorageSpec struct {
-	// Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`
+	// Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka`, `badger` or `grpc-plugin`.
 	// +optional
 	Type string `json:"type,omitempty"`
 
@@ -415,6 +415,9 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	Elasticsearch ElasticsearchSpec `json:"elasticsearch,omitempty"`
+
+	// +optional
+	GRPCPlugin GRPCStoragePluginSpec `json:"grpcPlugin,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
@@ -477,6 +480,26 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+}
+
+// GRPCStoragePluginSpec defines options for gRPC storage plugins.
+// +k8s:openapi-gen=true
+type GRPCStoragePluginSpec struct {
+	// Image refers to a container image with the storage plugin. The
+	// container is executed as a init container which will install
+	// the plugin on a volume shared with the Jaeger container.
+	Image string `json:"image,omitempty"`
+
+	// ConfigurationFile is the full path of the configuration file
+	// for the plugin. Please note that the Jaeger option is
+	// --grpc-storage-plugin.configuration-file while the flag the
+	// plugin is executed with is called --config.
+	// +optional
+	ConfigurationFile string `json:"configurationFile,omitempty"`
+
+	// Binary is the path to the storage plugin executable after the
+	// init container has installed it on a shared volume.
+	Binary string `json:"binary,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.

@@ -50,6 +50,10 @@ elif [ "${TEST_GROUP}" = "examples2" ]
 then
     echo "Running Examples2 Tests"
     make e2e-tests-examples2
+elif [ "${TEST_GROUP}" = "plugin" ]
+then
+    echo "Running Plugin Tests"
+    make e2e-tests-plugin
 elif [ "${TEST_GROUP}" = "es-token-propagation" ]
 then
     echo "Running token propagation tests"

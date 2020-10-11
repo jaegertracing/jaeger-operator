@@ -63,6 +63,7 @@ func (q *Query) Get() *appsv1.Deployment {
 		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
+	storage.Update(q.jaeger, commonSpec, &options)
 	ca.Update(q.jaeger, commonSpec)
 
 	var envFromSource []corev1.EnvFromSource
@@ -109,6 +110,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: storage.GetInitContainers(q.jaeger, commonSpec),
 					Containers: []corev1.Container{{
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",

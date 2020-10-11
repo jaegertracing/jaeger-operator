@@ -15,6 +15,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"./pkg/apis/jaegertracing/v1.AutoScaleSpec":                   schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref),
 		"./pkg/apis/jaegertracing/v1.ElasticsearchSpec":               schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref),
+		"./pkg/apis/jaegertracing/v1.GRPCStoragePluginSpec":           schema_pkg_apis_jaegertracing_v1_GRPCStoragePluginSpec(ref),
 		"./pkg/apis/jaegertracing/v1.Jaeger":                          schema_pkg_apis_jaegertracing_v1_Jaeger(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerAgentSpec":                 schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec":              schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref),
@@ -124,6 +125,40 @@ func schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1.ElasticsearchStorageSpec", "k8s.io/api/core/v1.ResourceRequirements"},
+	}
+}
+
+func schema_pkg_apis_jaegertracing_v1_GRPCStoragePluginSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GRPCStoragePluginSpec defines options for gRPC storage plugins.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"image": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Image refers to a container image with the storage plugin. The container is executed as a init container which will install the plugin on a volume shared with the Jaeger container.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"configurationFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigurationFile is the full path of the configuration file for the plugin. Please note that the Jaeger option is --grpc-storage-plugin.configuration-file while the flag the plugin is executed with is called --config.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"binary": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Binary is the path to the storage plugin executable after the init container has installed it on a shared volume.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -1896,7 +1931,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`",
+							Description: "Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka`, `badger` or `grpc-plugin`.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1937,11 +1972,16 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 							Ref: ref("./pkg/apis/jaegertracing/v1.ElasticsearchSpec"),
 						},
 					},
+					"grpcPlugin": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.GRPCStoragePluginSpec"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.ElasticsearchSpec", "./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "./pkg/apis/jaegertracing/v1.Options"},
+			"./pkg/apis/jaegertracing/v1.ElasticsearchSpec", "./pkg/apis/jaegertracing/v1.GRPCStoragePluginSpec", "./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "./pkg/apis/jaegertracing/v1.Options"},
 	}
 }
 

@@ -9,6 +9,7 @@ FMT_LOG=fmt.log
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+DEMO_STORAGE_PLUGIN_IMAGE ?= "$(NAMESPACE)/jaeger-operator-demo-storage-plugin:latest"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
@@ -72,6 +73,19 @@ build: format
 docker:
 	@[ ! -z "$(PIPELINE)" ] || docker build --file build/Dockerfile -t "$(BUILD_IMAGE)" .
 
+test/e2e/demo-storage-plugin/demo-storage-plugin:
+	@(cd test/e2e/demo-storage-plugin/; ${GO_FLAGS} go build -a -ldflags '-w -extldflags "-static"')
+
+.PHONY: demo-storage-plugin-image
+demo-storage-plugin-image: test/e2e/demo-storage-plugin/demo-storage-plugin
+	@docker build --file test/e2e/demo-storage-plugin/Dockerfile -t $(DEMO_STORAGE_PLUGIN_IMAGE) test/e2e/demo-storage-plugin/
+ifeq ($(CI),true)
+	@echo Skipping storage plugin push, as the build is running within a CI environment
+else
+	@echo "Pushing image $(DEMO_STORAGE_PLUGIN_IMAGE)..."
+	@docker push $(DEMO_STORAGE_PLUGIN_IMAGE) > /dev/null
+endif
+
 .PHONY: push
 push:
 ifeq ($(CI),true)
@@ -87,10 +101,10 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate e2e-tests-plugin
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: build docker push
+prepare-e2e-tests: build docker push demo-storage-plugin-image
 	@mkdir -p deploy/test
 	@cp deploy/service_account.yaml deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
@@ -162,6 +176,11 @@ e2e-tests-examples2: prepare-e2e-tests es kafka
 e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
 	@echo Running OpenShift Example end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples_openshift ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-plugin
+e2e-tests-plugin: prepare-e2e-tests
+	@echo Running Storage Plugin end-to-end tests...
+	@DEMO_STORAGE_PLUGIN_IMAGE=$(DEMO_STORAGE_PLUGIN_IMAGE) go test -tags=plugin ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-autoscale
 e2e-tests-autoscale: prepare-e2e-tests es kafka

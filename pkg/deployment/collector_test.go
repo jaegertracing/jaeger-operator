@@ -385,6 +385,38 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 	assert.Equal(t, "--kafka.producer.topic=mytopic", dep.Spec.Template.Spec.Containers[0].Args[1])
 }
 
+func TestCollectorWithGRPCPluginStorageType(t *testing.T) {
+	jaeger := &v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-instance",
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: v1.DeploymentStrategyProduction,
+			Storage: v1.JaegerStorageSpec{
+				Type: "grpc-plugin",
+				GRPCPlugin: v1.GRPCStoragePluginSpec{
+					Image:  "my-image",
+					Binary: "/plugin/start",
+				},
+			},
+		},
+	}
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	envvar := corev1.EnvVar{
+		Name:  "SPAN_STORAGE_TYPE",
+		Value: "grpc-plugin",
+	}
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, envvar)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Args, "--grpc-storage-plugin.binary=/plugin/start")
+
+	assert.Len(t, dep.Spec.Template.Spec.InitContainers, 1)
+	assert.Equal(t, "my-image", dep.Spec.Template.Spec.InitContainers[0].Image)
+	assert.Len(t, dep.Spec.Template.Spec.InitContainers[0].VolumeMounts, 2, "Init container needs plugin volume")
+}
+
 func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
