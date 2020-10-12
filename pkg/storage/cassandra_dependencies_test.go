@@ -57,6 +57,21 @@ func TestCassandraCustomTraceTTLParseError(t *testing.T) {
 	assert.Equal(t, "172800", foundValue, "unexpected TRACE_TTL environment var value")
 }
 
+func TestCassandraDefaultPort(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Len(t, b[0].Spec.Template.Spec.Containers, 1)
+	for _, e := range b[0].Spec.Template.Spec.Containers[0].Env {
+		if e.Name == "CQLSH_PORT" {
+			assert.Equal(t, "9042", e.Value, "unexpected CQLSH_PORT environment var value")
+			return
+		}
+	}
+	assert.Fail(t, "value for CQLSH_PORT environment var not found")
+}
+
 func TestDefaultImage(t *testing.T) {
 	viper.Set("jaeger-cassandra-schema-image", "jaegertracing/theimage")
 	defer viper.Reset()
