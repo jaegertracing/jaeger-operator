@@ -38,11 +38,17 @@ sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/
 # change the versions.txt
 sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
 
+mkdir -p deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}
+cp deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml \
+   deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+
 operator-sdk generate csv \
     --csv-channel=stable \
     --make-manifests=false \
-    --csv-version=${OPERATOR_VERSION} \
-    --from-version=${PREVIOUS_VERSION}
+    --csv-version=${OPERATOR_VERSION}
+
+cp deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}/jaeger-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml \
+   deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 
 # changes to deploy/olm-catalog/jaeger-operator/manifests
 sed "s~containerImage: docker.io/jaegertracing/jaeger-operator:${PREVIOUS_VERSION}~containerImage: docker.io/jaegertracing/jaeger-operator:${OPERATOR_VERSION}~i" -i deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
