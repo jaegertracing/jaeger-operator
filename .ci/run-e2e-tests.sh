@@ -39,8 +39,9 @@ then
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "streaming-otel" ]
 then
-    echo "Running Streaming Tests with OTEL collector"
+    echo "Running Streaming Tests with OTEL collector and ingester"
     export USE_OTEL_COLLECTOR=true
+    export USE_OTEL_INGESTER=true
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "examples1" ]
 then

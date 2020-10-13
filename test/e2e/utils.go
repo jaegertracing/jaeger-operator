@@ -48,6 +48,7 @@ var (
 	saveLogs           = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	testOtelCollector  = getBoolEnv("USE_OTEL_COLLECTOR", false)
+	testOtelIngester   = getBoolEnv("USE_OTEL_INGESTER", false)
 	testOtelAgent      = getBoolEnv("USE_OTEL_AGENT", false)
 	testOtelAllInOne   = getBoolEnv("USE_OTEL_ALL_IN_ONE", false)
 
@@ -56,6 +57,7 @@ var (
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
 	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
+	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
 	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
 
@@ -562,6 +564,26 @@ func deletePersistentVolumeClaims(namespace string) {
 		logrus.Infof("Deleting PVC %s from namespace %s", pvc.Name, namespace)
 		fw.KubeClient.CoreV1().PersistentVolumeClaims(kafkaNamespace).Delete(context.Background(), pvc.Name, emptyDeleteOptions)
 	}
+}
+
+func verifyIngesterImage(jaegerInstanceName, namespace string, expected bool) {
+	require.Equal(t, expected, wasUsingOtelIngester(jaegerInstanceName, namespace))
+}
+
+// Was this Jaeger Instance using the OTEL ingester?
+func wasUsingOtelIngester(jaegerInstanceName, namespace string) bool {
+	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-ingester", metav1.GetOptions{})
+	require.NoError(t, err)
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == "jaeger-ingester" {
+			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
+			return strings.Contains(container.Image, "jaeger-opentelemetry-ingester")
+		}
+	}
+
+	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
+	return false
 }
 
 func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
