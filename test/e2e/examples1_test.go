@@ -66,13 +66,13 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	name := "agent-as-daemonset"
 
 	if isOpenShift(t) {
-		yamlFileName = "../../deploy/examples/openshift/agent-as-daemonset.yaml"
+		yamlFileName = "../../examples/openshift/agent-as-daemonset.yaml"
 
 		execOcCommand("create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/hostport-scc-daemonset.yaml")
 		execOcCommand("create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/service_account_jaeger-agent-daemonset.yaml")
 		execOcCommand("adm", "policy", "--namespace", namespace, "add-scc-to-user", "daemonset-with-hostport", "-z", "jaeger-agent-daemonset")
 	} else {
-		yamlFileName = "../../deploy/examples/agent-as-daemonset.yaml"
+		yamlFileName = "../../examples/agent-as-daemonset.yaml"
 	}
 
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
@@ -95,20 +95,20 @@ func (suite *ExamplesTestSuite) TestWithCassandra() {
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for cassandra")
 
-	yamlFileName := "../../deploy/examples/with-cassandra.yaml"
+	yamlFileName := "../../examples/with-cassandra.yaml"
 	smokeTestAllInOneExampleWithTimeout("with-cassandra", yamlFileName, timeout+1*time.Minute)
 }
 
 func (suite *ExamplesTestSuite) TestBusinessApp() {
 	// First deploy a Jaeger instance
 	jaegerInstanceName := "simplest"
-	jaegerInstance := createJaegerInstanceFromFile(jaegerInstanceName, "../../deploy/examples/simplest.yaml")
+	jaegerInstance := createJaegerInstanceFromFile(jaegerInstanceName, "../../examples/simplest.yaml")
 	defer undeployJaegerInstance(jaegerInstance)
 	err := WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout+(1*time.Minute))
 	require.NoError(t, err)
 
 	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
-	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../deploy/examples/business-application-injected-sidecar.yaml")
+	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../examples/business-application-injected-sidecar.yaml")
 	output, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))

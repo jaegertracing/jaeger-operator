@@ -51,6 +51,6 @@ func (suite *ExamplesTestSuiteOCP) AfterTest(suiteName, testName string) {
 }
 
 func (suite *ExamplesTestSuiteOCP) TestSimpleProdDeployEsExample() {
-	yamlFileName := "../../deploy/examples/openshift/simple-prod-deploy-es.yaml"
+	yamlFileName := "../../examples/openshift/simple-prod-deploy-es.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
