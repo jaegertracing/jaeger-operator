@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -239,7 +240,7 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Failed to create jaeger instance")
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err, "Error waiting for Jaeger instance deployment")
 
 	return j
