@@ -43,6 +43,9 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 4
+          securityContext:
+            capabilities:
+              add: ["SYS_CHROOT"]
       volumes:
         - name: data
           emptyDir: {}
