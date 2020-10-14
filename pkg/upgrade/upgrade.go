@@ -63,10 +63,19 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			// nothing to do at this level, just go to the next instance
 			continue
 		}
-
+		version := jaeger.Status.Version
 		if !reflect.DeepEqual(jaeger, j) {
 			// the CR has changed, store it!
-			if err := c.Update(ctx, &jaeger); err != nil {
+			if err := c.Update(ctx, &jaeger); err == nil {
+				jaeger.Status.Version = version
+				if err := c.Status().Update(ctx, &jaeger); err != nil {
+					log.WithFields(log.Fields{
+						"instance":  jaeger.Name,
+						"namespace": jaeger.Namespace,
+					}).WithError(err).Error("failed update status of the upgraded instance")
+					tracing.HandleError(err, span)
+				}
+			} else {
 				log.WithFields(log.Fields{
 					"instance":  jaeger.Name,
 					"namespace": jaeger.Namespace,
