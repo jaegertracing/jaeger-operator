@@ -161,7 +161,7 @@ func getVertxDefinition(deploymentName string, annotations map[string]string) *a
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
+						Image: vertxExampleImage,
 						Name:  deploymentName,
 						Ports: []corev1.ContainerPort{
 							{
@@ -175,7 +175,8 @@ func getVertxDefinition(deploymentName string, annotations map[string]string) *a
 									Port: intstr.FromInt(8080),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: vertxDelaySeconds,
+							TimeoutSeconds:      vertxTimeoutSeconds,
 						},
 						LivenessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
@@ -184,7 +185,8 @@ func getVertxDefinition(deploymentName string, annotations map[string]string) *a
 									Port: intstr.FromInt(8080),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: vertxDelaySeconds,
+							TimeoutSeconds:      vertxTimeoutSeconds,
 						},
 					}},
 				},

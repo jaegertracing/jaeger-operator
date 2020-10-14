@@ -171,7 +171,7 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "jaegertracing/vertx-create-span:operator-e2e-tests",
+						Image: vertxExampleImage,
 						Name:  "vertx-create-span",
 						Env: []corev1.EnvVar{
 							corev1.EnvVar{
@@ -195,7 +195,8 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 									Port: intstr.FromInt(8080),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: vertxDelaySeconds,
+							TimeoutSeconds:      vertxTimeoutSeconds,
 						},
 						LivenessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
@@ -204,7 +205,8 @@ func getVertxDeployment(namespace string, selector map[string]string) *appsv1.De
 									Port: intstr.FromInt(8080),
 								},
 							},
-							InitialDelaySeconds: 1,
+							InitialDelaySeconds: vertxDelaySeconds,
+							TimeoutSeconds:      vertxTimeoutSeconds,
 						},
 					}},
 				},
