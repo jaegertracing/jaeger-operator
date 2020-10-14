@@ -58,6 +58,9 @@ var (
 	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
 	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
+	vertxExampleImage    = getStringEnv("VERTX_EXAMPLE_IMAGE", "jaegertracing/vertx-create-span:operator-e2e-tests")
+	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
+	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
 
 	ctx       *framework.TestCtx
 	fw        *framework.Framework
@@ -83,6 +86,13 @@ func getIntEnv(key string, defaultValue int) int {
 			logrus.Warnf("Error [%v] received converting environment variable [%s] using [%v]", err, key, value)
 		}
 		return intValue
+	}
+	return defaultValue
+}
+
+func getStringEnv(key, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
 	}
 	return defaultValue
 }
