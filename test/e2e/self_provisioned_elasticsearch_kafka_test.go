@@ -23,11 +23,11 @@ import (
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
-type SelfProvisionedTestSuite struct {
+type SelfProvisionedESWithKafkaTestSuite struct {
 	suite.Suite
 }
 
-func (suite *SelfProvisionedTestSuite) SetupSuite() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) SetupSuite() {
 	t = suite.T()
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
@@ -66,26 +66,26 @@ func (suite *SelfProvisionedTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetID failed")
 }
 
-func (suite *SelfProvisionedTestSuite) TearDownSuite() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) TearDownSuite() {
 	handleSuiteTearDown()
 }
 
-func TestSelfProvisionedSuite(t *testing.T) {
-	suite.Run(t, new(SelfProvisionedTestSuite))
+func TestSelfProvisionedWithKafkaSuite(t *testing.T) {
+	suite.Run(t, new(SelfProvisionedESWithKafkaTestSuite))
 }
 
-func (suite *SelfProvisionedTestSuite) SetupTest() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) SetupTest() {
 	t = suite.T()
 }
 
-func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
+func (suite *SelfProvisionedESWithKafkaTestSuite) AfterTest(suiteName, testName string) {
 	handleTestFailure()
 }
 
-func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
-	exampleJaeger := getJaegerSelfProvisionedESAndKafka(jaegerInstanceName, testOtelCollector)
+	exampleJaeger := getJaegerSelfProvisionedESAndKafka(jaegerInstanceName)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -112,10 +112,10 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() 
 	ProductionSmokeTest(jaegerInstanceName)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, testOtelCollector)
+	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
-func getJaegerSelfProvisionedESAndKafka(instanceName string, useOtelCollector bool) *v1.Jaeger {
+func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	ingressEnabled := true
 	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -145,10 +145,14 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string, useOtelCollector bo
 		},
 	}
 
-	if useOtelCollector {
+	if specifyOtelImages {
 		logrus.Infof("Using OTEL collector for %s", instanceName)
 		jaegerInstance.Spec.Collector.Image = otelCollectorImage
+	}
+
+	if specifyOtelConfig {
 		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+
 	}
 
 	return jaegerInstance

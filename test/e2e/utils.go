@@ -47,10 +47,8 @@ var (
 	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
 	saveLogs           = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	testOtelCollector  = getBoolEnv("USE_OTEL_COLLECTOR", false)
-	testOtelIngester   = getBoolEnv("USE_OTEL_INGESTER", false)
-	testOtelAgent      = getBoolEnv("USE_OTEL_AGENT", false)
-	testOtelAllInOne   = getBoolEnv("USE_OTEL_ALL_IN_ONE", false)
+	specifyOtelImages  = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
+	specifyOtelConfig  = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
 
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"

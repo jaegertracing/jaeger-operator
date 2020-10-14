@@ -86,7 +86,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 
 	// create jaeger custom resource
 	name := "simple-prod"
-	exampleJaeger := getJaegerSimpleProdWithServerUrls(name, testOtelCollector)
+	exampleJaeger := getJaegerSimpleProdWithServerUrls(name)
 	err = fw.Client.Create(context.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
@@ -100,7 +100,7 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	ProductionSmokeTest(name)
 
 	// Make sure we were using the correct collector image
-	verifyCollectorImage(name, namespace, testOtelCollector)
+	verifyCollectorImage(name, namespace, specifyOtelImages)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
@@ -159,7 +159,7 @@ func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	indexWithPrefixExists("jaeger-", false)
 }
 
-func getJaegerSimpleProdWithServerUrls(name string, useOtelCollector bool) *v1.Jaeger {
+func getJaegerSimpleProdWithServerUrls(name string) *v1.Jaeger {
 	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -185,9 +185,12 @@ func getJaegerSimpleProdWithServerUrls(name string, useOtelCollector bool) *v1.J
 		},
 	}
 
-	if useOtelCollector {
+	if specifyOtelImages {
 		logrus.Infof("Using OTEL collector for %s", name)
 		exampleJaeger.Spec.Collector.Image = otelCollectorImage
+	}
+
+	if specifyOtelConfig {
 		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
