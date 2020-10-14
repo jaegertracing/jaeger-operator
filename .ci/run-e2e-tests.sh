@@ -13,7 +13,8 @@ if [ "${TEST_GROUP}" = "es" ]; then
     make e2e-tests-es
 elif [ "${TEST_GROUP}" = "es-otel" ]; then
     echo "Running elasticsearch tests with OTEL collector"
-    export USE_OTEL_COLLECTOR=true
+    export SPECIFY_OTEL_IMAGES=true
+    export SPECIFY_OTEL_CONFIG=true
     make es
     make e2e-tests-es
 elif [ "${TEST_GROUP}" = "es-self-provisioned" ]; then
@@ -40,8 +41,8 @@ then
 elif [ "${TEST_GROUP}" = "streaming-otel" ]
 then
     echo "Running Streaming Tests with OTEL collector and ingester"
-    export USE_OTEL_COLLECTOR=true
-    export USE_OTEL_INGESTER=true
+    export SPECIFY_OTEL_IMAGES=true
+    export SPECIFY_OTEL_CONFIG=true
     make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "examples1" ]
 then
@@ -62,9 +63,8 @@ then
 elif [ "${TEST_GROUP}" = "smoke-otel" ]
 then
     echo "Running Smoke Tests with OTEL collector"
-    export USE_OTEL_COLLECTOR=true
-    export USE_OTEL_AGENT=true
-    export USE_OTEL_ALL_IN_ONE=true
+    export SPECIFY_OTEL_IMAGES=true
+    export SPECIFY_OTEL_CONFIG=true
     make e2e-tests-smoke
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1

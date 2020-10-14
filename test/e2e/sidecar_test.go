@@ -70,10 +70,10 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	firstJaegerInstanceName := "agent-as-sidecar"
-	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace, testOtelAgent, testOtelAllInOne)
+	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace)
 	defer undeployJaegerInstance(firstJaegerInstance)
 
-	verifyAllInOneImage(firstJaegerInstanceName, namespace, testOtelAllInOne)
+	verifyAllInOneImage(firstJaegerInstanceName, namespace, specifyOtelImages)
 
 	vertxDeploymentName := "vertx-create-span-sidecar"
 	dep := getVertxDefinition(vertxDeploymentName, map[string]string{inject.Annotation: "true"})
@@ -103,7 +103,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 	/* Testing other instance */
 	secondJaegerInstanceName := "agent-as-sidecar2"
-	secondJaegerInstance := createJaegerAgentAsSidecarInstance(secondJaegerInstanceName, namespace, testOtelAgent, testOtelAllInOne)
+	secondJaegerInstance := createJaegerAgentAsSidecarInstance(secondJaegerInstanceName, namespace)
 	defer undeployJaegerInstance(secondJaegerInstance)
 
 	persisted := &appsv1.Deployment{}
@@ -135,7 +135,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 		return len(resp.Data) > 0, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-	verifyAgentImage(vertxDeploymentName, namespace, testOtelAgent)
+	verifyAgentImage(vertxDeploymentName, namespace, specifyOtelImages)
 }
 
 func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {
@@ -193,7 +193,7 @@ func getVertxDefinition(deploymentName string, annotations map[string]string) *a
 	return dep
 }
 
-func createJaegerAgentAsSidecarInstance(name, namespace string, useOtelAgent, useOtelAllInOne bool) *v1.Jaeger {
+func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	j := &v1.Jaeger{
@@ -224,15 +224,15 @@ func createJaegerAgentAsSidecarInstance(name, namespace string, useOtelAgent, us
 		},
 	}
 
-	if useOtelAllInOne {
+	if specifyOtelImages {
 		logrus.Infof("Using OTEL AllInOne image for %s", name)
 		j.Spec.AllInOne.Image = otelAllInOneImage
-		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	if useOtelAgent {
 		logrus.Infof("Using OTEL Agent for %s", name)
 		j.Spec.Agent.Image = otelAgentImage
+	}
+
+	if specifyOtelConfig {
+		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
