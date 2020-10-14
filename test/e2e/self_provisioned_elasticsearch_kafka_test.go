@@ -23,11 +23,11 @@ import (
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
-type SelfProvisionedWithKafkaTestSuite struct {
+type SelfProvisionedESWithKafkaTestSuite struct {
 	suite.Suite
 }
 
-func (suite *SelfProvisionedWithKafkaTestSuite) SetupSuite() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) SetupSuite() {
 	t = suite.T()
 	if !isOpenShift(t) {
 		t.Skipf("Test %s is currently supported only on OpenShift because es-operator runs only on OpenShift\n", t.Name())
@@ -66,23 +66,23 @@ func (suite *SelfProvisionedWithKafkaTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetID failed")
 }
 
-func (suite *SelfProvisionedWithKafkaTestSuite) TearDownSuite() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) TearDownSuite() {
 	handleSuiteTearDown()
 }
 
 func TestSelfProvisionedWithKafkaSuite(t *testing.T) {
-	suite.Run(t, new(SelfProvisionedWithKafkaTestSuite))
+	suite.Run(t, new(SelfProvisionedESWithKafkaTestSuite))
 }
 
-func (suite *SelfProvisionedWithKafkaTestSuite) SetupTest() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) SetupTest() {
 	t = suite.T()
 }
 
-func (suite *SelfProvisionedWithKafkaTestSuite) AfterTest(suiteName, testName string) {
+func (suite *SelfProvisionedESWithKafkaTestSuite) AfterTest(suiteName, testName string) {
 	handleTestFailure()
 }
 
-func (suite *SelfProvisionedWithKafkaTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() {
+func (suite *SelfProvisionedESWithKafkaTestSuite) TestSelfProvisionedESAndKafkaSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
 	exampleJaeger := getJaegerSelfProvisionedESAndKafka(jaegerInstanceName)
