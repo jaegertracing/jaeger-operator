@@ -63,8 +63,8 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			// nothing to do at this level, just go to the next instance
 			continue
 		}
-		version := jaeger.Status.Version
 		if !reflect.DeepEqual(jaeger, j) {
+			version := jaeger.Status.Version
 			// the CR has changed, store it!
 			if err := c.Update(ctx, &jaeger); err == nil {
 				jaeger.Status.Version = version
