@@ -92,6 +92,11 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
+	hostNetwork := false
+	if a.jaeger.Spec.Agent.HostNetwork != nil {
+		hostNetwork = *a.jaeger.Spec.Agent.HostNetwork
+	}
+
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -176,6 +181,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Resources:    commonSpec.Resources,
 						VolumeMounts: commonSpec.VolumeMounts,
 					}},
+					HostNetwork:        hostNetwork,
 					Volumes:            commonSpec.Volumes,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

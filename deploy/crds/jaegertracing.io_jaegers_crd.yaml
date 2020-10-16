@@ -580,6 +580,8 @@ spec:
                   type: object
                 config:
                   type: object
+                hostNetwork:
+                  type: boolean
                 image:
                   type: string
                 imagePullSecrets:

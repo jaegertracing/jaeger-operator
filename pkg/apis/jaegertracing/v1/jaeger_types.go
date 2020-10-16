@@ -386,6 +386,9 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	SidecarSecurityContext *v1.SecurityContext `json:"sidecarSecurityContext,omitempty"`
+
+	// +optional
+	HostNetwork *bool `json:"hostNetwork,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector

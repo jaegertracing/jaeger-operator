@@ -323,6 +323,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 							Ref: ref("k8s.io/api/core/v1.SecurityContext"),
 						},
 					},
+					"hostNetwork": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
