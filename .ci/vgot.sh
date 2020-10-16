@@ -5,7 +5,7 @@ if [ $# = 0 ]; then
 fi
 d=`mktemp -d`
 cd "$d"
-echo 'module temp' > go.mod
+go mod init temp >/dev/null 2>&1
 for i; do
     pkg=`echo $i | sed 's/@.*//'`
     go get "$i" &&

@@ -22,6 +22,7 @@ ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
 GOPATH ?= "$(HOME)/go"
+GOROOT ?= "$(shell go env GOROOT)"
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
@@ -315,7 +316,7 @@ generate: internal-generate format
 
 .PHONY: internal-generate
 internal-generate:
-	@GOPATH=${GOPATH} ./.ci/generate.sh
+	@GOPATH=${GOPATH} GOROOT=${GOROOT} ./.ci/generate.sh
 
 .PHONY: test
 test: unit-tests e2e-tests
