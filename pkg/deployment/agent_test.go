@@ -246,4 +246,15 @@ func TestAgentServiceLinks(t *testing.T) {
 	dep := a.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+	assert.Equal(t, falseVar, dep.Spec.Template.Spec.HostNetwork)
+}
+
+func TestAgentHostNetwork(t *testing.T) {
+	trueVar := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.HostNetwork = &trueVar
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
 }
