@@ -4,24 +4,44 @@ package e2e
 
 import (
 	"context"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"os"
+	"regexp"
+	"strings"
+	"testing"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"os"
-	"strings"
-	"testing"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-const EnvUpdateVersionKey = "UPDATE_TEST_VERSION"
-const upgradeTestTag = "next"
+const (
+	envUpgradeVersionKey = "UPGRADE_TEST_VERSION"
+	upgradeTestTag       = "next"
+)
+
+type OperatorUpgradeTestSuite struct {
+	suite.Suite
+}
 
 func TestOperatorUpgrade(t *testing.T) {
+	suite.Run(t, new(OperatorUpgradeTestSuite))
+}
 
-	upgradeTestVersion := os.Getenv(EnvUpdateVersionKey)
-	t.Log(upgradeTestVersion)
+func (suite *OperatorUpgradeTestSuite) SetupTest() {
+	t = suite.T()
+}
+
+func (suite *OperatorUpgradeTestSuite) TestUpgrade() {
+	upgradeTestVersion := os.Getenv(envUpgradeVersionKey)
+	versionRegexp := regexp.MustCompile(`^[\d]+\.[\d]+\.[\d]+`)
+
+	require.Regexp(t, versionRegexp, upgradeTestVersion,
+		"Invalid upgrade version, need to specify a version to upgrade in format X.Y.Z")
 
 	ctx, err := prepare(t)
 	if err != nil {
@@ -42,6 +62,7 @@ func TestOperatorUpgrade(t *testing.T) {
 	image := deployment.Spec.Template.Spec.Containers[0].Image
 	image = strings.Replace(image, "latest", upgradeTestTag, 1)
 	deployment.Spec.Template.Spec.Containers[0].Image = image
+	t.Logf("Attempting to upgrade to version %s...", upgradeTestVersion)
 	fw.Client.Update(context.Background(), deployment)
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		updatedJaeger := &v1.Jaeger{}
@@ -57,5 +78,4 @@ func TestOperatorUpgrade(t *testing.T) {
 	})
 
 	require.NoError(t, err, "upgrade e2e test failed")
-
 }
