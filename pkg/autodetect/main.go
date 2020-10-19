@@ -196,6 +196,9 @@ func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupLi
 }
 
 func (b *Background) detectClusterRoles(ctx context.Context) {
+	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		return
+	}
 	tr := &authenticationapi.TokenReview{
 		ObjectMeta: metav1.ObjectMeta{Name: "jaeger-operator-TEST"},
 		Spec: authenticationapi.TokenReviewSpec{

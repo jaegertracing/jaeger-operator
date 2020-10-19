@@ -28,6 +28,7 @@ import (
 )
 
 func TestStart(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	// sanity check
@@ -63,6 +64,7 @@ func TestStart(t *testing.T) {
 }
 
 func TestStartContinuesInBackground(t *testing.T) {
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	// prepare
@@ -364,8 +366,25 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
+func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformKubernetes)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectClusterRoles(context.Background())
+
+	// verify
+	assert.False(t, viper.IsSet("auth-delegator-available"))
+}
+
 func TestNoAuthDelegatorAvailable(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -384,6 +403,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 
 func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -404,6 +424,7 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 
 func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
