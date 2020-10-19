@@ -22,6 +22,7 @@ ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
 GOPATH ?= "$(HOME)/go"
+GOROOT ?= "$(shell go env GOROOT)"
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
@@ -292,7 +293,7 @@ endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator
-	@rm -f deploy/test/*.yaml 
+	@rm -f deploy/test/*.yaml
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	@kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -310,12 +311,12 @@ crd:
 ingress:
 	@minikube addons enable ingress
 
-.PHONY: generate 
+.PHONY: generate
 generate: internal-generate format
 
 .PHONY: internal-generate
 internal-generate:
-	@GOPATH=${GOPATH} ./.ci/generate.sh
+	@GOPATH=${GOPATH} GOROOT=${GOROOT} ./.ci/generate.sh
 
 .PHONY: test
 test: unit-tests e2e-tests
@@ -337,13 +338,13 @@ install-sdk:
 
 .PHONY: install-tools
 install-tools:
-	@${GO_FLAGS} go install \
+	@${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
-		github.com/securego/gosec/cmd/gosec \
 		golang.org/x/tools/cmd/goimports \
-		sigs.k8s.io/controller-tools/cmd/controller-gen \
-		k8s.io/code-generator/cmd/client-gen \
-		k8s.io/kube-openapi/cmd/openapi-gen
+		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
+		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4 \
+		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
+		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
 
 .PHONY: install
 install: install-sdk install-tools
