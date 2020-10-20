@@ -81,8 +81,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		a.jaeger.Logger().WithField("error", err).
 			WithField("component", "all-in-one").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.AllInOne.Options, otelConf) {
-		otelconfig.Update(a.jaeger, "all-in-one", commonSpec, &options)
+	} else {
+		otelconfig.Sync(a.jaeger, "all-in-one", a.jaeger.Spec.AllInOne.Options, otelConf, commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments

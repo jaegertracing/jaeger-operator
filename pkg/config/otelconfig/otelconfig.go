@@ -2,6 +2,7 @@ package otelconfig
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
@@ -104,9 +105,8 @@ func create(jaeger *v1.Jaeger, component string, otelConfig map[string]interface
 	}, nil
 }
 
-// Update injects required flags and objects to the common spec.
-func Update(jaeger *v1.Jaeger, component string, commonSpec *v1.JaegerCommonSpec, args *[]string) {
-	volume := corev1.Volume{
+func upsert(jaeger *v1.Jaeger, component string, commonSpec *v1.JaegerCommonSpec, args *[]string) {
+	volumes := []corev1.Volume{{
 		Name: volumeName(jaeger, component),
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -121,15 +121,57 @@ func Update(jaeger *v1.Jaeger, component string, commonSpec *v1.JaegerCommonSpec
 				},
 			},
 		},
-	}
-	volumeMount := corev1.VolumeMount{
+	}}
+	volumeMounts := []corev1.VolumeMount{{
 		Name:      volumeName(jaeger, component),
 		MountPath: configFileLocation,
 		ReadOnly:  true,
-	}
-	commonSpec.Volumes = append(commonSpec.Volumes, volume)
-	commonSpec.VolumeMounts = append(commonSpec.VolumeMounts, volumeMount)
+	}}
+
+	// remove stale volumes, keeping only the one we assembled here
+	commonSpec.Volumes = util.RemoveDuplicatedVolumes(append(volumes, commonSpec.Volumes...))
+	commonSpec.VolumeMounts = util.RemoveDuplicatedVolumeMounts(append(volumeMounts, commonSpec.VolumeMounts...))
+
 	*args = append(*args, configFlagWithFile)
+}
+
+func remove(jaeger *v1.Jaeger, component string, commonSpec *v1.JaegerCommonSpec, args *[]string) {
+	name := volumeName(jaeger, component)
+
+	volumes := []corev1.Volume{}
+	for _, volume := range commonSpec.Volumes {
+		if volume.Name != name {
+			volumes = append(volumes, volume)
+		}
+	}
+	commonSpec.Volumes = volumes
+
+	mounts := []corev1.VolumeMount{}
+	for _, mount := range commonSpec.VolumeMounts {
+		if mount.Name != name {
+			mounts = append(mounts, mount)
+		}
+	}
+	commonSpec.VolumeMounts = mounts
+
+	if args != nil {
+		newArgs := []string{}
+		for _, arg := range *args {
+			if !strings.Contains(arg, configFileLocation) {
+				newArgs = append(newArgs, arg)
+			}
+		}
+		*args = newArgs
+	}
+}
+
+// Sync creates, updates or deletes spec and args entries for the component based on the given instance, opts and configuration.
+func Sync(jaeger *v1.Jaeger, component string, opts v1.Options, cfg map[string]interface{}, spec *v1.JaegerCommonSpec, args *[]string) {
+	if ShouldCreate(jaeger, opts, cfg) {
+		upsert(jaeger, component, spec, args)
+	} else {
+		remove(jaeger, component, spec, args)
+	}
 }
 
 func volumeName(jaeger *v1.Jaeger, component string) string {

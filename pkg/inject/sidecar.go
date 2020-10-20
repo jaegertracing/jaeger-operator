@@ -214,8 +214,8 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 		jaeger.Logger().WithField("error", err).
 			WithField("component", "agent").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(jaeger, jaeger.Spec.Agent.Options, otelConf) {
-		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
+	} else {
+		otelconfig.Sync(jaeger, "agent", jaeger.Spec.Agent.Options, otelConf, volumesAndMountsSpec, &args)
 	}
 
 	ca.Update(jaeger, volumesAndMountsSpec)
