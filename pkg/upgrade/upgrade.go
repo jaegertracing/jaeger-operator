@@ -74,7 +74,8 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 					log.WithFields(log.Fields{
 						"instance":  jaeger.Name,
 						"namespace": jaeger.Namespace,
-					}).WithError(err).Error("failed update status of the upgraded instance")
+						"version":   version,
+					}).WithError(err).Error("failed to update status the upgraded instance")
 					tracing.HandleError(err, span)
 				}
 			} else {

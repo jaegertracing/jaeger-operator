@@ -34,26 +34,28 @@ func TestOperatorUpgrade(t *testing.T) {
 
 func (suite *OperatorUpgradeTestSuite) SetupTest() {
 	t = suite.T()
-}
-
-func (suite *OperatorUpgradeTestSuite) TestUpgrade() {
-	upgradeTestVersion := os.Getenv(envUpgradeVersionKey)
-	versionRegexp := regexp.MustCompile(`^[\d]+\.[\d]+\.[\d]+`)
-
-	require.Regexp(t, versionRegexp, upgradeTestVersion,
-		"Invalid upgrade version, need to specify a version to upgrade in format X.Y.Z")
-
-	ctx, err := prepare(t)
+	var err error
+	ctx, err = prepare(t)
 	if err != nil {
 		ctx.Cleanup()
 		require.FailNow(t, "Failed in prepare")
 	}
-	defer ctx.Cleanup()
 	addToFrameworkSchemeForSmokeTests(t)
 	if err := simplest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 	fw = framework.Global
+}
+
+func (suite *OperatorUpgradeTestSuite) TearDownSuite() {
+	handleSuiteTearDown()
+}
+
+func (suite *OperatorUpgradeTestSuite) TestUpgrade() {
+	upgradeTestVersion := os.Getenv(envUpgradeVersionKey)
+	versionRegexp := regexp.MustCompile(`^[\d]+\.[\d]+\.[\d]+`)
+	require.Regexp(t, versionRegexp, upgradeTestVersion,
+		"Invalid upgrade version, need to specify a version to upgrade in format X.Y.Z")
 	createdJaeger := &v1.Jaeger{}
 	key := types.NamespacedName{Name: "my-jaeger", Namespace: ctx.GetID()}
 	fw.Client.Get(context.Background(), key, createdJaeger)
@@ -64,7 +66,7 @@ func (suite *OperatorUpgradeTestSuite) TestUpgrade() {
 	deployment.Spec.Template.Spec.Containers[0].Image = image
 	t.Logf("Attempting to upgrade to version %s...", upgradeTestVersion)
 	fw.Client.Update(context.Background(), deployment)
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		updatedJaeger := &v1.Jaeger{}
 		key := types.NamespacedName{Name: "my-jaeger", Namespace: ctx.GetID()}
 		if err := fw.Client.Get(context.Background(), key, updatedJaeger); err != nil {
