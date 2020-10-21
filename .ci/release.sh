@@ -35,6 +35,13 @@ sed "s~image: jaegertracing/jaeger-agent:.*~image: jaegertracing/jaeger-agent:${
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
 
+# changes to deploy/examples/with-grpc-plugin.yaml
+sed "s~image: jaegertracing/jaeger-operator-demo-storage-plugin:.*~image: jaegertracing/jaeger-operator-demo-storage-plugin:${JAEGER_VERSION}~gi" -i deploy/examples/with-grpc-plugin.yaml
+
+# change the test/e2e/demo-storage-plugin/go.mod
+sed "s~github.com/jaegertracing/jaeger v.*~github.com/jaegertracing/jaeger v${OPERATOR_VERSION}~gi" -i test/e2e/demo-storage-plugin/go.mod
+(cd test/e2e/demo-storage-plugin; go mod tidy)
+
 # change the versions.txt
 sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
 
@@ -62,6 +69,9 @@ else
       deploy/operator.yaml \
       deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml \
       deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml \
+      deploy/examples/with-grpc-plugin.yaml \
+      test/e2e/demo-storage-plugin/go.mod \
+      test/e2e/demo-storage-plugin/go.sum \
       test/operator.yaml \
       versions.txt
 

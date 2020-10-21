@@ -79,6 +79,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	sampling.Update(c.jaeger, commonSpec, &options)
 	tls.Update(c.jaeger, commonSpec, &options)
+	storage.Update(c.jaeger, commonSpec, &options)
 	ca.Update(c.jaeger, commonSpec)
 
 	otelConf, err := c.jaeger.Spec.Collector.Config.GetMap()
@@ -123,6 +124,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: storage.GetInitContainers(c.jaeger, commonSpec),
 					Containers: []corev1.Container{{
 						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
 						Name:  "jaeger-collector",

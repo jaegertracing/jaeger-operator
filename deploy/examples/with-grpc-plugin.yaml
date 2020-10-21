@@ -1,0 +1,26 @@
+---
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: with-grpc-plugin
+spec:
+  storage:
+    type: grpc-plugin
+    grpcPlugin:
+      image: jaegertracing/jaeger-operator-demo-storage-plugin:1.18.1
+      binary: "/plugin/demo-storage-plugin"
+      configurationFile: "/etc/plugin-config/config.json"
+  volumeMounts:
+  - name: plugin-config-volume
+    mountPath: /etc/plugin-config
+  volumes:
+  - name: plugin-config-volume
+    secret:
+      secretName: plugin-config
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: plugin-config
+stringData:
+  config.json: '{}'

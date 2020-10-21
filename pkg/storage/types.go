@@ -12,6 +12,7 @@ func ValidTypes() []string {
 		"elasticsearch",
 		"cassandra",
 		"badger",
+		"grpc-plugin",
 	}
 }
 
@@ -19,6 +20,9 @@ func ValidTypes() []string {
 func OptionsPrefix(storageType string) string {
 	if strings.EqualFold(storageType, "elasticsearch") {
 		return "es"
+	}
+	if strings.EqualFold(storageType, "grpc-plugin") {
+		return "grpc-storage-plugin"
 	}
 	return storageType
 }

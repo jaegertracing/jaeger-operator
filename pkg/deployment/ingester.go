@@ -92,6 +92,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	storage.Update(i.jaeger, commonSpec, &options)
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -120,6 +122,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: storage.GetInitContainers(i.jaeger, commonSpec),
 					Containers: []corev1.Container{{
 						Image: util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
 						Name:  "jaeger-ingester",

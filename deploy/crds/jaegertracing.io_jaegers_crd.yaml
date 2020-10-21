@@ -9264,6 +9264,15 @@ spec:
                         type: object
                       type: array
                   type: object
+                grpcPlugin:
+                  properties:
+                    binary:
+                      type: string
+                    configurationFile:
+                      type: string
+                    image:
+                      type: string
+                  type: object
                 options:
                   type: object
                 secretName:

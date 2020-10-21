@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -314,6 +315,60 @@ func TestQueryOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[0], "--a-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[1], "--b-option"))
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[2], "--c-option"))
+}
+
+func TestWithGRPCPluginStorageType(t *testing.T) {
+	jaeger := &v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-instance",
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: v1.DeploymentStrategyProduction,
+			Storage: v1.JaegerStorageSpec{
+				Type: "grpc-plugin",
+				GRPCPlugin: v1.GRPCStoragePluginSpec{
+					Image:  "my-image",
+					Binary: "/plugin/start",
+				},
+			},
+		},
+	}
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	envvars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: "grpc-plugin",
+		},
+	}
+	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 1)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Args, "--grpc-storage-plugin.binary=/plugin/start")
+
+	assert.Len(t, dep.Spec.Template.Spec.InitContainers, 1)
+	assert.Equal(t, "my-image", dep.Spec.Template.Spec.InitContainers[0].Image)
+	assert.Len(t, dep.Spec.Template.Spec.InitContainers[0].VolumeMounts, 1)
+
+	mountIndex := len(dep.Spec.Template.Spec.Containers[0].VolumeMounts) - 1
+	assert.Equal(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts[mountIndex], dep.Spec.Template.Spec.InitContainers[0].VolumeMounts[0])
+
+	expectedVolume := corev1.Volume{
+		Name: "plugin-volume",
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
+
+	found := false
+	for _, volume := range dep.Spec.Template.Spec.Volumes {
+		if volume.Name == "plugin-volume" {
+			assert.Equal(t, expectedVolume, volume)
+			found = true
+		}
+	}
+
+	assert.True(t, found, "Expected to find plugin-volume")
 }
 
 func TestQueryServiceLinks(t *testing.T) {
