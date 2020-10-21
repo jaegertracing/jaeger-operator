@@ -12,6 +12,7 @@ FMT_LOG=fmt.log
 OPERATOR_NAME ?= jaeger-operator
 NAMESPACE ?= "$(USER)"
 BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
+IMAGE_TAGS ?= "--tag $(BUILD_IMAGE)"
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
@@ -82,7 +83,7 @@ docker:
 
 .PHONY: dockerx
 dockerx:
-	@[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=GOPROXY=${GOPROXY} --platform=$(PLATFORMS) --file build/Dockerfile -t "$(BUILD_IMAGE)" ${IMAGE_TAGS} .
+	@[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=GOPROXY=${GOPROXY} --platform=$(PLATFORMS) --file build/Dockerfile $(IMAGE_TAGS) .
 
 .PHONY: push
 push:
