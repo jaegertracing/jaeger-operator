@@ -51,36 +51,36 @@ func (suite *ExamplesTestSuite2) AfterTest(suiteName, testName string) {
 }
 
 func (suite *ExamplesTestSuite2) TestSimplestExample() {
-	yamlFileName := "../../deploy/examples/simplest.yaml"
+	yamlFileName := "../../examples/simplest.yaml"
 	smokeTestAllInOneExample("simplest", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestWithBadgerExample() {
-	smokeTestAllInOneExample("with-badger", "../../deploy/examples/with-badger.yaml")
+	smokeTestAllInOneExample("with-badger", "../../examples/with-badger.yaml")
 }
 
 func (suite *ExamplesTestSuite2) TestWithBadgerAndVolumeExample() {
-	smokeTestAllInOneExample("with-badger-and-volume", "../../deploy/examples/with-badger-and-volume.yaml")
+	smokeTestAllInOneExample("with-badger-and-volume", "../../examples/with-badger-and-volume.yaml")
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdWithVolumes() {
-	yamlFileName := "../../deploy/examples/simple-prod-with-volumes.yaml"
+	yamlFileName := "../../examples/simple-prod-with-volumes.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdExample() {
-	yamlFileName := "../../deploy/examples/simple-prod.yaml"
+	yamlFileName := "../../examples/simple-prod.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleStreamingExample() {
-	yamlFileName := "../../deploy/examples/simple-streaming.yaml"
+	yamlFileName := "../../examples/simple-streaming.yaml"
 	smokeTestProductionExample("simple-streaming", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestWithSampling() {
 	name := "with-sampling"
-	yamlFileName := "../../deploy/examples/with-sampling.yaml"
+	yamlFileName := "../../examples/with-sampling.yaml"
 	// This is the same as smokeTestAllInOneExample, but we need to check the jaegerInstance after it finishes
 	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
 	defer undeployJaegerInstance(jaegerInstance)
