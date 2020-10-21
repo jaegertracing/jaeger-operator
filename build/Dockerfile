@@ -1,11 +1,23 @@
-FROM golang:1.14 as builder
-
-ARG GOPROXY
-ENV GOPROXY=${GOPROXY}
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14 as builder
 
 COPY . /go/src/github.com/jaegertracing/jaeger-operator/
 WORKDIR /go/src/github.com/jaegertracing/jaeger-operator
-RUN make gobuild
+
+ARG GOPROXY
+# download deps before gobuild
+RUN go mod download -x
+
+# Dockerfile `FROM --platform=${BUILDPLATFORM}` means
+# prepare image for build for matched BUILDPLATFORM, eq. linux/amd64
+# by this way, we could avoid to using qemu, which slow down compiling process.
+# and usefully for language who support multi-arch build like go.
+# see last part of https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
+ARG TARGETARCH
+# when --platform=linux/amd64,linux/arm64
+#
+# for $TARGETARCH in "amd64 arm64" do
+RUN make gobuild OUTPUT_BINARY=/go/bin/jaeger-operator-${TARGETARCH} GOARCH=${TARGETARCH}
+# done
 
 FROM registry.access.redhat.com/ubi8/ubi
 
@@ -25,7 +37,8 @@ RUN INSTALL_PKGS=" \
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/scripts/* /scripts/
 
 # install operator binary
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/build/_output/bin/jaeger-operator ${OPERATOR}
+ARG TARGETARCH
+COPY --from=builder /go/bin/jaeger-operator-${TARGETARCH} ${OPERATOR}
 
 ENTRYPOINT ["/usr/local/bin/jaeger-operator"]
 

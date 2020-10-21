@@ -1,5 +1,8 @@
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GO_FLAGS ?= GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) CGO_ENABLED=0 GO111MODULE=on
+PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x
+GOARCH ?= $(go env GOARCH)
+GOOS ?= $(go env GOOS)
+GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
 KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= "build/_output/bin"
@@ -75,7 +78,11 @@ gobuild:
 
 .PHONY: docker
 docker:
-	@[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+	@[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=TARGETARCH=$(GOARCH) --file build/Dockerfile -t "$(BUILD_IMAGE)" .
+
+.PHONY: dockerx
+dockerx:
+	@[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=GOPROXY=${GOPROXY} --platform=$(PLATFORMS) --file build/Dockerfile -t "$(BUILD_IMAGE)" ${IMAGE_TAGS} .
 
 .PHONY: push
 push:

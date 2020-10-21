@@ -39,4 +39,4 @@ if [ "${QUAY_PASSWORD}x" != "x" -a "${QUAY_USERNAME}x" != "x" ]; then
 fi
 
 echo "Building with tags ${IMAGE_TAGS}"
-docker buildx build --push --build-arg=GOPROXY=${GOPROXY} --platform=linux/amd64,linux/arm64 ${IMAGE_TAGS} --file build/Dockerfile .
+IMAGE_TAGS=${IMAGE_TAGS} make dockerx
