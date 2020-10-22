@@ -81,11 +81,11 @@ func TestUpdate(t *testing.T) {
 	args := []string{}
 	commonSpec := &v1.JaegerCommonSpec{}
 	upsert(j, "agent", commonSpec, &args)
-	assert.Equal(t, []string{"--config=/etc/jaeger/otel/config.yaml"}, args)
+	assert.Equal(t, []string{configFlagWithFile}, args)
 	assert.Equal(t, "jaeger-agent-otel-config", commonSpec.Volumes[0].Name)
 	assert.Equal(t, "jaeger-agent-otel-config", commonSpec.VolumeMounts[0].Name)
 	assert.Equal(t, []corev1.KeyToPath{{Key: "config", Path: configFileName}}, commonSpec.Volumes[0].ConfigMap.Items)
-	assert.Equal(t, "/etc/jaeger/otel/", commonSpec.VolumeMounts[0].MountPath)
+	assert.Equal(t, configFileLocation, commonSpec.VolumeMounts[0].MountPath)
 }
 
 func TestSyncShouldUpdate(t *testing.T) {
@@ -129,7 +129,7 @@ func TestSyncShouldUpdate(t *testing.T) {
 func TestSyncShouldRemove(t *testing.T) {
 	// prepare
 	j := v1.NewJaeger(types.NamespacedName{Name: "jaeger"})
-	args := []string{"--some-unrelated-arg"}
+	args := []string{"--some-unrelated-arg", configFlagWithFile}
 	commonSpec := &v1.JaegerCommonSpec{
 		Volumes: []corev1.Volume{
 			{Name: volumeName(j, "agent")},
