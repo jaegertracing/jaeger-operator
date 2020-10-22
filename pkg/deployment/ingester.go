@@ -84,8 +84,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		i.jaeger.Logger().WithField("error", err).
 			WithField("component", "ingester").
 			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(i.jaeger, i.jaeger.Spec.Ingester.Options, otelConf) {
-		otelconfig.Update(i.jaeger, "ingester", commonSpec, &options)
+	} else {
+		otelconfig.Sync(i.jaeger, "ingester", i.jaeger.Spec.Ingester.Options, otelConf, commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments

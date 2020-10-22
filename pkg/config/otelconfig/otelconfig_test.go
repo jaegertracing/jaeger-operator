@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
@@ -81,10 +80,74 @@ func TestUpdate(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "jaeger"})
 	args := []string{}
 	commonSpec := &v1.JaegerCommonSpec{}
-	Update(j, "agent", commonSpec, &args)
+	upsert(j, "agent", commonSpec, &args)
 	assert.Equal(t, []string{configFlagWithFile}, args)
 	assert.Equal(t, "jaeger-agent-otel-config", commonSpec.Volumes[0].Name)
 	assert.Equal(t, "jaeger-agent-otel-config", commonSpec.VolumeMounts[0].Name)
 	assert.Equal(t, []corev1.KeyToPath{{Key: "config", Path: configFileName}}, commonSpec.Volumes[0].ConfigMap.Items)
 	assert.Equal(t, configFileLocation, commonSpec.VolumeMounts[0].MountPath)
+}
+
+func TestSyncShouldUpdate(t *testing.T) {
+	// prepare
+	j := v1.NewJaeger(types.NamespacedName{Name: "jaeger"})
+	args := []string{"--some-unrelated-arg"}
+	commonSpec := &v1.JaegerCommonSpec{
+		Volumes: []corev1.Volume{
+			{Name: "some-other-volume-that-should-be-left-untouched"},
+			{
+				Name: volumeName(j, "agent"),
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/existing/stale/configuration",
+					},
+				},
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: "some-other-mount-that-should-be-left-untouched"},
+			{
+				Name:      volumeName(j, "agent"),
+				MountPath: "/existing/stale/configuration",
+			},
+		},
+	}
+	opts := v1.NewOptions(map[string]interface{}{})
+	cfg := map[string]interface{}{"theconfig": "somevalue"}
+
+	// test, cross-testing with upsert
+	Sync(j, "agent", opts, cfg, commonSpec, &args)
+
+	// verify
+	assert.Len(t, commonSpec.VolumeMounts, 2)
+	assert.Len(t, commonSpec.Volumes, 2)
+	assert.Nil(t, commonSpec.Volumes[1].VolumeSource.HostPath)
+	assert.NotEqual(t, "/existing/stale/configuration", commonSpec.VolumeMounts[1].MountPath)
+	assert.Len(t, args, 2)
+}
+
+func TestSyncShouldRemove(t *testing.T) {
+	// prepare
+	j := v1.NewJaeger(types.NamespacedName{Name: "jaeger"})
+	args := []string{"--some-unrelated-arg", configFlagWithFile}
+	commonSpec := &v1.JaegerCommonSpec{
+		Volumes: []corev1.Volume{
+			{Name: volumeName(j, "agent")},
+			{Name: "some-other-volume-that-should-be-left-untouched"},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{Name: volumeName(j, "agent")},
+			{Name: "some-other-mount-that-should-be-left-untouched"},
+		},
+	}
+	opts := v1.NewOptions(map[string]interface{}{"config": "/etc/config.yaml"})
+	cfg := map[string]interface{}{"theconfig": "somevalue"}
+
+	// test, cross-testing with remove
+	Sync(j, "agent", opts, cfg, commonSpec, &args)
+
+	// verify
+	assert.Len(t, commonSpec.VolumeMounts, 1)
+	assert.Len(t, commonSpec.Volumes, 1)
+	assert.Len(t, args, 1)
 }
