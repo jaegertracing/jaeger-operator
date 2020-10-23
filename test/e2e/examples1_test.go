@@ -68,8 +68,8 @@ func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
 	if isOpenShift(t) {
 		yamlFileName = "../../examples/openshift/agent-as-daemonset.yaml"
 
-		execOcCommand("create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/hostport-scc-daemonset.yaml")
-		execOcCommand("create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/service_account_jaeger-agent-daemonset.yaml")
+		execOcCommand("create", "--namespace", namespace, "-f", "../../examples/openshift/hostport-scc-daemonset.yaml")
+		execOcCommand("create", "--namespace", namespace, "-f", "../../examples/openshift/service_account_jaeger-agent-daemonset.yaml")
 		execOcCommand("adm", "policy", "--namespace", namespace, "add-scc-to-user", "daemonset-with-hostport", "-z", "jaeger-agent-daemonset")
 	} else {
 		yamlFileName = "../../examples/agent-as-daemonset.yaml"
@@ -107,7 +107,7 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	err := WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout+(1*time.Minute))
 	require.NoError(t, err)
 
-	// Now deploy deploy/examples/business-application-injected-sidecar.yaml
+	// Now deploy examples/business-application-injected-sidecar.yaml
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../examples/business-application-injected-sidecar.yaml")
 	output, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {

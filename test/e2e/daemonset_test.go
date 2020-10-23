@@ -78,7 +78,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 			t.Fatalf("Failed creating hostPortSccDaemonset %v\n", err)
 		}
 
-		cmd := exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/service_account_jaeger-agent-daemonset.yaml")
+		cmd := exec.Command("oc", "create", "--namespace", namespace, "-f", "../../examples/openshift/service_account_jaeger-agent-daemonset.yaml")
 		output, err := cmd.CombinedOutput()
 		if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 			require.NoError(t, err, "Failed creating service account with: [%s]\n", string(output))
@@ -88,7 +88,7 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 		output, err = cmd.CombinedOutput()
 		require.NoError(t, err, "Failed during occ adm policy command with: [%s]\n", string(output))
 
-		cmd = exec.Command("oc", "create", "--namespace", namespace, "-f", "../../deploy/examples/openshift/agent-as-daemonset.yaml")
+		cmd = exec.Command("oc", "create", "--namespace", namespace, "-f", "../../examples/openshift/agent-as-daemonset.yaml")
 		output, err = cmd.CombinedOutput()
 		require.NoError(t, err, "Failed creating daemonset with: [%s]\n", string(output))
 
