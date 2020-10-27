@@ -188,9 +188,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		}
 	}
 
-	// update the status to "Ready"
-	if instance.Status.Phase != v1.JaegerPhaseRunning {
+	// set the status version to the updated instance version if versions doesn't match
+	if updated.Status.Version != originalInstance.Status.Version || instance.Status.Phase != v1.JaegerPhaseRunning {
 		instance.Status.Phase = v1.JaegerPhaseRunning
+		instance.Status.Version = updated.Status.Version
 		if err := r.client.Status().Update(ctx, instance); err != nil {
 			logFields.WithError(err).Error("failed to store the running status into the current CustomResource")
 			return reconcile.Result{}, tracing.HandleError(err, span)

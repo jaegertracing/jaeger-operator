@@ -60,6 +60,10 @@ elif [ "${TEST_GROUP}" = "generate" ]
 then
     echo "Running CLI manifest generation tests"
     make e2e-tests-generate
+elif [ "${TEST_GROUP}" = "upgrade" ]
+then
+    echo "Running upgrade tests"
+    make e2e-tests-upgrade
 elif [ "${TEST_GROUP}" = "smoke-otel" ]
 then
     echo "Running Smoke Tests with OTEL collector"

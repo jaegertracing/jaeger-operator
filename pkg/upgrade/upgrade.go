@@ -57,16 +57,28 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			}).Debug("skipping CR upgrade as we are not owners")
 			continue
 		}
-
+		patch := client.MergeFrom(j.DeepCopy())
 		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
 			continue
 		}
-
 		if !reflect.DeepEqual(jaeger, j) {
+			version := jaeger.Status.Version
 			// the CR has changed, store it!
-			if err := c.Update(ctx, &jaeger); err != nil {
+
+			if err := c.Patch(ctx, &jaeger, patch); err == nil {
+				patch := client.MergeFrom(jaeger.DeepCopy())
+				jaeger.Status.Version = version
+				if err := c.Status().Patch(ctx, &jaeger, patch); err != nil {
+					log.WithFields(log.Fields{
+						"instance":  jaeger.Name,
+						"namespace": jaeger.Namespace,
+						"version":   version,
+					}).WithError(err).Error("failed to update status the upgraded instance")
+					tracing.HandleError(err, span)
+				}
+			} else {
 				log.WithFields(log.Fields{
 					"instance":  jaeger.Name,
 					"namespace": jaeger.Namespace,

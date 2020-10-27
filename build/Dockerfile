@@ -1,5 +1,8 @@
 FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14 as builder
 
+ARG JAEGER_VERSION
+ENV JAEGER_VERSION=${JAEGER_VERSION}
+
 COPY . /go/src/github.com/jaegertracing/jaeger-operator/
 WORKDIR /go/src/github.com/jaegertracing/jaeger-operator
 
