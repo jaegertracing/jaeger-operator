@@ -360,6 +360,12 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, nil
 	}
 
+	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+		if err := r.applyServiceMonitors(ctx, jaeger, str.ServiceMonitors()); err != nil {
+			return jaeger, tracing.HandleError(err, span)
+		}
+	}
+
 	// we apply the daemonsets after everything else, to increase the chances of having services and deployments
 	// ready by the time the daemonset is started, so that it gets at least one collector to connect to
 	if err := r.applyDaemonSets(ctx, jaeger, str.DaemonSets()); err != nil {

@@ -182,6 +182,11 @@ func (q *Query) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the query deployment
 func (q *Query) Services() []*corev1.Service {
 	labels := q.labels()
+	if q.jaeger.Spec.ServiceMonitor.Enabled != nil && *q.jaeger.Spec.ServiceMonitor.Enabled {
+		return []*corev1.Service{
+			service.NewQueryServiceWithAdminPort(q.jaeger, labels),
+		}
+	}
 	return []*corev1.Service{
 		service.NewQueryService(q.jaeger, labels),
 	}

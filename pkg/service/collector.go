@@ -12,6 +12,18 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
+// NewCollectorServicesWithAdminPort returns a new Kubernetes service for Jaeger Collector with admin port enabled
+func NewCollectorServicesWithAdminPort(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
+	services := NewCollectorServices(jaeger, selector)
+	services[0].Spec.Ports = append(services[0].Spec.Ports,
+		corev1.ServicePort{
+			Name: "admin",
+			Port: util.GetPort("--admin-http-port=", jaeger.Spec.Collector.Options.ToArgs(), 14269),
+		})
+
+	return services
+}
+
 // NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
 func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
 	return []*corev1.Service{

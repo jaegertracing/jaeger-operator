@@ -9,6 +9,17 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
+// NewQueryServiceWithAdminPort returns a new Kubernetes service for Jaeger Query with admin port enabled
+func NewQueryServiceWithAdminPort(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	service := NewQueryService(jaeger, selector)
+	service.Spec.Ports = append(service.Spec.Ports,
+		corev1.ServicePort{
+			Name: "admin",
+			Port: util.GetPort("--admin-http-port=", jaeger.Spec.Query.Options.ToArgs(), 16687),
+		})
+	return service
+}
+
 // NewQueryService returns a new Kubernetes service for Jaeger Query backed by the pods matching the selector
 func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true

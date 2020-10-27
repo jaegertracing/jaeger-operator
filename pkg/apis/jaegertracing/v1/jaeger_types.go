@@ -159,6 +159,9 @@ type JaegerSpec struct {
 	Ingress JaegerIngressSpec `json:"ingress,omitempty"`
 
 	// +optional
+	ServiceMonitor JaegerServiceMonitorSpec `json:"servicemonitor,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
@@ -509,6 +512,12 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	Elasticsearch ElasticsearchSpec `json:"elasticsearch,omitempty"`
+}
+
+// JaegerServiceMonitorSpec defines servicemonitor objects used by prometheus-operator
+type JaegerServiceMonitorSpec struct {
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator

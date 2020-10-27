@@ -143,3 +143,14 @@ func TestCollectorServiceLoadBalancer(t *testing.T) {
 	// Only the non-headless service will receive the type
 	assert.Equal(t, svc[1].Spec.Type, corev1.ServiceTypeLoadBalancer)
 }
+
+func TestCollectorServiceWithAdminPort(t *testing.T) {
+	trueVar := true
+	name := "TestCollectorServiceWithAdminPort"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
+	svcs := NewCollectorServicesWithAdminPort(jaeger, selector)
+	assert.Contains(t, svcs[0].Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
+}

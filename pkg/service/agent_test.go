@@ -41,3 +41,14 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 	}
 
 }
+
+func TestAgentServiceWithAdminPort(t *testing.T) {
+	trueVar := true
+	name := "TestAgentServiceWithAdminPort"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "agent"}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
+	svc := NewAgentServiceWithAdminPort(jaeger, selector)
+	assert.Contains(t, svc.Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14271})
+}

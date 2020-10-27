@@ -103,3 +103,14 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
 }
+
+func TestQueryServiceWithAdminPort(t *testing.T) {
+	trueVar := true
+	name := "TestQueryServiceWithAdminPort"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "agent"}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
+	svc := NewQueryServiceWithAdminPort(jaeger, selector)
+	assert.Contains(t, svc.Spec.Ports, corev1.ServicePort{Name: "admin", Port: 16687})
+}

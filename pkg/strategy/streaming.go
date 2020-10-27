@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,6 +26,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
+	"github.com/jaegertracing/jaeger-operator/pkg/servicemonitor"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -89,6 +93,17 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	for _, svc := range query.Services() {
 		manifest.services = append(manifest.services, *svc)
+	}
+
+	for _, svc := range ingester.Services() {
+		manifest.services = append(manifest.services, *svc)
+	}
+
+	// add the servicemonitor
+	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+		manifest.servicemonitors = []*monitoringv1.ServiceMonitor{
+			servicemonitor.NewServiceMonitor(jaeger),
+		}
 	}
 
 	// add the routes/ingresses

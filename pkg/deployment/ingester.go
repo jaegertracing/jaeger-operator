@@ -5,6 +5,9 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -156,6 +159,17 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+// Services returns a list of services to be deployed along with the ingester deployment
+func (i *Ingester) Services() []*corev1.Service {
+	services := []*corev1.Service{}
+	if i.jaeger.Spec.ServiceMonitor.Enabled != nil && *i.jaeger.Spec.ServiceMonitor.Enabled {
+		return append(services,
+			service.NewIngesterService(i.jaeger, i.labels()),
+		)
+	}
+	return services
 }
 
 func (i *Ingester) labels() map[string]string {

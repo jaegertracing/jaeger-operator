@@ -14,6 +14,8 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
@@ -39,6 +41,7 @@ type S struct {
 	routes                   []osv1.Route
 	services                 []corev1.Service
 	secrets                  []corev1.Secret
+	servicemonitors          []*monitoringv1.ServiceMonitor
 }
 
 // New constructs a new strategy from scratch
@@ -147,6 +150,11 @@ func (s S) WithSecrets(secrets []corev1.Secret) S {
 	return s
 }
 
+func (s S) WithServiceMonitors(servicemonitors []*monitoringv1.ServiceMonitor) S {
+	s.servicemonitors = servicemonitors
+	return s
+}
+
 // Accounts returns the list of service accounts for this strategy
 func (s S) Accounts() []corev1.ServiceAccount {
 	return s.accounts
@@ -227,6 +235,10 @@ func (s S) Dependencies() []batchv1.Job {
 	return s.dependencies
 }
 
+func (s S) ServiceMonitors() []*monitoringv1.ServiceMonitor {
+	return s.servicemonitors
+}
+
 // All returns the list of all objects for this strategy
 func (s S) All() []runtime.Object {
 	var ret []runtime.Object
@@ -295,6 +307,10 @@ func (s S) All() []runtime.Object {
 	}
 
 	for _, o := range s.deployments {
+		ret = append(ret, o.DeepCopy())
+	}
+
+	for _, o := range s.servicemonitors {
 		ret = append(ret, o.DeepCopy())
 	}
 

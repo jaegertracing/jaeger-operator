@@ -7,6 +7,8 @@ import (
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
@@ -19,6 +21,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/route"
+	"github.com/jaegertracing/jaeger-operator/pkg/servicemonitor"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
@@ -71,6 +74,13 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the services
 	for _, svc := range dep.Services() {
 		c.services = append(c.services, *svc)
+	}
+
+	// add the servicemonitor
+	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+		c.servicemonitors = []*monitoringv1.ServiceMonitor{
+			servicemonitor.NewServiceMonitor(jaeger),
+		}
 	}
 
 	// add the routes/ingresses
