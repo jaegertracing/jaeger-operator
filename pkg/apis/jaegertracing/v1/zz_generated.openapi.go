@@ -1842,6 +1842,11 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerIngressSpec"),
 						},
 					},
+					"serviceMonitor": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerServiceMonitorSpec"),
+						},
+					},
 					"volumes": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -1946,7 +1951,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.JaegerAgentSpec", "./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec", "./pkg/apis/jaegertracing/v1.JaegerCollectorSpec", "./pkg/apis/jaegertracing/v1.JaegerIngesterSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressSpec", "./pkg/apis/jaegertracing/v1.JaegerQuerySpec", "./pkg/apis/jaegertracing/v1.JaegerSamplingSpec", "./pkg/apis/jaegertracing/v1.JaegerStorageSpec", "./pkg/apis/jaegertracing/v1.JaegerUISpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"./pkg/apis/jaegertracing/v1.JaegerAgentSpec", "./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec", "./pkg/apis/jaegertracing/v1.JaegerCollectorSpec", "./pkg/apis/jaegertracing/v1.JaegerIngesterSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressSpec", "./pkg/apis/jaegertracing/v1.JaegerQuerySpec", "./pkg/apis/jaegertracing/v1.JaegerSamplingSpec", "./pkg/apis/jaegertracing/v1.JaegerServiceMonitorSpec", "./pkg/apis/jaegertracing/v1.JaegerStorageSpec", "./pkg/apis/jaegertracing/v1.JaegerUISpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

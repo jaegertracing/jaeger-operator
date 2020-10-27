@@ -159,7 +159,7 @@ type JaegerSpec struct {
 	Ingress JaegerIngressSpec `json:"ingress,omitempty"`
 
 	// +optional
-	ServiceMonitor JaegerServiceMonitorSpec `json:"servicemonitor,omitempty"`
+	ServiceMonitor JaegerServiceMonitorSpec `json:"serviceMonitor,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`

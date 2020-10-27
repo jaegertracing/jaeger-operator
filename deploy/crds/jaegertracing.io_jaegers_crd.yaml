@@ -7000,6 +7000,11 @@ spec:
               type: object
             serviceAccount:
               type: string
+            serviceMonitor:
+              properties:
+                enabled:
+                  type: boolean
+              type: object
             storage:
               properties:
                 cassandraCreateSchema:
