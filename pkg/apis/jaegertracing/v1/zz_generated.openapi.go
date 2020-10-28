@@ -13,26 +13,26 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/jaegertracing/v1.AutoScaleSpec":                   schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref),
-		"./pkg/apis/jaegertracing/v1.ElasticsearchSpec":               schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref),
-		"./pkg/apis/jaegertracing/v1.Jaeger":                          schema_pkg_apis_jaegertracing_v1_Jaeger(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerAgentSpec":                 schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec":              schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec": schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerCollectorSpec":             schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerCommonSpec":                schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec":          schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec":        schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerIngesterSpec":              schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec":      schema_pkg_apis_jaegertracing_v1_JaegerIngressOpenShiftSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerIngressSpec":               schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec":            schema_pkg_apis_jaegertracing_v1_JaegerIngressTLSSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerQuerySpec":                 schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerSamplingSpec":              schema_pkg_apis_jaegertracing_v1_JaegerSamplingSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerSpec":                      schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerStatus":                    schema_pkg_apis_jaegertracing_v1_JaegerStatus(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerStorageSpec":               schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref),
-		"./pkg/apis/jaegertracing/v1.JaegerUISpec":                    schema_pkg_apis_jaegertracing_v1_JaegerUISpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.AutoScaleSpec":                   schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.ElasticsearchSpec":               schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Jaeger":                          schema_pkg_apis_jaegertracing_v1_Jaeger(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAgentSpec":                 schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAllInOneSpec":              schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec": schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCollectorSpec":             schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCommonSpec":                schema_pkg_apis_jaegertracing_v1_JaegerCommonSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerDependenciesSpec":          schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec":        schema_pkg_apis_jaegertracing_v1_JaegerEsIndexCleanerSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngesterSpec":              schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec":      schema_pkg_apis_jaegertracing_v1_JaegerIngressOpenShiftSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressSpec":               schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec":            schema_pkg_apis_jaegertracing_v1_JaegerIngressTLSSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerQuerySpec":                 schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSamplingSpec":              schema_pkg_apis_jaegertracing_v1_JaegerSamplingSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSpec":                      schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStatus":                    schema_pkg_apis_jaegertracing_v1_JaegerStatus(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStorageSpec":               schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref),
+		"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerUISpec":                    schema_pkg_apis_jaegertracing_v1_JaegerUISpec(ref),
 	}
 }
 
@@ -155,19 +155,19 @@ func schema_pkg_apis_jaegertracing_v1_Jaeger(ref common.ReferenceCallback) commo
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerStatus"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.JaegerSpec", "./pkg/apis/jaegertracing/v1.JaegerStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -210,7 +210,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"volumes": {
@@ -315,7 +315,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 					"sidecarSecurityContext": {
@@ -333,7 +333,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecurityContext", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecurityContext", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -352,12 +352,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 					"volumes": {
@@ -464,7 +464,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -571,7 +571,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"volumes": {
@@ -676,14 +676,14 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -1171,7 +1171,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"volumes": {
@@ -1276,14 +1276,14 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngesterSpec(ref common.ReferenceCal
 					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -1346,7 +1346,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					},
 					"openshift": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec"),
 						},
 					},
 					"hosts": {
@@ -1378,7 +1378,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec"),
+										Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec"),
 									},
 								},
 							},
@@ -1493,14 +1493,14 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec", "./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressOpenShiftSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressTLSSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -1563,7 +1563,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"volumes": {
@@ -1677,7 +1677,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -1690,14 +1690,14 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSamplingSpec(ref common.ReferenceCal
 				Properties: map[string]spec.Schema{
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"},
 	}
 }
 
@@ -1716,47 +1716,47 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 					},
 					"allInOne": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAllInOneSpec"),
 						},
 					},
 					"query": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerQuerySpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerQuerySpec"),
 						},
 					},
 					"collector": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerCollectorSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCollectorSpec"),
 						},
 					},
 					"ingester": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerIngesterSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngesterSpec"),
 						},
 					},
 					"agent": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerAgentSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAgentSpec"),
 						},
 					},
 					"ui": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerUISpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerUISpec"),
 						},
 					},
 					"sampling": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerSamplingSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSamplingSpec"),
 						},
 					},
 					"storage": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerStorageSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStorageSpec"),
 						},
 					},
 					"ingress": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerIngressSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressSpec"),
 						},
 					},
 					"volumes": {
@@ -1863,7 +1863,7 @@ func schema_pkg_apis_jaegertracing_v1_JaegerSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.JaegerAgentSpec", "./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec", "./pkg/apis/jaegertracing/v1.JaegerCollectorSpec", "./pkg/apis/jaegertracing/v1.JaegerIngesterSpec", "./pkg/apis/jaegertracing/v1.JaegerIngressSpec", "./pkg/apis/jaegertracing/v1.JaegerQuerySpec", "./pkg/apis/jaegertracing/v1.JaegerSamplingSpec", "./pkg/apis/jaegertracing/v1.JaegerStorageSpec", "./pkg/apis/jaegertracing/v1.JaegerUISpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAgentSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerAllInOneSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCollectorSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngesterSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerIngressSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerQuerySpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerSamplingSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerStorageSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerUISpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.PodSecurityContext", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -1902,9 +1902,8 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"secretName": {
@@ -1915,39 +1914,39 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
 					"cassandraCreateSchema": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec"),
 						},
 					},
 					"dependencies": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerDependenciesSpec"),
 						},
 					},
 					"esIndexCleaner": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec"),
 						},
 					},
 					"esRollover": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec"),
 						},
 					},
 					"elasticsearch": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.ElasticsearchSpec"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.ElasticsearchSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.ElasticsearchSpec", "./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "./pkg/apis/jaegertracing/v1.Options"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.ElasticsearchSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "github.com/jaeger-operator/pkg/apis/jaegertracing/v1.Options"},
 	}
 }
 
@@ -1960,13 +1959,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerUISpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/jaegertracing/v1.FreeForm"),
+							Ref: ref("github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.FreeForm"},
+			"github.com/jaeger-operator/pkg/apis/jaegertracing/v1.FreeForm"},
 	}
 }

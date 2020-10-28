@@ -81,7 +81,7 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 }
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
-	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, string(vi.JaegerESStorage), retryInterval, timeout)
+	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, string(v1.JaegerESStorage), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
 	// create jaeger custom resource
