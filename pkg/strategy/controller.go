@@ -67,15 +67,15 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
 		jaeger.Logger().Info("Storage type not provided. Falling back to 'memory'")
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
 		jaeger.Logger().WithFields(log.Fields{
 			"storage":       jaeger.Spec.Storage.Type,
-			"known-options": storage.ValidTypes(),
+			"known-options": v1.ValidStorageTypes(),
 		}).Info("The provided storage type is unknown. Falling back to 'memory'")
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
 	// normalize the deployment strategy
@@ -108,8 +108,8 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	normalizeUI(&jaeger.Spec)
 }
 
-func distributedStorage(storage string) bool {
-	return !strings.EqualFold(storage, "memory") && !strings.EqualFold(storage, "badger")
+func distributedStorage(storage v1.JaegerStorageType) bool {
+	return (storage != v1.JaegerMemoryStorage) && (storage != v1.JaegerBadgerStorage)
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
@@ -133,9 +133,9 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	}
 }
 
-func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
+func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage v1.JaegerStorageType) {
 	// auto enable only for supported storages
-	if storage == "elasticsearch" && spec.Enabled == nil {
+	if storage == v1.JaegerESStorage && spec.Enabled == nil {
 		trueVar := true
 		spec.Enabled = &trueVar
 	}
@@ -205,9 +205,9 @@ func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string)
 	}
 }
 
-func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
+func disableDependenciesTab(uiOpts map[string]interface{}, storage v1.JaegerStorageType, depsEnabled *bool) {
 	// dependency tab is by default enabled and memory storage support it
-	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == true) {
+	if (storage == v1.JaegerMemoryStorage) || (depsEnabled != nil && *depsEnabled == true) {
 		return
 	}
 	deps := map[string]interface{}{}
@@ -286,9 +286,9 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	uiOpts["menu"] = append(menuArray, logout)
 }
 
-func unknownStorage(typ string) bool {
-	for _, k := range storage.ValidTypes() {
-		if strings.EqualFold(typ, k) {
+func unknownStorage(typ v1.JaegerStorageType) bool {
+	for _, k := range v1.ValidStorageTypes() {
+		if typ == k {
 			return false
 		}
 	}

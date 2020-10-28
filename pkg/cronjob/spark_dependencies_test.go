@@ -20,7 +20,7 @@ func TestStorageEnvs(t *testing.T) {
 		expected []corev1.EnvVar
 	}{
 		{storage: v1.JaegerStorageSpec{Type: "foo"}},
-		{storage: v1.JaegerStorageSpec{Type: "cassandra",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none"})},
 			expected: []corev1.EnvVar{
@@ -32,7 +32,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_LOCAL_DC", Value: ""},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "cassandra",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none", "cassandra.tls": "ofcourse!", "cassandra.local-dc": "no-remote"})},
 			expected: []corev1.EnvVar{
@@ -44,7 +44,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_LOCAL_DC", Value: "no-remote"},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
 				"es.username": "jdoe", "es.password": "none"})},
 			expected: []corev1.EnvVar{
@@ -53,7 +53,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
 				"es.username": "jdoe", "es.password": "none"}),
 			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchClientNodeOnly: &trueVar, ElasticsearchNodesWanOnly: &falseVar}},
@@ -73,7 +73,7 @@ func TestStorageEnvs(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
+	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}))
 }
 
 func TestSparkDependenciesSecrets(t *testing.T) {
@@ -90,7 +90,7 @@ func TestSparkDependenciesSecrets(t *testing.T) {
 }
 
 func TestSparkDependencies(t *testing.T) {
-	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
+	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}
 	historyLimits := int32(3)
 	j.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit = &historyLimits
 	cjob := CreateSparkDependencies(j)
@@ -168,12 +168,12 @@ func TestSparkDependenciesResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -183,7 +183,7 @@ func TestSparkDependenciesResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					Dependencies: v1.JaegerDependenciesSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: dependencyResources,

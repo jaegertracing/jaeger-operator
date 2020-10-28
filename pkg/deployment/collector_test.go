@@ -320,7 +320,7 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 		},
 		Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://somewhere",
 				}),
@@ -333,7 +333,7 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: "elasticsearch",
+			Value: string(v1.JaegerESStorage),
 		},
 		{
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",

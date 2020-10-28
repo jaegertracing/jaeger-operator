@@ -44,7 +44,7 @@ func sparkTest(t *testing.T, f *framework.Framework, testCtx *framework.TestCtx,
 	}
 	defer undeployJaegerInstance(j)
 
-	if storage.Type == "cassandra" {
+	if storage.Type == v1.JaegerCassandraStorage {
 		jobName := util.Truncate("%s-cassandra-schema-job", 52, name)
 		err = WaitForJob(t, fw.KubeClient, namespace, jobName, retryInterval, timeout+1*time.Minute)
 		if err != nil {

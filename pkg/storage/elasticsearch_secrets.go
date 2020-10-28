@@ -45,7 +45,7 @@ var masterSecret = secret{
 
 // es secret is used by Elasticsearch nodes
 var esSecret = secret{
-	name: "elasticsearch",
+	name: string(v1.JaegerESStorage),
 	keyFileNameMap: map[string]string{
 		"elasticsearch.key": "elasticsearch.key",
 		"elasticsearch.crt": "elasticsearch.crt",

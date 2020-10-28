@@ -206,7 +206,7 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 				},
 			},
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),
@@ -245,7 +245,7 @@ func getSimpleProd(name, namespace, cpuResourceLimit, memoryResourceLimit string
 			},
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),

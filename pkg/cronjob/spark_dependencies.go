@@ -17,18 +17,18 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-var supportedStorageTypes = map[string]bool{"elasticsearch": true, "cassandra": true}
+var supportedStorageTypes = map[v1.JaegerStorageType]bool{v1.JaegerESStorage: true, v1.JaegerCassandraStorage: true}
 
 // SupportedStorage returns whether the given storage is supported
-func SupportedStorage(storage string) bool {
-	return supportedStorageTypes[strings.ToLower(storage)]
+func SupportedStorage(storage v1.JaegerStorageType) bool {
+	return supportedStorageTypes[storage]
 }
 
 // CreateSparkDependencies creates a new cronjob for the Spark Dependencies task
 func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 	logTLSNotSupported(jaeger)
 	envVars := []corev1.EnvVar{
-		{Name: "STORAGE", Value: jaeger.Spec.Storage.Type},
+		{Name: "STORAGE", Value: string(jaeger.Spec.Storage.Type)},
 		{Name: "SPARK_MASTER", Value: jaeger.Spec.Storage.Dependencies.SparkMaster},
 		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.Dependencies.JavaOpts},
 	}
@@ -118,7 +118,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 	sFlagsMap := s.Options.Map()
 	switch s.Type {
-	case "cassandra":
+	case v1.JaegerCassandraStorage:
 		keyspace := sFlagsMap["cassandra.keyspace"]
 		if keyspace == "" {
 			keyspace = "jaeger_v1_test"
@@ -132,7 +132,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "CASSANDRA_LOCAL_DC", Value: sFlagsMap["cassandra.local-dc"]},
 			{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: strconv.FormatBool(s.Dependencies.CassandraClientAuthEnabled)},
 		}
-	case "elasticsearch":
+	case v1.JaegerESStorage:
 		vars := []corev1.EnvVar{
 			{Name: "ES_NODES", Value: sFlagsMap["es.server-urls"]},
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},

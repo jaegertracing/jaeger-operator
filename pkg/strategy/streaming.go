@@ -3,7 +3,6 @@ package strategy
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
@@ -125,7 +124,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	var indexCleaner *batchv1beta1.CronJob
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
-		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
+		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
 			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")

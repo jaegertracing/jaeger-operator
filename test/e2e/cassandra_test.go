@@ -83,7 +83,7 @@ func (suite *CassandraTestSuite) TestCassandra() {
 
 func (suite *CassandraTestSuite) TestCassandraSparkDependencies() {
 	storage := v1.JaegerStorageSpec{
-		Type:                  "cassandra",
+		Type:                  v1.JaegerCassandraStorage,
 		Options:               v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": cassandraKeyspace}),
 		CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{Datacenter: cassandraDatacenter, Mode: "prod"},
 	}
@@ -114,7 +114,7 @@ func getJaegerWithCassandra(jaegerInstanceName, namespace string) *v1.Jaeger {
 			},
 			Strategy: v1.DeploymentStrategyAllInOne,
 			Storage: v1.JaegerStorageSpec{
-				Type:    "cassandra",
+				Type:    v1.JaegerCassandraStorage,
 				Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": cassandraServiceName, "cassandra.keyspace": cassandraKeyspace}),
 				CassandraCreateSchema: v1.JaegerCassandraCreateSchemaSpec{
 					Datacenter: cassandraDatacenter,

@@ -124,7 +124,7 @@ func TestStreamingOptionsArePassed(t *testing.T) {
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",

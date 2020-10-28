@@ -147,19 +147,19 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "cassandra",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "kafka",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerKafkaStorage,
 				Dependencies: v1.JaegerDependenciesSpec{Enabled: &trueVar}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 		}}, sparkCronJobEnabled: false},
 	}
 	for _, test := range tests {
@@ -187,19 +187,19 @@ func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 		sparkCronJobEnabled bool
 	}{
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: true},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "cassandra",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "kafka",
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerKafkaStorage,
 				EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{Enabled: &trueVar, NumberOfDays: &days}},
 		}}, sparkCronJobEnabled: false},
 		{jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-			Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+			Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 		}}, sparkCronJobEnabled: false},
 	}
 	for _, test := range tests {

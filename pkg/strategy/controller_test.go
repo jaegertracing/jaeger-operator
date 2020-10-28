@@ -30,7 +30,7 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
-	jaeger.Spec.Storage.Type = "elasticsearch"
+	jaeger.Spec.Storage.Type = v1.JaegerESStorage
 
 	ctrl := For(context.TODO(), jaeger)
 	assert.Equal(t, ctrl.Type(), v1.DeploymentStrategyProduction)
@@ -40,13 +40,13 @@ func TestUnknownStorage(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Storage.Type = "unknown"
 	normalize(context.Background(), jaeger)
-	assert.Equal(t, "memory", jaeger.Spec.Storage.Type)
+	assert.Equal(t, v1.JaegerMemoryStorage, jaeger.Spec.Storage.Type)
 }
 
 func TestElasticsearchAsStorageOptions(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
-	jaeger.Spec.Storage.Type = "elasticsearch"
+	jaeger.Spec.Storage.Type = v1.JaegerESStorage
 	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
 		"es.server-urls": "http://elasticsearch-example-es-cluster:9200",
 	})
@@ -77,7 +77,7 @@ func TestIncompatibleMemoryStorageForProduction(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "memory",
+				Type: v1.JaegerMemoryStorage,
 			},
 		},
 	}
@@ -90,7 +90,7 @@ func TestIncompatibleBadgerStorageForProduction(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "badger",
+				Type: v1.JaegerBadgerStorage,
 			},
 		},
 	}
@@ -103,7 +103,7 @@ func TestIncompatibleStorageForStreaming(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
-				Type: "memory",
+				Type: v1.JaegerMemoryStorage,
 			},
 		},
 	}
@@ -126,7 +126,7 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "memory",
+				Type: v1.JaegerMemoryStorage,
 			},
 		},
 	}
@@ -193,7 +193,7 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar}},
 	}
 	for _, test := range tests {
-		normalizeIndexCleaner(&test.underTest, "elasticsearch")
+		normalizeIndexCleaner(&test.underTest, v1.JaegerESStorage)
 		assert.Equal(t, test.expected, test.underTest)
 	}
 }
@@ -222,38 +222,38 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 		expected  v1.JaegerStorageSpec
 	}{
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
-			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
+			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
 				Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar}},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch"},
-			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *"}},
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
+			expected:  v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *"}},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true})},
-			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
+			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true}),
 			},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false})},
-			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar},
+			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false}),
 			},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{},
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"})},
-			expected: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
+			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"}),
 			},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
-			expected:  v1.JaegerStorageSpec{Type: "elasticsearch", Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
+			expected:  v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "foo", Image: "bla", Enabled: &falseVar}},
 		},
 	}
 	for _, test := range tests {
@@ -297,8 +297,8 @@ func TestNormalizeUI(t *testing.T) {
 			expected: &v1.JaegerSpec{UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"dependencies": map[string]interface{}{"menuEnabled": false}})}},
 		},
 		{
-			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "memory"}},
+			j:        &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerMemoryStorage}},
+			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerMemoryStorage}},
 		},
 		{
 			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})}},
@@ -350,7 +350,7 @@ func TestNormalizeUIDependenciesTab(t *testing.T) {
 	falseVar := false
 	tests := []struct {
 		uiOpts   map[string]interface{}
-		storage  string
+		storage  v1.JaegerStorageType
 		enabled  *bool
 		expected map[string]interface{}
 	}{

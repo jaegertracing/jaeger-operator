@@ -79,7 +79,7 @@ func TestOptionsArePassed(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",
@@ -112,7 +112,7 @@ func TestOptionsArePassed(t *testing.T) {
 func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateProductionDependencies"})
-	j.Spec.Storage.Type = "cassandra"
+	j.Spec.Storage.Type = v1.JaegerCassandraStorage
 	c := newProductionStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
@@ -200,7 +200,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 
 func TestElasticsearchInject(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
-	j.Spec.Storage.Type = "elasticsearch"
+	j.Spec.Storage.Type = v1.JaegerESStorage
 	verdad := true
 	one := int(1)
 	j.Spec.Storage.EsIndexCleaner.Enabled = &verdad

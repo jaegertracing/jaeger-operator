@@ -233,7 +233,7 @@ func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
 			},
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Elasticsearch: v1.ElasticsearchSpec{
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{

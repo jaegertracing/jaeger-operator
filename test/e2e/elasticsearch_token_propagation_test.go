@@ -346,7 +346,7 @@ func jaegerInstance() *v1.Jaeger {
 		Spec: v1.JaegerSpec{
 			Strategy: "production",
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Elasticsearch: v1.ElasticsearchSpec{
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
