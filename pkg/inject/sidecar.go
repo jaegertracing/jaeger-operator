@@ -184,7 +184,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
-	adminPort := util.GetPort("--admin-http-port=", args, 14271)
+	adminPort := util.GetAdminPort(args, 14271)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
 		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",

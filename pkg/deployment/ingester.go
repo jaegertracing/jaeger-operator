@@ -49,7 +49,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 14270)
+	adminPort := util.GetAdminPort(args, 14270)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{

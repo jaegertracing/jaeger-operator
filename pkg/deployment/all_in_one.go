@@ -42,7 +42,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	args := append(a.jaeger.Spec.AllInOne.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 14269)
+	adminPort := util.GetAdminPort(args, 14269)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
