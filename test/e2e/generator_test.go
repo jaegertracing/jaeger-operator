@@ -69,6 +69,9 @@ spec:
 }
 
 func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
+	if isOpenShift(t) {
+		t.Skip("Skip until https://github.com/jaegertracing/jaeger-operator/issues/1278 is resolved")
+	}
 	// Get a *os.File for Jaeger CR with all in one, and the name of the deployment
 	name, cr := getAllInOneTempFile()
 	defer func() {
