@@ -188,9 +188,6 @@ func getJaegerSimpleProdWithServerUrls(name string) *v1.Jaeger {
 	if specifyOtelImages {
 		logrus.Infof("Using OTEL collector for %s", name)
 		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-	}
-
-	if specifyOtelConfig {
 		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
