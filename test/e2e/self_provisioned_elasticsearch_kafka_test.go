@@ -151,7 +151,7 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	}
 
 	if specifyOtelConfig {
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 
 	}
 

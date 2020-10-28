@@ -251,7 +251,7 @@ func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
 	}
 
 	if specifyOtelConfig {
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 	}
 
 	return exampleJaeger

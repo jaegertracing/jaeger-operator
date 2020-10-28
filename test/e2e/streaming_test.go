@@ -212,8 +212,8 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 	}
 
 	if specifyOtelConfig {
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
+		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 	}
 
 	return j
@@ -285,8 +285,8 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 	}
 
 	if specifyOtelConfig {
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
+		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
+		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 	}
 
 	return j
@@ -326,8 +326,8 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 	}
 
 	if specifyOtelConfig {
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		jaegerInstance.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
+		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
+		jaegerInstance.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 	}
 
 	return jaegerInstance

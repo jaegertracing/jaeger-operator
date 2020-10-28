@@ -235,8 +235,8 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 	}
 
 	if specifyOtelConfig {
-		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
+		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort(otelHcPort))
 	}
 
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)

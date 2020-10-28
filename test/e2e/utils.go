@@ -62,6 +62,8 @@ var (
 	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
 	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
 
+	otelHcPort = "13133" // Opentelemetry healthcheck port
+
 	ctx       *framework.TestCtx
 	fw        *framework.Framework
 	namespace string
