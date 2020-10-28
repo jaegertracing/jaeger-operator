@@ -79,7 +79,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 
 	jaegerInstanceName := "simple-prod"
 	jaegerInstance := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit)
-	createAndWaitFor(jaegerInstance, jaegerInstanceName)
+	createAndWaitFor(jaegerInstance, jaegerInstanceName, false)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	tracegen := createTracegenDeployment(jaegerInstanceName, namespace, tracegenDurationInMinutes, replicas)
@@ -97,7 +97,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleIngester() {
 
 	jaegerInstanceName := "simple-streaming"
 	jaegerInstance := getSimpleStreaming(jaegerInstanceName, namespace)
-	createAndWaitFor(jaegerInstance, jaegerInstanceName)
+	createAndWaitFor(jaegerInstance, jaegerInstanceName, true)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	tracegenReplicas := int32(1)
@@ -107,12 +107,17 @@ func (suite *AutoscaleTestSuite) TestAutoScaleIngester() {
 	waitUntilScales(jaegerInstanceName, "ingester")
 }
 
-func createAndWaitFor(jaegerInstance *v1.Jaeger, jaegerInstanceName string) {
+func createAndWaitFor(jaegerInstance *v1.Jaeger, jaegerInstanceName string, waitForIngester bool) {
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
+
+	if waitForIngester {
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-ingester", 1, retryInterval, timeout)
+		require.NoError(t, err, "Error waiting for collector deployment")
+	}
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for query deployment")
@@ -162,9 +167,19 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 	collectorOptions := make(map[string]interface{})
 	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
 	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
-	collectorOptions["kafka.producer.batch-linger"] = "1s"
-	collectorOptions["kafka.producer.batch-size"] = "128000"
-	collectorOptions["kafka.producer.batch-max-messages"] = "100"
+	if !specifyOtelConfig {
+		collectorOptions["kafka.producer.batch-linger"] = "1s"
+		collectorOptions["kafka.producer.batch-size"] = "128000"
+		collectorOptions["kafka.producer.batch-max-messages"] = "100"
+	}
+
+	ingesterOptions := make(map[string]interface{})
+	ingesterOptions["kafka.consumer.topic"] = "jaeger-spans"
+	ingesterOptions["kafka.consumer.brokers"] = kafkaClusterURL
+	if !specifyOtelConfig {
+		ingesterOptions["ingester.parallelism"] = "6900"
+		ingesterOptions["ingester.deadlockInterval"] = 0
+	}
 
 	autoscale := true
 	var minReplicas int32 = 1
@@ -193,12 +208,7 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 						},
 					},
 				},
-				Options: v1.NewOptions(map[string]interface{}{
-					"kafka.consumer.topic":      "jaeger-spans",
-					"kafka.consumer.brokers":    kafkaClusterURL,
-					"ingester.deadlockInterval": "0",
-					"ingester.parallelism":      "6900",
-				}),
+				Options: v1.NewOptions(ingesterOptions),
 				AutoScaleSpec: v1.AutoScaleSpec{
 					Autoscale:   &autoscale,
 					MinReplicas: &minReplicas,
