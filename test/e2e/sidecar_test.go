@@ -232,9 +232,7 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 		j.Spec.AllInOne.Image = otelAllInOneImage
 		logrus.Infof("Using OTEL Agent for %s", name)
 		j.Spec.Agent.Image = otelAgentImage
-	}
 
-	if specifyOtelConfig {
 		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
