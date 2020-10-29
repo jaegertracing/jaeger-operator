@@ -225,6 +225,19 @@ func GetPort(arg string, args []string, port int32) int32 {
 	return port
 }
 
+// GetAdminPort returns a port, either from supplied default port, or extracted from supplied arg value.
+// If new admin port flag exists, it will extracted from the new flag, otherwise will try to extract
+// from deprecated flag.
+func GetAdminPort(args []string, port int32) int32 {
+	if portArg := FindItem("--admin.http.host-port=", args); len(portArg) > 0 {
+		port = GetPort("--admin.http.host-port=", args, port)
+	} else {
+		port = GetPort("--admin-http-port=", args, port)
+	}
+
+	return port
+}
+
 // InitObjectMeta will set the required default settings to
 // kubernetes objects metadata if is required.
 func InitObjectMeta(obj metav1.Object) {

@@ -38,7 +38,7 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	args := append(q.jaeger.Spec.Query.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 16687)
+	adminPort := util.GetAdminPort(args, 16687)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{

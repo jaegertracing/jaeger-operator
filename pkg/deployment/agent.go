@@ -58,7 +58,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
-	adminPort := util.GetPort("--admin-http-port=", args, 14271)
+	adminPort := util.GetAdminPort(args, 14271)
 
 	trueVar := true
 	falseVar := false

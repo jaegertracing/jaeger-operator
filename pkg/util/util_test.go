@@ -353,6 +353,42 @@ func TestGetPortSpecified(t *testing.T) {
 	assert.Equal(t, int32(6831), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
 }
 
+func TestGetAdminPort(t *testing.T) {
+	tests := map[string]struct {
+		opts         v1.Options
+		defaultPort  int32
+		expectedPort int32
+	}{
+		"Use default port when no admin port flag provided": {
+			opts:         v1.NewOptions(map[string]interface{}{}),
+			defaultPort:  1234,
+			expectedPort: 1234,
+		},
+		"Use deprecated flag when new flag not provided and deprecated flag provided": {
+			opts: v1.NewOptions(map[string]interface{}{
+				"admin-http-port": ":1111",
+			}),
+			defaultPort:  1234,
+			expectedPort: 1111,
+		},
+		"Use new flag when provided": {
+			opts: v1.NewOptions(map[string]interface{}{
+				"admin-http-port":      ":1111",
+				"admin.http.host-port": ":2222",
+			}),
+			defaultPort:  1234,
+			expectedPort: 2222,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			args := test.opts.ToArgs()
+			assert.Equal(t, test.expectedPort, GetAdminPort(args, test.defaultPort))
+		})
+	}
+}
+
 func TestInitObjectMeta(t *testing.T) {
 	tests := map[string]struct {
 		obj metav1.Object
