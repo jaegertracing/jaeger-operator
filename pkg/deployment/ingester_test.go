@@ -311,7 +311,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://somewhere",
 				}),
@@ -324,7 +324,7 @@ func TestIngesterWithStorageType(t *testing.T) {
 	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: "elasticsearch",
+			Value: string(v1.JaegerESStorage),
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)

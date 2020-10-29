@@ -15,6 +15,10 @@ type IngressSecurityType string
 // +k8s:openapi-gen=true
 type JaegerPhase string
 
+// JaegerStorageType represents the Jaeger storage type
+// +k8s:openapi-gen=true
+type JaegerStorageType string
+
 const (
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	// +k8s:openapi-gen=true
@@ -79,7 +83,46 @@ const (
 	// JaegerPhaseRunning indicates that the Jaeger instance is ready and running
 	// +k8s:openapi-gen=true
 	JaegerPhaseRunning JaegerPhase = "Running"
+
+	// JaegerMemoryStorage indicates that the Jaeger storage type is memory. This is the default storage type.
+	// +k8s:openapi-gen=true
+	JaegerMemoryStorage JaegerStorageType = "memory"
+
+	// JaegerCassandraStorage indicates that the Jaeger storage type is cassandra
+	// +k8s:openapi-gen=true
+	JaegerCassandraStorage JaegerStorageType = "cassandra"
+
+	// JaegerESStorage indicates that the Jaeger storage type is elasticsearch
+	// +k8s:openapi-gen=true
+	JaegerESStorage JaegerStorageType = "elasticsearch"
+
+	// JaegerKafkaStorage indicates that the Jaeger storage type is kafka
+	// +k8s:openapi-gen=true
+	JaegerKafkaStorage JaegerStorageType = "kafka"
+
+	// JaegerBadgerStorage indicates that the Jaeger storage type is badger
+	// +k8s:openapi-gen=true
+	JaegerBadgerStorage JaegerStorageType = "badger"
 )
+
+// ValidStorageTypes returns the list of valid storage types
+func ValidStorageTypes() []JaegerStorageType {
+	return []JaegerStorageType{
+		JaegerMemoryStorage,
+		JaegerCassandraStorage,
+		JaegerESStorage,
+		JaegerKafkaStorage,
+		JaegerBadgerStorage,
+	}
+}
+
+// OptionsPrefix returns the options prefix associated with the storage type
+func (storageType JaegerStorageType) OptionsPrefix() string {
+	if storageType == JaegerESStorage {
+		return "es"
+	}
+	return string(storageType)
+}
 
 // JaegerSpec defines the desired state of Jaeger
 // +k8s:openapi-gen=true
@@ -395,9 +438,8 @@ type JaegerAgentSpec struct {
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
 // +k8s:openapi-gen=true
 type JaegerStorageSpec struct {
-	// Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`
 	// +optional
-	Type string `json:"type,omitempty"`
+	Type JaegerStorageType `json:"type,omitempty"`
 
 	// +optional
 	SecretName string `json:"secretName,omitempty"`

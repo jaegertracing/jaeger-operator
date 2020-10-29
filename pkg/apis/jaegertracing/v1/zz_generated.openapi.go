@@ -1902,9 +1902,8 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type can be `memory` (default), `cassandra`, `elasticsearch`, `kafka` or `badger`",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"secretName": {

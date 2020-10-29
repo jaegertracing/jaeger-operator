@@ -16,7 +16,7 @@ import (
 // EnableRollover returns true if rollover should be enabled
 func EnableRollover(spec v1.JaegerStorageSpec) bool {
 	useAliases := spec.Options.Map()["es.use-aliases"]
-	return strings.EqualFold(spec.Type, "elasticsearch") && strings.EqualFold(useAliases, "true")
+	return (spec.Type == v1.JaegerESStorage) && strings.EqualFold(useAliases, "true")
 }
 
 func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {

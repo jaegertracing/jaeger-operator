@@ -22,23 +22,23 @@ func TestEnableRollover(t *testing.T) {
 			expected: false,
 		},
 		{
-			spec:     v1.JaegerStorageSpec{Type: "cassandra"},
+			spec:     v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage},
 			expected: false,
 		},
 		{
-			spec:     v1.JaegerStorageSpec{Type: "elasticsearch"},
+			spec:     v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 			expected: false,
 		},
 		{
-			spec:     v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "false"})},
+			spec:     v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "false"})},
 			expected: false,
 		},
 		{
-			spec:     v1.JaegerStorageSpec{Type: "cassandra", Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "false"})},
+			spec:     v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage, Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "false"})},
 			expected: false,
 		},
 		{
-			spec:     v1.JaegerStorageSpec{Type: "elasticsearch", Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "true"})},
+			spec:     v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.use-aliases": "true"})},
 			expected: true,
 		},
 	}

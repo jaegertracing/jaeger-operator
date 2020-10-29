@@ -15,7 +15,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -60,7 +59,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
-		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
+		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
 	ca.Update(q.jaeger, commonSpec)
@@ -115,7 +114,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						Args:  options,
 						Env: []corev1.EnvVar{{
 							Name:  "SPAN_STORAGE_TYPE",
-							Value: q.jaeger.Spec.Storage.Type,
+							Value: string(q.jaeger.Spec.Storage.Type),
 						}},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,

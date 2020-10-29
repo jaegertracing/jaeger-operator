@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"context"
-	"strings"
 
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/global"
@@ -102,7 +101,7 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	}
 
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
-		if strings.EqualFold(jaeger.Spec.Storage.Type, "elasticsearch") {
+		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			c.cronJobs = append(c.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
 		} else {
 			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")

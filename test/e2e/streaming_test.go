@@ -196,7 +196,7 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 				}),
 			},
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),
@@ -262,7 +262,7 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 				Options: v1.NewOptions(ingesterOptions),
 			},
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),
@@ -305,7 +305,7 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 			},
 			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": esServerUrls,
 				}),

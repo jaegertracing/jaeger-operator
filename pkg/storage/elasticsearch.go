@@ -24,7 +24,7 @@ const (
 
 // ShouldDeployElasticsearch determines whether a new instance of Elasticsearch should be deployed
 func ShouldDeployElasticsearch(s v1.JaegerStorageSpec) bool {
-	if !strings.EqualFold(s.Type, "elasticsearch") {
+	if s.Type != v1.JaegerESStorage {
 		return false
 	}
 	_, ok := s.Options.Map()["es.server-urls"]

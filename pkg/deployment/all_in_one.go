@@ -20,7 +20,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -57,7 +56,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	options := allArgs(a.jaeger.Spec.AllInOne.Options,
-		a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type)))
+		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
@@ -135,7 +134,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						Env: []corev1.EnvVar{
 							{
 								Name:  "SPAN_STORAGE_TYPE",
-								Value: a.jaeger.Spec.Storage.Type,
+								Value: string(a.jaeger.Spec.Storage.Type),
 							},
 							{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",

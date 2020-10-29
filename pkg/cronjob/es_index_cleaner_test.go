@@ -155,12 +155,12 @@ func TestEsIndexCleanerResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -170,7 +170,7 @@ func TestEsIndexCleanerResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: childResources,
