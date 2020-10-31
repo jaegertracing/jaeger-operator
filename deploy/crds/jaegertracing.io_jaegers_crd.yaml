@@ -2660,6 +2660,8 @@ spec:
                   type: object
                 serviceAccount:
                   type: string
+                serviceType:
+                  type: string
                 tolerations:
                   items:
                     properties:

@@ -380,6 +380,13 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	// ServiceType represents the type of Service to create.
+	// Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName.
+	// The default, if omitted, is ClusterIP.
+	// See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
