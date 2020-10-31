@@ -322,3 +322,12 @@ func TestQueryServiceLinks(t *testing.T) {
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
 }
+
+func TestQueryJaegerDisabled(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryJaegerDisabled"})
+	trueVar := true
+	jaeger.Spec.Query.JaegerDisabled = &trueVar
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, "true", getEnvVarByName(dep.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
+}

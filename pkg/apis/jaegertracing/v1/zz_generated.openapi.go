@@ -460,6 +460,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 							Format: "",
 						},
 					},
+					"jaegerDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "JaegerDisabled adds the JAEGER_DISABLED environment flag to the query component to prevent it from adding its own traces. The default, if ommited, is false",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -1670,6 +1677,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "ServiceType represents the type of Service to create. Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName. The default, if omitted, is ClusterIP. See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"jaegerDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "JaegerDisabled adds the JAEGER_DISABLED environment flag to the query component to prevent it from adding its own traces. The default, if ommited, is false",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

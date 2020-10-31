@@ -162,6 +162,11 @@ func (in *JaegerAllInOneSpec) DeepCopyInto(out *JaegerAllInOneSpec) {
 	in.Options.DeepCopyInto(&out.Options)
 	in.Config.DeepCopyInto(&out.Config)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
+	if in.JaegerDisabled != nil {
+		in, out := &in.JaegerDisabled, &out.JaegerDisabled
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -540,6 +545,11 @@ func (in *JaegerQuerySpec) DeepCopyInto(out *JaegerQuerySpec) {
 	}
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
+	if in.JaegerDisabled != nil {
+		in, out := &in.JaegerDisabled, &out.JaegerDisabled
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

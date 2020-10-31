@@ -39,6 +39,11 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	adminPort := util.GetAdminPort(args, 16687)
 
+	jaegerDisabled := &falseVar
+	if q.jaeger.Spec.Query.JaegerDisabled != nil {
+		jaegerDisabled = q.jaeger.Spec.Query.JaegerDisabled
+	}
+
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
@@ -112,10 +117,16 @@ func (q *Query) Get() *appsv1.Deployment {
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
 						Args:  options,
-						Env: []corev1.EnvVar{{
-							Name:  "SPAN_STORAGE_TYPE",
-							Value: string(q.jaeger.Spec.Storage.Type),
-						}},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "SPAN_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "JAEGER_DISABLED",
+								Value: strconv.FormatBool(*jaegerDisabled),
+							},
+						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{

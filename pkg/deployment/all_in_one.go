@@ -43,6 +43,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	adminPort := util.GetAdminPort(args, 14269)
 
+	jaegerDisabled := &falseVar
+	if a.jaeger.Spec.AllInOne.JaegerDisabled != nil {
+		jaegerDisabled = a.jaeger.Spec.AllInOne.JaegerDisabled
+	}
+
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
@@ -139,6 +144,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							{
 								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 								Value: "9411",
+							},
+							{
+								Name:  "JAEGER_DISABLED",
+								Value: strconv.FormatBool(*jaegerDisabled),
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,

@@ -1607,6 +1607,8 @@ spec:
                   type: object
                 image:
                   type: string
+                jaegerDisabled:
+                  type: boolean
                 labels:
                   additionalProperties:
                     type: string
@@ -5520,6 +5522,8 @@ spec:
                   type: object
                 image:
                   type: string
+                jaegerDisabled:
+                  type: boolean
                 labels:
                   additionalProperties:
                     type: string
