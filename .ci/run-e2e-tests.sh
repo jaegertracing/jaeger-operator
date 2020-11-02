@@ -56,6 +56,10 @@ elif [ "${TEST_GROUP}" = "istio" ]
 then
     echo "Running Smoke Tests with istio"
     make e2e-tests-istio
+elif [ "${TEST_GROUP}" = "servicemonitor" ]
+then
+    echo "Running Servicemonitor Tests"
+    make e2e-tests-servicemonitor
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
