@@ -8,14 +8,14 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// Service represents the inventory of routes based on the current and desired states
+// ServiceMonitor represents the inventory of routes based on the current and desired states
 type ServiceMonitor struct {
 	Create []*monitoringv1.ServiceMonitor
 	Update []*monitoringv1.ServiceMonitor
 	Delete []*monitoringv1.ServiceMonitor
 }
 
-// ForServices builds an inventory of services based on the existing and desired states
+// ForServiceMonitors builds an inventory of services based on the existing and desired states
 func ForServiceMonitors(existing []*monitoringv1.ServiceMonitor, desired []*monitoringv1.ServiceMonitor) ServiceMonitor {
 	update := []*monitoringv1.ServiceMonitor{}
 	mdelete := serviceMonitorMap(existing)

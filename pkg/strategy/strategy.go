@@ -150,6 +150,7 @@ func (s S) WithSecrets(secrets []corev1.Secret) S {
 	return s
 }
 
+// WithServiceMonitors returns the strategy with the given list of serviceMonitors
 func (s S) WithServiceMonitors(servicemonitors []*monitoringv1.ServiceMonitor) S {
 	s.servicemonitors = servicemonitors
 	return s
@@ -235,6 +236,7 @@ func (s S) Dependencies() []batchv1.Job {
 	return s.dependencies
 }
 
+// ServiceMonitors returns the list of serviceMonitors for this strategy
 func (s S) ServiceMonitors() []*monitoringv1.ServiceMonitor {
 	return s.servicemonitors
 }
