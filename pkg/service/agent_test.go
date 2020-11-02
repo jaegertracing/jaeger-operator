@@ -49,6 +49,6 @@ func TestAgentServiceWithAdminPort(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
-	svc := NewAgentServiceWithAdminPort(jaeger, selector)
+	svc := NewAgentAdminService(jaeger, selector)
 	assert.Contains(t, svc.Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14271})
 }

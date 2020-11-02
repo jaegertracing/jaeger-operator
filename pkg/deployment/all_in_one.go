@@ -223,13 +223,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
 	labels := a.labels()
-	var services []*corev1.Service
-	if a.jaeger.Spec.ServiceMonitor.Enabled != nil && *a.jaeger.Spec.ServiceMonitor.Enabled {
-		services = service.NewCollectorServicesWithAdminPort(a.jaeger, labels)
-	} else {
-		services = service.NewCollectorServices(a.jaeger, labels)
-	}
-	return append(services,
+	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),
 	)

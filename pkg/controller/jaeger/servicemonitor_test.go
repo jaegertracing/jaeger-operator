@@ -2,10 +2,12 @@ package jaeger
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -13,8 +15,6 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
-
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 )
 
 func TestServiceMonitorsCreate(t *testing.T) {
@@ -103,6 +103,7 @@ func TestServiceMonitorsUpdate(t *testing.T) {
 	}
 
 	_, err := r.Reconcile(req)
+	require.NoError(t, err)
 
 	persisted := &monitoringv1.ServiceMonitor{}
 	persistedName := types.NamespacedName{
@@ -150,5 +151,6 @@ func TestServiceMonitorsDelete(t *testing.T) {
 		Namespace: nsn.Namespace,
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
-	assert.EqualError(t, err, fmt.Sprintf("servicemonitors.monitoring.coreos.com \"%s\" not found", nsn.Name))
+
+	assert.True(t, apierrors.IsNotFound(err))
 }

@@ -3,16 +3,14 @@ package jaeger
 import (
 	"context"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/global"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
-
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func (r *ReconcileJaeger) applyServiceMonitors(ctx context.Context, jaeger v1.Jaeger, desired []*monitoringv1.ServiceMonitor) error {

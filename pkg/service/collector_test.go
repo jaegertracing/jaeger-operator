@@ -151,6 +151,6 @@ func TestCollectorServiceWithAdminPort(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
-	svcs := NewCollectorServicesWithAdminPort(jaeger, selector)
+	svcs := NewCollectorServices(jaeger, selector)
 	assert.Contains(t, svcs[0].Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
 }

@@ -193,9 +193,6 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (c *Collector) Services() []*corev1.Service {
-	if c.jaeger.Spec.ServiceMonitor.Enabled != nil && *c.jaeger.Spec.ServiceMonitor.Enabled {
-		return service.NewCollectorServicesWithAdminPort(c.jaeger, c.labels())
-	}
 	return service.NewCollectorServices(c.jaeger, c.labels())
 }
 

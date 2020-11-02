@@ -8,8 +8,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// NewIngesterService returns a new Kubernetes service for Jaeger ingester backed by the pods matching the selector
-func NewIngesterService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+// NewIngesterAdminService returns a new Kubernetes service for Jaeger ingester backed by the pods matching the selector
+func NewIngesterAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -36,7 +36,7 @@ func NewIngesterService(jaeger *v1.Jaeger, selector map[string]string) *corev1.S
 			Ports: []corev1.ServicePort{
 				{
 					Name: "admin",
-					Port: util.GetPort("--admin-http-port=", jaeger.Spec.Ingester.Options.ToArgs(), 14270),
+					Port: util.GetPort("--admin.http.host-port", jaeger.Spec.Ingester.Options.ToArgs(), 14270),
 				},
 			},
 		},

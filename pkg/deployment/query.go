@@ -184,7 +184,7 @@ func (q *Query) Services() []*corev1.Service {
 	labels := q.labels()
 	if q.jaeger.Spec.ServiceMonitor.Enabled != nil && *q.jaeger.Spec.ServiceMonitor.Enabled {
 		return []*corev1.Service{
-			service.NewQueryServiceWithAdminPort(q.jaeger, labels),
+			service.NewQueryAdminService(q.jaeger, labels),
 		}
 	}
 	return []*corev1.Service{
