@@ -255,7 +255,15 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			}
 			return jaeger, tracing.HandleError(err, span)
 		}
-		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secrets.Items}
+		
+		var secretsForNamespace []corev1.Secret
+		for _, secret := range secrets.Items {
+			if secret.Namespace == jaeger.Namespace {
+				secretsForNamespace = append(secretsForNamespace, secret)
+			}
+		}
+
+		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secretsForNamespace}
 		err = es.CreateCerts()
 		if err != nil {
 			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
