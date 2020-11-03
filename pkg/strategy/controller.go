@@ -226,13 +226,53 @@ func disableDependenciesTab(uiOpts map[string]interface{}, storage v1.JaegerStor
 	}
 }
 
+func hasDocumentationLink(menus []interface{}) (bool, int) {
+	// Verify if a documentation entry exists.
+	// for now the only way we have to see if a documentation link exists is comparing labels
+	for menuIndex, menuItem := range menus {
+		converted, ok := menuItem.(map[string]interface{})
+		if !ok {
+			return false, 0
+		}
+		if label, ok := converted["label"]; ok && label == "About" {
+			items := converted["items"]
+			convertedItems, ok := items.([]interface{})
+			if !ok {
+				return false, 0
+			}
+			for _, item := range convertedItems {
+				itemMap, ok := item.(map[string]interface{})
+				if !ok {
+					return false, 0
+				}
+				if itemLabel, ok := itemMap["label"]; ok && itemLabel == "Documentation" {
+					return true, menuIndex
+				}
+			}
+		}
+	}
+	return false, 0
+}
+
 func enableDocumentationLink(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	if !viper.IsSet("documentation-url") {
 		return
 	}
 
-	// if a custom menu has been specified, do not add the link to the documentation
-	if _, ok := uiOpts["menu"]; ok {
+	if menus, ok := uiOpts["menu"]; ok {
+		menuArray := menus.([]interface{})
+		// If a documentation menu exists, update it, otherwise is a custom menu, don't touch it.
+		if hasDocLink, menuIndex := hasDocumentationLink(menuArray); hasDocLink {
+			// Update menu link
+			e := map[string]interface{}{
+				"label": "About",
+				"items": []interface{}{map[string]interface{}{
+					"label": "Documentation",
+					"url":   viper.GetString("documentation-url"),
+				}},
+			}
+			menuArray[menuIndex] = e
+		}
 		return
 	}
 
