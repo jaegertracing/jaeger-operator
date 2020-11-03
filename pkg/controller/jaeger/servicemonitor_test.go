@@ -44,7 +44,7 @@ func TestServiceMonitorsCreate(t *testing.T) {
 
 	res, err := r.Reconcile(req)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &monitoringv1.ServiceMonitor{}
@@ -54,7 +54,7 @@ func TestServiceMonitorsCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestServiceMonitorsUpdate(t *testing.T) {
@@ -111,7 +111,7 @@ func TestServiceMonitorsUpdate(t *testing.T) {
 		Namespace: nsn.Namespace,
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, new.Spec, persisted.Spec)
 }
 
@@ -144,6 +144,7 @@ func TestServiceMonitorsDelete(t *testing.T) {
 	}
 
 	_, err := r.Reconcile(req)
+	require.NoError(t, err)
 
 	persisted := &monitoringv1.ServiceMonitor{}
 	persistedName := types.NamespacedName{

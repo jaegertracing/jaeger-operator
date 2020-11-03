@@ -16,7 +16,6 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +32,7 @@ type ServiceMonitorTestSuite struct {
 
 func (suite *ServiceMonitorTestSuite) SetupSuite() {
 	t = suite.T()
-	assert.NoError(t, framework.AddToFrameworkScheme(monitoringv1.AddToScheme, &monitoringv1.PrometheusList{
+	require.NoError(t, framework.AddToFrameworkScheme(monitoringv1.AddToScheme, &monitoringv1.PrometheusList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Prometheus",
 			APIVersion: "monitoring.coreos.com/v1",
