@@ -2,6 +2,8 @@ package jaeger
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
@@ -178,6 +180,33 @@ func TestGetResourceFromNonCachedClient(t *testing.T) {
 	err = client.Get(context.Background(), req.NamespacedName, persisted)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
+}
+
+func TestGetSecretsForNamespace(t *testing.T) {
+	r := &ReconcileJaeger{}
+
+	secretOne := createSecret("foo", "secretOne")
+	secretTwo := createSecret("foo", "secretTwo")
+
+	secrets := []corev1.Secret {secretOne, secretTwo}
+	filteredSecrets := r.getSecretsForNamespace(secrets, "foo")
+	assert.Equal(t, 2, len(filteredSecrets))
+
+	secretThree := createSecret("bar", "secretThree")
+	secrets = append(secrets, secretThree)
+	filteredSecrets = r.getSecretsForNamespace(secrets, "bar")
+	assert.Equal(t, 1, len(filteredSecrets))
+	assert.Contains(t, filteredSecrets, secretThree)
+}
+
+func createSecret(secretNamespace, secretName string) corev1.Secret {
+	return corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            secretName,
+			Namespace:       secretNamespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+	}
 }
 
 func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {

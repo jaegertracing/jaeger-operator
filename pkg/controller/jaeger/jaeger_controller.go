@@ -255,13 +255,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			}
 			return jaeger, tracing.HandleError(err, span)
 		}
-		
-		var secretsForNamespace []corev1.Secret
-		for _, secret := range secrets.Items {
-			if secret.Namespace == jaeger.Namespace {
-				secretsForNamespace = append(secretsForNamespace, secret)
-			}
-		}
+		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
 
 		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secretsForNamespace}
 		err = es.CreateCerts()
@@ -370,4 +364,14 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	}
 
 	return jaeger, nil
+}
+
+func (r ReconcileJaeger)getSecretsForNamespace(secrets []corev1.Secret, namespace string) []corev1.Secret {
+	var secretsForNamespace []corev1.Secret
+	for _, secret := range secrets {
+		if secret.Namespace == namespace {
+			secretsForNamespace = append(secretsForNamespace, secret)
+		}
+	}
+	return secretsForNamespace
 }
