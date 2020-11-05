@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"context"
-	goctx "context"
 	"fmt"
 	"os"
 	"strings"
@@ -16,8 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -83,16 +80,9 @@ func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
-	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
-	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.NoError(t, err, "Error deploying example Jaeger")
-	defer undeployJaegerInstance(exampleJaeger)
-
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for collector deployment")
-
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for query deployment")
+	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+	createEsSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)
 
@@ -102,16 +92,9 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	jaegerInstanceName := "simple-prod2"
-	exampleJaeger := getJaegerSimpleProd(jaegerInstanceName)
-	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.NoError(t, err, "Error deploying example Jaeger")
-	defer undeployJaegerInstance(exampleJaeger)
-
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for collector deployment")
-
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for query deployment")
+	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+	createEsSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)
 
@@ -125,7 +108,7 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.EqualValues(t, updateCollectorCount, *updatedJaegerInstance.Spec.Collector.Replicas)
 	require.EqualValues(t, updateQueryCount, *updatedJaegerInstance.Spec.Query.Replicas)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", int(updateCollectorCount), retryInterval, timeout)
+	err := e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", int(updateCollectorCount), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", int(updateQueryCount), retryInterval, timeout)
@@ -213,45 +196,6 @@ func (suite *SelfProvisionedTestSuite) TestValidateEsOperatorImage() {
 	imageName := getElasticSearchOperatorImage(fw.KubeClient, esOperatorNamespace)
 	t.Logf("Using elasticsearch-operator image: %s\n", imageName)
 	require.Equal(t, expectedEsOperatorImage, imageName)
-}
-
-func getJaegerSimpleProd(instanceName string) *v1.Jaeger {
-	ingressEnabled := true
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-			Strategy: v1.DeploymentStrategyProduction,
-			Storage: v1.JaegerStorageSpec{
-				Type: v1.JaegerESStorage,
-				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount: 1,
-					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-					},
-				},
-			},
-		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	return exampleJaeger
 }
 
 func getElasticSearchOperatorImage(kubeclient kubernetes.Interface, namespace string) string {

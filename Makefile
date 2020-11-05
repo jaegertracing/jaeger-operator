@@ -181,6 +181,11 @@ e2e-tests-autoscale: prepare-e2e-tests es kafka
 	@echo Running Autoscale end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: e2e-tests-multi-instance
+e2e-tests-multi-instance: prepare-e2e-tests es kafka
+	@echo Running Multiple Instance end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=multiple ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: e2e-tests-upgrade
 e2e-tests-upgrade: prepare-e2e-tests
 	@echo Prepare next version image...

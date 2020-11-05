@@ -2,9 +2,10 @@ package jaeger
 
 import (
 	"context"
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
@@ -188,7 +189,7 @@ func TestGetSecretsForNamespace(t *testing.T) {
 	secretOne := createSecret("foo", "secretOne")
 	secretTwo := createSecret("foo", "secretTwo")
 
-	secrets := []corev1.Secret {secretOne, secretTwo}
+	secrets := []corev1.Secret{secretOne, secretTwo}
 	filteredSecrets := r.getSecretsForNamespace(secrets, "foo")
 	assert.Equal(t, 2, len(filteredSecrets))
 
@@ -202,8 +203,8 @@ func TestGetSecretsForNamespace(t *testing.T) {
 func createSecret(secretNamespace, secretName string) corev1.Secret {
 	return corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            secretName,
-			Namespace:       secretNamespace,
+			Name:      secretName,
+			Namespace: secretNamespace,
 		},
 		Type: corev1.SecretTypeOpaque,
 	}

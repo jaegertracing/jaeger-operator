@@ -366,7 +366,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	return jaeger, nil
 }
 
-func (r ReconcileJaeger)getSecretsForNamespace(secrets []corev1.Secret, namespace string) []corev1.Secret {
+func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespace string) []corev1.Secret {
 	var secretsForNamespace []corev1.Secret
 	for _, secret := range secrets {
 		if secret.Namespace == namespace {
