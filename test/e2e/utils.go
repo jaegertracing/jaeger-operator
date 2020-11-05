@@ -26,8 +26,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
@@ -754,7 +754,7 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 				Elasticsearch: v1.ElasticsearchSpec{
 					NodeCount: nodeCount,
 					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
 						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
@@ -771,7 +771,7 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 	return exampleJaeger
 }
 
-func createEsSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
+func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 

@@ -81,7 +81,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
 	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
-	createEsSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)
@@ -93,7 +93,7 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	jaegerInstanceName := "simple-prod2"
 	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
-	createEsSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)

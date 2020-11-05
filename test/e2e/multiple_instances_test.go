@@ -12,11 +12,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type MulitpleInstanceTestSuite struct {
+type MultipleInstanceTestSuite struct {
 	suite.Suite
 }
 
-func (suite *MulitpleInstanceTestSuite) SetupSuite() {
+func (suite *MultipleInstanceTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
@@ -33,19 +33,19 @@ func (suite *MulitpleInstanceTestSuite) SetupSuite() {
 	addToFrameworkSchemeForSmokeTests(t)
 }
 
-func (suite *MulitpleInstanceTestSuite) TearDownSuite() {
+func (suite *MultipleInstanceTestSuite) TearDownSuite() {
 	handleSuiteTearDown()
 }
 
 func TestMultipleInstanceSuite(t *testing.T) {
-	suite.Run(t, new(MulitpleInstanceTestSuite))
+	suite.Run(t, new(MultipleInstanceTestSuite))
 }
 
-func (suite *MulitpleInstanceTestSuite) SetupTest() {
+func (suite *MultipleInstanceTestSuite) SetupTest() {
 	t = suite.T()
 }
 
-func (suite *MulitpleInstanceTestSuite) AfterTest(suiteName, testName string) {
+func (suite *MultipleInstanceTestSuite) AfterTest(suiteName, testName string) {
 	handleTestFailure()
 }
 
@@ -53,7 +53,7 @@ func (suite *MulitpleInstanceTestSuite) AfterTest(suiteName, testName string) {
  * This test verifies that we create the elasticsearch secrets correctly if someone creates production Jaeger
  * instances with the same name in different namespaces
  */
-func (suite *MulitpleInstanceTestSuite) TestVerifySecrets() {
+func (suite *MultipleInstanceTestSuite) TestVerifySecrets() {
 	if !isOpenShift(t) {
 		t.Skip("This test is currently only supported on OpenShift")
 	}
@@ -61,16 +61,16 @@ func (suite *MulitpleInstanceTestSuite) TestVerifySecrets() {
 	jaegerInstanceName := "simple-prod"
 	// In production we'd use 3 nodes but 1 is sufficient for this test.
 	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
-	createEsSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	// Create a second instance with the same name but in a different namespace
 	secondContext, err := createNewTestContext()
 	defer secondContext.Cleanup()
 	secondNamespace := secondContext.GetID()
-	secondjaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, secondNamespace, 1)
-	createEsSelfProvDeployment(secondjaegerInstance, jaegerInstanceName, secondNamespace)
-	defer undeployJaegerInstance(secondjaegerInstance)
+	secondJaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, secondNamespace, 1)
+	createESSelfProvDeployment(secondJaegerInstance, jaegerInstanceName, secondNamespace)
+	defer undeployJaegerInstance(secondJaegerInstance)
 
 	// Get the secrets from both and verify that the logging-es.crt values differ
 	secretOne, err := fw.KubeClient.CoreV1().Secrets(namespace).Get(context.Background(), "elasticsearch", metav1.GetOptions{})
@@ -88,12 +88,7 @@ func (suite *MulitpleInstanceTestSuite) TestVerifySecrets() {
 
 func createNewTestContext() (*framework.Context, error) {
 	secondContext, err := prepare(t)
-	if err != nil {
-		if secondContext != nil {
-			secondContext.Cleanup()
-		}
-		require.FailNow(t, "Failed in prepare with: "+err.Error())
-	}
 	require.NoError(t, err, "Failed trying to create a new test context")
+
 	return secondContext, err
 }
