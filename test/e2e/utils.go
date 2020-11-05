@@ -23,8 +23,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -728,4 +730,75 @@ func waitForKafkaInstance() {
 func waitForElasticSearch() {
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, string(v1.JaegerESStorage), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
+}
+
+func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
+	ingressEnabled := true
+	exampleJaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instanceName,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
+			Strategy: v1.DeploymentStrategyProduction,
+			Storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+				Elasticsearch: v1.ElasticsearchSpec{
+					NodeCount: nodeCount,
+					Resources: &corev1.ResourceRequirements{
+						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
+						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+					},
+				},
+			},
+		},
+	}
+
+	if specifyOtelImages {
+		logrus.Infof("Using OTEL collector for %s", instanceName)
+		exampleJaeger.Spec.Collector.Image = otelCollectorImage
+		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
+	}
+
+	return exampleJaeger
+}
+
+func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying example Jaeger")
+
+	// Wait for all elasticsearch instances to appear
+	listOptions := &metav1.ListOptions{LabelSelector: "component=elasticsearch"}
+	var deployments []appsv1.Deployment
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		esDeployments, err := fw.KubeClient.AppsV1().Deployments(jaegerNamespace).List(context.Background(), *listOptions)
+		if int32(len(esDeployments.Items)) == jaegerInstance.Spec.Storage.Elasticsearch.NodeCount {
+			deployments = esDeployments.Items
+			return true, nil
+		}
+		return false, nil
+	})
+	require.NoError(t, err, "Failed waiting for elasticsearch deployments to be available")
+
+	// And then wait for them to finish deploying
+	for _, deployment := range deployments {
+		logrus.Infof("Waiting for deployment of %s", deployment.Name)
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, deployment.Name, 1, retryInterval, timeout)
+		require.NoError(t, err, "Failed waiting for elasticsearch deployment(s) %s to start", deployment.Name)
+	}
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstanceName, jaegerNamespace)
 }

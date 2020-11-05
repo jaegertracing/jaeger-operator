@@ -255,7 +255,9 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			}
 			return jaeger, tracing.HandleError(err, span)
 		}
-		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secrets.Items}
+		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
+
+		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secretsForNamespace}
 		err = es.CreateCerts()
 		if err != nil {
 			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
@@ -362,4 +364,14 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	}
 
 	return jaeger, nil
+}
+
+func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespace string) []corev1.Secret {
+	var secretsForNamespace []corev1.Secret
+	for _, secret := range secrets {
+		if secret.Namespace == namespace {
+			secretsForNamespace = append(secretsForNamespace, secret)
+		}
+	}
+	return secretsForNamespace
 }
