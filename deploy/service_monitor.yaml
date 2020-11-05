@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jaeger-operator-metrics
+  labels:
+    name: jaeger-operator
+spec:
+  endpoints:
+    - path: /metrics
+      port: http-metrics
+    - path: /metrics
+      port: cr-metrics
+  selector:
+    matchLabels:
+      name: jaeger-operator
