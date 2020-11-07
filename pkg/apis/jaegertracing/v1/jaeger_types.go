@@ -253,10 +253,10 @@ type JaegerQuerySpec struct {
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 
 	// +optional
-	// JaegerDisabled adds the JAEGER_DISABLED environment flag to the
-	// query component to prevent it from adding its own traces.
-	// The default, if ommited, is false
-	JaegerDisabled *bool `json:"jaegerDisabled,omitempty"`
+	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
+	// agent container from the query component to disable tracing requests to the query service.
+	// The default, if ommited, is true
+	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -349,10 +349,10 @@ type JaegerAllInOneSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
-	// JaegerDisabled adds the JAEGER_DISABLED environment flag to the
-	// query component to prevent it from adding its own traces.
-	// The default, if ommited, is false
-	JaegerDisabled *bool `json:"jaegerDisabled,omitempty"`
+	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
+	// agent container from the query component to disable tracing requests to the query service.
+	// The default, if ommited, is true
+	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs

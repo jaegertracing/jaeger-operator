@@ -43,9 +43,9 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	adminPort := util.GetAdminPort(args, 14269)
 
-	jaegerDisabled := &falseVar
-	if a.jaeger.Spec.AllInOne.JaegerDisabled != nil {
-		jaegerDisabled = a.jaeger.Spec.AllInOne.JaegerDisabled
+	jaegerDisabled := false
+	if a.jaeger.Spec.AllInOne.TracingEnabled != nil && *a.jaeger.Spec.AllInOne.TracingEnabled == false {
+		jaegerDisabled = true
 	}
 
 	baseCommonSpec := v1.JaegerCommonSpec{
@@ -147,7 +147,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							{
 								Name:  "JAEGER_DISABLED",
-								Value: strconv.FormatBool(*jaegerDisabled),
+								Value: strconv.FormatBool(jaegerDisabled),
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,

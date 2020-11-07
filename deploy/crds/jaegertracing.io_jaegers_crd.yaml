@@ -1607,8 +1607,6 @@ spec:
                   type: object
                 image:
                   type: string
-                jaegerDisabled:
-                  type: boolean
                 labels:
                   additionalProperties:
                     type: string
@@ -1698,6 +1696,8 @@ spec:
                         type: string
                     type: object
                   type: array
+                tracingEnabled:
+                  type: boolean
                 volumeMounts:
                   items:
                     properties:
@@ -5522,8 +5522,6 @@ spec:
                   type: object
                 image:
                   type: string
-                jaegerDisabled:
-                  type: boolean
                 labels:
                   additionalProperties:
                     type: string
@@ -5618,6 +5616,8 @@ spec:
                         type: string
                     type: object
                   type: array
+                tracingEnabled:
+                  type: boolean
                 volumeMounts:
                   items:
                     properties:

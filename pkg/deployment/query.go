@@ -39,9 +39,9 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	adminPort := util.GetAdminPort(args, 16687)
 
-	jaegerDisabled := &falseVar
-	if q.jaeger.Spec.Query.JaegerDisabled != nil {
-		jaegerDisabled = q.jaeger.Spec.Query.JaegerDisabled
+	jaegerDisabled := false
+	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+		jaegerDisabled = true
 	}
 
 	baseCommonSpec := v1.JaegerCommonSpec{
@@ -124,7 +124,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 							{
 								Name:  "JAEGER_DISABLED",
-								Value: strconv.FormatBool(*jaegerDisabled),
+								Value: strconv.FormatBool(jaegerDisabled),
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,

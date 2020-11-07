@@ -357,10 +357,10 @@ func TestAllInOneServiceLinks(t *testing.T) {
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
 }
 
-func TestAllInOneJaegerDisabled(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneJaegerDisabled"})
-	trueVar := true
-	jaeger.Spec.AllInOne.JaegerDisabled = &trueVar
+func TestAllInOneTracingDisabled(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneTracingDisabled"})
+	falseVar := false
+	jaeger.Spec.AllInOne.TracingEnabled = &falseVar
 	d := NewAllInOne(jaeger).Get()
 	assert.Equal(t, "true", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
 }
