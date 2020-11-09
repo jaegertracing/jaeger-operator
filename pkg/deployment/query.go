@@ -39,26 +39,26 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	adminPort := util.GetAdminPort(args, 16687)
 
-	jaegerDisabled := false
-	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
-		jaegerDisabled = true
-	}
-
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "true",
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
-
-			// note that we are explicitly using a string here, not the value from `inject.Annotation`
-			// this has two reasons:
-			// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
-			// 2) this specific string is part of the "public API" of the operator: we should not change
-			// it at will. So, we leave this configured just like any other application would
-			"sidecar.jaegertracing.io/inject": q.jaeger.Name,
 		},
 		Labels: labels,
+	}
+
+	jaegerDisabled := false
+	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+		jaegerDisabled = true
+	} else {
+		// note that we are explicitly using a string here, not the value from `inject.Annotation`
+		// this has two reasons:
+		// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
+		// 2) this specific string is part of the "public API" of the operator: we should not change
+		// it at will. So, we leave this configured just like any other application would
+		baseCommonSpec.Annotations["sidecar.jaegertracing.io/inject"] = q.jaeger.Name
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
