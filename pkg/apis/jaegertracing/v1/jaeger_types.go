@@ -495,6 +495,10 @@ type ElasticsearchSpec struct {
 
 	// +optional
 	RedundancyPolicy esv1.RedundancyPolicyType `json:"redundancyPolicy,omitempty"`
+
+	// +optional
+	// +listType=atomic
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

@@ -104,7 +104,8 @@ const (
 type ElasticsearchNodeSpec struct {
 	Image        string                  `json:"image,omitempty"`
 	Resources    v1.ResourceRequirements `json:"resources"`
-	NodeSelector map[string]string       `json:"nodeSelector,omitempty"`
+	NodeSelector map[string]string       `json:"nodeSelector"`
+	Tolerations  []v1.Toleration         `json:"tolerations,omitempty"`
 }
 
 type ElasticsearchRequiredAction string
