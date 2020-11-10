@@ -47,8 +47,6 @@ check:
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate format
-	@git diff pkg/apis/jaegertracing/v1/zz_generated.*.go || true
-	@git diff pkg/client/versioned || true
 	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
 	@git diff -s --exit-code pkg/client/versioned || (echo "Build failed: the versioned clients aren't up to date. Run 'make generate'." && exit 1)
 
