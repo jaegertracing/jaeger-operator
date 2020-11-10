@@ -251,6 +251,12 @@ type JaegerQuerySpec struct {
 	// The default, if omitted, is ClusterIP.
 	// See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+
+	// +optional
+	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
+	// agent container from the query component to disable tracing requests to the query service.
+	// The default, if ommited, is true
+	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -341,6 +347,12 @@ type JaegerAllInOneSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
+	// agent container from the query component to disable tracing requests to the query service.
+	// The default, if ommited, is true
+	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs

@@ -1696,6 +1696,8 @@ spec:
                         type: string
                     type: object
                   type: array
+                tracingEnabled:
+                  type: boolean
                 volumeMounts:
                   items:
                     properties:
@@ -5614,6 +5616,8 @@ spec:
                         type: string
                     type: object
                   type: array
+                tracingEnabled:
+                  type: boolean
                 volumeMounts:
                   items:
                     properties:

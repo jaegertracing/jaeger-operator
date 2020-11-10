@@ -45,15 +45,20 @@ func (q *Query) Get() *appsv1.Deployment {
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
-
-			// note that we are explicitly using a string here, not the value from `inject.Annotation`
-			// this has two reasons:
-			// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
-			// 2) this specific string is part of the "public API" of the operator: we should not change
-			// it at will. So, we leave this configured just like any other application would
-			"sidecar.jaegertracing.io/inject": q.jaeger.Name,
 		},
 		Labels: labels,
+	}
+
+	jaegerDisabled := false
+	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+		jaegerDisabled = true
+	} else {
+		// note that we are explicitly using a string here, not the value from `inject.Annotation`
+		// this has two reasons:
+		// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
+		// 2) this specific string is part of the "public API" of the operator: we should not change
+		// it at will. So, we leave this configured just like any other application would
+		baseCommonSpec.Annotations["sidecar.jaegertracing.io/inject"] = q.jaeger.Name
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
@@ -112,10 +117,16 @@ func (q *Query) Get() *appsv1.Deployment {
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
 						Args:  options,
-						Env: []corev1.EnvVar{{
-							Name:  "SPAN_STORAGE_TYPE",
-							Value: string(q.jaeger.Spec.Storage.Type),
-						}},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "SPAN_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "JAEGER_DISABLED",
+								Value: strconv.FormatBool(jaegerDisabled),
+							},
+						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{

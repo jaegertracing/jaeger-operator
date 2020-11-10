@@ -460,6 +460,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref common.ReferenceCal
 							Format: "",
 						},
 					},
+					"tracingEnabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected agent container from the query component to disable tracing requests to the query service. The default, if ommited, is true",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -1670,6 +1677,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "ServiceType represents the type of Service to create. Valid values include: ClusterIP, NodePort, LoadBalancer, and ExternalName. The default, if omitted, is ClusterIP. See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tracingEnabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected agent container from the query component to disable tracing requests to the query service. The default, if ommited, is true",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

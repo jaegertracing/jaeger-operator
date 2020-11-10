@@ -249,6 +249,18 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	}
 }
 
+func TestAgentSidecarNotInjectedTracingEnabledFalseForStreaming(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarNotInjectedTracingEnabledFalseForStreaming"})
+	falseVar := false
+	j.Spec.Query.TracingEnabled = &falseVar
+	c := newStreamingStrategy(context.Background(), j)
+	for _, dep := range c.Deployments() {
+		if strings.HasSuffix(dep.Name, "-query") {
+			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+		}
+	}
+}
+
 func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	name := "my-instance"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name, Namespace: "project"})

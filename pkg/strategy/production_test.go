@@ -198,6 +198,18 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 	}
 }
 
+func TestAgentSidecarNotInjectedTracingEnabledFalseForProduction(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarNotInjectedTracingEnabledFalseForProduction"})
+	falseVar := false
+	j.Spec.Query.TracingEnabled = &falseVar
+	c := newProductionStrategy(context.Background(), j)
+	for _, dep := range c.Deployments() {
+		if strings.HasSuffix(dep.Name, "-query") {
+			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+		}
+	}
+}
+
 func TestElasticsearchInject(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
 	j.Spec.Storage.Type = v1.JaegerESStorage

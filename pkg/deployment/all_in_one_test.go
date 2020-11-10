@@ -41,6 +41,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
 			Value: "9411",
 		},
+		{
+			Name:  "JAEGER_DISABLED",
+			Value: "false",
+		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }
@@ -351,4 +355,22 @@ func TestAllInOneServiceLinks(t *testing.T) {
 	dep := a.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}
+
+func TestAllInOneTracingDisabled(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneTracingDisabled"})
+	falseVar := false
+	jaeger.Spec.AllInOne.TracingEnabled = &falseVar
+	d := NewAllInOne(jaeger).Get()
+	assert.Equal(t, "true", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
+}
+
+func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {
+	envVar := corev1.EnvVar{}
+	for _, v := range vars {
+		if v.Name == name {
+			envVar = v
+		}
+	}
+	return envVar
 }
