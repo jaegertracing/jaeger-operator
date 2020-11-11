@@ -3,9 +3,12 @@
 package e2e
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -61,6 +64,25 @@ func (suite *ExamplesTestSuite2) TestWithBadgerExample() {
 
 func (suite *ExamplesTestSuite2) TestWithBadgerAndVolumeExample() {
 	smokeTestAllInOneExample("with-badger-and-volume", "../../examples/with-badger-and-volume.yaml")
+}
+
+func (suite *ExamplesTestSuite2) TestServiceTypesExample() {
+	yamlFileName := "../../examples/service-types.yaml"
+	name := "service-types"
+	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	err := WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
+	require.NoErrorf(t, err, "Error waiting for %s to deploy", name)
+
+	AllInOneSmokeTest(name)
+
+	collectorService, err := fw.KubeClient.CoreV1().Services(namespace).Get(context.Background(), fmt.Sprintf("%s-collector", name), v1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "LoadBalancer", string(collectorService.Spec.Type))
+	queryService, err := fw.KubeClient.CoreV1().Services(namespace).Get(context.Background(), fmt.Sprintf("%s-query", name), v1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "LoadBalancer", string(queryService.Spec.Type))
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdWithVolumes() {

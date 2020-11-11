@@ -32,7 +32,9 @@ func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *co
 }
 
 func clusteripCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	return collectorService(jaeger, selector)
+	svc := collectorService(jaeger, selector)
+	svc.Spec.Type = getTypeForCollectorService(jaeger)
+	return svc
 }
 
 func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
@@ -120,4 +122,11 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 
 	// doesn't look like we have TLS enabled
 	return "http-grpc"
+}
+
+func getTypeForCollectorService(jaeger *v1.Jaeger) corev1.ServiceType {
+	if jaeger.Spec.Collector.ServiceType != "" {
+		return jaeger.Spec.Collector.ServiceType
+	}
+	return corev1.ServiceTypeClusterIP
 }
