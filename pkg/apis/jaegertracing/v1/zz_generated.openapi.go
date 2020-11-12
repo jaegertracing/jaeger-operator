@@ -119,11 +119,28 @@ func schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref common.ReferenceCall
 							Format: "",
 						},
 					},
+					"tolerations": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Toleration"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1.ElasticsearchStorageSpec", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1.ElasticsearchStorageSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration"},
 	}
 }
 
