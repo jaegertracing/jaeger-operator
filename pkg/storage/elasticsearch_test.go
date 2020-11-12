@@ -33,6 +33,16 @@ func TestCreateElasticsearchCR(t *testing.T) {
 	genuuidmaster1 := "myprojectfoomaster"
 	genuuid2 := "myprojectfoobar"
 	genuuidmaster2 := "myprojectfoobarmaster"
+	genuuid3 := "mytolerableprojecttolerations"
+
+	toleration := corev1.Toleration{
+		Key:      "special",
+		Operator: "Equal",
+		Value:    "false",
+		Effect:   "NoSchedule",
+	}
+	tolerations := []corev1.Toleration{toleration}
+
 	tests := []struct {
 		name      string
 		namespace string
@@ -119,6 +129,33 @@ func TestCreateElasticsearchCR(t *testing.T) {
 						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 						GenUUID:   &genuuid2,
+					},
+				},
+			},
+		},
+		{
+			name:      "tolerations",
+			namespace: "mytolerableproject",
+			jEsSpec: v1.ElasticsearchSpec{
+				NodeCount:        2,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Tolerations:      tolerations,
+				Storage: esv1.ElasticsearchStorageSpec{
+					StorageClassName: &storageClassName,
+				},
+			},
+			esSpec: esv1.ElasticsearchSpec{
+				ManagementState:  esv1.ManagementStateManaged,
+				RedundancyPolicy: esv1.FullRedundancy,
+				Spec: esv1.ElasticsearchNodeSpec{
+					Tolerations: tolerations,
+				},
+				Nodes: []esv1.ElasticsearchNode{
+					{
+						NodeCount: 2,
+						Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
+						Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+						GenUUID:   &genuuid3,
 					},
 				},
 			},
