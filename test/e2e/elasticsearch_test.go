@@ -34,6 +34,9 @@ var esIndexCleanerEnabled = false
 
 func (suite *ElasticSearchTestSuite) SetupSuite() {
 	t = suite.T()
+	if skipESTests {
+		t.Skip()
+	}
 	var err error
 	ctx, err = prepare(t)
 	if err != nil {
