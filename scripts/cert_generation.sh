@@ -207,6 +207,12 @@ function generate_certs() {
   local component=$1
   local extensions=${2:-}
 
+  # For TRACING-1631 - if we can't find the namespace in the cert it's bad, regenerate everything
+  if [ $REGENERATE_NEEDED = 0 ] && [ "${component}" == "elasticsearch" ] && [ -f ${WORKING_DIR}/logging-es.crt ]  ; then
+    openssl x509 -in ${WORKING_DIR}/logging-es.crt -text | grep -q "DNS:elasticsearch.${NAMESPACE}.svc"
+    REGENERATE_NEEDED=$?
+  fi
+
   if [ $REGENERATE_NEEDED = 1 ] || [ ! -f ${WORKING_DIR}/${component}.crt ] || ! openssl x509 -checkend 0 -noout -in ${WORKING_DIR}/${component}.crt; then
     generate_cert_config $component $extensions
     generate_request $component
