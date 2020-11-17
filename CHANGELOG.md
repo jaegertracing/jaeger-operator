@@ -1,6 +1,33 @@
 Changes by Version
 ==================
 
+1.21.0 (2020-11-17)
+-------------------
+
+* Regenerate self-provisioned ES TLS cert when it's outdated ([#1301](https://github.com/jaegertracing/jaeger-operator/pull/1301), [@kevinearls](https://github.com/kevinearls))
+* Enable tolerations support in elasticsearch config ([#1296](https://github.com/jaegertracing/jaeger-operator/pull/1296), [@kevinearls](https://github.com/kevinearls))
+* Update github.com/miekg/dns to v1.1.35 ([#1298](https://github.com/jaegertracing/jaeger-operator/pull/1298), [@objectiser](https://github.com/objectiser))
+* Add serviceType for the collector service ([#1286](https://github.com/jaegertracing/jaeger-operator/pull/1286), [@sschne](https://github.com/sschne))
+* Add env var JAEGER_DISABLED ([#1285](https://github.com/jaegertracing/jaeger-operator/pull/1285), [@sschne](https://github.com/sschne))
+* Fix secret creation when using self provisioned elasticsearch instances ([#1288](https://github.com/jaegertracing/jaeger-operator/pull/1288), [@kevinearls](https://github.com/kevinearls))
+* Convert storage type to typed string ([#1282](https://github.com/jaegertracing/jaeger-operator/pull/1282), [@SezalAgrawal](https://github.com/SezalAgrawal))
+* Use New Admin Port Flag ([#1281](https://github.com/jaegertracing/jaeger-operator/pull/1281), [@johanavril](https://github.com/johanavril))
+* Update instances status using client.Status().update interface ([#1253](https://github.com/jaegertracing/jaeger-operator/pull/1253), [@rubenvp8510](https://github.com/rubenvp8510))
+* Remove gRPC host-port from being added to the CR (agent) ([#1272](https://github.com/jaegertracing/jaeger-operator/pull/1272), [@jpkrohling](https://github.com/jpkrohling))
+* Sync OTEL config volume/mount and args ([#1268](https://github.com/jaegertracing/jaeger-operator/pull/1268), [@jpkrohling](https://github.com/jpkrohling))
+* Publish container - dockerx should not use tag BUILD_IMAGE ([#1270](https://github.com/jaegertracing/jaeger-operator/pull/1270), [@morlay](https://github.com/morlay))
+* Speed up buildx process ([#1267](https://github.com/jaegertracing/jaeger-operator/pull/1267), [@morlay](https://github.com/morlay))
+* Fix the dependencies ([#1264](https://github.com/jaegertracing/jaeger-operator/pull/1264), [@faceair](https://github.com/faceair))
+* Add agent hostNetwork option ([#1257](https://github.com/jaegertracing/jaeger-operator/pull/1257), [@faceair](https://github.com/faceair))
+* Skip detectClusterRoles for Kubernetes ([#1262](https://github.com/jaegertracing/jaeger-operator/pull/1262), [@johanavril](https://github.com/johanavril))
+* Elasticsearch: add SYS_CHROOT capability ([#1260](https://github.com/jaegertracing/jaeger-operator/pull/1260), [@haircommander](https://github.com/haircommander))
+* Allow overriding the vertx example app image and config values ([#1259](https://github.com/jaegertracing/jaeger-operator/pull/1259), [@kevinearls](https://github.com/kevinearls))
+* Simplify OTEL related environment variables ([#1255](https://github.com/jaegertracing/jaeger-operator/pull/1255), [@kevinearls](https://github.com/kevinearls))
+* Add CQLSH_PORT environment variable ([#1243](https://github.com/jaegertracing/jaeger-operator/pull/1243), [@Ashmita152](https://github.com/Ashmita152))
+* Expose elasticsearch container ports ([#1224](https://github.com/jaegertracing/jaeger-operator/pull/1224), [@jkandasa](https://github.com/jkandasa))
+* Adding samples for ingress hosts and annotations ([#1231](https://github.com/jaegertracing/jaeger-operator/pull/1231), [@prageethw](https://github.com/prageethw))
+* Don't set kafka batch options when using otel collector ([#1227](https://github.com/jaegertracing/jaeger-operator/pull/1227), [@kevinearls](https://github.com/kevinearls))
+
 1.20.0 (2020-09-30)
 -------------------
 
