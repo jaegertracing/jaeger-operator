@@ -10,67 +10,18 @@ metadata:
           "metadata": {
             "name": "jaeger-all-in-one-inmemory"
           }
-        },
-        {
-          "apiVersion": "jaegertracing.io/v1",
-          "kind": "Jaeger",
-          "metadata": {
-            "name": "jaeger-all-in-one-local-storage"
-          },
-          "spec": {
-            "storage": {
-              "options": {
-                "badger": {
-                  "directory-key": "/badger/key",
-                  "directory-value": "/badger/data",
-                  "ephemeral": false
-                }
-              },
-              "type": "badger",
-              "volumeMounts": [
-                {
-                  "mountPath": "/badger",
-                  "name": "data"
-                }
-              ],
-              "volumes": [
-                {
-                  "emptyDir": {},
-                  "name": "data"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "apiVersion": "jaegertracing.io/v1",
-          "kind": "Jaeger",
-          "metadata": {
-            "name": "jaeger-prod-elasticsearch"
-          },
-          "spec": {
-            "storage": {
-              "options": {
-                "es": {
-                  "server-urls": "http://elasticsearch.default.svc:9200"
-                }
-              },
-              "type": "elasticsearch"
-            },
-            "strategy": "production"
-          }
         }
       ]
     capabilities: Deep Insights
     categories: Logging & Tracing
     certified: "false"
-    containerImage: docker.io/jaegertracing/jaeger-operator:1.20.0
+    containerImage: docker.io/jaegertracing/jaeger-operator:1.21.0
     createdAt: "2019-09-04T13:28:40+00:00"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.20.0
+  name: jaeger-operator.v1.21.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -349,7 +300,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.20.0
+                image: jaegertracing/jaeger-operator:1.21.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -550,8 +501,8 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.19.0
+  replaces: jaeger-operator.v1.20.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.20.0
+  version: 1.21.0
