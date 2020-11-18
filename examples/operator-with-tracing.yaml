@@ -17,13 +17,13 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
       - name: jaeger-operator
-        image: jaegertracing/jaeger-operator:1.18.1
+        image: jaegertracing/jaeger-operator:1.20.0
         ports:
         - containerPort: 8383
           name: http-metrics
         - containerPort: 8686
           name: cr-metrics
-        args: ["start", "--tracing-enabled=true"]
+        args: ["start", "--tracing-enabled=true", "--log-level=debug"]
         imagePullPolicy: Always
         env:
         - name: WATCH_NAMESPACE
@@ -41,14 +41,14 @@ spec:
         - name: OPERATOR_NAME
           value: "jaeger-operator"
       - name: jaeger-agent
-        image: jaegertracing/jaeger-agent:1.18
+        image: jaegertracing/jaeger-agent:1.20
         env:
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
         args:
-        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(POD_NAMESPACE).svc.cluster.local:14250
+        - --reporter.grpc.host-port=dns:///simple-prod-collector-headless.$(POD_NAMESPACE).svc.cluster.local:14250
         ports:
         - containerPort: 6831
           name: jg-compact-trft
