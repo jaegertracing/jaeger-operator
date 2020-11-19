@@ -439,6 +439,74 @@ func TestMenuWithCustomDocURL(t *testing.T) {
 	assert.Equal(t, expected, uiOpts["menu"])
 }
 
+func TestUpdateMenuDocURL(t *testing.T) {
+	docURLv1 := "http://testv1/doc/url"
+	docURLv2 := "http://testv2/doc/url"
+
+	viper.Set("documentation-url", docURLv1)
+	defer viper.Reset()
+
+	uiOpts := map[string]interface{}{}
+
+	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}}
+	enableDocumentationLink(uiOpts, spec)
+	assert.Contains(t, uiOpts, "menu")
+
+	expected := []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   docURLv1,
+				},
+			},
+		},
+	}
+	assert.Equal(t, expected, uiOpts["menu"])
+
+	viper.Set("documentation-url", docURLv2)
+	enableDocumentationLink(uiOpts, spec)
+	assert.Contains(t, uiOpts, "menu")
+
+	expected = []interface{}{
+		map[string]interface{}{
+			"label": "About",
+			"items": []interface{}{
+				map[string]interface{}{
+					"label": "Documentation",
+					"url":   docURLv2,
+				},
+			},
+		},
+	}
+	assert.Equal(t, expected, uiOpts["menu"])
+
+}
+
+func TestNoDocWithCustomMenu(t *testing.T) {
+	viper.Set("documentation-url", "http://testv1/doc/url")
+	defer viper.Reset()
+
+	internalLink := map[string]interface{}{
+		"label": "Some internal links",
+		"items": []interface{}{
+			map[string]interface{}{
+				"label": "The internal link",
+				"url":   "http://example.com/internal",
+			},
+		},
+	}
+	uiOpts := map[string]interface{}{
+		"menu": []interface{}{internalLink},
+	}
+
+	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}}
+	enableDocumentationLink(uiOpts, spec)
+	assert.Equal(t, uiOpts, uiOpts)
+
+}
+
 func TestMenuNoLogOutIngressSecurityNone(t *testing.T) {
 	uiOpts := map[string]interface{}{}
 	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityNoneExplicit}}
