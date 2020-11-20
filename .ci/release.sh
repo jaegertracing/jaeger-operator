@@ -35,8 +35,8 @@ sed "s~image: jaegertracing/jaeger-agent:.*~image: jaegertracing/jaeger-agent:${
 # changes to test/operator.yaml
 sed "s~image: jaegertracing/jaeger-operator.*~image: ${BUILD_IMAGE}~gi" -i test/operator.yaml
 
-# change the versions.txt
-sed "s~${PREVIOUS_VERSION}~${OPERATOR_VERSION}~gi" -i versions.txt
+# change the versions.txt, bump only operator version.
+sed "s~operator=${PREVIOUS_VERSION}~operator=${OPERATOR_VERSION}~gi" -i versions.txt
 
 mkdir -p deploy/olm-catalog/jaeger-operator/${OPERATOR_VERSION}
 cp deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml \
