@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+1.21.2 (2020-11-20)
+-------------------
+
+* Fixes jaeger version ([#1311](https://github.com/jaegertracing/jaeger-operator/pull/1311), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.21.1 (2020-11-19)
 
 * Update UI documentation link if is present ([#1290](https://github.com/jaegertracing/jaeger-operator/pull/1290), [@rubenvp8510](https://github.com/rubenvp8510))
