@@ -308,7 +308,6 @@ func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
-
 	defer resp.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
