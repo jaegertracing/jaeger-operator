@@ -244,7 +244,11 @@ endif
 
 .PHONY: es
 es: storage
+ifeq ($(SKIP_ES_EXTERNAL),true)
+	@echo Skipping creation of external Elasticsearch instance
+else
 	@kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+endif
 
 .PHONY: cassandra
 cassandra: storage

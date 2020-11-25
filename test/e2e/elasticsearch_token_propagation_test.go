@@ -334,6 +334,18 @@ func testAccountToken() string {
 }
 
 func jaegerInstance() *v1.Jaeger {
+	var esResourcesRequest corev1.ResourceList
+	if skipESExternal {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+			corev1.ResourceCPU:    resource.MustParse(requestCPU),
+		}
+	} else {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+		}
+	}
+
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -351,7 +363,7 @@ func jaegerInstance() *v1.Jaeger {
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests: esResourcesRequest,
 					},
 				},
 			},
