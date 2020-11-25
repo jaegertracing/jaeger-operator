@@ -134,6 +134,9 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
+	if skipESExternal {
+		t.Skip()
+	}
 	// Make sure ES instance is available
 	waitForElasticSearch()
 
