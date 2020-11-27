@@ -60,10 +60,9 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
 	logFields.Debug("injecting sidecar")
 	if hasAgent { // This is an update
-		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep)
+		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
 	} else {
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
-
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep, -1))
 	}
 
 	jaegerName := util.Truncate(jaeger.Name, 63)
@@ -164,7 +163,7 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 	return nil
 }
 
-func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
+func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
@@ -199,6 +198,15 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
 				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
 			)
+		} else if agentIdx > -1 {
+			agentContainer := dep.Spec.Template.Spec.Containers[agentIdx]
+			// try to resolve the tag with key `container.name` in the existing Args of the agent container
+			existingContainerNamePair := util.FindItem("container.name=", parseAgentTags(agentContainer.Args))
+			if len(existingContainerNamePair) > 0 {
+				agentTags = fmt.Sprintf("%s,%s", agentTags,
+					existingContainerNamePair,
+				)
+			}
 		}
 
 		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
@@ -377,4 +385,13 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 	depContainer := dep.Spec.Template.Spec.Containers[depAgentIndex]
 	oldDepContainer := oldDep.Spec.Template.Spec.Containers[oldDepIndex]
 	return reflect.DeepEqual(depContainer, oldDepContainer)
+}
+
+func parseAgentTags(args []string) []string {
+	tagsArg := util.FindItem("--jaeger.tags=", args)
+	if tagsArg == "" {
+		return []string{}
+	}
+	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
+	return strings.Split(tagsParam, ",")
 }

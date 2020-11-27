@@ -508,7 +508,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
 }
 
@@ -523,7 +523,7 @@ func TestSidecarExplicitTags(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, []string{"key=val"}, agentTags)
 }
 
@@ -671,7 +671,7 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
 	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
 }
 
@@ -684,7 +684,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
-	agentTagsArray := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	agentTagsArray := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
 
 	// inject - 2nd time due to deployment/namespace reconciliation
@@ -692,7 +692,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
-	agentTagsArray = agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	agentTagsArray = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
 }
 
@@ -755,15 +755,6 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 	return false
 }
 
-func agentTags(args []string) []string {
-	tagsArg := util.FindItem("--jaeger.tags=", args)
-	if tagsArg == "" {
-		return []string{}
-	}
-	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
-	return strings.Split(tagsParam, ",")
-}
-
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
@@ -786,7 +777,7 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Contains(t, agentTags, "container.name=only_container")
 }
 
