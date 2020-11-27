@@ -675,6 +675,27 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
 }
 
+func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	dep := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
+
+	// inject - 1st time
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	agentTagsArray := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
+
+	// inject - 2nd time due to deployment/namespace reconciliation
+	dep = Sidecar(jaeger, dep)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	agentTagsArray = agentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
+}
+
 func ns(annotations map[string]string) *corev1.Namespace {
 	return &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
