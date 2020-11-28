@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -508,8 +509,9 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
-	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTagsMap, "container.name")
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
@@ -524,7 +526,7 @@ func TestSidecarExplicitTags(t *testing.T) {
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, []string{"key=val"}, agentTags)
+	assert.True(t, reflect.DeepEqual(agentTags, map[string]string{"key": "val"}))
 }
 
 func TestSidecarCustomReporterPort(t *testing.T) {
@@ -671,8 +673,8 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
-	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
-	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	assert.NotContains(t, agentTagsMap, "container.name")
 }
 
 func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
@@ -684,16 +686,18 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
-	agentTagsArray := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTagsMap, "container.name")
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 
 	// inject - 2nd time due to deployment/namespace reconciliation
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
-	agentTagsArray = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, "container.name=only_container", util.FindItem("container.name=", agentTagsArray))
+	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTagsMap, "container.name")
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func ns(annotations map[string]string) *corev1.Namespace {
@@ -777,8 +781,9 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTagsMap, "container.name")
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func TestEqualSidecar(t *testing.T) {
@@ -874,4 +879,38 @@ func TestSidecarWithSecurityContext(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].SecurityContext, expectedSecurityContext)
+}
+
+func TestSortedTags(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
+}
+
+func TestSortedTagsWithContainer(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	defaultAgentTagsMap["container.name"] = "only_container"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"container.name", "only_container",
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
 }

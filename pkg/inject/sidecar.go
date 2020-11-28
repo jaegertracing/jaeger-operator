@@ -186,30 +186,29 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	adminPort := util.GetAdminPort(args, 14271)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
-		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
-			"cluster", "undefined", // this value isn't currently available
-			"deployment.name", dep.Name,
-			"pod.namespace", dep.Namespace,
-			"pod.name", fmt.Sprintf("${%s:}", envVarPodName),
-			"host.ip", fmt.Sprintf("${%s:}", envVarHostIP),
-		)
+		defaultAgentTagsMap := make(map[string]string)
+		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+		defaultAgentTagsMap["deployment.name"] = dep.Name
+		defaultAgentTagsMap["pod.namespace"] = dep.Namespace
+		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
+		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
 
-		if len(dep.Spec.Template.Spec.Containers) == 1 {
-			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
-				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
-			)
-		} else if agentIdx > -1 {
-			agentContainer := dep.Spec.Template.Spec.Containers[agentIdx]
-			// try to resolve the tag with key `container.name` in the existing Args of the agent container
-			existingContainerNamePair := util.FindItem("container.name=", parseAgentTags(agentContainer.Args))
-			if len(existingContainerNamePair) > 0 {
-				agentTags = fmt.Sprintf("%s,%s", agentTags,
-					existingContainerNamePair,
-				)
-			}
+		if (agentIdx == -1 && len(dep.Spec.Template.Spec.Containers) == 1) || // if jaeger-agent does not exist, check if len of containers is one
+			(agentIdx > -1 && len(dep.Spec.Template.Spec.Containers)-1 == 1) { // otherwise check if len of containers is one with jaeger-agent filtered out
+			defaultAgentTagsMap["container.name"] = dep.Spec.Template.Spec.Containers[0].Name
 		}
 
-		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
+		if agentIdx > -1 {
+			existingAgentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[agentIdx].Args)
+			// merge two maps
+			for key, value := range defaultAgentTagsMap {
+				existingAgentTags[key] = value
+			}
+			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(existingAgentTags)))
+		} else {
+			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(defaultAgentTagsMap)))
+		}
+
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
@@ -387,11 +386,26 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 	return reflect.DeepEqual(depContainer, oldDepContainer)
 }
 
-func parseAgentTags(args []string) []string {
+func parseAgentTags(args []string) map[string]string {
 	tagsArg := util.FindItem("--jaeger.tags=", args)
 	if tagsArg == "" {
-		return []string{}
+		return map[string]string{}
 	}
 	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
-	return strings.Split(tagsParam, ",")
+	tagsMap := make(map[string]string)
+	tagsArr := strings.Split(tagsParam, ",")
+	for _, tagsPairStr := range tagsArr {
+		tagsPair := strings.SplitN(tagsPairStr, "=", 2)
+		tagsMap[tagsPair[0]] = tagsPair[1]
+	}
+	return tagsMap
+}
+
+func joinTags(tags map[string]string) string {
+	tagsSlice := make([]string, 0)
+	for key, value := range tags {
+		tagsSlice = append(tagsSlice, fmt.Sprintf("%s=%s", key, value))
+	}
+	sort.Strings(tagsSlice)
+	return strings.Join(tagsSlice, ",")
 }
