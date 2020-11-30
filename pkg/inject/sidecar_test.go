@@ -913,3 +913,8 @@ func TestSortedTagsWithContainer(t *testing.T) {
 		"pod.namespace", "ns",
 	))
 }
+
+func TestParseEmptyAgentTags(t *testing.T) {
+	tags := parseAgentTags([]string{})
+	assert.Equal(t, tags, map[string]string{})
+}
