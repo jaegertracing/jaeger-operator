@@ -193,9 +193,11 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
 		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
 
-		if (agentIdx == -1 && len(dep.Spec.Template.Spec.Containers) == 1) || // if jaeger-agent does not exist, check if len of containers is one
-			(agentIdx > -1 && len(dep.Spec.Template.Spec.Containers)-1 == 1) { // otherwise check if len of containers is one with jaeger-agent filtered out
-			defaultAgentTagsMap["container.name"] = dep.Spec.Template.Spec.Containers[0].Name
+		defaultContainerName := getContainerName(dep.Spec.Template.Spec.Containers, agentIdx)
+
+		// if we can deduce the container name from the PodSpec
+		if defaultContainerName != "" {
+			defaultAgentTagsMap["container.name"] = defaultContainerName
 		}
 
 		if agentIdx > -1 {
@@ -408,4 +410,17 @@ func joinTags(tags map[string]string) string {
 	}
 	sort.Strings(tagsSlice)
 	return strings.Join(tagsSlice, ",")
+}
+
+func getContainerName(containers []corev1.Container, agentIdx int) string {
+	if agentIdx == -1 && len(containers) == 1 { // we only have one single container and it is not the agent
+		return containers[0].Name
+	} else if agentIdx > -1 && len(containers)-1 == 1 { // we have one single container besides the agent
+		// agent: 0, app: 1
+		// agent: 1, app: 0
+		return containers[1-agentIdx].Name
+	} else {
+		// otherwise, we cannot determine `container.name`
+		return ""
+	}
 }
