@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -108,7 +109,9 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	require.NoError(t, err)
 
 	// Now deploy examples/business-application-injected-sidecar.yaml
-	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", "../../examples/business-application-injected-sidecar.yaml")
+	businessAppCR := getBusinessAppCR(err)
+	defer os.Remove(businessAppCR.Name())
+	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", businessAppCR.Name())
 	output, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 		require.NoError(t, err, "Failed creating Jaeger instance with: [%s]\n", string(output))
@@ -168,6 +171,17 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 		return len(resp.Data) > 0 && strings.Contains(string(body), "traceID"), nil
 	})
 	require.NoError(t, err, "SmokeTest failed")
+}
+
+func getBusinessAppCR(err error) *os.File {
+	content, err := ioutil.ReadFile("../../examples/business-application-injected-sidecar.yaml")
+	require.NoError(t, err)
+	newContent := strings.Replace(string(content), "image: jaegertracing/vertx-create-span:operator-e2e-tests", "image: "+vertxExampleImage, 1)
+	file, err := ioutil.TempFile("", "vertx-example")
+	require.NoError(t, err)
+	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
+	require.NoError(t, err)
+	return file
 }
 
 func execOcCommand(args ...string) {
