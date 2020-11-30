@@ -2,7 +2,6 @@ package inject
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -526,7 +525,7 @@ func TestSidecarExplicitTags(t *testing.T) {
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.True(t, reflect.DeepEqual(agentTags, map[string]string{"key": "val"}))
+	assert.Equal(t, agentTags, map[string]string{"key": "val"})
 }
 
 func TestSidecarCustomReporterPort(t *testing.T) {
