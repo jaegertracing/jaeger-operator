@@ -107,7 +107,7 @@ With OLM, users can:
 
 OLM also enforces some constraints on the components it manages in order to ensure a good user experience.
 
-The Jaeger community provides and mantains a [ClusterServiceVersion (CSV) YAML](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md/) to integrate with OLM.
+The Jaeger community provides and maintains a [ClusterServiceVersion (CSV) YAML](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md/) to integrate with OLM.
 
 Starting from operator-sdk v0.5.0, one can generate and update CSVs based on the yaml files in the deploy folder.
 The Jaeger CSV can be updated to version 1.9.0 with the following command:
