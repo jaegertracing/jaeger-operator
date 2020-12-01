@@ -51,6 +51,7 @@ var (
 	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
 	specifyOtelImages  = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
 	specifyOtelConfig  = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
+	skipESTests        = getBoolEnv("SKIP_ES_TESTS", false)
 
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
