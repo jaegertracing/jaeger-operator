@@ -60,10 +60,9 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
 	logFields.Debug("injecting sidecar")
 	if hasAgent { // This is an update
-		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep)
+		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
 	} else {
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
-
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep, -1))
 	}
 
 	jaegerName := util.Truncate(jaeger.Name, 63)
@@ -164,7 +163,7 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 	return nil
 }
 
-func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
+func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
@@ -187,21 +186,31 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	adminPort := util.GetAdminPort(args, 14271)
 
 	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
-		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
-			"cluster", "undefined", // this value isn't currently available
-			"deployment.name", dep.Name,
-			"pod.namespace", dep.Namespace,
-			"pod.name", fmt.Sprintf("${%s:}", envVarPodName),
-			"host.ip", fmt.Sprintf("${%s:}", envVarHostIP),
-		)
+		defaultAgentTagsMap := make(map[string]string)
+		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+		defaultAgentTagsMap["deployment.name"] = dep.Name
+		defaultAgentTagsMap["pod.namespace"] = dep.Namespace
+		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
+		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
 
-		if len(dep.Spec.Template.Spec.Containers) == 1 {
-			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
-				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
-			)
+		defaultContainerName := getContainerName(dep.Spec.Template.Spec.Containers, agentIdx)
+
+		// if we can deduce the container name from the PodSpec
+		if defaultContainerName != "" {
+			defaultAgentTagsMap["container.name"] = defaultContainerName
 		}
 
-		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
+		if agentIdx > -1 {
+			existingAgentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[agentIdx].Args)
+			// merge two maps
+			for key, value := range defaultAgentTagsMap {
+				existingAgentTags[key] = value
+			}
+			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(existingAgentTags)))
+		} else {
+			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(defaultAgentTagsMap)))
+		}
+
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
@@ -377,4 +386,41 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 	depContainer := dep.Spec.Template.Spec.Containers[depAgentIndex]
 	oldDepContainer := oldDep.Spec.Template.Spec.Containers[oldDepIndex]
 	return reflect.DeepEqual(depContainer, oldDepContainer)
+}
+
+func parseAgentTags(args []string) map[string]string {
+	tagsArg := util.FindItem("--jaeger.tags=", args)
+	if tagsArg == "" {
+		return map[string]string{}
+	}
+	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
+	tagsMap := make(map[string]string)
+	tagsArr := strings.Split(tagsParam, ",")
+	for _, tagsPairStr := range tagsArr {
+		tagsPair := strings.SplitN(tagsPairStr, "=", 2)
+		tagsMap[tagsPair[0]] = tagsPair[1]
+	}
+	return tagsMap
+}
+
+func joinTags(tags map[string]string) string {
+	tagsSlice := make([]string, 0)
+	for key, value := range tags {
+		tagsSlice = append(tagsSlice, fmt.Sprintf("%s=%s", key, value))
+	}
+	sort.Strings(tagsSlice)
+	return strings.Join(tagsSlice, ",")
+}
+
+func getContainerName(containers []corev1.Container, agentIdx int) string {
+	if agentIdx == -1 && len(containers) == 1 { // we only have one single container and it is not the agent
+		return containers[0].Name
+	} else if agentIdx > -1 && len(containers)-1 == 1 { // we have one single container besides the agent
+		// agent: 0, app: 1
+		// agent: 1, app: 0
+		return containers[1-agentIdx].Name
+	} else {
+		// otherwise, we cannot determine `container.name`
+		return ""
+	}
 }

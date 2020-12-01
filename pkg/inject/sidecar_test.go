@@ -508,8 +508,8 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
@@ -523,8 +523,8 @@ func TestSidecarExplicitTags(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, []string{"key=val"}, agentTags)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTags, map[string]string{"key": "val"})
 }
 
 func TestSidecarCustomReporterPort(t *testing.T) {
@@ -671,8 +671,29 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
-	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	assert.NotContains(t, agentTagsMap, "container.name")
+}
+
+func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	dep := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
+
+	// inject - 1st time
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+
+	// inject - 2nd time due to deployment/namespace reconciliation
+	dep = Sidecar(jaeger, dep)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func ns(annotations map[string]string) *corev1.Namespace {
@@ -734,15 +755,6 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 	return false
 }
 
-func agentTags(args []string) []string {
-	tagsArg := util.FindItem("--jaeger.tags=", args)
-	if tagsArg == "" {
-		return []string{}
-	}
-	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
-	return strings.Split(tagsParam, ",")
-}
-
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
@@ -765,8 +777,9 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Contains(t, agentTagsMap, "container.name")
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func TestEqualSidecar(t *testing.T) {
@@ -862,4 +875,72 @@ func TestSidecarWithSecurityContext(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].SecurityContext, expectedSecurityContext)
+}
+
+func TestSortedTags(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
+}
+
+func TestSortedTagsWithContainer(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	defaultAgentTagsMap["container.name"] = "only_container"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"container.name", "only_container",
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
+}
+
+func TestParseEmptyAgentTags(t *testing.T) {
+	tags := parseAgentTags([]string{})
+	assert.Equal(t, tags, map[string]string{})
+}
+
+func TestGetContainerNameWithOneAppContainer(t *testing.T) {
+	deploy := dep(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "only_container", containerName)
+}
+
+func TestGetContainerNameWithTwoAppContainers(t *testing.T) {
+	deploy := depWithTwoContainers(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "", containerName)
+}
+
+func TestGetContainerNameWithAppContainerAndJaegerAgent(t *testing.T) {
+	nsn := types.NamespacedName{
+		Name:      "my-instance",
+		Namespace: "Test",
+	}
+	jaeger := v1.NewJaeger(nsn)
+	deploy := dep(map[string]string{}, map[string]string{})
+	deploy = Sidecar(jaeger, deploy)
+
+	assert.Len(t, deploy.Spec.Template.Spec.Containers, 2)
+	hasAgent, agentIdx := HasJaegerAgent(deploy)
+	assert.True(t, hasAgent)
+	assert.Greater(t, agentIdx, -1)
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, agentIdx)
+	assert.Equal(t, "only_container", containerName)
 }
