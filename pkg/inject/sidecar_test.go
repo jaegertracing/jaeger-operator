@@ -918,3 +918,32 @@ func TestParseEmptyAgentTags(t *testing.T) {
 	tags := parseAgentTags([]string{})
 	assert.Equal(t, tags, map[string]string{})
 }
+
+func TestGetContainerNameWithOneAppContainer(t *testing.T) {
+	deploy := dep(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "only_container", containerName)
+}
+
+func TestGetContainerNameWithTwoAppContainers(t *testing.T) {
+	deploy := depWithTwoContainers(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "", containerName)
+}
+
+func TestGetContainerNameWithAppContainerAndJaegerAgent(t *testing.T) {
+	nsn := types.NamespacedName{
+		Name:      "my-instance",
+		Namespace: "Test",
+	}
+	jaeger := v1.NewJaeger(nsn)
+	deploy := dep(map[string]string{}, map[string]string{})
+	deploy = Sidecar(jaeger, deploy)
+
+	assert.Len(t, deploy.Spec.Template.Spec.Containers, 2)
+	hasAgent, agentIdx := HasJaegerAgent(deploy)
+	assert.True(t, hasAgent)
+	assert.Greater(t, agentIdx, -1)
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, agentIdx)
+	assert.Equal(t, "only_container", containerName)
+}
