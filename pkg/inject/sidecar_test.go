@@ -509,7 +509,6 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTagsMap, "container.name")
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
