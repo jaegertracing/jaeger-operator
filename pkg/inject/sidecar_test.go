@@ -685,7 +685,6 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTagsMap, "container.name")
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 
 	// inject - 2nd time due to deployment/namespace reconciliation
@@ -694,7 +693,6 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
 	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTagsMap, "container.name")
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
