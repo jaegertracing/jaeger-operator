@@ -4,6 +4,8 @@ package e2e
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -31,6 +33,8 @@ type ElasticSearchTestSuite struct {
 }
 
 var esIndexCleanerEnabled = false
+var esUrl string
+var esNamespace = storageNamespace
 
 func (suite *ElasticSearchTestSuite) SetupSuite() {
 	t = suite.T()
@@ -70,6 +74,9 @@ func (suite *ElasticSearchTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
+	if skipESExternal {
+		t.Skip("This test requires an insecure ElasticSearch instance")
+	}
 	storage := v1.JaegerStorageSpec{
 		Type: v1.JaegerESStorage,
 		Options: v1.NewOptions(map[string]interface{}{
@@ -81,6 +88,9 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 }
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
+	if skipESExternal {
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_test")
+	}
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, string(v1.JaegerESStorage), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
 
@@ -106,57 +116,101 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
 	esIndexCleanerEnabled = false
 	esIndexPrefix := "prefix"
-	name := "test-es-index-prefixes"
+	jaegerInstanceName := "test-es-index-prefixes"
+	jaegerInstance := &v1.Jaeger{}
 
-	exampleJaeger := getJaegerAllInOne(name)
+	if skipESExternal {
+		esNamespace = namespace
+		numberOfDays := 0
+		indexCleanerSpec := v1.JaegerEsIndexCleanerSpec{
+			Enabled:      &esIndexCleanerEnabled,
+			Schedule:     "*/1 * * * *",
+			NumberOfDays: &numberOfDays,
+		}
 
+		jaegerInstance = getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+		jaegerInstance.Spec.Storage.EsIndexCleaner = indexCleanerSpec
+		addIndexPrefix(jaegerInstance, esIndexPrefix)
+
+		createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+		defer undeployJaegerInstance(jaegerInstance)
+
+		ProductionSmokeTest(jaegerInstanceName)
+	} else {
+		esNamespace = storageNamespace
+		jaegerInstance = getJaegerAllInOne(jaegerInstanceName)
+		addIndexPrefix(jaegerInstance, esIndexPrefix)
+
+		err := fw.Client.Create(context.Background(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+		require.NoError(t, err, "Error deploying Jaeger")
+		defer undeployJaegerInstance(jaegerInstance)
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+		require.NoError(t, err, "Error waiting for deployment")
+
+		// Run the smoke test so indices will be created
+		AllInOneSmokeTest(jaegerInstanceName)
+	}
+	// Now verify that we have indices with the prefix we want
+	indexWithPrefixExists(esIndexPrefix+"-jaeger-", true, esNamespace)
+
+	// Turn on index clean and make sure we clean up
+	turnOnEsIndexCleaner(jaegerInstance)
+	indexWithPrefixExists(esIndexPrefix+"-jaeger-", false, esNamespace)
+
+}
+
+func addIndexPrefix(jaegerInstance *v1.Jaeger, esIndexPrefix string) {
 	// Add an index prefix to the CR before creating this Jaeger instance
-	options := exampleJaeger.Spec.Storage.Options.Map()
+	options := jaegerInstance.Spec.Storage.Options.Map()
 	updateOptions := make(map[string]interface{})
 	for key, value := range options {
 		updateOptions[key] = value
 	}
 	updateOptions["es.index-prefix"] = esIndexPrefix
-	exampleJaeger.Spec.Storage.Options = v1.NewOptions(updateOptions)
-
-	err := fw.Client.Create(context.Background(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.NoError(t, err, "Error deploying Jaeger")
-	defer undeployJaegerInstance(exampleJaeger)
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for deployment")
-
-	// Run the smoke test so indices will be created
-	AllInOneSmokeTest(name)
-
-	// Now verify that we have indices with the prefix we want
-	indexWithPrefixExists(esIndexPrefix+"-jaeger-", true)
-
-	// Turn on index clean and make sure we clean up
-	turnOnEsIndexCleaner(name, exampleJaeger)
-	indexWithPrefixExists(esIndexPrefix+"-jaeger-", false)
+	jaegerInstance.Spec.Storage.Options = v1.NewOptions(updateOptions)
 }
 
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	esIndexCleanerEnabled = false
-	name := "test-es-index-cleaner"
-	j := getJaegerAllInOne(name)
+	jaegerInstanceName := "test-es-index-cleaner"
+	jaegerInstance := &v1.Jaeger{}
 
-	err := fw.Client.Create(context.Background(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.NoError(t, err, "Error deploying Jaeger")
-	defer undeployJaegerInstance(j)
+	if skipESExternal {
+		esNamespace = namespace
+		numberOfDays := 0
+		indexCleanerSpec := v1.JaegerEsIndexCleanerSpec{
+			Enabled:      &esIndexCleanerEnabled,
+			Schedule:     "*/1 * * * *",
+			NumberOfDays: &numberOfDays,
+		}
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, name, 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for deployment")
+		jaegerInstance = getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+		jaegerInstance.Spec.Storage.EsIndexCleaner = indexCleanerSpec
+		createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+		defer undeployJaegerInstance(jaegerInstance)
 
-	// create span, then make sure indices have been created
-	AllInOneSmokeTest(name)
-	indexWithPrefixExists("jaeger-", true)
+		ProductionSmokeTest(jaegerInstanceName)
+	} else {
+		esNamespace = storageNamespace
+		jaegerInstance = getJaegerAllInOne(jaegerInstanceName)
+
+		err := fw.Client.Create(context.Background(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+		require.NoError(t, err, "Error deploying Jaeger")
+		defer undeployJaegerInstance(jaegerInstance)
+
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName, 1, retryInterval, timeout)
+		require.NoError(t, err, "Error waiting for deployment")
+
+		// create span, then make sure indices have been created
+		AllInOneSmokeTest(jaegerInstanceName)
+	}
+	indexWithPrefixExists("jaeger-", true, esNamespace)
 
 	// Once we've created a span with the smoke test, enable the index cleaner
-	turnOnEsIndexCleaner(name, j)
+	turnOnEsIndexCleaner(jaegerInstance)
 
 	// Now make sure indices have been deleted
-	indexWithPrefixExists("jaeger-", false)
+	indexWithPrefixExists("jaeger-", false, esNamespace)
 }
 
 func getJaegerSimpleProdWithServerUrls(name string) *v1.Jaeger {
@@ -229,15 +283,31 @@ func getJaegerAllInOne(name string) *v1.Jaeger {
 }
 
 func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
-	c := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, "http://localhost:"+esPort+"/_cat/indices", nil)
-	if err != nil {
-		return false, err
+	transport := &http.Transport{}
+	if skipESExternal {
+		esUrl = "https://localhost:" + esPort + "/_cat/indices"
+		esSecret, err := fw.KubeClient.CoreV1().Secrets(namespace).Get(context.Background(), "elasticsearch", metav1.GetOptions{})
+		require.NoError(t, err)
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM(esSecret.Data["admin-ca"])
+
+		clientCert, err := tls.X509KeyPair(esSecret.Data["admin-cert"], esSecret.Data["admin-key"])
+		require.NoError(t, err)
+
+		transport.TLSClientConfig = &tls.Config{
+			RootCAs:      pool,
+			Certificates: []tls.Certificate{clientCert},
+		}
+	} else {
+		esUrl = "http://localhost:" + esPort + "/_cat/indices"
 	}
-	resp, err := c.Do(req)
-	if err != nil {
-		return false, err
-	}
+	client := http.Client{Transport: transport}
+
+	req, err := http.NewRequest(http.MethodGet, esUrl, nil)
+	require.NoError(t, err)
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -246,30 +316,30 @@ func hasIndexWithPrefix(prefix string, esPort string) (bool, error) {
 	return strings.Contains(bodyString, prefix), nil
 }
 
-func createEsPortForward() (portForwES *portforward.PortForwarder, closeChanES chan struct{}, esPort string) {
-	portForwES, closeChanES = CreatePortForward(storageNamespace, string(v1.JaegerESStorage), string(v1.JaegerESStorage), []string{"0:9200"}, fw.KubeConfig)
+func createEsPortForward(esNamespace string) (portForwES *portforward.PortForwarder, closeChanES chan struct{}, esPort string) {
+	portForwES, closeChanES = CreatePortForward(esNamespace, string(v1.JaegerESStorage), string(v1.JaegerESStorage), []string{"0:9200"}, fw.KubeConfig)
 	forwardedPorts, err := portForwES.GetPorts()
 	require.NoError(t, err)
 	return portForwES, closeChanES, strconv.Itoa(int(forwardedPorts[0].Local))
 }
 
-func turnOnEsIndexCleaner(name string, exampleJaeger *v1.Jaeger) {
-	key := types.NamespacedName{Name: name, Namespace: namespace}
-	err := fw.Client.Get(context.Background(), key, exampleJaeger)
+func turnOnEsIndexCleaner(jaegerInstance *v1.Jaeger) {
+	key := types.NamespacedName{Name: jaegerInstance.Name, Namespace: jaegerInstance.GetNamespace()}
+	err := fw.Client.Get(context.Background(), key, jaegerInstance)
 	require.NoError(t, err)
 	esIndexCleanerEnabled = true
-	err = fw.Client.Update(context.Background(), exampleJaeger)
+	err = fw.Client.Update(context.Background(), jaegerInstance)
 	require.NoError(t, err)
 
-	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout+1*time.Minute)
+	err = WaitForCronJob(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", jaegerInstance.Name), retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err, "Error waiting for Cron Job")
 
-	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", name), retryInterval, timeout)
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", jaegerInstance.Name), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Cron Job")
 }
 
-func indexWithPrefixExists(prefix string, condition bool) {
-	portForwES, closeChanES, esPort := createEsPortForward()
+func indexWithPrefixExists(prefix string, condition bool, esNamespace string) {
+	portForwES, closeChanES, esPort := createEsPortForward(esNamespace)
 	defer portForwES.Close()
 	defer close(closeChanES)
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {

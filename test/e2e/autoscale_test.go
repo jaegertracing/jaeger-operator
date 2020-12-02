@@ -75,11 +75,17 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	if !isOpenShift(t) {
 		t.Skip("This test is currently only supported on OpenShift")
 	}
-	waitForElasticSearch()
 
 	jaegerInstanceName := "simple-prod"
-	jaegerInstance := getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit)
-	createAndWaitFor(jaegerInstance, jaegerInstanceName, false)
+	var jaegerInstance *v1.Jaeger
+	if skipESExternal {
+		jaegerInstance = getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, int32(1))
+		createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+	} else {
+		waitForElasticSearch()
+		jaegerInstance = getSimpleProd(jaegerInstanceName, namespace, cpuResourceLimit, memoryResourceLimit)
+		createAndWaitFor(jaegerInstance, jaegerInstanceName, false)
+	}
 	defer undeployJaegerInstance(jaegerInstance)
 
 	tracegen := createTracegenDeployment(jaegerInstanceName, namespace, tracegenDurationInMinutes, replicas)
@@ -92,12 +98,19 @@ func (suite *AutoscaleTestSuite) TestAutoScaleIngester() {
 	if !isOpenShift(t) {
 		t.Skip("This test is currently only supported on OpenShift")
 	}
-	waitForElasticSearch()
-	waitForKafkaInstance()
 
 	jaegerInstanceName := "simple-streaming"
-	jaegerInstance := getSimpleStreaming(jaegerInstanceName, namespace)
-	createAndWaitFor(jaegerInstance, jaegerInstanceName, true)
+	var jaegerInstance *v1.Jaeger
+	if skipESExternal {
+		jaegerInstance = getJaegerSelfProvisionedESAndKafka(jaegerInstanceName)
+		createESKafkaSelfProvDeployment(jaegerInstance)
+	} else {
+		waitForElasticSearch()
+		waitForKafkaInstance()
+		jaegerInstance := getSimpleStreaming(jaegerInstanceName, namespace)
+		createAndWaitFor(jaegerInstance, jaegerInstanceName, true)
+	}
+
 	defer undeployJaegerInstance(jaegerInstance)
 
 	tracegenReplicas := int32(1)

@@ -57,6 +57,9 @@ func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *StreamingTestSuite) TestStreaming() {
+	if skipESExternal {
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_kafka_test")
+	}
 	waitForElasticSearch()
 	waitForKafkaInstance()
 
@@ -86,6 +89,9 @@ func (suite *StreamingTestSuite) TestStreaming() {
 func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	if !usingJaegerViaOLM {
 		t.Skip("This test should only run when using OLM")
+	}
+	if skipESExternal {
+		t.Skip()
 	}
 	// Make sure ES and the kafka instance are available
 	waitForElasticSearch()
@@ -128,6 +134,9 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
+	if skipESExternal {
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_kafka_test")
+	}
 	// Make sure ES instance is available
 	waitForElasticSearch()
 

@@ -86,16 +86,25 @@ func (suite *ExamplesTestSuite2) TestServiceTypesExample() {
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdWithVolumes() {
+	if skipESExternal {
+		t.Skip("This example requires an external ElasticSearch instance")
+	}
 	yamlFileName := "../../examples/simple-prod-with-volumes.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleProdExample() {
+	if skipESExternal {
+		t.Skip("This example requires an external ElasticSearch instance")
+	}
 	yamlFileName := "../../examples/simple-prod.yaml"
 	smokeTestProductionExample("simple-prod", yamlFileName)
 }
 
 func (suite *ExamplesTestSuite2) TestSimpleStreamingExample() {
+	if skipESExternal {
+		t.Skip("This example requires an external ElasticSearch instance")
+	}
 	yamlFileName := "../../examples/simple-streaming.yaml"
 	smokeTestProductionExample("simple-streaming", yamlFileName)
 }
