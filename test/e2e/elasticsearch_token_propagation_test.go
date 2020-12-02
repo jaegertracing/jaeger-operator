@@ -192,10 +192,6 @@ func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	require.NoError(t, err, "Error deploying example Jaeger")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, collectorName, 1, retryInterval, timeout)
-	if err != nil {
-		fmt.Printf("WTF Error %v in %s\n", err, namespace)
-		time.Sleep(5 * time.Minute)
-	}
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryName, 1, retryInterval, timeout)
