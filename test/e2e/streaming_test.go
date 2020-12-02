@@ -58,7 +58,7 @@ func (suite *StreamingTestSuite) AfterTest(suiteName, testName string) {
 
 func (suite *StreamingTestSuite) TestStreaming() {
 	if skipESExternal {
-		t.Skip()
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_kafka_test")
 	}
 	waitForElasticSearch()
 	waitForKafkaInstance()
@@ -135,7 +135,7 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 	if skipESExternal {
-		t.Skip()
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_kafka_test")
 	}
 	// Make sure ES instance is available
 	waitForElasticSearch()

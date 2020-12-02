@@ -61,8 +61,6 @@ var (
 	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
 	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
-	requestMemory        = getStringEnv("REQUEST_MEMORY", "1Gi")
-	requestCPU           = getStringEnv("REQUEST_CPU", "4")
 	vertxExampleImage    = getStringEnv("VERTX_EXAMPLE_IMAGE", "jaegertracing/vertx-create-span:operator-e2e-tests")
 	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
 	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
@@ -736,18 +734,6 @@ func waitForElasticSearch() {
 }
 
 func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
-	var esResourcesRequest corev1.ResourceList
-	if skipESExternal {
-		esResourcesRequest = corev1.ResourceList{
-			corev1.ResourceMemory: resource.MustParse(requestMemory),
-			corev1.ResourceCPU:    resource.MustParse(requestCPU),
-		}
-	} else {
-		esResourcesRequest = corev1.ResourceList{
-			corev1.ResourceMemory: resource.MustParse(requestMemory),
-		}
-	}
-
 	ingressEnabled := true
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -770,7 +756,7 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 					NodeCount: nodeCount,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
-						Requests: esResourcesRequest,
+						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
 			},
@@ -861,17 +847,6 @@ func waitForESDeployment(jaegerInstance *v1.Jaeger) {
 
 func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	ingressEnabled := true
-	var esResourcesRequest corev1.ResourceList
-	if skipESExternal {
-		esResourcesRequest = corev1.ResourceList{
-			corev1.ResourceMemory: resource.MustParse(requestMemory),
-			corev1.ResourceCPU:    resource.MustParse(requestCPU),
-		}
-	} else {
-		esResourcesRequest = corev1.ResourceList{
-			corev1.ResourceMemory: resource.MustParse(requestMemory),
-		}
-	}
 	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -893,7 +868,7 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: esResourcesRequest,
+						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
 			},

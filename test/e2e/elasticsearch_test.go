@@ -75,7 +75,7 @@ func (suite *ElasticSearchTestSuite) AfterTest(suiteName, testName string) {
 
 func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 	if skipESExternal {
-		t.Skip()
+		t.Skip("This test requires an insecure ElasticSearch instance")
 	}
 	storage := v1.JaegerStorageSpec{
 		Type: v1.JaegerESStorage,
@@ -89,7 +89,7 @@ func (suite *ElasticSearchTestSuite) TestSparkDependenciesES() {
 
 func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	if skipESExternal {
-		t.Skip()
+		t.Skip("This case is covered by the self_provisioned_elasticsearch_test")
 	}
 	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, string(v1.JaegerESStorage), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for elasticsearch")
