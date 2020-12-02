@@ -7,7 +7,6 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.8
 	github.com/googleapis/gnostic v0.3.1
-	github.com/miekg/dns v1.1.35 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20200701144905-de5b010b2b38
 	github.com/operator-framework/operator-sdk v0.18.2
@@ -31,6 +30,7 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
+	github.com/miekg/dns => github.com/miekg/dns v1.1.35 // Fix CVE-2019-19794 from issue #1298
 	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
 	vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 )
