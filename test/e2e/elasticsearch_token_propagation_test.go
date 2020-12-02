@@ -192,6 +192,10 @@ func (suite *TokenTestSuite) deployJaegerWithPropagationEnabled() {
 	require.NoError(t, err, "Error deploying example Jaeger")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, collectorName, 1, retryInterval, timeout)
+	if err != nil {
+		fmt.Printf("WTF Error %v in %s\n", err, namespace)
+		time.Sleep(5 * time.Minute)
+	}
 	require.NoError(t, err, "Error waiting for collector deployment")
 
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, queryName, 1, retryInterval, timeout)
@@ -334,6 +338,17 @@ func testAccountToken() string {
 }
 
 func jaegerInstance() *v1.Jaeger {
+	var esResourcesRequest corev1.ResourceList
+	if sepcifyRequestMemory {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+			corev1.ResourceCPU:    resource.MustParse(requestCPU),
+		}
+	} else {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+		}
+	}
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -351,7 +366,7 @@ func jaegerInstance() *v1.Jaeger {
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests: esResourcesRequest,
 					},
 				},
 			},

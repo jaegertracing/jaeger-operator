@@ -40,18 +40,19 @@ import (
 )
 
 var (
-	retryInterval      = time.Second * 5
-	timeout            = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
-	storageNamespace   = os.Getenv("STORAGE_NAMESPACE")
-	kafkaNamespace     = os.Getenv("KAFKA_NAMESPACE")
-	debugMode          = getBoolEnv("DEBUG_MODE", false)
-	usingOLM           = getBoolEnv("OLM", false)
-	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
-	saveLogs           = getBoolEnv("SAVE_LOGS", false)
-	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	specifyOtelImages  = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
-	specifyOtelConfig  = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
-	skipESExternal     = getBoolEnv("SKIP_ES_EXTERNAL", false)
+	retryInterval        = time.Second * 5
+	timeout              = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
+	storageNamespace     = os.Getenv("STORAGE_NAMESPACE")
+	kafkaNamespace       = os.Getenv("KAFKA_NAMESPACE")
+	debugMode            = getBoolEnv("DEBUG_MODE", false)
+	usingOLM             = getBoolEnv("OLM", false)
+	usingJaegerViaOLM    = getBoolEnv("JAEGER_OLM", false)
+	saveLogs             = getBoolEnv("SAVE_LOGS", false)
+	skipCassandraTests   = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
+	specifyOtelImages    = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
+	specifyOtelConfig    = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
+	sepcifyRequestMemory = getBoolEnv("SPECIFY_REQUEST_MEMORY", false)
+	skipESExternal       = getBoolEnv("SKIP_ES_EXTERNAL", false)
 
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
@@ -61,6 +62,8 @@ var (
 	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
 	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
+	requestMemory        = getStringEnv("REQUEST_MEMORY", "1Gi")
+	requestCPU           = getStringEnv("REQUEST_CPU", "4")
 	vertxExampleImage    = getStringEnv("VERTX_EXAMPLE_IMAGE", "jaegertracing/vertx-create-span:operator-e2e-tests")
 	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
 	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
@@ -735,6 +738,17 @@ func waitForElasticSearch() {
 
 func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
 	ingressEnabled := true
+	var esResourcesRequest corev1.ResourceList
+	if sepcifyRequestMemory {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+			corev1.ResourceCPU:    resource.MustParse(requestCPU),
+		}
+	} else {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+		}
+	}
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -756,7 +770,7 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 					NodeCount: nodeCount,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests: esResourcesRequest,
 					},
 				},
 			},
@@ -847,6 +861,17 @@ func waitForESDeployment(jaegerInstance *v1.Jaeger) {
 
 func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	ingressEnabled := true
+	var esResourcesRequest corev1.ResourceList
+	if sepcifyRequestMemory {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+			corev1.ResourceCPU:    resource.MustParse(requestCPU),
+		}
+	} else {
+		esResourcesRequest = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse(requestMemory),
+		}
+	}
 	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -868,7 +893,7 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
 						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
+						Requests: esResourcesRequest,
 					},
 				},
 			},
