@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   end-to-end:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2, generate, es-otel, streaming-otel, smoke-otel, upgrade]
