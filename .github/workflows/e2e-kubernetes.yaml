@@ -16,7 +16,7 @@ jobs:
         minikube-version: v1.15.1
     - uses: jpkrohling/setup-kubectl@v1.0.2
       with:
-        - kubectl-version: 1.19.4
+        kubectl-version: 1.19.4
     - uses: jpkrohling/setup-operator-sdk@v1.0.2
       with:
         operator-sdk-version: v0.18.2
