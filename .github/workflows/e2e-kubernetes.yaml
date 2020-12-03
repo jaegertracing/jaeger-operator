@@ -3,18 +3,20 @@ on: [push, pull_request]
 
 jobs:
   end-to-end:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2, generate, es-otel, streaming-otel, smoke-otel, upgrade]
     steps:
     - uses: actions/setup-go@v1
       with:
-        go-version: '1.14.4'
+        go-version: '1.14.12'
     - uses: jpkrohling/setup-minikube@v1.0.2
       with:
-        minikube-version: v1.5.2
+        minikube-version: v1.15.1
     - uses: jpkrohling/setup-kubectl@v1.0.2
+      with:
+        - kubectl-version: 1.19.4
     - uses: jpkrohling/setup-operator-sdk@v1.0.2
       with:
         operator-sdk-version: v0.18.2
