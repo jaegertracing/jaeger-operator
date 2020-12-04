@@ -34,7 +34,8 @@ type ElasticSearchTestSuite struct {
 	suite.Suite
 }
 
-// EsIndex to map indices on es rest api query output
+// EsIndex struct to map indices data from es rest api response
+// es api: /_cat/indices?format=json
 type EsIndex struct {
 	UUID        string `json:"uuid"`
 	Status      string `json:"status"`
@@ -46,10 +47,10 @@ type EsIndex struct {
 }
 
 var (
-	esIndexCleanerEnabled = false
-	numberOfDays          = 0
-	esNamespace           = storageNamespace
-	esUrl                 string
+	esIndexCleanerEnabled = false            // global variable used to enable/disable index cleaner (pass-by-reference in jaeger CR object)
+	numberOfDays          = 0                // index cleaner number of days (pass-by-reference in jaeger CR object)
+	esNamespace           = storageNamespace // default storage namespace location
+	esUrl                 string             // es node url
 )
 
 func (suite *ElasticSearchTestSuite) SetupSuite() {
@@ -129,10 +130,12 @@ func (suite *ElasticSearchTestSuite) TestSimpleProd() {
 	verifyCollectorImage(name, namespace, specifyOtelImages)
 }
 
+// executes es index cleaner tests with custom index prefix
 func (suite *ElasticSearchTestSuite) TestEsIndexCleanerWithIndexPrefix() {
 	suite.runIndexCleaner("my-custom_prefix", []int{3, 1, 0})
 }
 
+// executes es index cleaner with default index prefix
 func (suite *ElasticSearchTestSuite) TestEsIndexCleaner() {
 	suite.runIndexCleaner("", []int{45, 30, 7, 1, 0})
 }
@@ -150,7 +153,7 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 	// storage namespace
 	esNamespace = namespace
 
-	// set es namespace and update existing es node url into jaeger CR for external es tests
+	// update es node namespace and es node url into jaeger CR for external es deployment
 	if !skipESExternal {
 		esNamespace = storageNamespace
 		jaegerInstance.Spec.Storage = v1.JaegerStorageSpec{
@@ -162,9 +165,9 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 	}
 
 	// update jaeger CR with index cleaner specifications
-	indexHistoryDays := 45 // maximum number of days to generate spans ans services
+	indexHistoryDays := 45 // maximum number of days to generate spans and services
 	numberOfDays = indexHistoryDays
-	// initially disable index cleaner job
+	// initially disable es index cleaner job
 	esIndexCleanerEnabled = false
 	jaegerInstance.Spec.Storage.EsIndexCleaner.Enabled = &esIndexCleanerEnabled
 	jaegerInstance.Spec.Storage.EsIndexCleaner.Schedule = "*/1 * * * *"
@@ -192,12 +195,12 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 	// generate spans and service for last 45 days
 	currentDate := time.Now()
 	indexDateLayout := "2006-01-02"
-	// enable port forward for collector
+	// enable port forward for collector port
 	logrus.Info("Enabling collector port forward")
 	fwdPortColl, closeChanColl := CreatePortForward(namespace, jaegerInstanceName+"-collector", "collector", []string{fmt.Sprintf(":%d", jaegerCollectorPort)}, fw.KubeConfig)
 	defer fwdPortColl.Close()
 	defer close(closeChanColl)
-	// get local collector port
+	// get localhost collector port
 	colPorts, err := fwdPortColl.GetPorts()
 	require.NoError(t, err)
 	localPortColl := colPorts[0].Local
@@ -219,31 +222,30 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 		closer.Close()
 	}
 
+	// esIndexData struct is used to keep index data in simple format
+	// will be useful for the validations
 	type esIndexData struct {
-		Index  string
-		Type   string
-		Prefix string
-		Date   time.Time
+		IndexName string    // original index name
+		Type      string    // index type. span or service?
+		Prefix    string    // prefix of the index
+		Date      time.Time // index day/date
 	}
 
 	// function to get indices
-	// returns serviceIndices, spansIndices
+	// returns in order: serviceIndices, spansIndices
 	getIndices := func() ([]esIndexData, []esIndexData) {
-		// verify spans and services are available for 45 days
+		// get indices from es node
 		esIndices, err := getEsIndices()
 		require.NoError(t, err)
-
 		fmt.Println("indices found on rest api response:", len(esIndices))
 
 		servicesIndices := make([]esIndexData, 0)
 		spansIndices := make([]esIndexData, 0)
 
-		// parse date from index
+		// parse date, prefix, type from index
 		re := regexp.MustCompile(`\d{4}-\d{2}-\d{2}`)
 		for _, esIndex := range esIndices {
 			indexName := esIndex.Index
-			// fetch date
-			//fmt.Println(indexName)
 			dateString := re.FindString(indexName)
 			if dateString == "" { // assume this index not belongs to jaeger
 				continue
@@ -255,8 +257,8 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 			require.NoError(t, err)
 
 			esData := esIndexData{
-				Index: esIndex.Index,
-				Date:  indexDate,
+				IndexName: esIndex.Index,
+				Date:      indexDate,
 			}
 
 			// reference
@@ -288,7 +290,7 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 		})
 		indicesSlice := make([]string, 0)
 		for _, ind := range indices {
-			indicesSlice = append(indicesSlice, ind.Index)
+			indicesSlice = append(indicesSlice, ind.IndexName)
 		}
 		logrus.Infof("indices should be after %v, indices list: %v", verifyDateAfter, indicesSlice)
 		require.Equal(t, count, len(indices), "number of available indices not matching, %v", indices)
@@ -298,21 +300,21 @@ func (suite *ElasticSearchTestSuite) runIndexCleaner(esIndexPrefix string, daysR
 		}
 	}
 
-	// now trigger the index cleaner and verify it
-	for _, verifyDays := range daysRange { // number of days to keep
+	// trigger the index cleaner for multiple day range and verify indices
+	for _, verifyDays := range daysRange {
 		logrus.Infof("Scheduling index cleaner job for %d days", verifyDays)
 		// update and trigger index cleaner job
 		turnOnEsIndexCleaner(jaegerInstance, verifyDays)
 
-		// verify indices
+		// get servies and spans indices
 		servicesIndices, spanIndices := getIndices()
-		// get begining date
-		startDate := time.Now().AddDate(0, 0, -1*verifyDays)
+		// valid index start date
+		indexDateReference := time.Now().AddDate(0, 0, -1*verifyDays)
 		// set hours, minutes, seconds, etc.. to 0
-		startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+		indexDateReference = time.Date(indexDateReference.Year(), indexDateReference.Month(), indexDateReference.Day(), 0, 0, 0, 0, indexDateReference.Location())
 		logrus.Infof("indices found={numberOfDays:%d, services:%d, spans:%d}", verifyDays, len(servicesIndices), len(spanIndices))
-		assertIndex(servicesIndices, startDate, verifyDays)
-		assertIndex(spanIndices, startDate, verifyDays)
+		assertIndex(servicesIndices, indexDateReference, verifyDays)
+		assertIndex(spanIndices, indexDateReference, verifyDays)
 	}
 }
 
@@ -351,10 +353,11 @@ func getJaegerSimpleProdWithServerUrls(name string) *v1.Jaeger {
 	return exampleJaeger
 }
 
+// return indices from es node
 func getEsIndices() ([]EsIndex, error) {
 	// enable port forward
-	portForwES, closeChanES, esPort := createEsPortForward(esNamespace)
-	defer portForwES.Close()
+	fwdPortES, closeChanES, esPort := createEsPortForward(esNamespace)
+	defer fwdPortES.Close()
 	defer close(closeChanES)
 
 	// update es node url
@@ -429,13 +432,13 @@ func turnOnEsIndexCleaner(jaegerInstance *v1.Jaeger, days int) {
 	require.NoError(t, err, "Error waiting for Cron Job")
 
 	// delete index cleaner pods
-	// label to select: app.kubernetes.io/component=cronjob-es-index-cleaner
+	// unique label to select: app.kubernetes.io/component=cronjob-es-index-cleaner
 	err = fw.KubeClient.CoreV1().Pods(namespace).DeleteCollection(
 		context.Background(),
 		metav1.DeleteOptions{},
 		metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=cronjob-es-index-cleaner"})
 	require.NoError(t, err, "Error on delete index cleaner pods")
-	// disable index cleaner
+	// disable index cleaner job
 	esIndexCleanerEnabled = false
 	err = fw.Client.Update(context.Background(), jaegerInstance)
 	require.NoError(t, err)
