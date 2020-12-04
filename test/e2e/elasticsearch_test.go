@@ -84,6 +84,10 @@ func TestElasticSearchSuite(t *testing.T) {
 
 func (suite *ElasticSearchTestSuite) SetupTest() {
 	t = suite.T()
+	// delete indices from external elasticsearch
+	if !skipESExternal {
+		deleteEsIndices()
+	}
 }
 
 func (suite *ElasticSearchTestSuite) AfterTest(suiteName, testName string) {
@@ -355,6 +359,26 @@ func getJaegerSimpleProdWithServerUrls(name string) *v1.Jaeger {
 
 // return indices from es node
 func getEsIndices() ([]EsIndex, error) {
+	bodyBytes, err := executeEsRequest(http.MethodGet, "/_cat/indices?format=json")
+	require.NoError(t, err)
+
+	// convert json data to struct format
+	esIndices := make([]EsIndex, 0)
+	err = json.Unmarshal(bodyBytes, &esIndices)
+	require.NoError(t, err)
+
+	return esIndices, nil
+}
+
+// deletes all the indices on es node
+func deleteEsIndices() {
+	logrus.Info("deleting all es node indices")
+	_, err := executeEsRequest(http.MethodDelete, "/_all?format=json")
+	require.NoError(t, err)
+}
+
+// executes rest api request on es node
+func executeEsRequest(httpMethod, api string) ([]byte, error) {
 	// enable port forward
 	fwdPortES, closeChanES, esPort := createEsPortForward(esNamespace)
 	defer fwdPortES.Close()
@@ -365,7 +389,7 @@ func getEsIndices() ([]EsIndex, error) {
 	if skipESExternal {
 		urlScheme = "https"
 	}
-	esUrl = fmt.Sprintf("%s://localhost:%s/_cat/indices?format=json", urlScheme, esPort)
+	esUrl = fmt.Sprintf("%s://localhost:%s%s", urlScheme, esPort, api)
 
 	// create rest client to access es node rest API
 	transport := &http.Transport{}
@@ -387,8 +411,7 @@ func getEsIndices() ([]EsIndex, error) {
 		}
 	}
 
-	// execute a query to get indices on es node
-	req, err := http.NewRequest(http.MethodGet, esUrl, nil)
+	req, err := http.NewRequest(httpMethod, esUrl, nil)
 	require.NoError(t, err)
 
 	resp, err := client.Do(req)
@@ -397,14 +420,7 @@ func getEsIndices() ([]EsIndex, error) {
 
 	require.EqualValues(t, 200, resp.StatusCode)
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-
-	// convert json data to struct format
-	esIndices := make([]EsIndex, 0)
-	err = json.Unmarshal(bodyBytes, &esIndices)
-	require.NoError(t, err)
-
-	return esIndices, nil
+	return ioutil.ReadAll(resp.Body)
 }
 
 func createEsPortForward(esNamespace string) (portForwES *portforward.PortForwarder, closeChanES chan struct{}, esPort string) {
@@ -431,13 +447,6 @@ func turnOnEsIndexCleaner(jaegerInstance *v1.Jaeger, days int) {
 	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-index-cleaner", jaegerInstance.Name), retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for Cron Job")
 
-	// delete index cleaner pods
-	// unique label to select: app.kubernetes.io/component=cronjob-es-index-cleaner
-	err = fw.KubeClient.CoreV1().Pods(namespace).DeleteCollection(
-		context.Background(),
-		metav1.DeleteOptions{},
-		metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=cronjob-es-index-cleaner"})
-	require.NoError(t, err, "Error on delete index cleaner pods")
 	// disable index cleaner job
 	esIndexCleanerEnabled = false
 	err = fw.Client.Update(context.Background(), jaegerInstance)
