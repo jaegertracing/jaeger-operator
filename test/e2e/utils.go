@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,6 +16,8 @@ import (
 	"time"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go/config"
 
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
@@ -57,6 +60,7 @@ var (
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
+	jaegerCollectorPort  = 14268
 	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
 	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
@@ -882,4 +886,16 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	}
 
 	return jaegerInstance
+}
+
+func getTracerClientWithCollectorEndpoint(serviceName, collectorEndpoint string) (opentracing.Tracer, io.Closer, error) {
+	if collectorEndpoint == "" {
+		collectorEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", jaegerCollectorPort)
+	}
+	cfg := config.Configuration{
+		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
+		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
+		ServiceName: serviceName,
+	}
+	return cfg.NewTracer()
 }
