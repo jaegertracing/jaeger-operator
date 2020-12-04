@@ -31,8 +31,9 @@ touch "${HOME}"/.kube/config
 minikube config set WantNoneDriverWarning false
 minikube config set vm-driver none
 
+whoami
 minikube version
-minikube start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
+minikube start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC --driver=docker
 sudo chown -R $USER $HOME/.kube $HOME/.minikube
 
 minikube update-context
