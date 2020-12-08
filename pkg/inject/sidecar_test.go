@@ -49,6 +49,9 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	defer reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
+	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
+
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
@@ -57,6 +60,10 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+
+	// CR should not be touched.
+	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
+	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
