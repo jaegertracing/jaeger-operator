@@ -274,13 +274,16 @@ func (suite *ElasticSearchIndexTestSuite) turnOnEsIndexCleaner(jaegerInstance *v
 	// disable index cleaner job
 	suite.updateJaegerCR(jaegerInstance, indexCleanerNumOfDays, false)
 
+	// seeing inconsistency in minikube when immediately disabling and enabling index cleaner job
+	// as a result index clear job is not triggering, so sleep for a while
+	time.Sleep(time.Second * 5)
+
 	// delete completed job pods
 	err = fw.KubeClient.CoreV1().Pods(namespace).DeleteCollection(
 		context.Background(),
 		metav1.DeleteOptions{},
 		metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=cronjob-es-index-cleaner"})
 	require.NoError(t, err, "Error on delete index cleaner pods")
-
 }
 
 // function to update jaeger CR
