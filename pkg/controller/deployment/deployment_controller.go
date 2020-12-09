@@ -51,7 +51,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	return nil
+	return c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(r.(*ReconcileDeployment).syncOnJaegerChanges),
+	})
 }
 
 var _ reconcile.Reconciler = &ReconcileDeployment{}
@@ -177,4 +179,55 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileDeployment) syncOnJaegerChanges(event handler.MapObject) []reconcile.Request {
+	reconciliations := []reconcile.Request{}
+	nss := map[string]corev1.Namespace{} // namespace cache
+
+	jaeger, ok := event.Object.(*v1.Jaeger)
+	if !ok {
+		return reconciliations
+	}
+
+	deployments := appsv1.DeploymentList{}
+	err := r.client.List(context.Background(), &deployments)
+	if err != nil {
+		return reconciliations
+	}
+
+	for _, dep := range deployments.Items {
+		nsn := types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}
+		req := reconcile.Request{NamespacedName: nsn}
+
+		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
+		// we don't need to trigger a reconciliation for it
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaeger.Name {
+			continue
+		}
+
+		// if the deployment has the sidecar annotation, trigger a reconciliation
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			reconciliations = append(reconciliations, req)
+			continue
+		}
+
+		// if we don't have the namespace in the cache yet, retrieve it
+		var ns corev1.Namespace
+		if ns, ok = nss[dep.Namespace]; !ok {
+			err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+			if err != nil {
+				continue
+			}
+			nss[ns.Name] = ns
+		}
+
+		// if the namespace has the sidecar annotation, trigger a reconciliation
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			reconciliations = append(reconciliations, req)
+			continue
+		}
+
+	}
+	return reconciliations
 }
