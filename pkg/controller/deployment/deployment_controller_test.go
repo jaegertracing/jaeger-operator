@@ -70,6 +70,9 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dep-with-another-jaegers-label",
 				Namespace: "ns-without-annotation",
+				Annotations: map[string]string{
+					inject.Annotation: "true",
+				},
 				Labels: map[string]string{
 					inject.Label: "some-other-jaeger",
 				},
