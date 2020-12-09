@@ -60,7 +60,7 @@ func (suite *MultipleInstanceTestSuite) TestVerifySecrets() {
 
 	jaegerInstanceName := "simple-prod"
 	// In production we'd use 3 nodes but 1 is sufficient for this test.
-	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+	jaegerInstance := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, 1)
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
@@ -68,7 +68,7 @@ func (suite *MultipleInstanceTestSuite) TestVerifySecrets() {
 	secondContext, err := createNewTestContext()
 	defer secondContext.Cleanup()
 	secondNamespace := secondContext.GetID()
-	secondJaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, secondNamespace, 1)
+	secondJaegerInstance := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, secondNamespace, 1)
 	createESSelfProvDeployment(secondJaegerInstance, jaegerInstanceName, secondNamespace)
 	defer undeployJaegerInstance(secondJaegerInstance)
 

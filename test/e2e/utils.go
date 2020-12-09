@@ -15,9 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go/config"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
@@ -737,43 +738,14 @@ func waitForElasticSearch() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 }
 
-func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
-	ingressEnabled := true
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-			Strategy: v1.DeploymentStrategyProduction,
-			Storage: v1.JaegerStorageSpec{
-				Type: v1.JaegerESStorage,
-				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount: nodeCount,
-					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-					},
-				},
-			},
-		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	return exampleJaeger
+func deleteElasticSearchPod() {
+	// unique label to select elesticsearch pods: app: jaeger-elasticsearch
+	logrus.Info("Deleting elasticsearch pods")
+	err := fw.KubeClient.CoreV1().Pods(storageNamespace).DeleteCollection(
+		context.Background(),
+		metav1.DeleteOptions{},
+		metav1.ListOptions{LabelSelector: "app=jaeger-elasticsearch"})
+	require.NoError(t, err, "Error on delete elasticsearch pod(s)")
 }
 
 func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
@@ -888,7 +860,7 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	return jaegerInstance
 }
 
-func getTracerClientWithCollectorEndpoint(serviceName, collectorEndpoint string) (opentracing.Tracer, io.Closer, error) {
+func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string) (opentracing.Tracer, io.Closer, error) {
 	if collectorEndpoint == "" {
 		collectorEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", jaegerCollectorPort)
 	}
