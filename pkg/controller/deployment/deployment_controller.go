@@ -51,6 +51,26 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(func(object handler.MapObject) []reconcile.Request {
+			deployments := appsv1.DeploymentList{}
+			err := mgr.GetClient().List(context.Background(), &deployments)
+			reconciliations := []reconcile.Request{ }
+			if err != nil {
+				return reconciliations
+			}
+			for _, dep := range deployments.Items {
+				reconciliations = append(reconciliations, reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      dep.Name,
+						Namespace: dep.Namespace,
+					},
+				})
+
+			}
+			return reconciliations
+		}),
+	})
 	return nil
 }
 
