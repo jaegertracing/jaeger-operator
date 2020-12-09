@@ -133,13 +133,6 @@ func (suite *ElasticSearchIndexTestSuite) runIndexCleaner(esIndexPrefix string, 
 		jaegerInstance.Spec.Storage.Options.Map()["es.index-prefix"] = esIndexPrefix
 	}
 
-	// update otel specific change
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", jaegerInstanceName)
-		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
 	logrus.Infof("Creating jaeger services for es index cleaner test: %s", jaegerInstanceName)
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)

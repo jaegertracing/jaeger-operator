@@ -738,16 +738,6 @@ func waitForElasticSearch() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 }
 
-func deleteElasticSearchPod() {
-	// unique label to select elesticsearch pods: app: jaeger-elasticsearch
-	logrus.Info("Deleting elasticsearch pods")
-	err := fw.KubeClient.CoreV1().Pods(storageNamespace).DeleteCollection(
-		context.Background(),
-		metav1.DeleteOptions{},
-		metav1.ListOptions{LabelSelector: "app=jaeger-elasticsearch"})
-	require.NoError(t, err, "Error on delete elasticsearch pod(s)")
-}
-
 func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
