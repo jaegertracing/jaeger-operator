@@ -45,4 +45,4 @@ COPY --from=builder /go/bin/jaeger-operator-${TARGETARCH} ${OPERATOR}
 
 ENTRYPOINT ["/usr/local/bin/jaeger-operator"]
 
-USER ${USER_UID}
+USER ${USER_UID}:${USER_UID}
