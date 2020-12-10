@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -13,6 +14,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go/config"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 
@@ -57,6 +61,7 @@ var (
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
+	jaegerCollectorPort  = 14268
 	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
 	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
 	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
@@ -733,45 +738,6 @@ func waitForElasticSearch() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 }
 
-func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
-	ingressEnabled := true
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-			Strategy: v1.DeploymentStrategyProduction,
-			Storage: v1.JaegerStorageSpec{
-				Type: v1.JaegerESStorage,
-				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount: nodeCount,
-					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-					},
-				},
-			},
-		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	return exampleJaeger
-}
-
 func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
 	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
@@ -882,4 +848,16 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	}
 
 	return jaegerInstance
+}
+
+func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string) (opentracing.Tracer, io.Closer, error) {
+	if collectorEndpoint == "" {
+		collectorEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", jaegerCollectorPort)
+	}
+	cfg := config.Configuration{
+		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
+		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
+		ServiceName: serviceName,
+	}
+	return cfg.NewTracer()
 }

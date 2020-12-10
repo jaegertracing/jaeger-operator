@@ -79,7 +79,7 @@ func (suite *AutoscaleTestSuite) TestAutoScaleCollector() {
 	jaegerInstanceName := "simple-prod"
 	var jaegerInstance *v1.Jaeger
 	if skipESExternal {
-		jaegerInstance = getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, int32(1))
+		jaegerInstance = GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, int32(1))
 		createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	} else {
 		waitForElasticSearch()
