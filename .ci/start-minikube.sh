@@ -15,6 +15,8 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
+env | sort
+
 #export MINIKUBE_VERSION=v1.0.0
 export KUBERNETES_VERSION=v1.19.2
 
@@ -31,9 +33,11 @@ touch "${HOME}"/.kube/config
 minikube config set WantNoneDriverWarning false
 #minikube config set vm-driver none
 
+whoami
 minikube version
 minikube start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
-sudo chown -R $USER $HOME/.kube $HOME/.minikube
+#sudo chown -R $USER $HOME/.kube $HOME/.minikube
+ls -alF ${HOME}
 
 minikube update-context
 
