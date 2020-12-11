@@ -15,28 +15,8 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-export MINIKUBE_VERSION=v1.15.1
-export KUBERNETES_VERSION=v1.19.4
-
+minikube status
 MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
-
-sudo mount --make-rshared /
-sudo mount --make-rshared /proc
-sudo mount --make-rshared /sys
-
-mkdir "${HOME}"/.kube || true
-touch "${HOME}"/.kube/config
-
-# minikube config
-minikube config set WantNoneDriverWarning false
-minikube config set vm-driver none
-
-whoami
-minikube version
-minikube start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC --driver=docker
-sudo chown -R $USER $HOME/.kube $HOME/.minikube
-
-minikube update-context
 
 # waiting for node(s) to be ready
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
@@ -47,6 +27,9 @@ for POD in ${COREDNSPODS}
 do
     kubectl wait --for=condition=Ready pod/${POD}  --namespace kube-system --timeout=60s
 done
-sudo ${MINIKUBE} addons enable ingress
+
+
+minikube addons list
+minikube addons enable ingress
 
 eval $(minikube docker-env)
