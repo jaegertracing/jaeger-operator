@@ -43,12 +43,6 @@ func TestElasticSearchIndexSuite(t *testing.T) {
 	indexSuite := new(ElasticSearchIndexTestSuite)
 	// update default values
 	indexSuite.esIndexCleanerHistoryDays = 45
-	// storage namespace
-	if skipESExternal {
-		indexSuite.esNamespace = namespace
-	} else {
-		indexSuite.esNamespace = storageNamespace
-	}
 	suite.Run(t, indexSuite)
 }
 
@@ -75,6 +69,12 @@ func (suite *ElasticSearchIndexTestSuite) TearDownSuite() {
 
 func (suite *ElasticSearchIndexTestSuite) SetupTest() {
 	t = suite.T()
+	// update storage namespace
+	if skipESExternal {
+		suite.esNamespace = namespace
+	} else {
+		suite.esNamespace = storageNamespace
+	}
 	// delete indices from external elasticsearch node
 	if !skipESExternal {
 		DeleteEsIndices(suite.esNamespace)
