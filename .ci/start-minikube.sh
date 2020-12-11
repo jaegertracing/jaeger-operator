@@ -35,7 +35,7 @@ minikube config set vm-driver none
 
 whoami
 minikube version
-sudo ${MINIKUBE} start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC
+sudo ${MINIKUBE} start --kubernetes-version=$KUBERNETES_VERSION --extra-config=apiserver.authorization-mode=RBAC --driver=none
 #sudo chown -R $USER $HOME/.kube $HOME/.minikube
 ls -alF ${HOME}
 
