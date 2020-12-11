@@ -15,7 +15,7 @@ jobs:
       with:
         minikube version: 'v1.15.1'
         kubernetes version: 'v1.19.2'
-        driver: docker
+        driver: none
         github token: ${{ secrets.GITHUB_TOKEN }}
     - uses: jpkrohling/setup-kubectl@v1.0.2
     - uses: jpkrohling/setup-operator-sdk@v1.0.2

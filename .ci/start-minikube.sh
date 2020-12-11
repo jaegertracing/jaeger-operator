@@ -31,7 +31,7 @@ touch "${HOME}"/.kube/config
 
 # minikube config
 minikube config set WantNoneDriverWarning false
-#minikube config set vm-driver none
+minikube config set vm-driver none
 
 whoami
 minikube version
