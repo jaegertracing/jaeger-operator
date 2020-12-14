@@ -1,0 +1,7 @@
+apiVersion: jaegertracing.io/v2
+kind: Jaeger
+metadata:
+  name: jaeger-sample
+spec:
+  # Add fields here
+  foo: bar
