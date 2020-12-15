@@ -1,12 +1,13 @@
 package deployment
 
 import (
+	"context"
 	"sort"
 	"testing"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 func TestSyncOnJaegerChanges(t *testing.T) {
@@ -133,4 +137,70 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	})
 
 	assert.Equal(t, expected, requests)
+}
+
+func TestReconcileConfigMaps(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		existing []runtime.Object
+	}{
+		{
+			desc: "all config maps missing",
+		},
+		{
+			desc: "none missing",
+			existing: []runtime.Object{
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns1",
+						Name:      "my-instance-trusted-ca",
+					},
+				},
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns1",
+						Name:      "my-instance-service-ca",
+					},
+				},
+			},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			// prepare
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Namespace: "observability",
+				Name:      "my-instance",
+			})
+			dep := appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "ns1",
+					Name:      "my-dep",
+				},
+			}
+
+			s := scheme.Scheme
+			cl := fake.NewFakeClient(tC.existing...)
+			r := &ReconcileDeployment{
+				client:  cl,
+				rClient: cl,
+				scheme:  s,
+			}
+
+			viper.Set("platform", v1.FlagPlatformOpenShift)
+			defer viper.Reset()
+
+			// test
+			err := r.reconcileConfigMaps(context.Background(), jaeger, &dep)
+
+			// verify
+			assert.NoError(t, err)
+
+			cms := corev1.ConfigMapList{}
+			err = cl.List(context.Background(), &cms)
+			require.NoError(t, err)
+
+			assert.Len(t, cms.Items, 2)
+		})
+	}
 }
