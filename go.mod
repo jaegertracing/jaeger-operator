@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.8
-	github.com/googleapis/gnostic v0.3.1
+	github.com/googleapis/gnostic v0.5.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20200701144905-de5b010b2b38
