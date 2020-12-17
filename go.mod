@@ -7,6 +7,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.8
 	github.com/googleapis/gnostic v0.3.1
+	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20200701144905-de5b010b2b38
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
