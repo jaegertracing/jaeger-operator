@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/spf13/pflag"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +30,9 @@ import (
 
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	jaegertracingcontroller "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
+	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
+
 )
 
 var (
@@ -41,17 +44,24 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(jaegertracingv2.AddToScheme(scheme))
+	utilruntime.Must(otelv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
+	// registers any flags that underlying libraries might use
+	opts := zap.Options{}
+	opts.BindFlags(flag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	// Add flags related to this operator
 	var metricsAddr string
 	var enableLeaderElection bool
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+	pflag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	pflag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.Parse()
+	pflag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 

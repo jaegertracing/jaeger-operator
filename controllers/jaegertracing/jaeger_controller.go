@@ -18,8 +18,10 @@ package controllers
 
 import (
 	"context"
+	"github.com/jaegertracing/jaeger-operator/pkg/reconcilie"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,11 +39,31 @@ type JaegerReconciler struct {
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/status,verbs=get;update;patch
 
-func (r *JaegerReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("jaeger", req.NamespacedName)
+func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.Log.WithValues("jaeger", req.NamespacedName)
 
-	// your logic here
+	var instance jaegertracingv2.Jaeger
+	if err := r.Get(ctx, req.NamespacedName, &instance); err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.Error(err, "unable to fetch Jaeger instance")
+		}
+
+		// we'll ignore not-found errors, since they can't be fixed by an immediate
+		// requeue (we'll need to wait for a new notification), and we can get them
+		// on deleted requests.
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	params := reconcilie.Params{
+		Client:   r.Client,
+		Instance: instance,
+		Log:      log,
+		Scheme:   r.Scheme,
+	}
+
+	if err := reconcilie.Run(ctx, params); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

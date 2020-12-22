@@ -1,9 +1,9 @@
 # Current Operator version
 VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-VERSION_PKG ?= "github.com/open-telemetry/opentelemetry-operator/internal/version"
-OTELCOL_VERSION ?= "$(shell grep -v '\#' versions.txt | grep opentelemetry-collector | awk -F= '{print $$2}')"
-LD_FLAGS ?= "-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.otelCol=${OTELCOL_VERSION}"
+VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/internal/version"
+JAEGER_VERSION ?= "$(shell grep -v '\#' versions.txt | grep jaeger | awk -F= '{print $$2}')"
+LD_FLAGS ?= "-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.jaeger=${JAEGER_VERSION}"
 
 # Image URL to use all building/pushing image targets
 IMG_PREFIX ?= quay.io/${USER}
