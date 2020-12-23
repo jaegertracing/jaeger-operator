@@ -3,7 +3,6 @@ package reconcilie
 import (
 	"context"
 	"fmt"
-	"github.com/jaegertracing/jaeger-operator/pkg/collector"
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -12,9 +11,9 @@ import (
 )
 
 func Collector(ctx context.Context, params Params) error {
-	desired := collector.Get(params.Instance)
 
-	// first, handle the create/update parts
+	desired := params.Strategy.Collector
+
 	if err := controllerutil.SetControllerReference(&params.Instance, &desired, params.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)
 	}
@@ -28,6 +27,7 @@ func Collector(ctx context.Context, params Params) error {
 			return fmt.Errorf("failed to create: %w", err)
 		}
 		params.Log.V(2).Info("created", "collector", desired.Name, "collector.namespace", desired.Namespace)
+		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to get: %w", err)
 	}

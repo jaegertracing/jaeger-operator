@@ -18,9 +18,10 @@ package controllers
 
 import (
 	"context"
-	"github.com/jaegertracing/jaeger-operator/pkg/reconcilie"
-
 	"github.com/go-logr/logr"
+	"github.com/jaegertracing/jaeger-operator/pkg/normalize"
+	"github.com/jaegertracing/jaeger-operator/pkg/reconcilie"
+	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -54,11 +55,16 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	instance = normalize.Jaeger(ctx, instance)
+
+
+
 	params := reconcilie.Params{
 		Client:   r.Client,
 		Instance: instance,
 		Log:      log,
 		Scheme:   r.Scheme,
+		Strategy: strategy.For(ctx, instance),
 	}
 
 	if err := reconcilie.Run(ctx, params); err != nil {
@@ -67,6 +73,8 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	return ctrl.Result{}, nil
 }
+
+
 
 func (r *JaegerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
