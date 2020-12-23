@@ -1,7 +1,8 @@
 apiVersion: jaegertracing.io/v2
 kind: Jaeger
 metadata:
-  name: jaeger-sample
+  name: simple-prod
 spec:
-  # Add fields here
-  foo: bar
+  strategy: production
+  collector:
+    image: otel/opentelemetry-collector:0.17.0
