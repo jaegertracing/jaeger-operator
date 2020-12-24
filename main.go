@@ -32,7 +32,6 @@ import (
 	jaegertracingcontroller "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
-
 )
 
 var (

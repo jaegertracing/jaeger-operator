@@ -57,8 +57,6 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	instance = normalize.Jaeger(ctx, instance)
 
-
-
 	params := reconcilie.Params{
 		Client:   r.Client,
 		Instance: instance,
@@ -73,8 +71,6 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	return ctrl.Result{}, nil
 }
-
-
 
 func (r *JaegerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).

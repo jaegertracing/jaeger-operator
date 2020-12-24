@@ -19,5 +19,3 @@ func For(ctx context.Context, jaeger v2.Jaeger) Strategy {
 
 	return newProductionStrategy(ctx, jaeger)
 }
-
-

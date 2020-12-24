@@ -10,7 +10,7 @@ import (
 
 // S knows what type of deployments to build based on a given spec
 type Strategy struct {
-	Type                      jaegertracingv2.DeploymentStrategy
+	Type                     jaegertracingv2.DeploymentStrategy
 	Accounts                 []corev1.ServiceAccount
 	ClusterRoleBindings      []rbac.ClusterRoleBinding
 	ConfigMaps               []corev1.ConfigMap
