@@ -22,11 +22,10 @@ spec:
       kind: Jaeger
       name: jaegers.jaegertracing.io
       version: v2
-    - description: Jaeger is the Schema for the jaegers API
-      displayName: Jaeger
-      kind: Jaeger
-      name: jaegers.jaegertracing.jaegertracing.io
-      version: v2
+    required:
+    - kind: OpenTelemetryCollector
+      name: opentelemetrycollectors.core.opentelemetry.io
+      version: v1alpha1
   description: Jaeger, inspired by [Dapper](https://research.google.com/pubs/pub36356.html) and [OpenZipkin](http://zipkin.io/), is a distributed tracing system released as open source by Uber Technologies. It is used for monitoring and troubleshooting microservices-based distributed systems.
   displayName: Community Jaeger Operator
   icon:
