@@ -1,36 +1,36 @@
-/*
-
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright The Jaeger Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package controllers
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
-	"github.com/jaegertracing/jaeger-operator/pkg/normalize"
-	"github.com/jaegertracing/jaeger-operator/pkg/reconcilie"
-	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/normalize"
+	"github.com/jaegertracing/jaeger-operator/pkg/reconcilie"
+	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
+
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 )
 
-// JaegerReconciler reconciles a Jaeger object
+// JaegerReconciler reconciles a Jaeger object.
 type JaegerReconciler struct {
 	client.Client
 	Log    logr.Logger

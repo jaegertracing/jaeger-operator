@@ -1,36 +1,34 @@
-/*
-
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright The Jaeger Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package v2
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// IngressSecurityType represents the possible values for the security type
+// IngressSecurityType represents the possible values for the security type.
 type IngressSecurityType string
 
-// JaegerPhase represents the current phase of Jaeger instances
+// JaegerPhase represents the current phase of Jaeger instances.
 type JaegerPhase string
 
-// JaegerStorageType represents the Jaeger storage type
+// JaegerStorageType represents the Jaeger storage type.
 type JaegerStorageType string
 
-// JaegerSpec defines the desired state of Jaeger
+// JaegerSpec defines the desired state of Jaeger.
 type JaegerSpec struct {
 	// +optional
 	Strategy DeploymentStrategy `json:"strategy,omitempty"`
@@ -58,7 +56,7 @@ type JaegerSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
-// JaegerCommonSpec defines the common elements used in multiple other spec structs
+// JaegerCommonSpec defines the common elements used in multiple other spec structs.
 type JaegerCommonSpec struct {
 	// +optional
 	// +listType=atomic
@@ -93,7 +91,7 @@ type JaegerCommonSpec struct {
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 }
 
-// JaegerQuerySpec defines the options to be used when deploying the query
+// JaegerQuerySpec defines the options to be used when deploying the query.
 type JaegerQuerySpec struct {
 	// Replicas represents the number of replicas to create for this service.
 	// +optional
@@ -115,11 +113,11 @@ type JaegerQuerySpec struct {
 	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
-	// The default, if ommited, is true
+	// The default, if omitted, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
-// JaegerIngressSpec defines the options to be used when deploying the query ingress
+// JaegerIngressSpec defines the options to be used when deploying the query ingress.
 type JaegerIngressSpec struct {
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
@@ -143,7 +141,7 @@ type JaegerIngressSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
-// JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress
+// JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress.
 type JaegerIngressTLSSpec struct {
 	// +optional
 	// +listType=atomic
@@ -153,7 +151,7 @@ type JaegerIngressTLSSpec struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
-// JaegerAllInOneSpec defines the options to be used when deploying the query
+// JaegerAllInOneSpec defines the options to be used when deploying the query.
 type JaegerAllInOneSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
@@ -164,11 +162,11 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
-	// The default, if ommited, is true
+	// The default, if omitted, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 }
 
-// AutoScaleSpec defines the common elements used for create HPAs
+// AutoScaleSpec defines the common elements used for create HPAs.
 type AutoScaleSpec struct {
 	// Autoscale turns on/off the autoscale feature. By default, it's enabled if the Replicas field is not set.
 	// +optional
@@ -182,7 +180,7 @@ type AutoScaleSpec struct {
 	MaxReplicas *int32 `json:"maxReplicas,omitempty"`
 }
 
-// JaegerCollectorSpec defines the options to be used when deploying the collector
+// JaegerCollectorSpec defines the options to be used when deploying the collector.
 type JaegerCollectorSpec struct {
 	// +optional
 	AutoScaleSpec `json:",inline,omitempty"`
@@ -208,7 +206,7 @@ type JaegerCollectorSpec struct {
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 }
 
-// JaegerIngesterSpec defines the options to be used when deploying the ingester
+// JaegerIngesterSpec defines the options to be used when deploying the ingester.
 type JaegerIngesterSpec struct {
 	// +optional
 	AutoScaleSpec `json:",inline,omitempty"`
@@ -224,7 +222,7 @@ type JaegerIngesterSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
-// JaegerAgentSpec defines the options to be used when deploying the agent
+// JaegerAgentSpec defines the options to be used when deploying the agent.
 type JaegerAgentSpec struct {
 	// Strategy can be either 'DaemonSet' or 'Sidecar' (default)
 	// +optional
@@ -247,7 +245,7 @@ type JaegerAgentSpec struct {
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
 }
 
-// JaegerStatus defines the observed state of Jaeger
+// JaegerStatus defines the observed state of Jaeger.
 type JaegerStatus struct {
 	Version string      `json:"version"`
 	Phase   JaegerPhase `json:"phase"`
@@ -260,7 +258,7 @@ type JaegerStatus struct {
 // +kubebuilder:printcolumn:name="Strategy",type="string",JSONPath=".spec.strategy",description="Jaeger deployment strategy"
 // +kubebuilder:printcolumn:name="Storage",type="string",JSONPath=".spec.storage.type",description="Jaeger storage type"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// Jaeger is the Schema for the jaegers API
+// Jaeger is the Schema for the jaegers API.
 type Jaeger struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -271,7 +269,7 @@ type Jaeger struct {
 
 // +kubebuilder:object:root=true
 
-// JaegerList contains a list of Jaeger
+// JaegerList contains a list of Jaeger.
 type JaegerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
