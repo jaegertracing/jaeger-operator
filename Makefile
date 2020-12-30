@@ -73,7 +73,7 @@ deploy: set-image-controller
 # Generates the released manifests
 release-artifacts: set-image-controller
 	mkdir -p dist
-	$(KUSTOMIZE) build config/default -o dist/opentelemetry-operator.yaml
+	$(KUSTOMIZE) build config/default -o dist/jaeger-operator.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
