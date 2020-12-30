@@ -2,15 +2,10 @@ package naming
 
 import (
 	"fmt"
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 	"github.com/spf13/viper"
 	"strings"
 )
-
-func Collector(jaeger jaegertracingv2.Jaeger) string {
-	return jaeger.Name
-}
 
 // Image returns the image associated with the supplied image if defined, otherwise
 // uses the parameter name to retrieve the value. If the parameter value does not
