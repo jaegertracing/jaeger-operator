@@ -224,3 +224,37 @@ func TestCustomSparkDependenciesImage(t *testing.T) {
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
 	assert.Equal(t, "org/custom-spark-dependencies-image", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
+
+func TestDependenciesVolumes(t *testing.T) {
+	testVolumeName := "testDependenciesVolume"
+	testConfigMapName := "dvConfigMap"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesVolumes"})
+	testVolume := corev1.Volume{
+		Name:         testVolumeName,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap:             &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: testConfigMapName},
+			},
+		},
+	}
+	testVolumes := []corev1.Volume{testVolume}
+	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes=testVolumes
+
+	testVolumeMountName := "testVolumeMount"
+	testMountPath := "/es-tls"
+	testVolumeMount := corev1.VolumeMount{
+		Name:             testVolumeMountName,
+		ReadOnly:         false,
+		MountPath:        testMountPath,
+	}
+	testVolumeMounts := []corev1.VolumeMount{testVolumeMount}
+	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts = testVolumeMounts
+
+	cjob := CreateSparkDependencies(jaeger)
+	assert.Equal(t, testVolumeMountName, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].Name)
+	assert.False(t, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].ReadOnly)
+	assert.Equal(t, testMountPath, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
+
+	assert.Equal(t, testVolumeName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].Name)
+	assert.Equal(t, testConfigMapName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].ConfigMap.Name)
+}
