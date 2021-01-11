@@ -12,33 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilie
+package normalize
 
 import (
 	"context"
-	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 )
 
-var tasks = []struct {
-	Name        string
-	Do          func(context.Context, Params) error
-	BailOnError bool
-}{
-	{
-		Name:        "collector",
-		Do:          Collector,
-		BailOnError: true,
-	},
-}
-
-func Run(ctx context.Context, params Params) error {
-	for _, task := range tasks {
-		if err := task.Do(ctx, params); err != nil {
-			params.Log.Error(err, fmt.Sprintf("failed to reconcile %s", task.Name))
-			if task.BailOnError {
-				return err
-			}
-		}
-	}
-	return nil
+func TestDefaultName(t *testing.T) {
+	jaeger := v2.Jaeger{}
+	normalizedJaeger := Jaeger(context.Background(), jaeger)
+	assert.NotEmpty(t, normalizedJaeger.Name)
 }

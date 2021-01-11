@@ -12,6 +12,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	go.opentelemetry.io/otel v0.15.0
 	k8s.io/api v0.20.0
+	k8s.io/apiextensions-apiserver v0.19.2
 	k8s.io/apimachinery v0.20.0
 	k8s.io/client-go v0.20.0
 	sigs.k8s.io/controller-runtime v0.7.0

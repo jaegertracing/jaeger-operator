@@ -24,7 +24,7 @@ import (
 )
 
 // TODO: Better way of doing this..
-func defaultConfig() string {
+func DefaultConfig() string {
 	return `
     receivers:
       jaeger:
@@ -48,7 +48,7 @@ func Get(jaeger jaegertracingv2.Jaeger) otelv1alpha1.OpenTelemetryCollector {
 
 	config := jaeger.Spec.Collector.Config
 	if config == "" {
-		config = defaultConfig()
+		config = DefaultConfig()
 	}
 
 	collectorSpecs := jaeger.Spec.Collector
