@@ -230,22 +230,22 @@ func TestDependenciesVolumes(t *testing.T) {
 	testConfigMapName := "dvConfigMap"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesVolumes"})
 	testVolume := corev1.Volume{
-		Name:         testVolumeName,
+		Name: testVolumeName,
 		VolumeSource: corev1.VolumeSource{
-			ConfigMap:             &corev1.ConfigMapVolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{Name: testConfigMapName},
 			},
 		},
 	}
 	testVolumes := []corev1.Volume{testVolume}
-	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes=testVolumes
+	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes = testVolumes
 
 	testVolumeMountName := "testVolumeMount"
 	testMountPath := "/es-tls"
 	testVolumeMount := corev1.VolumeMount{
-		Name:             testVolumeMountName,
-		ReadOnly:         false,
-		MountPath:        testMountPath,
+		Name:      testVolumeMountName,
+		ReadOnly:  false,
+		MountPath: testMountPath,
 	}
 	testVolumeMounts := []corev1.VolumeMount{testVolumeMount}
 	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts = testVolumeMounts
