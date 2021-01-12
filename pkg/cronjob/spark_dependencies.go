@@ -93,9 +93,10 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Image: image,
 									Name:  name,
 									// let spark job use its default values
-									Env:       util.RemoveEmptyVars(envVars),
-									EnvFrom:   envFromSource,
-									Resources: commonSpec.Resources,
+									Env:          util.RemoveEmptyVars(envVars),
+									EnvFrom:      envFromSource,
+									Resources:    commonSpec.Resources,
+									VolumeMounts: jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
 								},
 							},
 							RestartPolicy:      corev1.RestartPolicyNever,
@@ -103,6 +104,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							Tolerations:        commonSpec.Tolerations,
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
+							Volumes:            jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,
