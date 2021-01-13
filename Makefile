@@ -288,12 +288,16 @@ endif
 
 .PHONY: kafka
 kafka: deploy-kafka-operator
+ifeq ($(SKIP_KAFKA),true)
+	@echo Skipping Kafka/external ES related tests
+else
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
 	@sed -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
+endif
 
 .PHONY: undeploy-kafka
 undeploy-kafka: undeploy-kafka-operator
