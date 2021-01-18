@@ -440,7 +440,7 @@ type services struct {
 	Data   []string    `json:"data"`
 	total  int         `json:"total"`
 	limit  int         `json:"limit"`
-	offset int         `json:offset`
+	offset int         `json:"offset"`
 	errors interface{} `json:"errors"`
 }
 
