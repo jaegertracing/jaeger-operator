@@ -70,6 +70,10 @@ then
     export SPECIFY_OTEL_IMAGES=true
     export SPECIFY_OTEL_CONFIG=true
     make e2e-tests-smoke
+elif [ "${TEST_GROUP}" = "istio" ]
+then
+    echo "Running Smoke Tests with istio"
+    make e2e-tests-istio
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi
