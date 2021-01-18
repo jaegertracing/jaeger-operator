@@ -45,6 +45,27 @@ func (suite *IstioTestSuite) SetupSuite() {
 	namespace = ctx.GetID()
 	require.NotNil(t, namespace, "GetID failed")
 
+	// label namespace
+	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
+	if err != nil {
+		t.Errorf("failed to get the namespaces details: %v", err)
+	}
+	labels := ns.GetLabels()
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	labels["istio-injection"] = "enabled"
+
+	ns.SetLabels(labels)
+
+	ns, err = framework.Global.KubeClient.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
+
+	if err != nil {
+		t.Errorf("failed to update labels of the namespace details: %v", err)
+	}
+
 	addToFrameworkSchemeForSmokeTests(t)
 }
 
