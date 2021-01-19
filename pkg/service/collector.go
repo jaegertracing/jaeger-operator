@@ -102,7 +102,7 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 
 	// if we don't have a jaeger provided, it's certainly not TLS...
 	if nil == jaeger {
-		return "http-grpc"
+		return "grpc-http"
 	}
 
 	// perhaps the user has provisioned the certs and configured the CR manually?
@@ -110,18 +110,18 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 	if val, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc.tls.enabled"]; ok {
 		enabled, err := strconv.ParseBool(val)
 		if err != nil {
-			return "http-grpc" // not "true", defaults to false
+			return "grpc-http" // not "true", defaults to false
 		}
 
 		if enabled {
-			return "https-grpc" // explicit true
+			return "grpc-https" // explicit true
 		}
 
-		return "http-grpc" // explicit false
+		return "grpc-http" // explicit false
 	}
 
 	// doesn't look like we have TLS enabled
-	return "http-grpc"
+	return "grpc-http"
 }
 
 func getTypeForCollectorService(jaeger *v1.Jaeger) corev1.ServiceType {
