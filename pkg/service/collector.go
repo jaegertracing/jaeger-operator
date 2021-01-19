@@ -97,7 +97,7 @@ func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		// we always have TLS certs when running on OpenShift, so, TLS is always enabled
-		return "https-grpc"
+		return "grpc-https"
 	}
 
 	// if we don't have a jaeger provided, it's certainly not TLS...
