@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -133,6 +135,34 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	})
 	require.NoError(t, err)
 
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
+			LabelSelector: labels.FormatLabels(map[string]string{
+				"app": vertxDeploymentName,
+			}),
+			Limit: 10,
+		})
+		require.NoError(t, err)
+
+		if pods.Size() == 0 {
+			return false, errors.New("Vertx Pods not found")
+		}
+
+		for _, pod := range pods.Items {
+			exist := containerExistsInPod(pod.Spec.Containers, "istio-proxy")
+			if exist {
+				log.Infof("Istio-proxy found in pod %s", pod.Name)
+				return true, nil
+			} else {
+				return false, nil
+			}
+		}
+
+		return false, errors.New("Unexpected error while checking pods")
+	})
+
+	require.NoError(t, err, "Fail to wait for istio-proxy injection")
+
 	// Confirm that we've created some traces
 	ports := []string{"0:16686"}
 	portForward, closeChan := CreatePortForward(namespace, jaegerInstanceName, "all-in-one", ports, fw.KubeConfig)
@@ -169,4 +199,14 @@ func getBusinessAppCR(err error) *os.File {
 	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
 	require.NoError(t, err)
 	return file
+}
+
+func containerExistsInPod(containers []corev1.Container, expectedContainerName string) (exist bool) {
+	exist = false
+	for _, c := range containers {
+		if c.Name == expectedContainerName {
+			exist = true
+		}
+	}
+	return
 }
