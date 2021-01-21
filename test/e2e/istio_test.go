@@ -47,24 +47,20 @@ func (suite *IstioTestSuite) SetupSuite() {
 
 	// label namespace
 	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
-	if err != nil {
-		t.Errorf("failed to get the namespaces details: %v", err)
+	require.NoError(t, err, "failed to get the namespaces details: %v", err)
+
+	nsLabels := ns.GetLabels()
+
+	if nsLabels == nil {
+		nsLabels = make(map[string]string)
 	}
-	labels := ns.GetLabels()
 
-	if labels == nil {
-		labels = make(map[string]string)
-	}
+	nsLabels["istio-injection"] = "enabled"
 
-	labels["istio-injection"] = "enabled"
-
-	ns.SetLabels(labels)
+	ns.SetLabels(nsLabels)
 
 	ns, err = framework.Global.KubeClient.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
-
-	if err != nil {
-		t.Errorf("failed to update labels of the namespace details: %v", err)
-	}
+	require.NoError(t, err, "failed to update labels of the namespace %s", namespace)
 
 	addToFrameworkSchemeForSmokeTests(t)
 }
