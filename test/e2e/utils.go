@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,7 +29,6 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
@@ -640,12 +638,18 @@ func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
 	return false
 }
 
+// verifyAgentImage test if this Jaeger Instance is using the OTEL agent?
 func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelAgent(appName, namespace))
+	require.Equal(t, expected, testContainerInPod(appName, namespace, func(container *corev1.Container) bool {
+		logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
+		return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+	}))
 }
 
-// Was this Jaeger Instance using the OTEL agent?
-func wasUsingOtelAgent(appName, namespace string) bool {
+// testContainerInPod is a general function to test if the container exists in the pod
+// provided that the pod has `app` label. Return true if and only if the container exists and
+// the user-defined function `predicate` returns true if given.
+func testContainerInPod(appName, namespace string, predicate func(*corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
@@ -677,8 +681,10 @@ func wasUsingOtelAgent(appName, namespace string) bool {
 	containers := pod.Spec.Containers
 	for _, container := range containers {
 		if container.Name == "jaeger-agent" {
-			logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+			if predicate != nil {
+				return predicate(&container)
+			}
+			return true
 		}
 	}
 
@@ -860,41 +866,4 @@ func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string
 		ServiceName: serviceName,
 	}
 	return cfg.NewTracer()
-}
-
-func waitForSpecificContainerWithinDeployment(deployment, container string) {
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
-			LabelSelector: labels.FormatLabels(map[string]string{
-				"app": deployment,
-			}),
-			Limit: 10,
-		})
-		require.NoError(t, err)
-		require.NotEqual(t, 0, pods.Size(), "%s pods not found", deployment)
-
-		for _, pod := range pods.Items {
-			exist := containerExistsInPod(pod.Spec.Containers, container)
-			if exist {
-				logrus.Infof("%s found in pod %s", container, pod.Name)
-				return true, nil
-			}
-
-			return false, nil
-		}
-
-		return false, errors.New("unexpected error while checking pods")
-	})
-
-	require.NoError(t, err, "Fail to wait for istio-proxy injection")
-}
-
-func containerExistsInPod(containers []corev1.Container, expectedContainerName string) (exist bool) {
-	exist = false
-	for _, c := range containers {
-		if c.Name == expectedContainerName {
-			exist = true
-		}
-	}
-	return
 }
