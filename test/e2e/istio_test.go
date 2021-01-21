@@ -50,13 +50,10 @@ func (suite *IstioTestSuite) SetupSuite() {
 	require.NoError(t, err, "failed to get the namespaces details: %v", err)
 
 	nsLabels := ns.GetLabels()
-
 	if nsLabels == nil {
 		nsLabels = make(map[string]string)
 	}
-
 	nsLabels["istio-injection"] = "enabled"
-
 	ns.SetLabels(nsLabels)
 
 	ns, err = framework.Global.KubeClient.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
