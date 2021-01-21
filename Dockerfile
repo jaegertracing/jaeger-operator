@@ -13,6 +13,15 @@ RUN go mod download
 COPY main.go main.go
 COPY apis/ apis/
 COPY controllers/ controllers/
+COPY internal/ internal/
+COPY pkg/ pkg/
+COPY versions.txt versions.txt
+
+
+ARG VERSION_PKG
+ARG VERSION
+ARG VERSION_DATE
+ARG JAEGER_VERSION
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.jaeger=${JAEGER_VERSION}" -a -o manager main.go

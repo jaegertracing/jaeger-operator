@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "config", "crd", "bases"),
-			filepath.Join("..", "..", "test", "config", "opentelemetry-operator", "crd", "bases"),
+			filepath.Join("..", "..", "tests", "config", "opentelemetry-operator", "crd", "bases"),
 		},
 	}
 
