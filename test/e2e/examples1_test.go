@@ -3,9 +3,7 @@
 package e2e
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,13 +14,10 @@ import (
 	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type ExamplesTestSuite struct {
@@ -126,23 +121,8 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	handler := &corev1.Handler{HTTPGet: livelinessHandler}
 	livelinessProbe := &corev1.Probe{Handler: *handler, InitialDelaySeconds: 1, FailureThreshold: 3, PeriodSeconds: 10, SuccessThreshold: 1, TimeoutSeconds: 1}
 
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		vertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), vertxDeploymentName, metav1.GetOptions{})
-		require.NoError(t, err)
-		containers := vertxDeployment.Spec.Template.Spec.Containers
-		for index, container := range containers {
-			if container.Name == vertxDeploymentName {
-				vertxDeployment.Spec.Template.Spec.Containers[index].LivenessProbe = livelinessProbe
-				updatedVertxDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(context.Background(), vertxDeployment, metav1.UpdateOptions{})
-				if err != nil {
-					log.Warnf("Error %v updating vertx app, retrying", err)
-					return false, nil
-				}
-				log.Infof("Updated deployment %v", updatedVertxDeployment.Name)
-				return true, nil
-			}
-		}
-		return false, errors.New("Vertx deployment not found")
+	err = waitForDeploymentAndUpdate(vertxDeploymentName, vertxDeploymentName, func(container *corev1.Container) {
+		container.LivenessProbe = livelinessProbe
 	})
 	require.NoError(t, err)
 

@@ -3,7 +3,9 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"github.com/prometheus/common/log"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -640,7 +642,7 @@ func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
 
 // verifyAgentImage test if this Jaeger Instance is using the OTEL agent?
 func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, testContainerInPod(namespace, appName, "jaeger-agent", func(container *corev1.Container) bool {
+	require.Equal(t, expected, testContainerInPod(namespace, appName, "jaeger-agent", func(container corev1.Container) bool {
 		logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
 		return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
 	}))
@@ -649,7 +651,7 @@ func verifyAgentImage(appName, namespace string, expected bool) {
 // testContainerInPod is a general function to test if the container exists in the pod
 // provided that the pod has `app` label. Return true if and only if the container exists and
 // the user-defined function `predicate` returns true if given.
-func testContainerInPod(namespace, appName, containerName string, predicate func(*corev1.Container) bool) bool {
+func testContainerInPod(namespace, appName, containerName string, predicate func(corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
@@ -682,7 +684,7 @@ func testContainerInPod(namespace, appName, containerName string, predicate func
 	for _, container := range containers {
 		if container.Name == containerName {
 			if predicate != nil {
-				return predicate(&container)
+				return predicate(container)
 			}
 			return true
 		}
@@ -866,4 +868,25 @@ func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string
 		ServiceName: serviceName,
 	}
 	return cfg.NewTracer()
+}
+
+func waitForDeploymentAndUpdate(deploymentName, containerName string, update func(container *corev1.Container)) error {
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
+		require.NoError(t, err)
+		containers := deployment.Spec.Template.Spec.Containers
+		for index, container := range containers {
+			if container.Name == containerName {
+				update(&deployment.Spec.Template.Spec.Containers[index])
+				updatedDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+				if err != nil {
+					log.Warnf("Error %v updating container, retrying", err)
+					return false, nil
+				}
+				log.Infof("Updated deployment %v", updatedDeployment.Name)
+				return true, nil
+			}
+		}
+		return false, errors.New(fmt.Sprintf("container %s in deployment %s not found", containerName, deploymentName))
+	})
 }
