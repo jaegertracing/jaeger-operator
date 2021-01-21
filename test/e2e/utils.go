@@ -3,9 +3,11 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/labels"
 	"net/http"
 	"os"
 	"os/exec"
@@ -860,4 +862,41 @@ func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string
 		ServiceName: serviceName,
 	}
 	return cfg.NewTracer()
+}
+
+func waitForSpecificContainerWithinDeployment(deployment, container string) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
+			LabelSelector: labels.FormatLabels(map[string]string{
+				"app": deployment,
+			}),
+			Limit: 10,
+		})
+		require.NoError(t, err)
+		require.NotEqual(t, 0, pods.Size(), "%s pods not found", deployment)
+
+		for _, pod := range pods.Items {
+			exist := containerExistsInPod(pod.Spec.Containers, container)
+			if exist {
+				logrus.Infof("%s found in pod %s", container, pod.Name)
+				return true, nil
+			} else {
+				return false, nil
+			}
+		}
+
+		return false, errors.New("unexpected error while checking pods")
+	})
+
+	require.NoError(t, err, "Fail to wait for istio-proxy injection")
+}
+
+func containerExistsInPod(containers []corev1.Container, expectedContainerName string) (exist bool) {
+	exist = false
+	for _, c := range containers {
+		if c.Name == expectedContainerName {
+			exist = true
+		}
+	}
+	return
 }

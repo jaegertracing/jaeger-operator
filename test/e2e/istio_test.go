@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -126,30 +125,7 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	})
 	require.NoError(t, err)
 
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		pods, err := fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
-			LabelSelector: labels.FormatLabels(map[string]string{
-				"app": vertxDeploymentName,
-			}),
-			Limit: 10,
-		})
-		require.NoError(t, err)
-		require.NotEqual(t, 0, pods.Size(), "Vertx Pods not found")
-
-		for _, pod := range pods.Items {
-			exist := containerExistsInPod(pod.Spec.Containers, "istio-proxy")
-			if exist {
-				log.Infof("Istio-proxy found in pod %s", pod.Name)
-				return true, nil
-			} else {
-				return false, nil
-			}
-		}
-
-		return false, errors.New("Unexpected error while checking pods")
-	})
-
-	require.NoError(t, err, "Fail to wait for istio-proxy injection")
+	waitForSpecificContainerWithinDeployment(vertxDeploymentName, "istio-proxy")
 
 	// Confirm that we've created some traces
 	ports := []string{"0:16686"}
@@ -183,14 +159,4 @@ func getBusinessAppCR(err error) *os.File {
 	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
 	require.NoError(t, err)
 	return file
-}
-
-func containerExistsInPod(containers []corev1.Container, expectedContainerName string) (exist bool) {
-	exist = false
-	for _, c := range containers {
-		if c.Name == expectedContainerName {
-			exist = true
-		}
-	}
-	return
 }
