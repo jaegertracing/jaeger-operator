@@ -649,13 +649,13 @@ func verifyAgentImage(appName, namespace string, expected bool) {
 // testContainerInPod is a general function to test if the container exists in the pod
 // provided that the pod has `app` label. Return true if and only if the container exists and
 // the user-defined function `predicate` returns true if given.
-func testContainerInPod(appName, namespace string, predicate func(*corev1.Container) bool) bool {
+func testContainerInPod(appName, podName string, predicate func(*corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
 	// Sometimes the app gets redeployed twice and we can get three pods, wait till there are either 1 or 2
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		pods, err = fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "app=" + appName})
+		pods, err = fw.KubeClient.CoreV1().Pods(podName).List(context.Background(), metav1.ListOptions{LabelSelector: "app=" + appName})
 		require.NoError(t, err)
 		if len(pods.Items) > 0 && len(pods.Items) < 3 {
 			return true, nil
