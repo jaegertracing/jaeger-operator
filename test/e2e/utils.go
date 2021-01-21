@@ -640,7 +640,7 @@ func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
 
 // verifyAgentImage test if this Jaeger Instance is using the OTEL agent?
 func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, testContainerInPod(appName, namespace, func(container *corev1.Container) bool {
+	require.Equal(t, expected, testContainerInPod(namespace, appName, "jaeger-agent", func(container *corev1.Container) bool {
 		logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
 		return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
 	}))
@@ -649,13 +649,13 @@ func verifyAgentImage(appName, namespace string, expected bool) {
 // testContainerInPod is a general function to test if the container exists in the pod
 // provided that the pod has `app` label. Return true if and only if the container exists and
 // the user-defined function `predicate` returns true if given.
-func testContainerInPod(appName, podName string, predicate func(*corev1.Container) bool) bool {
+func testContainerInPod(namespace, appName, containerName string, predicate func(*corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
 	// Sometimes the app gets redeployed twice and we can get three pods, wait till there are either 1 or 2
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		pods, err = fw.KubeClient.CoreV1().Pods(podName).List(context.Background(), metav1.ListOptions{LabelSelector: "app=" + appName})
+		pods, err = fw.KubeClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: "app=" + appName})
 		require.NoError(t, err)
 		if len(pods.Items) > 0 && len(pods.Items) < 3 {
 			return true, nil
@@ -680,7 +680,7 @@ func testContainerInPod(appName, podName string, predicate func(*corev1.Containe
 
 	containers := pod.Spec.Containers
 	for _, container := range containers {
-		if container.Name == "jaeger-agent" {
+		if container.Name == containerName {
 			if predicate != nil {
 				return predicate(&container)
 			}
@@ -688,7 +688,7 @@ func testContainerInPod(appName, podName string, predicate func(*corev1.Containe
 		}
 	}
 
-	require.Failf(t, "Did not find an agent image for %s in namespace %s", appName, namespace)
+	require.Failf(t, "Did not find container %s for pod with label{app=%s} in namespace %s", containerName, appName, namespace)
 	return false
 }
 

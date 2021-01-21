@@ -125,7 +125,7 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	})
 	require.NoError(t, err)
 
-	exists := testContainerInPod(vertxDeploymentName, "istio-proxy", nil)
+	exists := testContainerInPod(namespace, vertxDeploymentName, "istio-proxy", nil)
 	require.True(suite.T(), exists)
 
 	// Confirm that we've created some traces
