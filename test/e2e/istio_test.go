@@ -126,7 +126,7 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	require.NoError(t, err)
 
 	exists := testContainerInPod(namespace, vertxDeploymentName, "istio-proxy", nil)
-	require.True(suite.T(), exists)
+	require.True(t, exists)
 
 	// Confirm that we've created some traces
 	ports := []string{"0:16686"}
