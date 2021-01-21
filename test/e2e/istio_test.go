@@ -134,10 +134,7 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 			Limit: 10,
 		})
 		require.NoError(t, err)
-
-		if pods.Size() == 0 {
-			return false, errors.New("Vertx Pods not found")
-		}
+		require.NotEqual(t, 0, pods.Size(), "Vertx Pods not found")
 
 		for _, pod := range pods.Items {
 			exist := containerExistsInPod(pod.Spec.Containers, "istio-proxy")
@@ -166,15 +163,11 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	err = WaitAndPollForHTTPResponse(url, func(response *http.Response) (bool, error) {
 		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		resp := &resp{}
 		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		return len(resp.Data) > 0 && strings.Contains(string(body), "traceID"), nil
 	})
