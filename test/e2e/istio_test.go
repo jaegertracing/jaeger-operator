@@ -132,14 +132,3 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	})
 	require.NoError(t, err, "SmokeTest failed")
 }
-
-func getBusinessAppCR(err error) *os.File {
-	content, err := ioutil.ReadFile("../../examples/business-application-injected-sidecar.yaml")
-	require.NoError(t, err)
-	newContent := strings.Replace(string(content), "image: jaegertracing/vertx-create-span:operator-e2e-tests", "image: "+vertxExampleImage, 1)
-	file, err := ioutil.TempFile("", "vertx-example")
-	require.NoError(t, err)
-	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
-	require.NoError(t, err)
-	return file
-}
