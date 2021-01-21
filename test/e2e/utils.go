@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"github.com/prometheus/common/log"
 	"io"
@@ -887,6 +886,6 @@ func waitForDeploymentAndUpdate(deploymentName, containerName string, update fun
 				return true, nil
 			}
 		}
-		return false, errors.New(fmt.Sprintf("container %s in deployment %s not found", containerName, deploymentName))
+		return false, fmt.Errorf("container %s in deployment %s not found", containerName, deploymentName)
 	})
 }
