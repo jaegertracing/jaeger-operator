@@ -880,9 +880,9 @@ func waitForSpecificContainerWithinDeployment(deployment, container string) {
 			if exist {
 				logrus.Infof("%s found in pod %s", container, pod.Name)
 				return true, nil
-			} else {
-				return false, nil
 			}
+
+			return false, nil
 		}
 
 		return false, errors.New("unexpected error while checking pods")
