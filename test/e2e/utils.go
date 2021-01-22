@@ -890,7 +890,7 @@ func waitForDeploymentAndUpdate(deploymentName, containerName string, update fun
 	})
 }
 
-func getBusinessAppCR(err error) *os.File {
+func getBusinessAppCR() *os.File {
 	content, err := ioutil.ReadFile("../../examples/business-application-injected-sidecar.yaml")
 	require.NoError(t, err)
 	newContent := strings.Replace(string(content), "image: jaegertracing/vertx-create-span:operator-e2e-tests", "image: "+vertxExampleImage, 1)

@@ -85,7 +85,7 @@ func (suite *IstioTestSuite) TestEnvoySidecar() {
 	require.NoError(t, err)
 
 	// Now deploy examples/business-application-injected-sidecar.yaml
-	businessAppCR := getBusinessAppCR(err)
+	businessAppCR := getBusinessAppCR()
 	defer os.Remove(businessAppCR.Name())
 	cmd := exec.Command("kubectl", "create", "--namespace", namespace, "--filename", businessAppCR.Name())
 	output, err := cmd.CombinedOutput()
