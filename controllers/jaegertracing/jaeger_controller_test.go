@@ -16,6 +16,7 @@ package controllers
 
 import (
 	"context"
+	"testing"
 
 	"github.com/open-telemetry/opentelemetry-operator/controllers"
 	"github.com/stretchr/testify/assert"
@@ -26,8 +27,6 @@ import (
 	k8sreconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-
-	"testing"
 
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	"k8s.io/client-go/kubernetes/scheme"
