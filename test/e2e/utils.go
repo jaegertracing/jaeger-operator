@@ -15,18 +15,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go/config"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
+	"github.com/opentracing/opentracing-go"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/jaeger-client-go/config"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -40,6 +38,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -440,7 +439,7 @@ type services struct {
 	Data   []string    `json:"data"`
 	total  int         `json:"total"`
 	limit  int         `json:"limit"`
-	offset int         `json:offset`
+	offset int         `json:"offset"`
 	errors interface{} `json:"errors"`
 }
 
@@ -640,12 +639,18 @@ func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
 	return false
 }
 
+// verifyAgentImage test if this Jaeger Instance is using the OTEL agent?
 func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelAgent(appName, namespace))
+	require.Equal(t, expected, testContainerInPod(namespace, appName, "jaeger-agent", func(container corev1.Container) bool {
+		logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
+		return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+	}))
 }
 
-// Was this Jaeger Instance using the OTEL agent?
-func wasUsingOtelAgent(appName, namespace string) bool {
+// testContainerInPod is a general function to test if the container exists in the pod
+// provided that the pod has `app` label. Return true if and only if the container exists and
+// the user-defined function `predicate` returns true if given.
+func testContainerInPod(namespace, appName, containerName string, predicate func(corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
@@ -676,13 +681,15 @@ func wasUsingOtelAgent(appName, namespace string) bool {
 
 	containers := pod.Spec.Containers
 	for _, container := range containers {
-		if container.Name == "jaeger-agent" {
-			logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+		if container.Name == containerName {
+			if predicate != nil {
+				return predicate(container)
+			}
+			return true
 		}
 	}
 
-	require.Failf(t, "Did not find an agent image for %s in namespace %s", appName, namespace)
+	require.Failf(t, "Did not find container %s for pod with label{app=%s} in namespace %s", containerName, appName, namespace)
 	return false
 }
 
@@ -860,4 +867,36 @@ func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string
 		ServiceName: serviceName,
 	}
 	return cfg.NewTracer()
+}
+
+func waitForDeploymentAndUpdate(deploymentName, containerName string, update func(container *corev1.Container)) error {
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
+		require.NoError(t, err)
+		containers := deployment.Spec.Template.Spec.Containers
+		for index, container := range containers {
+			if container.Name == containerName {
+				update(&deployment.Spec.Template.Spec.Containers[index])
+				updatedDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+				if err != nil {
+					log.Warnf("Error %v updating container, retrying", err)
+					return false, nil
+				}
+				log.Infof("Updated deployment %v", updatedDeployment.Name)
+				return true, nil
+			}
+		}
+		return false, fmt.Errorf("container %s in deployment %s not found", containerName, deploymentName)
+	})
+}
+
+func getBusinessAppCR() *os.File {
+	content, err := ioutil.ReadFile("../../examples/business-application-injected-sidecar.yaml")
+	require.NoError(t, err)
+	newContent := strings.Replace(string(content), "image: jaegertracing/vertx-create-span:operator-e2e-tests", "image: "+vertxExampleImage, 1)
+	file, err := ioutil.TempFile("", "vertx-example")
+	require.NoError(t, err)
+	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
+	require.NoError(t, err)
+	return file
 }

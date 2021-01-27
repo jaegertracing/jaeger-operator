@@ -1,8 +1,9 @@
-// +build examples1
+// +build istio
 
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -17,14 +18,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type ExamplesTestSuite struct {
+type IstioTestSuite struct {
 	suite.Suite
 }
 
-func (suite *ExamplesTestSuite) SetupSuite() {
+// LIFECYCLE - Suite
+func (suite *IstioTestSuite) SetupSuite() {
 	t = suite.T()
 	var err error
 	ctx, err = prepare(t)
@@ -38,64 +41,42 @@ func (suite *ExamplesTestSuite) SetupSuite() {
 	namespace = ctx.GetID()
 	require.NotNil(t, namespace, "GetID failed")
 
+	// label namespace
+	ns, err := framework.Global.KubeClient.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get the namespaces details: %v", err)
+
+	nsLabels := ns.GetLabels()
+	if nsLabels == nil {
+		nsLabels = make(map[string]string)
+	}
+	nsLabels["istio-injection"] = "enabled"
+	ns.SetLabels(nsLabels)
+
+	ns, err = framework.Global.KubeClient.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
+	require.NoError(t, err, "failed to update labels of the namespace %s", namespace)
+
 	addToFrameworkSchemeForSmokeTests(t)
 }
 
-func (suite *ExamplesTestSuite) TearDownSuite() {
+func (suite *IstioTestSuite) TearDownSuite() {
 	handleSuiteTearDown()
 }
 
-func TestExamplesSuite(t *testing.T) {
-	suite.Run(t, new(ExamplesTestSuite))
-}
+// LIFECYCLE - Test
 
-func (suite *ExamplesTestSuite) SetupTest() {
+func (suite *IstioTestSuite) SetupTest() {
 	t = suite.T()
 }
 
-func (suite *ExamplesTestSuite) AfterTest(suiteName, testName string) {
+func (suite *IstioTestSuite) AfterTest(suiteName, testName string) {
 	handleTestFailure()
 }
 
-func (suite *ExamplesTestSuite) TestAgentAsDaemonSet() {
-	var yamlFileName string
-	name := "agent-as-daemonset"
-
-	if isOpenShift(t) {
-		yamlFileName = "../../examples/openshift/agent-as-daemonset.yaml"
-
-		execOcCommand("create", "--namespace", namespace, "-f", "../../examples/openshift/hostport-scc-daemonset.yaml")
-		execOcCommand("create", "--namespace", namespace, "-f", "../../examples/openshift/service_account_jaeger-agent-daemonset.yaml")
-		execOcCommand("adm", "policy", "--namespace", namespace, "add-scc-to-user", "daemonset-with-hostport", "-z", "jaeger-agent-daemonset")
-	} else {
-		yamlFileName = "../../examples/agent-as-daemonset.yaml"
-	}
-
-	jaegerInstance := createJaegerInstanceFromFile(name, yamlFileName)
-	defer undeployJaegerInstance(jaegerInstance)
-
-	err := WaitForDaemonSet(t, fw.KubeClient, namespace, name+"-agent-daemonset", retryInterval, timeout)
-	require.NoError(t, err)
-
-	err = WaitForDeployment(t, fw.KubeClient, namespace, "agent-as-daemonset", 1, retryInterval, timeout)
-	require.NoError(t, err)
-
-	AllInOneSmokeTest(name)
+func TestIstioSuite(t *testing.T) {
+	suite.Run(t, new(IstioTestSuite))
 }
 
-func (suite *ExamplesTestSuite) TestWithCassandra() {
-	if skipCassandraTests {
-		t.Skip()
-	}
-	// make sure cassandra deployment has finished
-	err := WaitForStatefulset(t, fw.KubeClient, storageNamespace, "cassandra", retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for cassandra")
-
-	yamlFileName := "../../examples/with-cassandra.yaml"
-	smokeTestAllInOneExampleWithTimeout("with-cassandra", yamlFileName, timeout+1*time.Minute)
-}
-
-func (suite *ExamplesTestSuite) TestBusinessApp() {
+func (suite *IstioTestSuite) TestEnvoySidecar() {
 	// First deploy a Jaeger instance
 	jaegerInstanceName := "simplest"
 	jaegerInstance := createJaegerInstanceFromFile(jaegerInstanceName, "../../examples/simplest.yaml")
@@ -126,6 +107,9 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	})
 	require.NoError(t, err)
 
+	exists := testContainerInPod(namespace, vertxDeploymentName, "istio-proxy", nil)
+	require.True(t, exists)
+
 	// Confirm that we've created some traces
 	ports := []string{"0:16686"}
 	portForward, closeChan := CreatePortForward(namespace, jaegerInstanceName, "all-in-one", ports, fw.KubeConfig)
@@ -138,25 +122,13 @@ func (suite *ExamplesTestSuite) TestBusinessApp() {
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	err = WaitAndPollForHTTPResponse(url, func(response *http.Response) (bool, error) {
 		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		resp := &resp{}
 		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, err
-		}
+		require.NoError(t, err)
 
 		return len(resp.Data) > 0 && strings.Contains(string(body), "traceID"), nil
 	})
 	require.NoError(t, err, "SmokeTest failed")
-}
-
-func execOcCommand(args ...string) {
-	cmd := exec.Command("oc", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil && !strings.Contains(string(output), "AlreadyExists") {
-		require.NoErrorf(t, err, "Failed executing oc command with [%v]\n", err)
-	}
 }

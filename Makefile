@@ -25,8 +25,12 @@ ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
+ISTIO_VERSION ?= 1.8.2
+ISTIOCTL="./deploy/test/istio/bin/istioctl"
 GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
+
+SED ?= "sed"
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
@@ -115,7 +119,7 @@ prepare-e2e-tests: build docker push
 	@cat deploy/role_binding.yaml >> deploy/test/namespace-manifests.yaml
 	@echo "---" >> deploy/test/namespace-manifests.yaml
 
-	@sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" test/operator.yaml >> deploy/test/namespace-manifests.yaml
+	@${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" test/operator.yaml >> deploy/test/namespace-manifests.yaml
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml deploy/test/global-manifests.yaml
 	@echo "---" >> deploy/test/global-manifests.yaml
@@ -194,6 +198,11 @@ e2e-tests-upgrade: prepare-e2e-tests
 	@echo Running Upgrade end-to-end tests...
 	UPGRADE_TEST_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) go test -tags=upgrade  ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: e2e-tests-istio
+e2e-tests-istio: prepare-e2e-tests istio
+	@echo Running Istio end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=istio ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: run
 run: crd
 	@rm -rf /tmp/_cert*
@@ -250,6 +259,19 @@ else
 	@kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 endif
 
+.PHONY: istio
+istio:
+	@echo Install istio with minimal profile
+	@mkdir -p deploy/test
+	@[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ./deploy/test/istio)
+	@${ISTIOCTL} install --set profile=minimal -y
+
+.PHONY: undeploy-istio
+undeploy-istio:
+	@[ -f "${ISTIOCTL}" ] && (${ISTIOCTL} manifest generate --set profile=demo | kubectl delete --ignore-not-found=true -f -) || true
+	@kubectl delete namespace istio-system --ignore-not-found=true || true
+	@rm -rf deploy/test/istio
+
 .PHONY: cassandra
 cassandra: storage
 	@kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
@@ -270,7 +292,7 @@ else
 	@kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	@kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	@curl --fail --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml --create-dirs
-	@sed 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f - 2>&1 | grep -v "already exists" || true
+	@${SED} 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f - 2>&1 | grep -v "already exists" || true
 	@kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
 
@@ -294,7 +316,7 @@ else
 	@echo Creating namespace $(KAFKA_NAMESPACE)
 	@kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	@curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
-	@sed -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
+	@${SED} -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
 	@kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 endif
@@ -321,7 +343,7 @@ else
 endif
 
 .PHONY: clean
-clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator
+clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
 	@rm -f deploy/test/*.yaml
 	@if [ -d deploy/test ]; then rmdir deploy/test ; fi
 	@kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -383,7 +405,7 @@ deploy: ingress crd
 	@kubectl apply -f deploy/service_account.yaml
 	@kubectl apply -f deploy/cluster_role.yaml
 	@kubectl apply -f deploy/cluster_role_binding.yaml
-	@sed "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml | kubectl apply -f -
+	@${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml | kubectl apply -f -
 
 .PHONY: operatorhub
 operatorhub: check-operatorhub-pr-template
