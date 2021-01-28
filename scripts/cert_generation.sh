@@ -209,7 +209,9 @@ function generate_certs() {
 
   # For TRACING-1631 - if we can't find the namespace in the cert it's bad, regenerate everything
   if [ $REGENERATE_NEEDED = 0 ] && [ "${component}" == "elasticsearch" ] && [ -f ${WORKING_DIR}/logging-es.crt ]  ; then
-    openssl x509 -in ${WORKING_DIR}/logging-es.crt -text | grep -q "DNS:elasticsearch.${NAMESPACE}.svc"
+    # Make sure the SAN contains both "DNS:elasticsearch.${NAMESPACE}.svc.cluster.local" AND "DNS:elasticsearch.${NAMESPACE}.svc.
+    # The latter may be followed by a comma or whitespace
+    openssl x509 -in ${WORKING_DIR}/logging-es.crt -text | grep "DNS:elasticsearch.${NAMESPACE}.svc.cluster.local" | grep -E -q "DNS:elasticsearch.${NAMESPACE}.svc,"
     REGENERATE_NEEDED=$?
   fi
 
