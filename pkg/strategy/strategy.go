@@ -32,5 +32,5 @@ type Strategy struct {
 	HorizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
 	Services                 []corev1.Service
 	Secrets                  []corev1.Secret
-	Collector                otelv1alpha1.OpenTelemetryCollector
+	Collector                *otelv1alpha1.OpenTelemetryCollector
 }

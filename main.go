@@ -31,6 +31,7 @@ import (
 
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	jaegertracingcontroller "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -60,6 +61,11 @@ func main() {
 	pflag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+
+	cfg := config.New()
+
+	pflag.CommandLine.AddFlagSet(cfg.FlagSet())
+
 	pflag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -80,6 +86,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jaeger"),
 		Scheme: mgr.GetScheme(),
+		Config: cfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jaeger")
 		os.Exit(1)

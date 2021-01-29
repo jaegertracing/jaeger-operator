@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package strategy
+package config
 
 import (
-	"context"
-
-	"go.opentelemetry.io/otel"
-
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-	"github.com/jaegertracing/jaeger-operator/internal/instrument"
+	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 
-// For returns the appropriate Strategy for the given Jaeger instance.
-func For(ctx context.Context, jaeger v2.Jaeger) Strategy {
-	tracer := otel.GetTracerProvider().Tracer(instrument.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "strategy.For")
-	defer span.End()
+type Option func(c *options)
 
-	if jaeger.Spec.Strategy == v2.DeploymentStrategyAllInOne {
-		return newAllInOneStrategy(ctx, jaeger)
+type options struct {
+	version        version.Version
+	collectorImage string
+}
+
+func WithVersion(v version.Version) Option {
+	return func(o *options) {
+		o.version = v
 	}
+}
 
-	return newProductionStrategy(ctx, jaeger)
+func WithCollectorImage(s string) Option {
+	return func(o *options) {
+		o.collectorImage = s
+	}
 }

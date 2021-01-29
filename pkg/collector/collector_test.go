@@ -17,9 +17,8 @@ package collector
 import (
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/internal/version"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -27,28 +26,27 @@ import (
 )
 
 func TestDefaultCollectorImage(t *testing.T) {
-	viper.Set("jaeger-collector-image", "org/custom-collector-image")
-	defer viper.Reset()
-
+	cfg := config.New()
 	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-
-	collector := Get(*jaeger)
+	collector := Get(*jaeger, cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Image)
-	assert.Equal(t, "org/custom-collector-image:"+version.Get().Jaeger, collector.Spec.Image)
+	assert.Equal(t, "otel/opentelemetry-collector:0.19.0", collector.Spec.Image)
 }
 
 func TestDefaultCollectorConfig(t *testing.T) {
+	cfg := config.New()
 	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	otelCollector := Get(*jaeger)
+	otelCollector := Get(*jaeger, cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Config)
 	assert.Equal(t, DefaultConfig(), otelCollector.Spec.Config)
 }
 
 func TestCustomCollectorConfig(t *testing.T) {
 	customConfig := "OTHER_VALUE"
+	cfg := config.New()
 	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Collector.Config = customConfig
-	otelCollector := Get(*jaeger)
+	otelCollector := Get(*jaeger, cfg)
 	assert.Equal(t, customConfig, jaeger.Spec.Collector.Config)
 	assert.Equal(t, customConfig, otelCollector.Spec.Config)
 }

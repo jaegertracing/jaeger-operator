@@ -17,50 +17,32 @@ package naming
 import (
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 
 func TestImageNameSupplied(t *testing.T) {
-	viper.Set("test-image", "org/custom-image")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/actual-image:1.2.3", Image("org/actual-image:1.2.3", "test-image"))
+	assert.Equal(t, "org/actual-image:1.2.3", Image("org/actual-image:1.2.3", "org/default-image", version.Get()))
 }
 
 func TestImageNameParamNoTag(t *testing.T) {
-	viper.Set("test-image", "org/custom-image")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/custom-image:"+version.Get().Jaeger, Image("", "test-image"))
+	assert.Equal(t, "org/default-image:"+version.Get().Jaeger, Image("", "org/default-image", version.Get()))
 }
 
 func TestImageNameParamWithTag(t *testing.T) {
-	viper.Set("test-image", "org/custom-image:1.2.3")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/custom-image:1.2.3", Image("", "test-image"))
+	assert.Equal(t, "org/default-image:1.2.3", Image("", "org/default-image:1.2.3", version.Get()))
 }
 
 func TestImageNameParamWithDigest(t *testing.T) {
-	viper.Set("test-image", "org/custom-image@sha256:2a7ef4373262fa5fa3b3eaac86015650f8f3eee65d6e2674df931657873e318e")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/custom-image@sha256:2a7ef4373262fa5fa3b3eaac86015650f8f3eee65d6e2674df931657873e318e", Image("", "test-image"))
+	defaultImage := "org/custom-image@sha256:2a7ef4373262fa5fa3b3eaac86015650f8f3eee65d6e2674df931657873e318e"
+	assert.Equal(t, defaultImage, Image("", defaultImage, version.Get()))
 }
 
 func TestImageNameParamDefaultNoTag(t *testing.T) {
-	viper.SetDefault("test-image", "org/default-image")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/default-image:"+version.Get().Jaeger, Image("", "test-image"))
+	assert.Equal(t, "org/default-image:"+version.Get().Jaeger, Image("", "org/default-image", version.Get()))
 }
 
 func TestImageNameParamDefaultWithTag(t *testing.T) {
-	viper.SetDefault("test-image", "org/default-image:1.2.3")
-	defer viper.Reset()
-
-	assert.Equal(t, "org/default-image:1.2.3", Image("", "test-image"))
+	assert.Equal(t, "org/default-image:1.2.3", Image("", "org/default-image:1.2.3", version.Get()))
 }

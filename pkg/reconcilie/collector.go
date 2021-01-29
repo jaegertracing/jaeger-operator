@@ -29,7 +29,11 @@ func Collector(ctx context.Context, params Params) error {
 
 	desired := params.Strategy.Collector
 
-	if err := controllerutil.SetControllerReference(&params.Instance, &desired, params.Scheme); err != nil {
+	if desired == nil {
+		return nil
+	}
+
+	if err := controllerutil.SetControllerReference(&params.Instance, desired, params.Scheme); err != nil {
 		return fmt.Errorf("failed to set controller reference: %w", err)
 	}
 
@@ -38,7 +42,7 @@ func Collector(ctx context.Context, params Params) error {
 	err := params.Client.Get(ctx, nns, existing)
 
 	if err != nil && k8serrors.IsNotFound(err) {
-		if err := params.Client.Create(ctx, &desired); err != nil {
+		if err := params.Client.Create(ctx, desired); err != nil {
 			return fmt.Errorf("failed to create: %w", err)
 		}
 		params.Log.V(2).Info("created", "collector", desired.Name, "collector.namespace", desired.Namespace)

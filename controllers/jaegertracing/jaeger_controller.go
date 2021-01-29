@@ -17,6 +17,8 @@ package controllers
 import (
 	"context"
 
+	"github.com/jaegertracing/jaeger-operator/internal/config"
+
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +37,7 @@ type JaegerReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+	Config config.Config
 }
 
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch;create;update;patch;delete
@@ -60,11 +63,12 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	instance = normalize.Jaeger(ctx, instance)
 
 	params := reconcilie.Params{
+		Config:   r.Config,
 		Client:   r.Client,
 		Instance: instance,
 		Log:      log,
 		Scheme:   r.Scheme,
-		Strategy: strategy.For(ctx, instance),
+		Strategy: strategy.For(ctx, r.Config, instance),
 	}
 
 	if err := reconcilie.Run(ctx, params); err != nil {

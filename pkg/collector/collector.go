@@ -18,6 +18,8 @@ import (
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/jaegertracing/jaeger-operator/internal/config"
+
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/pkg/naming"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -30,9 +32,6 @@ func DefaultConfig() string {
       jaeger:
         protocols:
           grpc:
-    processors:
-      queued_retry:
-
     exporters:
       logging:
 
@@ -40,11 +39,10 @@ func DefaultConfig() string {
       pipelines:
         traces:
           receivers: [jaeger]
-          processors: [queued_retry]
           exporters: [logging]`
 }
 
-func Get(jaeger jaegertracingv2.Jaeger) otelv1alpha1.OpenTelemetryCollector {
+func Get(jaeger jaegertracingv2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
 	config := jaeger.Spec.Collector.Config
 	if config == "" {
@@ -54,13 +52,13 @@ func Get(jaeger jaegertracingv2.Jaeger) otelv1alpha1.OpenTelemetryCollector {
 	collectorSpecs := jaeger.Spec.Collector
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, collectorSpecs.JaegerCommonSpec)
 
-	return otelv1alpha1.OpenTelemetryCollector{
+	return &otelv1alpha1.OpenTelemetryCollector{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Name,
 			Namespace: jaeger.Namespace,
 		},
 		Spec: otelv1alpha1.OpenTelemetryCollectorSpec{
-			Image:          naming.Image(jaeger.Spec.Collector.Image, "jaeger-collector-image"),
+			Image:          naming.Image(jaeger.Spec.Collector.Image, cfg.CollectorImage(), cfg.JaegerVersion()),
 			Config:         config,
 			Replicas:       collectorSpecs.Replicas,
 			ServiceAccount: commonSpecs.ServiceAccount,

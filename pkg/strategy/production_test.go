@@ -12,26 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package naming
+package strategy
 
 import (
-	"fmt"
-	"strings"
+	"context"
+	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/internal/version"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
+
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 )
 
-// Image returns the image associated with the supplied image if defined, otherwise
-// uses the parameter name to retrieve the value. If the parameter value does not
-// include a tag/digest, the Jaeger version will be appended.
-func Image(image, defaultImage string, ver version.Version) string {
-	if image == "" {
-		param := defaultImage
-		if strings.IndexByte(param, ':') == -1 {
-			image = fmt.Sprintf("%s:%s", param, version.Jaeger())
-		} else {
-			image = param
-		}
-	}
-	return image
+func TestCreateProductionDeployment(t *testing.T) {
+	name := "TestCreateProductionDeployment"
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: name})
+	cfg := config.New()
+	c := newProductionStrategy(context.Background(), cfg, *jaeger)
+	assert.NotNil(t, c.Collector)
 }

@@ -25,9 +25,15 @@ import (
 	"github.com/jaegertracing/jaeger-operator/internal/instrument"
 )
 
-func newAllInOneStrategy(ctx context.Context, _ config.Config, _ v2.Jaeger) Strategy {
+// For returns the appropriate Strategy for the given Jaeger instance.
+func For(ctx context.Context, cfg config.Config, jaeger v2.Jaeger) Strategy {
 	tracer := otel.GetTracerProvider().Tracer(instrument.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "newProductionStrategy")
+	_, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
-	return Strategy{Type: v2.DeploymentStrategyAllInOne}
+
+	if jaeger.Spec.Strategy == v2.DeploymentStrategyAllInOne {
+		return newAllInOneStrategy(ctx, cfg, jaeger)
+	}
+
+	return newProductionStrategy(ctx, cfg, jaeger)
 }
