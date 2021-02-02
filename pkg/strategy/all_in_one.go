@@ -1,122 +1,33 @@
+// Copyright The Jaeger Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package strategy
 
 import (
 	"context"
 
-	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
-	appsv1 "k8s.io/api/apps/v1"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
-	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
-	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
-	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
-	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
-	"github.com/jaegertracing/jaeger-operator/pkg/route"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	"go.opentelemetry.io/otel"
+
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/instrument"
 )
 
-func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "newAllInOneStrategy")
+func newAllInOneStrategy(ctx context.Context, _ config.Config, _ v2.Jaeger) Strategy {
+	tracer := otel.GetTracerProvider().Tracer(instrument.ReconciliationTracer)
+	_, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
-
-	c := S{typ: v1.DeploymentStrategyAllInOne}
-	jaeger.Logger().Debug("Creating all-in-one deployment")
-
-	dep := deployment.NewAllInOne(jaeger)
-
-	// add all service accounts
-	for _, acc := range account.Get(jaeger) {
-		c.accounts = append(c.accounts, *acc)
-	}
-
-	// add all cluster role bindings
-	c.clusterRoleBindings = crb.Get(jaeger)
-
-	// add the UI config map
-	if cm := configmap.NewUIConfig(jaeger).Get(); cm != nil {
-		c.configMaps = append(c.configMaps, *cm)
-	}
-
-	// add the Sampling config map
-	if cm := sampling.NewConfig(jaeger).Get(); cm != nil {
-		c.configMaps = append(c.configMaps, *cm)
-	}
-
-	// add the optional OpenShift trusted CA config map
-	if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
-		c.configMaps = append(c.configMaps, *cm)
-	}
-
-	// add the service CA config map
-	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
-		c.configMaps = append(c.configMaps, *cm)
-	}
-
-	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
-		c.configMaps = append(c.configMaps, cm...)
-	}
-
-	// add the deployments
-	c.deployments = []appsv1.Deployment{*inject.OAuthProxy(jaeger, dep.Get())}
-
-	// add the daemonsets
-	if ds := deployment.NewAgent(jaeger).Get(); ds != nil {
-		c.daemonSets = []appsv1.DaemonSet{*ds}
-	}
-
-	// add the services
-	for _, svc := range dep.Services() {
-		c.services = append(c.services, *svc)
-	}
-
-	// add the routes/ingresses
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
-			c.routes = append(c.routes, *q)
-			if link := consolelink.Get(jaeger, q); link != nil {
-				c.consoleLinks = append(c.consoleLinks, *link)
-			}
-		}
-	} else {
-		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
-			c.ingresses = append(c.ingresses, *q)
-		}
-	}
-
-	if isBoolTrue(jaeger.Spec.Storage.Dependencies.Enabled) {
-		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
-			c.cronJobs = append(c.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
-		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
-		}
-	}
-
-	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
-		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
-			c.cronJobs = append(c.cronJobs, *cronjob.CreateEsIndexCleaner(jaeger))
-		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
-		}
-	}
-
-	if storage.EnableRollover(jaeger.Spec.Storage) {
-		c.cronJobs = append(c.cronJobs, cronjob.CreateRollover(jaeger)...)
-	}
-
-	c.dependencies = storage.Dependencies(jaeger)
-
-	return c
-}
-
-func isBoolTrue(b *bool) bool {
-	return b != nil && *b
+	return Strategy{Type: v2.DeploymentStrategyAllInOne}
 }

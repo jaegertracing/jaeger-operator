@@ -1,0 +1,6 @@
+apiVersion: jaegertracing.io/v2
+kind: Jaeger
+metadata:
+  name: simple-prod
+spec:
+  strategy: production

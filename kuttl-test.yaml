@@ -1,0 +1,14 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+startKIND: true
+crdDir: ./tests/_build/crds/
+artifactsDir: ./tests/_build/artifacts/
+kindContainers:
+- local/jaeger-operator:e2e
+commands:
+- command: kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml
+- command: kubectl apply -f ./tests/config/opentelemetry-operator/crd/bases/opentelemetry.io_opentelemetrycollectors.yaml
+- command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator-controller-manager -n jaeger-operator-system
+- command: sleep 5s
+testDirs:
+- ./tests/e2e/

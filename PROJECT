@@ -1,0 +1,12 @@
+domain: jaegertracing.io
+layout: go.kubebuilder.io/v2
+projectName: jaeger-operator
+multigroup: true
+repo: github.com/jaegertracing/jaeger-operator
+resources:
+- group: jaegertracing
+  kind: Jaeger
+  version: v2
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}
