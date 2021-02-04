@@ -13,7 +13,7 @@ jobs:
     - uses: actions/setup-go@v2.1.3
       with:
         go-version: '1.14.4'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2.3.4
     - uses: jpkrohling/setup-operator-sdk@v1.0.2
       with:
         operator-sdk-version: v0.18.2
