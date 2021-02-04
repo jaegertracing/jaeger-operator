@@ -3,18 +3,15 @@ package deployment
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -323,31 +320,6 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.ca", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.enabled", dep.Spec.Template.Spec.Containers[0].Args))
 	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.server-name", dep.Spec.Template.Spec.Containers[0].Args))
-}
-
-func TestAllInOneOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.AllInOne.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	c := NewAllInOne(jaeger)
-	d := c.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
-}
-
-func TestAllInOneOTELConfig_error(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.AllInOne.Config = v1.NewFreeForm(map[string]interface{}{})
-	jaeger.Spec.AllInOne.Config.UnmarshalJSON([]byte(""))
-	_, err := jaeger.Spec.AllInOne.Config.GetMap()
-	require.Error(t, err)
-
-	c := NewAllInOne(jaeger)
-	d := c.Get()
-	assert.False(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.False(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.False(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func TestAllInOneServiceLinks(t *testing.T) {

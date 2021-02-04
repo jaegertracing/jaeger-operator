@@ -816,21 +816,6 @@ func TestEqualSidecar(t *testing.T) {
 	assert.False(t, EqualSidecar(dep1, dep3))
 }
 
-func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	d := Sidecar(jaeger, &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels:      map[string]string{Label: "my-instance"},
-			Annotations: map[string]string{},
-		},
-	})
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
-}
-
 func hasVolume(name string, volumes []corev1.Volume) bool {
 	for _, v := range volumes {
 		if v.Name == name {

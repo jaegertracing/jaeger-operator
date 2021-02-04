@@ -13,9 +13,8 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func setDefaults() {
@@ -225,18 +224,6 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
-}
-
-func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-	jaeger.Spec.Agent.Strategy = "daemonset"
-
-	a := NewAgent(jaeger)
-	d := a.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func TestAgentServiceLinks(t *testing.T) {

@@ -528,17 +528,6 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 }
 
-func TestCollectorOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.Collector.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	c := NewCollector(jaeger)
-	d := c.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("instance-collector-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("instance-collector-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
-}
-
 func TestCollectorServiceLinks(t *testing.T) {
 	c := NewCollector(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
 	dep := c.Get()

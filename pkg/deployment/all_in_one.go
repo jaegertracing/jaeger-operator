@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -78,15 +76,6 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
 		}
-	}
-
-	otelConf, err := a.jaeger.Spec.AllInOne.Config.GetMap()
-	if err != nil {
-		a.jaeger.Logger().WithField("error", err).
-			WithField("component", "all-in-one").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(a.jaeger, "all-in-one", a.jaeger.Spec.AllInOne.Options, otelConf, commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments

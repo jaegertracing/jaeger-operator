@@ -80,10 +80,6 @@ func (suite *StreamingTestSuite) TestStreaming() {
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector and ingester images
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
-	verifyIngesterImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithTLS() {
@@ -127,10 +123,6 @@ func (suite *StreamingTestSuite) TestStreamingWithTLS() {
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, kafkaNamespace)
-
-	// Make sure we were using the correct collector and ingester images
-	verifyCollectorImage(jaegerInstanceName, kafkaNamespace, specifyOtelImages)
-	verifyIngesterImage(jaegerInstanceName, kafkaNamespace, specifyOtelImages)
 }
 
 func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
@@ -162,10 +154,6 @@ func (suite *StreamingTestSuite) TestStreamingWithAutoProvisioning() {
 	}
 
 	ProductionSmokeTestWithNamespace(jaegerInstanceName, jaegerInstanceNamespace)
-
-	// Make sure we were using the correct collector and ingester images
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
-	verifyIngesterImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
@@ -174,11 +162,6 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 	collectorOptions := make(map[string]interface{})
 	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
 	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
-	if !specifyOtelConfig {
-		collectorOptions["kafka.producer.batch-linger"] = "1s"
-		collectorOptions["kafka.producer.batch-size"] = "128000"
-		collectorOptions["kafka.producer.batch-max-messages"] = "100"
-	}
 
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -213,15 +196,6 @@ func jaegerStreamingDefinition(namespace string, name string) *v1.Jaeger {
 		},
 	}
 
-	if specifyOtelImages {
-		log.Infof("Using OTEL collector for %s", name)
-		j.Spec.Collector.Image = otelCollectorImage
-		log.Infof("Using OTEL ingester for %s", name)
-		j.Spec.Ingester.Image = otelIngesterImage
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
-	}
-
 	return j
 }
 
@@ -238,9 +212,6 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 	ingesterOptions["kafka.consumer.tls.ca"] = "/var/run/secrets/cluster-ca/ca.crt"
 	ingesterOptions["kafka.consumer.tls.cert"] = "/var/run/secrets/kafkauser/user.crt"
 	ingesterOptions["kafka.consumer.tls.key"] = "/var/run/secrets/kafkauser/user.key"
-	if !specifyOtelConfig {
-		ingesterOptions["ingester.deadlockInterval"] = 0
-	}
 
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
@@ -283,16 +254,6 @@ func jaegerStreamingDefinitionWithTLS(namespace string, name, kafkaUserName stri
 		},
 	}
 
-	if specifyOtelImages {
-		log.Infof("Using OTEL collector for %s", name)
-		j.Spec.Collector.Image = otelCollectorImage
-		log.Infof("Using OTEL ingester for %s", name)
-		j.Spec.Ingester.Image = otelIngesterImage
-
-		j.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
-	}
-
 	return j
 }
 
@@ -320,16 +281,6 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 				}),
 			},
 		},
-	}
-
-	if specifyOtelImages {
-		log.Infof("Using OTEL collector for %s", name)
-		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		log.Infof("Using OTEL ingester for %s", name)
-		jaegerInstance.Spec.Ingester.Image = otelIngesterImage
-
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		jaegerInstance.Spec.Ingester.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14270"))
 	}
 
 	return jaegerInstance

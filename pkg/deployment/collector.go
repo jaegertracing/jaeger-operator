@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -79,15 +77,6 @@ func (c *Collector) Get() *appsv1.Deployment {
 	sampling.Update(c.jaeger, commonSpec, &options)
 	tls.Update(c.jaeger, commonSpec, &options)
 	ca.Update(c.jaeger, commonSpec)
-
-	otelConf, err := c.jaeger.Spec.Collector.Config.GetMap()
-	if err != nil {
-		c.jaeger.Logger().WithField("error", err).
-			WithField("component", "collector").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(c.jaeger, "collector", c.jaeger.Spec.Collector.Options, otelConf, commonSpec, &options)
-	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

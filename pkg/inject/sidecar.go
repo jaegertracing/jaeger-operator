@@ -6,15 +6,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -235,15 +233,6 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
 	volumesAndMountsSpec := jaeger.Spec.Agent.JaegerCommonSpec
-	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
-	if err != nil {
-		jaeger.Logger().WithField("error", err).
-			WithField("component", "agent").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(jaeger, "agent", jaeger.Spec.Agent.Options, otelConf, &volumesAndMountsSpec, &args)
-	}
-
 	ca.Update(jaeger, &volumesAndMountsSpec)
 	ca.AddServiceCA(jaeger, &volumesAndMountsSpec)
 

@@ -180,19 +180,10 @@ func getSimpleStreaming(name, namespace string) *v1.Jaeger {
 	collectorOptions := make(map[string]interface{})
 	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
 	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
-	if !specifyOtelConfig {
-		collectorOptions["kafka.producer.batch-linger"] = "1s"
-		collectorOptions["kafka.producer.batch-size"] = "128000"
-		collectorOptions["kafka.producer.batch-max-messages"] = "100"
-	}
 
 	ingesterOptions := make(map[string]interface{})
 	ingesterOptions["kafka.consumer.topic"] = "jaeger-spans"
 	ingesterOptions["kafka.consumer.brokers"] = kafkaClusterURL
-	if !specifyOtelConfig {
-		ingesterOptions["ingester.parallelism"] = "6900"
-		ingesterOptions["ingester.deadlockInterval"] = 0
-	}
 
 	autoscale := true
 	var minReplicas int32 = 1
