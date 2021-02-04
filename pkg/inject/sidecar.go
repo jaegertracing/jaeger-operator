@@ -200,7 +200,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
 	adminPort := util.GetAdminPort(args, 14271)
 
-	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
+	if len(util.FindItem("--agent.tags=", args)) == 0 {
 		defaultAgentTagsMap := make(map[string]string)
 		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
 		defaultAgentTagsMap["deployment.name"] = dep.Name
@@ -221,9 +221,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 			for key, value := range defaultAgentTagsMap {
 				existingAgentTags[key] = value
 			}
-			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(existingAgentTags)))
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(existingAgentTags)))
 		} else {
-			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(defaultAgentTagsMap)))
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(defaultAgentTagsMap)))
 		}
 
 	}
@@ -395,7 +395,7 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 }
 
 func parseAgentTags(args []string) map[string]string {
-	tagsArg := util.FindItem("--jaeger.tags=", args)
+	tagsArg := util.FindItem("--agent.tags=", args)
 	if tagsArg == "" {
 		return map[string]string{}
 	}
