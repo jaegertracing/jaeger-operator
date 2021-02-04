@@ -10,17 +10,20 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - "-draft"
       - "status-success=basic-checks"
-      - "status-success=end-to-end (smoke)"
-      - "status-success=end-to-end (es)"
+      - "status-success=codecov/patch" # we don't require those, but we might want to manually check before automatically merging
+      - "status-success=codecov/project"
+      - "status-success=CodeQL Analyze (go)"
+      - "status-success=DCO"
       - "status-success=end-to-end (cassandra)"
-      - "status-success=end-to-end (streaming)"
+      - "status-success=end-to-end (es)"
       - "status-success=end-to-end (examples1)"
       - "status-success=end-to-end (examples2)"
       - "status-success=end-to-end (generate)"
-      - "status-success=DCO"
+      - "status-success=end-to-end (istio)"
+      - "status-success=end-to-end (smoke)"
+      - "status-success=end-to-end (streaming)"
+      - "status-success=end-to-end (upgrade)"
       - "status-success=WIP"
-      - "status-success=codecov/patch" # we don't require those, but we might want to manually check before automatically merging
-      - "status-success=codecov/project"
     actions:
       merge:
         method: squash
@@ -75,16 +78,19 @@ pull_request_rules:
     conditions:
       - author~=^dependabot(|-preview)\[bot\]$
       - "status-success=basic-checks"
-      - "status-success=end-to-end (smoke)"
-      - "status-success=end-to-end (es)"
+      - "status-success=codecov/patch" # we don't require those, but we might want to manually check before automatically merging
+      - "status-success=codecov/project"
+      - "status-success=CodeQL Analyze (go)"
+      - "status-success=DCO"
       - "status-success=end-to-end (cassandra)"
-      - "status-success=end-to-end (streaming)"
+      - "status-success=end-to-end (es)"
       - "status-success=end-to-end (examples1)"
       - "status-success=end-to-end (examples2)"
       - "status-success=end-to-end (generate)"
-      - "status-success=end-to-end (es-otel)"
-      - "status-success=end-to-end (streaming-otel)"
-      - "status-success=DCO"
+      - "status-success=end-to-end (istio)"
+      - "status-success=end-to-end (smoke)"
+      - "status-success=end-to-end (streaming)"
+      - "status-success=end-to-end (upgrade)"
       - "status-success=WIP"
     actions:
       merge:
