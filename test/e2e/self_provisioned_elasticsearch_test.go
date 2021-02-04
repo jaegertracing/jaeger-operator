@@ -85,9 +85,6 @@ func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
@@ -164,9 +161,6 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.NoError(t, err)
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func esDeploymentName(ns, jaegerName string, instances int) string {

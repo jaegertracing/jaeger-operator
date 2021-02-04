@@ -1,21 +1,12 @@
 package e2e
 
 import (
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
-
-func updateOtelImages(jaegerInstance *v1.Jaeger) {
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", jaegerInstance.Name)
-		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-}
 
 // GetJaegerSimpleProdWithServerUrlsCR returns simple production CR with external es server urls
 func GetJaegerSimpleProdWithServerUrlsCR(name, esServerUrls string) *v1.Jaeger {
@@ -43,8 +34,6 @@ func GetJaegerSimpleProdWithServerUrlsCR(name, esServerUrls string) *v1.Jaeger {
 			},
 		},
 	}
-
-	updateOtelImages(simpleProdCR)
 
 	return simpleProdCR
 }
@@ -79,8 +68,6 @@ func GetJaegerSelfProvSimpleProdCR(instanceName, namespace string, nodeCount int
 			},
 		},
 	}
-
-	updateOtelImages(selfProvSimpleProdCR)
 
 	return selfProvSimpleProdCR
 }

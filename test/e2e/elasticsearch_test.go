@@ -90,7 +90,4 @@ func (suite *ElasticSearchBasicTestSuite) TestSimpleProd() {
 	require.NoError(t, err, "Error waiting for query deployment")
 
 	ProductionSmokeTest(name)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(name, namespace, specifyOtelImages)
 }

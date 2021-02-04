@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -74,8 +72,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace)
 	defer undeployJaegerInstance(firstJaegerInstance)
 
-	verifyAllInOneImage(firstJaegerInstanceName, namespace, specifyOtelImages)
-
 	vertxDeploymentName := "vertx-create-span-sidecar"
 	dep := getVertxDefinition(vertxDeploymentName, map[string]string{inject.Annotation: "true"})
 	err := fw.Client.Create(goctx.TODO(), dep, cleanupOptions)
@@ -136,7 +132,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 		return len(resp.Data) > 0, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-	verifyAgentImage(vertxDeploymentName, namespace, specifyOtelImages)
 }
 
 func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {
@@ -225,16 +220,6 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 				Security: v1.IngressSecurityNoneExplicit,
 			},
 		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL AllInOne image for %s", name)
-		j.Spec.AllInOne.Image = otelAllInOneImage
-		logrus.Infof("Using OTEL Agent for %s", name)
-		j.Spec.Agent.Image = otelAgentImage
-
-		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)

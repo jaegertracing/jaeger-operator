@@ -513,7 +513,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--a-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--b-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
@@ -522,7 +522,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 func TestSidecarExplicitTags(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{"jaeger.tags": "key=val"})
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{"agent.tags": "key=val"})
 	dep := dep(map[string]string{}, map[string]string{})
 
 	// test
@@ -677,7 +677,7 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--agent.tags")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
 	assert.NotContains(t, agentTagsMap, "container.name")
 }
@@ -690,7 +690,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 
@@ -698,7 +698,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
 	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
@@ -780,7 +780,7 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
 	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+	assert.Greater(t, len(util.FindItem("--agent.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
 	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
@@ -804,7 +804,7 @@ func TestEqualSidecar(t *testing.T) {
 
 	// Change flags.
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"--jaeger.tags": "changed-tag=newvalue",
+		"--agent.tags": "changed-tag=newvalue",
 	})
 
 	dep2 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
@@ -814,21 +814,6 @@ func TestEqualSidecar(t *testing.T) {
 	// When no agent is present on the deploy
 	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	assert.False(t, EqualSidecar(dep1, dep3))
-}
-
-func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	d := Sidecar(jaeger, &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels:      map[string]string{Label: "my-instance"},
-			Annotations: map[string]string{},
-		},
-	})
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func hasVolume(name string, volumes []corev1.Volume) bool {

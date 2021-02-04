@@ -52,8 +52,6 @@ var (
 	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
 	saveLogs           = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	specifyOtelImages  = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
-	specifyOtelConfig  = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
 	skipESExternal     = getBoolEnv("SKIP_ES_EXTERNAL", false)
 
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
@@ -61,10 +59,6 @@ var (
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
 	jaegerCollectorPort  = 14268
-	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
-	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
-	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
-	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
 	vertxExampleImage    = getStringEnv("VERTX_EXAMPLE_IMAGE", "jaegertracing/vertx-create-span:operator-e2e-tests")
 	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
 	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
@@ -581,72 +575,6 @@ func deletePersistentVolumeClaims(namespace string) {
 	}
 }
 
-func verifyIngesterImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelIngester(jaegerInstanceName, namespace))
-}
-
-// Was this Jaeger Instance using the OTEL ingester?
-func wasUsingOtelIngester(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-ingester", metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger-ingester" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-ingester")
-		}
-	}
-
-	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
-	return false
-}
-
-func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelCollector(jaegerInstanceName, namespace))
-}
-
-// Was this Jaeger Instance using the OTEL collector?
-func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-collector", metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger-collector" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-collector")
-		}
-	}
-
-	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
-	return false
-}
-
-func verifyAllInOneImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelAllInOne(jaegerInstanceName, namespace))
-}
-
-func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName, metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "opentelemetry-all-in-one")
-		}
-	}
-
-	return false
-}
-
-// verifyAgentImage test if this Jaeger Instance is using the OTEL agent?
-func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, testContainerInPod(namespace, appName, "jaeger-agent", func(container corev1.Container) bool {
-		logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
-		return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
-	}))
-}
-
 // testContainerInPod is a general function to test if the container exists in the pod
 // provided that the pod has `app` label. Return true if and only if the container exists and
 // the user-defined function `predicate` returns true if given.
@@ -691,14 +619,6 @@ func testContainerInPod(namespace, appName, containerName string, predicate func
 
 	require.Failf(t, "Did not find container %s for pod with label{app=%s} in namespace %s", containerName, appName, namespace)
 	return false
-}
-
-func getOtelConfigForHealthCheckPort(healthCheckPort string) map[string]interface{} {
-	return map[string]interface{}{
-		"extensions": map[string]interface{}{
-			"health_check": map[string]string{"port": healthCheckPort},
-		},
-	}
 }
 
 func logWarningEvents() {
@@ -846,12 +766,6 @@ func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 				},
 			},
 		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	return jaegerInstance

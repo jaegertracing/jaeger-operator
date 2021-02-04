@@ -6,15 +6,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -202,7 +200,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
 	adminPort := util.GetAdminPort(args, 14271)
 
-	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
+	if len(util.FindItem("--agent.tags=", args)) == 0 {
 		defaultAgentTagsMap := make(map[string]string)
 		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
 		defaultAgentTagsMap["deployment.name"] = dep.Name
@@ -223,9 +221,9 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 			for key, value := range defaultAgentTagsMap {
 				existingAgentTags[key] = value
 			}
-			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(existingAgentTags)))
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(existingAgentTags)))
 		} else {
-			args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, joinTags(defaultAgentTagsMap)))
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(defaultAgentTagsMap)))
 		}
 
 	}
@@ -235,15 +233,6 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
 	volumesAndMountsSpec := jaeger.Spec.Agent.JaegerCommonSpec
-	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
-	if err != nil {
-		jaeger.Logger().WithField("error", err).
-			WithField("component", "agent").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(jaeger, "agent", jaeger.Spec.Agent.Options, otelConf, &volumesAndMountsSpec, &args)
-	}
-
 	ca.Update(jaeger, &volumesAndMountsSpec)
 	ca.AddServiceCA(jaeger, &volumesAndMountsSpec)
 
@@ -406,7 +395,7 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 }
 
 func parseAgentTags(args []string) map[string]string {
-	tagsArg := util.FindItem("--jaeger.tags=", args)
+	tagsArg := util.FindItem("--agent.tags=", args)
 	if tagsArg == "" {
 		return map[string]string{}
 	}

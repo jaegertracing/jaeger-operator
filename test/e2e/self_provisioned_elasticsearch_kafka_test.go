@@ -107,7 +107,4 @@ func (suite *SelfProvisionedESWithKafkaTestSuite) TestSelfProvisionedESAndKafkaS
 	require.NoError(t, err, "Error waiting for ingester deployment")
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
