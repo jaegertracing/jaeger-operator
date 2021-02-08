@@ -15,6 +15,12 @@ import (
 
 func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 	latestVersion := "1.22.0"
+
+	// this is here because 1.22 isn't in the version map yet
+	// remove this code once it's been added there
+	upgrades[latestVersion] = upgrade1_22_0
+	parseSemVer()
+
 	opts := v1.NewOptions(map[string]interface{}{
 		"jaeger.tags": "somekey=somevalue",
 	})
