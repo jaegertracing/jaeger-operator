@@ -16,6 +16,6 @@ var (
 		"1.17.0": upgrade1_17_0,
 		"1.18.0": upgrade1_18_0,
 		"1.20.0": upgrade1_20_0,
-		"1.22.0": upgrade1_22_0,
+		// "1.22.0": upgrade1_22_0, // enable once 1.22 is to be released
 	}
 )

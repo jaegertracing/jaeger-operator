@@ -4,4 +4,4 @@ jaeger=1.21.0
 
 # DO NOT EDIT the next value, it is updated automatically during the release.
 # Represents the current (latest) release of the Jaeger Operator.
-operator=1.21.2
+operator=1.21.3

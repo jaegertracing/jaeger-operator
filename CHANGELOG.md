@@ -1,6 +1,23 @@
 Changes by Version
 ==================
 
+1.21.3 (2021-02-09)
+-------------------
+
+* Migrate jaeger.tags in existing CRs ([#1380](https://github.com/jaegertracing/jaeger-operator/pull/1380), [@jpkrohling](https://github.com/jpkrohling))
+* Remove support for the experimental OpenTelemetry-based Jaeger ([#1379](https://github.com/jaegertracing/jaeger-operator/pull/1379), [@jpkrohling](https://github.com/jpkrohling))
+* Fix way we force es secret reconcile ([#1374](https://github.com/jaegertracing/jaeger-operator/pull/1374), [@kevinearls](https://github.com/kevinearls))
+* added the codeql.yml ([#1313](https://github.com/jaegertracing/jaeger-operator/pull/1313), [@KrishnaSindhur](https://github.com/KrishnaSindhur))
+* Fix service port naming convention ([#1368](https://github.com/jaegertracing/jaeger-operator/pull/1368), [@lujiajing1126](https://github.com/lujiajing1126))
+* Add volumes and volume-mounts for spark dependencies ([#1359](https://github.com/jaegertracing/jaeger-operator/pull/1359), [@kevinearls](https://github.com/kevinearls))
+* Create missing CA config maps on deployment controller ([#1347](https://github.com/jaegertracing/jaeger-operator/pull/1347), [@jpkrohling](https://github.com/jpkrohling))
+* set non root group ([#1339](https://github.com/jaegertracing/jaeger-operator/pull/1339), [@UsaninMax](https://github.com/UsaninMax))
+* Kafka 2.4 not supported by RH AMQ operator 1.6 ([#1335](https://github.com/jaegertracing/jaeger-operator/pull/1335), [@jkandasa](https://github.com/jkandasa))
+* Trigger deployments reconciliation when jaeger instance is created ([#1334](https://github.com/jaegertracing/jaeger-operator/pull/1334), [@rubenvp8510](https://github.com/rubenvp8510))
+* Copy common spec to avoid touching persisted CR spec ([#1333](https://github.com/jaegertracing/jaeger-operator/pull/1333), [@rubenvp8510](https://github.com/rubenvp8510))
+* Try to resolve container.name from the injected agent args ([#1319](https://github.com/jaegertracing/jaeger-operator/pull/1319), [@lujiajing1126](https://github.com/lujiajing1126))
+* Fix typo in CONTRIBUTING.md ([#1321](https://github.com/jaegertracing/jaeger-operator/pull/1321), [@sniperking1234](https://github.com/sniperking1234))
+
 1.21.2 (2020-11-20)
 -------------------
 
