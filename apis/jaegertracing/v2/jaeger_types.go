@@ -226,7 +226,7 @@ type JaegerIngesterSpec struct {
 type JaegerAgentSpec struct {
 	// Strategy can be either 'DaemonSet' or 'Sidecar' (default)
 	// +optional
-	Strategy string `json:"strategy,omitempty"`
+	Strategy AgentStrategy `json:"strategy,omitempty"`
 
 	// +optional
 	Image string `json:"image,omitempty"`
@@ -234,6 +234,9 @@ type JaegerAgentSpec struct {
 	// +optional
 	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	// +optional
+	Config string `json:"config,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`

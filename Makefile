@@ -95,13 +95,11 @@ generate: controller-gen
 e2e:
 	$(KUTTL) test
 
-prepare-e2e: kuttl set-test-image-vars set-image-controller container
+prepare-e2e: IMG=local/jaeger-operator:e2e
+prepare-e2e: kuttl set-image-controller container
 	mkdir -p tests/_build/crds tests/_build/manifests
 	$(KUSTOMIZE) build config/default -o tests/_build/manifests/01-jaeger-operator.yaml
 	$(KUSTOMIZE) build config/crd -o tests/_build/crds/
-
-set-test-image-vars:
-IMG=local/jaeger-operator:e2e
 
 # Build the docker image
 container:
@@ -110,6 +108,12 @@ container:
 # Push the docker image
 container-push:
 	docker push ${IMG}
+
+cert-manager:
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
+	kubectl wait --timeout=5m --for=condition=available deployment cert-manager -n cert-manager
+	kubectl wait --timeout=5m --for=condition=available deployment cert-manager-cainjector -n cert-manager
+	kubectl wait --timeout=5m --for=condition=available deployment cert-manager-webhook -n cert-manager
 
 # find or download controller-gen
 # download controller-gen if necessary

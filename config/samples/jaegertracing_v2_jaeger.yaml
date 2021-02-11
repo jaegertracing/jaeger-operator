@@ -4,5 +4,3 @@ metadata:
   name: simple-prod
 spec:
   strategy: production
-  collector:
-    image: otel/opentelemetry-collector:0.17.0

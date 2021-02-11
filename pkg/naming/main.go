@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"strings"
 
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 
@@ -34,4 +36,21 @@ func Image(image, defaultImage string, ver version.Version) string {
 		}
 	}
 	return image
+}
+
+func Collector(instance v2.Jaeger) string {
+	return fmt.Sprintf("%s-collector", instance.Name)
+}
+
+func Agent(instance v2.Jaeger) string {
+	return fmt.Sprintf("%s-agent", instance.Name)
+}
+
+// Service builds the service name based on the instance.
+func CollectorService(instance v2.Jaeger) string {
+	return fmt.Sprintf("%s-collector-collector", instance.Name)
+}
+
+func CollectorHeadlessService(instance v2.Jaeger) string {
+	return fmt.Sprintf("%s-collector-headless", CollectorService(instance))
 }

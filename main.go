@@ -18,6 +18,10 @@ import (
 	"flag"
 	"os"
 
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/jaegertracing/jaeger-operator/internal/deployinjector"
+
 	"github.com/spf13/pflag"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -90,6 +94,16 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jaeger")
 		os.Exit(1)
+	}
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&jaegertracingv2.Jaeger{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
+			os.Exit(1)
+		}
+		mgr.GetWebhookServer().Register("/mutate-v1-deployment", &webhook.Admission{
+			Handler: deployinjector.NewDeploySidecarInjector(cfg, ctrl.Log.WithName("sidecar"), mgr.GetClient()),
+		})
 	}
 	// +kubebuilder:scaffold:builder
 

@@ -581,6 +581,8 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                config:
+                  type: string
                 hostNetwork:
                   type: boolean
                 image:
@@ -741,6 +743,9 @@ spec:
                       type: object
                   type: object
                 strategy:
+                  enum:
+                  - DaemonSet
+                  - Sidecar
                   type: string
                 tolerations:
                   items:

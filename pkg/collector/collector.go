@@ -54,7 +54,7 @@ func Get(jaeger jaegertracingv2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTel
 
 	return &otelv1alpha1.OpenTelemetryCollector{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jaeger.Name,
+			Name:      naming.Collector(jaeger),
 			Namespace: jaeger.Namespace,
 		},
 		Spec: otelv1alpha1.OpenTelemetryCollectorSpec{

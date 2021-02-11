@@ -12,23 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package strategy
+package v2
 
-import (
-	"context"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/types"
-
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-	"github.com/jaegertracing/jaeger-operator/internal/config"
+type (
+	// DeploymentStrategy represents the possible values for deployment strategies
+	// +kubebuilder:validation:Enum=DaemonSet;Sidecar
+	AgentStrategy string
 )
 
-func TestCreateProductionDeployment(t *testing.T) {
-	name := "TestCreateProductionDeployment"
-	jaeger := v2.NewJaeger(types.NamespacedName{Name: name})
-	cfg := config.New()
-	c := newProductionStrategy(context.Background(), cfg, *jaeger)
-	assert.NotNil(t, c.Collectors)
-}
+const (
+	// DeploymentStrategyAllInOne represents the 'allInOne' deployment strategy (default).
+	AgentSidecar AgentStrategy = "Sidecar"
+
+	// DeploymentStrategyStreaming represents the 'streaming' deployment strategy.
+	AgentDaemonSet AgentStrategy = "DaemonSet"
+)

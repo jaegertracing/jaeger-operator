@@ -7,6 +7,13 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - list
+  - watch
+- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
@@ -43,5 +50,6 @@ rules:
   - create
   - get
   - list
+  - patch
   - update
   - watch
