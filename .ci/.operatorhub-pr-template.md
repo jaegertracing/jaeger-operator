@@ -1,7 +1,4 @@
 Thanks submitting your Operator. Please check below list before you create your Pull Request.
-*************************************************
-**Flat operator directory structure is obsolete from 23-rd of October 2019, only nested directory structure will be accepted.**
-*************************************************
 
 ### New Submissions
 
@@ -11,12 +8,15 @@ Thanks submitting your Operator. Please check below list before you create your 
 * [ ] Have you [packaged and deployed](https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md) your Operator for Operator Framework?
 * [ ] Have you tested your Operator with all Custom Resource Definitions?
 * [ ] Have you tested your Operator in all supported [installation modes](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#operator-metadata)?
+* [ ] Have you considered whether you want use [semantic versioning order](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#updating-your-existing-operator)?
 * [ ] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
+* [ ] Is operator [icon](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#operator-icon) set?
 
 ### Updates to existing Operators
 
-* [ ] Is your new CSV pointing to the previous version with the `replaces` property?
-* [ ] Is your new CSV referenced in the [appropriate channel](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#bundle-format) defined in the `package.yaml` ?
+* [ ] Did you create a `ci.yaml` file according to the [update instructions](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#updating-your-existing-operator)?
+* [ ] Is your new CSV pointing to the previous version with the `replaces` property if you chose `replaces-mode` via the `updateGraph` property in `ci.yaml`?
+* [ ] Is your new CSV referenced in the [appropriate channel](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#bundle-format) defined in the `package.yaml` or `annotations.yaml` ?
 * [ ] Have you tested an update to your Operator when deployed via OLM?
 * [ ] Is your submission [signed](https://github.com/operator-framework/community-operators/blob/master/docs/contributing.md#sign-your-work)?
 
