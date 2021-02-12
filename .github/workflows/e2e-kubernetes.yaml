@@ -20,7 +20,7 @@ jobs:
       with:
         minikube-version: v1.5.2
     - uses: jpkrohling/setup-kubectl@v1.0.2
-    - uses: jpkrohling/setup-operator-sdk@v1.0.2
+    - uses: jpkrohling/setup-operator-sdk@v1.1.0
       with:
         operator-sdk-version: v0.18.2
     - uses: actions/checkout@v2.3.4
