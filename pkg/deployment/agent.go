@@ -85,7 +85,10 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	if a.jaeger.Spec.Agent.HostNetwork != nil {
 		hostNetwork = *a.jaeger.Spec.Agent.HostNetwork
 	}
-
+	priorityClassName := ""
+	if a.jaeger.Spec.Agent.PriorityClassName != "" {
+		priorityClassName = a.jaeger.Spec.Agent.PriorityClassName
+	}
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -171,6 +174,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						VolumeMounts: commonSpec.VolumeMounts,
 					}},
 					HostNetwork:        hostNetwork,
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

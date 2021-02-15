@@ -245,3 +245,13 @@ func TestAgentHostNetwork(t *testing.T) {
 	dep := a.Get()
 	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
 }
+
+func TestAgentPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.PriorityClassName = priorityClassName
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
