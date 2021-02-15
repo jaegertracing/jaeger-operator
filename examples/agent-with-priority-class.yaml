@@ -1,0 +1,8 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: agent-as-daemonset
+spec:
+  agent:
+    strategy: DaemonSet
+    PriorityClassName: test # priorityClassName here
