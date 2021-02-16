@@ -1704,6 +1704,13 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"nodePort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodePort represents the port at which the NodePort service to allocate",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
 					"tracingEnabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected agent container from the query component to disable tracing requests to the query service. The default, if ommited, is true",
