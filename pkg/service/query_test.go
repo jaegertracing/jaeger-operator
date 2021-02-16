@@ -65,6 +65,7 @@ func TestQueryServiceNodePortWithIngress(t *testing.T) {
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, int32(0), svc.Spec.Ports[0].NodePort)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort) // make sure we get a NodePort service
 }
@@ -91,14 +92,14 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Query.ServiceType = corev1.ServiceTypeNodePort
-	jaeger.Spec.Query.NodePort = 31000
+	jaeger.Spec.Query.NodePort = 32767
 	svc := NewQueryService(jaeger, selector)
 
 	assert.Equal(t, "testqueryservicespecifiednodeportwithingress-query", svc.ObjectMeta.Name)
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
-	assert.Equal(t, int32(31000), svc.Spec.Ports[0].NodePort)
+	assert.Equal(t, int32(32767), svc.Spec.Ports[0].NodePort) // make sure we get the same NodePort as set above
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
-	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort) // make sure we get a NodePort service
+	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
 }
