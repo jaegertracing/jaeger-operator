@@ -452,6 +452,9 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
