@@ -103,7 +103,7 @@ func (p *deploySidecarInjector) mutate(ctx context.Context, ns corev1.Namespace,
 	// is the annotation value 'false'? if so, we need a pod without the sidecar (ie, remove if exists)
 	if strings.EqualFold(annValue, "false") {
 		logger.V(1).Info("deployment explicitly refuses sidecar injection, attempting to remove sidecar if it exists")
-		return sidecar.Remove(deployment)
+		return sidecar.Remove(deployment), nil
 	}
 
 	// from this point and on, a sidecar is wanted
@@ -131,7 +131,7 @@ func (p *deploySidecarInjector) mutate(ctx context.Context, ns corev1.Namespace,
 	// once it's been determined that a sidecar is desired, none exists yet, and we know which instance it should talk to,
 	// we should add the sidecar.
 	logger.V(1).Info("injecting sidecar into pod", "jaeger-namespace", jaeger.Namespace, "jaeger-name", jaeger.Name)
-	return sidecar.Add(p.logger, jaeger, deployment)
+	return sidecar.Add(p.logger, jaeger, deployment), nil
 }
 
 func (p *deploySidecarInjector) InjectDecoder(d *admission.Decoder) error {

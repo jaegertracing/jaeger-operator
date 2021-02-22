@@ -30,7 +30,6 @@ func expectedOtelCollectors(ctx context.Context, params Params, expected []*otel
 		if err := controllerutil.SetControllerReference(&params.Instance, desired, params.Scheme); err != nil {
 			return fmt.Errorf("failed to set controller reference: %v", err)
 		}
-
 		existing := &otelv1alpha1.OpenTelemetryCollector{}
 		nns := types.NamespacedName{Namespace: desired.Namespace, Name: desired.Name}
 		err := params.Client.Get(ctx, nns, existing)
@@ -39,8 +38,8 @@ func expectedOtelCollectors(ctx context.Context, params Params, expected []*otel
 			if err := params.Client.Create(ctx, desired); err != nil {
 				return fmt.Errorf("failed to create: %w", err)
 			}
-			params.Log.V(2).Info("created", "collector", desired.Name, "collector.namespace", desired.Namespace)
-			return nil
+			params.Log.V(1).Info("created", "collector", desired.Name, "collector.namespace", desired.Namespace)
+			continue
 		} else if err != nil {
 			return fmt.Errorf("failed to get: %w", err)
 		}

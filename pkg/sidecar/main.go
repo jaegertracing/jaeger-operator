@@ -73,7 +73,7 @@ func Select(annotationValue string, namespace corev1.Namespace, candidates []v2.
 			jaeger := candidates[0]
 			return jaeger, nil
 		}
-		instancesInNamespace := filterJaegerByNamespace(namespace.Namespace, candidates)
+		instancesInNamespace := filterJaegerByNamespace(namespace.Name, candidates)
 		if len(instancesInNamespace) == 1 {
 			jaeger := instancesInNamespace[0]
 			return jaeger, nil

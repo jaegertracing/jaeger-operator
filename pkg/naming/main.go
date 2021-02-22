@@ -52,5 +52,5 @@ func CollectorService(instance v2.Jaeger) string {
 }
 
 func CollectorHeadlessService(instance v2.Jaeger) string {
-	return fmt.Sprintf("%s-collector-headless", CollectorService(instance))
+	return fmt.Sprintf("%s-headless", CollectorService(instance))
 }

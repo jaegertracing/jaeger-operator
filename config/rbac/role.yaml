@@ -37,6 +37,17 @@ rules:
 - apiGroups:
   - jaegertracing.io
   resources:
+  - jaegers/finalizers
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jaegertracing.io
+  resources:
   - jaegers/status
   verbs:
   - get

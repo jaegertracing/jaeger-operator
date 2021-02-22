@@ -38,15 +38,6 @@ func TestDefaultCollectorConfig(t *testing.T) {
 	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	otelCollector := Get(*jaeger, cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Config)
-	assert.Equal(t, DefaultConfig(), otelCollector.Spec.Config)
-}
-
-func TestCustomCollectorConfig(t *testing.T) {
-	customConfig := "OTHER_VALUE"
-	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Collector.Config = customConfig
-	otelCollector := Get(*jaeger, cfg)
-	assert.Equal(t, customConfig, jaeger.Spec.Collector.Config)
-	assert.Equal(t, customConfig, otelCollector.Spec.Config)
+	defaultCfgString, _ := defaultConfig().String()
+	assert.Equal(t, defaultCfgString, otelCollector.Spec.Config)
 }

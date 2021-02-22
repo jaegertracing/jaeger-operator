@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/rvargasp/jaeger-operator
-  newTag: 1.21.2-14-g24bd006f
+  newTag: 1.21.2-14-gd104cf5f

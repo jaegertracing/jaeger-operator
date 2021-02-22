@@ -24,17 +24,17 @@ import (
 )
 
 // Add a new sidecar container to the given deployment, based on the given Jaeger instance.
-func Add(logger logr.Logger, jaeger v2.Jaeger, deployment appsv1.Deployment) (appsv1.Deployment, error) {
+func Add(logger logr.Logger, jaeger v2.Jaeger, deployment appsv1.Deployment) appsv1.Deployment {
 	// add opentelemetry annotation to template
 	if deployment.Spec.Template.Annotations == nil {
 		deployment.Spec.Template.Annotations = map[string]string{}
 	}
 	deployment.Spec.Template.Annotations[sidecar.Annotation] = naming.Agent(jaeger)
-	return deployment, nil
+	return deployment
 }
 
 // Remove the sidecar container from the given deployment.
-func Remove(deployment appsv1.Deployment) (appsv1.Deployment, error) {
+func Remove(deployment appsv1.Deployment) appsv1.Deployment {
 	delete(deployment.Spec.Template.Annotations, sidecar.Annotation)
-	return deployment, nil
+	return deployment
 }

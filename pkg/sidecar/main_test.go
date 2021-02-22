@@ -17,6 +17,10 @@ package sidecar
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/types"
+
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -140,5 +144,119 @@ func TestEffectiveAnnotationValue(t *testing.T) {
 			// verify
 			assert.Equal(t, tt.expected, annValue)
 		})
+	}
+}
+
+func TestSelect(t *testing.T) {
+	for _, tt := range []struct {
+		desc              string
+		annotation        string
+		namespace         corev1.Namespace
+		candidates        []v2.Jaeger
+		expectedCandidate v2.Jaeger
+		expectedError     error
+	}{
+		{
+
+			"Annotation true and a single instance",
+			"true",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+			},
+			*v2.NewJaeger(
+				types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"},
+			),
+			nil,
+		},
+		{
+
+			"Annotation true and a multiple instances, one on the same namespace",
+			"true",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test-other", Name: "other-candidate"}),
+			},
+			*v2.NewJaeger(
+				types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"},
+			),
+			nil,
+		},
+		{
+			"Annotation true and a multiple instances, both on the same namespace",
+			"true",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "other-candidate"}),
+			},
+			v2.Jaeger{},
+			ErrMultipleInstancesPossible,
+		},
+		{
+			"Annotation name of an instance",
+			"selected-candidate",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "other-candidate"}),
+			},
+			*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+			nil,
+		},
+		{
+			"Annotation name of an instance but two instances with same name on different namespaces",
+			"selected-candidate",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test-other", Name: "selected-candidate"}),
+			},
+			*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+			nil,
+		},
+		{
+			"Annotation name of a non existing instance.",
+			"non-existing-jaeger",
+			corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns-test",
+				},
+			},
+			[]v2.Jaeger{
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test", Name: "selected-candidate"}),
+				*v2.NewJaeger(types.NamespacedName{Namespace: "ns-test-other", Name: "selected-candidate"}),
+			},
+			v2.Jaeger{},
+			ErrNoInstancesAvailable,
+		},
+	} {
+		t.Run(tt.desc, func(t *testing.T) {
+			candidate, err := Select(tt.annotation, tt.namespace, tt.candidates)
+			assert.Equal(t, tt.expectedError, err)
+			assert.Equal(t, tt.expectedCandidate, candidate)
+		})
+
 	}
 }
