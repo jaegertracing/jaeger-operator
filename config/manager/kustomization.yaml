@@ -1,8 +1,2 @@
 resources:
 - manager.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: controller
-  newName: quay.io/rvargasp/jaeger-operator
-  newTag: 1.21.2-15-g73701e0c
