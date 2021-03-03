@@ -37,8 +37,6 @@ var _ webhook.Defaulter = &Jaeger{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (r *Jaeger) Default() {
 	jaegerlog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
 }
 
 // +kubebuilder:webhook:verbs=create;update;delete,path=/validate-jaegertracing-io-v2-jaeger,mutating=false,failurePolicy=fail,groups=jaegertracing.io,resources=jaegers,versions=v2,name=vjaeger.kb.io

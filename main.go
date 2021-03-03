@@ -20,7 +20,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/jaegertracing/jaeger-operator/internal/deployinjector"
+	"github.com/jaegertracing/jaeger-operator/internal/deploymentinjector"
 
 	"github.com/spf13/pflag"
 
@@ -102,7 +102,7 @@ func main() {
 			os.Exit(1)
 		}
 		mgr.GetWebhookServer().Register("/mutate-v1-deployment", &webhook.Admission{
-			Handler: deployinjector.NewDeploySidecarInjector(cfg, ctrl.Log.WithName("sidecar"), mgr.GetClient()),
+			Handler: deploymentinjector.NewDeploySidecarInjector(cfg, ctrl.Log.WithName("sidecar"), mgr.GetClient()),
 		})
 	}
 	// +kubebuilder:scaffold:builder
