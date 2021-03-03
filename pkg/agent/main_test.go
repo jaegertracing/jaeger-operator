@@ -18,17 +18,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/naming"
-
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
+	"github.com/jaegertracing/jaeger-operator/pkg/naming"
 )
 
 func TestDefaultAgent(t *testing.T) {
