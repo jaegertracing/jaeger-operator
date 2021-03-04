@@ -17,12 +17,10 @@ package naming
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 

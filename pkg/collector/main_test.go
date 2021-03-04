@@ -17,17 +17,16 @@ package collector
 import (
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 )
 
 func TestDefaultCollectorImage(t *testing.T) {
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	collector := Get(*jaeger, cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Image)
 	assert.Equal(t, "otel/opentelemetry-collector:0.19.0", collector.Spec.Image)
@@ -35,7 +34,7 @@ func TestDefaultCollectorImage(t *testing.T) {
 
 func TestDefaultCollectorConfig(t *testing.T) {
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	otelCollector := Get(*jaeger, cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Config)
 	defaultCfgString, _ := defaultConfig().String()

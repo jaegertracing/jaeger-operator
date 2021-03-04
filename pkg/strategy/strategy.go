@@ -20,12 +20,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 )
 
 // S knows what type of deployments to build based on a given spec.
 type Strategy struct {
-	Type                     jaegertracingv2.DeploymentStrategy
+	Type                     v2.DeploymentStrategy
 	Accounts                 []corev1.ServiceAccount
 	ClusterRoleBindings      []rbac.ClusterRoleBinding
 	ConfigMaps               []corev1.ConfigMap

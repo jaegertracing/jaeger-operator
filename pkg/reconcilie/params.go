@@ -19,16 +19,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
-
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
 type Params struct {
 	Config   config.Config
 	Client   client.Client
-	Instance jaegertracingv2.Jaeger
+	Instance v2.Jaeger
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Strategy strategy.Strategy

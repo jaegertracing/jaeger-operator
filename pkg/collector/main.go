@@ -18,12 +18,10 @@ import (
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	otelconfig "github.com/jaegertracing/jaeger-operator/pkg/opentelemetry/config"
-
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
-
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/pkg/naming"
+	otelconfig "github.com/jaegertracing/jaeger-operator/pkg/opentelemetry/config"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -40,7 +38,7 @@ func defaultConfig() *otelconfig.Configuration {
 	)
 }
 
-func Get(jaeger jaegertracingv2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
+func Get(jaeger v2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
 	collectorSpecs := jaeger.Spec.Collector
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, collectorSpecs.JaegerCommonSpec)

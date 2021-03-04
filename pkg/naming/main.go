@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 
