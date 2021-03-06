@@ -31,7 +31,7 @@ import (
 	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	jaegertracingcontroller "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
-	"github.com/jaegertracing/jaeger-operator/internal/deploymentinjector"
+	"github.com/jaegertracing/jaeger-operator/internal/sidecarannotation"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -98,7 +98,7 @@ func main() {
 			os.Exit(1)
 		}
 		mgr.GetWebhookServer().Register("/mutate-v1-deployment", &webhook.Admission{
-			Handler: deploymentinjector.NewDeploySidecarInjector(cfg, ctrl.Log.WithName("sidecar"), mgr.GetClient()),
+			Handler: sidecarannotation.NewDeploySidecarAnnotation(cfg, ctrl.Log.WithName("sidecar"), mgr.GetClient()),
 		})
 	}
 	// +kubebuilder:scaffold:builder

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package deploymentinjector
+package sidecarannotation
 
 import (
 	"context"
@@ -41,32 +41,32 @@ import (
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=list;watch
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch
 
-var _ DeploySidecarInjector = (*deploySidecarInjector)(nil)
+var _ DeploySidecarAnnotation = (*deploySidecarAnnotation)(nil)
 
-// DeploySidecarInjector is a webhoo that convert jaeger deployment annotations to opentelemetry sidecar annotations.
-type DeploySidecarInjector interface {
+// DeploySidecarAnnotation is a webhoo that convert jaeger deployment annotations to opentelemetry sidecar annotations.
+type DeploySidecarAnnotation interface {
 	admission.Handler
 	admission.DecoderInjector
 }
 
 // the implementation.
-type deploySidecarInjector struct {
+type deploySidecarAnnotation struct {
 	config  config.Config
 	logger  logr.Logger
 	client  client.Client
 	decoder *admission.Decoder
 }
 
-// NewDeploySidecarInjector creates a new DeploySidecarInjector.
-func NewDeploySidecarInjector(cfg config.Config, logger logr.Logger, cl client.Client) DeploySidecarInjector {
-	return &deploySidecarInjector{
+// NewDeploySidecarAnnotation creates a new DeploySidecarAnnotation.
+func NewDeploySidecarAnnotation(cfg config.Config, logger logr.Logger, cl client.Client) DeploySidecarAnnotation {
+	return &deploySidecarAnnotation{
 		config: cfg,
 		logger: logger,
 		client: cl,
 	}
 }
 
-func (p *deploySidecarInjector) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (p *deploySidecarAnnotation) Handle(ctx context.Context, req admission.Request) admission.Response {
 	deployment := appsv1.Deployment{}
 	err := p.decoder.Decode(req, &deployment)
 	if err != nil {
@@ -88,7 +88,7 @@ func (p *deploySidecarInjector) Handle(ctx context.Context, req admission.Reques
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeployment)
 }
 
-func (p *deploySidecarInjector) mutate(deployment appsv1.Deployment) appsv1.Deployment {
+func (p *deploySidecarAnnotation) mutate(deployment appsv1.Deployment) appsv1.Deployment {
 	logger := p.logger.WithValues("namespace", deployment.Namespace, "name", deployment.Name)
 
 	// if no annotations are found at all, just return the same deployment
@@ -124,7 +124,7 @@ func (p *deploySidecarInjector) mutate(deployment appsv1.Deployment) appsv1.Depl
 	return addOpentelemetryAnnotation(otelCollectorName, deployment)
 }
 
-func (p *deploySidecarInjector) InjectDecoder(d *admission.Decoder) error {
+func (p *deploySidecarAnnotation) InjectDecoder(d *admission.Decoder) error {
 	p.decoder = d
 	return nil
 }
