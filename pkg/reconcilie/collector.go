@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func expectedOtelCollectors(ctx context.Context, params Params, expected []*otelv1alpha1.OpenTelemetryCollector) error {
+func expectedOtelCol(ctx context.Context, params Params, expected []*otelv1alpha1.OpenTelemetryCollector) error {
 	for _, desired := range expected {
 		if err := controllerutil.SetControllerReference(&params.Instance, desired, params.Scheme); err != nil {
 			return fmt.Errorf("failed to set controller reference: %v", err)
@@ -74,7 +74,7 @@ func expectedOtelCollectors(ctx context.Context, params Params, expected []*otel
 }
 func Collector(ctx context.Context, params Params) error {
 
-	err := expectedOtelCollectors(ctx, params, params.Strategy.Collectors)
+	err := expectedOtelCol(ctx, params, params.Strategy.OtelCol)
 
 	if err != nil {
 		return err

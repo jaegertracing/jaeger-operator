@@ -30,5 +30,5 @@ func TestCreateProductionDeployment(t *testing.T) {
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: name})
 	cfg := config.New()
 	c := newProductionStrategy(context.Background(), cfg, *jaeger)
-	assert.NotNil(t, c.Collectors)
+	assert.NotNil(t, c.OtelCol)
 }

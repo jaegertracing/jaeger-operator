@@ -31,6 +31,6 @@ func newProductionStrategy(ctx context.Context, cfg config.Config, jaeger v2.Jae
 	_, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
 	strategy := Strategy{Type: v2.DeploymentStrategyProduction}
-	strategy.Collectors = append(strategy.Collectors, collector.Get(jaeger, cfg), agent.Get(jaeger, cfg))
+	strategy.OtelCol = append(strategy.OtelCol, collector.Get(jaeger, cfg), agent.Get(jaeger, cfg))
 	return strategy
 }
