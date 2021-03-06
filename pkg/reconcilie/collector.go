@@ -28,7 +28,7 @@ import (
 func expectedOtelCol(ctx context.Context, params Params, expected []*otelv1alpha1.OpenTelemetryCollector) error {
 	for _, desired := range expected {
 		if err := controllerutil.SetControllerReference(&params.Instance, desired, params.Scheme); err != nil {
-			return fmt.Errorf("failed to set controller reference: %v", err)
+			return fmt.Errorf("failed to set controller reference: %w", err)
 		}
 		existing := &otelv1alpha1.OpenTelemetryCollector{}
 		nns := types.NamespacedName{Namespace: desired.Namespace, Name: desired.Name}
