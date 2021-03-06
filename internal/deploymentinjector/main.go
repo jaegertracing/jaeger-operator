@@ -31,7 +31,7 @@ import (
 
 	otelsidecar "github.com/open-telemetry/opentelemetry-operator/pkg/sidecar"
 
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
 	"github.com/jaegertracing/jaeger-operator/pkg/naming"
 	"github.com/jaegertracing/jaeger-operator/pkg/sidecar"
@@ -43,7 +43,7 @@ import (
 
 var _ DeploySidecarInjector = (*deploySidecarInjector)(nil)
 
-// DeploySidecarInjector is a webhook handler that analyzes new pods and injects appropriate sidecars into it.
+// DeploySidecarInjector is a webhoo that convert jaeger deployment annotations to opentelemetry sidecar annotations.
 type DeploySidecarInjector interface {
 	admission.Handler
 	admission.DecoderInjector
@@ -57,7 +57,7 @@ type deploySidecarInjector struct {
 	decoder *admission.Decoder
 }
 
-// NewPodSidecarInjector creates a new DeploySidecarInjector.
+// NewDeploySidecarInjector creates a new DeploySidecarInjector.
 func NewDeploySidecarInjector(cfg config.Config, logger logr.Logger, cl client.Client) DeploySidecarInjector {
 	return &deploySidecarInjector{
 		config: cfg,
@@ -95,6 +95,10 @@ func (p *deploySidecarInjector) mutate(deployment appsv1.Deployment) appsv1.Depl
 	depAnnValue, hasAnnotation := deployment.Annotations[sidecar.Annotation]
 
 	if !hasAnnotation {
+		if _, hasOtelAnnotation := deployment.Spec.Template.Annotations[otelsidecar.Annotation]; hasOtelAnnotation {
+			return removeOpentelemetryAnnotation(deployment)
+		}
+
 		logger.V(1).Info("annotation not present in deployment, skipping sidecar injection")
 		return deployment
 	}
@@ -107,7 +111,7 @@ func (p *deploySidecarInjector) mutate(deployment appsv1.Deployment) appsv1.Depl
 		return removeOpentelemetryAnnotation(deployment)
 	}
 
-	if strings.EqualFold(depAnnValue, "true") {
+	if strings.EqualFold(depAnnValue, "true") || strings.EqualFold(depAnnValue, "false") {
 		return addOpentelemetryAnnotation(depAnnValue, deployment)
 	}
 
