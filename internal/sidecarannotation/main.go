@@ -18,22 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	otelsidecar "github.com/open-telemetry/opentelemetry-operator/pkg/sidecar"
-
-	"github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
-	"github.com/jaegertracing/jaeger-operator/pkg/naming"
 	"github.com/jaegertracing/jaeger-operator/pkg/sidecar"
 )
 
@@ -91,56 +84,15 @@ func (p *deploySidecarAnnotation) Handle(ctx context.Context, req admission.Requ
 func (p *deploySidecarAnnotation) mutate(deployment appsv1.Deployment) appsv1.Deployment {
 	logger := p.logger.WithValues("namespace", deployment.Namespace, "name", deployment.Name)
 
-	// if no annotations are found at all, just return the same deployment
-	depAnnValue, hasAnnotation := deployment.Annotations[sidecar.Annotation]
-
-	if !hasAnnotation {
-		if _, hasOtelAnnotation := deployment.Spec.Template.Annotations[otelsidecar.Annotation]; hasOtelAnnotation {
-			return removeOpentelemetryAnnotation(deployment)
-		}
-
+	deployment, skipped := sidecar.TransformDeploymentAnnotation(deployment)
+	if skipped {
 		logger.V(1).Info("annotation not present in deployment, skipping sidecar injection")
-		return deployment
 	}
 
-	logger.Info("annotation " + depAnnValue)
-
-	// is the annotation value 'false'? if so, we need a pod without the sidecar (ie, remove if exists)
-	if strings.EqualFold(depAnnValue, "false") {
-		logger.V(1).Info("deployment explicitly refuses sidecar injection, attempting to remove sidecar if it exists")
-		return removeOpentelemetryAnnotation(deployment)
-	}
-
-	if strings.EqualFold(depAnnValue, "true") || strings.EqualFold(depAnnValue, "false") {
-		return addOpentelemetryAnnotation(depAnnValue, deployment)
-	}
-
-	otelCollectorName := naming.Agent(v2.Jaeger{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: depAnnValue,
-		},
-	})
-
-	return addOpentelemetryAnnotation(otelCollectorName, deployment)
+	return deployment
 }
 
 func (p *deploySidecarAnnotation) InjectDecoder(d *admission.Decoder) error {
 	p.decoder = d
 	return nil
-}
-
-func addOpentelemetryAnnotation(annotationValue string, deployment appsv1.Deployment) appsv1.Deployment {
-	// add opentelemetry annotation to template
-	if deployment.Spec.Template.Annotations == nil {
-		deployment.Spec.Template.Annotations = map[string]string{}
-	}
-
-	deployment.Spec.Template.Annotations[otelsidecar.Annotation] = annotationValue
-	return deployment
-}
-
-// Remove the sidecar container from the given deployment.
-func removeOpentelemetryAnnotation(deployment appsv1.Deployment) appsv1.Deployment {
-	delete(deployment.Spec.Template.Annotations, otelsidecar.Annotation)
-	return deployment
 }
