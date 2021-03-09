@@ -425,3 +425,68 @@ local-jaeger-container:
 changelog:
 	@echo "Set env variable OAUTH_TOKEN before invoking, https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token"
 	@docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --owner jaegertracing --repo jaeger-operator
+
+
+# e2e tests using kuttl
+
+kuttl:
+ifeq (, $(shell which kubectl-kuttl))
+	echo ${PATH}
+	ls -l /usr/local/bin
+	which kubectl-kuttl
+
+	@{ \
+	set -e ;\
+	echo "" ;\
+	echo "ERROR: kuttl not found." ;\
+	echo "Please check https://kuttl.dev/docs/cli.html for installation instructions and try again." ;\
+	echo "" ;\
+	exit 1 ;\
+	}
+else
+KUTTL=$(shell which kubectl-kuttl)
+endif
+
+kind:
+ifeq (, $(shell which kind))
+	@{ \
+	set -e ;\
+	echo "" ;\
+	echo "ERROR: kind not found." ;\
+	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
+	echo "" ;\
+	exit 1 ;\
+	}
+else
+KIND=$(shell which kind)
+endif
+
+.PHONY: prepare-e2e-kuttl-tests
+prepare-e2e-kuttl-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
+prepare-e2e-kuttl-tests: build docker
+	@mkdir -p  tests/_build/manifests
+	@mkdir -p  tests/_build/crds
+
+	@cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
+	@echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+
+	@cat deploy/role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
+	@echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+
+	@cat deploy/cluster_role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
+	@echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+
+	@${SED} "s~namespace: .*~namespace: jaeger-operator-system~gi" deploy/cluster_role_binding.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
+	@echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+
+	@${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
+	@${SED} "s~imagePullPolicy: Always~imagePullPolicy: Never~gi" tests/_build/manifests/01-jaeger-operator.yaml -i
+	@${SED} "0,/fieldPath: metadata.namespace/s/fieldPath: metadata.namespace/fieldPath: metadata.annotations['olm.targetNamespaces']/gi" tests/_build/manifests/01-jaeger-operator.yaml -i
+
+	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
+
+
+# end-to-tests
+.PHONY: kuttl-e2e
+kuttl-e2e:
+	$(KUTTL) test
