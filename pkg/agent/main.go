@@ -65,17 +65,20 @@ func otelModeFromStrategy(strategy v2.AgentStrategy) otelv1alpha1.Mode {
 
 func Get(jaeger v2.Jaeger, logger logr.Logger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
-	configuration := defaultConfig()
-	jaegerExporter := configuration.GetJaegerExporter()
-	if jaegerExporter != nil {
-		jaegerExporter.Endpoint = fmt.Sprintf("%s.%s.svc:14250", naming.CollectorHeadlessService(jaeger), jaeger.Namespace)
-	}
+	configString := jaeger.Spec.Agent.Config
 
-	configString, err := configuration.String()
-
-	if err != nil {
-		logger.Error(err, "failed marshall otel collector configuration", "name", naming.Agent(jaeger), "namespace", jaeger.Namespace)
-		return &otelv1alpha1.OpenTelemetryCollector{}
+	if configString == "" {
+		var err error
+		configuration := defaultConfig()
+		jaegerExporter := configuration.GetJaegerExporter()
+		if jaegerExporter != nil {
+			jaegerExporter.Endpoint = fmt.Sprintf("%s.%s.svc:14250", naming.CollectorHeadlessService(jaeger), jaeger.Namespace)
+		}
+		configString, err = configuration.String()
+		if err != nil {
+			logger.Error(err, "failed marshall otel collector configuration", "name", naming.Agent(jaeger), "namespace", jaeger.Namespace)
+			return &otelv1alpha1.OpenTelemetryCollector{}
+		}
 	}
 
 	agentSpecs := jaeger.Spec.Agent

@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
 	"github.com/jaegertracing/jaeger-operator/pkg/naming"
 )
@@ -32,7 +32,7 @@ import (
 func TestDefaultAgent(t *testing.T) {
 	// Prepare configuration
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	otelcollectorConfig := defaultConfig()
 	jaegerExporter := otelcollectorConfig.GetJaegerExporter()
 	require.NotNil(t, jaegerExporter)
@@ -52,7 +52,7 @@ func TestDefaultAgent(t *testing.T) {
 func TestDaemonSetAgent(t *testing.T) {
 	// Prepare configuration
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	otelcollectorConfig := defaultConfig()
 	jaegerExporter := otelcollectorConfig.GetJaegerExporter()
 	require.NotNil(t, jaegerExporter)
@@ -60,7 +60,7 @@ func TestDaemonSetAgent(t *testing.T) {
 	strCfg, err := otelcollectorConfig.String()
 	require.NoError(t, err)
 
-	jaeger.Spec.Agent.Strategy = jaegertracingv2.AgentDaemonSet
+	jaeger.Spec.Agent.Strategy = v2.AgentDaemonSet
 	otelCollector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 
 	assert.Empty(t, jaeger.Spec.Collector.Config)
@@ -73,7 +73,7 @@ func TestDaemonSetAgent(t *testing.T) {
 func TestInvalidAgentMode(t *testing.T) {
 	// Prepare configuration
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	otelcollectorConfig := defaultConfig()
 	jaegerExporter := otelcollectorConfig.GetJaegerExporter()
 	require.NotNil(t, jaegerExporter)
@@ -89,4 +89,14 @@ func TestInvalidAgentMode(t *testing.T) {
 	assert.Equal(t, strCfg, otelCollector.Spec.Config)
 	assert.Equal(t, "my-instance-agent", otelCollector.Name)
 	assert.Equal(t, otelv1alpha1.ModeSidecar, otelCollector.Spec.Mode)
+}
+
+func TestCustomAgentConfig(t *testing.T) {
+	customConfig := "OTHER_VALUE"
+	cfg := config.New()
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Config = customConfig
+	otelCollector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
+	assert.Equal(t, customConfig, jaeger.Spec.Agent.Config)
+	assert.Equal(t, customConfig, otelCollector.Spec.Config)
 }

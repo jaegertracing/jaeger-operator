@@ -44,11 +44,14 @@ func Get(jaeger v2.Jaeger, logger logr.Logger, cfg config.Config) *otelv1alpha1.
 	collectorSpecs := jaeger.Spec.Collector
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, collectorSpecs.JaegerCommonSpec)
 
-	configString, err := defaultConfig().String()
-
-	if err != nil {
-		logger.Error(err, "failed marshall otel collector configuration", "name", naming.Collector(jaeger), "namespace", jaeger.Namespace)
-		return &otelv1alpha1.OpenTelemetryCollector{}
+	configString := collectorSpecs.Config
+	if configString == "" {
+		var err error
+		configString, err = defaultConfig().String()
+		if err != nil {
+			logger.Error(err, "failed marshall otel collector configuration", "name", naming.Collector(jaeger), "namespace", jaeger.Namespace)
+			return &otelv1alpha1.OpenTelemetryCollector{}
+		}
 	}
 
 	return &otelv1alpha1.OpenTelemetryCollector{
