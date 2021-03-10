@@ -70,7 +70,7 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		Instance: instance,
 		Log:      log,
 		Scheme:   r.Scheme,
-		Strategy: strategy.For(ctx, r.Config, instance),
+		Strategy: strategy.For(ctx, log, r.Config, instance),
 	}
 
 	if err := reconcilie.Run(ctx, params); err != nil {

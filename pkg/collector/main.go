@@ -15,6 +15,7 @@
 package collector
 
 import (
+	"github.com/go-logr/logr"
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -38,12 +39,17 @@ func defaultConfig() *otelconfig.Configuration {
 	)
 }
 
-func Get(jaeger v2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
+func Get(jaeger v2.Jaeger, logger logr.Logger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
 	collectorSpecs := jaeger.Spec.Collector
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, collectorSpecs.JaegerCommonSpec)
 
-	configString, _ := defaultConfig().String()
+	configString, err := defaultConfig().String()
+
+	if err != nil {
+		logger.Error(err, "failed marshall otel collector configuration", "name", naming.Collector(jaeger), "namespace", jaeger.Namespace)
+		return &otelv1alpha1.OpenTelemetryCollector{}
+	}
 
 	return &otelv1alpha1.OpenTelemetryCollector{
 		ObjectMeta: metav1.ObjectMeta{

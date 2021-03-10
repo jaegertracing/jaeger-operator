@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
@@ -29,6 +30,6 @@ func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: name})
 	cfg := config.New()
-	c := newProductionStrategy(context.Background(), cfg, *jaeger)
+	c := newProductionStrategy(context.Background(), logf.Log.WithName("unit-tests"), cfg, *jaeger)
 	assert.NotNil(t, c.OtelCol)
 }

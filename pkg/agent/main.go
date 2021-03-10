@@ -17,6 +17,7 @@ package agent
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -62,7 +63,7 @@ func otelModeFromStrategy(strategy v2.AgentStrategy) otelv1alpha1.Mode {
 	return otelv1alpha1.ModeSidecar
 }
 
-func Get(jaeger v2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
+func Get(jaeger v2.Jaeger, logger logr.Logger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
 	configuration := defaultConfig()
 	jaegerExporter := configuration.GetJaegerExporter()
@@ -70,7 +71,12 @@ func Get(jaeger v2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollect
 		jaegerExporter.Endpoint = fmt.Sprintf("%s.%s.svc:14250", naming.CollectorHeadlessService(jaeger), jaeger.Namespace)
 	}
 
-	configString, _ := configuration.String()
+	configString, err := configuration.String()
+
+	if err != nil {
+		logger.Error(err, "failed marshall otel collector configuration", "name", naming.Agent(jaeger), "namespace", jaeger.Namespace)
+		return &otelv1alpha1.OpenTelemetryCollector{}
+	}
 
 	agentSpecs := jaeger.Spec.Agent
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, agentSpecs.JaegerCommonSpec)

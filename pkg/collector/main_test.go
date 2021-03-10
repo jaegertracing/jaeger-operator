@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
@@ -27,7 +28,7 @@ import (
 func TestDefaultCollectorImage(t *testing.T) {
 	cfg := config.New()
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	collector := Get(*jaeger, cfg)
+	collector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Image)
 	assert.Equal(t, "otel/opentelemetry-collector:0.19.0", collector.Spec.Image)
 }
@@ -35,7 +36,7 @@ func TestDefaultCollectorImage(t *testing.T) {
 func TestDefaultCollectorConfig(t *testing.T) {
 	cfg := config.New()
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	otelCollector := Get(*jaeger, cfg)
+	otelCollector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Config)
 	defaultCfgString, _ := defaultConfig().String()
 	assert.Equal(t, defaultCfgString, otelCollector.Spec.Config)

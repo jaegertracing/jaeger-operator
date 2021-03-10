@@ -17,6 +17,7 @@ package strategy
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	"go.opentelemetry.io/otel"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
@@ -26,11 +27,11 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/collector"
 )
 
-func newProductionStrategy(ctx context.Context, cfg config.Config, jaeger v2.Jaeger) Strategy {
+func newProductionStrategy(ctx context.Context, logger logr.Logger, cfg config.Config, jaeger v2.Jaeger) Strategy {
 	tracer := otel.GetTracerProvider().Tracer(instrument.ReconciliationTracer)
 	_, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
 	strategy := Strategy{Type: v2.DeploymentStrategyProduction}
-	strategy.OtelCol = append(strategy.OtelCol, collector.Get(jaeger, cfg), agent.Get(jaeger, cfg))
+	strategy.OtelCol = append(strategy.OtelCol, collector.Get(jaeger, logger, cfg), agent.Get(jaeger, logger, cfg))
 	return strategy
 }
