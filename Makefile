@@ -463,7 +463,7 @@ endif
 
 .PHONY: prepare-e2e-kuttl-tests
 prepare-e2e-kuttl-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
-prepare-e2e-kuttl-tests: build docker
+prepare-e2e-kuttl-tests: build docker build-assert-job
 	@mkdir -p  tests/_build/manifests
 	@mkdir -p  tests/_build/crds
 
@@ -490,3 +490,8 @@ prepare-e2e-kuttl-tests: build docker
 .PHONY: kuttl-e2e
 kuttl-e2e:
 	$(KUTTL) test
+
+
+.PHONY: build-assert-job
+build-assert-job:
+	docker build -t local/asserts:e2e  -f Dockerfile.asserts .
