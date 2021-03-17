@@ -204,9 +204,9 @@ e2e-tests-istio: prepare-e2e-tests istio
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=istio ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-tolerations
-e2e-tests-tolerations: prepare-e2e-tests deploy-es-operator
+e2e-tests-tolerations: prepare-e2e-tests deploy-es-operator es
 	@echo Running Tolerantions end-to-end tests...
-	go test -tags=tolerations ./test/e2e/... $(TEST_OPTIONS)
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=tolerations ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd

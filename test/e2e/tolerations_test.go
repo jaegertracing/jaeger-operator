@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	v1 "k8s.io/api/core/v1"
+
+	jaegerV1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 type TolerationsTestSuite struct {
@@ -35,6 +37,10 @@ func (suite *TolerationsTestSuite) SetupSuite() {
 	require.NotNil(t, namespace, "GetID failed")
 
 	addToFrameworkSchemeForSmokeTests(t)
+
+	if isOpenShift(t) {
+		esServerUrls = "http://elasticsearch." + storageNamespace + ".svc.cluster.local:9200"
+	}
 }
 
 func (suite *TolerationsTestSuite) TearDownSuite() {
@@ -83,13 +89,41 @@ func (suite *TolerationsTestSuite) TestAllInOneTolerations() {
 	suite.verifyTolerations(allInOneDeployment.Name, tolerationsAllInOne, allInOneDeployment.Spec.Template.Spec.Tolerations)
 }
 
+func (suite *TolerationsTestSuite) TestProdTolerations() {
+	if skipESExternal {
+		t.Skip("This case needs external es cluster url")
+	}
+	suite.runProdTolerations(false)
+}
+
 func (suite *TolerationsTestSuite) TestElasticsearchProdTolerations() {
+	if !isOpenShift(t) {
+		t.Skip("This test should only be run on OpenShift")
+	}
+	suite.runProdTolerations(true)
+}
+
+func (suite *TolerationsTestSuite) runProdTolerations(includeESSelfProvision bool) {
 	jaegerInstanceName := "simple-prod-tolerations"
+	if includeESSelfProvision {
+		jaegerInstanceName = "simple-prod-tolerations-with-es-prod"
+	}
+
 	collectorReplicasCount := int32(1)
 	queryReplicasCount := int32(1)
 	esNodeCount := int32(1)
 
 	jaegerCR := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, esNodeCount)
+
+	// update storage spec, if es self provision not available
+	if !includeESSelfProvision {
+		jaegerCR.Spec.Storage = jaegerV1.JaegerStorageSpec{
+			Type: jaegerV1.JaegerESStorage,
+			Options: jaegerV1.NewOptions(map[string]interface{}{
+				"es.server-urls": esServerUrls,
+			}),
+		}
+	}
 
 	// update replicas count
 	jaegerCR.Spec.Collector.Replicas = &collectorReplicasCount
@@ -125,12 +159,14 @@ func (suite *TolerationsTestSuite) TestElasticsearchProdTolerations() {
 	require.Equal(t, queryReplicasCount, queryDeployment.Status.ReadyReplicas, "Query deployment replicas count not matching")
 	suite.verifyTolerations(queryDeployment.Name, tolerationsQuery, queryDeployment.Spec.Template.Spec.Tolerations)
 
-	esDeployments := getDeployments(namespace, "component=elasticsearch")
-	require.Equal(t, esNodeCount, int32(len(esDeployments)), "Elasticsearch deployments count not matching")
-	for index := 0; index < len(esDeployments); index++ {
-		esDeployment := esDeployments[index]
-		require.Equal(t, int32(1), esDeployment.Status.ReadyReplicas, "Elasticsearch deployment replicas count not matching")
-		suite.verifyTolerations(esDeployment.Name, tolerationsES, esDeployment.Spec.Template.Spec.Tolerations)
+	if includeESSelfProvision {
+		esDeployments := getDeployments(namespace, "component=elasticsearch")
+		require.Equal(t, esNodeCount, int32(len(esDeployments)), "Elasticsearch deployments count not matching")
+		for index := 0; index < len(esDeployments); index++ {
+			esDeployment := esDeployments[index]
+			require.Equal(t, int32(1), esDeployment.Status.ReadyReplicas, "Elasticsearch deployment replicas count not matching")
+			suite.verifyTolerations(esDeployment.Name, tolerationsES, esDeployment.Spec.Template.Spec.Tolerations)
+		}
 	}
 }
 
