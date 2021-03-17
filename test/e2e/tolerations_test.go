@@ -109,7 +109,7 @@ func (suite *TolerationsTestSuite) TestElasticsearchProdTolerations() {
 	createESSelfProvDeployment(jaegerCR, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerCR)
 
-	// ProductionSmokeTest(jaegerInstanceName)
+	ProductionSmokeTest(jaegerInstanceName)
 
 	// verify tolerations
 
@@ -127,7 +127,6 @@ func (suite *TolerationsTestSuite) TestElasticsearchProdTolerations() {
 
 	esDeployments := getDeployments(namespace, "component=elasticsearch")
 	require.Equal(t, esNodeCount, int32(len(esDeployments)), "Elasticsearch deployments count not matching")
-
 	for index := 0; index < len(esDeployments); index++ {
 		esDeployment := esDeployments[index]
 		require.Equal(t, int32(1), esDeployment.Status.ReadyReplicas, "Elasticsearch deployment replicas count not matching")
