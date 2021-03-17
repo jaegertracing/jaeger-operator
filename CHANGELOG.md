@@ -6,7 +6,6 @@ Changes by Version
 
 * simplest example file should be as simplest ([#1404](https://github.com/jaegertracing/jaeger-operator/pull/1404), [@jkandasa](https://github.com/jkandasa))
 * Add ability to indicate PriorityClass for agent ([#1392](https://github.com/jaegertracing/jaeger-operator/pull/1392), [@elkh510](https://github.com/elkh510))
-* Update operatorhub PR template ([#1388](https://github.com/jaegertracing/jaeger-operator/pull/1388), [@jpkrohling](https://github.com/jpkrohling))
 * Migrate jaeger.tags in existing CRs ([#1380](https://github.com/jaegertracing/jaeger-operator/pull/1380), [@jpkrohling](https://github.com/jpkrohling))
 
 1.21.3 (2021-02-09)

@@ -85,7 +85,7 @@ func TestDeleteQueryRemovedFlags(t *testing.T) {
 	assert.NotContains(t, persisted.Spec.Query.Options.Map(), "downsampling.ratio")
 }
 
-func TestCassandraRemovedFlags(t *testing.T) {
+func TestCassandraVerifyHostFlags_SetTrue(t *testing.T) {
 	latestVersion := "1.22.0"
 	opts := v1.NewOptions(map[string]interface{}{
 		"cassandra.tls.verify-host": "true",
@@ -107,6 +107,35 @@ func TestCassandraRemovedFlags(t *testing.T) {
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, latestVersion, persisted.Status.Version)
+	assert.Len(t, persisted.Spec.Collector.Options.Map(), 0)
+	assert.NotContains(t, persisted.Spec.Collector.Options.Map(), "cassandra.tls.verify-host")
+}
+
+func TestCassandraVerifyHostFlags_SetFalse(t *testing.T) {
+	latestVersion := "1.22.0"
+	opts := v1.NewOptions(map[string]interface{}{
+		"cassandra.tls.verify-host": "false",
+	})
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+	existing := v1.NewJaeger(nsn)
+	existing.Status.Version = "1.21.0"
+	existing.Spec.Collector.Options = opts
+
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, latestVersion, persisted.Status.Version)
+	assert.Len(t, persisted.Spec.Collector.Options.Map(), 1)
 	assert.NotContains(t, persisted.Spec.Collector.Options.Map(), "cassandra.tls.verify-host")
 	assert.Contains(t, persisted.Spec.Collector.Options.Map(), "cassandra.tls.skip-host-verify")
+	assert.Equal(t, "true", persisted.Spec.Collector.Options.Map()["cassandra.tls.skip-host-verify"])
+
 }
