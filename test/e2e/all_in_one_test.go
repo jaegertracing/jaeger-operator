@@ -64,22 +64,25 @@ func (suite *AllInOneTestSuite) AfterTest(suiteName, testName string) {
 
 func (suite *AllInOneTestSuite) TestAllInOne() {
 	// create jaeger custom resource
-	exampleJaeger := GetJaegerAllInOneCR(namespace, "my-jaeger")
+	instanceName := "my-jaeger"
+	exampleJaeger := GetJaegerAllInOneCR(instanceName, namespace)
 
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(exampleJaeger)
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "my-jaeger", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, instanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for deployment")
+
+	AllInOneSmokeTest(instanceName)
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
-	exampleJaeger := GetJaegerAllInOneCR(namespace, name)
+	exampleJaeger := GetJaegerAllInOneCR(name, namespace)
 	exampleJaeger.Spec.Ingress = v1.JaegerIngressSpec{
 		Enabled:  &ingressEnabled,
 		Security: v1.IngressSecurityNoneExplicit,
@@ -121,21 +124,25 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 		return false, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
+
+	AllInOneSmokeTest(name)
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 
-	j := GetJaegerAllInOneWithUICR(basePath, TrackingID)
+	instanceName := "all-in-one-with-ui-config"
+
+	j := GetJaegerAllInOneWithUICR(instanceName, namespace, basePath, TrackingID)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Error creating jaeger instance")
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, instanceName, 1, retryInterval, timeout)
 	require.NoError(t, err, "Error waiting for jaeger deployment")
 	defer undeployJaegerInstance(j)
 
 	ports := []string{"0:16686"}
-	portForward, closeChan := CreatePortForward(namespace, "all-in-one-with-ui-config", "all-in-one", ports, fw.KubeConfig)
+	portForward, closeChan := CreatePortForward(namespace, instanceName, "all-in-one", ports, fw.KubeConfig)
 	defer portForward.Close()
 	defer close(closeChan)
 	forwardedPorts, err := portForward.GetPorts()
@@ -174,4 +181,6 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 		return true, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
+
+	AllInOneSmokeTestWithQueryBasePath(instanceName, basePath)
 }

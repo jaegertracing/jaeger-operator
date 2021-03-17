@@ -98,14 +98,14 @@ func GetJaegerAllInOneCR(instanceName, namespace string) *v1.Jaeger {
 }
 
 // GetJaegerAllInOneWithUICR returns all-in-one with query base path and gaID CR
-func GetJaegerAllInOneWithUICR(queryBasePath, trackingID string) *v1.Jaeger {
+func GetJaegerAllInOneWithUICR(instanceName, namespace, queryBasePath, trackingID string) *v1.Jaeger {
 	allInOneCR := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "all-in-one-with-ui-config",
+			Name:      instanceName,
 			Namespace: namespace,
 		},
 		Spec: v1.JaegerSpec{

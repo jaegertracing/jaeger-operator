@@ -20,6 +20,11 @@ import (
 
 // AllInOneSmokeTest is for the all-in-one image, where query and collector use the same pod
 func AllInOneSmokeTest(jaegerInstanceName string) {
+	AllInOneSmokeTestWithQueryBasePath(jaegerInstanceName, "")
+}
+
+// AllInOneSmokeTestWithQueryBasePath is for the all-in-one image, where query and collector use the same pod with custom query base path
+func AllInOneSmokeTestWithQueryBasePath(jaegerInstanceName, queryBasePath string) {
 	allInOneImageName := "all-in-one"
 	ports := []string{"0:16686", "0:14268"}
 	portForw, closeChan := CreatePortForward(namespace, jaegerInstanceName, allInOneImageName, ports, fw.KubeConfig)
@@ -32,11 +37,18 @@ func AllInOneSmokeTest(jaegerInstanceName string) {
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
+	queryApi := "/api/traces"
+	if queryBasePath != "" {
+		if !strings.HasPrefix(queryBasePath, "/") {
+			queryBasePath = fmt.Sprintf("/%s", queryBasePath)
+		}
+		queryApi = fmt.Sprintf("%s/api/traces", queryBasePath)
+	}
 	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, namespace)
 	if insecureEndpoint {
-		apiTracesEndpoint = getQueryURL(jaegerInstanceName, namespace, "%s/api/traces")
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, namespace, "%s"+queryApi)
 	} else {
-		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", queryPort)
+		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d%s", queryPort, queryApi)
 	}
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
