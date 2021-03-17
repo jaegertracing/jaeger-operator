@@ -19,10 +19,27 @@ func upgrade1_22_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 		to:   "agent.tags",
 	}}
 
+	flagMapQuery := []deprecationFlagMap{
+		{
+			from: "downsampling.hashsalt",
+			to:   "",
+		},
+		{
+			from: "downsampling.ratio",
+			to:   "",
+		},
+	}
+
+	flagsAll := []deprecationFlagMap{{
+		from: "cassandra.tls.verify-host",
+		to:   "cassandra.tls.skip-host-verify",
+	}}
+
 	j := &jaeger
 	j.Spec.AllInOne.Options = migrateDeprecatedOptions(j, j.Spec.AllInOne.Options, flagMapCollector)
 	j.Spec.Collector.Options = migrateDeprecatedOptions(j, j.Spec.Collector.Options, flagMapCollector)
 	j.Spec.Agent.Options = migrateDeprecatedOptions(j, j.Spec.Agent.Options, flagMapAgent)
+	j.Spec.Query.Options = migrateDeprecatedOptions(j, j.Spec.Query.Options, flagMapQuery)
 
-	return jaeger, nil
+	return migrateAllDeprecatedOptions(jaeger, flagsAll), nil
 }
