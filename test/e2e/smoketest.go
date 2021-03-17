@@ -37,18 +37,18 @@ func AllInOneSmokeTestWithQueryBasePath(jaegerInstanceName, queryBasePath string
 
 	// Use ingress for k8s or on OpenShift if we have an insecure route
 	var apiTracesEndpoint string
-	queryApi := "/api/traces"
+	queryAPI := "/api/traces"
 	if queryBasePath != "" {
 		if !strings.HasPrefix(queryBasePath, "/") {
 			queryBasePath = fmt.Sprintf("/%s", queryBasePath)
 		}
-		queryApi = fmt.Sprintf("%s/api/traces", queryBasePath)
+		queryAPI = fmt.Sprintf("%s/api/traces", queryBasePath)
 	}
 	insecureEndpoint := hasInsecureEndpoint(jaegerInstanceName, namespace)
 	if insecureEndpoint {
-		apiTracesEndpoint = getQueryURL(jaegerInstanceName, namespace, "%s"+queryApi)
+		apiTracesEndpoint = getQueryURL(jaegerInstanceName, namespace, "%s"+queryAPI)
 	} else {
-		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d%s", queryPort, queryApi)
+		apiTracesEndpoint = fmt.Sprintf("http://localhost:%d%s", queryPort, queryAPI)
 	}
 	collectorEndpoint := fmt.Sprintf("http://localhost:%d/api/traces", collectorPort)
 	executeSmokeTest(apiTracesEndpoint, collectorEndpoint, insecureEndpoint)
