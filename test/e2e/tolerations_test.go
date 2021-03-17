@@ -104,9 +104,9 @@ func (suite *TolerationsTestSuite) TestElasticsearchProdTolerations() {
 }
 
 func (suite *TolerationsTestSuite) runProdTolerations(includeESSelfProvision bool) {
-	jaegerInstanceName := "simple-prod-tolerations"
+	jaegerInstanceName := "prod-tolerations"
 	if includeESSelfProvision {
-		jaegerInstanceName = "simple-prod-tolerations-with-es-prod"
+		jaegerInstanceName = "prod-es-tolerations"
 	}
 
 	collectorReplicasCount := int32(1)
@@ -137,7 +137,9 @@ func (suite *TolerationsTestSuite) runProdTolerations(includeESSelfProvision boo
 	// update tolerations to jaeger cr
 	jaegerCR.Spec.Collector.Tolerations = tolerationsCollector
 	jaegerCR.Spec.Query.Tolerations = tolerationsQuery
-	jaegerCR.Spec.Storage.Elasticsearch.Tolerations = tolerationsES
+	if includeESSelfProvision {
+		jaegerCR.Spec.Storage.Elasticsearch.Tolerations = tolerationsES
+	}
 
 	logrus.Infof("Creating jaeger services for tolerations test. jaeger-cr:%s, namespace:%s", jaegerInstanceName, namespace)
 	createESSelfProvDeployment(jaegerCR, jaegerInstanceName, namespace)
