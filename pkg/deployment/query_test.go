@@ -331,3 +331,12 @@ func TestQueryTracingDisabled(t *testing.T) {
 	dep := query.Get()
 	assert.Equal(t, "true", getEnvVarByName(dep.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
 }
+
+func TestQueryPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Query.PriorityClassName = priorityClassName
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}

@@ -257,6 +257,9 @@ type JaegerQuerySpec struct {
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -399,6 +402,9 @@ type JaegerCollectorSpec struct {
 	// The default, if omitted, is ClusterIP.
 	// See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester

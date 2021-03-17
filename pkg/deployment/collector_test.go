@@ -535,6 +535,15 @@ func TestCollectorServiceLinks(t *testing.T) {
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
 }
 
+func TestCollectorPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Collector.PriorityClassName = priorityClassName
+	c := NewCollector(jaeger)
+	dep := c.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
 func hasVolume(name string, volumes []corev1.Volume) bool {
 	for _, v := range volumes {
 		if v.Name == name {

@@ -716,6 +716,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCollectorSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"priorityClassName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
@@ -1715,6 +1721,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerQuerySpec(ref common.ReferenceCallba
 							Description: "TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected agent container from the query component to disable tracing requests to the query service. The default, if ommited, is true",
 							Type:        []string{"boolean"},
 							Format:      "",
+						},
+					},
+					"priorityClassName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
