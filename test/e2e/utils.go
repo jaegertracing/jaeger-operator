@@ -814,3 +814,10 @@ func getBusinessAppCR() *os.File {
 	require.NoError(t, err)
 	return file
 }
+
+func getDeployments(namespace, labels string) []appsv1.Deployment {
+	listOptions := &metav1.ListOptions{LabelSelector: labels}
+	deploymentList, err := fw.KubeClient.AppsV1().Deployments(namespace).List(context.Background(), *listOptions)
+	require.NoError(t, err, "Failed get deployment details")
+	return deploymentList.Items
+}

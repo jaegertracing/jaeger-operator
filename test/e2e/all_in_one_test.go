@@ -18,7 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -65,7 +64,7 @@ func (suite *AllInOneTestSuite) AfterTest(suiteName, testName string) {
 
 func (suite *AllInOneTestSuite) TestAllInOne() {
 	// create jaeger custom resource
-	exampleJaeger := getJaegerAllInOneDefinition(namespace, "my-jaeger")
+	exampleJaeger := GetJaegerAllInOneCR(namespace, "my-jaeger")
 
 	log.Infof("passing %v", exampleJaeger)
 	err := fw.Client.Create(goctx.TODO(), exampleJaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
@@ -80,7 +79,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	// create jaeger custom resource
 	ingressEnabled := true
 	name := "my-jaeger-with-ingress"
-	exampleJaeger := getJaegerAllInOneDefinition(namespace, name)
+	exampleJaeger := GetJaegerAllInOneCR(namespace, name)
 	exampleJaeger.Spec.Ingress = v1.JaegerIngressSpec{
 		Enabled:  &ingressEnabled,
 		Security: v1.IngressSecurityNoneExplicit,
@@ -128,7 +127,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 
-	j := getJaegerAllInOneWithUiDefinition(basePath)
+	j := GetJaegerAllInOneWithUiCR(basePath, TrackingID)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Error creating jaeger instance")
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
@@ -175,59 +174,4 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 		return true, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-}
-
-func getJaegerAllInOneWithUiDefinition(basePath string) *v1.Jaeger {
-	j := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "all-in-one-with-ui-config",
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Strategy: v1.DeploymentStrategyAllInOne,
-			AllInOne: v1.JaegerAllInOneSpec{
-				Options: v1.NewOptions(map[string]interface{}{
-					"query.base-path": basePath,
-				}),
-			},
-			UI: v1.JaegerUISpec{
-				Options: v1.NewFreeForm(map[string]interface{}{
-					"tracking": map[string]interface{}{
-						"gaID": TrackingID,
-					},
-				}),
-			},
-		},
-	}
-	j.Spec.Annotations = map[string]string{
-		"nginx.ingress.kubernetes.io/ssl-redirect": "false",
-	}
-	return j
-}
-
-func getJaegerAllInOneDefinition(namespace string, name string) *v1.Jaeger {
-	exampleJaeger := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Strategy: v1.DeploymentStrategyAllInOne,
-			AllInOne: v1.JaegerAllInOneSpec{
-				Options: v1.NewOptions(map[string]interface{}{
-					"log-level":         "debug",
-					"memory.max-traces": 10000,
-				}),
-			},
-		},
-	}
-	return exampleJaeger
 }

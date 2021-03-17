@@ -56,6 +56,10 @@ elif [ "${TEST_GROUP}" = "istio" ]
 then
     echo "Running Smoke Tests with istio"
     make e2e-tests-istio
+elif [ "${TEST_GROUP}" = "tolerations" ]
+then
+    echo "Running Tolerations Tests"
+    make e2e-tests-tolerations
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi

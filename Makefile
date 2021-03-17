@@ -104,7 +104,7 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate e2e-tests-tolerations
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: build docker push
@@ -202,6 +202,11 @@ e2e-tests-upgrade: prepare-e2e-tests
 e2e-tests-istio: prepare-e2e-tests istio
 	@echo Running Istio end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=istio ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-tolerations
+e2e-tests-tolerations: prepare-e2e-tests deploy-es-operator
+	@echo Running Tolerantions end-to-end tests...
+	go test -tags=tolerations ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
