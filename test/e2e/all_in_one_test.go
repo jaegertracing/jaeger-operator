@@ -127,7 +127,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 	basePath := "/jaeger"
 
-	j := GetJaegerAllInOneWithUiCR(basePath, TrackingID)
+	j := GetJaegerAllInOneWithUICR(basePath, TrackingID)
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)
 	require.NoError(t, err, "Error creating jaeger instance")
 	err = e2eutil.WaitForDeployment(t, fw.KubeClient, namespace, "all-in-one-with-ui-config", 1, retryInterval, timeout)
