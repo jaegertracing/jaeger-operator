@@ -3,7 +3,7 @@ Changes by Version
 
 1.22.0 (2021-03-16)
 -------------------
-
+* Add ability to indicate PriorityClass for collector and query ([#1413](https://github.com/jaegertracing/jaeger-operator/pull/1413), [@majidazimi](https://github.com/majidazimi))
 * simplest example file should be as simplest ([#1404](https://github.com/jaegertracing/jaeger-operator/pull/1404), [@jkandasa](https://github.com/jkandasa))
 * Add ability to indicate PriorityClass for agent ([#1392](https://github.com/jaegertracing/jaeger-operator/pull/1392), [@elkh510](https://github.com/elkh510))
 * Migrate jaeger.tags in existing CRs ([#1380](https://github.com/jaegertracing/jaeger-operator/pull/1380), [@jpkrohling](https://github.com/jpkrohling))
