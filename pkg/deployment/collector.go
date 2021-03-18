@@ -82,6 +82,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
+	priorityClassName := ""
+	if c.jaeger.Spec.Collector.PriorityClassName != "" {
+		priorityClassName = c.jaeger.Spec.Collector.PriorityClassName
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -171,6 +176,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, account.CollectorComponent),
 					Affinity:           commonSpec.Affinity,

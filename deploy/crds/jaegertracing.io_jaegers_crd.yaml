@@ -598,6 +598,8 @@ spec:
                   type: object
                 options:
                   type: object
+                priorityClassName:
+                  type: string
                 resources:
                   nullable: true
                   properties:
@@ -2639,6 +2641,8 @@ spec:
                   type: integer
                 options:
                   type: object
+                priorityClassName:
+                  type: string
                 replicas:
                   format: int32
                   type: integer
@@ -5649,6 +5653,8 @@ spec:
                   type: object
                 options:
                   type: object
+                priorityClassName:
+                  type: string
                 replicas:
                   format: int32
                   type: integer
@@ -7526,6 +7532,7 @@ spec:
                             type: string
                         type: object
                       type: array
+                      x-kubernetes-list-type: atomic
                   type: object
                 esIndexCleaner:
                   properties:
