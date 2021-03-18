@@ -1,14 +1,18 @@
 package upgrade
 
-import "strings"
+import (
+	"strconv"
+)
 
 func flagBoolValue(v interface{}) bool {
 	strValue, isString := v.(string)
 	if isString {
-		if strings.EqualFold(strValue, "true") {
-			return true
+		value, err := strconv.ParseBool(strValue)
+		if err != nil {
+			// a default value if I can't parse it
+			return false
 		}
-		return false
+		return value
 	}
 
 	boolValue := v.(bool)
