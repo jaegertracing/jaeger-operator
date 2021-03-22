@@ -16,11 +16,6 @@ import (
 func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 	latestVersion := "1.22.0"
 
-	// this is here because 1.22 isn't in the version map yet
-	// remove this code once it's been added there
-	upgrades[latestVersion] = upgrade1_22_0
-	parseSemVer()
-
 	opts := v1.NewOptions(map[string]interface{}{
 		"jaeger.tags": "somekey=somevalue",
 	})
@@ -60,4 +55,91 @@ func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 	assert.Contains(t, colOpts, "collector.tags")
 	assert.Equal(t, "somekey=somevalue", colOpts["collector.tags"])
 	assert.NotContains(t, colOpts, "jaeger.tags")
+}
+
+func TestDeleteQueryRemovedFlags(t *testing.T) {
+	latestVersion := "1.22.0"
+	opts := v1.NewOptions(map[string]interface{}{
+		"downsampling.hashsalt": "somevalue",
+		"downsampling.ratio":    "0.25",
+	})
+
+	nsn := types.NamespacedName{Name: "my-instance"}
+	existing := v1.NewJaeger(nsn)
+	existing.Status.Version = "1.21.0"
+	existing.Spec.Query.Options = opts
+
+	objs := []runtime.Object{existing}
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	cl := fake.NewFakeClient(objs...)
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+
+	persisted := &v1.Jaeger{}
+	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	assert.Equal(t, latestVersion, persisted.Status.Version)
+	assert.Len(t, persisted.Spec.Query.Options.Map(), 0)
+	assert.NotContains(t, persisted.Spec.Query.Options.Map(), "downsampling.hashsalt")
+	assert.NotContains(t, persisted.Spec.Query.Options.Map(), "downsampling.ratio")
+}
+
+func TestCassandraVerifyHostFlags(t *testing.T) {
+
+	oldFlag := "cassandra.tls.verify-host"
+	newFlag := "cassandra.tls.skip-host-verify"
+
+	tests := []struct {
+		testName    string
+		opts        v1.Options
+		flagPresent bool
+		flagValue   string
+	}{
+		{
+			testName: "verify-host=true",
+			opts: v1.NewOptions(map[string]interface{}{
+				oldFlag: "true",
+			}),
+			flagPresent: false,
+		},
+		{
+			testName: "verify-host=false",
+			opts: v1.NewOptions(map[string]interface{}{
+				oldFlag: "false",
+			}),
+			flagPresent: true,
+			flagValue:   "true",
+		},
+	}
+	latestVersion := "1.22.0"
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			nsn := types.NamespacedName{Name: "my-instance"}
+			existing := v1.NewJaeger(nsn)
+			existing.Status.Version = "1.21.0"
+			existing.Spec.Collector.Options = tt.opts
+
+			objs := []runtime.Object{existing}
+			s := scheme.Scheme
+			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+			cl := fake.NewFakeClient(objs...)
+			assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+
+			persisted := &v1.Jaeger{}
+			assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+			assert.Equal(t, latestVersion, persisted.Status.Version)
+			if tt.flagPresent {
+				assert.Len(t, persisted.Spec.Collector.Options.Map(), 1)
+				assert.NotContains(t, persisted.Spec.Collector.Options.Map(), oldFlag)
+				assert.Contains(t, persisted.Spec.Collector.Options.Map(), newFlag)
+				assert.Equal(t, tt.flagValue, persisted.Spec.Collector.Options.Map()[newFlag])
+			} else {
+				assert.Len(t, persisted.Spec.Collector.Options.Map(), 0)
+				assert.NotContains(t, persisted.Spec.Collector.Options.Map(), oldFlag)
+			}
+
+		})
+	}
 }
