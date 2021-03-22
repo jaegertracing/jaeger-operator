@@ -15,7 +15,7 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
         - name: jaeger-operator
-          image: jaegertracing/jaeger-operator:1.21.3
+          image: jaegertracing/jaeger-operator:1.22.0
           ports:
           - containerPort: 60000
             name: metrics
