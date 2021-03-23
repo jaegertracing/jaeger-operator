@@ -86,7 +86,9 @@ func (suite *TolerationsTestSuite) TestAllInOneTolerations() {
 	require.Equal(t, 1, len(allInOneDeployments), "AllInOne deployments count not matching")
 	allInOneDeployment := allInOneDeployments[0]
 	require.Equal(t, int32(1), allInOneDeployment.Status.ReadyReplicas, "AllInOne deployment replicas count not matching")
-	suite.verifyTolerations(allInOneDeployment.Name, tolerationsAllInOne, allInOneDeployment.Spec.Template.Spec.Tolerations)
+	logrus.Debugf("tolerations, deploymentName:%s, expectedList:[%+v]", allInOneDeployment.Name, tolerationsAllInOne)
+	logrus.Debugf("tolerations, deploymentName:%s, actualList:[%+v]", allInOneDeployment.Name, allInOneDeployment.Spec.Template.Spec.Tolerations)
+	suite.verifyTolerations(tolerationsAllInOne, allInOneDeployment.Spec.Template.Spec.Tolerations)
 }
 
 func (suite *TolerationsTestSuite) TestProdTolerations() {
@@ -153,21 +155,26 @@ func (suite *TolerationsTestSuite) runProdTolerations(includeESSelfProvision boo
 	require.Equal(t, 1, len(collectorDeployments), "Collector deployments count not matching")
 	collectorDeployment := collectorDeployments[0]
 	require.Equal(t, collectorReplicasCount, collectorDeployment.Status.ReadyReplicas, "Collector deployment replicas count not matching")
-	suite.verifyTolerations(collectorDeployment.Name, tolerationsCollector, collectorDeployment.Spec.Template.Spec.Tolerations)
+	logrus.Debugf("tolerations, deploymentName:%s, expectedList:[%+v]", collectorDeployment.Name, tolerationsCollector)
+	logrus.Debugf("tolerations, deploymentName:%s, actualList:[%+v]", collectorDeployment.Name, collectorDeployment.Spec.Template.Spec.Tolerations)
+	suite.verifyTolerations(tolerationsCollector, collectorDeployment.Spec.Template.Spec.Tolerations)
 
 	queryDeployments := getDeployments(namespace, fmt.Sprintf("app=jaeger,app.kubernetes.io/component=query,app.kubernetes.io/instance=%s", jaegerInstanceName))
 	require.Equal(t, 1, len(queryDeployments), "Query deployments count not matching")
 	queryDeployment := queryDeployments[0]
 	require.Equal(t, queryReplicasCount, queryDeployment.Status.ReadyReplicas, "Query deployment replicas count not matching")
-	suite.verifyTolerations(queryDeployment.Name, tolerationsQuery, queryDeployment.Spec.Template.Spec.Tolerations)
+	logrus.Debugf("tolerations, deploymentName:%s, expectedList:[%+v]", queryDeployment.Name, tolerationsQuery)
+	logrus.Debugf("tolerations, deploymentName:%s, actualList:[%+v]", queryDeployment.Name, queryDeployment.Spec.Template.Spec.Tolerations)
+	suite.verifyTolerations(tolerationsQuery, queryDeployment.Spec.Template.Spec.Tolerations)
 
 	if includeESSelfProvision {
 		esDeployments := getDeployments(namespace, "component=elasticsearch")
 		require.Equal(t, esNodeCount, int32(len(esDeployments)), "Elasticsearch deployments count not matching")
-		for index := 0; index < len(esDeployments); index++ {
-			esDeployment := esDeployments[index]
+		for _, esDeployment := range esDeployments {
 			require.Equal(t, int32(1), esDeployment.Status.ReadyReplicas, "Elasticsearch deployment replicas count not matching")
-			suite.verifyTolerations(esDeployment.Name, tolerationsES, esDeployment.Spec.Template.Spec.Tolerations)
+			logrus.Debugf("tolerations, deploymentName:%s, expectedList:[%+v]", esDeployment.Name, tolerationsES)
+			logrus.Debugf("tolerations, deploymentName:%s, actualList:[%+v]", esDeployment.Name, esDeployment.Spec.Template.Spec.Tolerations)
+			suite.verifyTolerations(tolerationsES, esDeployment.Spec.Template.Spec.Tolerations)
 		}
 	}
 }
@@ -185,15 +192,11 @@ func (suite *TolerationsTestSuite) getTolerations(prefix string) []v1.Toleration
 	return tolerations
 }
 
-func (suite *TolerationsTestSuite) verifyTolerations(deploymentName string, expectedList []v1.Toleration, actualList []v1.Toleration) {
-	logrus.Infof("tolerations, deploymentName:%s, expectedList:[%+v]", deploymentName, expectedList)
-	logrus.Infof("tolerations, deploymentName:%s, actualList:[%+v]", deploymentName, actualList)
+func (suite *TolerationsTestSuite) verifyTolerations(expectedList []v1.Toleration, actualList []v1.Toleration) {
 	require.True(t, len(expectedList) <= len(actualList), "actual tolerations count is less than the expected")
-	for expectedIndex := 0; expectedIndex < len(expectedList); expectedIndex++ {
-		expected := expectedList[expectedIndex]
+	for _, expected := range expectedList {
 		found := false
-		for actualIndex := 0; actualIndex < len(actualList); actualIndex++ {
-			actual := actualList[actualIndex]
+		for _, actual := range actualList {
 			if expected.Key == actual.Key &&
 				expected.Operator == actual.Operator &&
 				expected.Value == actual.Value &&
