@@ -766,27 +766,49 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "my-instance",
-		Namespace: "test",
-	})
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name       string
+		options    v1.Options
+		expectedCA string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedCA: ca.ServiceCAPath,
+		},
+		{
+			name: "Custom CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "true",
+				"reporter.grpc.tls.ca":      "/my/custom/ca",
+			}),
+			expectedCA: "/my/custom/ca",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Name:      "my-instance",
+				Namespace: "test",
+			})
+			jaeger.Spec.Agent.Options = tt.options
+			dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+			dep = Sidecar(jaeger, dep)
 
-	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-	dep = Sidecar(jaeger, dep)
-
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--agent.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTagsMap, "container.name")
-	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
+			assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--agent.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+tt.expectedCA, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+			assert.Contains(t, agentTagsMap, "container.name")
+			assert.Equal(t, agentTagsMap["container.name"], "only_container")
+		})
+	}
 }
 
 func TestEqualSidecar(t *testing.T) {

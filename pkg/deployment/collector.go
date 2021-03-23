@@ -75,8 +75,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
-	tls.Update(c.jaeger, commonSpec, &options)
-	ca.Update(c.jaeger, commonSpec)
+	if len(util.FindItem("--collector.grpc.tls.enabled=true", args)) == 0 {
+		tls.Update(c.jaeger, commonSpec, &options)
+		ca.Update(c.jaeger, commonSpec)
+	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
