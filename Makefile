@@ -494,4 +494,4 @@ kuttl-e2e:
 
 .PHONY: build-assert-job
 build-assert-job:
-	docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+	@docker build -t local/asserts:e2e  -f Dockerfile.asserts .

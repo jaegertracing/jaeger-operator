@@ -2,17 +2,16 @@ package utils
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-
-//TestGetHTTP polls and endpoint and test the response
+//TestGetHTTP polls an endpoint and test the response
 func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Response, body []byte) (done bool, err error)) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 

@@ -15,7 +15,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-ingress
+  name: test-ui-config
 spec:
   template:
     spec:
@@ -24,11 +24,11 @@ spec:
           image: local/asserts:e2e
           command: ["./allinone_testuiconfig"]
           env:
-            - name: JAEGER_INSTANCE_NAME
-              value: "all-in-one-with-ui-config"
-            - name: QUERY_BASE_PATH
+            - name: QUERY-HOSTNAME
+              value: "all-in-one-with-ui-config-query"
+            - name: QUERY-BASE_PATH
               value: "jaeger"
-            - name: TRACKING_ID
+            - name: TRACKING-ID
               value: "MyTrackingId"
       restartPolicy: OnFailure
   backoffLimit: 10

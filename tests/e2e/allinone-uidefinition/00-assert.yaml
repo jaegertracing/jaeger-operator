@@ -1,6 +1,6 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-ingress
+  name: test-ui-config
 status:
   succeeded: 1

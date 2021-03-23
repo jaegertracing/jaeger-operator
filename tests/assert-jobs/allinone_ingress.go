@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
 	"github.com/spf13/viper"
 
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
@@ -23,12 +22,14 @@ type services struct {
 	Errors interface{} `json:"errors"`
 }
 
+const ingressHostKey = "ingress-host"
+
 func main() {
 
 	params := utils.NewParameters()
 	params.Parse()
-	viper.SetDefault("ingressHost", "localhost")
-	host := viper.GetString("ingressHost")
+	viper.SetDefault(ingressHostKey, "localhost")
+	host := viper.GetString(ingressHostKey)
 	url := fmt.Sprintf("http://%s/api/services", host)
 
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
