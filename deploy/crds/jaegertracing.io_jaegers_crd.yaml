@@ -580,6 +580,8 @@ spec:
                   type: object
                 config:
                   type: object
+                dnsPolicy:
+                  type: string
                 hostNetwork:
                   type: boolean
                 image:

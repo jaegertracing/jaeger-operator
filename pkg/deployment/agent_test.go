@@ -246,6 +246,17 @@ func TestAgentHostNetwork(t *testing.T) {
 	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
 }
 
+func TestAgentDNSPolicyWithHostNetwork(t *testing.T) {
+	trueVar := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.HostNetwork = &trueVar
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
+	assert.Equal(t, corev1.DNSClusterFirstWithHostNet, dep.Spec.Template.Spec.DNSPolicy)
+}
+
 func TestAgentPriorityClassName(t *testing.T) {
 	priorityClassName := "test-class"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
