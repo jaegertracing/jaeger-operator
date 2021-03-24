@@ -393,7 +393,7 @@ install-tools:
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
 		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
-		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4 \
+		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0 \
 		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
 		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
 
