@@ -14,18 +14,21 @@ import (
 )
 
 const (
-	queryBasePathKey = "query-base-path"
-	tracingIDKey     = "tracing-id"
-	queryHostName    = "query-hostname"
+	envQueryBasePath = "QUERY_BASE_PATH"
+	envTracingIDKey  = "TRACING_ID"
+	envQueryHostName = "QUERY_HOSTNAME"
 )
 
 func main() {
+	viper.AutomaticEnv()
+
 	params := utils.NewParameters()
 	params.Parse()
 
-	basePath := viper.GetString(queryBasePathKey)
-	trackingID := viper.GetString(tracingIDKey)
-	hostName := viper.GetString(queryHostName)
+	basePath := viper.GetString(envQueryBasePath)
+	trackingID := viper.GetString(envTracingIDKey)
+	hostName := viper.GetString(envQueryHostName)
+
 	searchURL := fmt.Sprintf("http://%s:16686/%s/search", hostName, basePath)
 
 	err := utils.TestGetHTTP(searchURL, params, func(_ *http.Response, body []byte) (done bool, err error) {
@@ -39,5 +42,6 @@ func main() {
 		log.Fatal(err)
 		os.Exit(1)
 	}
+
 	logrus.Info("Success")
 }

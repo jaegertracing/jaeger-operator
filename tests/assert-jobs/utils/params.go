@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	timeoutKey       = "timeout"
-	retryIntervalKey = "retry-interval"
+	envTimeoutKey    = "TIMEOUT"
+	envRetryInterval = "RETRY_INTERVAL"
 )
 
 const (
@@ -29,9 +29,8 @@ func NewParameters() *TestParams {
 
 //Parse the environment variables and fill the structure with the parameters
 func (params *TestParams) Parse() {
-	viper.AutomaticEnv()
-	viper.SetDefault(timeoutKey, retryIntervalDefault)
-	viper.SetDefault(retryIntervalKey, timeOutDefault)
-	params.RetryInterval = time.Duration(viper.GetInt(retryIntervalKey)) * time.Second
-	params.Timeout = time.Duration(viper.GetInt(timeoutKey)) * time.Second
+	viper.SetDefault(envTimeoutKey, retryIntervalDefault)
+	viper.SetDefault(envRetryInterval, timeOutDefault)
+	params.RetryInterval = time.Duration(viper.GetInt(envRetryInterval)) * time.Second
+	params.Timeout = time.Duration(viper.GetInt(envTimeoutKey)) * time.Second
 }

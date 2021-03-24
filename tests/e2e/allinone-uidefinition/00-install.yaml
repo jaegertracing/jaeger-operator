@@ -22,11 +22,11 @@ spec:
       containers:
         - name: asserts-container
           image: local/asserts:e2e
-          command: ["./allinone_testuiconfig"]
+          command: ["./uiconfig"]
           env:
-            - name: QUERY-HOSTNAME
+            - name: QUERY_HOSTNAME
               value: "all-in-one-with-ui-config-query"
-            - name: QUERY-BASE_PATH
+            - name: QUERY_BASE_PATH
               value: "jaeger"
             - name: TRACKING-ID
               value: "MyTrackingId"

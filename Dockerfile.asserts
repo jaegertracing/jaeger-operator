@@ -9,8 +9,10 @@ WORKDIR /go/src/github.com/jaegertracing/jaeger-operator
 RUN go mod download
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build  -a ./tests/assert-jobs/allinone_testuiconfig.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./uiconfig -a ./tests/assert-jobs/uiconfig/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
 
 FROM scratch
 WORKDIR /
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/allinone_testuiconfig .
+COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/uiconfig .
+COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/reporter .
