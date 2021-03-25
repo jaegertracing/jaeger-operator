@@ -488,7 +488,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 # end-to-tests
 .PHONY: kuttl-e2e
-kuttl-e2e:
+kuttl-e2e: prepare-e2e-kuttl-tests
 	$(KUTTL) test
 
 

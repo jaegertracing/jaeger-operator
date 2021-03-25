@@ -29,8 +29,8 @@ func NewParameters() *TestParams {
 
 //Parse the environment variables and fill the structure with the parameters
 func (params *TestParams) Parse() {
-	viper.SetDefault(envTimeoutKey, retryIntervalDefault)
-	viper.SetDefault(envRetryInterval, timeOutDefault)
+	viper.SetDefault(envTimeoutKey, timeOutDefault)
+	viper.SetDefault(envRetryInterval, retryIntervalDefault)
 	params.RetryInterval = time.Duration(viper.GetInt(envRetryInterval)) * time.Second
 	params.Timeout = time.Duration(viper.GetInt(envTimeoutKey)) * time.Second
 }
