@@ -26,7 +26,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		},
 	}
 	if jaeger.Spec.Query.ServiceType == corev1.ServiceTypeNodePort {
-		ports[0].NodePort = int32(GetNodePortForQueryService(jaeger))
+		ports[0].NodePort = GetNodePortForQueryService(jaeger)
 	}
 
 	return &corev1.Service{
@@ -97,6 +97,6 @@ func getTypeForQueryService(jaeger *v1.Jaeger) corev1.ServiceType {
 }
 
 // GetNodePortForQueryService returns the query service NodePort for this Jaeger instance
-func GetNodePortForQueryService(jaeger *v1.Jaeger) int {
-	return int(jaeger.Spec.Query.NodePort)
+func GetNodePortForQueryService(jaeger *v1.Jaeger) int32 {
+	return jaeger.Spec.Query.NodePort
 }
