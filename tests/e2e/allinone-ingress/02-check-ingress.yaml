@@ -3,4 +3,4 @@ kind: TestStep
 commands:
   - command: "kubectl wait --for=condition=complete --timeout=30s job/report-span"
     namespaced: true
-  - script: "go run ../../assert-jobs/ingress/main.go --service-name=my-test-service"
+  - script: "go run ../../assert-jobs/query/main.go --service-name=my-test-service"
