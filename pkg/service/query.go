@@ -18,6 +18,17 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
 	}
 
+	ports := []corev1.ServicePort{
+		{
+			Name:       getPortNameForQueryService(jaeger),
+			Port:       int32(GetPortForQueryService(jaeger)),
+			TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
+		},
+	}
+	if jaeger.Spec.Query.ServiceType == corev1.ServiceTypeNodePort {
+		ports[0].NodePort = GetNodePortForQueryService(jaeger)
+	}
+
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -41,13 +52,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		Spec: corev1.ServiceSpec{
 			Selector: selector,
 			Type:     getTypeForQueryService(jaeger),
-			Ports: []corev1.ServicePort{
-				{
-					Name:       getPortNameForQueryService(jaeger),
-					Port:       int32(GetPortForQueryService(jaeger)),
-					TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
-				},
-			},
+			Ports:    ports,
 		},
 	}
 }
@@ -89,4 +94,9 @@ func getTypeForQueryService(jaeger *v1.Jaeger) corev1.ServiceType {
 		return jaeger.Spec.Query.ServiceType
 	}
 	return corev1.ServiceTypeClusterIP
+}
+
+// GetNodePortForQueryService returns the query service NodePort for this Jaeger instance
+func GetNodePortForQueryService(jaeger *v1.Jaeger) int32 {
+	return jaeger.Spec.Query.NodePort
 }
