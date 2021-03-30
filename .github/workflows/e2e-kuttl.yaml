@@ -24,4 +24,4 @@ jobs:
         run: ./.ci/install-kuttl.sh
 
       - name: "run tests"
-        run: make install prepare-e2e-kuttl-tests kuttl-e2e
+        run: make install kuttl-e2e

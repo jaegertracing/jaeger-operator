@@ -1,0 +1,34 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: all-in-one-with-ui-config
+spec:
+  strategy: allinone
+  allInOne:
+    options:
+      query.base-path: "/jaeger"
+  ui:
+    options:
+      tracking:
+        gaID: "MyTrackingId"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-ui-config
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: local/asserts:e2e
+          command: ["./uiconfig"]
+          env:
+            - name: QUERY_HOSTNAME
+              value: "all-in-one-with-ui-config-query"
+            - name: QUERY_BASE_PATH
+              value: "jaeger"
+            - name: TRACKING-ID
+              value: "MyTrackingId"
+      restartPolicy: OnFailure
+  backoffLimit: 10

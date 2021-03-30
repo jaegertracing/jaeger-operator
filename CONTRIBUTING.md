@@ -175,6 +175,16 @@ If you face issues like the one below, make sure you don't have any Jaeger insta
 ...
 ```
 
+##### Kuttl E2E tests
+
+There are some tests that uses [Kuttl](https://kuttl.dev/), those tests can be executed via:
+
+```
+$ make kuttl-e2e
+```
+
+You first need to install [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) in order to run the based kuttle e2e tests
+
 #### Building [OCI Images](https://github.com/opencontainers/image-spec/blob/master/spec.md) for multiple arch (linux/arm64, linux/amd64)
 
 OCI images could be built and published by [buildx](https://github.com/docker/buildx), it could be executed for local test via:

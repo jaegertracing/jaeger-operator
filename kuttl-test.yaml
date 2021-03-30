@@ -5,11 +5,16 @@ crdDir: ./tests/_build/crds/
 artifactsDir: ./tests/_build/artifacts/
 kindContainers:
   - local/jaeger-operator:e2e
+  - local/asserts:e2e
 commands:
   - command: kubectl create namespace jaeger-operator-system
   - command: kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system
   - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n jaeger-operator-system
+  - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+  - command: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
   - command: sleep 5s
 
+kindConfig: ./kind.yaml
 testDirs:
   - ./tests/e2e/
+timeout: 200
