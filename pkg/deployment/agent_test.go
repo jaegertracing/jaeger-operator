@@ -200,30 +200,62 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "my-instance",
-		Namespace: "test",
-	})
-	jaeger.Spec.Agent.Strategy = "daemonset"
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name       string
+		options    v1.Options
+		expectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs:[]string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca="+ca.ServiceCAPath,
+				"--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local",
+			},
+		},
+		{
+			name: "Custom CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "true",
+				"reporter.grpc.tls.ca":      "/my/custom/ca",
+			}),
+			expectedArgs:[]string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=/my/custom/ca",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Name:      "my-instance",
+				Namespace: "test",
+			})
+			jaeger.Spec.Agent.Strategy = "daemonset"
+			jaeger.Spec.Agent.Options = tt.options
 
-	a := NewAgent(jaeger)
-	dep := a.Get()
+			a := NewAgent(jaeger)
+			dep := a.Get()
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-	// the following are added automatically
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			for _, arg := range tt.expectedArgs {
+				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			}
 
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+		})
+	}
+
 }
 
 func TestAgentServiceLinks(t *testing.T) {

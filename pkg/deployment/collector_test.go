@@ -509,23 +509,51 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name         string
+		options      v1.Options
+		expectedCert string
+		expectedKey  string
+	}{
+		{
+			name: "Openshift certificates",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedCert: "/etc/tls-config/tls.crt",
+			expectedKey:  "/etc/tls-config/tls.key",
+		},
+		{
+			name: "Custom certificates",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"collector.grpc.tls.enabled": "true",
+				"collector.grpc.tls.cert":    "/my/custom/cert",
+				"collector.grpc.tls.key":     "/my/custom/key",
+			}),
+			expectedCert: "/my/custom/cert",
+			expectedKey:  "/my/custom/key",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+			jaeger.Spec.Collector.Options = tt.options
 
-	a := NewCollector(jaeger)
-	dep := a.Get()
+			a := NewCollector(jaeger)
+			dep := a.Get()
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
+			assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
 
-	// the following are added automatically
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			// the following are added automatically
+			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert="+tt.expectedCert, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key="+tt.expectedKey, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+		})
+	}
+
 }
 
 func TestCollectorServiceLinks(t *testing.T) {
