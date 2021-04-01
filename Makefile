@@ -484,7 +484,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	@${SED} "0,/fieldPath: metadata.namespace/s/fieldPath: metadata.namespace/fieldPath: metadata.annotations['olm.targetNamespaces']/gi" tests/_build/manifests/01-jaeger-operator.yaml -i
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
-
+	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 
 # end-to-tests
 .PHONY: kuttl-e2e

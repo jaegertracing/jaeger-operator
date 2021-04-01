@@ -64,4 +64,5 @@ func main() {
 		logrus.Error("Error trying to parse response: %v", err)
 		os.Exit(1)
 	}
+	logrus.Info("Successfully terminates")
 }

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: find-service2
+  name: find-service2-ns
 spec:
   template:
     spec:
