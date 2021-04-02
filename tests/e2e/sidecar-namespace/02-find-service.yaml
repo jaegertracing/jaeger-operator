@@ -14,5 +14,5 @@ spec:
               value: "order"
             - name: QUERY_HOST
               value: "agent-as-sidecar-query:16686"
-      restartPolicy: OnFailure
-  backoffLimit: 10
+      restartPolicy: Never
+  backoffLimit: 1
