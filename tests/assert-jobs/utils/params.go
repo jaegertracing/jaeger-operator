@@ -12,8 +12,8 @@ const (
 )
 
 const (
-	timeOutDefault       = 120
-	retryIntervalDefault = 5
+	timeOutDefault       = 40
+	retryIntervalDefault = 8
 )
 
 //TestParams contains all general parameters of the test job

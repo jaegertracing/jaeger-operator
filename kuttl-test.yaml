@@ -18,5 +18,5 @@ commands:
 kindConfig: ./kind.yaml
 testDirs:
   - ./tests/e2e/
-timeout: 300
+timeout: 330
 parallel: 1
