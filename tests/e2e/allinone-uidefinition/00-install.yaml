@@ -30,5 +30,5 @@ spec:
               value: "jaeger"
             - name: TRACKING-ID
               value: "MyTrackingId"
-      restartPolicy: OnFailure
-  backoffLimit: 10
+      restartPolicy: Never
+  backoffLimit: 1

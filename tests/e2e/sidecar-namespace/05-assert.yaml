@@ -1,0 +1,6 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: find-service2-ns
+status:
+  succeeded: 1

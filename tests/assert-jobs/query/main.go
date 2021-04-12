@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -23,13 +24,15 @@ type services struct {
 }
 
 const (
-	flagIngressHost = "ingress-host"
+	flagIngressHost = "query-host"
 	flagServiceName = "service-name"
 )
 
 func main() {
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
-
+	viper.SetDefault(flagIngressHost, "localhost")
+	flag.String(flagIngressHost, "", "Query service hostname")
 	flag.String(flagServiceName, "", "Service name expected")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -41,7 +44,6 @@ func main() {
 	params := utils.NewParameters()
 	params.Parse()
 
-	viper.SetDefault(flagIngressHost, "localhost")
 	host := viper.GetString(flagIngressHost)
 	serviceName := viper.GetString(flagServiceName)
 
@@ -62,4 +64,5 @@ func main() {
 		logrus.Error("Error trying to parse response: %v", err)
 		os.Exit(1)
 	}
+	logrus.Info("Successfully terminates")
 }
