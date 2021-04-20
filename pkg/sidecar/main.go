@@ -12,23 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilie
+package sidecar
 
-import (
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
+var (
+	// Annotation is the annotation name to look for when deciding whether or not to inject.
+	Annotation = "sidecar.jaegertracing.io/inject"
+	// Label is the label name the operator put on injected deployments.
+	Label = "sidecar.jaegertracing.io/injected"
 )
-
-type Params struct {
-	Config   config.Config
-	Client   client.Client
-	Instance v2.Jaeger
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Strategy strategy.Strategy
-}

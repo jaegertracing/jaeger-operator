@@ -12,23 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilie
+package config
 
-import (
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+const JaegerType = "jaeger"
 
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
-)
+// Jaeger Receiver Settings
 
-type Params struct {
-	Config   config.Config
-	Client   client.Client
-	Instance v2.Jaeger
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Strategy strategy.Strategy
+type JaegerReceiverConfig struct {
+	Protocols Protocols
+}
+
+func (*JaegerReceiverConfig) Type() string {
+	return JaegerType
+}
+
+// Jaeger exporter settings
+
+type JaegerExporterConfig struct {
+	GRPCSettings `yaml:",inline,omitempty"`
+}
+
+func (*JaegerExporterConfig) Type() string {
+	return JaegerType
 }

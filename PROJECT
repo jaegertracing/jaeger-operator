@@ -1,7 +1,7 @@
 domain: jaegertracing.io
 layout: go.kubebuilder.io/v2
-projectName: jaeger-operator
 multigroup: true
+projectName: jaeger-operator
 repo: github.com/jaegertracing/jaeger-operator
 resources:
 - group: jaegertracing

@@ -18,7 +18,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/version"
 )
 
@@ -45,4 +47,24 @@ func TestImageNameParamDefaultNoTag(t *testing.T) {
 
 func TestImageNameParamDefaultWithTag(t *testing.T) {
 	assert.Equal(t, "org/default-image:1.2.3", Image("", "org/default-image:1.2.3", version.Get()))
+}
+
+func TestCollectorName(t *testing.T) {
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Equal(t, "my-instance-collector", Collector(*jaeger))
+}
+
+func TestAgentName(t *testing.T) {
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Equal(t, "my-instance-agent", Agent(*jaeger))
+}
+
+func TestCollectorService(t *testing.T) {
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Equal(t, "my-instance-collector-collector", CollectorService(*jaeger))
+}
+
+func TestCollectorHeadlessService(t *testing.T) {
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Equal(t, "my-instance-collector-collector-headless", CollectorHeadlessService(*jaeger))
 }

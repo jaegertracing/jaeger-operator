@@ -42,7 +42,9 @@ type JaegerReconciler struct {
 
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=opentelemetry.io,resources=opentelemetrycollectors,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/finalizers,verbs=get;update;patch
+// +kubebuilder:rbac:groups=opentelemetry.io,resources=opentelemetrycollectors,verbs=get;list;watch;create;update;patch
+
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
 func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -68,7 +70,7 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		Instance: instance,
 		Log:      log,
 		Scheme:   r.Scheme,
-		Strategy: strategy.For(ctx, r.Config, instance),
+		Strategy: strategy.For(ctx, log, r.Config, instance),
 	}
 
 	if err := reconcilie.Run(ctx, params); err != nil {

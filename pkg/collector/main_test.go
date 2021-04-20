@@ -17,36 +17,37 @@ package collector
 import (
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 )
 
 func TestDefaultCollectorImage(t *testing.T) {
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	collector := Get(*jaeger, cfg)
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	collector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Image)
 	assert.Equal(t, "otel/opentelemetry-collector:0.19.0", collector.Spec.Image)
 }
 
 func TestDefaultCollectorConfig(t *testing.T) {
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	otelCollector := Get(*jaeger, cfg)
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	otelCollector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 	assert.Empty(t, jaeger.Spec.Collector.Config)
-	assert.Equal(t, DefaultConfig(), otelCollector.Spec.Config)
+	defaultCfgString, _ := defaultConfig().String()
+	assert.Equal(t, defaultCfgString, otelCollector.Spec.Config)
 }
 
 func TestCustomCollectorConfig(t *testing.T) {
 	customConfig := "OTHER_VALUE"
 	cfg := config.New()
-	jaeger := jaegertracingv2.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Collector.Config = customConfig
-	otelCollector := Get(*jaeger, cfg)
+	otelCollector := Get(*jaeger, logf.Log.WithName("unit-tests"), cfg)
 	assert.Equal(t, customConfig, jaeger.Spec.Collector.Config)
 	assert.Equal(t, customConfig, otelCollector.Spec.Config)
 }

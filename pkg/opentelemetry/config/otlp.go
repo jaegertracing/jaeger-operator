@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilie
+package config
 
-import (
-	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+const OtlpType = "otlp"
 
-	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
-)
+type OTLPReceiver struct {
+	Protocols Protocols
+}
 
-type Params struct {
-	Config   config.Config
-	Client   client.Client
-	Instance v2.Jaeger
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Strategy strategy.Strategy
+func (*OTLPReceiver) Type() string {
+	return OtlpType
 }

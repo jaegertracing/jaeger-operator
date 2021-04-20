@@ -17,11 +17,10 @@ package strategy
 import (
 	"context"
 
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-
 	"go.opentelemetry.io/otel"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 	"github.com/jaegertracing/jaeger-operator/internal/instrument"
 )
 

@@ -7,6 +7,13 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - list
+  - watch
+- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
@@ -30,6 +37,14 @@ rules:
 - apiGroups:
   - jaegertracing.io
   resources:
+  - jaegers/finalizers
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jaegertracing.io
+  resources:
   - jaegers/status
   verbs:
   - get
@@ -43,5 +58,6 @@ rules:
   - create
   - get
   - list
+  - patch
   - update
   - watch

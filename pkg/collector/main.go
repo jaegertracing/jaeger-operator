@@ -15,51 +15,53 @@
 package collector
 
 import (
+	"github.com/go-logr/logr"
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
-
-	jaegertracingv2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/pkg/naming"
+	otelconfig "github.com/jaegertracing/jaeger-operator/pkg/opentelemetry/config"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// TODO: Better way of doing this..
-func DefaultConfig() string {
-	return `
-    receivers:
-      jaeger:
-        protocols:
-          grpc:
-    exporters:
-      logging:
-
-    service:
-      pipelines:
-        traces:
-          receivers: [jaeger]
-          exporters: [logging]`
+func defaultConfig() *otelconfig.Configuration {
+	return otelconfig.NewConfiguration(
+		otelconfig.WithExporter(&otelconfig.LoggingExporter{}),
+		otelconfig.WithReceiver(
+			&otelconfig.JaegerReceiverConfig{
+				Protocols: otelconfig.Protocols{
+					GRPC: &otelconfig.GRPCSettings{},
+				},
+			},
+		),
+	)
 }
 
-func Get(jaeger jaegertracingv2.Jaeger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
-
-	config := jaeger.Spec.Collector.Config
-	if config == "" {
-		config = DefaultConfig()
-	}
+func Get(jaeger v2.Jaeger, logger logr.Logger, cfg config.Config) *otelv1alpha1.OpenTelemetryCollector {
 
 	collectorSpecs := jaeger.Spec.Collector
 	commonSpecs := util.Merge(jaeger.Spec.JaegerCommonSpec, collectorSpecs.JaegerCommonSpec)
 
+	configString := collectorSpecs.Config
+	if configString == "" {
+		var err error
+		configString, err = defaultConfig().String()
+		if err != nil {
+			logger.Error(err, "failed marshall otel collector configuration", "name", naming.Collector(jaeger), "namespace", jaeger.Namespace)
+			return &otelv1alpha1.OpenTelemetryCollector{}
+		}
+	}
+
 	return &otelv1alpha1.OpenTelemetryCollector{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jaeger.Name,
+			Name:      naming.Collector(jaeger),
 			Namespace: jaeger.Namespace,
 		},
 		Spec: otelv1alpha1.OpenTelemetryCollectorSpec{
 			Image:          naming.Image(jaeger.Spec.Collector.Image, cfg.CollectorImage(), cfg.JaegerVersion()),
-			Config:         config,
+			Config:         configString,
 			Replicas:       collectorSpecs.Replicas,
 			ServiceAccount: commonSpecs.ServiceAccount,
 			VolumeMounts:   commonSpecs.VolumeMounts,

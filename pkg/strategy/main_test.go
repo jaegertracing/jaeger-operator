@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
 	"github.com/jaegertracing/jaeger-operator/internal/config"
@@ -29,14 +30,14 @@ func TestNewControllerForProduction(t *testing.T) {
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Strategy = v2.DeploymentStrategyProduction
 	cfg := config.New()
-	ctrl := For(context.TODO(), cfg, *jaeger)
+	ctrl := For(context.TODO(), logf.Log.WithName("unit-tests"), cfg, *jaeger)
 	assert.Equal(t, ctrl.Type, v2.DeploymentStrategyProduction)
 }
 
 func TestNewControllerForProductionAsDefault(t *testing.T) {
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	cfg := config.New()
-	ctrl := For(context.TODO(), cfg, *jaeger)
+	ctrl := For(context.TODO(), logf.Log.WithName("unit-tests"), cfg, *jaeger)
 	assert.Equal(t, ctrl.Type, v2.DeploymentStrategyProduction)
 }
 
@@ -44,6 +45,6 @@ func TestNewControllerForAllInOneAsExplicitValue(t *testing.T) {
 	jaeger := v2.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	cfg := config.New()
 	jaeger.Spec.Strategy = v2.DeploymentStrategyAllInOne
-	ctrl := For(context.TODO(), cfg, *jaeger)
+	ctrl := For(context.TODO(), logf.Log.WithName("unit-tests"), cfg, *jaeger)
 	assert.Equal(t, ctrl.Type, v2.DeploymentStrategyAllInOne)
 }

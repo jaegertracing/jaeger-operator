@@ -17,16 +17,16 @@ package strategy
 import (
 	"context"
 
-	"github.com/jaegertracing/jaeger-operator/internal/config"
-
+	"github.com/go-logr/logr"
 	"go.opentelemetry.io/otel"
 
 	v2 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v2"
+	"github.com/jaegertracing/jaeger-operator/internal/config"
 	"github.com/jaegertracing/jaeger-operator/internal/instrument"
 )
 
 // For returns the appropriate Strategy for the given Jaeger instance.
-func For(ctx context.Context, cfg config.Config, jaeger v2.Jaeger) Strategy {
+func For(ctx context.Context, logger logr.Logger, cfg config.Config, jaeger v2.Jaeger) Strategy {
 	tracer := otel.GetTracerProvider().Tracer(instrument.ReconciliationTracer)
 	_, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
@@ -35,5 +35,5 @@ func For(ctx context.Context, cfg config.Config, jaeger v2.Jaeger) Strategy {
 		return newAllInOneStrategy(ctx, cfg, jaeger)
 	}
 
-	return newProductionStrategy(ctx, cfg, jaeger)
+	return newProductionStrategy(ctx, logger, cfg, jaeger)
 }
