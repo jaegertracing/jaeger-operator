@@ -7,10 +7,28 @@ import (
 	"strings"
 )
 
+// Values represent and string or a slice of string
+type Values map[string]interface{}
+
+// DeepCopy indicate how to do a deep copy of Values type
+func (v *Values) DeepCopy() *Values {
+	out := make(Values, len(*v))
+	for key, val := range *v {
+		switch val.(type) {
+		case string:
+			out[key] = val
+
+		case []string:
+			out[key] = append([]string(nil), val.([]string)...)
+		}
+	}
+	return &out
+}
+
 // Options defines a common options parameter to the different structs
 type Options struct {
-	opts map[string]string `json:"-"`
-	json *[]byte           `json:"-"`
+	opts Values  `json:"-"`
+	json *[]byte `json:"-"`
 }
 
 // NewOptions build a new Options object based on the given map
@@ -23,7 +41,7 @@ func NewOptions(o map[string]interface{}) Options {
 // Filter creates a new Options object with just the elements identified by the supplied prefix
 func (o *Options) Filter(prefix string) Options {
 	options := Options{}
-	options.opts = make(map[string]string)
+	options.opts = make(map[string]interface{})
 
 	archivePrefix := prefix + "-archive."
 	prefix += "."
@@ -45,7 +63,6 @@ func (o *Options) UnmarshalJSON(b []byte) error {
 	if err := d.Decode(&entries); err != nil {
 		return err
 	}
-
 	o.parse(entries)
 	o.json = &b
 	return nil
@@ -69,18 +86,24 @@ func (o Options) MarshalJSON() ([]byte, error) {
 }
 
 func (o *Options) parse(entries map[string]interface{}) {
-	o.opts = make(map[string]string)
+	o.opts = make(map[string]interface{})
 	for k, v := range entries {
 		o.opts = entry(o.opts, k, v)
 	}
 }
 
-func entry(entries map[string]string, key string, value interface{}) map[string]string {
+func entry(entries map[string]interface{}, key string, value interface{}) map[string]interface{} {
 	switch value.(type) {
 	case map[string]interface{}:
 		for k, v := range value.(map[string]interface{}) {
 			entries = entry(entries, fmt.Sprintf("%s.%v", key, k), v)
 		}
+	case []interface{}:
+		values := make([]string, 0, len(value.([]interface{})))
+		for _, v := range value.([]interface{}) {
+			values = append(values, v.(string))
+		}
+		entries[key] = values
 	case interface{}:
 		entries[key] = fmt.Sprintf("%v", value)
 	}
@@ -91,21 +114,25 @@ func entry(entries map[string]string, key string, value interface{}) map[string]
 // ToArgs converts the options to a value suitable for the Container.Args field
 func (o *Options) ToArgs() []string {
 	if len(o.opts) > 0 {
-		i := 0
-		args := make([]string, len(o.opts))
+		args := make([]string, 0, len(o.opts))
 		for k, v := range o.opts {
-			args[i] = fmt.Sprintf("--%s=%v", k, v)
-			i++
+			switch v.(type) {
+			case string:
+				args = append(args, fmt.Sprintf("--%s=%v", k, v))
+			case []string:
+				for _, vv := range v.([]string) {
+					args = append(args, fmt.Sprintf("--%s=%v", k, vv))
+				}
+			}
 		}
 		return args
 	}
-
 	return nil
 }
 
 // Map returns a map representing the option entries. Items are flattened, with dots as separators. For instance
 // an option "cassandra" with a nested "servers" object becomes an entry with the key "cassandra.servers"
-func (o *Options) Map() map[string]string {
+func (o *Options) Map() map[string]interface{} {
 	return o.opts
 }
 

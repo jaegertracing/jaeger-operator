@@ -5,6 +5,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -147,4 +149,20 @@ func TestUpdate(t *testing.T) {
 
 	// verify
 	assert.Equal(t, o.opts["key"], "new")
+}
+
+func TestRepetitiveArguments(t *testing.T) {
+	o := NewOptions(nil)
+	err := o.UnmarshalJSON([]byte(`{"firstsarg":"v1", "additional-headers":["whatever:thing", "access-control-allow-origin:blerg"]}`))
+	require.NoError(t, err)
+	expected := []string{"--additional-headers=access-control-allow-origin:blerg", "--additional-headers=whatever:thing", "--firstsarg=v1"}
+
+	args := o.ToArgs()
+	sort.SliceStable(args, func(i, j int) bool {
+		return args[i] < args[j]
+	})
+
+	assert.Len(t, args, 3)
+	assert.Equal(t, expected, args)
+
 }
