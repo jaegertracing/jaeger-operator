@@ -36,7 +36,7 @@ import (
 
 var _ DeploySidecarAnnotation = (*deploySidecarAnnotation)(nil)
 
-// DeploySidecarAnnotation is a webhoo that convert jaeger deployment annotations to opentelemetry sidecar annotations.
+// DeploySidecarAnnotation is a webhook that converts Jaeger sidecar annotations to OpenTelemetry sidecar annotations.
 type DeploySidecarAnnotation interface {
 	admission.Handler
 	admission.DecoderInjector
