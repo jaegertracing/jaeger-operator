@@ -5651,6 +5651,9 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
+                nodePort:
+                  format: int32
+                  type: integer
                 options:
                   type: object
                 priorityClassName:
