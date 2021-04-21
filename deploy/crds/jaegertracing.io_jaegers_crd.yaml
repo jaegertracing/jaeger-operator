@@ -580,6 +580,7 @@ spec:
                   type: object
                 config:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 dnsPolicy:
                   type: string
                 hostNetwork:
@@ -600,6 +601,7 @@ spec:
                   type: object
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 priorityClassName:
                   type: string
                 resources:
@@ -1633,6 +1635,7 @@ spec:
                   type: object
                 config:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 image:
                   type: string
                 labels:
@@ -1641,6 +1644,7 @@ spec:
                   type: object
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 resources:
                   nullable: true
                   properties:
@@ -2629,6 +2633,7 @@ spec:
                   type: boolean
                 config:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 image:
                   type: string
                 labels:
@@ -2643,6 +2648,7 @@ spec:
                   type: integer
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 priorityClassName:
                   type: string
                 replicas:
@@ -3631,6 +3637,7 @@ spec:
                   type: boolean
                 config:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 image:
                   type: string
                 labels:
@@ -3645,6 +3652,7 @@ spec:
                   type: integer
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 replicas:
                   format: int32
                   type: integer
@@ -4649,6 +4657,7 @@ spec:
                   type: object
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 resources:
                   nullable: true
                   properties:
@@ -5658,6 +5667,7 @@ spec:
                   type: integer
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 priorityClassName:
                   type: string
                 replicas:
@@ -6399,6 +6409,7 @@ spec:
               properties:
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
               type: object
             securityContext:
               properties:
@@ -9531,6 +9542,7 @@ spec:
                   type: object
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 secretName:
                   type: string
                 type:
@@ -9559,6 +9571,7 @@ spec:
               properties:
                 options:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
               type: object
             volumeMounts:
               items:
