@@ -464,6 +464,9 @@ type JaegerAgentSpec struct {
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
 
 	// +optional
+	DNSPolicy v1.DNSPolicy `json:"dnsPolicy,omitempty"`
+
+	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
