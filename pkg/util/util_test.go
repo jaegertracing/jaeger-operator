@@ -288,14 +288,14 @@ func TestMergeTolerations(t *testing.T) {
 
 func TestGetEsHostname(t *testing.T) {
 	tests := []struct {
-		underTest map[string]string
+		underTest map[string]interface{}
 		hostname  string
 	}{
 		{hostname: ""},
-		{underTest: map[string]string{"": ""}, hostname: ""},
-		{underTest: map[string]string{"es.server-urls": ""}, hostname: ""},
-		{underTest: map[string]string{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
-		{underTest: map[string]string{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
+		{underTest: map[string]interface{}{"": ""}, hostname: ""},
+		{underTest: map[string]interface{}{"es.server-urls": ""}, hostname: ""},
+		{underTest: map[string]interface{}{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
+		{underTest: map[string]interface{}{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.hostname, GetEsHostname(test.underTest))
