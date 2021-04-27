@@ -136,6 +136,19 @@ func (o *Options) Map() map[string]interface{} {
 	return o.opts
 }
 
+// StringMap returns a map representing the option entries,excluding entries that have multiple values.
+// Items are flattened, with dots as separators in the same way as Map does.
+func (o *Options) StringMap() map[string]string {
+	smap := make(map[string]string)
+	for k, v := range o.opts {
+		switch v.(type) {
+		case string:
+			smap[k] = v.(string)
+		}
+	}
+	return smap
+}
+
 // GenericMap returns the map representing the option entries as interface{}, suitable for usage with NewOptions()
 func (o *Options) GenericMap() map[string]interface{} {
 	out := make(map[string]interface{})

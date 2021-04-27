@@ -177,12 +177,16 @@ func Labels(name, component string, jaeger v1.Jaeger) map[string]string {
 }
 
 // GetEsHostname return first ES hostname from options map
-func GetEsHostname(opts map[string]string) string {
+func GetEsHostname(opts map[string]interface{}) string {
 	urls, ok := opts["es.server-urls"]
 	if !ok {
 		return ""
 	}
-	urlArr := strings.Split(urls, ",")
+	urlsString, isString := urls.(string)
+	if !isString {
+		return ""
+	}
+	urlArr := strings.Split(urlsString, ",")
 	return urlArr[0]
 }
 

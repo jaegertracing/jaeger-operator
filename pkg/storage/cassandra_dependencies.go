@@ -44,7 +44,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
 	}}
 
-	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]
+	host := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
 	if host == "" {
 		jaeger.Logger().Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
@@ -54,7 +54,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		Value: host,
 	})
 
-	port := jaeger.Spec.Storage.Options.Map()["cassandra.port"]
+	port := jaeger.Spec.Storage.Options.StringMap()["cassandra.port"]
 	if port == "" {
 		jaeger.Logger().Info("Cassandra port not specified. Using '9042' for the cassandra-create-schema job.")
 		port = "9042" // this is the default in the image
@@ -64,7 +64,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		Value: port,
 	})
 
-	keyspace := jaeger.Spec.Storage.Options.Map()["cassandra.keyspace"]
+	keyspace := jaeger.Spec.Storage.Options.StringMap()["cassandra.keyspace"]
 	if keyspace == "" {
 		jaeger.Logger().Info("Cassandra keyspace not specified. Using 'jaeger_v1_test' for the cassandra-create-schema job.")
 		keyspace = "jaeger_v1_test" // this is default in the image
@@ -74,16 +74,18 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		Name:  "KEYSPACE",
 		Value: keyspace,
 	})
+	username := jaeger.Spec.Storage.Options.StringMap()["cassandra.username"]
+	password := jaeger.Spec.Storage.Options.StringMap()["cassandra.password"]
 
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	if len(envFromSource) == 0 {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "CASSANDRA_USERNAME",
-			Value: jaeger.Spec.Storage.Options.Map()["cassandra.username"],
+			Value: username,
 		})
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "CASSANDRA_PASSWORD",
-			Value: jaeger.Spec.Storage.Options.Map()["cassandra.password"],
+			Value: password,
 		})
 	}
 

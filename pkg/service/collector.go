@@ -107,7 +107,7 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 
 	// perhaps the user has provisioned the certs and configured the CR manually?
 	// for that, we check whether the CLI option `collector.grpc.tls.enabled` was set for the collector
-	if val, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc.tls.enabled"]; ok {
+	if val, ok := jaeger.Spec.Collector.Options.StringMap()["collector.grpc.tls.enabled"]; ok {
 		enabled, err := strconv.ParseBool(val)
 		if err != nil {
 			return "grpc-http" // not "true", defaults to false

@@ -119,7 +119,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 }
 
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
-	sFlagsMap := s.Options.Map()
+	sFlagsMap := s.Options.StringMap()
 	switch s.Type {
 	case v1.JaegerCassandraStorage:
 		keyspace := sFlagsMap["cassandra.keyspace"]
@@ -156,7 +156,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 }
 
 func logTLSNotSupported(j *v1.Jaeger) {
-	sFlagsMap := j.Spec.Storage.Options.Map()
+	sFlagsMap := j.Spec.Storage.Options.StringMap()
 	if strings.EqualFold(sFlagsMap["es.tls.enabled"], "true") || strings.EqualFold(sFlagsMap["es.tls"], "true") {
 		j.Logger().Warn("Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies")
 	}
