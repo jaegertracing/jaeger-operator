@@ -201,9 +201,10 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	defer viper.Reset()
 
 	for _, tt := range []struct {
-		name         string
-		options      v1.Options
-		expectedArgs []string
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
 	}{
 		{
 			name: "Openshift CA",
@@ -232,6 +233,21 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 				"--reporter.grpc.tls.ca=/my/custom/ca",
 			},
 		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=false",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			jaeger := v1.NewJaeger(types.NamespacedName{
@@ -249,6 +265,12 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 
 			for _, arg := range tt.expectedArgs {
 				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			}
+
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				}
 			}
 
 			assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
