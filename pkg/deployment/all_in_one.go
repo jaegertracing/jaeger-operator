@@ -74,7 +74,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
 	// as it might receive connections from external agents
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls.enabled=true", options)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
