@@ -65,9 +65,12 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
-	tls.Update(a.jaeger, commonSpec, &options)
-	ca.Update(a.jaeger, commonSpec)
-	ca.AddServiceCA(a.jaeger, commonSpec)
+
+	if len(util.FindItem("--collector.grpc.tls.enabled", options)) == 0 {
+		tls.Update(a.jaeger, commonSpec, &options)
+		ca.Update(a.jaeger, commonSpec)
+		ca.AddServiceCA(a.jaeger, commonSpec)
+	}
 	storage.UpdateGRPCPlugin(a.jaeger, commonSpec)
 
 	// Enable tls by default for openshift platform

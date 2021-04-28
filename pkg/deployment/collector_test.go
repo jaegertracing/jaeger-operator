@@ -510,31 +510,55 @@ func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
-
 	for _, tt := range []struct {
-		name         string
-		options      v1.Options
-		expectedCert string
-		expectedKey  string
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
 	}{
 		{
-			name: "Openshift certificates",
+			name: "Openshift CA",
 			options: v1.NewOptions(map[string]interface{}{
 				"a-option": "a-value",
 			}),
-			expectedCert: "/etc/tls-config/tls.crt",
-			expectedKey:  "/etc/tls-config/tls.key",
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/etc/tls-config/tls.crt",
+				"--collector.grpc.tls.key=/etc/tls-config/tls.key",
+				"--sampling.strategies-file",
+			},
 		},
 		{
-			name: "Custom certificates",
+			name: "Custom CA",
 			options: v1.NewOptions(map[string]interface{}{
 				"a-option":                   "a-value",
 				"collector.grpc.tls.enabled": "true",
 				"collector.grpc.tls.cert":    "/my/custom/cert",
 				"collector.grpc.tls.key":     "/my/custom/key",
 			}),
-			expectedCert: "/my/custom/cert",
-			expectedKey:  "/my/custom/key",
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/my/custom/cert",
+				"--collector.grpc.tls.key=/my/custom/key",
+				"--sampling.strategies-file",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"collector.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--collector.grpc.tls.enabled=true",
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -544,15 +568,19 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 			a := NewCollector(jaeger)
 			dep := a.Get()
 
+			// verify
 			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
-			assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-			// the following are added automatically
-			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert="+tt.expectedCert, dep.Spec.Template.Spec.Containers[0].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key="+tt.expectedKey, dep.Spec.Template.Spec.Containers[0].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			for _, arg := range tt.expectedArgs {
+				assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
+			}
+
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				}
+			}
 		})
 	}
 
