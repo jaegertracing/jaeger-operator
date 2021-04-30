@@ -41,8 +41,8 @@ func upgrade1_22_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 
 func migrateCassandraVerifyFlagv1_22_0(j v1.Jaeger) v1.Jaeger {
 	j.Spec.Collector.Options = updateCassandraVerifyHostFlagv1_22_0(j.Spec.Collector.Options)
-	j.Spec.Storage.Options = updateCassandraVerifyHostFlagv1_22_0(j.Spec.Collector.Options)
-	j.Spec.Ingress.Options = updateCassandraVerifyHostFlagv1_22_0(j.Spec.Collector.Options)
+	j.Spec.Storage.Options = updateCassandraVerifyHostFlagv1_22_0(j.Spec.Storage.Options)
+	j.Spec.Ingress.Options = updateCassandraVerifyHostFlagv1_22_0(j.Spec.Ingress.Options)
 	return j
 }
 

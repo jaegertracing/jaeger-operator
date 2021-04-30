@@ -20,12 +20,23 @@ func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 		"jaeger.tags": "somekey=somevalue",
 	})
 
+	storageOpts := v1.NewOptions(map[string]interface{}{
+		"server-urls": "https://example:9200",
+	})
+
+	ingressOpts := v1.NewOptions(map[string]interface{}{
+		"ingres-option": "value",
+	})
+
 	nsn := types.NamespacedName{Name: "my-instance"}
 	existing := v1.NewJaeger(nsn)
 	existing.Status.Version = "1.21.0"
 	existing.Spec.AllInOne.Options = opts
 	existing.Spec.Agent.Options = opts
 	existing.Spec.Collector.Options = opts
+	existing.Spec.Storage.Options = storageOpts
+	existing.Spec.Ingress.Options = ingressOpts
+
 	objs := []runtime.Object{existing}
 
 	s := scheme.Scheme
@@ -55,6 +66,10 @@ func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 	assert.Contains(t, colOpts, "collector.tags")
 	assert.Equal(t, "somekey=somevalue", colOpts["collector.tags"])
 	assert.NotContains(t, colOpts, "jaeger.tags")
+
+	assert.Equal(t, storageOpts.Map(), persisted.Spec.Storage.Options.Map())
+	assert.Equal(t, ingressOpts.Map(), persisted.Spec.Ingress.Options.Map())
+
 }
 
 func TestDeleteQueryRemovedFlags(t *testing.T) {
