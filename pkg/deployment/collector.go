@@ -78,8 +78,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 	sampling.Update(c.jaeger, commonSpec, &options)
 	if len(util.FindItem("--collector.grpc.tls.enabled=", args)) == 0 {
 		tls.Update(c.jaeger, commonSpec, &options)
-		ca.Update(c.jaeger, commonSpec)
 	}
+	ca.Update(c.jaeger, commonSpec)
 	storage.UpdateGRPCPlugin(c.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
