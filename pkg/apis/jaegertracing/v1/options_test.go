@@ -151,6 +151,25 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, o.opts["key"], "new")
 }
 
+func TestStringMap(t *testing.T) {
+	o := NewOptions(nil)
+	err := o.UnmarshalJSON([]byte(`{"firstsarg":"v1", "additional-headers":["whatever:thing", "access-control-allow-origin:blerg"]}`))
+	require.NoError(t, err)
+	expected := map[string]string{"firstsarg": "v1"}
+	strMap := o.StringMap()
+	assert.Len(t, strMap, 1)
+	assert.Equal(t, expected, strMap)
+}
+
+func TestDeepCopy(t *testing.T) {
+	o1 := NewOptions(nil)
+	err := o1.UnmarshalJSON([]byte(`{"firstsarg":"v1", "additional-headers":["whatever:thing", "access-control-allow-origin:blerg"]}`))
+	require.NoError(t, err)
+	copy := o1.opts.DeepCopy()
+
+	assert.Equal(t, copy, &(o1.opts))
+}
+
 func TestRepetitiveArguments(t *testing.T) {
 	o := NewOptions(nil)
 	err := o.UnmarshalJSON([]byte(`{"firstsarg":"v1", "additional-headers":["whatever:thing", "access-control-allow-origin:blerg"]}`))
