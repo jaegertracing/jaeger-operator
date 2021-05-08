@@ -3,11 +3,13 @@ package deployment
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/trace"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -79,9 +81,9 @@ type ReconcileDeployment struct {
 func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileDeployment")
-	span.SetAttributes(key.String("name", request.Name), key.String("namespace", request.Namespace))
+	span.SetAttributes(attribute.String("name", request.Name), attribute.String("namespace", request.Namespace))
 	defer span.End()
 
 	logger := log.WithFields(log.Fields{
@@ -98,7 +100,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			span.SetStatus(codes.NotFound)
+			span.SetStatus(codes.Error, err.Error())
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -111,7 +113,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 	if err != nil {
 		msg := "failed to get the namespace for the deployment, skipping injection based on namespace annotation"
 		logger.WithError(err).Debug(msg)
-		span.AddEvent(ctx, msg, key.String("error", err.Error()))
+		span.AddEvent(msg, trace.WithAttributes(attribute.String("error", err.Error())))
 	}
 
 	if !inject.Desired(dep, ns) {
@@ -141,7 +143,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			if err := r.reconcileConfigMaps(ctx, jaeger, dep); err != nil {
 				msg := "failed to reconcile config maps for the namespace"
 				logger.WithError(err).Error(msg)
-				span.AddEvent(ctx, msg)
+				span.AddEvent(msg)
 			}
 		}
 
@@ -151,7 +153,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			{
 				msg := "injecting Jaeger Agent sidecar"
 				logger.Info(msg)
-				span.AddEvent(ctx, msg)
+				span.AddEvent(msg)
 			}
 
 			dep = inject.Sidecar(jaeger, dep)
@@ -162,7 +164,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		}
 	} else {
 		msg := "no suitable Jaeger instances found to inject a sidecar"
-		span.AddEvent(ctx, msg)
+		span.AddEvent(msg)
 		logger.Debug(msg)
 	}
 
@@ -221,7 +223,7 @@ func (r *ReconcileDeployment) syncOnJaegerChanges(event handler.MapObject) []rec
 }
 
 func (r *ReconcileDeployment) reconcileConfigMaps(ctx context.Context, jaeger *v1.Jaeger, dep *appsv1.Deployment) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileConfigMaps")
 	defer span.End()
 
@@ -243,18 +245,17 @@ func (r *ReconcileDeployment) reconcileConfigMaps(ctx context.Context, jaeger *v
 }
 
 func (r *ReconcileDeployment) reconcileConfigMap(ctx context.Context, cm *corev1.ConfigMap, dep *appsv1.Deployment) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileConfigMap")
 	defer span.End()
 
 	// Update the namespace to be the same as the Deployment being injected
 	cm.Namespace = dep.Namespace
-	span.SetAttribute(key.String("name", cm.Name))
-	span.SetAttribute(key.String("namespace", cm.Namespace))
+	span.SetAttributes(attribute.String("name", cm.Name), attribute.String("namespace", cm.Namespace))
 
 	if err := r.client.Create(ctx, cm); err != nil {
 		if errors.IsAlreadyExists(err) {
-			span.AddEvent(ctx, "config map exists already")
+			span.AddEvent("config map exists already")
 		} else {
 			return tracing.HandleError(err, span)
 		}

@@ -3,9 +3,10 @@ package jaeger
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+
 	osv1 "github.com/openshift/api/route/v1"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -14,7 +15,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyRoutes(ctx context.Context, jaeger v1.Jaeger, desired []osv1.Route) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyRoutes")
 	defer span.End()
 

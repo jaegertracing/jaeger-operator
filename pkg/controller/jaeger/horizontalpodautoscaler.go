@@ -3,8 +3,9 @@ package jaeger
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jaeger v1.Jaeger, desired []autoscalingv2beta2.HorizontalPodAutoscaler) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyHorizontalPodAutoscalers")
 	defer span.End()
 

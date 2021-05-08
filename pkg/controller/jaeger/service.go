@@ -3,8 +3,9 @@ package jaeger
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyServices(ctx context.Context, jaeger v1.Jaeger, desired []corev1.Service) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyServices")
 	defer span.End()
 

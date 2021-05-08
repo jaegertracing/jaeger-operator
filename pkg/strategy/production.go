@@ -3,9 +3,10 @@ package strategy
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -26,7 +27,7 @@ import (
 )
 
 func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
 
@@ -86,7 +87,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 			}
 		}
 	} else {
-		span.SetAttribute(key.String("Platform", v1.FlagPlatformKubernetes))
+		span.SetAttributes(attribute.String("Platform", v1.FlagPlatformKubernetes))
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
 			c.ingresses = append(c.ingresses, *q)
 		}
