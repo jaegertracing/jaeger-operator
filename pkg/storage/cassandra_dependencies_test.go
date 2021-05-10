@@ -149,3 +149,14 @@ func TestCassandraCreateSchemaSecurityContext(t *testing.T) {
 	assert.Len(t, b, 1)
 	assert.Equal(t, b[0].Spec.Template.Spec.SecurityContext, expectedSecurityContext)
 }
+
+func TestCassandraCreateSchemaSecret(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaSecret"})
+	secret := "cassandra-test-secret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	b := cassandraDeps(jaeger)
+
+	assert.Len(t, b, 1)
+	assert.Equal(t, secret, b[0].Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
