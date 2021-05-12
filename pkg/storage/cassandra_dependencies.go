@@ -75,16 +75,8 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		Value: keyspace,
 	})
 
-	var envFromSource []corev1.EnvFromSource
-	if len(jaeger.Spec.Storage.SecretName) > 0 {
-		envFromSource = append(envFromSource, corev1.EnvFromSource{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: jaeger.Spec.Storage.SecretName,
-				},
-			},
-		})
-	} else {
+	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
+	if len(envFromSource) == 0 {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "CASSANDRA_USERNAME",
 			Value: jaeger.Spec.Storage.Options.Map()["cassandra.username"],
