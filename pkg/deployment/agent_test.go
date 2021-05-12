@@ -201,8 +201,8 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	defer viper.Reset()
 
 	for _, tt := range []struct {
-		name       string
-		options    v1.Options
+		name         string
+		options      v1.Options
 		expectedArgs []string
 	}{
 		{
@@ -210,11 +210,11 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 			options: v1.NewOptions(map[string]interface{}{
 				"a-option": "a-value",
 			}),
-			expectedArgs:[]string{
+			expectedArgs: []string{
 				"--a-option=a-value",
 				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
 				"--reporter.grpc.tls.enabled=true",
-				"--reporter.grpc.tls.ca="+ca.ServiceCAPath,
+				"--reporter.grpc.tls.ca=" + ca.ServiceCAPath,
 				"--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local",
 			},
 		},
@@ -225,7 +225,7 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 				"reporter.grpc.tls.enabled": "true",
 				"reporter.grpc.tls.ca":      "/my/custom/ca",
 			}),
-			expectedArgs:[]string{
+			expectedArgs: []string{
 				"--a-option=a-value",
 				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
 				"--reporter.grpc.tls.enabled=true",

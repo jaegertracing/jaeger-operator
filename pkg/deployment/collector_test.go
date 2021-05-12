@@ -81,8 +81,8 @@ func TestDefaultCollectorImage(t *testing.T) {
 			Value: "",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
@@ -336,8 +336,8 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 			Value: string(v1.JaegerESStorage),
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
@@ -375,8 +375,8 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 			Value: "kafka",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
@@ -410,8 +410,8 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 			Value: "kafka",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
