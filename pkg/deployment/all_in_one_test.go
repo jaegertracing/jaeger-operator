@@ -35,8 +35,8 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Value: "",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 		{
 			Name:  "JAEGER_DISABLED",
