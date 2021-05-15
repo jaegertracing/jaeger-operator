@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"go.opentelemetry.io/otel"
-
 	"github.com/spf13/viper"
-
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"

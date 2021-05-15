@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"go.opentelemetry.io/otel"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 

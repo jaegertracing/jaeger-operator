@@ -17,10 +17,6 @@ import (
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -39,7 +35,9 @@ import (
 )
 
 func bootstrap(ctx context.Context) manager.Manager {
-	tracing.Bootstrap()
+
+	namespace := getNamespace(ctx)
+	tracing.Bootstrap(ctx, namespace)
 
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "bootstrap")
@@ -47,13 +45,8 @@ func bootstrap(ctx context.Context) manager.Manager {
 
 	setLogLevel(ctx)
 
-	namespace := getNamespace(ctx)
-
 	buildIdentity(ctx, namespace)
-
-	if viper.GetBool("tracing-enabled") {
-		buildJaegerExporter(ctx, namespace)
-	}
+	tracing.SetInstanceID(ctx, namespace)
 
 	log.WithFields(log.Fields{
 		"os":              runtime.GOOS,
@@ -231,44 +224,6 @@ func buildIdentity(ctx context.Context, podNamespace string) {
 
 	span.SetAttributes(otelattribute.String(v1.ConfigIdentity, identity))
 	viper.Set(v1.ConfigIdentity, identity)
-}
-
-func buildJaegerExporter(ctx context.Context, namespace string) {
-	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "buildJaegerExporter")
-	defer span.End()
-	agentHostPort := viper.GetString("jaeger-agent-hostport")
-	hostPort := strings.Split(agentHostPort, ":")
-
-	var endpoint jaeger.EndpointOption
-	if len(hostPort) >= 2 {
-		endpoint = jaeger.WithAgentEndpoint(
-			jaeger.WithAgentHost(hostPort[0]),
-			jaeger.WithAgentPort(hostPort[1]),
-		)
-	} else {
-		endpoint = jaeger.WithAgentEndpoint(
-			jaeger.WithAgentHost(hostPort[0]),
-		)
-	}
-
-	exporter, err := jaeger.NewRawExporter(endpoint)
-
-	if err == nil {
-		traceProvider := tracesdk.NewTracerProvider(
-			tracesdk.WithBatcher(exporter),
-			tracesdk.WithResource(resource.NewWithAttributes(
-				semconv.ServiceNameKey.String("jaeger-operator"),
-				semconv.ServiceVersionKey.String(version.Get().Operator),
-				semconv.ServiceNamespaceKey.String(namespace),
-				semconv.ServiceInstanceIDKey.String(viper.GetString(v1.ConfigIdentity)),
-			)),
-		)
-		otel.SetTracerProvider(traceProvider)
-	} else {
-		span.SetStatus(codes.Error, err.Error())
-		log.WithError(err).Warn("could not configure a Jaeger tracer for the operator")
-	}
 }
 
 func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {

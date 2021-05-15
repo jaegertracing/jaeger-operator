@@ -3,10 +3,9 @@ package jaeger
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-
 	osv1 "github.com/openshift/api/route/v1"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"

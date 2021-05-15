@@ -6,17 +6,15 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel"
-
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	otelattribute "go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
@@ -36,7 +34,6 @@ func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S
 	for _, dep := range str.Dependencies() {
 		err := r.handleDependency(ctx, str, dep)
 		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
 			return tracing.HandleError(err, span)
 		}
 	}
@@ -56,7 +53,6 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 
 	err := r.client.Create(ctx, &dep)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		span.SetStatus(codes.Error, err.Error())
 		return tracing.HandleError(err, span)
 	}
 

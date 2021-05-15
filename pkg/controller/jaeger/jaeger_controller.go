@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/otel"
-	otelattribute "go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"

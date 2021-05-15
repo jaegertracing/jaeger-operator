@@ -5,12 +5,10 @@ import (
 	"reflect"
 	"strings"
 
-	"go.opentelemetry.io/otel"
-
 	"github.com/Masterminds/semver"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"

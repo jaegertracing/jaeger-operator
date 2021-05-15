@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel"
-
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"

@@ -3,9 +3,8 @@ package jaeger
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

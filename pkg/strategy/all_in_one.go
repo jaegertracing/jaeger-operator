@@ -3,9 +3,8 @@ package strategy
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
