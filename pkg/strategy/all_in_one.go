@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -23,7 +23,7 @@ import (
 )
 
 func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newAllInOneStrategy")
 	defer span.End()
 

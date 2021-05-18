@@ -6,7 +6,7 @@ import (
 	osconsolev1 "github.com/openshift/api/console/v1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
@@ -15,7 +15,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyConsoleLinks")
 	defer span.End()
 

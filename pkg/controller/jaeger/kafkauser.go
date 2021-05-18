@@ -8,7 +8,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -26,7 +26,7 @@ var (
 )
 
 func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta1.KafkaUser) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyKafkaUsers")
 	defer span.End()
 
@@ -89,7 +89,7 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 }
 
 func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUser kafkav1beta1.KafkaUser) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "waitForKafkaUserStability")
 	defer span.End()
 

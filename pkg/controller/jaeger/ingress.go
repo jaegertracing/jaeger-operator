@@ -3,21 +3,20 @@ package jaeger
 import (
 	"context"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	"k8s.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, desired []v1beta1.Ingress) error {
 	ingressClient := ingress.NewIngressClient(r.client, r.rClient)
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyIngresses")
 	defer span.End()
 

@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,13 +85,15 @@ type ReconcileJaeger struct {
 func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcile")
 	defer span.End()
 
 	execution := time.Now().UTC()
 
-	span.SetAttributes(key.String("name", request.Name), key.String("namespace", request.Namespace))
+	span.SetAttributes(
+		otelattribute.String("name", request.Name),
+		otelattribute.String("namespace", request.Namespace))
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"instance":  request.Name,
@@ -106,7 +108,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			span.SetStatus(codes.NotFound)
+			span.SetStatus(codes.Error, err.Error())
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -117,8 +119,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	if err := validate(instance); err != nil {
 		instance.Logger().WithError(err).Error("failed to validate")
-		span.SetAttribute(key.String("error", err.Error()))
-		span.SetStatus(codes.InvalidArgument)
+		span.SetStatus(codes.Error, err.Error())
 		return reconcile.Result{}, err
 	}
 
@@ -230,7 +231,7 @@ func defaultStrategyChooser(ctx context.Context, instance *v1.Jaeger) strategy.S
 }
 
 func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "apply")
 	defer span.End()
 
