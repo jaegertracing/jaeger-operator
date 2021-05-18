@@ -158,3 +158,102 @@ func TestCassandraVerifyHostFlags(t *testing.T) {
 		})
 	}
 }
+
+func TestMigrateQueryHostPortFlagsv1_22_0(t *testing.T) {
+
+	tests := []struct {
+		testName    string
+		opts        v1.Options
+		expectedOps map[string]string
+	}{
+		{
+			testName: "no old flags",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.grpc-server.host-port": ":8080",
+				"query.http-server.host-port": ":8081",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": ":8080",
+				"query.http-server.host-port": ":8081",
+			},
+		},
+
+		{
+			testName: "both old flags",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.port":      "8080",
+				"query.host-port": "localhost:8081",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": ":8080",
+				"query.http-server.host-port": ":8080",
+			},
+		},
+
+		{
+			testName: "with query.host-port",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.host-port": "localhost:8081",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": "localhost:8081",
+				"query.http-server.host-port": "localhost:8081",
+			},
+		},
+		{
+			testName: "with grpc-server.host-port set",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.host-port":             "localhost:8081",
+				"query.grpc-server.host-port": "other:7777",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": "other:7777",
+				"query.http-server.host-port": "localhost:8081",
+			},
+		},
+		{
+			testName: "with grpc-server.host-port set and query.port",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.port":                  "8081",
+				"query.grpc-server.host-port": "other:7777",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": "other:7777",
+				"query.http-server.host-port": ":8081",
+			},
+		},
+		{
+			testName: "with grpc/http-server.host-port set",
+			opts: v1.NewOptions(map[string]interface{}{
+				"query.host-port":             "localhost:8081",
+				"query.grpc-server.host-port": "other:7777",
+				"query.http-server.host-port": "other:9999",
+			}),
+			expectedOps: map[string]string{
+				"query.grpc-server.host-port": "other:7777",
+				"query.http-server.host-port": "other:9999",
+			},
+		},
+	}
+	latestVersion := "1.22.0"
+	for _, tt := range tests {
+		nsn := types.NamespacedName{Name: "my-instance"}
+		existing := v1.NewJaeger(nsn)
+		existing.Status.Version = "1.21.0"
+		existing.Spec.Query.Options = tt.opts
+
+		objs := []runtime.Object{existing}
+		s := scheme.Scheme
+		s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+		s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+		cl := fake.NewFakeClient(objs...)
+		assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+
+		persisted := &v1.Jaeger{}
+		assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+		assert.Equal(t, latestVersion, persisted.Status.Version)
+		assert.Equal(t, tt.expectedOps, persisted.Spec.Query.Options.Map())
+
+	}
+
+}
