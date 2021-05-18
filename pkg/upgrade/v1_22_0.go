@@ -36,6 +36,9 @@ func upgrade1_22_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 	j.Spec.Agent.Options = migrateDeprecatedOptions(j, j.Spec.Agent.Options, flagMapAgent)
 	j.Spec.Query.Options = migrateDeprecatedOptions(j, j.Spec.Query.Options, flagMapQuery)
 
+	//Migrate query host/port flags
+	j.Spec.Query.Options = migrateQueryHostPortFlagsv1_22_0(j.Spec.Query.Options)
+
 	return migrateCassandraVerifyFlagv1_22_0(jaeger), nil
 }
 
@@ -57,5 +60,36 @@ func updateCassandraVerifyHostFlagv1_22_0(options v1.Options) v1.Options {
 			in[newFlag] = "true"
 		}
 	}
+	return v1.NewOptions(in)
+}
+
+func migrateQueryHostPortFlagsv1_22_0(options v1.Options) v1.Options {
+	in := options.GenericMap()
+
+	port, hasPortFlag := in["query.port"]
+	hostPort, hasHostPortFlag := in["query.host-port"]
+
+	_, hasGrpcFlag := in["query.grpc-server.host-port"]
+	_, hasHTTPFlag := in["query.http-server.host-port"]
+
+	newValue := ""
+	if hasPortFlag {
+		newValue = ":" + port.(string)
+	} else if hasHostPortFlag {
+		newValue = hostPort.(string)
+	}
+
+	if newValue != "" {
+		if !hasGrpcFlag {
+			in["query.grpc-server.host-port"] = newValue
+		}
+		if !hasHTTPFlag {
+			in["query.http-server.host-port"] = newValue
+		}
+	}
+
+	delete(in, "query.port")
+	delete(in, "query.host-port")
+
 	return v1.NewOptions(in)
 }

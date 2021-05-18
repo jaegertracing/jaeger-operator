@@ -128,8 +128,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Value: string(storageType),
 							},
 							{
-								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-								Value: "9411",
+								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+								Value: ":9411",
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
