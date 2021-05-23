@@ -131,11 +131,12 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 			Namespace: "ns-without-annotation",
 		}},
 	}
-
 	sort.Slice(requests, func(i, j int) bool {
-		return requests[i].Namespace < requests[j].Namespace && requests[i].Name < requests[j].Name
+		return requests[i].NamespacedName.String() < requests[j].NamespacedName.String()
 	})
-
+	sort.Slice(expected, func(i, j int) bool {
+		return expected[i].NamespacedName.String() < expected[j].NamespacedName.String()
+	})
 	assert.Equal(t, expected, requests)
 }
 

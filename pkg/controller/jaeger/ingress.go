@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
