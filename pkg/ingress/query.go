@@ -3,9 +3,8 @@ package ingress
 import (
 	"fmt"
 
-	netv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -37,9 +36,14 @@ func (i *QueryIngress) Get() *netv1beta1.Ingress {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	spec := netv1beta1.IngressSpec{}
+
 	backend := netv1beta1.IngressBackend{
-		ServiceName: service.GetNameForQueryService(i.jaeger),
-		ServicePort: intstr.FromInt(service.GetPortForQueryService(i.jaeger)),
+		Service: &netv1beta1.IngressServiceBackend{
+			Name: service.GetNameForQueryService(i.jaeger),
+			Port: netv1beta1.ServiceBackendPort{
+				Number: int32(service.GetPortForQueryService(i.jaeger)),
+			},
+		},
 	}
 
 	i.addRulesSpec(&spec, &backend)
@@ -83,7 +87,7 @@ func (i *QueryIngress) addRulesSpec(spec *netv1beta1.IngressSpec, backend *netv1
 		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
 	} else {
 		// no hosts and no custom path -> fall back to a single service Ingress
-		spec.Backend = backend
+		spec.DefaultBackend = backend
 	}
 }
 
