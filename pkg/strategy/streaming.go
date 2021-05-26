@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,7 +28,7 @@ import (
 )
 
 func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
 	defer span.End()
 
@@ -177,7 +177,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 }
 
 func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "autoProvisionKafka")
 	defer span.End()
 
