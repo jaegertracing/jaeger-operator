@@ -15,7 +15,7 @@ set -x
 # socat is needed for port forwarding
 sudo apt-get update && sudo apt-get install socat
 
-export MINIKUBE_VERSION=v1.11.0
+export MINIKUBE_VERSION=v1.20.0
 export KUBERNETES_VERSION=v1.19.1
 
 MINIKUBE=$(which minikube) # it's outside of the regular PATH, so, need the full path when calling with sudo
@@ -47,5 +47,3 @@ do
     kubectl wait --for=condition=Ready pod/${POD}  --namespace kube-system --timeout=60s
 done
 sudo ${MINIKUBE} addons enable ingress
-
-eval $(minikube docker-env)
