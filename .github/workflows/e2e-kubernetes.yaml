@@ -8,17 +8,21 @@ on:
 
 jobs:
   end-to-end:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2, generate, upgrade, istio]
     steps:
     - uses: actions/setup-go@v2.1.3
       with:
-        go-version: '1.14.4'
-    - uses: jpkrohling/setup-minikube@v1.0.2
+        go-version: '1.14.12'
+    - uses: manusa/actions-setup-minikube@v2.4.1
       with:
-        minikube-version: v1.20.0
+        minikube version: 'v1.20.0'
+        kubernetes version: 'v1.19.1'
+        driver: none
+        github token: ${{ secrets.GITHUB_TOKEN }}
+        start args: '--addons=ingress'
     - uses: jpkrohling/setup-kubectl@v1.0.2
     - uses: jpkrohling/setup-operator-sdk@v1.0.2
       with:
