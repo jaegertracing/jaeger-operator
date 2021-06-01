@@ -346,6 +346,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref common.ReferenceCallba
 							Format: "",
 						},
 					},
+					"dnsPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"priorityClassName": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},

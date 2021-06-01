@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -25,7 +25,7 @@ var (
 )
 
 func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyElasticsearches")
 	defer span.End()
 
@@ -79,7 +79,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 }
 
 func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elasticsearch) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "waitForAvailableElastic")
 	defer span.End()
 

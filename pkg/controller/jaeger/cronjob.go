@@ -4,7 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,7 +14,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyCronJobs")
 	defer span.End()
 

@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+1.22.1 (2021-04-19)
+-------------------
+* Allow configure custom certificates to collector ([#1418](https://github.com/jaegertracing/jaeger-operator/pull/1418), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for NodePort in Jaeger Query Service ([#1394](https://github.com/jaegertracing/jaeger-operator/pull/1394), [@CSP197](https://github.com/CSP197))
+
 1.22.0 (2021-03-16)
 -------------------
 * Add ability to indicate PriorityClass for collector and query ([#1413](https://github.com/jaegertracing/jaeger-operator/pull/1413), [@majidazimi](https://github.com/majidazimi))

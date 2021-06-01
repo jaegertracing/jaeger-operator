@@ -62,7 +62,7 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	jaegerInstanceName := "agent-as-sidecar-namespace"
-	j := createJaegerAgentAsSidecarInstance(jaegerInstanceName, namespace)
+	j := createJaegerAgentAsSidecarInstance(jaegerInstanceName, namespace, &falseVar)
 	defer undeployJaegerInstance(j)
 
 	dep := getVertxDefinition(namespace, map[string]string{})

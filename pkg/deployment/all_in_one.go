@@ -131,8 +131,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: string(a.jaeger.Spec.Storage.Type),
 							},
 							{
-								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-								Value: "9411",
+								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+								Value: ":9411",
 							},
 							{
 								Name:  "JAEGER_DISABLED",

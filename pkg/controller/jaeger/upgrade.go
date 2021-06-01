@@ -3,7 +3,7 @@ package jaeger
 import (
 	"context"
 
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
@@ -12,7 +12,7 @@ import (
 )
 
 func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (v1.Jaeger, error) {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyUpgrades")
 	defer span.End()
 
