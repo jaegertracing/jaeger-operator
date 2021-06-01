@@ -252,7 +252,7 @@ func TestMigrateQueryHostPortFlagsv1_22_0(t *testing.T) {
 		persisted := &v1.Jaeger{}
 		assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
 		assert.Equal(t, latestVersion, persisted.Status.Version)
-		assert.Equal(t, tt.expectedOps, persisted.Spec.Query.Options.Map())
+		assert.Equal(t, tt.expectedOps, persisted.Spec.Query.Options.StringMap())
 
 	}
 
