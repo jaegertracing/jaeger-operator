@@ -611,6 +611,9 @@ type JaegerDependenciesSpec struct {
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
@@ -636,6 +639,9 @@ type JaegerEsIndexCleanerSpec struct {
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
@@ -655,6 +661,9 @@ type JaegerEsRolloverSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
 	// we parse it with time.ParseDuration
 	// +optional

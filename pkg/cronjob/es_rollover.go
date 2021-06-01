@@ -52,6 +52,7 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: &one,
+					BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
 					Template:    *createTemplate(name, "rollover", jaeger, envs),
 				},
 			},
