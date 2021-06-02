@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+1.22.2 (2021-06-01)
+-------------------
+
+* Add preserve unknown fields annotation to FreeForm and Options fields ([#1435](https://github.com/jaegertracing/jaeger-operator/pull/1435), [@rubenvp8510](https://github.com/rubenvp8510))
+* Migrate remaining flags and some env vars to 1.22 ([#1449](https://github.com/jaegertracing/jaeger-operator/pull/1449), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix override storage and ingress values when upgrade to 1.22 ([#1439](https://github.com/jaegertracing/jaeger-operator/pull/1439), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add agent dnsPolicy option ([#1370](https://github.com/jaegertracing/jaeger-operator/pull/1370), [@faceair](https://github.com/faceair))
+
 1.22.1 (2021-04-19)
 -------------------
 * Allow configure custom certificates to collector ([#1418](https://github.com/jaegertracing/jaeger-operator/pull/1418), [@rubenvp8510](https://github.com/rubenvp8510))
