@@ -6755,6 +6755,9 @@ spec:
                         type: string
                       nullable: true
                       type: object
+                    backoffLimit:
+                      format: int32
+                      type: integer
                     cassandraClientAuthEnabled:
                       type: boolean
                     elasticsearchClientNodeOnly:
@@ -7819,6 +7822,9 @@ spec:
                         type: string
                       nullable: true
                       type: object
+                    backoffLimit:
+                      format: int32
+                      type: integer
                     enabled:
                       type: boolean
                     image:
@@ -8814,6 +8820,9 @@ spec:
                         type: string
                       nullable: true
                       type: object
+                    backoffLimit:
+                      format: int32
+                      type: integer
                     conditions:
                       type: string
                     image:
