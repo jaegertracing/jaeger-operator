@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.16 as builder
 
 ARG JAEGER_VERSION
 ENV JAEGER_VERSION=${JAEGER_VERSION}
