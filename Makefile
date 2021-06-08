@@ -41,6 +41,9 @@ UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... | grep -v elasticsearc
 
 TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/test/global-manifests.yaml -root .
 
+KUBE_VERSION ?= 1.21
+KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
+
 .DEFAULT_GOAL := build
 
 .PHONY: check
@@ -419,7 +422,7 @@ check-operatorhub-pr-template:
 .PHONY: local-jaeger-container
 local-jaeger-container:
 	@echo "Starting local container with Jaeger. Check http://localhost:16686"
-	@docker run -d --rm -p 16686:16686 -p 6831:6831/udp --name jaeger jaegertracing/all-in-one:1.15 > /dev/null
+	@docker run -d --rm -p 16686:16686 -p 6831:6831/udp --name jaeger jaegertracing/all-in-one:1.22 > /dev/null
 
 .PHONY: changelog
 changelog:
@@ -488,11 +491,17 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 # end-to-tests
 .PHONY: kuttl-e2e
-kuttl-e2e: prepare-e2e-kuttl-tests run-kuttl-e2e
+kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 
 .PHONY: run-kuttl-e2e
 run-kuttl-e2e:
 	$(KUTTL) test
+
+start-kind: 
+	kind create cluster --config $(KIND_CONFIG)
+	kind load docker-image local/jaeger-operator:e2e
+	kind load docker-image local/asserts:e2e
+	kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
 
 .PHONY: build-assert-job
 build-assert-job:
