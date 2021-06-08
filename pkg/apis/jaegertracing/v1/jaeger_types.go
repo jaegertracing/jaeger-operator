@@ -610,6 +610,10 @@ type JaegerDependenciesSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
@@ -635,6 +639,10 @@ type JaegerEsIndexCleanerSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
@@ -656,6 +664,10 @@ type JaegerEsRolloverSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+	
 	// we parse it with time.ParseDuration
 	// +optional
 	ReadTTL string `json:"readTTL,omitempty"`
