@@ -667,7 +667,7 @@ type JaegerEsRolloverSpec struct {
 	// BackoffLimit sets the Kubernetes back-off limit
 	// +optional
 	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
-	
+
 	// we parse it with time.ParseDuration
 	// +optional
 	ReadTTL string `json:"readTTL,omitempty"`
