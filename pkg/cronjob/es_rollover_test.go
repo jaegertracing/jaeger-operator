@@ -142,6 +142,16 @@ func TestEsRolloverAnnotations(t *testing.T) {
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
+func TestEsRolloverBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerAnnotations"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.EsRollover.BackoffLimit = &BackoffLimit
+
+	cjob := rollover(jaeger)
+	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
+}
+
 func TestEsRolloverLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverLabels"})
 	jaeger.Spec.Labels = map[string]string{

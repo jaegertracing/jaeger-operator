@@ -118,6 +118,16 @@ func TestDependenciesAnnotations(t *testing.T) {
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
+func TestSparkDependenciesBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecrets"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.Dependencies.BackoffLimit = &BackoffLimit
+
+	cronJob := CreateSparkDependencies(jaeger)
+	assert.Equal(t, &BackoffLimit, cronJob.Spec.JobTemplate.Spec.BackoffLimit)
+}
+
 func TestDependenciesLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesLabels"})
 	jaeger.Spec.Labels = map[string]string{
