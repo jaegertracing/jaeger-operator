@@ -10,7 +10,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
 
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
@@ -72,7 +72,7 @@ func TestWithElasticsearches(t *testing.T) {
 }
 
 func TestWithIngresses(t *testing.T) {
-	c := New().WithIngresses([]v1beta1.Ingress{{}})
+	c := New().WithIngresses([]networkingv1.Ingress{{}})
 	assert.Len(t, c.Ingresses(), 1)
 	assert.Len(t, c.All(), 1)
 }

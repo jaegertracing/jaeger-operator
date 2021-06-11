@@ -1,6 +1,5 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestSuite
-startKIND: true
 crdDir: ./tests/_build/crds/
 artifactsDir: ./tests/_build/artifacts/
 kindContainers:
@@ -15,7 +14,6 @@ commands:
   - command: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=150s
   - command: sleep 5s
 
-kindConfig: ./kind.yaml
 testDirs:
   - ./tests/e2e/
 timeout: 330

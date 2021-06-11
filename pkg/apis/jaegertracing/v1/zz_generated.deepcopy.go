@@ -328,6 +328,11 @@ func (in *JaegerDependenciesSpec) DeepCopyInto(out *JaegerDependenciesSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.BackoffLimit != nil {
+		in, out := &in.BackoffLimit, &out.BackoffLimit
+		*out = new(int32)
+		**out = **in
+	}
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
@@ -365,6 +370,11 @@ func (in *JaegerEsIndexCleanerSpec) DeepCopyInto(out *JaegerEsIndexCleanerSpec) 
 		*out = new(int32)
 		**out = **in
 	}
+	if in.BackoffLimit != nil {
+		in, out := &in.BackoffLimit, &out.BackoffLimit
+		*out = new(int32)
+		**out = **in
+	}
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	return
 }
@@ -389,6 +399,11 @@ func (in *JaegerEsRolloverSpec) DeepCopyInto(out *JaegerEsRolloverSpec) {
 	}
 	if in.TTLSecondsAfterFinished != nil {
 		in, out := &in.TTLSecondsAfterFinished, &out.TTLSecondsAfterFinished
+		*out = new(int32)
+		**out = **in
+	}
+	if in.BackoffLimit != nil {
+		in, out := &in.BackoffLimit, &out.BackoffLimit
 		*out = new(int32)
 		**out = **in
 	}
