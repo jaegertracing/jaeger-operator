@@ -36,26 +36,26 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		jaeger.Spec.Storage.CassandraCreateSchema.Mode = "prod"
 	}
 
-	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]
+	host := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
 	if host == "" {
 		jaeger.Logger().Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
 	}
 
-	port := jaeger.Spec.Storage.Options.Map()["cassandra.port"]
+	port := jaeger.Spec.Storage.Options.StringMap()["cassandra.port"]
 	if port == "" {
 		jaeger.Logger().Info("Cassandra port not specified. Using '9042' for the cassandra-create-schema job.")
 		port = "9042" // this is the default in the image
 	}
 
-	keyspace := jaeger.Spec.Storage.Options.Map()["cassandra.keyspace"]
+	keyspace := jaeger.Spec.Storage.Options.StringMap()["cassandra.keyspace"]
 	if keyspace == "" {
 		jaeger.Logger().Info("Cassandra keyspace not specified. Using 'jaeger_v1_test' for the cassandra-create-schema job.")
 		keyspace = "jaeger_v1_test" // this is default in the image
 	}
 
-	username := jaeger.Spec.Storage.Options.Map()["cassandra.username"]
-	password := jaeger.Spec.Storage.Options.Map()["cassandra.password"]
+	username := jaeger.Spec.Storage.Options.StringMap()["cassandra.username"]
+	password := jaeger.Spec.Storage.Options.StringMap()["cassandra.password"]
 
 	annotations := map[string]string{
 		"prometheus.io/scrape":    "false",
