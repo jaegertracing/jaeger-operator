@@ -1,9 +1,12 @@
 Changes by Version
 ==================
 
-1.22.2 (2021-06-01)
+1.23.0 (2021-07-11)
 -------------------
-
+* Implement backoff limit for jobs ([#1468](https://github.com/jaegertracing/jaeger-operator/pull/1468), [@chasekiefer](https://github.com/chasekiefer))
+* Remove OwnerReferences from CA configmaps ([#1467](https://github.com/jaegertracing/jaeger-operator/pull/1467), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add compatibility matrix ([#1465](https://github.com/jaegertracing/jaeger-operator/pull/1465), [@jpkrohling](https://github.com/jpkrohling))
+* Promote crd to apiextensions.k8s.io/v1 ([#1456](https://github.com/jaegertracing/jaeger-operator/pull/1456), [@rubenvp8510](https://github.com/rubenvp8510))
 * Add preserve unknown fields annotation to FreeForm and Options fields ([#1435](https://github.com/jaegertracing/jaeger-operator/pull/1435), [@rubenvp8510](https://github.com/rubenvp8510))
 * Migrate remaining flags and some env vars to 1.22 ([#1449](https://github.com/jaegertracing/jaeger-operator/pull/1449), [@rubenvp8510](https://github.com/rubenvp8510))
 * Fix override storage and ingress values when upgrade to 1.22 ([#1439](https://github.com/jaegertracing/jaeger-operator/pull/1439), [@rubenvp8510](https://github.com/rubenvp8510))
