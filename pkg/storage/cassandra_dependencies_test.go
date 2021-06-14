@@ -160,3 +160,15 @@ func TestCassandraCreateSchemaSecret(t *testing.T) {
 	assert.Len(t, b, 1)
 	assert.Equal(t, secret, b[0].Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
+
+func TestCassandraCreateSchemaAffinity(t *testing.T) {
+	expectedAffinity := &corev1.Affinity{}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaAffinity"})
+	jaeger.Spec.Storage.CassandraCreateSchema.Affinity = expectedAffinity
+
+	b := cassandraDeps(jaeger)
+
+	assert.Len(t, b, 1)
+	assert.Equal(t, expectedAffinity, b[0].Spec.Template.Spec.Affinity)
+}
