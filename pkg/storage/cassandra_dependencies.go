@@ -140,6 +140,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 					},
 					Spec: corev1.PodSpec{
 						ActiveDeadlineSeconds: podTimeout,
+						Affinity:              jaeger.Spec.Storage.CassandraCreateSchema.Affinity,
 						SecurityContext:       jaeger.Spec.SecurityContext,
 						Containers: []corev1.Container{{
 							Image: util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
