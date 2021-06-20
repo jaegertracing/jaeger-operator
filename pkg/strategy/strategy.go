@@ -8,7 +8,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -33,7 +33,7 @@ type S struct {
 	deployments              []appsv1.Deployment
 	elasticsearches          []esv1.Elasticsearch
 	horizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
-	ingresses                []v1beta1.Ingress
+	ingresses                []networkingv1.Ingress
 	kafkas                   []kafkav1beta1.Kafka
 	kafkaUsers               []kafkav1beta1.KafkaUser
 	routes                   []osv1.Route
@@ -106,7 +106,7 @@ func (s S) WithElasticsearches(es []esv1.Elasticsearch) S {
 }
 
 // WithIngresses returns the strategy with the given list of dependencies
-func (s S) WithIngresses(i []v1beta1.Ingress) S {
+func (s S) WithIngresses(i []networkingv1.Ingress) S {
 	s.ingresses = i
 	return s
 }
@@ -188,7 +188,7 @@ func (s S) Elasticsearches() []esv1.Elasticsearch {
 }
 
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent
-func (s S) Ingresses() []v1beta1.Ingress {
+func (s S) Ingresses() []networkingv1.Ingress {
 	return s.ingresses
 }
 

@@ -240,6 +240,7 @@ type JaegerQuerySpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
@@ -270,6 +271,7 @@ type JaegerQuerySpec struct {
 // +k8s:openapi-gen=true
 type JaegerUISpec struct {
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options FreeForm `json:"options,omitempty"`
 }
 
@@ -277,6 +279,7 @@ type JaegerUISpec struct {
 // +k8s:openapi-gen=true
 type JaegerSamplingSpec struct {
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options FreeForm `json:"options,omitempty"`
 }
 
@@ -308,6 +311,7 @@ type JaegerIngressSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 }
 
@@ -347,9 +351,11 @@ type JaegerAllInOneSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -392,12 +398,14 @@ type JaegerCollectorSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -425,12 +433,14 @@ type JaegerIngesterSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 }
 
@@ -449,12 +459,14 @@ type JaegerAgentSpec struct {
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -480,6 +492,7 @@ type JaegerStorageSpec struct {
 	SecretName string `json:"secretName,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
@@ -597,6 +610,10 @@ type JaegerDependenciesSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
@@ -622,6 +639,10 @@ type JaegerEsIndexCleanerSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
@@ -642,6 +663,10 @@ type JaegerEsRolloverSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
 	// we parse it with time.ParseDuration
 	// +optional

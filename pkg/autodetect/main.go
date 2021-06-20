@@ -17,8 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
@@ -100,7 +98,6 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
-			b.detectIngressAPI()
 
 		})
 
@@ -134,23 +131,6 @@ func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGrou
 		log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
 	} else {
 		log.WithField("platform", viper.GetString("platform")).Debug("The 'platform' option is explicitly set")
-	}
-}
-
-func (b *Background) detectIngressAPI() {
-	apiRes, err := b.dcl.ServerResourcesForGroupVersion("networking.k8s.io/v1beta1")
-	if err != nil {
-		viper.Set("ingress-api", ingress.ExtensionAPI)
-		log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
-		return
-	}
-
-	for _, r := range apiRes.APIResources {
-		if r.Name == "ingresses" {
-			viper.Set("ingress-api", ingress.NetworkingAPI)
-			log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
-			break
-		}
 	}
 }
 

@@ -100,6 +100,19 @@ func TestEsIndexCleanerAnnotations(t *testing.T) {
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
+func TestEsIndexCleanerBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerAnnotations"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.EsIndexCleaner.BackoffLimit = &BackoffLimit
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
+}
+
 func TestEsIndexCleanerLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerLabels"})
 	jaeger.Spec.Labels = map[string]string{

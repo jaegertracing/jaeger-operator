@@ -9,7 +9,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -80,14 +80,14 @@ func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 
 // WaitForIngress checks to see if a given ingress' load balancer is ready after a specified amount of time
 // See #WaitForDeployment for the full semantics
-func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) (*v1beta1.Ingress, error) {
+func WaitForIngress(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, retryInterval, timeout time.Duration) (*networkingv1.Ingress, error) {
 	start := time.Now()
-	var ingress *v1beta1.Ingress
+	var ingress *networkingv1.Ingress
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		ingress, err = kubeclient.NetworkingV1beta1().Ingresses(namespace).Get(ctxWithTimeout, name, metav1.GetOptions{})
+		ingress, err = kubeclient.NetworkingV1().Ingresses(namespace).Get(ctxWithTimeout, name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s ingress\n", name)
