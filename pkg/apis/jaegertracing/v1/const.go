@@ -31,6 +31,6 @@ const (
 	// ReconciliationTracer is the OpenTelemetry tracer name for the reconciliation loops
 	ReconciliationTracer string = "operator/reconciliation"
 
-	// ReconciliationMetricsSetup is the OpenTelemetry tracer name for the custom metrics setup
+	// CustomMetricsTracer is the OpenTelemetry tracer name for the custom metrics setup
 	CustomMetricsTracer string = "operator/bootstrap-custom-metrics"
 )
