@@ -231,7 +231,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
-	labels := a.labels()
+	// merge defined labels with default labels
+	spec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, v1.JaegerCommonSpec{Labels: a.labels()}})
+	labels := spec.Labels
+
 	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),
