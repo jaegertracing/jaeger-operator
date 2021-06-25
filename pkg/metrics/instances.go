@@ -6,22 +6,26 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
-
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 var groups = make(map[string]*instancesCounter)
 
+// This structure contains the labels associated with the instances and a counter of the number of instances
+// that have the set of labels e.g.:
+//  Labels: [strategy=production, agent=sidecar, storage=es] , Count:2
+//  Labels: [strategy=allinone, agent=sidecar, storage=memory] , Count:1
 type instancesCounter struct {
 	Labels []attribute.KeyValue
 	Count  int64
 }
+
 type instancesMetric struct {
 	client client.Client
 	groups map[string]*instancesCounter
@@ -30,7 +34,7 @@ type instancesMetric struct {
 func newInstancesMetric(client client.Client) *instancesMetric {
 	return &instancesMetric{
 		client: client,
-		groups: make(map[string]*instancesCounter),
+		groups: make(map[string]*instancesCounter), // for store the count of instances with different labels
 	}
 }
 
@@ -42,7 +46,8 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	_, err := meter.NewInt64ValueObserver("operator_jaeger_instances", i.callback,
 		metric.WithDescription("Number of jaeger instances in cluster"),
 	)
-	return err
+	return tracing.HandleError(err, span)
+
 }
 func (i *instancesMetric) agentMode(jaeger v1.Jaeger) string {
 	agent := string(jaeger.Spec.Agent.Strategy)

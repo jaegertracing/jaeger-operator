@@ -3,13 +3,7 @@ package metrics
 import (
 	"context"
 
-	"go.opentelemetry.io/otel/codes"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
-
 	prometheusclient "github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
@@ -20,12 +14,15 @@ import (
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 const meterName = "jaegertracing.io/jaeger"
 
-// Bootstrap prepares a new tracer to be used by the operator
-func Bootstrap(ctx context.Context, namespace string, client client.Client) {
+// Bootstrap configures the OpenTelemetry meter provides with the prometheus exporter
+func Bootstrap(ctx context.Context, namespace string, client client.Client) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.CustomMetricsTracer)
 	ctx, span := tracer.Start(ctx, "bootstrap")
 	defer span.End()
@@ -45,9 +42,7 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) {
 	)
 	exporter, err := prometheus.NewExporter(config, c)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		log.WithError(err).Error("Failed to initialize metrics")
-
+		return tracing.HandleError(err, span)
 	}
 
 	global.SetMeterProvider(exporter.MeterProvider())
@@ -55,8 +50,5 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) {
 	// Create metrics
 	instancesObservedValue := newInstancesMetric(client)
 	err = instancesObservedValue.Setup(ctx)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		log.WithError(err).Error("Failed to initialize metrics")
-	}
+	return tracing.HandleError(err, span)
 }

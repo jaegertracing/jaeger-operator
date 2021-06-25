@@ -89,8 +89,10 @@ func bootstrap(ctx context.Context) manager.Manager {
 	serveCRMetrics(ctx, cfg, namespace)
 	createMetricsService(ctx, cfg, namespace)
 	detectOAuthProxyImageStream(ctx, mgr)
-	opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
-
+	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
+	if err != nil {
+		log.WithError(err).Error("Failed to initialize metrics")
+	}
 	return mgr
 }
 

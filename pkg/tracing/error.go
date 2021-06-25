@@ -7,6 +7,8 @@ import (
 
 // HandleError sets the span to an error state, storing it s cause in an attribute
 func HandleError(err error, span apitrace.Span) error {
-	span.SetStatus(codes.Error, err.Error())
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+	}
 	return err
 }
