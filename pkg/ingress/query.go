@@ -123,7 +123,7 @@ func getRules(path string, hosts []string, backend *networkingv1.IngressBackend)
 }
 
 func getRule(host string, path string, backend *networkingv1.IngressBackend) networkingv1.IngressRule {
-	pathType := networkingv1.PathTypePrefix
+	pathType := networkingv1.PathTypeImplementationSpecific
 	rule := networkingv1.IngressRule{}
 	rule.Host = host
 	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
