@@ -289,7 +289,7 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 func getKafkaUser(name, namespace string) *kafkav1beta1.KafkaUser {
 	kafkaUser := &kafkav1beta1.KafkaUser{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "kafka.strimzi.io/v1beta1",
+			APIVersion: "kafka.strimzi.io/v1beta2",
 			Kind:       "KafkaUser",
 		},
 		ObjectMeta: metav1.ObjectMeta{

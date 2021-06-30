@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -37,7 +37,7 @@ func TestKafkaCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithKafkas([]v1beta1.Kafka{{
+		s := strategy.New().WithKafkas([]v1beta2.Kafka{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      jaeger.Name,
 				Namespace: jaeger.Namespace,
@@ -46,8 +46,8 @@ func TestKafkaCreate(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -63,7 +63,7 @@ func TestKafkaCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.Kafka{}
+	persisted := &v1beta2.Kafka{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -83,7 +83,7 @@ func TestKafkaUpdate(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	orig := v1beta1.Kafka{
+	orig := v1beta2.Kafka{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        nsn.Name,
 			Namespace:   nsn.Namespace,
@@ -93,8 +93,8 @@ func TestKafkaUpdate(t *testing.T) {
 				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 		},
-		Status: kafkav1beta1.KafkaStatus{
-			Conditions: []kafkav1beta1.KafkaStatusCondition{{
+		Status: kafkav1beta2.KafkaStatus{
+			Conditions: []kafkav1beta2.KafkaStatusCondition{{
 				Type:   "Ready",
 				Status: "True",
 			}},
@@ -108,7 +108,7 @@ func TestKafkaUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		kafkaUpdated := v1beta1.Kafka{
+		kafkaUpdated := v1beta2.Kafka{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        nsn.Name,
 				Namespace:   nsn.Namespace,
@@ -118,15 +118,15 @@ func TestKafkaUpdate(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
 			},
 		}
 
-		s := strategy.New().WithKafkas([]v1beta1.Kafka{kafkaUpdated})
+		s := strategy.New().WithKafkas([]v1beta2.Kafka{kafkaUpdated})
 		return s
 	}
 
@@ -135,7 +135,7 @@ func TestKafkaUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Kafka{}
+	persisted := &v1beta2.Kafka{}
 	persistedName := types.NamespacedName{
 		Name:      orig.GetName(),
 		Namespace: orig.GetNamespace(),
@@ -157,7 +157,7 @@ func TestKafkaDelete(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	orig := v1beta1.Kafka{
+	orig := v1beta2.Kafka{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsn.Name,
 			Namespace: nsn.Namespace,
@@ -183,7 +183,7 @@ func TestKafkaDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Kafka{}
+	persisted := &v1beta2.Kafka{}
 	persistedName := types.NamespacedName{
 		Name:      orig.GetName(),
 		Namespace: orig.GetNamespace(),
@@ -210,7 +210,7 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
-		&v1beta1.Kafka{
+		&v1beta2.Kafka{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
@@ -219,8 +219,8 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -234,7 +234,7 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithKafkas([]v1beta1.Kafka{{
+		s := strategy.New().WithKafkas([]v1beta2.Kafka{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
@@ -243,8 +243,8 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -260,13 +260,13 @@ func TestKafkaCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.Kafka{}
+	persisted := &v1beta2.Kafka{}
 	err = cl.Get(context.Background(), nsn, persisted)
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.GetName())
 	assert.Equal(t, nsn.Namespace, persisted.GetNamespace())
 
-	persistedExisting := &v1beta1.Kafka{}
+	persistedExisting := &v1beta2.Kafka{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.GetName())

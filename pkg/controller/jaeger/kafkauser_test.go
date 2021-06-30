@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -37,7 +37,7 @@ func TestKafkaUserCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithKafkaUsers([]v1beta1.KafkaUser{{
+		s := strategy.New().WithKafkaUsers([]v1beta2.KafkaUser{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      jaeger.Name,
 				Namespace: jaeger.Namespace,
@@ -46,8 +46,8 @@ func TestKafkaUserCreate(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaUserStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaUserStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -63,7 +63,7 @@ func TestKafkaUserCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.KafkaUser{}
+	persisted := &v1beta2.KafkaUser{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -83,7 +83,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	orig := v1beta1.KafkaUser{
+	orig := v1beta2.KafkaUser{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        nsn.Name,
 			Namespace:   nsn.Namespace,
@@ -93,8 +93,8 @@ func TestKafkaUserUpdate(t *testing.T) {
 				"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
 		},
-		Status: kafkav1beta1.KafkaUserStatus{
-			Conditions: []kafkav1beta1.KafkaStatusCondition{{
+		Status: kafkav1beta2.KafkaUserStatus{
+			Conditions: []kafkav1beta2.KafkaStatusCondition{{
 				Type:   "Ready",
 				Status: "True",
 			}},
@@ -108,7 +108,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		kafkaUpdated := v1beta1.KafkaUser{
+		kafkaUpdated := v1beta2.KafkaUser{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        nsn.Name,
 				Namespace:   nsn.Namespace,
@@ -118,15 +118,15 @@ func TestKafkaUserUpdate(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaUserStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaUserStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
 			},
 		}
 
-		s := strategy.New().WithKafkaUsers([]v1beta1.KafkaUser{kafkaUpdated})
+		s := strategy.New().WithKafkaUsers([]v1beta2.KafkaUser{kafkaUpdated})
 		return s
 	}
 
@@ -135,7 +135,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.KafkaUser{}
+	persisted := &v1beta2.KafkaUser{}
 	persistedName := types.NamespacedName{
 		Name:      orig.GetName(),
 		Namespace: orig.GetNamespace(),
@@ -156,7 +156,7 @@ func TestKafkaUserDelete(t *testing.T) {
 		Name: "TestKafkaUserDelete",
 	}
 
-	orig := v1beta1.KafkaUser{
+	orig := v1beta2.KafkaUser{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsn.Name,
 			Namespace: nsn.Namespace,
@@ -182,7 +182,7 @@ func TestKafkaUserDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.KafkaUser{}
+	persisted := &v1beta2.KafkaUser{}
 	persistedName := types.NamespacedName{
 		Name:      orig.GetName(),
 		Namespace: orig.GetNamespace(),
@@ -209,7 +209,7 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
-		&v1beta1.KafkaUser{
+		&v1beta2.KafkaUser{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
@@ -218,8 +218,8 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaUserStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaUserStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -233,7 +233,7 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithKafkaUsers([]v1beta1.KafkaUser{{
+		s := strategy.New().WithKafkaUsers([]v1beta2.KafkaUser{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
@@ -242,8 +242,8 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 					"app.kubernetes.io/managed-by": "jaeger-operator",
 				},
 			},
-			Status: kafkav1beta1.KafkaUserStatus{
-				Conditions: []kafkav1beta1.KafkaStatusCondition{{
+			Status: kafkav1beta2.KafkaUserStatus{
+				Conditions: []kafkav1beta2.KafkaStatusCondition{{
 					Type:   "Ready",
 					Status: "True",
 				}},
@@ -259,13 +259,13 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.KafkaUser{}
+	persisted := &v1beta2.KafkaUser{}
 	err = cl.Get(context.Background(), nsn, persisted)
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.GetName())
 	assert.Equal(t, nsn.Namespace, persisted.GetNamespace())
 
-	persistedExisting := &v1beta1.KafkaUser{}
+	persistedExisting := &v1beta2.KafkaUser{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.GetName())

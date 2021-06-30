@@ -45,7 +45,7 @@ func (suite *SelfProvisionedESWithKafkaTestSuite) SetupSuite() {
 	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &kafkav1beta1.KafkaList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Kafka",
-			APIVersion: "kafka.strimzi.io/v1beta1",
+			APIVersion: "kafka.strimzi.io/v1beta2",
 		},
 	}))
 	addToFrameworkSchemeForSmokeTests(t)
