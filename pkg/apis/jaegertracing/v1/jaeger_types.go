@@ -574,6 +574,9 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Timeout string `json:"timeout,omitempty"`
 
 	// +optional
+	Affinity *v1.Affinity `json:"affinity,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 

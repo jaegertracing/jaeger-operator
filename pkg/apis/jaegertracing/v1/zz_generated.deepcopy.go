@@ -195,6 +195,11 @@ func (in *JaegerCassandraCreateSchemaSpec) DeepCopyInto(out *JaegerCassandraCrea
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Affinity != nil {
+		in, out := &in.Affinity, &out.Affinity
+		*out = new(corev1.Affinity)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.TTLSecondsAfterFinished != nil {
 		in, out := &in.TTLSecondsAfterFinished, &out.TTLSecondsAfterFinished
 		*out = new(int32)
