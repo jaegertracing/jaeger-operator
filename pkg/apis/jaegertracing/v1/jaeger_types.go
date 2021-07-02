@@ -611,6 +611,9 @@ type JaegerDependenciesSpec struct {
 	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
 
 	// +optional
+	ElasticsearchTimeRange string `json:"elasticsearchTimeRange,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
 	// BackoffLimit sets the Kubernetes back-off limit

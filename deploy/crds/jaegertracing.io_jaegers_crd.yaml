@@ -7560,6 +7560,8 @@ spec:
                       type: boolean
                     elasticsearchNodesWanOnly:
                       type: boolean
+                    elasticsearchTimeRange:
+                      type: string
                     enabled:
                       type: boolean
                     image:

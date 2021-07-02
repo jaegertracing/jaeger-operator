@@ -919,6 +919,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 							Format: "",
 						},
 					},
+					"elasticsearchTimeRange": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"ttlSecondsAfterFinished": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
