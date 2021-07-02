@@ -66,10 +66,17 @@ For instance, when we released v1.22.0, the latest Kubernetes version was v1.20.
 
 The Jaeger Operator *might* work on versions outside of the given range, but when opening new issues, please make sure to test your scenario on a supported version.
 
-| Jaeger Operator | Kubernetes           |
-|-----------------|----------------------|
-| v1.23           | v1.19+               |
-| v1.22           | v1.18 to v1.20       |
+| Jaeger Operator | Kubernetes           | Strimzi Operator   |
+|-----------------|----------------------|---------------------
+| v1.23           | v1.19+               | v0.19, v0.20       |
+| v1.22           | v1.18 to v1.20       | v0.19              |
+
+### Jaeger Operator vs. Strimzi Operator
+
+We maintain compatibility with a set of tested Strimzi operator versions, but some changes in Strimzi operator require us to break compatibility with older versions
+
+The jaeger Operator *might* work on other untested versions of Strimzi Operator, but when opening new issues, please make sure to test your scenario on a supported version. See the table above for compatibility
+
 
 ## (experimental) Generate Kubernetes manifest file
 
