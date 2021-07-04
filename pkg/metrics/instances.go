@@ -14,10 +14,10 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-const MetricPrefix = "jaeger_operator_instances"
-const AgentStrategiesMetric = "agent_strategies"
-const StorageMetric = "storage_types"
-const StrategiesMetric = "strategies"
+const metricPrefix = "jaeger_operator_instances"
+const agentStrategiesMetric = "agent_strategies"
+const storageMetric = "storage_types"
+const strategiesMetric = "strategies"
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
@@ -64,7 +64,7 @@ func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn 
 		KeyFn: keyFn,
 		Label: label,
 	}
-	obs, err := batch.NewInt64ValueObserver(fmt.Sprintf("%s_%s", MetricPrefix, name), metric.WithDescription(desc))
+	obs, err := batch.NewInt64ValueObserver(fmt.Sprintf("%s_%s", metricPrefix, name), metric.WithDescription(desc))
 	if err != nil {
 		return instancesView{}, err
 	}
@@ -79,7 +79,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	meter := global.Meter(meterName)
 	batch := meter.NewBatchObserver(i.callback)
 	obs, err := newObservation(batch,
-		AgentStrategiesMetric,
+		agentStrategiesMetric,
 		"Number of instances per agent strategy",
 		"type",
 		func(jaeger v1.Jaeger) string {
@@ -90,7 +90,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 		return err
 	}
 	i.observations = append(i.observations, obs)
-	obs, err = newObservation(batch, StorageMetric,
+	obs, err = newObservation(batch, storageMetric,
 		"Number of instances per storage type",
 		"type",
 		func(jaeger v1.Jaeger) string {
@@ -101,7 +101,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	obs, err = newObservation(batch, StrategiesMetric,
+	obs, err = newObservation(batch, strategiesMetric,
 		"Number of instances per strategy type",
 		"type",
 		func(jaeger v1.Jaeger) string {
