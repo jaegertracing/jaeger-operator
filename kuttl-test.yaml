@@ -10,7 +10,7 @@ commands:
   - command: kubectl create namespace jaeger-operator-system
   - command: kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system
   - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n jaeger-operator-system
-  - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+  - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/helm-chart-3.33.0/deploy/static/provider/kind/deploy.yaml
   - command: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=150s
   - command: sleep 5s
 

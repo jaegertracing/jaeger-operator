@@ -587,6 +587,9 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Timeout string `json:"timeout,omitempty"`
 
 	// +optional
+	Affinity *v1.Affinity `json:"affinity,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
@@ -619,6 +622,9 @@ type JaegerDependenciesSpec struct {
 
 	// +optional
 	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
+
+	// +optional
+	ElasticsearchTimeRange string `json:"elasticsearchTimeRange,omitempty"`
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`

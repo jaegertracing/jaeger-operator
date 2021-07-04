@@ -557,6 +557,11 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref common
 							Format:      "",
 						},
 					},
+					"affinity": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/core/v1.Affinity"),
+						},
+					},
 					"ttlSecondsAfterFinished": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -566,6 +571,8 @@ func schema_pkg_apis_jaegertracing_v1_JaegerCassandraCreateSchemaSpec(ref common
 				},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.Affinity"},
 	}
 }
 
@@ -919,6 +926,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerDependenciesSpec(ref common.Referenc
 					"elasticsearchNodesWanOnly": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"elasticsearchTimeRange": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
 							Format: "",
 						},
 					},
