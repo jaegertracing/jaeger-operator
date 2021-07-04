@@ -4,7 +4,6 @@ import (
 	"context"
 
 	prometheusclient "github.com/prometheus/client_golang/prometheus"
-	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
@@ -15,13 +14,11 @@ import (
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/semconv"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 const meterName = "jaegertracing.io/jaeger"
@@ -33,17 +30,6 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 	defer span.End()
 	tracing.SetInstanceID(ctx, namespace)
 
-	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String("jaeger-operator"),
-		semconv.ServiceVersionKey.String(version.Get().Operator),
-		semconv.ServiceNamespaceKey.String(namespace),
-	}
-
-	instanceID := viper.GetString(v1.ConfigIdentity)
-
-	if instanceID != "" {
-		attr = append(attr, semconv.ServiceInstanceIDKey.String(instanceID))
-	}
 	config := prometheus.Config{
 		Registry: metrics.Registry.(*prometheusclient.Registry),
 	}
@@ -55,7 +41,7 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 			export.CumulativeExportKindSelector(),
 			processor.WithMemory(true),
 		),
-		controller.WithResource(resource.NewWithAttributes(attr...)),
+		controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
 	)
 	exporter, err := prometheus.NewExporter(config, c)
 	if err != nil {

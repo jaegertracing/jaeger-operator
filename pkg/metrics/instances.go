@@ -12,30 +12,62 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var groups = make(map[string]*instancesCounter)
+const MetricPrefix = "jaeger_operator_instances"
+const AgentModesMetric = "agent_modes"
+const StorageMetric = "storage"
+const StrategiesMetric = "strategy"
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
-// that have the set of labels e.g.:
-//  Labels: [strategy=production, agent=sidecar, storage=es] , Count:2
-//  Labels: [strategy=allinone, agent=sidecar, storage=memory] , Count:1
-type instancesCounter struct {
-	Labels []attribute.KeyValue
-	Count  int64
+type instancesView struct {
+	Name     string
+	Count    map[string]int
+	Observer *metric.Int64ValueObserver
+	KeyFn    func(jaeger v1.Jaeger) string
+}
+
+func (i *instancesView) reset() {
+	for k := range i.Count {
+		i.Count[k] = 0
+	}
+}
+
+func (i *instancesView) Record(jaeger v1.Jaeger) {
+	i.Count[i.KeyFn(jaeger)]++
+}
+
+func (i *instancesView) Report(result metric.BatchObserverResult) {
+	for key, count := range i.Count {
+		result.Observe([]attribute.KeyValue{
+			attribute.String(i.Name, key),
+		}, i.Observer.Observation(int64(count)))
+	}
 }
 
 type instancesMetric struct {
-	client client.Client
-	groups map[string]*instancesCounter
+	client       client.Client
+	observations []instancesView
 }
 
 func newInstancesMetric(client client.Client) *instancesMetric {
 	return &instancesMetric{
 		client: client,
-		groups: make(map[string]*instancesCounter), // for store the count of instances with different labels
 	}
+}
+
+func newObservation(batch metric.BatchObserver, name string, desc string, keyFn func(jaeger v1.Jaeger) string) (instancesView, error) {
+	observation := instancesView{
+		Name:  name,
+		Count: make(map[string]int),
+		KeyFn: keyFn,
+	}
+	obs, err := batch.NewInt64ValueObserver(fmt.Sprintf("%s_%s", MetricPrefix, name), metric.WithDescription(desc))
+	if err != nil {
+		return instancesView{}, err
+	}
+	observation.Observer = &obs
+	return observation, nil
 }
 
 func (i *instancesMetric) Setup(ctx context.Context) error {
@@ -43,68 +75,77 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "setup-jaeger-instances")
 	defer span.End()
 	meter := global.Meter(meterName)
-	_, err := meter.NewInt64ValueObserver("operator_jaeger_instances", i.callback,
-		metric.WithDescription("Number of jaeger instances in cluster"),
-	)
-	return tracing.HandleError(err, span)
+	batch := meter.NewBatchObserver(i.callback)
+	obs, err := newObservation(batch,
+		AgentModesMetric,
+		"Number of instances per agent strategy",
+		func(jaeger v1.Jaeger) string {
+			return strings.ToLower(string(jaeger.Spec.Agent.Strategy))
+		})
 
-}
-func (i *instancesMetric) agentMode(jaeger v1.Jaeger) string {
-	agent := string(jaeger.Spec.Agent.Strategy)
-	if agent == "" {
-		return "sidecar"
+	if err != nil {
+		return err
 	}
-	return agent
-}
-func (i *instancesMetric) storage(jaeger v1.Jaeger) string {
-	storage := string(jaeger.Spec.Storage.Type)
-	if storage == "" {
-		storage = "memory"
+	i.observations = append(i.observations, obs)
+	obs, err = newObservation(batch, StorageMetric,
+		"Number of instances per storage type",
+		func(jaeger v1.Jaeger) string {
+			return strings.ToLower(string(jaeger.Spec.Storage.Type))
+		})
+	if err != nil {
+		return err
 	}
-	return strings.ToLower(storage)
+	i.observations = append(i.observations, obs)
 
-}
-func (i *instancesMetric) strategy(jaeger v1.Jaeger) string {
-	strategy := string(jaeger.Spec.Strategy)
-	if strategy == "" {
-		return "allinone"
+	obs, err = newObservation(batch, StrategiesMetric,
+		"Number of instances per strategy type",
+		func(jaeger v1.Jaeger) string {
+			return strings.ToLower(string(jaeger.Spec.Strategy))
+		})
+	if err != nil {
+		return err
 	}
-	return strings.ToLower(strategy)
+	i.observations = append(i.observations, obs)
+	return nil
+}
+
+func isInstanceNormalized(jaeger v1.Jaeger) bool {
+	return !(jaeger.Spec.Storage.Type == "" || jaeger.Spec.Strategy == "")
+}
+
+func normalizeAgentStrategy(jaeger *v1.Jaeger) {
+	if jaeger.Spec.Agent.Strategy == "" {
+		jaeger.Spec.Agent.Strategy = "Sidecar"
+	}
 }
 
 func (i *instancesMetric) reset() {
-	for _, g := range groups {
-		g.Count = 0
+	for _, o := range i.observations {
+		o.reset()
 	}
 }
 
-func (i *instancesMetric) callback(ctx context.Context, result metric.Int64ObserverResult) {
-	instances := &v1.JaegerList{}
-	for _, g := range groups {
-		g.Count = 0
+func (i *instancesMetric) report(result metric.BatchObserverResult) {
+	for _, o := range i.observations {
+		o.Report(result)
 	}
+}
+
+func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObserverResult) {
+	instances := &v1.JaegerList{}
 	if err := i.client.List(ctx, instances); err == nil {
+		i.reset()
 		for _, jaeger := range instances.Items {
-			agent := i.agentMode(jaeger)
-			strategy := i.strategy(jaeger)
-			storage := i.storage(jaeger)
-			key := fmt.Sprintf("%s_%s_%s", strategy, storage, agent)
-			item, ok := groups[key]
-			if !ok {
-				groups[key] = &instancesCounter{
-					Count: 1,
-					Labels: []attribute.KeyValue{
-						attribute.String("strategy", strategy),
-						attribute.String("storage", storage),
-						attribute.String("agent", strings.ToLower(agent)),
-					},
+			// Is this instance is already normalized by the reconciliation process
+			// count it on the metrics, otherwise not.
+			if isInstanceNormalized(jaeger) {
+				// Normalization doesn't normalize agent mode. so we need to do it here.
+				normalizeAgentStrategy(&jaeger)
+				for _, o := range i.observations {
+					o.Record(jaeger)
 				}
-			} else {
-				item.Count++
 			}
 		}
-		for _, group := range groups {
-			result.Observe(group.Count, group.Labels...)
-		}
+		i.report(result)
 	}
 }
