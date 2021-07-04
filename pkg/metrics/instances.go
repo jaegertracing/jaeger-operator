@@ -15,9 +15,9 @@ import (
 )
 
 const MetricPrefix = "jaeger_operator_instances"
-const AgentModesMetric = "agent_modes"
-const StorageMetric = "storage"
-const StrategiesMetric = "strategy"
+const AgentStrategiesMetric = "agent_strategies"
+const StorageMetric = "storage_types"
+const StrategiesMetric = "strategies"
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
@@ -79,9 +79,9 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	meter := global.Meter(meterName)
 	batch := meter.NewBatchObserver(i.callback)
 	obs, err := newObservation(batch,
-		AgentModesMetric,
+		AgentStrategiesMetric,
 		"Number of instances per agent strategy",
-		"mode",
+		"type",
 		func(jaeger v1.Jaeger) string {
 			return strings.ToLower(string(jaeger.Spec.Agent.Strategy))
 		})
