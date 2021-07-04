@@ -22,6 +22,7 @@ const StrategiesMetric = "strategy"
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
 	Name     string
+	Label    string
 	Count    map[string]int
 	Observer *metric.Int64ValueObserver
 	KeyFn    func(jaeger v1.Jaeger) string
@@ -40,7 +41,7 @@ func (i *instancesView) Record(jaeger v1.Jaeger) {
 func (i *instancesView) Report(result metric.BatchObserverResult) {
 	for key, count := range i.Count {
 		result.Observe([]attribute.KeyValue{
-			attribute.String(i.Name, key),
+			attribute.String(i.Label, key),
 		}, i.Observer.Observation(int64(count)))
 	}
 }
@@ -56,11 +57,12 @@ func newInstancesMetric(client client.Client) *instancesMetric {
 	}
 }
 
-func newObservation(batch metric.BatchObserver, name string, desc string, keyFn func(jaeger v1.Jaeger) string) (instancesView, error) {
+func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn func(jaeger v1.Jaeger) string) (instancesView, error) {
 	observation := instancesView{
 		Name:  name,
 		Count: make(map[string]int),
 		KeyFn: keyFn,
+		Label: label,
 	}
 	obs, err := batch.NewInt64ValueObserver(fmt.Sprintf("%s_%s", MetricPrefix, name), metric.WithDescription(desc))
 	if err != nil {
@@ -79,6 +81,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	obs, err := newObservation(batch,
 		AgentModesMetric,
 		"Number of instances per agent strategy",
+		"mode",
 		func(jaeger v1.Jaeger) string {
 			return strings.ToLower(string(jaeger.Spec.Agent.Strategy))
 		})
@@ -89,6 +92,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	i.observations = append(i.observations, obs)
 	obs, err = newObservation(batch, StorageMetric,
 		"Number of instances per storage type",
+		"type",
 		func(jaeger v1.Jaeger) string {
 			return strings.ToLower(string(jaeger.Spec.Storage.Type))
 		})
@@ -99,6 +103,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 
 	obs, err = newObservation(batch, StrategiesMetric,
 		"Number of instances per strategy type",
+		"type",
 		func(jaeger v1.Jaeger) string {
 			return strings.ToLower(string(jaeger.Spec.Strategy))
 		})
