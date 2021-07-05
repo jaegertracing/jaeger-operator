@@ -91,7 +91,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 	detectOAuthProxyImageStream(ctx, mgr)
 	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
 	if err != nil {
-		log.WithError(err).Error("Failed to initialize metrics")
+		log.WithError(err).Error("failed to initialize metrics")
 	}
 	return mgr
 }
