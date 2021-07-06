@@ -5,9 +5,11 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -335,6 +337,28 @@ func TestAllInOneTracingDisabled(t *testing.T) {
 	jaeger.Spec.AllInOne.TracingEnabled = &falseVar
 	d := NewAllInOne(jaeger).Get()
 	assert.Equal(t, "true", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
+}
+
+func TestAllInOneRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.Strategy = &strategy
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestAllInOneEmptyStrategyType(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
 }
 
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {

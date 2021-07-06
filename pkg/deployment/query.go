@@ -89,6 +89,14 @@ func (q *Query) Get() *appsv1.Deployment {
 		priorityClassName = q.jaeger.Spec.Query.PriorityClassName
 	}
 
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if q.jaeger.Spec.Query.Strategy != nil {
+		strategy = *q.jaeger.Spec.Query.Strategy
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -112,6 +120,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
