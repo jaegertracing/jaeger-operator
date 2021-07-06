@@ -78,7 +78,7 @@ The Jaeger Operator *might* work on versions outside of the given range, but whe
 
 ### Jaeger Operator vs. Strimzi Operator
 
-We maintain compatibility with a set of tested Strimzi operator versions, but some changes in Strimzi operator require us to break compatibility with older versions
+We maintain compatibility with a set of tested Strimzi operator versions, but some changes in Strimzi operator require us to break compatibility with older versions.
 
 The jaeger Operator *might* work on other untested versions of Strimzi Operator, but when opening new issues, please make sure to test your scenario on a supported version.
 
