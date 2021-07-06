@@ -52,6 +52,15 @@ The official documentation for the Jaeger Operator, including all its customizat
 
 ## Compatibility matrix
 
+The following table shows the compatibility of jaeger operator with different components, in this particular case we shows Kubernetes and Strimzi operator compatibility
+
+
+| Jaeger Operator | Kubernetes           | Strimzi Operator   |
+|-----------------|----------------------|---------------------
+| v1.23           | v1.19+               | v0.19, v0.20       |
+| v1.22           | v1.18 to v1.20       | v0.19              |
+
+
 ### Jaeger Operator vs. Jaeger
 
 The Jaeger Operator follows the same versioning as the operand (Jaeger) up to the minor part of the version. For example, the Jaeger Operator v1.22.2 tracks Jaeger 1.22.0. The patch part of the version indicates the patch level of the operator itself, not that of Jaeger. Whenever a new patch version is released for Jaeger, we'll release a new patch version of the operator.
@@ -66,10 +75,13 @@ For instance, when we released v1.22.0, the latest Kubernetes version was v1.20.
 
 The Jaeger Operator *might* work on versions outside of the given range, but when opening new issues, please make sure to test your scenario on a supported version.
 
-| Jaeger Operator | Kubernetes           |
-|-----------------|----------------------|
-| v1.23           | v1.19+               |
-| v1.22           | v1.18 to v1.20       |
+
+### Jaeger Operator vs. Strimzi Operator
+
+We maintain compatibility with a set of tested Strimzi operator versions, but some changes in Strimzi operator require us to break compatibility with older versions.
+
+The jaeger Operator *might* work on other untested versions of Strimzi Operator, but when opening new issues, please make sure to test your scenario on a supported version.
+
 
 ## (experimental) Generate Kubernetes manifest file
 

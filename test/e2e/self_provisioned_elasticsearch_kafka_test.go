@@ -16,7 +16,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -42,10 +42,10 @@ func (suite *SelfProvisionedESWithKafkaTestSuite) SetupSuite() {
 			APIVersion: "logging.openshift.io/v1",
 		},
 	}))
-	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &kafkav1beta1.KafkaList{
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &kafkav1beta2.KafkaList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Kafka",
-			APIVersion: "kafka.strimzi.io/v1beta1",
+			APIVersion: "kafka.strimzi.io/v1beta2",
 		},
 	}))
 	addToFrameworkSchemeForSmokeTests(t)

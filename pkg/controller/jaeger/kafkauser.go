@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -25,7 +25,7 @@ var (
 	ErrKafkaUserRemoved = errors.New("kafka user has been removed")
 )
 
-func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta1.KafkaUser) error {
+func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta2.KafkaUser) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyKafkaUsers")
 	defer span.End()
@@ -37,7 +37,7 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 			"app.kubernetes.io/managed-by": "jaeger-operator",
 		}),
 	}
-	list := &kafkav1beta1.KafkaUserList{}
+	list := &kafkav1beta2.KafkaUserList{}
 	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}
@@ -88,7 +88,7 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 	return nil
 }
 
-func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUser kafkav1beta1.KafkaUser) error {
+func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUser kafkav1beta2.KafkaUser) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "waitForKafkaUserStability")
 	defer span.End()
@@ -96,7 +96,7 @@ func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUs
 	seen := false
 	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		k := &kafkav1beta1.KafkaUser{}
+		k := &kafkav1beta2.KafkaUser{}
 		if err := r.client.Get(ctx, types.NamespacedName{Name: kafkaUser.GetName(), Namespace: kafkaUser.GetNamespace()}, k); err != nil {
 			if k8serrors.IsNotFound(err) {
 				if seen {
