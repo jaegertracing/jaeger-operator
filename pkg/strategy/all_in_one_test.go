@@ -64,6 +64,15 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, true)
 }
 
+func TestCreateAllInOneDeploymentWithServiceMonitor(t *testing.T) {
+	name := t.Name()
+	trueVal := true
+	j := v1.NewJaeger(types.NamespacedName{Name: name})
+	j.Spec.ServiceMonitor.Enabled = &trueVal
+	c := newAllInOneStrategy(context.Background(), j)
+	assert.Len(t, c.servicemonitors, 1)
+}
+
 func TestDelegateAllInOneDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateAllInOneDependencies"})

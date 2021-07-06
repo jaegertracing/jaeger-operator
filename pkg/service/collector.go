@@ -14,10 +14,18 @@ import (
 
 // NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
 func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
-	return []*corev1.Service{
+	services := []*corev1.Service{
 		headlessCollectorService(jaeger, selector),
 		clusteripCollectorService(jaeger, selector),
 	}
+	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+		services[0].Spec.Ports = append(services[0].Spec.Ports,
+			corev1.ServicePort{
+				Name: "admin",
+				Port: util.GetPort("--admin.http.host-port=", jaeger.Spec.Collector.Options.ToArgs(), 14269),
+			})
+	}
+	return services
 }
 
 func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {

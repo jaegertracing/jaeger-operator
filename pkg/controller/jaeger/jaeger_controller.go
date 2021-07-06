@@ -357,7 +357,12 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	if err := r.applyHorizontalPodAutoscalers(ctx, jaeger, str.HorizontalPodAutoscalers()); err != nil {
 		// we don't want to fail the whole reconciliation when this fails
 		jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile pod autoscalers")
-		return jaeger, nil
+	}
+
+	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+		if err := r.applyServiceMonitors(ctx, jaeger, str.ServiceMonitors()); err != nil {
+			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile servicemonitor")
+		}
 	}
 
 	// we apply the daemonsets after everything else, to increase the chances of having services and deployments

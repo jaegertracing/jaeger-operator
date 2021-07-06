@@ -32,7 +32,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 
 SED ?= "sed"
 
-PROMETHEUS_OPERATOR_TAG ?= v0.39.0
+PROMETHEUS_OPERATOR_TAG ?= v0.43.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -107,7 +107,7 @@ unit-tests:
 	@go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
+e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate e2e-tests-servicemonitor
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: build docker push
@@ -200,6 +200,11 @@ e2e-tests-upgrade: prepare-e2e-tests
 	BUILD_IMAGE="$(NAMESPACE)/$(OPERATOR_NAME):next" $(MAKE) push
 	@echo Running Upgrade end-to-end tests...
 	UPGRADE_TEST_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) go test -tags=upgrade  ./test/e2e/... $(TEST_OPTIONS)
+.PHONY: e2e-tests-servicemonitor
+
+e2e-tests-servicemonitor: prepare-e2e-tests es deploy-prometheus-operator
+	@echo Running Servicemonitor end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) PROMETHEUS_NAMESPACE=$(PROMETHEUS_NAMESPACE) go test -tags=servicemonitor ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: e2e-tests-istio
 e2e-tests-istio: prepare-e2e-tests istio

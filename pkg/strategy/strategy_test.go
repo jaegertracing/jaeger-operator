@@ -13,6 +13,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+
 	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
@@ -104,5 +106,11 @@ func TestWithServices(t *testing.T) {
 func TestWithSecrets(t *testing.T) {
 	c := New().WithSecrets([]v1.Secret{{}})
 	assert.Len(t, c.Secrets(), 1)
+	assert.Len(t, c.All(), 1)
+}
+
+func TestWithServiceMonitors(t *testing.T) {
+	c := New().WithServiceMonitors([]*monitoringv1.ServiceMonitor{{}})
+	assert.Len(t, c.ServiceMonitors(), 1)
 	assert.Len(t, c.All(), 1)
 }

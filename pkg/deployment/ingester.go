@@ -14,6 +14,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -156,6 +158,17 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+// Services returns a list of services to be deployed along with the ingester deployment
+func (i *Ingester) Services() []*corev1.Service {
+	services := []*corev1.Service{}
+	if i.jaeger.Spec.ServiceMonitor.Enabled != nil && *i.jaeger.Spec.ServiceMonitor.Enabled {
+		return append(services,
+			service.NewIngesterAdminService(i.jaeger, i.labels()),
+		)
+	}
+	return services
 }
 
 func (i *Ingester) labels() map[string]string {

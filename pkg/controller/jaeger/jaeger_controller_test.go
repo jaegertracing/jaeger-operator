@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
@@ -226,6 +227,9 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 
 	// Kafka
 	s.AddKnownTypes(v1beta1.SchemeGroupVersion, &v1beta1.Kafka{}, &v1beta1.KafkaList{}, &v1beta1.KafkaUser{}, &v1beta1.KafkaUserList{})
+
+	// Prometheus Operator
+	s.AddKnownTypes(monitoringv1.SchemeGroupVersion, &monitoringv1.ServiceMonitor{}, &monitoringv1.ServiceMonitorList{})
 
 	cl := fake.NewFakeClient(objs...)
 	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl}, cl

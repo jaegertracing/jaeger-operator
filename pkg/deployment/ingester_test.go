@@ -63,6 +63,20 @@ func TestIngesterName(t *testing.T) {
 	assert.Equal(t, "TestIngesterName-ingester", dep.ObjectMeta.Name)
 }
 
+func TestIngesterServices(t *testing.T) {
+	ingester := NewIngester(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	svcs := ingester.Services()
+	assert.Len(t, svcs, 0)
+}
+
+func TestIngesterServicesWithServiceMonitor(t *testing.T) {
+	ingester := NewIngester(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	trueVal := true
+	ingester.jaeger.Spec.ServiceMonitor.Enabled = &trueVal
+	svcs := ingester.Services()
+	assert.Len(t, svcs, 1)
+}
+
 func TestDefaultIngesterImage(t *testing.T) {
 	viper.Set("jaeger-ingester-image", "org/custom-ingester-image")
 	defer viper.Reset()

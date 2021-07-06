@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/coreos/prometheus-operator v0.41.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-openapi/spec v0.19.8
 	github.com/googleapis/gnostic v0.4.1
@@ -12,18 +13,19 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/common v0.10.0
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
-	github.com/uber/jaeger-client-go v2.20.1+incompatible
+	github.com/uber/jaeger-client-go v2.23.1+incompatible
 	go.opentelemetry.io/otel v0.20.0
 	go.opentelemetry.io/otel/exporters/trace/jaeger v0.20.0
 	go.opentelemetry.io/otel/sdk v0.20.0
 	go.opentelemetry.io/otel/trace v0.20.0
 	google.golang.org/grpc v1.32.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.7
 	k8s.io/apimachinery v0.20.7
 	k8s.io/client-go v12.0.0+incompatible

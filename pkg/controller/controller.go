@@ -5,6 +5,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	osimagev1 "github.com/openshift/api/image/v1"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
@@ -19,6 +20,10 @@ func AddToManager(m manager.Manager) error {
 	}
 
 	if err := consolev1.Install(m.GetScheme()); err != nil {
+		return err
+	}
+
+	if err := monitoringv1.AddToScheme(m.GetScheme()); err != nil {
 		return err
 	}
 
