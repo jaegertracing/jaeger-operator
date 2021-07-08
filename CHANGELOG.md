@@ -6,8 +6,7 @@ Changes by Version
 * Include OIDC plugin in binary ([#1501](https://github.com/jaegertracing/jaeger-operator/pull/1501), [@esnible](https://github.com/esnible))
 * Update jaeger operator to support strimzi operator 0.23.0 ([#1495](https://github.com/jaegertracing/jaeger-operator/pull/1495), [@rubenvp8510](https://github.com/rubenvp8510))
 * Feature/add deployment strategy to crd ([#1499](https://github.com/jaegertracing/jaeger-operator/pull/1499), [@ethernoy](https://github.com/ethernoy))
-* add cassandraCreateSchema affinity ([#1475](https://github.com/jaegertracing/jaeger-operator/pull/1475), [@chasekiefer](https://github.com/chasekiefer))
-* kafka 2.5.0 is not supported by RH AMQ operator 1.7.x ([#1476](https://github.com/jaegertracing/jaeger-operator/pull/1476), [@jkandasa](https://github.com/jkandasa))
+* Add cassandraCreateSchema affinity ([#1475](https://github.com/jaegertracing/jaeger-operator/pull/1475), [@chasekiefer](https://github.com/chasekiefer))
 * Allow to pass ES_TIME_RANGE var to Spark dependencies job ([#1481](https://github.com/jaegertracing/jaeger-operator/pull/1481), [@Gr1N](https://github.com/Gr1N))
 * Pass secretName to cassandra dependencies job (#1162) ([#1447](https://github.com/jaegertracing/jaeger-operator/pull/1447), [@Gerrit-K](https://github.com/Gerrit-K))
 
