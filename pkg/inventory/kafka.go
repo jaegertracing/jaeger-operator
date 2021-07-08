@@ -5,20 +5,20 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Kafka represents the inventory of kafkas based on the current and desired states
 type Kafka struct {
-	Create []v1beta1.Kafka
-	Update []v1beta1.Kafka
-	Delete []v1beta1.Kafka
+	Create []v1beta2.Kafka
+	Update []v1beta2.Kafka
+	Delete []v1beta2.Kafka
 }
 
 // ForKafkas builds an inventory of kafkas based on the existing and desired states
-func ForKafkas(existing []v1beta1.Kafka, desired []v1beta1.Kafka) Kafka {
-	update := []v1beta1.Kafka{}
+func ForKafkas(existing []v1beta2.Kafka, desired []v1beta2.Kafka) Kafka {
+	update := []v1beta2.Kafka{}
 	mcreate := kafkaMap(desired)
 	mdelete := kafkaMap(existing)
 
@@ -66,16 +66,16 @@ func ForKafkas(existing []v1beta1.Kafka, desired []v1beta1.Kafka) Kafka {
 	}
 }
 
-func kafkaMap(deps []v1beta1.Kafka) map[string]v1beta1.Kafka {
-	m := map[string]v1beta1.Kafka{}
+func kafkaMap(deps []v1beta2.Kafka) map[string]v1beta2.Kafka {
+	m := map[string]v1beta2.Kafka{}
 	for _, d := range deps {
 		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }
 
-func kafkaList(m map[string]v1beta1.Kafka) []v1beta1.Kafka {
-	l := []v1beta1.Kafka{}
+func kafkaList(m map[string]v1beta2.Kafka) []v1beta2.Kafka {
+	l := []v1beta2.Kafka{}
 	for _, v := range m {
 		l = append(l, v)
 	}

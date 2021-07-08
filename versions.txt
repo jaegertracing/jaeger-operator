@@ -1,6 +1,6 @@
 # The Jaeger version to use by default. This is updated manually. Make sure to update the changelog
 # and add an upgrade procedure (pkg/upgrade) for the new version.
-jaeger=1.23.0
+jaeger=1.24.0
 
 # DO NOT EDIT the next value, it is updated automatically during the release.
 # Represents the current (latest) release of the Jaeger Operator.

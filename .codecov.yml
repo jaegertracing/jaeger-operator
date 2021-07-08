@@ -4,5 +4,5 @@ ignore:
   - "pkg/apis/io/v1alpha1/zz_generated.defaults.go"
   - "pkg/apis/jaegertracing/v1/zz_generated.defaults.go"
   - "pkg/apis/jaegertracing/v1/zz_generated.openapi.go"
-  - "pkg/apis/kafka/v1beta1/zz_generated.deepcopy.go"
-  - "pkg/apis/kafka/v1beta1/zz_generated.openapi.go"
+  - "pkg/apis/kafka/v1beta2/zz_generated.deepcopy.go"
+  - "pkg/apis/kafka/v1beta2/zz_generated.openapi.go"

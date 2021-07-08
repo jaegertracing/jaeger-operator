@@ -52,6 +52,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: ""},
 			}},
 		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
@@ -62,8 +63,20 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: ""},
 				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "true"},
+			}},
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
+			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+				"es.username": "jdoe", "es.password": "none"}),
+			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchTimeRange: "30m"}},
+			expected: []corev1.EnvVar{
+				{Name: "ES_NODES", Value: "lol:hol"},
+				{Name: "ES_INDEX_PREFIX", Value: "haha"},
+				{Name: "ES_USERNAME", Value: "jdoe"},
+				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: "30m"},
 			}},
 	}
 	for _, test := range tests {

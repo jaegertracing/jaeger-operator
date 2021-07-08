@@ -7,13 +7,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Persistent returns the custom resource for a persistent Kafka
 // Reference: https://github.com/strimzi/strimzi-kafka-operator/blob/master/examples/kafka/kafka-persistent.yaml
-func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
+func Persistent(jaeger *v1.Jaeger) v1beta2.Kafka {
 	var replicas, replFactor, minIst, storage uint
 	if viper.GetBool("kafka-provisioning-minimal") {
 		jaeger.Logger().Warn("usage of kafka-provisioning-minimal is not supported")
@@ -29,7 +29,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 	}
 
 	trueVar := true
-	return v1beta1.Kafka{
+	return v1beta2.Kafka{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Name,
 			Namespace: jaeger.Namespace,
@@ -44,13 +44,23 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 				},
 			},
 		},
-		Spec: v1beta1.KafkaSpec{
+		Spec: v1beta2.KafkaSpec{
 			v1.NewFreeForm(map[string]interface{}{
 				"kafka": map[string]interface{}{
 					"replicas": uint(replicas),
-					"listeners": map[string]interface{}{
-						"plain": map[string]interface{}{},
-						"tls":   map[string]interface{}{},
+					"listeners": []map[string]interface{}{
+						{
+							"name": "plain",
+							"port": 9092,
+							"type": "internal",
+							"tls":  false,
+						},
+						{
+							"name": "tls",
+							"port": 9093,
+							"type": "internal",
+							"tls":  true,
+						},
 					},
 					"config": map[string]interface{}{
 						"offsets.topic.replication.factor":         replFactor,
@@ -87,7 +97,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta1.Kafka {
 
 // User returns a custom resource for a Kafka user. The Kafka Operator will then create a secret with the
 // credentials for this user
-func User(jaeger *v1.Jaeger) v1beta1.KafkaUser {
+func User(jaeger *v1.Jaeger) v1beta2.KafkaUser {
 	trueVar := true
 
 	labels := util.Labels(jaeger.Name, "kafkauser", *jaeger)
@@ -96,7 +106,7 @@ func User(jaeger *v1.Jaeger) v1beta1.KafkaUser {
 	// this user to access the target cluster
 	labels["strimzi.io/cluster"] = jaeger.Name
 
-	return v1beta1.KafkaUser{
+	return v1beta2.KafkaUser{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jaeger.Name,
 			Namespace: jaeger.Namespace,
@@ -111,7 +121,7 @@ func User(jaeger *v1.Jaeger) v1beta1.KafkaUser {
 				},
 			},
 		},
-		Spec: v1beta1.KafkaUserSpec{
+		Spec: v1beta2.KafkaUserSpec{
 			v1.NewFreeForm(map[string]interface{}{
 				"authentication": map[string]interface{}{
 					"type": "tls",

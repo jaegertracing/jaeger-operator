@@ -15,7 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -34,8 +34,8 @@ type S struct {
 	elasticsearches          []esv1.Elasticsearch
 	horizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
 	ingresses                []networkingv1.Ingress
-	kafkas                   []kafkav1beta1.Kafka
-	kafkaUsers               []kafkav1beta1.KafkaUser
+	kafkas                   []kafkav1beta2.Kafka
+	kafkaUsers               []kafkav1beta2.KafkaUser
 	routes                   []osv1.Route
 	services                 []corev1.Service
 	secrets                  []corev1.Secret
@@ -124,13 +124,13 @@ func (s S) WithRoutes(r []osv1.Route) S {
 }
 
 // WithKafkas returns the strategy with the given list of Kafkas
-func (s S) WithKafkas(k []kafkav1beta1.Kafka) S {
+func (s S) WithKafkas(k []kafkav1beta2.Kafka) S {
 	s.kafkas = k
 	return s
 }
 
 // WithKafkaUsers returns the strategy with the given list of Kafka Users
-func (s S) WithKafkaUsers(k []kafkav1beta1.KafkaUser) S {
+func (s S) WithKafkaUsers(k []kafkav1beta2.KafkaUser) S {
 	s.kafkaUsers = k
 	return s
 }
@@ -198,12 +198,12 @@ func (s S) HorizontalPodAutoscalers() []autoscalingv2beta2.HorizontalPodAutoscal
 }
 
 // Kafkas returns the list of Kafkas for this strategy.
-func (s S) Kafkas() []kafkav1beta1.Kafka {
+func (s S) Kafkas() []kafkav1beta2.Kafka {
 	return s.kafkas
 }
 
 // KafkaUsers returns the list of KafkaUsers for this strategy.
-func (s S) KafkaUsers() []kafkav1beta1.KafkaUser {
+func (s S) KafkaUsers() []kafkav1beta2.KafkaUser {
 	return s.kafkaUsers
 }
 

@@ -89,6 +89,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 		priorityClassName = c.jaeger.Spec.Collector.PriorityClassName
 	}
 
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if c.jaeger.Spec.Collector.Strategy != nil {
+		strategy = *c.jaeger.Spec.Collector.Strategy
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -112,6 +120,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
