@@ -152,5 +152,7 @@ func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObser
 			}
 		}
 		i.report(result)
+	} else {
+		println(err.Error())
 	}
 }
