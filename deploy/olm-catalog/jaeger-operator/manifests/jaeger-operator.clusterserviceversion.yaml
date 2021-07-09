@@ -21,7 +21,7 @@ metadata:
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.23.0
+  name: jaeger-operator.v1.24.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -269,6 +269,293 @@ spec:
           - update
           - watch
         serviceAccountName: jaeger-operator
+      - rules:
+        - apiGroups:
+          - kafka.strimzi.io
+          resources:
+          - kafkatopics
+          - kafkatopics/status
+          - kafkausers
+          - kafkausers/status
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - patch
+          - update
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        serviceAccountName: strimzi-entity-operator
+      - rules:
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - storage.k8s.io
+          resources:
+          - storageclasses
+          verbs:
+          - get
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - list
+        serviceAccountName: strimzi-cluster-operator-global
+      - rules:
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - rolebindings
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - roles
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - serviceaccounts
+          - configmaps
+          - services
+          - endpoints
+          - secrets
+          - persistentvolumeclaims
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - kafka.strimzi.io
+          resources:
+          - kafkas
+          - kafkas/status
+          - kafkaconnects
+          - kafkaconnects/status
+          - kafkaconnects2is
+          - kafkaconnects2is/status
+          - kafkaconnectors
+          - kafkaconnectors/status
+          - kafkamirrormakers
+          - kafkamirrormakers/status
+          - kafkabridges
+          - kafkabridges/status
+          - kafkamirrormaker2s
+          - kafkamirrormaker2s/status
+          - kafkarebalances
+          - kafkarebalances/status
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - extensions
+          resources:
+          - deployments
+          - deployments/scale
+          - replicasets
+          - replicationcontrollers
+          - networkpolicies
+          - ingresses
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - deployments/scale
+          - deployments/status
+          - statefulsets
+          - replicasets
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+        - apiGroups:
+          - apps.openshift.io
+          resources:
+          - deploymentconfigs
+          - deploymentconfigs/scale
+          - deploymentconfigs/status
+          - deploymentconfigs/finalizers
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - build.openshift.io
+          resources:
+          - buildconfigs
+          - buildconfigs/instantiate
+          - builds
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - image.openshift.io
+          resources:
+          - imagestreams
+          - imagestreams/status
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - networkpolicies
+          - ingresses
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        - apiGroups:
+          - policy
+          resources:
+          - poddisruptionbudgets
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - delete
+          - patch
+          - update
+        serviceAccountName: strimzi-cluster-operator-namespaced
+      - rules:
+        - apiGroups:
+          - kafka.strimzi.io
+          resources:
+          - kafkatopics
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - patch
+          - update
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+        serviceAccountName: strimzi-topic-operator
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - get
+        serviceAccountName: strimzi-kafka-client
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - get
+        serviceAccountName: strimzi-kafka-broker
       deployments:
       - name: jaeger-operator
         spec:
@@ -300,7 +587,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.23.0
+                image: jaegertracing/jaeger-operator:1.24.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -308,6 +595,171 @@ spec:
                   name: http-metrics
                 - containerPort: 8686
                   name: cr-metrics
+                resources: {}
+              serviceAccountName: jaeger-operator
+      - name: strimzi-cluster-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: strimzi-cluster-operator
+              strimzi.io/kind: cluster-operator
+          strategy:
+            type: Recreate
+          template:
+            metadata:
+              labels:
+                name: strimzi-cluster-operator
+                strimzi.io/kind: cluster-operator
+            spec:
+              containers:
+              - args:
+                - /opt/strimzi/bin/cluster_operator_run.sh
+                env:
+                - name: STRIMZI_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: STRIMZI_FULL_RECONCILIATION_INTERVAL_MS
+                  value: "120000"
+                - name: STRIMZI_OPERATION_TIMEOUT_MS
+                  value: "300000"
+                - name: STRIMZI_DEFAULT_TLS_SIDECAR_ENTITY_OPERATOR_IMAGE
+                  value: quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_DEFAULT_KAFKA_EXPORTER_IMAGE
+                  value: quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_DEFAULT_CRUISE_CONTROL_IMAGE
+                  value: quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_DEFAULT_TLS_SIDECAR_CRUISE_CONTROL_IMAGE
+                  value: quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_KAFKA_IMAGES
+                  value: |
+                    2.6.0=quay.io/strimzi/kafka:0.23.0-kafka-2.6.0
+                    2.6.1=quay.io/strimzi/kafka:0.23.0-kafka-2.6.1
+                    2.6.2=quay.io/strimzi/kafka:0.23.0-kafka-2.6.2
+                    2.7.0=quay.io/strimzi/kafka:0.23.0-kafka-2.7.0
+                    2.8.0=quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_KAFKA_CONNECT_IMAGES
+                  value: |
+                    2.6.0=quay.io/strimzi/kafka:0.23.0-kafka-2.6.0
+                    2.6.1=quay.io/strimzi/kafka:0.23.0-kafka-2.6.1
+                    2.6.2=quay.io/strimzi/kafka:0.23.0-kafka-2.6.2
+                    2.7.0=quay.io/strimzi/kafka:0.23.0-kafka-2.7.0
+                    2.8.0=quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_KAFKA_CONNECT_S2I_IMAGES
+                  value: |
+                    2.6.0=quay.io/strimzi/kafka:0.23.0-kafka-2.6.0
+                    2.6.1=quay.io/strimzi/kafka:0.23.0-kafka-2.6.1
+                    2.6.2=quay.io/strimzi/kafka:0.23.0-kafka-2.6.2
+                    2.7.0=quay.io/strimzi/kafka:0.23.0-kafka-2.7.0
+                    2.8.0=quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_KAFKA_MIRROR_MAKER_IMAGES
+                  value: |
+                    2.6.0=quay.io/strimzi/kafka:0.23.0-kafka-2.6.0
+                    2.6.1=quay.io/strimzi/kafka:0.23.0-kafka-2.6.1
+                    2.6.2=quay.io/strimzi/kafka:0.23.0-kafka-2.6.2
+                    2.7.0=quay.io/strimzi/kafka:0.23.0-kafka-2.7.0
+                    2.8.0=quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_KAFKA_MIRROR_MAKER_2_IMAGES
+                  value: |
+                    2.6.0=quay.io/strimzi/kafka:0.23.0-kafka-2.6.0
+                    2.6.1=quay.io/strimzi/kafka:0.23.0-kafka-2.6.1
+                    2.6.2=quay.io/strimzi/kafka:0.23.0-kafka-2.6.2
+                    2.7.0=quay.io/strimzi/kafka:0.23.0-kafka-2.7.0
+                    2.8.0=quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
+                - name: STRIMZI_DEFAULT_TOPIC_OPERATOR_IMAGE
+                  value: quay.io/strimzi/operator:0.23.0
+                - name: STRIMZI_DEFAULT_USER_OPERATOR_IMAGE
+                  value: quay.io/strimzi/operator:0.23.0
+                - name: STRIMZI_DEFAULT_KAFKA_INIT_IMAGE
+                  value: quay.io/strimzi/operator:0.23.0
+                - name: STRIMZI_DEFAULT_KAFKA_BRIDGE_IMAGE
+                  value: quay.io/strimzi/kafka-bridge:0.19.0
+                - name: STRIMZI_DEFAULT_JMXTRANS_IMAGE
+                  value: quay.io/strimzi/jmxtrans:0.23.0
+                - name: STRIMZI_DEFAULT_KANIKO_EXECUTOR_IMAGE
+                  value: quay.io/strimzi/kaniko-executor:0.23.0
+                - name: STRIMZI_OPERATOR_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: STRIMZI_FEATURE_GATES
+                image: quay.io/strimzi/operator:0.23.0
+                livenessProbe:
+                  httpGet:
+                    path: /healthy
+                    port: http
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                name: strimzi-cluster-operator
+                ports:
+                - containerPort: 8080
+                  name: http
+                readinessProbe:
+                  httpGet:
+                    path: /ready
+                    port: http
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                resources:
+                  limits:
+                    cpu: "1"
+                    memory: 384Mi
+                  requests:
+                    cpu: 200m
+                    memory: 384Mi
+                volumeMounts:
+                - mountPath: /tmp
+                  name: strimzi-tmp
+                - mountPath: /opt/strimzi/custom-config/
+                  name: co-config-volume
+              serviceAccountName: strimzi-cluster-operator
+              volumes:
+              - emptyDir:
+                  medium: Memory
+                name: strimzi-tmp
+              - configMap:
+                  name: strimzi-cluster-operator
+                name: co-config-volume
+      - name: jaeger-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: jaeger-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: jaeger-operator
+            spec:
+              containers:
+              - args:
+                - start
+                - --log-level=debug
+                - --tracing-enabled=false
+                - --kafka-provisioning-minimal=true
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: OPERATOR_NAME
+                  value: jaeger-operator
+                image: rubensvp/jaeger-operator:latest
+                imagePullPolicy: Always
+                name: jaeger-operator
+                ports:
+                - containerPort: 60000
+                  name: metrics
                 resources: {}
               serviceAccountName: jaeger-operator
       permissions:
@@ -501,8 +953,8 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.22.1
+  replaces: jaeger-operator.v1.23.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.23.0
+  version: 1.24.0
