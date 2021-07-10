@@ -51,6 +51,10 @@ type instancesMetric struct {
 	observations []instancesView
 }
 
+func instanceMetricName(name string) string {
+	return fmt.Sprintf("%s_%s", metricPrefix, name)
+}
+
 func newInstancesMetric(client client.Client) *instancesMetric {
 	return &instancesMetric{
 		client: client,
@@ -64,7 +68,7 @@ func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn 
 		KeyFn: keyFn,
 		Label: label,
 	}
-	obs, err := batch.NewInt64ValueObserver(fmt.Sprintf("%s_%s", metricPrefix, name), metric.WithDescription(desc))
+	obs, err := batch.NewInt64ValueObserver(instanceMetricName(name), metric.WithDescription(desc))
 	if err != nil {
 		return instancesView{}, err
 	}
@@ -152,7 +156,5 @@ func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObser
 			}
 		}
 		i.report(result)
-	} else {
-		println(err.Error())
 	}
 }
