@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"context"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -165,6 +166,27 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		msg := "no suitable Jaeger instances found to inject a sidecar"
 		span.AddEvent(msg)
 		logger.Debug(msg)
+		hasAgent, _ := inject.HasJaegerAgent(dep)
+		annotationValue, hasDepAnnotation := dep.Annotations[inject.Annotation]
+		// If deployment has the annotation with false value and has an hasAgent, we need to clean it.
+		if hasAgent && hasDepAnnotation && strings.EqualFold(annotationValue, "false") {
+			jaegerInstance, hasLabel := dep.Labels[inject.Label]
+			if hasLabel {
+				log.WithFields(log.Fields{
+					"deployment": dep.Name,
+					"namespace":  dep.Namespace,
+					"jaeger":     jaegerInstance,
+				}).Info("Removing Jaeger Agent sidecar")
+				patch := client.MergeFrom(dep.DeepCopy())
+				inject.CleanSidecar(jaegerInstance, dep)
+				if err := r.client.Patch(ctx, dep, patch); err != nil {
+					log.WithFields(log.Fields{
+						"deploymentName":      dep.Name,
+						"deploymentNamespace": dep.Namespace,
+					}).WithError(err).Error("error cleaning orphaned deployment")
+				}
+			}
+		}
 	}
 
 	return reconcile.Result{}, nil
