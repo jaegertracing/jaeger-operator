@@ -3,6 +3,8 @@ package metrics
 import (
 	"context"
 
+	"github.com/spf13/viper"
+
 	prometheusclient "github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -25,33 +27,36 @@ const meterName = "jaegertracing.io/jaeger"
 
 // Bootstrap configures the OpenTelemetry meter provides with the prometheus exporter
 func Bootstrap(ctx context.Context, namespace string, client client.Client) error {
-	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "bootstrap")
-	defer span.End()
-	tracing.SetInstanceID(ctx, namespace)
+	if viper.GetBool("operand-metrics-enabled") {
+		tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
+		ctx, span := tracer.Start(ctx, "bootstrap")
+		defer span.End()
+		tracing.SetInstanceID(ctx, namespace)
 
-	config := prometheus.Config{
-		Registry: metrics.Registry.(*prometheusclient.Registry),
-	}
-	c := controller.New(
-		processor.New(
-			selector.NewWithHistogramDistribution(
-				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
+		config := prometheus.Config{
+			Registry: metrics.Registry.(*prometheusclient.Registry),
+		}
+		c := controller.New(
+			processor.New(
+				selector.NewWithHistogramDistribution(
+					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
+				),
+				export.CumulativeExportKindSelector(),
+				processor.WithMemory(true),
 			),
-			export.CumulativeExportKindSelector(),
-			processor.WithMemory(true),
-		),
-		controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
-	)
-	exporter, err := prometheus.NewExporter(config, c)
-	if err != nil {
+			controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
+		)
+		exporter, err := prometheus.NewExporter(config, c)
+		if err != nil {
+			return tracing.HandleError(err, span)
+		}
+
+		global.SetMeterProvider(exporter.MeterProvider())
+
+		// Create metrics
+		instancesObservedValue := newInstancesMetric(client)
+		err = instancesObservedValue.Setup(ctx)
 		return tracing.HandleError(err, span)
 	}
-
-	global.SetMeterProvider(exporter.MeterProvider())
-
-	// Create metrics
-	instancesObservedValue := newInstancesMetric(client)
-	err = instancesObservedValue.Setup(ctx)
-	return tracing.HandleError(err, span)
+	return nil
 }
