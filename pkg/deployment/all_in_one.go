@@ -93,6 +93,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		})
 	}
 
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if a.jaeger.Spec.AllInOne.Strategy != nil {
+		strategy = *a.jaeger.Spec.AllInOne.Strategy
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -115,6 +123,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: commonSpec.Labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,

@@ -38,7 +38,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -637,7 +637,7 @@ func logWarningEvents() {
 }
 
 func waitForKafkaInstance() {
-	kafkaInstance := &v1beta1.Kafka{}
+	kafkaInstance := &v1beta2.Kafka{}
 
 	err := WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-zookeeper", retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err)

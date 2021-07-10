@@ -1,6 +1,7 @@
 package v1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -265,6 +266,9 @@ type JaegerQuerySpec struct {
 
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -366,6 +370,9 @@ type JaegerAllInOneSpec struct {
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs
@@ -417,6 +424,9 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -442,6 +452,9 @@ type JaegerIngesterSpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -574,6 +587,9 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Timeout string `json:"timeout,omitempty"`
 
 	// +optional
+	Affinity *v1.Affinity `json:"affinity,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 }
 
@@ -606,6 +622,9 @@ type JaegerDependenciesSpec struct {
 
 	// +optional
 	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
+
+	// +optional
+	ElasticsearchTimeRange string `json:"elasticsearchTimeRange,omitempty"`
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
