@@ -57,7 +57,6 @@ func NewStartCommand() *cobra.Command {
 	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
 	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
-	cmd.Flags().Bool("operand-metrics-enabled", false, "Whether the Operator should report metrics about the operands.")
 
 	return cmd
 }
