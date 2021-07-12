@@ -3,9 +3,8 @@ package metrics
 import (
 	"context"
 
-	"github.com/spf13/viper"
-
 	prometheusclient "github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
@@ -19,44 +18,44 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 const meterName = "jaegertracing.io/jaeger"
 
-// Bootstrap configures the OpenTelemetry meter provides with the prometheus exporter
+// Bootstrap configures the OpenTelemetry meter provider with the Prometheus exporter.
 func Bootstrap(ctx context.Context, namespace string, client client.Client) error {
-	if viper.GetBool("operand-metrics-enabled") {
-		tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-		ctx, span := tracer.Start(ctx, "bootstrap")
-		defer span.End()
-		tracing.SetInstanceID(ctx, namespace)
+	if !viper.GetBool("operand-metrics-enabled") {
+		return nil
+	}
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "bootstrap")
+	defer span.End()
+	tracing.SetInstanceID(ctx, namespace)
 
-		config := prometheus.Config{
-			Registry: metrics.Registry.(*prometheusclient.Registry),
-		}
-		c := controller.New(
-			processor.New(
-				selector.NewWithHistogramDistribution(
-					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
-				),
-				export.CumulativeExportKindSelector(),
-				processor.WithMemory(true),
+	config := prometheus.Config{
+		Registry: metrics.Registry.(*prometheusclient.Registry),
+	}
+	c := controller.New(
+		processor.New(
+			selector.NewWithHistogramDistribution(
+				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 			),
-			controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
-		)
-		exporter, err := prometheus.NewExporter(config, c)
-		if err != nil {
-			return tracing.HandleError(err, span)
-		}
-
-		global.SetMeterProvider(exporter.MeterProvider())
-
-		// Create metrics
-		instancesObservedValue := newInstancesMetric(client)
-		err = instancesObservedValue.Setup(ctx)
+			export.CumulativeExportKindSelector(),
+			processor.WithMemory(true),
+		),
+		controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
+	)
+	exporter, err := prometheus.NewExporter(config, c)
+	if err != nil {
 		return tracing.HandleError(err, span)
 	}
-	return nil
+
+	global.SetMeterProvider(exporter.MeterProvider())
+
+	// Create metrics
+	instancesObservedValue := newInstancesMetric(client)
+	err = instancesObservedValue.Setup(ctx)
+	return tracing.HandleError(err, span)
 }
