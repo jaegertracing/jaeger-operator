@@ -362,7 +362,9 @@ func createMetricsService(ctx context.Context, cfg *rest.Config, namespace strin
 		log.WithError(err).Warn("could not create metrics Service")
 	}
 
-	createServiceMonitor(ctx, cfg, namespace, service)
+	if viper.GetBool("service-monitor-enabled") {
+		createServiceMonitor(ctx, cfg, namespace, service)
+	}
 }
 
 func createServiceMonitor(ctx context.Context, cfg *rest.Config, namespace string, service *corev1.Service) {
