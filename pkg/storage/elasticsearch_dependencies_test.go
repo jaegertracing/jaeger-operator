@@ -79,13 +79,15 @@ func TestEnvVars(t *testing.T) {
 		},
 		{
 			opts: v1.NewOptions(map[string]interface{}{
-				"es.index-prefix": "foo",
-				"es.num-shards":   "5",
-				"es.num-replicas": "3",
-				"es.password":     "nopass",
-				"es.username":     "fredy"}),
+				"es.index-prefix":         "foo",
+				"es.index-date-separator": ".",
+				"es.num-shards":           "5",
+				"es.num-replicas":         "3",
+				"es.password":             "nopass",
+				"es.username":             "fredy"}),
 			expected: []corev1.EnvVar{
 				{Name: "INDEX_PREFIX", Value: "foo"},
+				{Name: "INDEX_DATE_SEPARATOR", Value: "."},
 				{Name: "ES_USERNAME", Value: "fredy"},
 				{Name: "ES_PASSWORD", Value: "nopass"},
 				{Name: "SHARDS", Value: "5"},
