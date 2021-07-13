@@ -52,18 +52,26 @@ func GetJaegerIndices(namespace string) ([]esIndexData, []esIndexData) {
 		}
 		esData.Date = indexDate
 
-		esData.Prefix = jaegerRe.ReplaceAllString(indexName, "")
-
 		// reference
 		// https://github.com/jaegertracing/jaeger/blob/6c2be456ca41cdb98ac4b81cb8d9a9a9044463cd/plugin/storage/es/spanstore/reader.go#L40
 		if strings.Contains(indexName, "jaeger-span-") {
 			esData.Type = "span"
+			prefix := strings.Replace(indexName, "jaeger-span-", "", 1)
+			if len(prefix) > 0 {
+				esData.Prefix = prefix[:len(prefix)-1] // removes "-" at end
+			}
 			spansIndices = append(spansIndices, esData)
-		} else {
+		} else if strings.Contains(indexName, "jaeger-service-") {
+
 			esData.Type = "service"
+			prefix := strings.Replace(indexName, "jaeger-service-", "", 1)
+			if len(prefix) > 0 {
+				esData.Prefix = prefix[:len(prefix)-1] // removes "-" at end
+			}
 			servicesIndices = append(servicesIndices, esData)
 		}
 	}
+
 	return servicesIndices, spansIndices
 }
 
