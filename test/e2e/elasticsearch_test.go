@@ -1,4 +1,4 @@
-// +build elasticsearch
+// +build elasticsearch2
 
 package e2e
 
