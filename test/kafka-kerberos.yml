@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: kafka
+      labels:
+        app: jaeger
+        name: jaeger-kafka-service
+        jaeger-infra: kafka-service
+    spec:
+      ports:
+        - port: 8888
+          protocol: UDP
+          name: kdc-udp
+        - port: 8888
+          protocol: TCP
+          name: kdc-tcp
+        - port: 8464
+          protocol: TCP
+          name: kdc-pass-tcp
+        - port: 8464
+          protocol: UDP
+          name: kdc-pass-udp
+        - port: 8749
+          protocol: UDP
+          name: kdc-admin-udp
+        - port: 8749
+          protocol: TCP
+          name: kdc-admin-tcp
+        - port: 9092
+          name: kafka
+      clusterIP: None
+      selector:
+        app: jaeger-kafka
+  - apiVersion: "apps/v1"
+    kind: Deployment
+    metadata:
+      name: kafka
+      labels:
+        app: jaeger-kafka
+        jaeger-infra: kafka-deployment
+    spec:
+      selector:
+        matchLabels:
+          app: jaeger-kafka
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: jaeger-kafka
+            jaeger-infra: kafka-node
+        spec:
+          terminationGracePeriodSeconds: 2800
+          containers:
+            - name: kafka
+              image: rubensvp/kafka-kerberos:latest
+              imagePullPolicy: Always
+              env:
+                - name: KADMIN_PASSWORD
+                  value: qwerty
+                - name: OPENSHIFT_AUTODISCOVER
+                  value: "true"
+              ports:
+                - containerPort: 8888
+                  name: kdc
+                - containerPort: 8464
+                  name: krb5-password
+                - containerPort: 8749
+                  name: krb5-admin
+                - containerPort: 9092
+                  name: kafka
