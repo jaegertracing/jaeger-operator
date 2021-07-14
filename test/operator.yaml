@@ -20,7 +20,7 @@ spec:
           - containerPort: 60000
             name: metrics
           args: ["start", "--log-level=debug", "--tracing-enabled=false", "--kafka-provisioning-minimal=true"]
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

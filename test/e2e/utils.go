@@ -814,3 +814,37 @@ func getBusinessAppCR() *os.File {
 	require.NoError(t, err)
 	return file
 }
+
+// Generate spans history in the deployed Jaeger instance
+//	- namespace: namespace where the Jaeger instance is deployed
+//	- jaegerInstanceName: name of the deployed Jaeger instance
+// 	- startSpan: name of the start span to generate
+//	- dateLayout: layout for the spans dates
+// 	- days: days history longitude
+func GenerateSpansHistory(namespace, jaegerInstanceName, startSpan, dateLayout string, days int) {
+	logrus.Info("Enabling collector port forward")
+	fwdPortColl, closeChanColl := CreatePortForward(namespace, jaegerInstanceName+"-collector", "collector", []string{fmt.Sprintf(":%d", jaegerCollectorPort)}, fw.KubeConfig)
+	defer fwdPortColl.Close()
+	defer close(closeChanColl)
+	// get localhost collector port
+	colPorts, err := fwdPortColl.GetPorts()
+	require.NoError(t, err)
+	localPortColl := colPorts[0].Local
+	logrus.Infof("Generating spans and services for the last %d days", days)
+	currentDate := time.Now()
+	for day := 0; day < days; day++ {
+		spanDate := currentDate.AddDate(0, 0, -1*day)
+		stringDate := spanDate.Format(dateLayout)
+		// get tracing client
+		serviceName := fmt.Sprintf("%s_%s", jaegerInstanceName, stringDate)
+		tracer, closer, err := getTracingClientWithCollectorEndpoint(serviceName, fmt.Sprintf("http://localhost:%d/api/traces", localPortColl))
+		require.NoError(t, err)
+		// generate span
+		tracer.StartSpan(startSpan, opentracing.StartTime(spanDate)).
+			SetTag("jaeger-instance", jaegerInstanceName).
+			SetTag("test-case", t.Name()).
+			SetTag("string-date", stringDate).
+			FinishWithOptions(opentracing.FinishOptions{FinishTime: spanDate.Add(time.Second)})
+		closer.Close()
+	}
+}

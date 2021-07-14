@@ -5,13 +5,10 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -28,16 +25,8 @@ type ElasticSearchIndexTestSuite struct {
 	esNamespace               string // default storage namespace location
 }
 
-const ElasticSearchIndexDateLayout = "2006-01-02" // date layout in elasticsearch indices, example:
-
 // esIndexData struct is used to keep index data in simple format
 // will be useful for the validations
-type esIndexData struct {
-	IndexName string    // original index name
-	Type      string    // index type. span or service?
-	Prefix    string    // prefix of the index
-	Date      time.Time // index day/date
-}
 
 func TestElasticSearchIndexSuite(t *testing.T) {
 	indexSuite := new(ElasticSearchIndexTestSuite)
@@ -137,89 +126,10 @@ func (suite *ElasticSearchIndexTestSuite) runIndexCleaner(esIndexPrefix string, 
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	suite.generateSpansHistoy(namespace, jaegerInstanceName)
+	GenerateSpansHistory(namespace, jaegerInstanceName, "span-index-cleaner", ElasticSearchIndexDateLayout, suite.esIndexCleanerHistoryDays)
 
 	suite.triggerIndexCleanerAndVerifyIndices(jaegerInstance, esIndexPrefix, daysRange)
 
-}
-
-func (suite *ElasticSearchIndexTestSuite) generateSpansHistoy(namespace, jaegerInstanceName string) {
-	logrus.Info("Enabling collector port forward")
-	fwdPortColl, closeChanColl := CreatePortForward(namespace, jaegerInstanceName+"-collector", "collector", []string{fmt.Sprintf(":%d", jaegerCollectorPort)}, fw.KubeConfig)
-	defer fwdPortColl.Close()
-	defer close(closeChanColl)
-	// get localhost collector port
-	colPorts, err := fwdPortColl.GetPorts()
-	require.NoError(t, err)
-	localPortColl := colPorts[0].Local
-	logrus.Infof("Generating spans and services for the last %d days", suite.esIndexCleanerHistoryDays)
-	currentDate := time.Now()
-	for day := 0; day < suite.esIndexCleanerHistoryDays; day++ {
-		spanDate := currentDate.AddDate(0, 0, -1*day)
-		stringDate := spanDate.Format(ElasticSearchIndexDateLayout)
-		// get tracing client
-		serviceName := fmt.Sprintf("%s_%s", jaegerInstanceName, stringDate)
-		tracer, closer, err := getTracingClientWithCollectorEndpoint(serviceName, fmt.Sprintf("http://localhost:%d/api/traces", localPortColl))
-		require.NoError(t, err)
-		// generate span
-		tracer.StartSpan("span-index-cleaner", opentracing.StartTime(spanDate)).
-			SetTag("jaeger-instance", jaegerInstanceName).
-			SetTag("test-case", t.Name()).
-			SetTag("string-date", stringDate).
-			FinishWithOptions(opentracing.FinishOptions{FinishTime: spanDate.Add(time.Second)})
-		closer.Close()
-	}
-}
-
-// function to get indices
-// returns in order: serviceIndices, spansIndices
-func (suite *ElasticSearchIndexTestSuite) getIndices() ([]esIndexData, []esIndexData) {
-	// get indices from es node
-	esIndices, err := GetEsIndices(suite.esNamespace)
-	require.NoError(t, err)
-	logrus.Infof("Number of indices found on rest api response:%d", len(esIndices))
-
-	servicesIndices := make([]esIndexData, 0)
-	spansIndices := make([]esIndexData, 0)
-
-	// parse date, prefix, type from index
-	re := regexp.MustCompile(`\d{4}-\d{2}-\d{2}`)
-	for _, esIndex := range esIndices {
-		indexName := esIndex.Index
-		dateString := re.FindString(indexName)
-		if dateString == "" { // assume this index not belongs to jaeger
-			continue
-		}
-
-		indexName = strings.Replace(indexName, dateString, "", 1)
-
-		indexDate, err := time.Parse(ElasticSearchIndexDateLayout, dateString)
-		require.NoError(t, err)
-
-		esData := esIndexData{
-			IndexName: esIndex.Index,
-			Date:      indexDate,
-		}
-
-		// reference
-		// https://github.com/jaegertracing/jaeger/blob/6c2be456ca41cdb98ac4b81cb8d9a9a9044463cd/plugin/storage/es/spanstore/reader.go#L40
-		if strings.Contains(indexName, "jaeger-span-") {
-			esData.Type = "span"
-			prefix := strings.Replace(indexName, "jaeger-span-", "", 1)
-			if len(prefix) > 0 {
-				esData.Prefix = prefix[:len(prefix)-1] // removes "-" at end
-			}
-			spansIndices = append(spansIndices, esData)
-		} else if strings.Contains(indexName, "jaeger-service-") {
-			esData.Type = "service"
-			prefix := strings.Replace(indexName, "jaeger-service-", "", 1)
-			if len(prefix) > 0 {
-				esData.Prefix = prefix[:len(prefix)-1] // removes "-" at end
-			}
-			servicesIndices = append(servicesIndices, esData)
-		}
-	}
-	return servicesIndices, spansIndices
 }
 
 // function to validate indices
@@ -248,7 +158,8 @@ func (suite *ElasticSearchIndexTestSuite) triggerIndexCleanerAndVerifyIndices(ja
 		suite.turnOnEsIndexCleaner(jaegerInstance, verifyDays)
 
 		// get services and spans indices
-		servicesIndices, spanIndices := suite.getIndices()
+		servicesIndices, spanIndices := GetJaegerIndices(suite.esNamespace)
+
 		// set valid index start date
 		indexDateReference := time.Now().AddDate(0, 0, -1*verifyDays)
 		// set hours, minutes, seconds, etc.. to 0
