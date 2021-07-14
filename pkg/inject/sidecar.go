@@ -80,10 +80,10 @@ func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		"namespace":  dep.Namespace,
 		"deployment": dep.Name,
 	})
-	_, depExist := dep.Annotations[Annotation]
+	annotationValue, depExist := dep.Annotations[Annotation]
 	_, nsExist := ns.Annotations[Annotation]
 
-	if depExist {
+	if depExist && !strings.EqualFold(annotationValue, "false") {
 		logger.Debug("annotation present on deployment")
 		return true
 	}
