@@ -32,6 +32,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller"
+	opmetrics "github.com/jaegertracing/jaeger-operator/pkg/metrics"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -88,7 +89,10 @@ func bootstrap(ctx context.Context) manager.Manager {
 	serveCRMetrics(ctx, cfg, namespace)
 	createMetricsService(ctx, cfg, namespace)
 	detectOAuthProxyImageStream(ctx, mgr)
-
+	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
+	if err != nil {
+		log.WithError(err).Error("failed to initialize metrics")
+	}
 	return mgr
 }
 
