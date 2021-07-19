@@ -3,20 +3,20 @@ package inventory
 import (
 	"fmt"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // KafkaUser represents the inventory of kafkas based on the current and desired states
 type KafkaUser struct {
-	Create []v1beta1.KafkaUser
-	Update []v1beta1.KafkaUser
-	Delete []v1beta1.KafkaUser
+	Create []v1beta2.KafkaUser
+	Update []v1beta2.KafkaUser
+	Delete []v1beta2.KafkaUser
 }
 
 // ForKafkaUsers builds an inventory of kafkas based on the existing and desired states
-func ForKafkaUsers(existing []v1beta1.KafkaUser, desired []v1beta1.KafkaUser) KafkaUser {
-	update := []v1beta1.KafkaUser{}
+func ForKafkaUsers(existing []v1beta2.KafkaUser, desired []v1beta2.KafkaUser) KafkaUser {
+	update := []v1beta2.KafkaUser{}
 	mcreate := kafkaUserMap(desired)
 	mdelete := kafkaUserMap(existing)
 
@@ -50,16 +50,16 @@ func ForKafkaUsers(existing []v1beta1.KafkaUser, desired []v1beta1.KafkaUser) Ka
 	}
 }
 
-func kafkaUserMap(deps []v1beta1.KafkaUser) map[string]v1beta1.KafkaUser {
-	m := map[string]v1beta1.KafkaUser{}
+func kafkaUserMap(deps []v1beta2.KafkaUser) map[string]v1beta2.KafkaUser {
+	m := map[string]v1beta2.KafkaUser{}
 	for _, d := range deps {
 		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }
 
-func kafkaUserList(m map[string]v1beta1.KafkaUser) []v1beta1.KafkaUser {
-	l := []v1beta1.KafkaUser{}
+func kafkaUserList(m map[string]v1beta2.KafkaUser) []v1beta2.KafkaUser {
+	l := []v1beta2.KafkaUser{}
 	for _, v := range m {
 		l = append(l, v)
 	}

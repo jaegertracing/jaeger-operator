@@ -21,7 +21,7 @@ metadata:
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.23.0
+  name: jaeger-operator.v1.24.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -300,7 +300,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.23.0
+                image: jaegertracing/jaeger-operator:1.24.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -501,8 +501,8 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.22.1
+  replaces: jaeger-operator.v1.23.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.23.0
+  version: 1.24.0

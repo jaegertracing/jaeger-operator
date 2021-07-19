@@ -5,6 +5,7 @@
 package v1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -174,6 +175,11 @@ func (in *JaegerAllInOneSpec) DeepCopyInto(out *JaegerAllInOneSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Strategy != nil {
+		in, out := &in.Strategy, &out.Strategy
+		*out = new(appsv1.DeploymentStrategy)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -230,6 +236,11 @@ func (in *JaegerCollectorSpec) DeepCopyInto(out *JaegerCollectorSpec) {
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	in.Config.DeepCopyInto(&out.Config)
+	if in.Strategy != nil {
+		in, out := &in.Strategy, &out.Strategy
+		*out = new(appsv1.DeploymentStrategy)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -438,6 +449,11 @@ func (in *JaegerIngesterSpec) DeepCopyInto(out *JaegerIngesterSpec) {
 	in.Options.DeepCopyInto(&out.Options)
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	in.Config.DeepCopyInto(&out.Config)
+	if in.Strategy != nil {
+		in, out := &in.Strategy, &out.Strategy
+		*out = new(appsv1.DeploymentStrategy)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -576,6 +592,11 @@ func (in *JaegerQuerySpec) DeepCopyInto(out *JaegerQuerySpec) {
 		in, out := &in.TracingEnabled, &out.TracingEnabled
 		*out = new(bool)
 		**out = **in
+	}
+	if in.Strategy != nil {
+		in, out := &in.Strategy, &out.Strategy
+		*out = new(appsv1.DeploymentStrategy)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

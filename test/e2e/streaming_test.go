@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 )
 
 type StreamingTestSuite struct {
@@ -286,10 +286,10 @@ func jaegerAutoProvisionedDefinition(namespace string, name string) *v1.Jaeger {
 	return jaegerInstance
 }
 
-func getKafkaUser(name, namespace string) *kafkav1beta1.KafkaUser {
-	kafkaUser := &kafkav1beta1.KafkaUser{
+func getKafkaUser(name, namespace string) *kafkav1beta2.KafkaUser {
+	kafkaUser := &kafkav1beta2.KafkaUser{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "kafka.strimzi.io/v1beta1",
+			APIVersion: "kafka.strimzi.io/v1beta2",
 			Kind:       "KafkaUser",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -299,7 +299,7 @@ func getKafkaUser(name, namespace string) *kafkav1beta1.KafkaUser {
 				"strimzi.io/cluster": "my-cluster",
 			},
 		},
-		Spec: kafkav1beta1.KafkaUserSpec{
+		Spec: kafkav1beta2.KafkaUserSpec{
 			v1.NewFreeForm(map[string]interface{}{
 				"authentication": map[string]interface{}{
 					"type": "tls",
