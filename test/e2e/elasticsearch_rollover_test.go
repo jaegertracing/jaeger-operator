@@ -140,7 +140,6 @@ func (suite *ElasticSearchRolloverTestSuite) TestRolloverESEnable() {
 	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
 
 	// The generation of the indices is not instantaneus. So, we wait some time until they are generated
-	time.Sleep(time.Minute * 30)
 	serviceIndicesBefore, spansIndicesBefore := GetJaegerIndices(suite.esNamespace)
 
 	// Enable Rollover
