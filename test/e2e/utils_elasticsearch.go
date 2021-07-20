@@ -30,6 +30,22 @@ type EsIndex struct {
 	StoreSize   string `json:"store.size"`
 }
 
+// CountDocsInIndex count the number of docs in an index
+func CountDocsInIndex(esNamespace, indexName string) int {
+	apiEndpoint := "/" + indexName + "/_count"
+	bodyBytes, err := ExecuteEsRequest(esNamespace, http.MethodGet, apiEndpoint)
+	require.NoError(t, err)
+
+	countAnswer := struct {
+		Count int `json:"count"`
+	}{}
+
+	err = json.Unmarshal(bodyBytes, &countAnswer)
+	require.NoError(t, err)
+
+	return countAnswer.Count
+}
+
 // GetEsIndices return indices from es node
 func GetEsIndices(esNamespace string) ([]EsIndex, error) {
 	bodyBytes, err := ExecuteEsRequest(esNamespace, http.MethodGet, "/_cat/indices?format=json")

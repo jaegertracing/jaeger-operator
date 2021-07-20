@@ -3,6 +3,7 @@ package e2e
 import (
 	"errors"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type esIndexData struct {
 	Prefix     string    // prefix of the index
 	Date       time.Time // index day/date
 	RolloverID string    // rollover string
+	DocCount   int       // Document count
 }
 
 // Get Jaeger ES indices
@@ -42,10 +44,14 @@ func GetJaegerIndices(namespace string) ([]esIndexData, []esIndexData) {
 			IndexName: esIndex.Index,
 		}
 
+		esData.DocCount, err = strconv.Atoi(esIndex.DocsCount)
+		require.NoError(t, err)
+
 		dateString := dateRe.FindString(esIndex.Index)
 		indexName := strings.Replace(esIndex.Index, dateString, "", 1)
 
-		indexDate, err := time.Parse(ElasticSearchIndexDateLayout, dateString)
+		var indexDate time.Time
+		indexDate, err = time.Parse(ElasticSearchIndexDateLayout, dateString)
 		if err != nil {
 			esData.RolloverID = rolloverRe.FindString(dateString)
 			require.NotSame(t, esData.RolloverID, "", "Not date or rollover ID in index")

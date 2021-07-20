@@ -148,6 +148,11 @@ e2e-tests-es: prepare-e2e-tests es
 	@echo Running Elasticsearch end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
 
+.PHONY: e2e-tests-es-rollover
+e2e-tests-es-rollover: prepare-e2e-tests es
+	@echo Running Elasticsearch end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch_rollover ./test/e2e/... $(TEST_OPTIONS)
+
 .PHONY: e2e-tests-self-provisioned-es
 e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
 	@echo Running Self provisioned Elasticsearch end-to-end tests...

@@ -1,4 +1,4 @@
-// +build elasticsearchrollover
+// +build elasticsearch_rollover
 
 package e2e
 
@@ -47,10 +47,6 @@ func (suite *ElasticSearchRolloverTestSuite) SetupSuite() {
 }
 
 func (suite *ElasticSearchRolloverTestSuite) TearDownSuite() {
-	// if !skipESExternal {
-	// 	DeleteEsIndices(suite.esNamespace)
-	// }
-
 	handleSuiteTearDown()
 }
 
@@ -118,7 +114,8 @@ func (suite *ElasticSearchRolloverTestSuite) TestRolloverESIndex() {
 	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
 
 	// The generation of the indices is not instantaneus. So, we wait some time until they are generated
-	time.Sleep(time.Second * 5)
+	err := WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
 	serviceIndices, spansIndices := GetJaegerIndices(suite.esNamespace)
 
 	// Find the the new created indices with the expected names
@@ -139,11 +136,11 @@ func (suite *ElasticSearchRolloverTestSuite) TestRolloverESEnable() {
 	defer undeployJaegerInstance(jaegerInstance)
 
 	// We generate some spans before enabling the Rollover feature
-	generatedSpans := 2
+	generatedSpans := 3
 	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
 
 	// The generation of the indices is not instantaneus. So, we wait some time until they are generated
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Minute * 30)
 	serviceIndicesBefore, spansIndicesBefore := GetJaegerIndices(suite.esNamespace)
 
 	// Enable Rollover
@@ -152,7 +149,8 @@ func (suite *ElasticSearchRolloverTestSuite) TestRolloverESEnable() {
 
 	// We add new spans after enabling the rollout feature
 	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
-	time.Sleep(time.Second * 5)
+	err := WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
 	serviceIndicesAfter, spansIndicesAfter := GetJaegerIndices(suite.esNamespace)
 
 	// The old indices were not removed
@@ -177,10 +175,131 @@ func (suite *ElasticSearchRolloverTestSuite) TestRolloverESEnable() {
 	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
 
 	// After starting from scratch, we just have 1 index for spans
-	time.Sleep(time.Second * 5)
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
 	serviceIndices, spansIndices := GetJaegerIndices(suite.esNamespace)
 	assert.Len(t, serviceIndices, 0)
 	assert.Len(t, spansIndices, 1)
+}
+
+func (suite *ElasticSearchRolloverTestSuite) TestRolloverESReadTTL() {
+	jaegerInstanceName := "test-es-rollover"
+	// Get the Jaeger CR to create the service
+	jaegerInstance := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, 1)
+	defer undeployJaegerInstance(jaegerInstance)
+
+	// If there is an external ES deployment use it instead of creating a self provisioned one
+	if !skipESExternal {
+		if isOpenShift(t) {
+			esServerUrls = "http://elasticsearch." + storageNamespace + ".svc.cluster.local:9200"
+		}
+	}
+
+	// Configure the ES Rollover feature
+	jaegerInstance.Spec.Storage = v1.JaegerStorageSpec{
+		Type: v1.JaegerESStorage,
+		Options: v1.NewOptions(map[string]interface{}{
+			"es.server-urls": esServerUrls,
+			"es.use-aliases": true,
+		}),
+		EsRollover: v1.JaegerEsRolloverSpec{
+			Schedule:   "* * * * *",
+			ReadTTL:    "20h",
+			Conditions: "{\"max_docs\": 2}",
+		},
+	}
+
+	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
+
+	suite.waitRolloverDeployment(jaegerInstanceName)
+
+	generatedSpans := 10
+
+	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
+
+	// Wait until the jobs is run to create the first indices
+	err := WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for Cron Job")
+
+	servicesIndices, spansIndices := GetJaegerIndices(suite.esNamespace)
+	assert.Len(t, servicesIndices, 1)
+	assert.Len(t, spansIndices, 1)
+
+	totalDocs := 0
+	for _, index := range servicesIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+
+	totalDocs = 0
+	for _, index := range spansIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+
+	// We wait until the job is run again and we have the rollover
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err)
+	time.Sleep(time.Minute)
+
+	servicesIndices, spansIndices = GetJaegerIndices(suite.esNamespace)
+	assert.Len(t, servicesIndices, 2)
+	assert.Len(t, spansIndices, 2)
+
+	totalDocs = 0
+	for _, index := range spansIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+	assert.Equal(t, totalDocs, CountDocsInIndex(suite.esNamespace, "jaeger-span-read"))
+
+	totalDocs = 0
+	for _, index := range servicesIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+	assert.Equal(t, totalDocs, CountDocsInIndex(suite.esNamespace, "jaeger-service-read"))
+
+	// Decrease the ReadTTL parameter
+	suite.updateJaegerCR(jaegerInstance, "* * * * *", "{\"max_docs\": \"2\"}", "1m")
+
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err)
+	time.Sleep(time.Minute)
+
+	servicesIndices, spansIndices = GetJaegerIndices(suite.esNamespace)
+	assert.Len(t, servicesIndices, 2)
+	assert.Len(t, spansIndices, 2)
+
+	totalDocs = 0
+	for _, index := range servicesIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+
+	lastIndexName := servicesIndices[len(servicesIndices)-1].IndexName
+
+	assert.Equal(t, 0, CountDocsInIndex(suite.esNamespace, lastIndexName))
+
+	// Now, the old data is not accessible from the alias
+	assert.Equal(t, 0, CountDocsInIndex(suite.esNamespace, "jaeger-service-read"))
+
+	totalDocs = 0
+	for _, index := range spansIndices {
+		totalDocs += CountDocsInIndex(suite.esNamespace, index.IndexName)
+	}
+	assert.Equal(t, totalDocs, generatedSpans)
+
+	// Now, the old data is not accessible from the alias
+	assert.Equal(t, 0, CountDocsInIndex(suite.esNamespace, "jaeger-span-read"))
+
+	GenerateSpansHistory(namespace, jaegerInstanceName, "span-rollover-test", ElasticSearchIndexDateLayout, generatedSpans)
+	err = WaitForJobOfAnOwner(t, fw.KubeClient, namespace, fmt.Sprintf("%s-es-rollover", jaegerInstanceName), retryInterval, timeout)
+	require.NoError(t, err)
+	time.Sleep(time.Minute)
+
+	assert.Equal(t, 10, CountDocsInIndex(suite.esNamespace, "jaeger-span-read"))
+
 }
 
 func (suite *ElasticSearchRolloverTestSuite) waitRolloverDeployment(jaegerInstanceName string) {
