@@ -78,6 +78,16 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
+	// remove reserved labels
+	delete(jaeger.Spec.JaegerCommonSpec.Labels, "app.kubernetes.io/instance")
+	delete(jaeger.Spec.JaegerCommonSpec.Labels, "app.kubernetes.io/managed-by")
+
+	delete(jaeger.Spec.AllInOne.JaegerCommonSpec.Labels, "app.kubernetes.io/instance")
+	delete(jaeger.Spec.AllInOne.JaegerCommonSpec.Labels, "app.kubernetes.io/managed-by")
+
+	delete(jaeger.Spec.Query.JaegerCommonSpec.Labels, "app.kubernetes.io/instance")
+	delete(jaeger.Spec.Query.JaegerCommonSpec.Labels, "app.kubernetes.io/managed-by")
+
 	// normalize the deployment strategy
 	if jaeger.Spec.Strategy != v1.DeploymentStrategyProduction && jaeger.Spec.Strategy != v1.DeploymentStrategyStreaming {
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
