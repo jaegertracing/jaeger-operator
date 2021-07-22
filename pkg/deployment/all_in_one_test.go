@@ -93,6 +93,42 @@ func TestAllInOneLabels(t *testing.T) {
 	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
 }
 
+func TestAllInOneOverwrittenDefaultLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneOverwrittenDefaultLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":                   "operator",
+		"hello":                  "jaeger",
+		"app.kubernetes.io/name": "my-jaeger", // Override default labels
+	}
+	jaeger.Spec.AllInOne.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Template.Labels["app.kubernetes.io/name"])
+
+	// Deployment selectors should be the same as the template labels.
+	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
+	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
+	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Selector.MatchLabels["app.kubernetes.io/name"])
+
+	// Service selectors should be the same as the template labels.
+	services := allinone.Services()
+	for _, svc := range services {
+		assert.Equal(t, "operator", svc.Spec.Selector["name"])
+		assert.Equal(t, "world", svc.Spec.Selector["hello"])
+		assert.Equal(t, "false", svc.Spec.Selector["another"])
+		assert.Equal(t, "my-jaeger", svc.Spec.Selector["app.kubernetes.io/name"])
+	}
+}
+
 func TestAllInOneHasOwner(t *testing.T) {
 	name := "TestAllInOneHasOwner"
 	a := NewAllInOne(v1.NewJaeger(types.NamespacedName{Name: name}))

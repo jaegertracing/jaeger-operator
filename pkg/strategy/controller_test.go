@@ -178,6 +178,19 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
+func TestRemoveReservedLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestRemoveReservedLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"app.kubernetes.io/instance":   "custom-instance",
+		"app.kubernetes.io/managed-by": "custom-managed-by",
+	}
+
+	normalize(context.Background(), jaeger)
+
+	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/instance")
+	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/managed-by")
+}
+
 func TestNormalizeIndexCleaner(t *testing.T) {
 	trueVar := true
 	falseVar := false

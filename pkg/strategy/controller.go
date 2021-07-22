@@ -78,6 +78,22 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
+	// remove reserved labels
+	for _, labels := range []map[string]string{
+		jaeger.Spec.JaegerCommonSpec.Labels,
+		jaeger.Spec.AllInOne.JaegerCommonSpec.Labels,
+		jaeger.Spec.Query.JaegerCommonSpec.Labels,
+	} {
+		if _, ok := labels["app.kubernetes.io/instance"]; ok {
+			span.AddEvent(fmt.Sprintf("the reserved label 'app.kubernetes.io/instance' is overwritten, falling back to %s", jaeger.Name))
+			delete(labels, "app.kubernetes.io/instance")
+		}
+		if _, ok := labels["app.kubernetes.io/managed-by"]; ok {
+			span.AddEvent("the reserved label 'app.kubernetes.io/managed-by' is overwritten, falling back to jaeger-operator")
+			delete(labels, "app.kubernetes.io/managed-by")
+		}
+	}
+
 	// normalize the deployment strategy
 	if jaeger.Spec.Strategy != v1.DeploymentStrategyProduction && jaeger.Spec.Strategy != v1.DeploymentStrategyStreaming {
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
