@@ -22,5 +22,6 @@ func TestValidTypes(t *testing.T) {
 			JaegerESStorage,
 			JaegerKafkaStorage,
 			JaegerBadgerStorage,
+			JaegerGRPCPluginStorage,
 		})
 }
