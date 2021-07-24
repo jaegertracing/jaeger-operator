@@ -1,23 +1,25 @@
 #!/bin/bash
 
-COMMUNITY_OPERATORS_REPOSITORY="$(dirname $(dirname $(pwd)))/k8s-operatorhub/community-operators"
-UPSTREAM_REPOSITORY="$(dirname $(dirname $(pwd)))/redhat-openshift-ecosystem/community-operators-prod"
+
+COMMUNITY_OPERATORS_REPOSITORY="k8s-operatorhub/community-operators"
+UPSTREAM_REPOSITORY="redhat-openshift-ecosystem/community-operators-prod"
+LOCAL_REPOSITORIES_PATH=${LOCAL_REPOSITORIES_PATH:-"$(dirname $(dirname $(pwd)))"}
 
 
-if [[ ! -d ${COMMUNITY_OPERATORS_REPOSITORY} ]]; then
-    echo "${COMMUNITY_OPERATORS_REPOSITORY} doesn't exist, aborting."
+if [[ ! -d "${LOCAL_REPOSITORIES_PATH}/${COMMUNITY_OPERATORS_REPOSITORY}" ]]; then
+    echo "${LOCAL_REPOSITORIES_PATH}/${COMMUNITY_OPERATORS_REPOSITORY} doesn't exist, aborting."
     exit 1
 fi
 
-if [[ ! -d ${UPSTREAM_REPOSITORY} ]]; then
-    echo "${UPSTREAM_REPOSITORY} doesn't exist, aborting."
+if [[ ! -d "${LOCAL_REPOSITORIES_PATH}/${UPSTREAM_REPOSITORY}" ]]; then
+    echo "${LOCAL_REPOSITORIES_PATH}/${UPSTREAM_REPOSITORY} doesn't exist, aborting."
     exit 1
 fi
-
 
 
 OLD_PWD=$(pwd)
 VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
+
 PKG_FILE=deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml
 CSV_FILE=deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
 CRD_FILE=deploy/crds/jaegertracing.io_jaegers_crd.yaml
@@ -28,11 +30,11 @@ DEST_PKG_FILE=jaeger.package.yaml
 DEST_CSV_FILE=jaeger.v${VERSION}.clusterserviceversion.yaml
 
 for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
-    cd "${dest}"
+    cd "${LOCAL_REPOSITORIES_PATH}/${dest}"
     git remote | grep upstream > /dev/null
     if [[ $? != 0 ]]; then
         echo "Cannot find a remote named 'upstream'. Adding one."
-        #git remote add upstream git@github.com:operator-framework/community-operators.git
+        git remote add upstream git@github.com:${dest}.git
     fi
 
     git fetch -q upstream
@@ -60,12 +62,12 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
         echo "'gh' command not found, can't submit the PR on your behalf."
         break
     fi
-
     tmpfile=$(mktemp /tmp/Update-Jaeger-to-${VERSION}.XXX)
-    echo  "Update Jaeger to v${VERSION}" > ${tmpfile}
-    cat  ${OLD_PWD}/.ci/.pr-template.md >> ${tmpfile}
+    echo "Update Jaeger to v${VERSION}" > ${tmpfile}
+    curl https://raw.githubusercontent.com/${dest}/main/docs/pull_request_template.md >> "${tmpfile}"
+
     echo "Submitting PR on your behalf via 'hub'"
-    gh pr create --title  "Update Jaeger to v${VERSION}" --body "$(cat ${tmpfile})"
+    gh pr create --title  "Update Jaeger to v${VERSION}" --body-file "${tmpfile}"
     rm ${tmpfile}
 done
 
