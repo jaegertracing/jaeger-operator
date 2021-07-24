@@ -75,20 +75,20 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 }
 
 // Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
-func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
 		"namespace":  dep.Namespace,
 		"deployment": dep.Name,
 	})
-	annotationValue, depExist := dep.Annotations[Annotation]
-	_, nsExist := ns.Annotations[Annotation]
+	depAnnotationValue, depExist := dep.Annotations[Annotation]
+	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
-	if depExist && !strings.EqualFold(annotationValue, "false") {
+	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
 		logger.Debug("annotation present on deployment")
 		return true
 	}
 
-	if nsExist {
+	if nsExist && !strings.EqualFold(nsAnnotationValue, "false") {
 		logger.Debug("annotation present on namespace")
 		return true
 	}
@@ -98,7 +98,7 @@ func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !Desired(dep, ns) {
+	if !desired(dep, ns) {
 		return false
 	}
 
