@@ -23,6 +23,13 @@ spec:
           name: cr-metrics
         args: ["start"]
         imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
         env:
         - name: WATCH_NAMESPACE
           valueFrom:
