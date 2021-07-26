@@ -15,6 +15,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"./pkg/apis/jaegertracing/v1.AutoScaleSpec":                   schema_pkg_apis_jaegertracing_v1_AutoScaleSpec(ref),
 		"./pkg/apis/jaegertracing/v1.ElasticsearchSpec":               schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref),
+		"./pkg/apis/jaegertracing/v1.GRPCPluginSpec":                  schema_pkg_apis_jaegertracing_v1_GRPCPluginSpec(ref),
 		"./pkg/apis/jaegertracing/v1.Jaeger":                          schema_pkg_apis_jaegertracing_v1_Jaeger(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerAgentSpec":                 schema_pkg_apis_jaegertracing_v1_JaegerAgentSpec(ref),
 		"./pkg/apis/jaegertracing/v1.JaegerAllInOneSpec":              schema_pkg_apis_jaegertracing_v1_JaegerAllInOneSpec(ref),
@@ -141,6 +142,26 @@ func schema_pkg_apis_jaegertracing_v1_ElasticsearchSpec(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1.ElasticsearchStorageSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.Toleration"},
+	}
+}
+
+func schema_pkg_apis_jaegertracing_v1_GRPCPluginSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GRPCPluginSpec represents the grpc-plugin configuration options.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"image": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This image is used as an init-container to copy plugin binary into /plugin directory.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -2058,11 +2079,16 @@ func schema_pkg_apis_jaegertracing_v1_JaegerStorageSpec(ref common.ReferenceCall
 							Ref: ref("./pkg/apis/jaegertracing/v1.ElasticsearchSpec"),
 						},
 					},
+					"grpcPlugin": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("./pkg/apis/jaegertracing/v1.GRPCPluginSpec"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/jaegertracing/v1.ElasticsearchSpec", "./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "./pkg/apis/jaegertracing/v1.Options"},
+			"./pkg/apis/jaegertracing/v1.ElasticsearchSpec", "./pkg/apis/jaegertracing/v1.GRPCPluginSpec", "./pkg/apis/jaegertracing/v1.JaegerCassandraCreateSchemaSpec", "./pkg/apis/jaegertracing/v1.JaegerDependenciesSpec", "./pkg/apis/jaegertracing/v1.JaegerEsIndexCleanerSpec", "./pkg/apis/jaegertracing/v1.JaegerEsRolloverSpec", "./pkg/apis/jaegertracing/v1.Options"},
 	}
 }
 

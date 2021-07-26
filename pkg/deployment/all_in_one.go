@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -66,6 +68,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	tls.Update(a.jaeger, commonSpec, &options)
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(a.jaeger, commonSpec)
 
 	// Enable tls by default for openshift platform
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
@@ -223,6 +226,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(a.jaeger, commonSpec),
 				},
 			},
 		},
