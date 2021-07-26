@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -91,6 +92,42 @@ func TestAllInOneLabels(t *testing.T) {
 	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
 	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
 	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
+}
+
+func TestAllInOneOverwrittenDefaultLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneOverwrittenDefaultLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":                   "operator",
+		"hello":                  "jaeger",
+		"app.kubernetes.io/name": "my-jaeger", // Override default labels
+	}
+	jaeger.Spec.AllInOne.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Template.Labels["app.kubernetes.io/name"])
+
+	// Deployment selectors should be the same as the template labels.
+	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
+	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
+	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Selector.MatchLabels["app.kubernetes.io/name"])
+
+	// Service selectors should be the same as the template labels.
+	services := allinone.Services()
+	for _, svc := range services {
+		assert.Equal(t, "operator", svc.Spec.Selector["name"])
+		assert.Equal(t, "world", svc.Spec.Selector["hello"])
+		assert.Equal(t, "false", svc.Spec.Selector["another"])
+		assert.Equal(t, "my-jaeger", svc.Spec.Selector["app.kubernetes.io/name"])
+	}
 }
 
 func TestAllInOneHasOwner(t *testing.T) {
@@ -359,6 +396,38 @@ func TestAllInOneEmptyStrategyType(t *testing.T) {
 	a := NewAllInOne(jaeger)
 	dep := a.Get()
 	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestAllInOneGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneGRPCPlugin"})
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "testallinonegrpcplugin-sampling-configuration-volume",
+					MountPath: "/etc/jaeger/sampling",
+					ReadOnly:  true,
+				},
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {

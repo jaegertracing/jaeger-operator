@@ -1,0 +1,28 @@
+# This example shows how to use Jaeger's Clickhouse grpc-plugin https://github.com/pavolloffay/jaeger-clickhouse
+# Before deploying Jaeger, create Clickhouse instance via Clickhouse operator and jaeger-clickhouse config map.
+# kubectl create configmap jaeger-clickhouse --from-file config.yaml
+# Content of config.yaml:
+# address: tcp://clickhouse-simple-01:9000
+# username: clickhouse_operator
+# password: clickhouse_operator_password
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: clickhouse-grpc-plugin
+spec:
+  storage:
+    type: grpc-plugin
+    grpcPlugin:
+      image: ghcr.io/pavolloffay/jaeger-clickhouse:0.4.1
+    options:
+      grpc-storage-plugin:
+        binary: /plugin/jaeger-clickhouse
+        configuration-file: /plugin-config/config.yaml
+        log-level: debug
+  volumeMounts:
+    - name: plugin-config
+      mountPath: /plugin-config
+  volumes:
+    - name: plugin-config
+      configMap:
+        name: jaeger-clickhouse
