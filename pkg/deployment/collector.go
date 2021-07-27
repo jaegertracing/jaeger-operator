@@ -17,6 +17,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -79,6 +80,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 		tls.Update(c.jaeger, commonSpec, &options)
 		ca.Update(c.jaeger, commonSpec)
 	}
+	storage.UpdateGRPCPlugin(c.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
@@ -194,6 +196,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(c.jaeger, commonSpec),
 				},
 			},
 		},
