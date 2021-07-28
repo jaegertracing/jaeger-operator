@@ -104,6 +104,10 @@ const (
 	// JaegerBadgerStorage indicates that the Jaeger storage type is badger
 	// +k8s:openapi-gen=true
 	JaegerBadgerStorage JaegerStorageType = "badger"
+
+	// JaegerGRPCPluginStorage indicates that the Jaeger storage type is grpc-plugin
+	// +k8s:openapi-gen=true
+	JaegerGRPCPluginStorage JaegerStorageType = "grpc-plugin"
 )
 
 // ValidStorageTypes returns the list of valid storage types
@@ -114,6 +118,7 @@ func ValidStorageTypes() []JaegerStorageType {
 		JaegerESStorage,
 		JaegerKafkaStorage,
 		JaegerBadgerStorage,
+		JaegerGRPCPluginStorage,
 	}
 }
 
@@ -121,6 +126,9 @@ func ValidStorageTypes() []JaegerStorageType {
 func (storageType JaegerStorageType) OptionsPrefix() string {
 	if storageType == JaegerESStorage {
 		return "es"
+	}
+	if storageType == JaegerGRPCPluginStorage {
+		return "grpc-storage-plugin"
 	}
 	return string(storageType)
 }
@@ -522,6 +530,9 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	Elasticsearch ElasticsearchSpec `json:"elasticsearch,omitempty"`
+
+	// +optional
+	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
@@ -591,6 +602,14 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+}
+
+// GRPCPluginSpec represents the grpc-plugin configuration options.
+// +k8s:openapi-gen=true
+type GRPCPluginSpec struct {
+	// This image is used as an init-container to copy plugin binary into /plugin directory.
+	// +optional
+	Image string `json:"image,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
