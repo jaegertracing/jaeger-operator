@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Values represent and string or a slice of string
+// Values hold a map, with string as the key and either a string or a slice of strings as the value
 type Values map[string]interface{}
 
 // DeepCopy indicate how to do a deep copy of Values type
