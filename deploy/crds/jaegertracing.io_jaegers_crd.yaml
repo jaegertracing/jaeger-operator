@@ -6149,6 +6149,9 @@ spec:
                       type: string
                     nullable: true
                     type: object
+                  grpcNodePort:
+                    format: int32
+                    type: integer
                   image:
                     type: string
                   labels:
