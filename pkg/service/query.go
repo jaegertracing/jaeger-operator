@@ -24,9 +24,16 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			Port:       int32(GetPortForQueryService(jaeger)),
 			TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
 		},
+		{
+			Name:       "grpc-query",
+			Port:       int32(16685),
+			TargetPort: intstr.FromInt(16685),
+		},
 	}
 	if jaeger.Spec.Query.ServiceType == corev1.ServiceTypeNodePort {
 		ports[0].NodePort = GetNodePortForQueryService(jaeger)
+		ports[1].NodePort = GetGRPCNodePortForQueryService(jaeger)
+
 	}
 
 	return &corev1.Service{
@@ -99,4 +106,9 @@ func getTypeForQueryService(jaeger *v1.Jaeger) corev1.ServiceType {
 // GetNodePortForQueryService returns the query service NodePort for this Jaeger instance
 func GetNodePortForQueryService(jaeger *v1.Jaeger) int32 {
 	return jaeger.Spec.Query.NodePort
+}
+
+// GetGRPCNodePortForQueryService returns the query service grpc NodePort for this Jaeger instance
+func GetGRPCNodePortForQueryService(jaeger *v1.Jaeger) int32 {
+	return jaeger.Spec.Query.GRPCNodePort
 }
