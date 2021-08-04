@@ -768,20 +768,28 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 }
 
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
+
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
 	for _, tt := range []struct {
-		name       string
-		options    v1.Options
-		expectedCA string
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
 	}{
 		{
 			name: "Openshift CA",
 			options: v1.NewOptions(map[string]interface{}{
 				"a-option": "a-value",
 			}),
-			expectedCA: ca.ServiceCAPath,
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=" + ca.ServiceCAPath,
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--agent.tags=",
+			},
 		},
 		{
 			name: "Custom CA",
@@ -790,7 +798,29 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 				"reporter.grpc.tls.enabled": "true",
 				"reporter.grpc.tls.ca":      "/my/custom/ca",
 			}),
-			expectedCA: "/my/custom/ca",
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=/my/custom/ca",
+				"--agent.tags=",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--reporter.grpc.tls.enabled=false",
+				"--agent.tags=",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -803,15 +833,20 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 			dep = Sidecar(jaeger, dep)
 
 			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-			assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
-			assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--agent.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-			assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+tt.expectedCA, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-			agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-			assert.Contains(t, agentTagsMap, "container.name")
-			assert.Equal(t, agentTagsMap["container.name"], "only_container")
+			assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, len(tt.expectedArgs))
+
+			for _, arg := range tt.expectedArgs {
+				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			}
+
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+				}
+			}
+
+			assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
 		})
 	}
 }

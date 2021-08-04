@@ -338,27 +338,69 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/etc/tls-config/tls.crt",
+				"--collector.grpc.tls.key=/etc/tls-config/tls.key",
+				"--sampling.strategies-file",
+				"--reporter.grpc.tls.ca",
+				"--reporter.grpc.tls.enabled",
+				"--reporter.grpc.tls.server-name",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"reporter.grpc.tls.enabled":  "false",
+				"collector.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.tls.enabled=false",
+				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+	} {
+		jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+		jaeger.Spec.AllInOne.Options = tt.options
 
-	// test
-	a := NewAllInOne(jaeger)
-	dep := a.Get()
+		// test
+		a := NewAllInOne(jaeger)
+		dep := a.Get()
 
-	// verify
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 8)
-	assert.NotEmpty(t, util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args))
+		// verify
+		assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+		assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.ca", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.enabled", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.server-name", dep.Spec.Template.Spec.Containers[0].Args))
+		for _, arg := range tt.expectedArgs {
+			assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
+		}
+
+		if tt.nonExpectedArgs != nil {
+			for _, arg := range tt.nonExpectedArgs {
+				assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			}
+		}
+	}
+
 }
 
 func TestAllInOneServiceLinks(t *testing.T) {
