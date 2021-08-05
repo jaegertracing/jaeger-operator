@@ -129,7 +129,7 @@ func distributedStorage(storage v1.JaegerStorageType) bool {
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
-	sFlagsMap := spec.Options.Map()
+	sFlagsMap := spec.Options.StringMap()
 	tlsEnabled := sFlagsMap["es.tls"]
 	tlsSkipHost := sFlagsMap["es.tls.skip-host-verify"]
 	tlsCa := sFlagsMap["es.tls.ca"]
@@ -201,7 +201,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 			uiOpts = m
 		}
 	}
-	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	enableArchiveButton(uiOpts, spec.Storage.Options.StringMap())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
 	enableDocumentationLink(uiOpts, spec)
 	enableLogOut(uiOpts, spec)
