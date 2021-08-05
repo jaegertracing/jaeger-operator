@@ -267,6 +267,10 @@ type JaegerQuerySpec struct {
 	NodePort int32 `json:"nodePort,omitempty"`
 
 	// +optional
+	// NodePort represents the port at which the NodePort service to allocate
+	GRPCNodePort int32 `json:"grpcNodePort,omitempty"`
+
+	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
