@@ -47,7 +47,8 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetNameForCollectorService(jaeger),
 			Namespace: jaeger.Namespace,
-			Labels:    util.Labels(GetNameForCollectorService(jaeger), "service-collector", *jaeger),
+			Annotations: jaeger.Spec.Collector.Annotations,
+			Labels: util.Labels(GetNameForCollectorService(jaeger), "service-collector", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: jaeger.APIVersion,
 				Kind:       jaeger.Kind,
