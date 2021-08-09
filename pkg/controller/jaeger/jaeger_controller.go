@@ -171,6 +171,13 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 
 	updated, err := r.apply(ctx, *instance, str)
 	if err != nil {
+		logFields.WithError(err).Error("failed to apply the changes")
+		// We need to make sure that the instance still exist, so we can update the status to failed. Could happen that the instance
+		// is deleted before the deployment is stable, in this case apply will return "deployment has been removed" error,
+		// but we can't write that status on an unexisting instance.
+		if k8serrors.IsNotFound(r.rClient.Get(ctx, request.NamespacedName, &v1.Jaeger{})) {
+			return reconcile.Result{}, nil
+		}
 		// update the status to "Failed"
 		instance.Status.Phase = v1.JaegerPhaseFailed
 		if err := r.client.Status().Update(ctx, instance); err != nil {
@@ -178,8 +185,8 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after the reconciliation")
 		}
 
-		logFields.WithError(err).Error("failed to apply the changes")
 		return reconcile.Result{}, tracing.HandleError(err, span)
+
 	}
 	instance = &updated
 
