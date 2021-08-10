@@ -1,6 +1,17 @@
 Changes by Version
 ==================
 
+1.25.0 (2021-08-08)
+-------------------
+* Add support repetitive arguments to operand ([#1434](https://github.com/jaegertracing/jaeger-operator/pull/1434), [@rubenvp8510](https://github.com/rubenvp8510))
+* Allow TLS flags to be disabled ([#1440](https://github.com/jaegertracing/jaeger-operator/pull/1440), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add gRPC port for jaeger-query into its service resource ([#1521](https://github.com/jaegertracing/jaeger-operator/pull/1521), [@rubenvp8510](https://github.com/rubenvp8510))
+* Sidecar removed when annotation is false ([#1508](https://github.com/jaegertracing/jaeger-operator/pull/1508), [@mfz85](https://github.com/mfz85))
+* Add support for GRPC storage plugin ([#1517](https://github.com/jaegertracing/jaeger-operator/pull/1517), [@pavolloffay](https://github.com/pavolloffay))
+* Fix overwritten default labels in label selectors of `Service` ([#1490](https://github.com/jaegertracing/jaeger-operator/pull/1490), [@rudeigerc](https://github.com/rudeigerc))
+* Add resources requests and limits to the operator ([#1515](https://github.com/jaegertracing/jaeger-operator/pull/1515), [@brunopadz](https://github.com/brunopadz))
+* Instrument instances types ([#1484](https://github.com/jaegertracing/jaeger-operator/pull/1484), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.24.0 (2021-07-08)
 -------------------
 * Include OIDC plugin in binary ([#1501](https://github.com/jaegertracing/jaeger-operator/pull/1501), [@esnible](https://github.com/esnible))
