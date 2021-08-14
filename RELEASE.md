@@ -13,15 +13,15 @@
 1. Commit version change and changelog and create a pull request:
 
    ```
-   git commit -sm "Preparing release v1.23.0"
+   git commit -sm "Preparing release v1.25.0"
    ```
 
 1. Tag and push
 
     ```
     git checkout master ## it's only possible to release from master for now!
-    git tag release/v1.23.0
-    git push git@github.com:jaegertracing/jaeger-operator.git release/v1.23.0
+    git tag release/v1.25.0
+    git push git@github.com:jaegertracing/jaeger-operator.git release/v1.25.0
     ```
 
 1. Wait until release CI job finishes and then pull the changes:
