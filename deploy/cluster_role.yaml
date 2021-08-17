@@ -53,6 +53,14 @@ rules:
   - update
   - watch
 - apiGroups:
+    - ""
+  resources:
+    - namespaces
+  verbs:
+    - list
+    - watch
+    - get
+- apiGroups:
   - apps
   resources:
   - deployments
