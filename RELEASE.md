@@ -20,7 +20,7 @@ Steps to release a new version of the Jaeger Operator:
     ```
     git checkout master
     git tag v1.25.0
-    git push git@github.com:jaegertracing/jaeger-operator.git release/v1.25.0
+    git push git@github.com:jaegertracing/jaeger-operator.git v1.25.0
     ```
 
 6. The GitHub Workflow will take it from here, creating a GitHub release and publishing the images
