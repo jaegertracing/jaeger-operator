@@ -31,8 +31,8 @@ Steps to release a new version of the Jaeger Operator:
 
 7. After the release, PRs needs to be created against the Operator Hub Community Operators repositories:
 
-    * One for the `upstream-community-operators`, used by OLM on Kubernetes. (https://github.com/k8s-operatorhub/community-operators)
-    * One for the `community-operators` used by OpenShift. (https://github.com/redhat-openshift-ecosystem/community-operators-prod)
+    * One for the [upstream-community-operators](https://github.com/k8s-operatorhub/community-operators), used by OLM on Kubernetes.
+    * One for the [community-operators](https://github.com/redhat-openshift-ecosystem/community-operators-prod) used by OpenShift.
 
 This can be done with the following steps:
 - Update master `git pull git@github.com:jaegertracing/jaeger-operator.git master`
@@ -43,7 +43,7 @@ This can be done with the following steps:
 
 ## Generating the changelog
 
-- Get the `OAUTH_TOKEN` from (Github)[https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token] select `repo:status` scope.
+- Get the `OAUTH_TOKEN` from [Github](https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token), select `repo:status` scope.
 - Run  `OAUTH_TOKEN=... make changelog`
 - Remove the commits that are not relevant to users, like:
   * CI or testing-specific commits (e2e, unit test, ...)
