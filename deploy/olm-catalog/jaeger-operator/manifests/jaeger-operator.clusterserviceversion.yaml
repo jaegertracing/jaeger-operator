@@ -21,6 +21,7 @@ metadata:
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
+    operators.openshift.io/infrastructure-features: '["disconnected"]'
   name: jaeger-operator.v1.25.0
   namespace: placeholder
 spec:
