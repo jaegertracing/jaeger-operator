@@ -3,19 +3,19 @@
 Steps to release a new version of the Jaeger Operator:
 
 
-1. Change the `versions.txt `so that it lists the target version of the Jaeger (if it is required). Don't touch the operator version it will be changed automatrically in the next ste.
+1. Change the `versions.txt `so that it lists the target version of the Jaeger (if it is required). Don't touch the operator version it will be changed automatically in the next step.
 
-2. Run `make prepare-release VERSION=1.25.0`, using the operator version that will be released.
+1. Run `make prepare-release VERSION=1.25.0`, using the operator version that will be released.
 
-3. Prepare a changelog since last release. 
+1. Prepare a changelog since last release. 
 
-4. Commit the changes and create a pull request:
+1. Commit the changes and create a pull request:
 
    ```
    git commit -sm "Preparing release v1.25.0"
    ```
 
-5. Once the changes above are merged and available in `master` tag it with the desired version, prefixed with `v`, eg. `v1.25.0`
+1. Once the changes above are merged and available in `master` tag it with the desired version, prefixed with `v`, eg. `v1.25.0`
 
     ```
     git checkout master
@@ -23,13 +23,9 @@ Steps to release a new version of the Jaeger Operator:
     git push git@github.com:jaegertracing/jaeger-operator.git v1.25.0
     ```
 
-6. The GitHub Workflow will take it from here, creating a GitHub release and publishing the images
+1. The GitHub Workflow will take it from here, creating a GitHub release and publishing the images
 
-    ```
-    git pull git@github.com:jaegertracing/jaeger-operator.git master
-    ```
-
-7. After the release, PRs needs to be created against the Operator Hub Community Operators repositories:
+1. After the release, PRs needs to be created against the Operator Hub Community Operators repositories:
 
     * One for the [upstream-community-operators](https://github.com/k8s-operatorhub/community-operators), used by OLM on Kubernetes.
     * One for the [community-operators](https://github.com/redhat-openshift-ecosystem/community-operators-prod) used by OpenShift.
