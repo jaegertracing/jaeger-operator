@@ -12,9 +12,11 @@ RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./uiconfig -a ./tests/assert-jobs/uiconfig/main.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./query -a ./tests/assert-jobs/query/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./index -a ./tests/assert-jobs/index/main.go
 
 FROM scratch
 WORKDIR /
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/uiconfig .
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/reporter .
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/query .
+COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/index .
