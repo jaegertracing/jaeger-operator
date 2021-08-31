@@ -488,6 +488,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
+	docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 # end-to-tests
 .PHONY: kuttl-e2e
@@ -502,6 +503,7 @@ start-kind:
 	kind load docker-image local/jaeger-operator:e2e
 	kind load docker-image local/asserts:e2e
 	kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 .PHONY: build-assert-job
 build-assert-job:
