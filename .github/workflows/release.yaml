@@ -16,7 +16,7 @@ jobs:
       with:
         operator-sdk-version: v0.18.2
     - uses: docker/setup-qemu-action@v1.2.0
-    - uses: docker/setup-buildx-action@v1.5.1
+    - uses: docker/setup-buildx-action@v1.6.0
     - name: "perform the release"
       env:
         GH_WRITE_TOKEN: ${{ secrets.GH_WRITE_TOKEN }}
