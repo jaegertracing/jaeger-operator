@@ -2,6 +2,8 @@ package namespace
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -72,7 +74,7 @@ type ReconcileNamespace struct {
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a Namespace object and makes changes based on the state read
+// Reconcile reads the state of the cluster for a Namespace object and makes changes based on the state read
 // and what is in the Namespace.Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -84,11 +86,28 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	ctx, span := tracer.Start(ctx, "reconcileNamespace")
 	defer span.End()
 
+	// Don't reconcile namespace unless unless namespace matches $WATCH_NAMESPACE
+	watched_namespaces := os.Getenv("WATCH_NAMESPACE")
+	if watched_namespaces != "" {
+		watched := false
+		for _, watched_namespace := range strings.Split(watched_namespaces, ",") {
+			if request.Name == watched_namespace {
+				watched = true
+				break
+			}
+		}
+		if !watched {
+			log.WithFields(log.Fields{
+				"name": request.Name,
+			}).Trace("Skipping Reconcile of Namespace due to WATCH_NAMESPACE")
+			return reconcile.Result{}, nil
+		}
+	}
+
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))
 	log.WithFields(log.Fields{
-		"namespace": request.Namespace,
-		"name":      request.Name,
-	}).Trace("Reconciling Namespace")
+		"name": request.Name,
+	}).Debug("Reconciling Namespace")
 
 	ns := &corev1.Namespace{}
 	err := r.rClient.Get(ctx, request.NamespacedName, ns)
