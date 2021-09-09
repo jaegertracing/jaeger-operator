@@ -87,11 +87,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	defer span.End()
 
 	// Don't reconcile namespace unless unless namespace matches $WATCH_NAMESPACE
-	watched_namespaces := os.Getenv("WATCH_NAMESPACE")
-	if watched_namespaces != "" {
+	watchedNamespaces := os.Getenv("WATCH_NAMESPACE")
+	if watchedNamespaces != "" {
 		watched := false
-		for _, watched_namespace := range strings.Split(watched_namespaces, ",") {
-			if request.Name == watched_namespace {
+		for _, watchedNamespace := range strings.Split(watchedNamespaces, ",") {
+			if request.Name == watchedNamespace {
 				watched = true
 				break
 			}
