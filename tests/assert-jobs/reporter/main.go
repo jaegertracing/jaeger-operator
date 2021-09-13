@@ -97,7 +97,7 @@ func generateSpansHistory(serviceName, operationName string, days, services int)
 }
 
 // Block the execution until the Jaeger REST API is available (or timeout)
-func waitUntilRestApiAvailable(jaegerEndpoint string) error {
+func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
 	err := wait.Poll(time.Second*5, time.Minute*5, func() (done bool, err error) {
 		resp, err := http.Get(jaegerEndpoint)
 
@@ -156,7 +156,7 @@ func main() {
 
 	// Sometimes, Kubernetes reports the Jaeger service is there but there is an interval where the service is up but the
 	// REST API is not operative yet
-	err = waitUntilRestApiAvailable(jaegerEndpoint)
+	err = waitUntilRestAPIAvailable(jaegerEndpoint)
 	if err != nil {
 		log.Fatalln(err)
 		os.Exit(1)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -64,7 +63,7 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 			}
 		}
 
-		return false, errors.New(fmt.Sprintf("The %s CronJob was not found", cronjobName))
+		return false, fmt.Errorf(fmt.Sprintf("The %s CronJob was not found", cronjobName))
 	})
 
 	log.Debugln("Cronjob", cronjobName, "found successfully")
@@ -172,11 +171,11 @@ func initCmd() error {
 	}
 
 	if viper.GetString(flagcronJobName) == "" {
-		return errors.New(fmt.Sprintf("Parameter --%s must be set", flagcronJobName))
+		return fmt.Errorf(fmt.Sprintf("Parameter --%s must be set", flagcronJobName))
 	}
 
 	if _, err := os.Stat(viper.GetString(flagKubeconfig)); err != nil {
-		return errors.New(fmt.Sprintf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig))
+		return fmt.Errorf(fmt.Sprintf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig))
 	}
 
 	return nil

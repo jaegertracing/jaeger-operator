@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -22,7 +21,7 @@ var log logrus.Logger
 const (
 	flagEsNamespace        = "es-namespace"
 	flagEsPort             = "es-port"
-	flagEsUrl              = "es-url"
+	flagEsURL              = "es-url"
 	flagPattern            = "pattern"
 	flagName               = "name"
 	flagIsAlias            = "is-alias"
@@ -35,7 +34,7 @@ const (
 func filterIndices(indices *[]elasticsearch.EsIndex, pattern string) ([]elasticsearch.EsIndex, error) {
 	regexPattern, err := regexp.Compile(pattern)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("There was a problem with the pattern: %s", err))
+		return nil, fmt.Errorf(fmt.Sprintf("There was a problem with the pattern: %s", err))
 	}
 
 	var matchingIndices []elasticsearch.EsIndex
@@ -64,8 +63,8 @@ func initCmd() error {
 	viper.SetDefault(flagEsPort, "9200")
 	flag.String(flagEsPort, "", "ElasticSearch port")
 
-	viper.SetDefault(flagEsUrl, "http://localhost")
-	flag.String(flagEsUrl, "", "ElasticSearch URL")
+	viper.SetDefault(flagEsURL, "http://localhost")
+	flag.String(flagEsURL, "", "ElasticSearch URL")
 
 	viper.SetDefault(flagVerbose, false)
 	flag.Bool(flagVerbose, false, "Enable verbosity")
@@ -96,9 +95,9 @@ func initCmd() error {
 	params.Parse()
 
 	if viper.GetString(flagName) != "" && viper.GetString(flagPattern) != "" {
-		return errors.New(fmt.Sprintf("--%s and --%s provided. Provide just one", flagName, flagPattern))
+		return fmt.Errorf(fmt.Sprintf("--%s and --%s provided. Provide just one", flagName, flagPattern))
 	} else if viper.GetString(flagName) == "" && viper.GetString(flagPattern) == "" {
-		return errors.New(fmt.Sprintf("--%s nor --%s provided. Provide one at least", flagName, flagPattern))
+		return fmt.Errorf(fmt.Sprintf("--%s nor --%s provided. Provide one at least", flagName, flagPattern))
 	}
 
 	return nil
@@ -116,7 +115,7 @@ func main() {
 	connection := elasticsearch.EsConnection{
 		Port:      viper.GetString(flagEsPort),
 		Namespace: viper.GetString(flagEsNamespace),
-		URL:       viper.GetString(flagEsUrl),
+		URL:       viper.GetString(flagEsURL),
 	}
 	connection.PrettyString(log.Debug)
 
