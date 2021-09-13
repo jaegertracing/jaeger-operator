@@ -2,9 +2,9 @@ package namespace
 
 import (
 	"context"
-	"os"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
@@ -34,7 +34,17 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNamespace{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
+	watchedNamespace, _ := k8sutil.GetWatchNamespace()
+	watchedNamespaces := []string{}
+	if watchedNamespace != "" {
+		watchedNamespaces = strings.Split(watchedNamespace, ",")
+	}
+	return &ReconcileNamespace{
+		client:            mgr.GetClient(),
+		scheme:            mgr.GetScheme(),
+		rClient:           mgr.GetAPIReader(),
+		watchedNamespaces: watchedNamespaces,
+	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -72,6 +82,9 @@ type ReconcileNamespace struct {
 	rClient client.Reader
 
 	scheme *runtime.Scheme
+
+	// if != "", restrict to matching namespaces
+	watchedNamespaces []string
 }
 
 // Reconcile reads the state of the cluster for a Namespace object and makes changes based on the state read
@@ -87,21 +100,18 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	defer span.End()
 
 	// Don't reconcile namespace unless unless namespace matches $WATCH_NAMESPACE
-	watchedNamespaces := os.Getenv("WATCH_NAMESPACE")
-	if watchedNamespaces != "" {
-		watched := false
-		for _, watchedNamespace := range strings.Split(watchedNamespaces, ",") {
-			if request.Name == watchedNamespace {
-				watched = true
-				break
-			}
+	watched := false
+	for _, watchedNamespace := range r.watchedNamespaces {
+		if request.Name == watchedNamespace {
+			watched = true
+			break
 		}
-		if !watched {
-			log.WithFields(log.Fields{
-				"name": request.Name,
-			}).Trace("Skipping Reconcile of Namespace due to WATCH_NAMESPACE")
-			return reconcile.Result{}, nil
-		}
+	}
+	if !watched {
+		log.WithFields(log.Fields{
+			"name": request.Name,
+		}).Trace("Skipping Reconcile of Namespace due to WATCH_NAMESPACE")
+		return reconcile.Result{}, nil
 	}
 
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))
