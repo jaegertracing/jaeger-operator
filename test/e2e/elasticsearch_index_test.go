@@ -81,18 +81,21 @@ func (suite *ElasticSearchIndexTestSuite) SetupTest() {
 	}
 }
 
-func (suite *ElasticSearchIndexTestSuite) AfterTest(suiteName, testName string) {
+func (suite *ElasticSearchIndexTestSuite) AfterTest(_, _ string) {
 	handleTestFailure()
 }
 
-// executes es index cleaner with default index prefix
+// TestIndexCleaner tests whether index has been removed. It uses indices without prefix.
+// Jaeger index cleaner < 1.26 used the date from index name. However, this has changed in version 1.26
+// to use the real creation date from index metadata. There is no way to create index with
+// explicitly set creation date, hence the only functionality that can be tested here is to remove all indices.
 func (suite *ElasticSearchIndexTestSuite) TestEsIndexCleaner() {
-	suite.runIndexCleaner("", []int{45, 30, 7, 1, 0})
+	suite.runIndexCleaner("", []int{0})
 }
 
 // executes es index cleaner tests with custom index prefix
 func (suite *ElasticSearchIndexTestSuite) TestEsIndexCleanerWithIndexPrefix() {
-	suite.runIndexCleaner("my-custom_prefix", []int{3, 1, 0})
+	suite.runIndexCleaner("my-custom_prefix", []int{0})
 }
 
 // executes index cleaner tests
@@ -137,13 +140,12 @@ func (suite *ElasticSearchIndexTestSuite) runIndexCleaner(esIndexPrefix string, 
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
-	suite.generateSpansHistoy(namespace, jaegerInstanceName)
+	suite.generateSpansHistory(namespace, jaegerInstanceName)
 
 	suite.triggerIndexCleanerAndVerifyIndices(jaegerInstance, esIndexPrefix, daysRange)
-
 }
 
-func (suite *ElasticSearchIndexTestSuite) generateSpansHistoy(namespace, jaegerInstanceName string) {
+func (suite *ElasticSearchIndexTestSuite) generateSpansHistory(namespace, jaegerInstanceName string) {
 	logrus.Info("Enabling collector port forward")
 	fwdPortColl, closeChanColl := CreatePortForward(namespace, jaegerInstanceName+"-collector", "collector", []string{fmt.Sprintf(":%d", jaegerCollectorPort)}, fw.KubeConfig)
 	defer fwdPortColl.Close()
