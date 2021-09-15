@@ -98,8 +98,16 @@ func generateSpansHistory(serviceName, operationName string, days, services int)
 
 // Block the execution until the Jaeger REST API is available (or timeout)
 func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
+	transport := &http.Transport{}
+	client := http.Client{Transport: transport}
+
 	err := wait.Poll(time.Second*5, time.Minute*5, func() (done bool, err error) {
-		resp, err := http.Get(jaegerEndpoint)
+		req, err := http.NewRequest(http.MethodGet, jaegerEndpoint, nil)
+		if err != nil {
+			return false, err
+		}
+
+		resp, err := client.Do(req)
 
 		// The GET HTTP verb is not supported by the Jaeger Collector REST API enpoint. An error 405
 		// means the REST API is there
@@ -153,6 +161,11 @@ func main() {
 	log = *logger.InitLog(viper.GetBool(flagVerbose))
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
+
+	if jaegerEndpoint == "" {
+		log.Fatalln("Please, specify a Jaeger endpoint")
+		os.Exit(1)
+	}
 
 	// Sometimes, Kubernetes reports the Jaeger service is there but there is an interval where the service is up but the
 	// REST API is not operative yet
