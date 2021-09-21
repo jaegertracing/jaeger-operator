@@ -506,3 +506,7 @@ start-kind:
 .PHONY: build-assert-job
 build-assert-job:
 	@docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+
+.PHONY: prepare-release
+prepare-release:
+	@./.ci/prepare-release.sh
