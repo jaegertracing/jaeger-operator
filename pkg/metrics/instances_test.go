@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 )
 
 const AgentSideCar = "Sidecar"
@@ -81,7 +81,7 @@ func TestValueObservedMetrics(t *testing.T) {
 	s := scheme.Scheme
 
 	// Add jaeger to schema
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{}, &v1.JaegerList{})
+	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{}, &v1.JaegerList{})
 
 	// Create jaeger instances
 	jaegerAllInOne := newJaegerInstance(types.NamespacedName{

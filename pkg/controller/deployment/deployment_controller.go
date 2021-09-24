@@ -14,50 +14,15 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
-
-// Add creates a new Deployment Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileDeployment{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
-	c, err := controller.New("deployment-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes to primary resource Deployment
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	return c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(r.(*ReconcileDeployment).syncOnJaegerChanges),
-	})
-}
-
-var _ reconcile.Reconciler = &ReconcileDeployment{}
 
 // ReconcileDeployment reconciles a Deployment object
 type ReconcileDeployment struct {
@@ -72,14 +37,20 @@ type ReconcileDeployment struct {
 	scheme *runtime.Scheme
 }
 
+func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileDeployment {
+	return &ReconcileDeployment{
+		client:  client,
+		rClient: clientReader,
+		scheme:  scheme,
+	}
+}
+
 // Reconcile reads that state of the cluster for a Deployment object and makes changes based on the state read
 // and what is in the Deployment.Spec
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := context.Background()
-
+func (r *ReconcileDeployment) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileDeployment")
 	span.SetAttributes(attribute.String("name", request.Name), attribute.String("namespace", request.Namespace))
@@ -199,11 +170,11 @@ func (r *ReconcileDeployment) removeSidecar(ctx context.Context, dep *appsv1.Dep
 	}
 }
 
-func (r *ReconcileDeployment) syncOnJaegerChanges(event handler.MapObject) []reconcile.Request {
+func (r *ReconcileDeployment) SyncOnJaegerChanges(object client.Object) []reconcile.Request {
 	reconciliations := []reconcile.Request{}
 	nss := map[string]corev1.Namespace{} // namespace cache
 
-	jaeger, ok := event.Object.(*v1.Jaeger)
+	jaeger, ok := object.(*v1.Jaeger)
 	if !ok {
 		return reconciliations
 	}

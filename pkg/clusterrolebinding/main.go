@@ -7,8 +7,8 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 

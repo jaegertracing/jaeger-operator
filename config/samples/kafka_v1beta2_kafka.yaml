@@ -1,0 +1,7 @@
+apiVersion: kafka.jaegertracing.io/v1beta2
+kind: Kafka
+metadata:
+  name: kafka-sample
+spec:
+  # Add fields here
+  foo: bar

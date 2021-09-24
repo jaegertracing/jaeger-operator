@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 )
 
 func TestUpgradeDeprecatedOptionsv1_20_0NonConflicting(t *testing.T) {
@@ -25,8 +25,8 @@ func TestUpgradeDeprecatedOptionsv1_20_0NonConflicting(t *testing.T) {
 	objs := []runtime.Object{existing}
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 	cl := fake.NewFakeClient(objs...)
 
 	// test

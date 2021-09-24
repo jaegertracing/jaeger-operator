@@ -14,12 +14,12 @@ jobs:
       with:
         go-version: 1.16
     - uses: actions/checkout@v2.4.0
-    - uses: jpkrohling/setup-operator-sdk@v1.0.2
+    - uses: jpkrohling/setup-operator-sdk@v1.1.0
       with:
-        operator-sdk-version: v0.18.2
+        operator-sdk-version: v1.12.0
 
     - name: "basic checks"
-      run: ./.ci/script.sh
+      run: make test
 
     - name: "upload test coverage report"
       env:

@@ -30,7 +30,10 @@ jobs:
       - name: "install kuttl"
         run: ./.ci/install-kuttl.sh
 
+      - name: "install gomplate"
+        run: ./.ci/install-gomplate.sh
+
       - name: "run tests"
         env:
           KUBE_VERSION: ${{ matrix.kube-version }}
-        run: make install e2e-tests KUBE_VERSION=$KUBE_VERSION
+        run: make prepare-kuttl-e2e kuttl-e2e KUBE_VERSION=$KUBE_VERSION

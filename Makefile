@@ -4,450 +4,270 @@ echo_prefix=">>>>"
 else
 VECHO = @
 endif
-
-VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x
-GOARCH ?= $(go env GOARCH)
-GOOS ?= $(go env GOOS)
-GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
-KUBERNETES_CONFIG ?= "$(HOME)/.kube/config"
-WATCH_NAMESPACE ?= ""
-BIN_DIR ?= "build/_output/bin"
-IMPORT_LOG=import.log
-FMT_LOG=fmt.log
-
-OPERATOR_NAME ?= jaeger-operator
-NAMESPACE ?= "$(USER)"
-BUILD_IMAGE ?= "$(NAMESPACE)/$(OPERATOR_NAME):latest"
-IMAGE_TAGS ?= "--tag $(BUILD_IMAGE)"
-OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
-VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
-JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
-OPERATOR_VERSION ?= "$(shell git describe --tags)"
-STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
-KAFKA_NAMESPACE ?= "kafka"
-KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
-KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
-ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.4
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
-SDK_VERSION=v0.18.2
-ISTIO_VERSION ?= 1.11.2
-ISTIOCTL="./deploy/test/istio/bin/istioctl"
-GOPATH ?= "$(HOME)/go"
-GOROOT ?= "$(shell go env GOROOT)"
-
-ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
+ISTIOCTL="./tests/_build/istio/istio/bin/istioctl"
 
-PROMETHEUS_OPERATOR_TAG ?= v0.39.0
-PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
+# Current Operator version
+VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
+VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
+JAEGER_VERSION ?= $(shell grep -v '\#' versions.txt | grep jaeger | awk -F= '{print $$2}')
+LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
+UNIT_TEST_PACKAGES := $(shell go list ./pkg/... | grep -v elasticsearch/v1 | grep -v kafka/v1beta2 | grep -v client/versioned)
 
-LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
+ISTIO_VERSION ?= 1.11.2
 
-UNIT_TEST_PACKAGES := $(shell go list ./cmd/... ./pkg/... | grep -v elasticsearch/v1 | grep -v kafka/v1beta2 | grep -v client/versioned)
+# Options for 'bundle-build'
+ifneq ($(origin CHANNELS), undefined)
+BUNDLE_CHANNELS := --channels=$(CHANNELS)
+endif
 
-TEST_OPTIONS = $(VERBOSE) -kubeconfig $(KUBERNETES_CONFIG) -namespacedMan ../../deploy/test/namespace-manifests.yaml -globalMan ../../deploy/test/global-manifests.yaml -root .
+ifneq ($(origin DEFAULT_CHANNEL), undefined)
+BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
+endif
+BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-KUBE_VERSION ?= 1.21
+KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
-.DEFAULT_GOAL := build
+# IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
+# This variable is used to construct full image tags for bundle and catalog images.
+#
+# For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
+# jaegertracing.io/jaeger-operator-bundle:$VERSION and jaegertracing.io/jaeger-operator-catalog:$VERSION.
+IMAGE_TAG_BASE ?= jaegertracing.io/jaeger-operator
 
-.PHONY: check
-check:
-	$(ECHO) Checking...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh > $(FMT_LOG)
-	$(VECHO)[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
+# BUNDLE_IMG defines the image:tag used for the bundle.
+# You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
+BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
-.PHONY: ensure-generate-is-noop
-ensure-generate-is-noop: generate format
-	$(VECHO)git diff  pkg/apis/jaegertracing/v1/zz_generated.*.go
-	$(VECHO)git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
-	$(VECHO)git diff -s --exit-code pkg/client/versioned || (echo "Build failed: the versioned clients aren't up to date. Run 'make generate'." && exit 1)
+# Image URL to use all building/pushing image targets
+IMG ?= controller:latest
+# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false,maxDescLen=0,generateEmbeddedObjectMeta=true"
 
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+ENVTEST_K8S_VERSION = 1.22
 
-.PHONY: format
-format:
-	$(ECHO) Formatting code...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh
-
-.PHONY: lint
-lint:
-	$(ECHO) Linting...
-	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
-
-.PHONY: security
-security:
-	$(ECHO) Security...
-	$(VECHO)${GOPATH}/bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
-
-.PHONY: build
-build: format
-	$(MAKE) gobuild
-
-.PHONY: gobuild
-gobuild:
-	$(ECHO) Building...
-	$(VECHO)${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
-
-.PHONY: docker
-docker:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --file build/Dockerfile -t "$(BUILD_IMAGE)" .
-
-.PHONY: dockerx
-dockerx:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=GOPROXY=${GOPROXY} --platform=$(PLATFORMS) --file build/Dockerfile $(IMAGE_TAGS) .
-
-.PHONY: push
-push:
-ifeq ($(CI),true)
-	$(ECHO) Skipping push, as the build is running within a CI environment
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
 else
-	$(ECHO) "Pushing image $(BUILD_IMAGE)..."
-	$(VECHO)docker push $(BUILD_IMAGE) > /dev/null
+GOBIN=$(shell go env GOBIN)
 endif
 
-.PHONY: unit-tests
-unit-tests:
-	$(ECHO) Running unit tests...
-	$(VECHO)go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
-
-.PHONY: run
-run: crd
-	$(VECHO)rm -rf /tmp/_cert*
-	$(VECHO)POD_NAMESPACE=default OPERATOR_NAME=${OPERATOR_NAME} operator-sdk run local --watch-namespace="${WATCH_NAMESPACE}" --operator-flags "start ${CLI_FLAGS}" --go-ldflags ${LD_FLAGS}
-
-.PHONY: run-debug
-run-debug: run
-run-debug: CLI_FLAGS = --log-level=debug --tracing-enabled=true
-
-.PHONY: set-max-map-count
-set-max-map-count:
-	# This is not required in OCP 4.1. The node tuning operator configures the property automatically
-	# when label tuned.openshift.io/elasticsearch=true label is present on the ES pod. The label
-	# is configured by ES operator.
-	$(VECHO)minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
-
-.PHONY: set-node-os-linux
-set-node-os-linux:
-	# Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
-	$(VECHO)kubectl label nodes --all kubernetes.io/os=linux --overwrite
-
-.PHONY: deploy-es-operator
-deploy-es-operator: set-node-os-linux set-max-map-count deploy-prometheus-operator
-ifeq ($(OLM),true)
-	$(ECHO) Skipping es-operator deployment, assuming it has been installed via OperatorHub
+# If we are running in CI, run go test in verbose mode
+ifeq (,$(CI))
+GOTEST_OPTS=
 else
-	$(VECHO)kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl set image deployment/elasticsearch-operator elasticsearch-operator=${ES_OPERATOR_IMAGE} -n ${ES_OPERATOR_NAMESPACE}
+GOTEST_OPTS=-v
 endif
 
-.PHONY: undeploy-es-operator
-undeploy-es-operator:
-ifeq ($(OLM),true)
-	$(ECHO) Skipping es-operator undeployment, as it should have been installed via OperatorHub
+# Setting SHELL to bash allows bash commands to be executed by recipes.
+# This is a requirement for 'setup-envtest.sh' in the test target.
+# Options are set to exit when a recipe line exits non-zero or a piped command fails.
+SHELL = /usr/bin/env bash -o pipefail
+.SHELLFLAGS = -ec
+
+all: build
+
+##@ General
+
+# The help target prints out all targets with their descriptions organized
+# beneath their categories. The categories are represented by '##@' and the
+# target descriptions by '##'. The awk commands is responsible for reading the
+# entire set of makefiles included in this invocation, looking for lines of the
+# file as xyz: ## something, and then pretty-format the target and help. Then,
+# if there's a line with ##@ something, that gets pretty-printed as a category.
+# More info on the usage of ANSI control characters for terminal formatting:
+# https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
+# More info on the awk command:
+# http://linuxcommand.org/lc3_adv_awk.php
+
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Development
+
+manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+fmt: ## Run go fmt against code.
+	go fmt ./...
+
+vet: ## Run go vet against code.
+	go vet ./...
+
+##@ Build
+
+build: generate fmt vet ## Build manager binary.
+	go build -o bin/manager main.go
+
+run: manifests generate fmt vet ## Run a controller from your host.
+	go run -ldflags ${LD_FLAGS} ./main.go
+
+docker-build: test ## Build docker image with the manager.
+	docker build -t ${IMG} .
+
+docker-push: ## Push docker image with the manager.
+	docker push ${IMG}
+
+##@ Deployment
+
+install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+
+uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+
+deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
+
+undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+
+CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+controller-gen: ## Download controller-gen locally if necessary.
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
+
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
+ENVTEST = $(shell pwd)/bin/setup-envtest
+envtest: ## Download envtest-setup locally if necessary.
+	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef
+
+.PHONY: bundle
+bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	operator-sdk generate kustomize manifests -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+
+.PHONY: bundle-build
+bundle-build: ## Build the bundle image.
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+.PHONY: bundle-push
+bundle-push: ## Push the bundle image.
+	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+
+.PHONY: opm
+OPM = ./bin/opm
+opm: ## Download opm locally if necessary.
+ifeq (,$(wildcard $(OPM)))
+ifeq (,$(shell which opm 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(OPM)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$${OS}-$${ARCH}-opm ;\
+	chmod +x $(OPM) ;\
+	}
 else
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete namespace ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true 2>&1 || true
+OPM = $(shell which opm)
+endif
 endif
 
-.PHONY: es
-es: storage
-ifeq ($(SKIP_ES_EXTERNAL),true)
-	$(ECHO) Skipping creation of external Elasticsearch instance
-else
-	$(VECHO)kubectl create -f ./tests/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
+# These images MUST exist in a registry and be pull-able.
+BUNDLE_IMGS ?= $(BUNDLE_IMG)
+
+# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v0.2.0).
+CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(VERSION)
+
+# Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
+ifneq ($(origin CATALOG_BASE_IMG), undefined)
+FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
 endif
+
+# Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
+# This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
+# https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
+.PHONY: catalog-build
+catalog-build: opm ## Build a catalog image.
+	$(OPM) index add --container-tool docker --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+
+# Push the catalog image.
+.PHONY: catalog-push
+catalog-push: ## Push a catalog image.
+	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: test
+test: generate fmt vet envtest
+	@echo Running unit tests...
+	@ KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
+
+# Build the container image, used only for local dev purposes
+container:
+	docker build -t ${IMG} --build-arg VERSION_PKG=${VERSION_PKG} --build-arg VERSION=${VERSION} --build-arg VERSION_DATE=${VERSION_DATE} --build-arg JAEGER_VERSION=${JAEGER_VERSION} .
+
+# Push the container image, used only for local dev purposes
+container-push:
+	docker push ${IMG}
+
 
 .PHONY: istio
 istio:
-	$(ECHO) Install istio with minimal profile
-	$(VECHO)mkdir -p deploy/test
-	$(VECHO)[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ./deploy/test/istio)
-	$(VECHO)${ISTIOCTL} install --set profile=minimal -y
+	mkdir -p tests/_build/istio
+	[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ./tests/_build/istio/istio)
+	${ISTIOCTL} install --set profile=minimal -y
 
-.PHONY: undeploy-istio
-undeploy-istio:
-	$(VECHO)[ -f "${ISTIOCTL}" ] && (${ISTIOCTL} manifest generate --set profile=demo | kubectl delete --ignore-not-found=true -f -) || true
-	$(VECHO)kubectl delete namespace istio-system --ignore-not-found=true || true
-	$(VECHO)rm -rf deploy/test/istio
+# end-to-tests
+.PHONY: kuttl-e2e
+kuttl-e2e:
+	$(KUTTL) test
 
-.PHONY: cassandra
-cassandra: storage
-	$(VECHO)kubectl create -f ./tests/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+.PHONY: prepare-kuttl-e2e
+prepare-kuttl-e2e: kuttl set-test-image-vars set-image-controller prepare-kuttl-images generate-kuttl-files build render-kuttl-templates start-kind
 
-.PHONY: storage
-storage:
-	$(ECHO) Creating namespace $(STORAGE_NAMESPACE)
-	$(VECHO)kubectl create namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+.PHONY: generate-kuttl-files
+generate-kuttl-files:
+	mkdir -p tests/_build/crds tests/_build/manifests
+	$(KUSTOMIZE) build config/default -o tests/_build/manifests/01-jaeger-operator.yaml
+	$(KUSTOMIZE) build config/crd -o tests/_build/crds/
 
-.PHONY: deploy-kafka-operator
-deploy-kafka-operator:
-	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
-	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-ifeq ($(OLM),true)
-	$(ECHO) Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
-else
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml --create-dirs
-	$(VECHO)${SED} -i 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml
-	$(VECHO) kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-operator.yaml | grep -v "already exists" || true
-	$(VECHO)kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
-endif
-
-.PHONY: undeploy-kafka-operator
-undeploy-kafka-operator:
-ifeq ($(OLM),true)
-	$(ECHO) Skiping kafka-operator undeploy
-else
-	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
-	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-namespaced --ignore-not-found=true || true
-	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --ignore-not-found=true || true
-	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --ignore-not-found=true || true
-endif
-	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
-
-.PHONY: kafka
-kafka: deploy-kafka-operator
-ifeq ($(SKIP_KAFKA),true)
-	$(ECHO) Skipping Kafka/external ES related tests
-else
-	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
-	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
-	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
-endif
-
-.PHONY: undeploy-kafka
-undeploy-kafka: undeploy-kafka-operator
-	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
-
-
-.PHONY: deploy-prometheus-operator
-deploy-prometheus-operator:
-ifeq ($(OLM),true)
-	$(ECHO) Skipping prometheus-operator deployment, assuming it has been installed via OperatorHub
-else
-	$(VECHO)kubectl apply -f ${PROMETHEUS_BUNDLE}
-endif
-
-.PHONY: undeploy-prometheus-operator
-undeploy-prometheus-operator:
-ifeq ($(OLM),true)
-	$(ECHO) Skipping prometheus-operator undeployment, as it should have been installed via OperatorHub
-else
-	$(VECHO)kubectl delete -f ${PROMETHEUS_BUNDLE} --ignore-not-found=true || true
-endif
-
-.PHONY: clean
-clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
-	$(VECHO)rm -f deploy/test/*.yaml
-	$(VECHO)if [ -d deploy/test ]; then rmdir deploy/test ; fi
-	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	$(VECHO)kubectl delete -f deploy/crds/jaegertracing.io_jaegers_crd.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/operator.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/role_binding.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/role.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/service_account.yaml --ignore-not-found=true || true
-
-.PHONY: crd
-crd:
-	$(VECHO)kubectl create -f deploy/crds/jaegertracing.io_jaegers_crd.yaml 2>&1 | grep -v "already exists" || true
-
-.PHONY: ingress
-ingress:
-	$(VECHO)minikube addons enable ingress
-
-.PHONY: generate
-generate: internal-generate format
-
-.PHONY: internal-generate
-internal-generate:
-	$(VECHO)GOPATH=${GOPATH} GOROOT=${GOROOT} ./.ci/generate.sh
-
-.PHONY: test
-test: unit-tests e2e-tests
-
-.PHONY: all
-all: check format lint security build test
-
-.PHONY: ci
-ci: ensure-generate-is-noop check format lint security build unit-tests
-
-.PHONY: scorecard
-scorecard:
-	$(VECHO)operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
-
-.PHONY: install-sdk
-install-sdk:
-	$(ECHO) Installing SDK ${SDK_VERSION}
-	$(VECHO)SDK_VERSION=$(SDK_VERSION) GOPATH=$(GOPATH) ./.ci/install-sdk.sh
-
-.PHONY: install-tools
-install-tools:
-	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
-		golang.org/x/lint/golint \
-		golang.org/x/tools/cmd/goimports \
-		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
-		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 \
-		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
-		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
-	./.ci/install-gomplate.sh
-
-.PHONY: install
-install: install-sdk install-tools
-
-.PHONY: deploy
-deploy: ingress crd
-	$(VECHO)kubectl apply -f deploy/service_account.yaml
-	$(VECHO)kubectl apply -f deploy/cluster_role.yaml
-	$(VECHO)kubectl apply -f deploy/cluster_role_binding.yaml
-	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml | kubectl apply -f -
-
-.PHONY: operatorhub
-operatorhub: check-operatorhub-pr-template
-	$(VECHO)./.ci/operatorhub.sh
-
-.PHONY: check-operatorhub-pr-template
-check-operatorhub-pr-template:
-	$(VECHO)curl https://raw.githubusercontent.com/operator-framework/community-operators/master/docs/pull_request_template.md -o .ci/.operatorhub-pr-template.md -s > /dev/null 2>&1
-	$(VECHO)git diff -s --exit-code .ci/.operatorhub-pr-template.md || (echo "Build failed: the PR template for OperatorHub has changed. Sync it and try again." && exit 1)
-
-.PHONY: local-jaeger-container
-local-jaeger-container:
-	$(ECHO) "Starting local container with Jaeger. Check http://localhost:16686"
-	$(VECHO)docker run -d --rm -p 16686:16686 -p 6831:6831/udp --name jaeger jaegertracing/all-in-one:1.22 > /dev/null
-
-.PHONY: changelog
-changelog:
-	$(ECHO) "Set env variable OAUTH_TOKEN before invoking, https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token"
-	$(VECHO)docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --owner jaegertracing --repo jaeger-operator
-
-
-# e2e tests using kuttl
-
-kuttl:
-ifeq (, $(shell which kubectl-kuttl))
-	echo ${PATH}
-	ls -l /usr/local/bin
-	which kubectl-kuttl
-
-	$(VECHO){ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: kuttl not found." ;\
-	echo "Please check https://kuttl.dev/docs/cli.html for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KUTTL=$(shell which kubectl-kuttl)
-endif
-
-kind:
-ifeq (, $(shell which kind))
-	$(VECHO){ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: kind not found." ;\
-	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KIND=$(shell which kind)
-endif
-
-.PHONY: prepare-e2e-tests
-prepare-e2e-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
-prepare-e2e-tests: build docker build-assert-job
-	$(VECHO)mkdir -p  tests/_build/manifests
-	$(VECHO)mkdir -p  tests/_build/crds
-
-	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
-
-	$(VECHO)cat deploy/role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
-
-	$(VECHO)cat deploy/cluster_role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
-
-	$(VECHO)${SED} "s~namespace: .*~namespace: jaeger-operator-system~gi" deploy/cluster_role_binding.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
-
-	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)${SED} "s~imagePullPolicy: Always~imagePullPolicy: Never~gi" tests/_build/manifests/01-jaeger-operator.yaml -i
-	$(VECHO)${SED} "0,/fieldPath: metadata.namespace/s/fieldPath: metadata.namespace/fieldPath: metadata.annotations['olm.targetNamespaces']/gi" tests/_build/manifests/01-jaeger-operator.yaml -i
-
-	$(VECHO)cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
+.PHONY: prepare-kuttl-images
+prepare-kuttl-images: container build-assert-job
 	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	# Image for the upgrade E2E test
+	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg VERSION_PKG=${VERSION_PKG} --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file Dockerfile -t "local/jaeger-operator:next" .
 
-# This files are needed for the examples
-# examples-simplest
-	$(VECHO)gomplate -f examples/simplest.yaml -o tests/e2e/examples-simplest/00-install.yaml
-	$(VECHO)JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-simplest/00-assert.yaml
-	$(VECHO)JAEGER_SERVICE=smoketest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simplest/01-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simplest/01-assert.yaml
-# examples-with-badger
-	$(VECHO)gomplate -f examples/with-badger.yaml -o tests/e2e/examples-with-badger/00-install.yaml
-	$(VECHO)JAEGER_NAME=with-badger gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger/00-assert.yaml
-	$(VECHO)JAEGER_SERVICE=with-badger JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger/01-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger/01-assert.yaml
-# examples-with-badger-and-volume
-	$(VECHO)gomplate -f examples/with-badger-and-volume.yaml -o tests/e2e/examples-with-badger-and-volume/00-install.yaml
-	$(VECHO)JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/00-assert.yaml
-	$(VECHO)JAEGER_SERVICE=with-badger-and-volume JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-assert.yaml
-# examples-service-types
-	$(VECHO)gomplate -f examples/service-types.yaml -o tests/e2e/examples-service-types/00-install.yaml
-	$(VECHO)JAEGER_NAME=service-types gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-service-types/00-assert.yaml
-	$(VECHO)JAEGER_SERVICE=service-types JAEGER_OPERATION=smoketestoperation JAEGER_NAME=service-types gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-service-types/01-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-service-types/01-assert.yaml
-# examples-simple-prod
-	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod/00-install.yaml
-	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod/00-assert.yaml
-	$(VECHO)gomplate -f examples/simple-prod.yaml -o tests/e2e/examples-simple-prod/01-install.yaml
-	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod/01-install.yaml
-	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod/01-assert.yaml
-	$(VECHO)JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod/02-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod/02-assert.yaml
-# examples-simple-prod-with-volumes
-	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-install.yaml
-	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-assert.yaml
-	$(VECHO)gomplate -f examples/simple-prod-with-volumes.yaml -o tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
-	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
-	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/01-assert.yaml
-	$(VECHO)JAEGER_SERVICE=simple-prod-with-volumes JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-assert.yaml
-# examples-with-sampling
-	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-with-sampling/00-install.yaml
-	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-with-sampling/00-assert.yaml
-	$(VECHO)gomplate -f examples/with-sampling.yaml -o tests/e2e/examples-with-sampling/01-install.yaml
-	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-with-sampling/01-install.yaml
-	$(VECHO)JAEGER_NAME=with-sampling gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-sampling/01-assert.yaml
-	$(VECHO)JAEGER_SERVICE=with-sampling JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-sampling gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-sampling/02-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-sampling/02-assert.yaml
+.PHONY: start-kind
+start-kind: 
+	$(VECHO)kind create cluster --config $(KIND_CONFIG)
+	$(VECHO)kind load docker-image local/jaeger-operator:e2e
+	$(VECHO)kind load docker-image local/asserts:e2e
+	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)kind load docker-image local/jaeger-operator:next
+	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+
+
+.PHONY: render-kuttl-templates
+render-kuttl-templates:
 # This is needed for the generate test
-	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
-# This is needed for the upgrade test
-	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
 	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
@@ -531,40 +351,49 @@ prepare-e2e-tests: build docker build-assert-job
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/04-wait-es-index-cleaner.yaml -o tests/e2e/es-index-cleaner/11-wait-es-index-cleaner.yaml
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/12-install.yaml
 
-# end-to-tests
-.PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests start-kind run-e2e-tests
 
-.PHONY: run-e2e-tests
-run-e2e-tests:
-	$(VECHO)$(KUTTL) test
-
-start-kind:
-# Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
-# file), the cluster is created here. There are multiple reasons to do this:
-# 	* The kubectl command will not work outside KUTTL
-#	* Some KUTTL versions are not able to start properly a Kind cluster
-#	* The cluster will be removed after running KUTTL (this can be disabled). Sometimes,
-#		the cluster teardown is not done properly and KUTTL can not be run with the --start-kind flag
-# When the Kind cluster is not created by Kuttl, the
-# kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
-# container images here.
-	$(VECHO)kind create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
-	$(VECHO)kind load docker-image local/jaeger-operator:e2e
-	$(VECHO)kind load docker-image local/asserts:e2e
-	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)kind load docker-image local/jaeger-operator:next
-	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+set-test-image-vars:
+	$(eval IMG=local/jaeger-operator:e2e)
 
 .PHONY: build-assert-job
 build-assert-job:
-	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
-	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+	@docker build -t local/asserts:e2e  -f Dockerfile.asserts .
 
-.PHONY: build-assert-job
-install-git-hooks:
-	$(VECHO)cp scripts/git-hooks/pre-commit .git/hooks
+kuttl:
+ifeq (, $(shell which kubectl-kuttl))
+	echo ${PATH}
+	ls -l /usr/local/bin
+	which kubectl-kuttl
 
-.PHONY: prepare-release
-prepare-release:
-	$(VECHO)./.ci/prepare-release.sh
+	@{ \
+	set -e ;\
+	echo "" ;\
+	echo "ERROR: kuttl not found." ;\
+	echo "Please check https://kuttl.dev/docs/cli.html for installation instructions and try again." ;\
+	echo "" ;\
+	exit 1 ;\
+	}
+else
+KUTTL=$(shell which kubectl-kuttl)
+endif
+
+
+# Set the controller image parameters
+set-image-controller: manifests kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+
+kind:
+ifeq (, $(shell which kind))
+	@{ \
+	set -e ;\
+	echo "" ;\
+	echo "ERROR: kind not found." ;\
+	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
+	echo "" ;\
+	exit 1 ;\
+	}
+else
+KIND=$(shell which kind)
+endif
+
+tools: kustomize controller-gen operator-sdk

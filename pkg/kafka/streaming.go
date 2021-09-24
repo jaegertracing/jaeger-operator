@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -35,7 +35,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta2.Kafka {
 			Namespace: jaeger.Namespace,
 			Labels:    util.Labels(jaeger.Name, "kafka", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,
@@ -45,7 +45,7 @@ func Persistent(jaeger *v1.Jaeger) v1beta2.Kafka {
 			},
 		},
 		Spec: v1beta2.KafkaSpec{
-			v1.NewFreeForm(map[string]interface{}{
+			FreeForm: v1.NewFreeForm(map[string]interface{}{
 				"kafka": map[string]interface{}{
 					"replicas": uint(replicas),
 					"listeners": []map[string]interface{}{
@@ -112,7 +112,7 @@ func User(jaeger *v1.Jaeger) v1beta2.KafkaUser {
 			Namespace: jaeger.Namespace,
 			Labels:    labels,
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,
@@ -122,7 +122,7 @@ func User(jaeger *v1.Jaeger) v1beta2.KafkaUser {
 			},
 		},
 		Spec: v1beta2.KafkaUserSpec{
-			v1.NewFreeForm(map[string]interface{}{
+			FreeForm: v1.NewFreeForm(map[string]interface{}{
 				"authentication": map[string]interface{}{
 					"type": "tls",
 				},
