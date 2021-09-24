@@ -3,8 +3,8 @@ package inventory
 import (
 	"fmt"
 
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 // Elasticsearch represents the elastic search inventory based on the current and desired states

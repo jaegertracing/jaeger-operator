@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	"github.com/spf13/viper"

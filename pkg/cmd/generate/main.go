@@ -14,7 +14,7 @@ import (
 	k8s_json "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/start"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )

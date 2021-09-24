@@ -18,54 +18,13 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
-
-// Add creates a new Jaeger Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileJaeger{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
-	c, err := controller.New("jaeger-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	if d, err := autodetect.New(mgr); err != nil {
-		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
-	} else {
-		d.Start()
-	}
-
-	// Watch for changes to primary resource Jaeger
-	err = c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileJaeger{}
 
 // ReconcileJaeger reconciles a Jaeger object
 type ReconcileJaeger struct {
@@ -75,6 +34,15 @@ type ReconcileJaeger struct {
 	rClient         client.Reader
 	scheme          *runtime.Scheme
 	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
+}
+
+func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileJaeger {
+	return &ReconcileJaeger{
+		client:          client,
+		rClient:         clientReader,
+		scheme:          scheme,
+		strategyChooser: defaultStrategyChooser,
+	}
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -162,7 +130,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// workaround for https://github.com/jaegertracing/jaeger-operator/pull/558
-	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
+	instance.APIVersion = fmt.Sprintf("%s/%s", v1.GroupVersion.Group, v1.GroupVersion.Version)
 	instance.Kind = "Jaeger"
 
 	originalInstance := *instance

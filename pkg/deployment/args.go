@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
 )
 
 func allArgs(optionsList ...v1.Options) []string {
