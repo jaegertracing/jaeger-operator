@@ -32,7 +32,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 
 SED ?= "sed"
 
-PROMETHEUS_OPERATOR_TAG ?= v0.43.0
+PROMETHEUS_OPERATOR_TAG ?= v0.51.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(OPERATOR_VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
@@ -202,6 +202,11 @@ e2e-tests-upgrade: prepare-e2e-tests
 	UPGRADE_TEST_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) go test -tags=upgrade  ./test/e2e/... $(TEST_OPTIONS)
 .PHONY: e2e-tests-servicemonitor
 
+e2e-tests-servicemonitor: prepare-e2e-tests es deploy-prometheus-operator
+	@echo Running Servicemonitor end-to-end tests...
+	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) PROMETHEUS_NAMESPACE=$(PROMETHEUS_NAMESPACE) go test -tags=servicemonitor ./test/e2e/... $(TEST_OPTIONS)
+
+.PHONY: e2e-tests-servicemonitor
 e2e-tests-servicemonitor: prepare-e2e-tests es deploy-prometheus-operator
 	@echo Running Servicemonitor end-to-end tests...
 	@STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) PROMETHEUS_NAMESPACE=$(PROMETHEUS_NAMESPACE) go test -tags=servicemonitor ./test/e2e/... $(TEST_OPTIONS)

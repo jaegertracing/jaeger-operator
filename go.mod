@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/coreos/prometheus-operator v0.41.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-openapi/spec v0.19.8
 	github.com/googleapis/gnostic v0.4.1
@@ -13,6 +12,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.51.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.18.0
 	github.com/sirupsen/logrus v1.6.0
@@ -31,7 +31,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace v0.20.0
 	google.golang.org/grpc v1.32.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.7
 	k8s.io/apimachinery v0.20.7
 	k8s.io/client-go v12.0.0+incompatible
