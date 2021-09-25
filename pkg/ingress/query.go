@@ -77,9 +77,9 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *networkingv1.IngressBackend) {
 	path := ""
 
-	if allInOneQueryBasePath, ok := i.jaeger.Spec.AllInOne.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
+	if allInOneQueryBasePath, ok := i.jaeger.Spec.AllInOne.Options.StringMap()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
 		path = allInOneQueryBasePath
-	} else if queryBasePath, ok := i.jaeger.Spec.Query.Options.Map()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
+	} else if queryBasePath, ok := i.jaeger.Spec.Query.Options.StringMap()["query.base-path"]; ok && i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction {
 		path = queryBasePath
 	}
 
@@ -123,13 +123,15 @@ func getRules(path string, hosts []string, backend *networkingv1.IngressBackend)
 }
 
 func getRule(host string, path string, backend *networkingv1.IngressBackend) networkingv1.IngressRule {
+	pathType := networkingv1.PathTypeImplementationSpecific
 	rule := networkingv1.IngressRule{}
 	rule.Host = host
 	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
 		Paths: []networkingv1.HTTPIngressPath{
 			networkingv1.HTTPIngressPath{
-				Path:    path,
-				Backend: *backend,
+				PathType: &pathType,
+				Path:     path,
+				Backend:  *backend,
 			},
 		},
 	}

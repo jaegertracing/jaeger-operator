@@ -14,8 +14,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -77,10 +77,19 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		i.jaeger.Spec.Storage.Options.Filter(i.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	ca.Update(i.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(i.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if i.jaeger.Spec.Ingester.Strategy != nil {
+		strategy = *i.jaeger.Spec.Ingester.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -104,6 +113,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
@@ -154,6 +164,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(i.jaeger, commonSpec),
 				},
 			},
 		},

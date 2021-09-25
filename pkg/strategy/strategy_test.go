@@ -15,7 +15,7 @@ import (
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -80,13 +80,13 @@ func TestWithIngresses(t *testing.T) {
 }
 
 func TestWithKafkas(t *testing.T) {
-	c := New().WithKafkas([]kafkav1beta1.Kafka{{}})
+	c := New().WithKafkas([]kafkav1beta2.Kafka{{}})
 	assert.Len(t, c.Kafkas(), 1)
 	assert.Len(t, c.All(), 1)
 }
 
 func TestWithKafkaUsers(t *testing.T) {
-	c := New().WithKafkaUsers([]kafkav1beta1.KafkaUser{{}})
+	c := New().WithKafkaUsers([]kafkav1beta2.KafkaUser{{}})
 	assert.Len(t, c.KafkaUsers(), 1)
 	assert.Len(t, c.All(), 1)
 }

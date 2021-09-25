@@ -155,7 +155,7 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 		{flag: "es.tls.key", envVar: "ES_TLS_KEY"},
 		{flag: "es.tls.skip-host-verify", envVar: "ES_TLS_SKIP_HOST_VERIFY"},
 	}
-	options := opts.Map()
+	options := opts.StringMap()
 	var envs []corev1.EnvVar
 	for _, x := range scriptEnvVars {
 		if val, ok := options[x.flag]; ok {

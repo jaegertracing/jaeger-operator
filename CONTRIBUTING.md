@@ -37,7 +37,7 @@ make run
 At this point, a Jaeger instance can be installed:
 
 ```
-kubectl apply -f deploy/examples/simplest.yaml
+kubectl apply -f examples/simplest.yaml
 kubectl get jaegers
 kubectl get pods
 ```
@@ -45,7 +45,7 @@ kubectl get pods
 To remove the instance:
 
 ```
-kubectl delete -f deploy/examples/simplest.yaml
+kubectl delete -f examples/simplest.yaml
 ```
 
 Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
@@ -77,7 +77,7 @@ kubectl get pods -n ingress-nginx
 To verify that it's working, deploy the `simplest.yaml` and check the ingress routes:
 
 ```
-$ kubectl apply -f deploy/examples/simplest.yaml 
+$ kubectl apply -f examples/simplest.yaml
 jaeger.jaegertracing.io/simplest created
 $ kubectl get ingress
 NAME             HOSTS     ADDRESS          PORTS     AGE
@@ -124,7 +124,7 @@ The generated CSV yaml should then be compared and used to update the deploy/olm
 The jaeger.clusterserviceversion.yaml file can then be tested with this command:
 
 ```
-$ operator-sdk scorecard --cr-manifest deploy/examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
+$ operator-sdk scorecard --cr-manifest examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
 Checking that writing into CRs has an effect

@@ -78,6 +78,22 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
+	// remove reserved labels
+	for _, labels := range []map[string]string{
+		jaeger.Spec.JaegerCommonSpec.Labels,
+		jaeger.Spec.AllInOne.JaegerCommonSpec.Labels,
+		jaeger.Spec.Query.JaegerCommonSpec.Labels,
+	} {
+		if _, ok := labels["app.kubernetes.io/instance"]; ok {
+			span.AddEvent(fmt.Sprintf("the reserved label 'app.kubernetes.io/instance' is overwritten, falling back to %s", jaeger.Name))
+			delete(labels, "app.kubernetes.io/instance")
+		}
+		if _, ok := labels["app.kubernetes.io/managed-by"]; ok {
+			span.AddEvent("the reserved label 'app.kubernetes.io/managed-by' is overwritten, falling back to jaeger-operator")
+			delete(labels, "app.kubernetes.io/managed-by")
+		}
+	}
+
 	// normalize the deployment strategy
 	if jaeger.Spec.Strategy != v1.DeploymentStrategyProduction && jaeger.Spec.Strategy != v1.DeploymentStrategyStreaming {
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
@@ -113,7 +129,7 @@ func distributedStorage(storage v1.JaegerStorageType) bool {
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
-	sFlagsMap := spec.Options.Map()
+	sFlagsMap := spec.Options.StringMap()
 	tlsEnabled := sFlagsMap["es.tls"]
 	tlsSkipHost := sFlagsMap["es.tls.skip-host-verify"]
 	tlsCa := sFlagsMap["es.tls.ca"]
@@ -185,7 +201,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 			uiOpts = m
 		}
 	}
-	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	enableArchiveButton(uiOpts, spec.Storage.Options.StringMap())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
 	enableDocumentationLink(uiOpts, spec)
 	enableLogOut(uiOpts, spec)

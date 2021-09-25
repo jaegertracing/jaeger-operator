@@ -5,16 +5,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -461,4 +463,54 @@ func TestIngesterServiceLinks(t *testing.T) {
 	dep := ingester.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}
+
+func TestIngesterRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := newIngesterJaeger("my-instance")
+	jaeger.Spec.Ingester.Strategy = &strategy
+	i := NewIngester(jaeger)
+	dep := i.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestIngesterEmptyStrategyType(t *testing.T) {
+	jaeger := newIngesterJaeger("my-instance")
+	i := NewIngester(jaeger)
+	dep := i.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestIngesterGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestIngesterGRPCPlugin"})
+	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	ingester := Ingester{jaeger: jaeger}
+	dep := ingester.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }

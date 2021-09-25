@@ -1,6 +1,7 @@
 package v1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -103,6 +104,10 @@ const (
 	// JaegerBadgerStorage indicates that the Jaeger storage type is badger
 	// +k8s:openapi-gen=true
 	JaegerBadgerStorage JaegerStorageType = "badger"
+
+	// JaegerGRPCPluginStorage indicates that the Jaeger storage type is grpc-plugin
+	// +k8s:openapi-gen=true
+	JaegerGRPCPluginStorage JaegerStorageType = "grpc-plugin"
 )
 
 // ValidStorageTypes returns the list of valid storage types
@@ -113,6 +118,7 @@ func ValidStorageTypes() []JaegerStorageType {
 		JaegerESStorage,
 		JaegerKafkaStorage,
 		JaegerBadgerStorage,
+		JaegerGRPCPluginStorage,
 	}
 }
 
@@ -120,6 +126,9 @@ func ValidStorageTypes() []JaegerStorageType {
 func (storageType JaegerStorageType) OptionsPrefix() string {
 	if storageType == JaegerESStorage {
 		return "es"
+	}
+	if storageType == JaegerGRPCPluginStorage {
+		return "grpc-storage-plugin"
 	}
 	return string(storageType)
 }
@@ -261,6 +270,10 @@ type JaegerQuerySpec struct {
 	NodePort int32 `json:"nodePort,omitempty"`
 
 	// +optional
+	// NodePort represents the port at which the NodePort service to allocate
+	GRPCNodePort int32 `json:"grpcNodePort,omitempty"`
+
+	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
@@ -268,6 +281,9 @@ type JaegerQuerySpec struct {
 
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -369,6 +385,9 @@ type JaegerAllInOneSpec struct {
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs
@@ -420,6 +439,9 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -445,6 +467,9 @@ type JaegerIngesterSpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -512,6 +537,9 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	Elasticsearch ElasticsearchSpec `json:"elasticsearch,omitempty"`
+
+	// +optional
+	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
 }
 
 // JaegerServiceMonitorSpec defines servicemonitor objects used by prometheus-operator
@@ -583,7 +611,18 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Timeout string `json:"timeout,omitempty"`
 
 	// +optional
+	Affinity *v1.Affinity `json:"affinity,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+}
+
+// GRPCPluginSpec represents the grpc-plugin configuration options.
+// +k8s:openapi-gen=true
+type GRPCPluginSpec struct {
+	// This image is used as an init-container to copy plugin binary into /plugin directory.
+	// +optional
+	Image string `json:"image,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -615,6 +654,9 @@ type JaegerDependenciesSpec struct {
 
 	// +optional
 	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
+
+	// +optional
+	ElasticsearchTimeRange string `json:"elasticsearchTimeRange,omitempty"`
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`

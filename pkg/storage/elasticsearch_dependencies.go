@@ -15,7 +15,7 @@ import (
 
 // EnableRollover returns true if rollover should be enabled
 func EnableRollover(spec v1.JaegerStorageSpec) bool {
-	useAliases := spec.Options.Map()["es.use-aliases"]
+	useAliases := spec.Options.StringMap()["es.use-aliases"]
 	return (spec.Type == v1.JaegerESStorage) && strings.EqualFold(useAliases, "true")
 }
 
@@ -78,7 +78,7 @@ func envVars(opts v1.Options) []corev1.EnvVar {
 		{flag: "es.num-shards", envVar: "SHARDS"},
 		{flag: "es.num-replicas", envVar: "REPLICAS"},
 	}
-	options := opts.Map()
+	options := opts.StringMap()
 	for _, x := range scriptEnvVars {
 		if val, ok := options[x.flag]; ok {
 			envs = append(envs, corev1.EnvVar{Name: x.envVar, Value: val})

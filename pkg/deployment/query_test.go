@@ -5,15 +5,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -339,4 +341,53 @@ func TestQueryPriorityClassName(t *testing.T) {
 	q := NewQuery(jaeger)
 	dep := q.Get()
 	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
+func TestQueryRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Query.Strategy = &strategy
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestQueryEmptyStrategyType(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestQueryGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryGRPCPlugin"})
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	query := Query{jaeger: jaeger}
+	dep := query.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }

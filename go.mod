@@ -13,16 +13,22 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.10.0
-	github.com/sirupsen/logrus v1.5.0
+	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/common v0.18.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.23.1+incompatible
 	go.opentelemetry.io/otel v0.20.0
+	go.opentelemetry.io/otel/exporters/metric/prometheus v0.20.0
 	go.opentelemetry.io/otel/exporters/trace/jaeger v0.20.0
+	go.opentelemetry.io/otel/metric v0.20.0
+	go.opentelemetry.io/otel/oteltest v0.20.0
 	go.opentelemetry.io/otel/sdk v0.20.0
+	go.opentelemetry.io/otel/sdk/export/metric v0.20.0
+	go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace v0.20.0
 	google.golang.org/grpc v1.32.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0

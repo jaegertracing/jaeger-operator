@@ -21,7 +21,8 @@ metadata:
       distributed systems
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.23.0
+    operators.openshift.io/infrastructure-features: '["disconnected"]'
+  name: jaeger-operator.v1.25.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -300,7 +301,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: jaegertracing/jaeger-operator:1.23.0
+                image: jaegertracing/jaeger-operator:1.25.0
                 imagePullPolicy: Always
                 name: jaeger-operator
                 ports:
@@ -308,7 +309,13 @@ spec:
                   name: http-metrics
                 - containerPort: 8686
                   name: cr-metrics
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 512Mi
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
               serviceAccountName: jaeger-operator
       permissions:
       - rules:
@@ -501,8 +508,8 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.22.1
+  replaces: jaeger-operator.v1.24.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.23.0
+  version: 1.25.0

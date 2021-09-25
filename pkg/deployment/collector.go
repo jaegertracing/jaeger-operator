@@ -17,6 +17,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -75,10 +76,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
-	if len(util.FindItem("--collector.grpc.tls.enabled=true", args)) == 0 {
+	if len(util.FindItem("--collector.grpc.tls.enabled=", args)) == 0 {
 		tls.Update(c.jaeger, commonSpec, &options)
-		ca.Update(c.jaeger, commonSpec)
 	}
+	ca.Update(c.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(c.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
@@ -87,6 +89,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 	priorityClassName := ""
 	if c.jaeger.Spec.Collector.PriorityClassName != "" {
 		priorityClassName = c.jaeger.Spec.Collector.PriorityClassName
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if c.jaeger.Spec.Collector.Strategy != nil {
+		strategy = *c.jaeger.Spec.Collector.Strategy
 	}
 
 	return &appsv1.Deployment{
@@ -112,6 +122,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
@@ -185,6 +196,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(c.jaeger, commonSpec),
 				},
 			},
 		},

@@ -119,7 +119,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 }
 
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
-	sFlagsMap := s.Options.Map()
+	sFlagsMap := s.Options.StringMap()
 	switch s.Type {
 	case v1.JaegerCassandraStorage:
 		keyspace := sFlagsMap["cassandra.keyspace"]
@@ -141,6 +141,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
+			{Name: "ES_TIME_RANGE", Value: s.Dependencies.ElasticsearchTimeRange},
 		}
 		if s.Dependencies.ElasticsearchNodesWanOnly != nil {
 			vars = append(vars, corev1.EnvVar{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(*s.Dependencies.ElasticsearchNodesWanOnly)})
@@ -155,7 +156,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 }
 
 func logTLSNotSupported(j *v1.Jaeger) {
-	sFlagsMap := j.Spec.Storage.Options.Map()
+	sFlagsMap := j.Spec.Storage.Options.StringMap()
 	if strings.EqualFold(sFlagsMap["es.tls.enabled"], "true") || strings.EqualFold(sFlagsMap["es.tls"], "true") {
 		j.Logger().Warn("Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies")
 	}

@@ -75,20 +75,20 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 }
 
 // Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
-func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
 		"namespace":  dep.Namespace,
 		"deployment": dep.Name,
 	})
-	_, depExist := dep.Annotations[Annotation]
-	_, nsExist := ns.Annotations[Annotation]
+	depAnnotationValue, depExist := dep.Annotations[Annotation]
+	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
-	if depExist {
+	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
 		logger.Debug("annotation present on deployment")
 		return true
 	}
 
-	if nsExist {
+	if nsExist && !strings.EqualFold(nsAnnotationValue, "false") {
 		logger.Debug("annotation present on namespace")
 		return true
 	}
@@ -98,7 +98,7 @@ func Desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !Desired(dep, ns) {
+	if !desired(dep, ns) {
 		return false
 	}
 
@@ -188,7 +188,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 
 	// Enable tls by default for openshift platform
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 		}

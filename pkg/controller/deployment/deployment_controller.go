@@ -115,11 +115,6 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		span.AddEvent(msg, trace.WithAttributes(attribute.String("error", err.Error())))
 	}
 
-	if !inject.Desired(dep, ns) {
-		// sidecar isn't desired for this deployment, skip remaining of the reconciliation
-		return reconcile.Result{}, nil
-	}
-
 	jaegers := &v1.JaegerList{}
 	opts := []client.ListOption{}
 
@@ -132,23 +127,23 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
-	jaeger := inject.Select(dep, ns, jaegers)
-	if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-		logger := logger.WithFields(log.Fields{
-			"jaeger":           jaeger.Name,
-			"jaeger-namespace": jaeger.Namespace,
-		})
-		if jaeger.Namespace != dep.Namespace {
-			if err := r.reconcileConfigMaps(ctx, jaeger, dep); err != nil {
-				msg := "failed to reconcile config maps for the namespace"
-				logger.WithError(err).Error(msg)
-				span.AddEvent(msg)
+	if inject.Needed(dep, ns) {
+		jaeger := inject.Select(dep, ns, jaegers)
+		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
+			logger := logger.WithFields(log.Fields{
+				"jaeger":           jaeger.Name,
+				"jaeger-namespace": jaeger.Namespace,
+			})
+			if jaeger.Namespace != dep.Namespace {
+				if err := r.reconcileConfigMaps(ctx, jaeger, dep); err != nil {
+					msg := "failed to reconcile config maps for the namespace"
+					logger.WithError(err).Error(msg)
+					span.AddEvent(msg)
+				}
 			}
-		}
 
-		// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-		// Verified that jaeger instance was found and is not marked for deletion.
-		if inject.Needed(dep, ns) {
+			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+			// Verified that jaeger instance was found and is not marked for deletion.
 			{
 				msg := "injecting Jaeger Agent sidecar"
 				logger.Info(msg)
@@ -160,14 +155,43 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 				logger.WithError(err).Error("failed to update deployment with sidecar")
 				return reconcile.Result{}, tracing.HandleError(err, span)
 			}
+
+		} else {
+			msg := "no suitable Jaeger instances found to inject a sidecar"
+			span.AddEvent(msg)
+			logger.Debug(msg)
 		}
+
 	} else {
-		msg := "no suitable Jaeger instances found to inject a sidecar"
-		span.AddEvent(msg)
-		logger.Debug(msg)
+		hasAgent, _ := inject.HasJaegerAgent(dep)
+		if hasAgent {
+			_, hasLabel := dep.Labels[inject.Label]
+			if hasLabel {
+				r.removeSidecar(ctx, dep)
+			}
+
+		}
+		return reconcile.Result{}, nil
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileDeployment) removeSidecar(ctx context.Context, dep *appsv1.Deployment) {
+	jaegerInstance := dep.Labels[inject.Label]
+	log.WithFields(log.Fields{
+		"deployment": dep.Name,
+		"namespace":  dep.Namespace,
+		"jaeger":     jaegerInstance,
+	}).Info("Removing Jaeger Agent sidecar")
+	patch := client.MergeFrom(dep.DeepCopy())
+	inject.CleanSidecar(jaegerInstance, dep)
+	if err := r.client.Patch(ctx, dep, patch); err != nil {
+		log.WithFields(log.Fields{
+			"deploymentName":      dep.Name,
+			"deploymentNamespace": dep.Namespace,
+		}).WithError(err).Error("error cleaning orphaned deployment")
+	}
 }
 
 func (r *ReconcileDeployment) syncOnJaegerChanges(event handler.MapObject) []reconcile.Request {

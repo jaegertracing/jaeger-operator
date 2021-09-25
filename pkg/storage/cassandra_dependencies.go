@@ -36,26 +36,58 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		jaeger.Spec.Storage.CassandraCreateSchema.Mode = "prod"
 	}
 
-	host := jaeger.Spec.Storage.Options.Map()["cassandra.servers"]
+	envVars := []corev1.EnvVar{{
+		Name:  "MODE",
+		Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
+	}, {
+		Name:  "DATACENTER",
+		Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+	}}
+
+	host := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
 	if host == "" {
 		jaeger.Logger().Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
 	}
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "CQLSH_HOST",
+		Value: host,
+	})
 
-	port := jaeger.Spec.Storage.Options.Map()["cassandra.port"]
+	port := jaeger.Spec.Storage.Options.StringMap()["cassandra.port"]
 	if port == "" {
 		jaeger.Logger().Info("Cassandra port not specified. Using '9042' for the cassandra-create-schema job.")
 		port = "9042" // this is the default in the image
 	}
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "CQLSH_PORT",
+		Value: port,
+	})
 
-	keyspace := jaeger.Spec.Storage.Options.Map()["cassandra.keyspace"]
+	keyspace := jaeger.Spec.Storage.Options.StringMap()["cassandra.keyspace"]
 	if keyspace == "" {
 		jaeger.Logger().Info("Cassandra keyspace not specified. Using 'jaeger_v1_test' for the cassandra-create-schema job.")
 		keyspace = "jaeger_v1_test" // this is default in the image
 	}
 
-	username := jaeger.Spec.Storage.Options.Map()["cassandra.username"]
-	password := jaeger.Spec.Storage.Options.Map()["cassandra.password"]
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "KEYSPACE",
+		Value: keyspace,
+	})
+	username := jaeger.Spec.Storage.Options.StringMap()["cassandra.username"]
+	password := jaeger.Spec.Storage.Options.StringMap()["cassandra.password"]
+
+	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
+	if len(envFromSource) == 0 {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "CASSANDRA_USERNAME",
+			Value: username,
+		})
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "CASSANDRA_PASSWORD",
+			Value: password,
+		})
+	}
 
 	annotations := map[string]string{
 		"prometheus.io/scrape":    "false",
@@ -93,6 +125,10 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 			traceTTLSeconds = fmt.Sprintf("%.0f", dur.Seconds())
 		}
 	}
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "TRACE_TTL",
+		Value: traceTTLSeconds,
+	})
 
 	if jaeger.Spec.Storage.CassandraCreateSchema.Timeout != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.Timeout)
@@ -140,35 +176,13 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 					},
 					Spec: corev1.PodSpec{
 						ActiveDeadlineSeconds: podTimeout,
+						Affinity:              jaeger.Spec.Storage.CassandraCreateSchema.Affinity,
 						SecurityContext:       jaeger.Spec.SecurityContext,
 						Containers: []corev1.Container{{
-							Image: util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
-							Name:  truncatedName,
-							Env: []corev1.EnvVar{{
-								Name:  "CQLSH_HOST",
-								Value: host,
-							}, {
-								Name:  "CQLSH_PORT",
-								Value: port,
-							}, {
-								Name:  "MODE",
-								Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
-							}, {
-								Name:  "DATACENTER",
-								Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
-							}, {
-								Name:  "TRACE_TTL",
-								Value: traceTTLSeconds,
-							}, {
-								Name:  "KEYSPACE",
-								Value: keyspace,
-							}, {
-								Name:  "CASSANDRA_USERNAME",
-								Value: username,
-							}, {
-								Name:  "CASSANDRA_PASSWORD",
-								Value: password,
-							}},
+							Image:   util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
+							Name:    truncatedName,
+							Env:     envVars,
+							EnvFrom: envFromSource,
 						}},
 						RestartPolicy: corev1.RestartPolicyOnFailure,
 					},
