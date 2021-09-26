@@ -12,7 +12,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.51.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.50.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.18.0
 	github.com/sirupsen/logrus v1.6.0
