@@ -2,7 +2,7 @@ name: "Release"
 on:
   push:
     tags:
-    - 'release/v*'
+    - 'v*'
 
 jobs:
   release:
@@ -20,7 +20,7 @@ jobs:
     - name: "perform the release"
       env:
         GH_WRITE_TOKEN: ${{ secrets.GH_WRITE_TOKEN }}
-      run: ./.ci/release.sh
+      run: ./.ci/create-release-github.sh
     - name: "publishes the images"
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

@@ -12,6 +12,9 @@ jobs:
     strategy:
       matrix:
         TEST_GROUP: [smoke, es, cassandra, streaming, examples1, examples2, generate, upgrade, istio]
+        kube-version:
+          - "v1.19.1"
+          - "v1.22.0"
     steps:
     - uses: actions/setup-go@v2.1.4
       with:
@@ -21,12 +24,14 @@ jobs:
       run: ./.ci/setup-docker.sh
     - uses: manusa/actions-setup-minikube@v2.4.2
       with:
-        minikube version: 'v1.20.0'
-        kubernetes version: 'v1.19.1'
+        minikube version: 'v1.23.1'
+        kubernetes version: ${{ matrix.kube-version }}
         driver: none
         github token: ${{ secrets.GITHUB_TOKEN }}
-        start args: '--addons=ingress --wait=all'
+        start args: ' --wait=all'
     - uses: jpkrohling/setup-kubectl@v1.0.2
+    - name: "setup ingress"
+      run: ./.ci/apply-ingress.sh
     - uses: jpkrohling/setup-operator-sdk@v1.0.2
       with:
         operator-sdk-version: v0.18.2

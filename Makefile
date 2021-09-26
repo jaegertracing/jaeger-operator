@@ -25,7 +25,7 @@ ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
-ISTIO_VERSION ?= 1.8.2
+ISTIO_VERSION ?= 1.11.2
 ISTIOCTL="./deploy/test/istio/bin/istioctl"
 GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
@@ -508,3 +508,7 @@ start-kind:
 .PHONY: build-assert-job
 build-assert-job:
 	@docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+
+.PHONY: prepare-release
+prepare-release:
+	@./.ci/prepare-release.sh
