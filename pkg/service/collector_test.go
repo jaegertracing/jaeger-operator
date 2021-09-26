@@ -144,13 +144,15 @@ func TestCollectorServiceLoadBalancer(t *testing.T) {
 	assert.Equal(t, svc[1].Spec.Type, corev1.ServiceTypeLoadBalancer)
 }
 
-func TestCollectorServiceWithAdminPort(t *testing.T) {
+func TestCollectorAdminService(t *testing.T) {
 	trueVar := true
-	name := "TestCollectorServiceWithAdminPort"
+	name := "TestCollectorAdminService"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
 	svcs := NewCollectorServices(jaeger, selector)
-	assert.Contains(t, svcs[0].Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
+	assert.Len(t, svcs, 3)
+	assert.Contains(t, svcs[2].Name, "admin")
+	assert.Contains(t, svcs[2].Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
 }

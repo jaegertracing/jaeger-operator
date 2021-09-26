@@ -175,9 +175,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 func (i *Ingester) Services() []*corev1.Service {
 	services := []*corev1.Service{}
 	if i.jaeger.Spec.ServiceMonitor.Enabled != nil && *i.jaeger.Spec.ServiceMonitor.Enabled {
-		return append(services,
-			service.NewIngesterAdminService(i.jaeger, i.labels()),
-		)
+		services = append(services, service.NewIngesterAdminService(i.jaeger, i.labels()))
 	}
 	return services
 }

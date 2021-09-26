@@ -9,17 +9,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// NewQueryAdminService returns a new Kubernetes service for Jaeger Query with admin port enabled
-func NewQueryAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	service := NewQueryService(jaeger, selector)
-	service.Spec.Ports = append(service.Spec.Ports,
-		corev1.ServicePort{
-			Name: "admin",
-			Port: util.GetPort("--admin.http.host-port", jaeger.Spec.Query.Options.ToArgs(), 16687),
-		})
-	return service
-}
-
 // NewQueryService returns a new Kubernetes service for Jaeger Query backed by the pods matching the selector
 func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
@@ -75,9 +64,56 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 	}
 }
 
+// NewQueryAdminService returns a new Kubernetes service for Jaeger Query with admin port enabled
+func NewQueryAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	service := NewQueryService(jaeger, selector)
+	service.Spec.Ports = append(service.Spec.Ports,
+		corev1.ServicePort{
+			Name: "admin",
+			Port: util.GetPort("--admin.http.host-port", jaeger.Spec.Query.Options.ToArgs(), 16687),
+		})
+	trueVar := true
+
+	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      GetNameForQueryAdminService(jaeger),
+			Namespace: jaeger.Namespace,
+			Labels:    util.Labels(GetNameForQueryAdminService(jaeger), "service-query", *jaeger),
+			OwnerReferences: []metav1.OwnerReference{
+				metav1.OwnerReference{
+					APIVersion: jaeger.APIVersion,
+					Kind:       jaeger.Kind,
+					Name:       jaeger.Name,
+					UID:        jaeger.UID,
+					Controller: &trueVar,
+				},
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: selector,
+			Type:     "",
+			Ports: []corev1.ServicePort{
+				{
+					Name: "admin",
+					Port: util.GetPort("--admin.http.host-port", jaeger.Spec.Query.Options.ToArgs(), 16687),
+				},
+			},
+		},
+	}
+}
+
 // GetNameForQueryService returns the query service name for this Jaeger instance
 func GetNameForQueryService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-query", 63, jaeger.Name))
+}
+
+// GetNameForQueryService returns the query service name for this Jaeger instance
+func GetNameForQueryAdminService(jaeger *v1.Jaeger) string {
+	return util.DNSName(util.Truncate("%s-query-admin", 63, jaeger.Name))
 }
 
 // GetTLSSecretNameForQueryService returns the auto-generated TLS secret name for the Query Service for the given Jaeger instance

@@ -3,7 +3,7 @@
 package e2e
 
 import (
-	goctx "context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -80,7 +80,7 @@ func (suite *ServiceMonitorTestSuite) TestAllInOne() {
 
 	jaeger := getJaegerAllInOneServiceMonitor(namespace, jaegerInstanceName)
 	log.Infof("passing %v", jaeger)
-	err := fw.Client.Create(goctx.TODO(), jaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := fw.Client.Create(context.TODO(), jaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(jaeger)
 
@@ -94,7 +94,7 @@ func (suite *ServiceMonitorTestSuite) TestAllInOne() {
 
 	AllInOneSmokeTest(jaegerInstanceName)
 
-	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "collector-headless")
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "collector-admin")
 }
 
 func (suite *ServiceMonitorTestSuite) TestProduction() {
@@ -105,7 +105,7 @@ func (suite *ServiceMonitorTestSuite) TestProduction() {
 
 	jaeger := getJaegerProductionServiceMonitor(namespace, jaegerInstanceName)
 	log.Infof("passing %v", jaeger)
-	err := fw.Client.Create(goctx.TODO(), jaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	err := fw.Client.Create(context.TODO(), jaeger, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying example Jaeger")
 	defer undeployJaegerInstance(jaeger)
 
@@ -122,11 +122,45 @@ func (suite *ServiceMonitorTestSuite) TestProduction() {
 
 	ProductionSmokeTest(jaegerInstanceName)
 
-	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "collector-headless")
-	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "query")
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "collector-admin")
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "query-admin")
+}
+
+func (suite *ServiceMonitorTestSuite) TestStreaming() {
+	waitForElasticSearch()
+	waitForKafkaInstance()
+
+	prometheusInstanceName := "prometheus-streaming"
+	jaegerInstanceName := "simple-streaming"
+	j := getJaegerStreamingServiceMonitor(namespace, jaegerInstanceName)
+	log.Infof("passing %v", j)
+	err := fw.Client.Create(context.TODO(), j, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying jaeger")
+	defer undeployJaegerInstance(j)
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-ingester", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for ingester deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+
+	// We deploy prometheus after jaeger, to avoid the 3 minute config reload interval after serviceMonitor is deployed
+	deployPrometheus(t, namespace, prometheusInstanceName)
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, fmt.Sprintf("prometheus-%s", prometheusInstanceName), retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for prometheus")
+
+	ProductionSmokeTest(jaegerInstanceName)
+
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "collector-admin")
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "query-admin")
+	testPrometheusMetricCollector(t, prometheusInstanceName, jaegerInstanceName, "ingester-admin")
 }
 
 func testPrometheusMetricCollector(t *testing.T, prometheusInstanceName, jaegerInstanceName, service string) {
+	serviceName := fmt.Sprintf("%s-%s", jaegerInstanceName, service)
 	ports := []string{"9090"}
 	portForward, closeChan := CreatePortForward(namespace, fmt.Sprintf("prometheus-%s", prometheusInstanceName), "prometheus", ports, fw.KubeConfig)
 	defer portForward.Close()
@@ -160,12 +194,12 @@ func testPrometheusMetricCollector(t *testing.T, prometheusInstanceName, jaegerI
 
 		json.NewDecoder(res.Body).Decode(&jsonResult)
 
-		if contains(jsonResult.Data, fmt.Sprintf("%s-%s", jaegerInstanceName, service)) {
+		if contains(jsonResult.Data, serviceName) {
 			return true, nil
 		}
 		return false, nil
 	})
-	require.NoError(t, err, "Prometheus was not able to collect metrics from serviceMonitor before timeout")
+	require.NoError(t, err, "Prometheus was not able to collect metrics from serviceMonitor for service %s before timeout.", serviceName)
 }
 
 func contains(list []string, item string) bool {
@@ -225,17 +259,64 @@ func getJaegerProductionServiceMonitor(namespace string, name string) *v1.Jaeger
 	return exampleJaeger
 }
 
+func getJaegerStreamingServiceMonitor(namespace string, name string) *v1.Jaeger {
+	serviceMonitorEnabled := true
+	kafkaClusterURL := fmt.Sprintf("my-cluster-kafka-brokers.%s:9092", kafkaNamespace)
+	ingressEnabled := true
+	collectorOptions := make(map[string]interface{})
+	collectorOptions["kafka.producer.topic"] = "jaeger-spans"
+	collectorOptions["kafka.producer.brokers"] = kafkaClusterURL
+
+	exampleJaeger := &v1.Jaeger{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Jaeger",
+			APIVersion: "jaegertracing.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Ingress: v1.JaegerIngressSpec{
+				Enabled:  &ingressEnabled,
+				Security: v1.IngressSecurityNoneExplicit,
+			},
+			Strategy: v1.DeploymentStrategyStreaming,
+			Collector: v1.JaegerCollectorSpec{
+				Options: v1.NewOptions(collectorOptions),
+			},
+			Ingester: v1.JaegerIngesterSpec{
+				Options: v1.NewOptions(map[string]interface{}{
+					"kafka.consumer.topic":   "jaeger-spans",
+					"kafka.consumer.brokers": kafkaClusterURL,
+				}),
+			},
+			Storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": esServerUrls,
+				}),
+			},
+			ServiceMonitor: v1.JaegerServiceMonitorSpec{
+				Enabled: &serviceMonitorEnabled,
+			},
+		},
+	}
+
+	return exampleJaeger
+}
+
 func deployPrometheus(t *testing.T, namespace string, name string) {
-	err := fw.Client.Create(goctx.TODO(), getPrometheusServiceAccount(namespace, name),
+	err := fw.Client.Create(context.TODO(), getPrometheusServiceAccount(namespace, name),
 		&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying prometheus serviceaccount")
-	err = fw.Client.Create(goctx.TODO(), getPrometheusRole(namespace, name),
+	err = fw.Client.Create(context.TODO(), getPrometheusRole(namespace, name),
 		&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying prometheus role")
-	err = fw.Client.Create(goctx.TODO(), getPrometheusRoleBinding(namespace, name),
+	err = fw.Client.Create(context.TODO(), getPrometheusRoleBinding(namespace, name),
 		&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying prometheus rolebinding")
-	err = fw.Client.Create(goctx.TODO(), getPrometheus(namespace, name),
+	err = fw.Client.Create(context.TODO(), getPrometheus(namespace, name),
 		&framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 	require.NoError(t, err, "Error deploying prometheus")
 }

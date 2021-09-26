@@ -17,11 +17,11 @@ func NewIngesterAdminService(jaeger *v1.Jaeger, selector map[string]string) *cor
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getNameForIngesterService(jaeger),
+			Name:      getNameForIngesterAdminService(jaeger),
 			Namespace: jaeger.Namespace,
-			Labels:    util.Labels(getNameForIngesterService(jaeger), "ingester", *jaeger),
+			Labels:    util.Labels(getNameForIngesterAdminService(jaeger), "ingester", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,
@@ -32,7 +32,7 @@ func NewIngesterAdminService(jaeger *v1.Jaeger, selector map[string]string) *cor
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:  selector,
-			ClusterIP: "None",
+			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
 					Name: "admin",
@@ -43,6 +43,6 @@ func NewIngesterAdminService(jaeger *v1.Jaeger, selector map[string]string) *cor
 	}
 }
 
-func getNameForIngesterService(jaeger *v1.Jaeger) string {
-	return util.DNSName(util.Truncate("%s-ingester", 63, jaeger.Name))
+func getNameForIngesterAdminService(jaeger *v1.Jaeger) string {
+	return util.DNSName(util.Truncate("%s-ingester-admin", 63, jaeger.Name))
 }

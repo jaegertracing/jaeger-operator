@@ -107,9 +107,11 @@ func TestCreateStreamingDeploymentWithServiceMonitorEnabled(t *testing.T) {
 
 	c := newStreamingStrategy(context.Background(), j)
 	services := map[string]bool{
-		fmt.Sprintf("%s-collector", strings.ToLower(name)): false,
-		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
-		fmt.Sprintf("%s-ingester", strings.ToLower(name)):  false,
+		fmt.Sprintf("%s-collector", strings.ToLower(name)):       false,
+		fmt.Sprintf("%s-collector-admin", strings.ToLower(name)): false,
+		fmt.Sprintf("%s-query", strings.ToLower(name)):           false,
+		fmt.Sprintf("%s-query-admin", strings.ToLower(name)):     false,
+		fmt.Sprintf("%s-ingester-admin", strings.ToLower(name)):  false,
 	}
 	for _, o := range c.Services() {
 		services[o.Name] = true

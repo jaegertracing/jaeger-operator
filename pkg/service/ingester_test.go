@@ -10,11 +10,11 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func TestIngesterService(t *testing.T) {
+func TestIngesterAdminService(t *testing.T) {
 	name := "testingesterservice"
 	jaegerInstance := v1.NewJaeger(types.NamespacedName{Name: name})
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "ingester"}
 	service := NewIngesterAdminService(jaegerInstance, selector)
 
-	assert.Equal(t, fmt.Sprintf("%s-ingester", name), service.Name)
+	assert.Equal(t, fmt.Sprintf("%s-ingester-admin", name), service.Name)
 }

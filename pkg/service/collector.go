@@ -19,11 +19,7 @@ func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*core
 		clusteripCollectorService(jaeger, selector),
 	}
 	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
-		services[0].Spec.Ports = append(services[0].Spec.Ports,
-			corev1.ServicePort{
-				Name: "admin",
-				Port: util.GetPort("--admin.http.host-port=", jaeger.Spec.Collector.Options.ToArgs(), 14269),
-			})
+		services = append(services, collectorAdminService(jaeger, selector))
 	}
 	return services
 }
@@ -69,7 +65,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
-					Name: "http-zipkin",
+					Name: "http",
 					Port: 9411,
 				},
 				{
@@ -90,6 +86,38 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 
 }
 
+func collectorAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+	trueVar := true
+	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      GetNameForCollectorAdminService(jaeger),
+			Namespace: jaeger.Namespace,
+			Labels:    util.Labels(GetNameForCollectorAdminService(jaeger), "service-collector", *jaeger),
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: jaeger.APIVersion,
+				Kind:       jaeger.Kind,
+				Name:       jaeger.Name,
+				UID:        jaeger.UID,
+				Controller: &trueVar,
+			}},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector:  selector,
+			ClusterIP: "",
+			Ports: []corev1.ServicePort{
+				{
+					Name: "admin",
+					Port: util.GetPort("--admin.http.host-port=", jaeger.Spec.Collector.Options.ToArgs(), 14269),
+				},
+			},
+		},
+	}
+}
+
 // GetNameForCollectorService returns the service name for the collector in this Jaeger instance
 func GetNameForCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector", 63, jaeger.Name))
@@ -98,6 +126,11 @@ func GetNameForCollectorService(jaeger *v1.Jaeger) string {
 // GetNameForHeadlessCollectorService returns the headless service name for the collector in this Jaeger instance
 func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
+}
+
+// GetNameForCollectorService returns the service name for the collector in this Jaeger instance
+func GetNameForCollectorAdminService(jaeger *v1.Jaeger) string {
+	return util.DNSName(util.Truncate("%s-collector-admin", 63, jaeger.Name))
 }
 
 // GetPortNameForGRPC returns the port name for 'grpc'. It may either be http-grpc or https-grpc, based on whether

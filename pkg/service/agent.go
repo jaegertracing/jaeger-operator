@@ -8,17 +8,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-// NewAgentAdminService returns a new Kubernetes service for Jaeger Agent with admin port enabled
-func NewAgentAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	service := NewAgentService(jaeger, selector)
-	service.Spec.Ports = append(service.Spec.Ports,
-		corev1.ServicePort{
-			Name: "admin",
-			Port: util.GetPort("--admin.http.host-port=", jaeger.Spec.Agent.Options.ToArgs(), 14271),
-		})
-	return service
-}
-
 // NewAgentService returns a new Kubernetes service for Jaeger Agent backed by the pods matching the selector
 func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
