@@ -176,4 +176,8 @@ func main() {
 	}
 
 	generateSpansHistory(viper.GetString(flagJaegerServiceName), viper.GetString(flagJaegerOperationName), viper.GetInt(flagDays), viper.GetInt(flagServices))
+
+	// After reporting the spans, we wait some seconds to ensure the spans were reported and
+	// stored in the final storage (ES or other)
+	time.Sleep(time.Second * 10)
 }
