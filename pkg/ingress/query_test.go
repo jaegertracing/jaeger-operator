@@ -251,6 +251,24 @@ func TestQueryIngressTLSSecret(t *testing.T) {
 	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
 }
 
+func TestQueryIngressClass(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
+	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
+
+	inressClassName := "nginx"
+	jaeger.Spec.Ingress.IngressClassName = &inressClassName
+
+	ingress := NewQueryIngress(jaeger)
+	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep.Spec.IngressClassName)
+	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
+	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
+
+}
+
 func TestQueryIngressTLSHosts(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSHosts"})
 
