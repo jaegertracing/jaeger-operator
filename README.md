@@ -110,3 +110,4 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 [goreport]: https://goreportcard.com/report/github.com/jaegertracing/jaeger-operator
 [godoc-img]: https://godoc.org/github.com/jaegertracing/jaeger-operator?status.svg
 [godoc]: https://godoc.org/github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1#JaegerSpec
+
