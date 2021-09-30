@@ -128,7 +128,7 @@ func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
 }
 
-// GetNameForCollectorService returns the service name for the collector in this Jaeger instance
+// GetNameForCollectorAdminService returns the collector admin service name for this Jaeger instance
 func GetNameForCollectorAdminService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-admin", 63, jaeger.Name))
 }

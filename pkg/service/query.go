@@ -111,7 +111,7 @@ func GetNameForQueryService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-query", 63, jaeger.Name))
 }
 
-// GetNameForQueryService returns the query service name for this Jaeger instance
+// GetNameForQueryAdminService returns the query admin service name for this Jaeger instance
 func GetNameForQueryAdminService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-query-admin", 63, jaeger.Name))
 }
