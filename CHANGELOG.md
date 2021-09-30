@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+1.26.0 (2021-09-30)
+-------------------
+* Add ingressClassName field to query ingress ([#1557](https://github.com/jaegertracing/jaeger-operator/pull/1557), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add disconnected annotation to csv ([#1536](https://github.com/jaegertracing/jaeger-operator/pull/1536), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.25.0 (2021-08-08)
 -------------------
 * Add support repetitive arguments to operand ([#1434](https://github.com/jaegertracing/jaeger-operator/pull/1434), [@rubenvp8510](https://github.com/rubenvp8510))
