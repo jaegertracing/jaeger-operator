@@ -47,7 +47,7 @@ var (
 	timeout            = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
 	storageNamespace   = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace     = os.Getenv("KAFKA_NAMESPACE")
-	debugMode          = getBoolEnv("DEBUG_MODE", false)
+	debugMode          = getBoolEnv("DEBUG_MODE", true)
 	usingOLM           = getBoolEnv("OLM", false)
 	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
 	saveLogs           = getBoolEnv("SAVE_LOGS", false)

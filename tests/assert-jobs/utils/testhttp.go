@@ -19,7 +19,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		return err
 	}
 
-	client := http.Client{Timeout: 3 * time.Second}
+	client := http.Client{Timeout: 30 * time.Second}
 
 	logrus.Info("Polling to %s", url)
 

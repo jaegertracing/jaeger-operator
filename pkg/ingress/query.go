@@ -50,6 +50,10 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 
 	i.addTLSSpec(&spec)
 
+	if i.jaeger.Spec.Ingress.IngressClassName != nil {
+		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
+	}
+
 	return &networkingv1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Ingress",
