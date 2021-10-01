@@ -106,6 +106,11 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
+	if dep.Labels["app"] == "jaeger" {
+		// Don't touch jaeger deployments
+		return reconcile.Result{}, nil
+	}
+
 	ns := &corev1.Namespace{}
 	err = r.rClient.Get(ctx, types.NamespacedName{Name: request.Namespace}, ns)
 	// we shouldn't fail if the namespace object can't be obtained

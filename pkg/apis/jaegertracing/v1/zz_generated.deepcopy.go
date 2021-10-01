@@ -527,6 +527,11 @@ func (in *JaegerIngressSpec) DeepCopyInto(out *JaegerIngressSpec) {
 	}
 	in.JaegerCommonSpec.DeepCopyInto(&out.JaegerCommonSpec)
 	in.Options.DeepCopyInto(&out.Options)
+	if in.IngressClassName != nil {
+		in, out := &in.IngressClassName, &out.IngressClassName
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 
