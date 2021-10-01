@@ -5047,6 +5047,8 @@ spec:
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
+                  ingressClassName:
+                    type: string
                   labels:
                     additionalProperties:
                       type: string
