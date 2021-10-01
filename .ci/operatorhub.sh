@@ -41,11 +41,11 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
     git checkout -q main
     git rebase -q upstream/main
 
-    mkdir -p "${dest}/operators/jaeger/${VERSION}"
+    mkdir -p "operators/jaeger/${VERSION}"
 
-    cp "${OLD_PWD}/${PKG_FILE}" "${dest}/operators/jaeger/${DEST_PKG_FILE}"
-    cp "${OLD_PWD}/${CSV_FILE}" "${dest}/operators/jaeger/${VERSION}/${DEST_CSV_FILE}"
-    cp "${OLD_PWD}/${CRD_FILE}" "${dest}/operators/jaeger/${VERSION}"
+    cp "${OLD_PWD}/${PKG_FILE}" "operators/jaeger/${DEST_PKG_FILE}"
+    cp "${OLD_PWD}/${CSV_FILE}" "operators/jaeger/${VERSION}/${DEST_CSV_FILE}"
+    cp "${OLD_PWD}/${CRD_FILE}" "operators/jaeger/${VERSION}"
 
     git checkout -q -b Update-Jaeger-to-${VERSION}
     if [[ $? != 0 ]]; then
@@ -53,7 +53,7 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
         exit 1
     fi
 
-    git add ${dest}
+    git add .
     git commit -sqm "Update Jaeger to v${VERSION}"
 
 
@@ -65,7 +65,6 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
 
     echo "Submitting PR on your behalf via 'hub'"
     gh pr create --title  "Update Jaeger to v${VERSION}" --body-file "${OLD_PWD}/.ci/.checked-pr-template.md"
-    rm ${tmpfile}
 done
 
 cd ${OLD_PWD}
