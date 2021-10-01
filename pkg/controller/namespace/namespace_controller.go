@@ -124,6 +124,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 
 	for i := 0; i < len(deps.Items); i++ {
 		dep := &deps.Items[i]
+		if dep.Labels["app"] == "jaeger" {
+			// Don't touch jaeger deployments
+			continue
+		}
+
 		if inject.Needed(dep, ns) {
 			jaegers := &v1.JaegerList{}
 			opts := []client.ListOption{}
