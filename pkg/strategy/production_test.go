@@ -27,7 +27,7 @@ func TestCreateProductionDeployment(t *testing.T) {
 	name := "TestCreateProductionDeployment"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	c := newProductionStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, false, false)
+	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, false, false, false)
 }
 
 func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
@@ -39,7 +39,7 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	normalize(context.Background(), jaeger)
 
 	c := newProductionStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, true, false)
+	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, true, false, false)
 }
 
 func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -49,7 +49,7 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newProductionStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForProduction(t, j, c, true, false, false)
+	assertDeploymentsAndServicesForProduction(t, j, c, true, false, false, false)
 }
 
 func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
@@ -63,7 +63,7 @@ func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {
 	})
 
 	c := newProductionStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForProduction(t, j, c, false, false, true)
+	assertDeploymentsAndServicesForProduction(t, j, c, false, false, true, false)
 }
 
 func TestOptionsArePassed(t *testing.T) {
@@ -123,7 +123,15 @@ func TestAutoscaleForProduction(t *testing.T) {
 	assert.Len(t, c.HorizontalPodAutoscalers(), 1)
 }
 
-func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func TestServiceMonitorEnabledForProduction(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
+	trueVal := true
+	jaeger.Spec.ServiceMonitor.Enabled = &trueVal
+	c := newProductionStrategy(context.Background(), jaeger)
+	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, false, false, true)
+}
+
+func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool, hasServiceMonitor bool) {
 	name := instance.Name
 	expectedNumObjs := 7
 
@@ -153,6 +161,15 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger
 		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
+	if hasServiceMonitor {
+		services[fmt.Sprintf("%s-collector-admin", strings.ToLower(name))] = false
+		services[fmt.Sprintf("%s-query-admin", strings.ToLower(name))] = false
+	}
+
+	serviceMonitors := map[string]bool{
+		fmt.Sprintf("%s-metrics", name): false,
+	}
+
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
 	consoleLinks := map[string]bool{}
@@ -172,7 +189,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, serviceMonitors, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesProduction(t *testing.T) {

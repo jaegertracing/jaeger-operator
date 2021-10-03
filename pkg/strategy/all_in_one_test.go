@@ -25,7 +25,7 @@ func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	c := newAllInOneStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
@@ -37,7 +37,7 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	normalize(context.Background(), jaeger)
 
 	c := newAllInOneStrategy(context.Background(), jaeger)
-	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, true, false)
+	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, true, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
@@ -61,7 +61,7 @@ func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
 	})
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, true)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, true, false)
 }
 
 func TestDelegateAllInOneDependencies(t *testing.T) {
@@ -77,7 +77,15 @@ func TestNoAutoscaleForAllInOne(t *testing.T) {
 	assert.Len(t, c.HorizontalPodAutoscalers(), 0)
 }
 
-func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
+func TestServiceMonitorEnabledForAllInOne(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
+	trueVal := true
+	j.Spec.ServiceMonitor.Enabled = &trueVal
+	c := newAllInOneStrategy(context.Background(), j)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, false, true)
+}
+
+func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool, hasServiceMonitor bool) {
 	// TODO(jpkroehling): this func deserves a refactoring already
 	name := instance.Name
 	expectedNumObjs := 7
@@ -110,6 +118,13 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
+	if hasServiceMonitor {
+		services[fmt.Sprintf("%s-collector-admin", strings.ToLower(name))] = false
+	}
+
+	servicemonitors := map[string]bool{
+		fmt.Sprintf("%s-metrics", name): false,
+	}
 	// the ingress rule, if we are not on openshift
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
@@ -131,7 +146,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, servicemonitors, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesAllInOne(t *testing.T) {
