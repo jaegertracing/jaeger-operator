@@ -131,7 +131,7 @@ func TestQueryServices(t *testing.T) {
 }
 
 func TestQueryAdminServices(t *testing.T) {
-	query := NewIngester(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	query := NewQuery(v1.NewJaeger(types.NamespacedName{Name: "TestQueryAdminServices"}))
 	svcs := query.AdminServices()
 	assert.Len(t, svcs, 1)
 }
