@@ -171,7 +171,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	}
 }
 
-// Services returns a list of services to be deployed along with the ingester deployment
+// AdminServices returns a list of services exposing an admin interface for the ingester component
 func (i *Ingester) AdminServices() []*corev1.Service {
 	return []*corev1.Service{
 		service.NewIngesterAdminService(i.jaeger, i.labels()),

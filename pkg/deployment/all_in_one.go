@@ -247,7 +247,7 @@ func (a *AllInOne) Services() []*corev1.Service {
 	)
 }
 
-// AdminServices returns a list of services to be deployed along with the all-in-one deployment
+// AdminServices returns a list of services exposing an admin interface for the all-in-one deployment
 func (a *AllInOne) AdminServices() []*corev1.Service {
 	labels := a.mergedLabels()
 	return []*corev1.Service{

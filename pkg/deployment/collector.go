@@ -208,7 +208,7 @@ func (c *Collector) Services() []*corev1.Service {
 	return service.NewCollectorServices(c.jaeger, c.labels())
 }
 
-// Services returns a list of services to be deployed along with the all-in-one deployment
+// AdminServices returns a list of services exposing an admin interface for the collector component
 func (c *Collector) AdminServices() []*corev1.Service {
 	return []*corev1.Service{
 		service.NewCollectorAdminService(c.jaeger, c.labels()),

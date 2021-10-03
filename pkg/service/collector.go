@@ -83,6 +83,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 
 }
 
+// NewCollectorAdminService returns a new admin service for Jaeger Collector component
 func NewCollectorAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
 	return &corev1.Service{

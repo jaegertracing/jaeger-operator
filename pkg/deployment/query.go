@@ -199,7 +199,7 @@ func (q *Query) Services() []*corev1.Service {
 	}
 }
 
-// AdminServices returns a list of admin services to be deployed along with the query deployment
+// AdminServices returns a list of services exposing an admin interface for the query component
 func (q *Query) AdminServices() []*corev1.Service {
 	return []*corev1.Service{
 		service.NewQueryAdminService(q.jaeger, q.labels()),
