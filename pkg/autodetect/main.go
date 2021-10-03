@@ -28,9 +28,10 @@ type Background struct {
 	dcl      discovery.DiscoveryInterface
 	ticker   *time.Ticker
 
-	firstRun         *sync.Once
-	retryDetectKafka bool
-	retryDetectEs    bool
+	firstRun              *sync.Once
+	retryDetectKafka      bool
+	retryDetectEs         bool
+	retryDetectPrometheus bool
 }
 
 // New creates a new auto-detect runner
@@ -48,14 +49,16 @@ func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.
 	// whether we should keep adjusting depending on the environment
 	retryDetectEs := viper.GetString("es-provision") == v1.FlagProvisionElasticsearchAuto
 	retryDetectKafka := viper.GetString("kafka-provision") == v1.FlagProvisionKafkaAuto
+	retryDetectPrometheus := viper.GetString("prometheus-provision") == v1.FlagProvisionPrometheusAuto
 
 	return &Background{
-		cl:               cl,
-		dcl:              dcl,
-		clReader:         clr,
-		retryDetectKafka: retryDetectKafka,
-		retryDetectEs:    retryDetectEs,
-		firstRun:         &sync.Once{},
+		cl:                    cl,
+		dcl:                   dcl,
+		clReader:              clr,
+		retryDetectKafka:      retryDetectKafka,
+		retryDetectEs:         retryDetectEs,
+		retryDetectPrometheus: retryDetectPrometheus,
+		firstRun:              &sync.Once{},
 	}
 }
 
@@ -103,6 +106,7 @@ func (b *Background) autoDetectCapabilities() {
 
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
+		b.detectPrometheus(ctx, apiList)
 	}
 
 	b.detectClusterRoles(ctx)
@@ -172,6 +176,25 @@ func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupLi
 		}
 	} else {
 		log.WithField("kafka-provision", viper.GetString("kafka-provision")).Trace("The 'kafka-provision' option is explicitly set")
+	}
+}
+
+func (b *Background) detectPrometheus(ctx context.Context, apiList *metav1.APIGroupList) {
+	// detect whether the Prometheus operator is available
+	if b.retryDetectPrometheus {
+		log.Trace("Determining whether we should enable the Prometheus Operator integration")
+		previous := viper.GetString("prometheus-provision")
+		if isPrometheusOperatorAvailable(apiList) {
+			viper.Set("prometheus-provision", v1.FlagProvisionPrometheusYes)
+		} else {
+			viper.Set("prometheus-provision", v1.FlagProvisionPrometheusNo)
+		}
+
+		if previous != viper.GetString("prometheus-provision") {
+			log.WithField("prometheus-provision", viper.GetString("prometheus-provision")).Info("Automatically adjusted the 'prometheus-provision' flag")
+		}
+	} else {
+		log.WithField("prometheus-provision", viper.GetString("prometheus-provision")).Trace("The 'prometheus-provision' option is explicitly set")
 	}
 }
 
@@ -285,6 +308,16 @@ func isKafkaOperatorAvailable(apiList *metav1.APIGroupList) bool {
 	apiGroups := apiList.Groups
 	for i := 0; i < len(apiGroups); i++ {
 		if apiGroups[i].Name == "kafka.strimzi.io" {
+			return true
+		}
+	}
+	return false
+}
+
+func isPrometheusOperatorAvailable(apiList *metav1.APIGroupList) bool {
+	apiGroups := apiList.Groups
+	for i := 0; i < len(apiGroups); i++ {
+		if apiGroups[i].Name == "monitoring.coreos.com" {
 			return true
 		}
 	}

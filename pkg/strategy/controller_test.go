@@ -636,6 +636,32 @@ func TestCustomMenuGetsLogOutSkipped(t *testing.T) {
 	assert.Equal(t, expected, uiOpts["menu"])
 }
 
+func TestShouldDeployAdminServices(t *testing.T) {
+	trueVal := true
+	falseVal := false
+	tests := []struct {
+		PrometheusProvision   string
+		ServiceMonitorEnabled *bool
+		Result                bool
+	}{
+		{"yes", &trueVal, true},
+		{"yes", &falseVal, false},
+		{"yes", nil, true},
+		{"no", &trueVal, true},
+		{"no", &falseVal, false},
+		{"no", nil, false},
+	}
+	for _, test := range tests {
+		viper.Set("prometheus-provision", test.PrometheusProvision)
+		spec := &v1.JaegerSpec{
+			ServiceMonitor: v1.JaegerServiceMonitorSpec{
+				Enabled: test.ServiceMonitorEnabled,
+			},
+		}
+		assert.Equal(t, test.Result, shouldDeployAdminServices(spec))
+	}
+}
+
 func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool, consoleLinks map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true

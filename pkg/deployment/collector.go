@@ -208,6 +208,13 @@ func (c *Collector) Services() []*corev1.Service {
 	return service.NewCollectorServices(c.jaeger, c.labels())
 }
 
+// Services returns a list of services to be deployed along with the all-in-one deployment
+func (c *Collector) AdminServices() []*corev1.Service {
+	return []*corev1.Service{
+		service.NewCollectorAdminService(c.jaeger, c.labels()),
+	}
+}
+
 // Autoscalers returns a list of HPAs based on this collector
 func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
 	return autoscalers(c)

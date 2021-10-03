@@ -18,9 +18,6 @@ func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*core
 		headlessCollectorService(jaeger, selector),
 		clusteripCollectorService(jaeger, selector),
 	}
-	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
-		services = append(services, collectorAdminService(jaeger, selector))
-	}
 	return services
 }
 
@@ -86,7 +83,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 
 }
 
-func collectorAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
+func NewCollectorAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{

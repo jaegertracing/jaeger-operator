@@ -147,6 +147,12 @@ func TestAllInOneNumberOfServices(t *testing.T) {
 	}
 }
 
+func TestAllInOneAdminServices(t *testing.T) {
+	name := "TestAllInOneAdminServices"
+	services := NewAllInOne(v1.NewJaeger(types.NamespacedName{Name: name})).AdminServices()
+	assert.Len(t, services, 1)
+}
+
 func TestAllInOneVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestAllInOneVolumeMountsWithVolumes"
 

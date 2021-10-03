@@ -77,9 +77,14 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	}
 
 	// add the servicemonitor
-	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
-		c.servicemonitors = []*monitoringv1.ServiceMonitor{
-			servicemonitor.NewServiceMonitor(jaeger),
+	c.servicemonitors = []*monitoringv1.ServiceMonitor{
+		servicemonitor.NewServiceMonitor(jaeger),
+	}
+
+	// add the admin services
+	if shouldDeployAdminServices(&jaeger.Spec) {
+		for _, svc := range dep.AdminServices() {
+			c.services = append(c.services, *svc)
 		}
 	}
 

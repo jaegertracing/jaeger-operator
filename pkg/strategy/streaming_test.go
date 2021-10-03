@@ -98,29 +98,6 @@ func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
 	assertDeploymentsAndServicesForStreaming(t, j, c, false, false, true)
 }
 
-func TestCreateStreamingDeploymentWithServiceMonitorEnabled(t *testing.T) {
-	name := "my-instance"
-
-	j := v1.NewJaeger(types.NamespacedName{Name: name})
-	trueVal := true
-	j.Spec.ServiceMonitor.Enabled = &trueVal
-
-	c := newStreamingStrategy(context.Background(), j)
-	services := map[string]bool{
-		fmt.Sprintf("%s-collector", strings.ToLower(name)):       false,
-		fmt.Sprintf("%s-collector-admin", strings.ToLower(name)): false,
-		fmt.Sprintf("%s-query", strings.ToLower(name)):           false,
-		fmt.Sprintf("%s-query-admin", strings.ToLower(name)):     false,
-		fmt.Sprintf("%s-ingester-admin", strings.ToLower(name)):  false,
-	}
-	for _, o := range c.Services() {
-		services[o.Name] = true
-	}
-	for k, v := range services {
-		assert.True(t, v, "Expected %s to have been returned from the list of services", k)
-	}
-}
-
 func TestStreamingOptionsArePassed(t *testing.T) {
 	jaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{

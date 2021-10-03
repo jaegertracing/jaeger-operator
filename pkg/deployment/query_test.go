@@ -130,6 +130,12 @@ func TestQueryServices(t *testing.T) {
 	assert.Len(t, svcs, 1)
 }
 
+func TestQueryAdminServices(t *testing.T) {
+	query := NewIngester(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	svcs := query.AdminServices()
+	assert.Len(t, svcs, 1)
+}
+
 func TestQueryVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestQueryVolumeMountsWithVolumes"
 

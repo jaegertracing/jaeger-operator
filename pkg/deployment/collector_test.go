@@ -64,6 +64,12 @@ func TestCollectorServices(t *testing.T) {
 	assert.Len(t, svcs, 2) // headless and cluster IP
 }
 
+func TestCollectorAdminServices(t *testing.T) {
+	collector := NewCollector(v1.NewJaeger(types.NamespacedName{Name: "my-instance"}))
+	svcs := collector.AdminServices()
+	assert.Len(t, svcs, 1)
+}
+
 func TestDefaultCollectorImage(t *testing.T) {
 	viper.Set("jaeger-collector-image", "org/custom-collector-image")
 	defer viper.Reset()
@@ -665,7 +671,7 @@ func hasVolume(name string, volumes []corev1.Volume) bool {
 	return false
 }
 
-func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
+func hasVolumeunt(name string, volumeMounts []corev1.VolumeMount) bool {
 	for _, v := range volumeMounts {
 		if v.Name == name {
 			return true

@@ -359,9 +359,18 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile pod autoscalers")
 	}
 
-	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
-		if err := r.applyServiceMonitors(ctx, jaeger, str.ServiceMonitors()); err != nil {
-			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile servicemonitor")
+	if strings.EqualFold(viper.GetString("prometheus-provision"), v1.FlagProvisionPrometheusNo) {
+		if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
+			log.WithFields(log.Fields{
+				"namespace": jaeger.Namespace,
+				"instance":  jaeger.Name,
+			}).Warn("ServiceMonitors should be provisioned, but provisioning is disabled for this Jaeger Operator")
+		}
+	} else {
+		if jaeger.Spec.ServiceMonitor.Enabled == nil || *jaeger.Spec.ServiceMonitor.Enabled {
+			if err := r.applyServiceMonitors(ctx, jaeger, str.ServiceMonitors()); err != nil {
+				jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile servicemonitor")
+			}
 		}
 	}
 

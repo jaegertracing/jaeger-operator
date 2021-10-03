@@ -57,6 +57,18 @@ const (
 	// +k8s:openapi-gen=true
 	FlagProvisionKafkaNo = "no"
 
+	// FlagProvisionPrometheusAuto represents the 'auto' value for the 'prometheus-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionPrometheusAuto = "auto"
+
+	// FlagProvisionPrometheusYes represents the value 'yes' for the 'prometheus-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionPrometheusYes = "yes"
+
+	// FlagProvisionPrometheusNo represents the value 'no' for the 'prometheus-provision' flag
+	// +k8s:openapi-gen=true
+	FlagProvisionPrometheusNo = "no"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	// +k8s:openapi-gen=true
 	IngressSecurityNone IngressSecurityType = ""

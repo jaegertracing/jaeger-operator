@@ -194,13 +194,16 @@ func (q *Query) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the query deployment
 func (q *Query) Services() []*corev1.Service {
 	labels := q.labels()
-	services := []*corev1.Service{
+	return []*corev1.Service{
 		service.NewQueryService(q.jaeger, labels),
 	}
-	if q.jaeger.Spec.ServiceMonitor.Enabled != nil && *q.jaeger.Spec.ServiceMonitor.Enabled {
-		services = append(services, service.NewQueryAdminService(q.jaeger, labels))
+}
+
+// AdminServices returns a list of admin services to be deployed along with the query deployment
+func (q *Query) AdminServices() []*corev1.Service {
+	return []*corev1.Service{
+		service.NewQueryAdminService(q.jaeger, q.labels()),
 	}
-	return services
 }
 
 func (q *Query) labels() map[string]string {

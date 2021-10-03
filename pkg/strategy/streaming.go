@@ -93,14 +93,23 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		manifest.services = append(manifest.services, *svc)
 	}
 
-	for _, svc := range ingester.Services() {
-		manifest.services = append(manifest.services, *svc)
+	// add the servicemonitor
+	manifest.servicemonitors = []*monitoringv1.ServiceMonitor{
+		servicemonitor.NewServiceMonitor(jaeger),
 	}
 
-	// add the servicemonitor
-	if jaeger.Spec.ServiceMonitor.Enabled != nil && *jaeger.Spec.ServiceMonitor.Enabled {
-		manifest.servicemonitors = []*monitoringv1.ServiceMonitor{
-			servicemonitor.NewServiceMonitor(jaeger),
+	// add the admin services
+	if shouldDeployAdminServices(&jaeger.Spec) {
+		for _, svc := range collector.AdminServices() {
+			manifest.services = append(manifest.services, *svc)
+		}
+
+		for _, svc := range query.AdminServices() {
+			manifest.services = append(manifest.services, *svc)
+		}
+
+		for _, svc := range ingester.AdminServices() {
+			manifest.services = append(manifest.services, *svc)
 		}
 	}
 

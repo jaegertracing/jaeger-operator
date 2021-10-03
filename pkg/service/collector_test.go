@@ -145,14 +145,12 @@ func TestCollectorServiceLoadBalancer(t *testing.T) {
 }
 
 func TestCollectorAdminService(t *testing.T) {
-	trueVar := true
 	name := "TestCollectorAdminService"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.ServiceMonitor.Enabled = &trueVar
-	svcs := NewCollectorServices(jaeger, selector)
-	assert.Len(t, svcs, 3)
-	assert.Contains(t, svcs[2].Name, "admin")
-	assert.Contains(t, svcs[2].Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
+	svc := NewCollectorAdminService(jaeger, selector)
+
+	assert.Contains(t, svc.Name, "collector-admin")
+	assert.Contains(t, svc.Spec.Ports, corev1.ServicePort{Name: "admin", Port: 14269})
 }

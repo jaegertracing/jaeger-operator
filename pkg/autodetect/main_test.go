@@ -366,6 +366,78 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
+func TestAutoDetectPrometheusProvisionNoOperator(t *testing.T) {
+	// prepare
+	viper.Set("prometheus-provision", v1.FlagProvisionPrometheusAuto)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, v1.FlagProvisionPrometheusNo, viper.GetString("prometheus-provision"))
+}
+
+func TestAutoDetectPrometheusProvisionWithOperator(t *testing.T) {
+	// prepare
+	viper.Set("prometheus-provision", v1.FlagProvisionPrometheusAuto)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{
+			Groups: []metav1.APIGroup{{
+				Name: "monitoring.coreos.com",
+			}},
+		}, nil
+	}
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, v1.FlagProvisionPrometheusYes, viper.GetString("prometheus-provision"))
+}
+
+func TestAutoDetectPrometheusExplicitYes(t *testing.T) {
+	// prepare
+	viper.Set("prometheus-provision", v1.FlagProvisionPrometheusYes)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, v1.FlagProvisionPrometheusYes, viper.GetString("prometheus-provision"))
+}
+
+func TestAutoDetectPrometheusExplicitNo(t *testing.T) {
+	// prepare
+	viper.Set("prometheus-provision", v1.FlagProvisionPrometheusNo)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, v1.FlagProvisionPrometheusNo, viper.GetString("prometheus-provision"))
+}
+
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
 	// prepare
 	viper.Set("platform", v1.FlagPlatformKubernetes)

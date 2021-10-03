@@ -240,14 +240,30 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
-	// merge defined labels with default labels
-	spec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, v1.JaegerCommonSpec{Labels: a.labels()}})
-	labels := spec.Labels
-
+	labels := a.mergedLabels()
 	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),
 	)
+}
+
+// AdminServices returns a list of services to be deployed along with the all-in-one deployment
+func (a *AllInOne) AdminServices() []*corev1.Service {
+	labels := a.mergedLabels()
+	return []*corev1.Service{
+		// The all-in-one image provides the metric scraping endpoint on the same port as the collector service, so we use that one
+		service.NewCollectorAdminService(a.jaeger, labels),
+	}
+}
+
+func (a *AllInOne) mergedLabels() map[string]string {
+	// merge defined labels with default labels
+	spec := util.Merge([]v1.JaegerCommonSpec{
+		a.jaeger.Spec.AllInOne.JaegerCommonSpec,
+		a.jaeger.Spec.JaegerCommonSpec,
+		{Labels: a.labels()},
+	})
+	return spec.Labels
 }
 
 func (a *AllInOne) labels() map[string]string {

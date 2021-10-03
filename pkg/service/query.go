@@ -66,14 +66,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 
 // NewQueryAdminService returns a new Kubernetes service for Jaeger Query with admin port enabled
 func NewQueryAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	service := NewQueryService(jaeger, selector)
-	service.Spec.Ports = append(service.Spec.Ports,
-		corev1.ServicePort{
-			Name: "admin",
-			Port: util.GetPort("--admin.http.host-port", jaeger.Spec.Query.Options.ToArgs(), 16687),
-		})
 	trueVar := true
-
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -84,7 +77,7 @@ func NewQueryAdminService(jaeger *v1.Jaeger, selector map[string]string) *corev1
 			Namespace: jaeger.Namespace,
 			Labels:    util.Labels(GetNameForQueryAdminService(jaeger), "service-query", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,

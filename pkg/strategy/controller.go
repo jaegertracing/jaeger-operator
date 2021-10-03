@@ -351,3 +351,19 @@ func unknownStorage(typ v1.JaegerStorageType) bool {
 
 	return true
 }
+
+func shouldDeployAdminServices(spec *v1.JaegerSpec) bool {
+	// If the prometheus-provision flag is true, the provisioning of admin services defaults to true
+	if strings.EqualFold(viper.GetString("prometheus-provision"), v1.FlagProvisionPrometheusYes) {
+		if spec.ServiceMonitor.Enabled == nil || *spec.ServiceMonitor.Enabled {
+			return true
+		}
+	} else {
+		// If the servicemonitor is explicitely enabled, but the prometheus-provision falg is false,
+		// we will deploy the required services anyway
+		if spec.ServiceMonitor.Enabled != nil && *spec.ServiceMonitor.Enabled {
+			return true
+		}
+	}
+	return false
+}

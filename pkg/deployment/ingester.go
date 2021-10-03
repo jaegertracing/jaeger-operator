@@ -172,12 +172,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 }
 
 // Services returns a list of services to be deployed along with the ingester deployment
-func (i *Ingester) Services() []*corev1.Service {
-	services := []*corev1.Service{}
-	if i.jaeger.Spec.ServiceMonitor.Enabled != nil && *i.jaeger.Spec.ServiceMonitor.Enabled {
-		services = append(services, service.NewIngesterAdminService(i.jaeger, i.labels()))
+func (i *Ingester) AdminServices() []*corev1.Service {
+	return []*corev1.Service{
+		service.NewIngesterAdminService(i.jaeger, i.labels()),
 	}
-	return services
 }
 
 func (i *Ingester) labels() map[string]string {
