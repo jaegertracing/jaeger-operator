@@ -12,7 +12,7 @@ const (
 )
 
 const (
-	timeOutDefault       = 40
+	timeOutDefault       = 60
 	retryIntervalDefault = 8
 )
 

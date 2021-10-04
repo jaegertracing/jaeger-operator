@@ -52,6 +52,9 @@ func main() {
 	err = utils.TestGetHTTP(url, params, func(response *http.Response, body []byte) (done bool, err error) {
 		resp := &services{}
 		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			return false, err
+		}
 		for _, v := range resp.Data {
 			if v == serviceName {
 				return true, nil
@@ -61,7 +64,7 @@ func main() {
 	})
 
 	if err != nil {
-		logrus.Error("Error trying to parse response: %v", err)
+		logrus.Error("Error trying to parse response: ", err)
 		os.Exit(1)
 	}
 	logrus.Info("Successfully terminates")

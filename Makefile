@@ -25,7 +25,7 @@ ES_OPERATOR_NAMESPACE ?= openshift-logging
 ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 SDK_VERSION=v0.18.2
-ISTIO_VERSION ?= 1.8.2
+ISTIO_VERSION ?= 1.11.2
 ISTIOCTL="./deploy/test/istio/bin/istioctl"
 GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
@@ -54,6 +54,7 @@ check:
 
 .PHONY: ensure-generate-is-noop
 ensure-generate-is-noop: generate format
+	@git diff  pkg/apis/jaegertracing/v1/zz_generated.*.go 
 	@git diff -s --exit-code pkg/apis/jaegertracing/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
 	@git diff -s --exit-code pkg/client/versioned || (echo "Build failed: the versioned clients aren't up to date. Run 'make generate'." && exit 1)
 
