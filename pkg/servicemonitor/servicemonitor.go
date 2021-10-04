@@ -22,6 +22,10 @@ func NewServiceMonitor(jaeger *v1.Jaeger) *monitoringv1.ServiceMonitor {
 	delete(matchLabels, "app.kubernetes.io/component")
 
 	return &monitoringv1.ServiceMonitor{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Servicemonitor",
+			APIVersion: "monitoring.coreos.com/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-metrics", jaeger.Name),
 			Namespace: jaeger.Namespace,
