@@ -118,13 +118,12 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
+	servicemonitors := map[string]bool{}
 	if hasServiceMonitor {
+		servicemonitors[fmt.Sprintf("%s-metrics", name)] = false
 		services[fmt.Sprintf("%s-collector-admin", strings.ToLower(name))] = false
 	}
 
-	servicemonitors := map[string]bool{
-		fmt.Sprintf("%s-metrics", name): false,
-	}
 	// the ingress rule, if we are not on openshift
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}

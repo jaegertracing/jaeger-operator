@@ -212,14 +212,12 @@ func assertDeploymentsAndServicesForStreaming(t *testing.T, instance *v1.Jaeger,
 		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
+	serviceMonitors := map[string]bool{}
 	if hasServiceMonitor {
+		serviceMonitors[fmt.Sprintf("%s-metrics", name)] = false
 		services[fmt.Sprintf("%s-collector-admin", strings.ToLower(name))] = false
 		services[fmt.Sprintf("%s-ingester-admin", strings.ToLower(name))] = false
 		services[fmt.Sprintf("%s-query-admin", strings.ToLower(name))] = false
-	}
-
-	serviceMonitors := map[string]bool{
-		fmt.Sprintf("%s-metrics", name): false,
 	}
 
 	ingresses := map[string]bool{}

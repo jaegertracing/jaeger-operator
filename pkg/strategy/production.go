@@ -79,13 +79,13 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		c.services = append(c.services, *svc)
 	}
 
-	// add the servicemonitor
-	c.servicemonitors = []*monitoringv1.ServiceMonitor{
-		servicemonitor.NewServiceMonitor(jaeger),
-	}
+	if shouldDeployServiceMonitor(&jaeger.Spec) {
+		// add the servicemonitor
+		c.servicemonitors = []*monitoringv1.ServiceMonitor{
+			servicemonitor.NewServiceMonitor(jaeger),
+		}
 
-	// add the admin service
-	if shouldDeployAdminServices(&jaeger.Spec) {
+		// add the admin service
 		for _, svc := range collector.AdminServices() {
 			c.services = append(c.services, *svc)
 		}

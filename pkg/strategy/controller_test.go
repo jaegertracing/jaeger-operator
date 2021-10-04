@@ -658,7 +658,7 @@ func TestShouldDeployAdminServices(t *testing.T) {
 				Enabled: test.ServiceMonitorEnabled,
 			},
 		}
-		assert.Equal(t, test.Result, shouldDeployAdminServices(spec))
+		assert.Equal(t, test.Result, shouldDeployServiceMonitor(spec))
 	}
 }
 
