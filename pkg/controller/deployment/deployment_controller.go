@@ -106,7 +106,7 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
-	if dep.Labels["app"] == "jaeger" {
+	if dep.Labels["app"] == "jaeger" && dep.Labels["app.kubernetes.io/component"] != "query" {
 		// Don't touch jaeger deployments
 		return reconcile.Result{}, nil
 	}
