@@ -498,7 +498,7 @@ kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 run-kuttl-e2e:
 	$(KUTTL) test
 
-start-kind: 
+start-kind:
 	kind create cluster --config $(KIND_CONFIG)
 	kind load docker-image local/jaeger-operator:e2e
 	kind load docker-image local/asserts:e2e
@@ -507,6 +507,10 @@ start-kind:
 .PHONY: build-assert-job
 build-assert-job:
 	@docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+
+.PHONY: build-assert-job
+install-git-hooks:
+	@cp scripts/git-hooks/pre-commit .git/hooks
 
 .PHONY: prepare-release
 prepare-release:
