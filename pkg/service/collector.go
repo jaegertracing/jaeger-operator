@@ -14,11 +14,10 @@ import (
 
 // NewCollectorServices returns a new Kubernetes service for Jaeger Collector backed by the pods matching the selector
 func NewCollectorServices(jaeger *v1.Jaeger, selector map[string]string) []*corev1.Service {
-	services := []*corev1.Service{
+	return []*corev1.Service{
 		headlessCollectorService(jaeger, selector),
 		clusteripCollectorService(jaeger, selector),
 	}
-	return services
 }
 
 func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
@@ -62,7 +61,7 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 			ClusterIP: "",
 			Ports: []corev1.ServicePort{
 				{
-					Name: "http",
+					Name: "http-zipkin",
 					Port: 9411,
 				},
 				{
