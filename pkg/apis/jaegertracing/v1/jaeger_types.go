@@ -329,6 +329,9 @@ type JaegerIngressSpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
+
+	// +optional
+	IngressClassName *string `json:"ingressClassName,omitempty"`
 }
 
 // JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress

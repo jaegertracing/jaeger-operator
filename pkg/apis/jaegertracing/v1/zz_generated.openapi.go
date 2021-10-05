@@ -1608,6 +1608,12 @@ func schema_pkg_apis_jaegertracing_v1_JaegerIngressSpec(ref common.ReferenceCall
 							Ref: ref("./pkg/apis/jaegertracing/v1.Options"),
 						},
 					},
+					"ingressClassName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
