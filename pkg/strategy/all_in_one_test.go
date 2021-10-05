@@ -118,9 +118,9 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 		fmt.Sprintf("%s-query", strings.ToLower(name)):     false,
 	}
 
-	servicemonitors := map[string]bool{}
+	serviceMonitors := map[string]bool{}
 	if hasServiceMonitor {
-		servicemonitors[fmt.Sprintf("%s-metrics", name)] = false
+		serviceMonitors[fmt.Sprintf("%s-metrics", name)] = false
 		services[fmt.Sprintf("%s-collector-admin", strings.ToLower(name))] = false
 	}
 
@@ -145,7 +145,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 	if hasConfigMap {
 		configMaps[fmt.Sprintf("%s-ui-configuration", name)] = false
 	}
-	assertHasAllObjects(t, name, s, deployments, daemonsets, services, servicemonitors, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
+	assertHasAllObjects(t, name, s, deployments, daemonsets, services, serviceMonitors, ingresses, routes, serviceAccounts, configMaps, consoleLinks)
 }
 
 func TestSparkDependenciesAllInOne(t *testing.T) {

@@ -662,7 +662,7 @@ func TestShouldDeployAdminServices(t *testing.T) {
 	}
 }
 
-func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, servicemonitors map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool, consoleLinks map[string]bool) {
+func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]bool, daemonsets map[string]bool, services map[string]bool, serviceMonitors map[string]bool, ingresses map[string]bool, routes map[string]bool, serviceAccounts map[string]bool, configMaps map[string]bool, consoleLinks map[string]bool) {
 	for _, o := range s.Deployments() {
 		deployments[o.Name] = true
 	}
@@ -676,7 +676,7 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 	}
 
 	for _, o := range s.ServiceMonitors() {
-		servicemonitors[o.Name] = true
+		serviceMonitors[o.Name] = true
 	}
 
 	for _, o := range s.Ingresses() {
@@ -711,8 +711,8 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 		assert.True(t, v, "Expected %s to have been returned from the list of services", k)
 	}
 
-	for k, v := range servicemonitors {
-		assert.True(t, v, "Expected %s to have been returned from the list of servicemonitors", k)
+	for k, v := range serviceMonitors {
+		assert.True(t, v, "Expected %s to have been returned from the list of service monitors", k)
 	}
 
 	for k, v := range ingresses {
