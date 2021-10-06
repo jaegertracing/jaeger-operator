@@ -1,3 +1,4 @@
+# Template to assert the the correct container version is used
 apiVersion: apps/v1
 kind: Deployment
 metadata:
