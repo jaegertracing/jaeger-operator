@@ -1,0 +1,4 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "kubectl apply -f ../../_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system"

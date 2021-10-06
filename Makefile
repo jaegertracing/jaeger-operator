@@ -489,6 +489,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
+	docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
 
 # end-to-tests
 .PHONY: kuttl-e2e
@@ -498,11 +499,12 @@ kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 run-kuttl-e2e:
 	$(KUTTL) test
 
-start-kind: 
+start-kind:
 	kind create cluster --config $(KIND_CONFIG)
 	kind load docker-image local/jaeger-operator:e2e
 	kind load docker-image local/asserts:e2e
 	kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	kind load docker-image local/jaeger-operator:next
 
 .PHONY: build-assert-job
 build-assert-job:
