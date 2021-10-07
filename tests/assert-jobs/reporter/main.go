@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -18,6 +19,7 @@ import (
 	"github.com/uber/jaeger-client-go/config"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
 
@@ -30,6 +32,7 @@ const (
 	flagVerbose             = "verbose"
 	flagServices            = "services"
 	envVarJaegerEndpoint    = "jaeger_endpoint"
+	enVarJaegerQuery        = "jaeger_query"
 )
 
 // Init the Jaeger tracer. Returns the tracer and the closer.
@@ -56,6 +59,56 @@ func initTracer(serviceName string) (opentracing.Tracer, io.Closer) {
 	return tracer, closer
 }
 
+// Assert the span was reported properly
+// spanDate: start date of the reported span
+// serviceName: name of the span service
+func assertSpanWasCreated(spanDate time.Time, serviceName string) {
+	startQueryTime := spanDate.Add(time.Minute * -1)
+	finishQueryTime := spanDate.Add(time.Minute)
+
+	jaegerCollectorEndpoint := viper.GetString(enVarJaegerQuery)
+
+	url := fmt.Sprintf(
+		"%s?lookback=custom&service=%s&limit=200&start=%d&end=%d",
+		jaegerCollectorEndpoint,
+		serviceName,
+		startQueryTime.UnixNano()/1000,
+		finishQueryTime.UnixNano()/1000,
+	)
+	params := utils.TestParams{Timeout: time.Minute * 2, RetryInterval: time.Second * 5}
+
+	err := utils.TestGetHTTP(url, &params, func(response *http.Response, body []byte) (done bool, err error) {
+		resp := struct {
+			Data []struct {
+				Spans []struct {
+					StartTime int64 `json:"startTime"`
+				} `json:"spans"`
+			} `json:"data"`
+		}{}
+
+		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			return false, err
+		}
+
+		for _, reportedTrace := range resp.Data {
+			for _, reportedSpan := range reportedTrace.Spans {
+				if reportedSpan.StartTime == spanDate.UnixNano()/1000 {
+					return true, nil
+				}
+			}
+		}
+
+		return false, nil
+	})
+	if err == nil {
+		logrus.Info("Span asserted properly")
+	} else {
+		logrus.Error("There was a problem reporting the information: ", err)
+		os.Exit(1)
+	}
+}
+
 // Generate spans for the given service
 // serviceName: name of the service to generate spans
 // operationName: name of the operation for the spans
@@ -72,12 +125,18 @@ func generateSpansHistoryService(serviceName, operationName string, days int) {
 	tracer, closer := initTracer(serviceName)
 	defer closer.Close()
 
+	generatedSpans := 0
+
 	for day := 0; day < days; day++ {
 		spanDate := currentDate.AddDate(0, 0, -1*day)
-		stringDate := spanDate.Format("2006-01-02")
+		stringDate := spanDate.Format("2 Jan 2006 15:04:05")
 		span := tracer.StartSpan(fmt.Sprintf("%s-%d", operationName, day), opentracing.StartTime(spanDate))
 		span.SetTag("string-date", stringDate)
 		span.FinishWithOptions(opentracing.FinishOptions{FinishTime: spanDate.Add(time.Hour * 2)})
+
+		assertSpanWasCreated(spanDate, serviceName)
+		generatedSpans++
+		logrus.Info(generatedSpans, " spans reported properly")
 	}
 }
 
@@ -161,9 +220,14 @@ func main() {
 	log = *logger.InitLog(viper.GetBool(flagVerbose))
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
-
 	if jaegerEndpoint == "" {
-		log.Fatalln("Please, specify a Jaeger endpoint")
+		log.Errorln("Please, specify a Jaeger Collector endpoint")
+		os.Exit(1)
+	}
+
+	jaegerCollectorEndpoint := viper.GetString(enVarJaegerQuery)
+	if jaegerCollectorEndpoint == "" {
+		log.Errorln("Please, specify a Jaeger Query endpoint")
 		os.Exit(1)
 	}
 

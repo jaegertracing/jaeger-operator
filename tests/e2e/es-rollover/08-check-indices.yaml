@@ -33,7 +33,7 @@ spec:
           image: local/asserts:e2e
           command: ["./index",
             "--name", "jaeger-span-read",
-            "--assert-count-docs", "110",
+            "--assert-count-docs", "40",
             "--verbose"
           ]
           env:
