@@ -134,9 +134,12 @@ func generateSpansHistoryService(serviceName, operationName string, days int) {
 		span.SetTag("string-date", stringDate)
 		span.FinishWithOptions(opentracing.FinishOptions{FinishTime: spanDate.Add(time.Hour * 2)})
 
-		assertSpanWasCreated(spanDate, serviceName)
-		generatedSpans++
-		logrus.Info(generatedSpans, " spans reported properly")
+		jaegerQueryEndpoint := viper.GetString(enVarJaegerQuery)
+		if jaegerQueryEndpoint != "" {
+			assertSpanWasCreated(spanDate, serviceName)
+			generatedSpans++
+			logrus.Info(generatedSpans, " spans reported properly")
+		}
 	}
 }
 
@@ -222,12 +225,6 @@ func main() {
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
 	if jaegerEndpoint == "" {
 		log.Errorln("Please, specify a Jaeger Collector endpoint")
-		os.Exit(1)
-	}
-
-	jaegerCollectorEndpoint := viper.GetString(enVarJaegerQuery)
-	if jaegerCollectorEndpoint == "" {
-		log.Errorln("Please, specify a Jaeger Query endpoint")
 		os.Exit(1)
 	}
 
