@@ -24,10 +24,10 @@ const (
 	flagEsURL              = "es-url"
 	flagPattern            = "pattern"
 	flagName               = "name"
-	flagIsAlias            = "is-alias"
 	flagExist              = "assert-exist"
 	flagAssertCountIndices = "assert-count-indices"
 	flagAssertCountDocs    = "assert-count-docs"
+	flagJaegerService      = "jaeger-service"
 	flagVerbose            = "verbose"
 )
 
@@ -78,6 +78,9 @@ func initCmd() error {
 	viper.SetDefault(flagName, "")
 	flag.String(flagName, "", "Name of the desired index (needed for aliases)")
 
+	viper.SetDefault(flagJaegerService, "")
+	flag.String(flagJaegerService, "", "Name of the Jaeger Service")
+
 	viper.SetDefault(flagAssertCountIndices, "-1")
 	flag.Int(flagAssertCountIndices, -1, "Assert the number of matched indices")
 
@@ -98,6 +101,8 @@ func initCmd() error {
 		return fmt.Errorf(fmt.Sprintf("--%s and --%s provided. Provide just one", flagName, flagPattern))
 	} else if viper.GetString(flagName) == "" && viper.GetString(flagPattern) == "" {
 		return fmt.Errorf(fmt.Sprintf("--%s nor --%s provided. Provide one at least", flagName, flagPattern))
+	} else if viper.GetBool(flagAssertCountDocs) && viper.GetString(flagJaegerService) == "" {
+		return fmt.Errorf(fmt.Sprintf("--%s provided. Provide --%s", flagAssertCountDocs, flagJaegerService))
 	}
 
 	return nil
@@ -134,15 +139,13 @@ func main() {
 		}
 
 		matchingIndices, err = filterIndices(&indices, viper.GetString(flagPattern))
+		if err != nil {
+			log.Fatalln(err)
+			os.Exit(1)
+		}
 	} else {
-		var index elasticsearch.EsIndex
-		index, err = elasticsearch.GetEsIndex(connection, viper.GetString(flagName))
+		index := elasticsearch.GetEsIndex(connection, viper.GetString(flagName))
 		matchingIndices = []elasticsearch.EsIndex{index}
-	}
-
-	if err != nil {
-		log.Fatalln(err)
-		os.Exit(1)
 	}
 
 	if viper.GetBool(flagExist) {
@@ -163,8 +166,13 @@ func main() {
 
 	if viper.GetInt(flagAssertCountDocs) > -1 {
 		foundDocs := 0
+		jaegerServiceName := viper.GetString(flagJaegerService)
 		for _, index := range matchingIndices {
-			foundDocs += index.RealDocCount
+			spans, err := index.GetServiceIndexSpans(jaegerServiceName)
+			if err != nil {
+				log.Errorln("Something failed while getting the index spans:", err)
+			}
+			foundDocs += len(spans)
 		}
 		log.Debug(foundDocs, " in ", len(matchingIndices), " indices")
 

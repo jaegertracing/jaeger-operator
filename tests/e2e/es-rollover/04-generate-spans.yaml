@@ -10,7 +10,7 @@ spec:
         - name: report-span-2
           image: local/asserts:e2e
           command: ["./reporter",
-            "--days", "10",
+            "--days", "2",
             "--services", "1",
             "--verbose"
           ]
