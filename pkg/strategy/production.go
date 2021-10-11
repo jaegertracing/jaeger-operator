@@ -137,9 +137,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled == true {
-		queryDep = inject.Sidecar(jaeger, queryDep)
-	}
 	c.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator

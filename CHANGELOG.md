@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+1.27.0 (2021-10-07)
+-------------------
+* Allow sidecar injection for query pod from other Jaeger instances ([#1569](https://github.com/jaegertracing/jaeger-operator/pull/1569), [@pavolloffay](https://github.com/pavolloffay))
+* Avoid touching jaeger deps on deployment/ns controller ([#1529](https://github.com/jaegertracing/jaeger-operator/pull/1529), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.26.0 (2021-09-30)
 -------------------
 * Add ingressClassName field to query ingress ([#1557](https://github.com/jaegertracing/jaeger-operator/pull/1557), [@rubenvp8510](https://github.com/rubenvp8510))
