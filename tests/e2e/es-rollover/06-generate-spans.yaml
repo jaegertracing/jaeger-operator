@@ -1,14 +1,19 @@
+# Generate some traces in the Jaeger instance
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: report-span
+  name: report-span-3
 spec:
   template:
     spec:
       containers:
-        - name: asserts-container
+        - name: report-span-3
           image: local/asserts:e2e
-          command: ["./reporter"]
+          command: ["./reporter",
+            "--days", "2",
+            "--services", "1",
+            "--verbose"
+          ]
           env:
             - name: JAEGER_SERVICE_NAME
               value: "my-test-service"
