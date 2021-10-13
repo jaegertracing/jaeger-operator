@@ -1,0 +1,27 @@
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jaeger-collector
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+---
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jaeger-query
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+---
+# Assert the ES Rollover mapping is run
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-jaeger-es-rollover-create-mapping
+status:
+  succeeded: 1

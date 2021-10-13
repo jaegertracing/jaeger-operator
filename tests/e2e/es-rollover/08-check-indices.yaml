@@ -1,0 +1,44 @@
+---
+# Assert the index rollover
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assert-indexes-after-3
+spec:
+  template:
+    spec:
+      containers:
+        - name: assert-indexes-after-3
+          image: local/asserts:e2e
+          command: ["./index",
+            "--name", "jaeger-span-000002",
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "http://elasticsearch"
+      restartPolicy: OnFailure
+  backoffLimit: 10
+---
+# Assert the information can be accessed after the rollover
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assert-indexes-after-4
+spec:
+  template:
+    spec:
+      containers:
+        - name: assert-indexes-after-4
+          image: local/asserts:e2e
+          command: ["./index",
+            "--name", "jaeger-span-read",
+            "--assert-count-docs", "4",
+            "--jaeger-service", "my-test-service",
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "http://elasticsearch"
+      restartPolicy: OnFailure
+  backoffLimit: 10
