@@ -399,7 +399,7 @@ install-tools:
 		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
 		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 \
 		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
-		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6 \
+		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
 	./.ci/install-gomplate.sh
 
 .PHONY: install
