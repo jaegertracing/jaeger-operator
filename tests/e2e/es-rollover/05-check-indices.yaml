@@ -1,0 +1,67 @@
+# Assert the previous indices are still there
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assert-indexes-after-0
+spec:
+  template:
+    spec:
+      containers:
+        - name: assert-indexes-after-0
+          image: local/asserts:e2e
+          command: ["./index",
+            "--pattern", "jaeger-span-\\d{4}-\\d{2}-\\d{2}",
+            "--assert-count-indices", "2",
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "http://elasticsearch"
+      restartPolicy: OnFailure
+  backoffLimit: 10
+---
+# Assert there is a new index using the format `jaeger-span-000001`
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assert-indexes-after-1
+spec:
+  template:
+    spec:
+      containers:
+        - name: assert-indexes-after-1
+          image: local/asserts:e2e
+          command: ["./index",
+            "--pattern", "jaeger-span-\\d{6}",
+            "--assert-count-docs", "2",
+            "--jaeger-service", "my-test-service",
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "http://elasticsearch"
+      restartPolicy: OnFailure
+  backoffLimit: 10
+---
+# Assert the alias was created
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assert-indexes-after-2
+spec:
+  template:
+    spec:
+      containers:
+        - name: assert-indexes-after-2
+          image: local/asserts:e2e
+          command: ["./index",
+            "--name", "jaeger-span-read",
+            "--assert-count-docs", "2",
+            "--jaeger-service", "my-test-service",
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "http://elasticsearch"
+      restartPolicy: OnFailure
+  backoffLimit: 10
