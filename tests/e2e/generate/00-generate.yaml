@@ -6,7 +6,3 @@ commands:
   # Deploy the manifest
   - command: "kubectl apply -f generated-manifest.yaml"
     namespaced: true
-  # Sometimes, the Jaeger deployment is done but the endpoints are not available
-  # yet. So, we wait here before moving to the next step to ensure the endpoints
-  # are available and the reporter application can send the spans properly
-  - script: "sleep 10"
