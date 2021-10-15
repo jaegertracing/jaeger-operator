@@ -3,6 +3,7 @@ package inject
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -82,7 +83,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
 	}
 
-	if jaeger.Spec.Ingress.Openshift.SAR != nil && len(*jaeger.Spec.Ingress.Openshift.SAR) > 0 {
+	if jaeger.Spec.Ingress.Openshift.SAR != nil && len(strings.TrimSpace(*jaeger.Spec.Ingress.Openshift.SAR)) > 0 {
 		args = append(args, fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR))
 	}
 
