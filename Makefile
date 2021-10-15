@@ -400,6 +400,7 @@ install-tools:
 		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 \
 		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
 		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
+	./.ci/install-gomplate.sh
 
 .PHONY: install
 install: install-sdk install-tools
@@ -490,6 +491,14 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+
+
+# This files are needed for the examples
+# examples-simplest
+	gomplate -f examples/simplest.yaml -o tests/e2e/examples-simplest/00-install.yaml
+	JAEGER_NAME=simplest gomplate -f tests/templates/simple-jaeger-assert.yaml -o tests/e2e/examples-simplest/00-assert.yaml
+	JAEGER_SERVICE=smoketest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-simplest/01-smoke-test.yaml
+	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-simplest/01-assert.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
