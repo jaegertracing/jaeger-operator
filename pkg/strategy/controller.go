@@ -118,7 +118,6 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 
 	if jaeger.Spec.Ingress.Openshift.SAR == nil {
 		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
-		fmt.Println(sar)
 		jaeger.Spec.Ingress.Openshift.SAR = &sar
 	}
 
