@@ -365,7 +365,7 @@ func jaegerInstance() *v1.Jaeger {
 			},
 			Ingress: v1.JaegerIngressSpec{
 				Openshift: v1.JaegerIngressOpenShiftSpec{
-					SAR: &sar,
+					SAR:          &sar,
 					DelegateUrls: `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`,
 				},
 				Options: v1.NewOptions(map[string]interface{}{

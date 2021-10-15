@@ -254,7 +254,7 @@ func jaegerWithPassword(namespace string, instanceName, secretName string) *v1.J
 		Spec: v1.JaegerSpec{
 			Ingress: v1.JaegerIngressSpec{
 				Openshift: v1.JaegerIngressOpenShiftSpec{
-					SAR: &sar,
+					SAR:          &sar,
 					HtpasswdFile: "/usr/local/data/htpasswd",
 				},
 			},
