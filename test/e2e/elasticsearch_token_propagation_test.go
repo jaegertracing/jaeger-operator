@@ -334,6 +334,7 @@ func testAccountToken() string {
 }
 
 func jaegerInstance() *v1.Jaeger {
+	sar := "{\"namespace\": \"default\", \"resource\": \"pods\", \"verb\": \"get\"}"
 	exampleJaeger := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -364,7 +365,7 @@ func jaegerInstance() *v1.Jaeger {
 			},
 			Ingress: v1.JaegerIngressSpec{
 				Openshift: v1.JaegerIngressOpenShiftSpec{
-					SAR:          "{\"namespace\": \"default\", \"resource\": \"pods\", \"verb\": \"get\"}",
+					SAR: &sar,
 					DelegateUrls: `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`,
 				},
 				Options: v1.NewOptions(map[string]interface{}{

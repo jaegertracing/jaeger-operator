@@ -82,8 +82,8 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		volumeMounts = append(volumeMounts, jaeger.Spec.JaegerCommonSpec.VolumeMounts...)
 	}
 
-	if len(jaeger.Spec.Ingress.Openshift.SAR) > 0 {
-		args = append(args, fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.Openshift.SAR))
+	if jaeger.Spec.Ingress.Openshift.SAR != nil && len(*jaeger.Spec.Ingress.Openshift.SAR) > 0 {
+		args = append(args, fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR))
 	}
 
 	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && viper.GetBool("auth-delegator-available") {

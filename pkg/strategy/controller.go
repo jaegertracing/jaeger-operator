@@ -116,6 +116,11 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
+	if jaeger.Spec.Ingress.Openshift.SAR == nil {
+		sar := fmt.Sprintf("'{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}'", jaeger.Namespace)
+		jaeger.Spec.Ingress.Openshift.SAR = &sar
+	}
+
 	// note that the order normalization matters - UI norm expects all normalized properties
 	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)

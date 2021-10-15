@@ -241,6 +241,7 @@ func jaegerWithPassword(namespace string, instanceName, secretName string) *v1.J
 	volumes := getVolumes(secretName)
 	volumeMounts := getVolumeMounts()
 
+	sar := "{\"namespace\": " + "\"" + namespace + "\"" + ", \"resource\": \"pods\", \"verb\": \"get\"}"
 	j := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
@@ -253,7 +254,7 @@ func jaegerWithPassword(namespace string, instanceName, secretName string) *v1.J
 		Spec: v1.JaegerSpec{
 			Ingress: v1.JaegerIngressSpec{
 				Openshift: v1.JaegerIngressOpenShiftSpec{
-					SAR:          "{\"namespace\": " + "\"" + namespace + "\"" + ", \"resource\": \"pods\", \"verb\": \"get\"}",
+					SAR: &sar,
 					HtpasswdFile: "/usr/local/data/htpasswd",
 				},
 			},
