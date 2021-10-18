@@ -12,7 +12,7 @@ import (
 
 func Test1_27_upgrade(t *testing.T) {
 	j := v1.Jaeger{}
-	j, err := upgrade1_27_0(context.Background(), nil, j)
+	j, err := upgrade1_28_0(context.Background(), nil, j)
 	require.NoError(t, err)
 	assert.Equal(t, " ", *j.Spec.Ingress.Openshift.SAR)
 }
