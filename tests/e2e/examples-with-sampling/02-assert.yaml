@@ -1,11 +1,15 @@
-# Assert the proabilitic default strategy was set properly
-apiVersion: jaegertracing.io/v1
-kind: Jaeger
+# Assert the spans are reported
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: with-sampling
-spec:
-  sampling:
-    options:
-      default_strategy:
-        type: probabilistic
-        param: 50
+  name: report-span
+status:
+  succeeded: 1
+---
+# Assert the spans can be queried
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-span
+status:
+  succeeded: 1
