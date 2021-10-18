@@ -400,6 +400,7 @@ install-tools:
 		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 \
 		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
 		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
+	./.ci/install-gomplate.sh
 
 .PHONY: install
 install: install-sdk install-tools
@@ -490,6 +491,26 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+
+# examples-agent-as-daemonset
+	gomplate -f examples/agent-as-daemonset.yaml -o tests/e2e/examples-agent-as-daemonset/00-install.yaml
+	JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-agent-as-daemonset/00-assert.yaml
+	JAEGER_SERVICE=agent-as-daemonset JAEGER_OPERATION=smoketestoperation JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-agent-as-daemonset/02-smoke-test.yaml
+	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-agent-as-daemonset/02-assert.yaml
+# examples-with-cassandra
+	gomplate -f tests/templates/cassandra-install.yaml -o tests/e2e/examples-with-cassandra/00-install.yaml
+	gomplate -f tests/templates/cassandra-assert.yaml -o tests/e2e/examples-with-cassandra/00-assert.yaml
+	gomplate -f examples/with-cassandra.yaml -o tests/e2e/examples-with-cassandra/01-install.yaml
+	${SED} -i "s~cassandra.default.svc~cassandra~gi" tests/e2e/examples-with-cassandra/01-install.yaml
+	JAEGER_NAME=with-cassandra gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-with-cassandra/01-assert.yaml
+	JAEGER_SERVICE=with-cassandra JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-cassandra gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-with-cassandra/02-smoke-test.yaml
+	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-with-cassandra/02-assert.yaml
+# examples-business-application-injected-sidecar
+	cat examples/business-application-injected-sidecar.yaml tests/e2e/examples-business-application-injected-sidecar/livenessProbe.yaml >  tests/e2e/examples-business-application-injected-sidecar/00-install.yaml
+	gomplate -f  examples/simplest.yaml -o tests/e2e/examples-business-application-injected-sidecar/01-install.yaml
+	JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-business-application-injected-sidecar/01-assert.yaml
+	JAEGER_SERVICE=simplest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-business-application-injected-sidecar/02-smoke-test.yaml
+	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-business-application-injected-sidecar/02-assert.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
