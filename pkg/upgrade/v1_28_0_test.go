@@ -10,7 +10,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
-func Test1_27_upgrade(t *testing.T) {
+func Test1_28_upgrade(t *testing.T) {
 	j := v1.Jaeger{}
 	j, err := upgrade1_28_0(context.Background(), nil, j)
 	require.NoError(t, err)
