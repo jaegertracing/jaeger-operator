@@ -502,6 +502,13 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 # This is needed for the generate test
 	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
+# This is needed for the upgrade test
+	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
+	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
+	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
+	$(VECHO)${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
+
 
 # end-to-tests
 .PHONY: kuttl-e2e
@@ -516,6 +523,7 @@ start-kind:
 	$(VECHO)kind load docker-image local/jaeger-operator:e2e
 	$(VECHO)kind load docker-image local/asserts:e2e
 	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)kind load docker-image local/jaeger-operator:next
 	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 .PHONY: build-assert-job
