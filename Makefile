@@ -490,14 +490,14 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 	@docker pull jaegertracing/vertx-create-span:operator-e2e-tests
-	@docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	@docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 # This is needed for the upgrade test
 	@docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
-	@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml -o tests/e2e/upgrade/00-assert.yaml
-	@JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml -o tests/e2e/upgrade/01-assert.yaml
-	@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml -o tests/e2e/upgrade/02-assert.yaml
+	@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
+	@JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
+	@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
+	${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
