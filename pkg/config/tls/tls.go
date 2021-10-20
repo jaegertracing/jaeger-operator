@@ -17,6 +17,10 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 		return
 	}
 
+	if len(util.FindItem("--reporter.grpc.host-port=", *options)) != 0 {
+		return
+	}
+
 	volume := corev1.Volume{
 		Name: configurationVolumeName(jaeger),
 		VolumeSource: corev1.VolumeSource{
