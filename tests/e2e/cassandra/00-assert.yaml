@@ -1,0 +1,17 @@
+# Assert the Casandra is up and running
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+status:
+  readyReplicas: 2
+---
+# Assert the Jaeger is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: with-cassandra
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
