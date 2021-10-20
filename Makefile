@@ -408,6 +408,7 @@ install-tools:
 		sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 \
 		k8s.io/code-generator/cmd/client-gen@v0.18.6 \
 		k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20200410145947-61e04a5be9a6
+	./.ci/install-gomplate.sh
 
 .PHONY: install
 install: install-sdk install-tools
@@ -499,6 +500,14 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
+# This is needed for the upgrade test
+	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
+	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
+	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
+	$(VECHO)${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
+
+
 # end-to-tests
 .PHONY: kuttl-e2e
 kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
@@ -512,6 +521,7 @@ start-kind:
 	$(VECHO)kind load docker-image local/jaeger-operator:e2e
 	$(VECHO)kind load docker-image local/asserts:e2e
 	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)kind load docker-image local/jaeger-operator:next
 	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 .PHONY: build-assert-job
