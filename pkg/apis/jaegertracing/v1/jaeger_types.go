@@ -350,7 +350,7 @@ type JaegerIngressTLSSpec struct {
 // +k8s:openapi-gen=true
 type JaegerIngressOpenShiftSpec struct {
 	// +optional
-	SAR string `json:"sar,omitempty"`
+	SAR *string `json:"sar,omitempty"`
 
 	// +optional
 	DelegateUrls string `json:"delegateUrls,omitempty"`
