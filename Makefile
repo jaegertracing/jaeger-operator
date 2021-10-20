@@ -501,7 +501,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 # This is needed for the generate test
-	@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
+	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
