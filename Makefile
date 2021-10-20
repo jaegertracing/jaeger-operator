@@ -489,62 +489,62 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	@${SED} "0,/fieldPath: metadata.namespace/s/fieldPath: metadata.namespace/fieldPath: metadata.annotations['olm.targetNamespaces']/gi" tests/_build/manifests/01-jaeger-operator.yaml -i
 
 	@cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
-	docker pull jaegertracing/vertx-create-span:operator-e2e-tests
-	docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	@docker pull jaegertracing/vertx-create-span:operator-e2e-tests
+	@docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 # This files are needed for the examples
 # examples-simplest
-	gomplate -f examples/simplest.yaml -o tests/e2e/examples-simplest/00-install.yaml
-	JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-simplest/00-assert.yaml
-	JAEGER_SERVICE=smoketest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-simplest/01-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-simplest/01-assert.yaml
+	@gomplate -f examples/simplest.yaml -o tests/e2e/examples-simplest/00-install.yaml
+	@JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-simplest/00-assert.yaml
+	@JAEGER_SERVICE=smoketest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simplest/01-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simplest/01-assert.yaml
 # examples-with-badger
-	gomplate -f examples/with-badger.yaml -o tests/e2e/examples-with-badger/00-install.yaml
-	JAEGER_NAME=with-badger gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-with-badger/00-assert.yaml
-	JAEGER_SERVICE=with-badger JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-with-badger/01-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-with-badger/01-assert.yaml
+	@gomplate -f examples/with-badger.yaml -o tests/e2e/examples-with-badger/00-install.yaml
+	@JAEGER_NAME=with-badger gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger/00-assert.yaml
+	@JAEGER_SERVICE=with-badger JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger/01-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger/01-assert.yaml
 # examples-with-badger-and-volume
-	gomplate -f examples/with-badger-and-volume.yaml -o tests/e2e/examples-with-badger-and-volume/00-install.yaml
-	JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-with-badger-and-volume/00-assert.yaml
-	JAEGER_SERVICE=with-badger-and-volume JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-with-badger-and-volume/01-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-with-badger-and-volume/01-assert.yaml
+	@gomplate -f examples/with-badger-and-volume.yaml -o tests/e2e/examples-with-badger-and-volume/00-install.yaml
+	@JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/00-assert.yaml
+	@JAEGER_SERVICE=with-badger-and-volume JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-assert.yaml
 # examples-service-types
-	gomplate -f examples/service-types.yaml -o tests/e2e/examples-service-types/00-install.yaml
-	JAEGER_NAME=service-types gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-service-types/00-assert.yaml
-	JAEGER_SERVICE=service-types JAEGER_OPERATION=smoketestoperation JAEGER_NAME=service-types gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-service-types/01-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-service-types/01-assert.yaml
+	@gomplate -f examples/service-types.yaml -o tests/e2e/examples-service-types/00-install.yaml
+	@JAEGER_NAME=service-types gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-service-types/00-assert.yaml
+	@JAEGER_SERVICE=service-types JAEGER_OPERATION=smoketestoperation JAEGER_NAME=service-types gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-service-types/01-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-service-types/01-assert.yaml
 # examples-simple-prod
-	gomplate -f tests/templates/elasticsearch-install.yaml -o tests/e2e/examples-simple-prod/00-install.yaml
-	gomplate -f tests/templates/elasticsearch-assert.yaml -o tests/e2e/examples-simple-prod/00-assert.yaml
-	gomplate -f examples/simple-prod.yaml -o tests/e2e/examples-simple-prod/01-install.yaml
-	${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod/01-install.yaml
-	JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml -o tests/e2e/examples-simple-prod/01-assert.yaml
-	JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-simple-prod/02-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-simple-prod/02-assert.yaml
+	@gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod/00-install.yaml
+	@gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod/00-assert.yaml
+	@gomplate -f examples/simple-prod.yaml -o tests/e2e/examples-simple-prod/01-install.yaml
+	@${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod/01-install.yaml
+	@JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod/01-assert.yaml
+	@JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod/02-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod/02-assert.yaml
 # examples-simple-prod-with-volumes
-	gomplate -f tests/templates/elasticsearch-install.yaml -o tests/e2e/examples-simple-prod-with-volumes/00-install.yaml
-	gomplate -f tests/templates/elasticsearch-assert.yaml -o tests/e2e/examples-simple-prod-with-volumes/00-assert.yaml
-	gomplate -f examples/simple-prod-with-volumes.yaml -o tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
-	${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
-	JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml -o tests/e2e/examples-simple-prod-with-volumes/01-assert.yaml
-	JAEGER_SERVICE=simple-prod-with-volumes JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-simple-prod-with-volumes/02-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-simple-prod-with-volumes/02-assert.yaml
+	@gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-install.yaml
+	@gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-assert.yaml
+	@gomplate -f examples/simple-prod-with-volumes.yaml -o tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
+	@${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
+	@JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/01-assert.yaml
+	@JAEGER_SERVICE=simple-prod-with-volumes JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-assert.yaml
 # examples-simple-streaming
-	gomplate -f tests/templates/elasticsearch-install.yaml -o tests/e2e/examples-simple-streaming/00-install.yaml
-	gomplate -f tests/templates/elasticsearch-assert.yaml -o tests/e2e/examples-simple-streaming/00-assert.yaml
-	gomplate -f examples/simple-streaming.yaml -o tests/e2e/examples-simple-streaming/01-install.yaml
-	${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-streaming/01-install.yaml
-	JAEGER_NAME=simple-streaming gomplate -f tests/templates/production-jaeger-assert.yaml -o tests/e2e/examples-simple-streaming/01-assert.yaml
-	JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-simple-streaming/03-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-simple-streaming/03-assert.yaml
+	@gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-streaming/00-install.yaml
+	@gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-streaming/00-assert.yaml
+	@gomplate -f examples/simple-streaming.yaml -o tests/e2e/examples-simple-streaming/01-install.yaml
+	@${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-streaming/01-install.yaml
+	@JAEGER_NAME=simple-streaming gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-streaming/01-assert.yaml
+	@JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-streaming/03-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-streaming/03-assert.yaml
 # examples-with-sampling
-	gomplate -f tests/templates/elasticsearch-install.yaml -o tests/e2e/examples-with-sampling/00-install.yaml
-	gomplate -f tests/templates/elasticsearch-assert.yaml -o tests/e2e/examples-with-sampling/00-assert.yaml
-	gomplate -f examples/with-sampling.yaml -o tests/e2e/examples-with-sampling/01-install.yaml
-	${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-with-sampling/01-install.yaml
-	JAEGER_NAME=with-sampling gomplate -f tests/templates/allinone-jaeger-assert.yaml -o tests/e2e/examples-with-sampling/01-assert.yaml
-	JAEGER_SERVICE=with-sampling JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-sampling gomplate -f tests/templates/smoke-test.yaml -o tests/e2e/examples-with-sampling/02-smoke-test.yaml
-	gomplate -f tests/templates/smoke-test-assert.yaml -o tests/e2e/examples-with-sampling/02-assert.yaml
+	@gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-with-sampling/00-install.yaml
+	@gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-with-sampling/00-assert.yaml
+	@gomplate -f examples/with-sampling.yaml -o tests/e2e/examples-with-sampling/01-install.yaml
+	@${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-with-sampling/01-install.yaml
+	@JAEGER_NAME=with-sampling gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-sampling/01-assert.yaml
+	@JAEGER_SERVICE=with-sampling JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-sampling gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-sampling/02-smoke-test.yaml.template
+	@gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-sampling/02-assert.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
