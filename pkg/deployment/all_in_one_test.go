@@ -378,6 +378,22 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 				"--collector.grpc.tls.enabled=true",
 			},
 		},
+		{
+			name: "Do not implicitly enable TLS when grpc.host-port is provided",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                "a-value",
+				"reporter.grpc.host-port": "my.host-port.com",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=my.host-port.com",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
 	} {
 		jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 		jaeger.Spec.AllInOne.Options = tt.options
