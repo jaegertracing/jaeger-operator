@@ -19,4 +19,3 @@ if [ ! -f ${DEST} ]; then
     fi
     $SUDO chmod +x ${DEST}
 fi
-
