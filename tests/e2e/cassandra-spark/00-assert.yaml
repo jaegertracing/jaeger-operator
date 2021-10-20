@@ -29,8 +29,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   ownerReferences:
-  - apiVersion: batch/v1
-    kind: CronJob
+  - kind: CronJob
     name: test-spark-deps-spark-dependencies
 status:
   succeeded: 1
