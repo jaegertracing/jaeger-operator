@@ -1,6 +1,6 @@
+# Check the spans werer reported successfully and Jaeger query is reachable from
+# localhost
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - command: "kubectl wait --for=condition=complete --timeout=30s job/report-span"
-    namespaced: true
   - script: "go run ../../assert-jobs/query/main.go --service-name=my-test-service"

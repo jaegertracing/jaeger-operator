@@ -1,3 +1,4 @@
+# Assert there is an ingress entry for the Jaeger query
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
