@@ -1,0 +1,7 @@
+# Assert the Jaeger deployment is done
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jaeger
+spec:
+  replicas: 1

@@ -1,0 +1,38 @@
+# Report some spans to run a smoke test
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: report-span
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: local/asserts:e2e
+          command: ["./reporter"]
+          env:
+            - name: JAEGER_SERVICE_NAME
+              value: "my-test-service"
+            - name: OPERATION_NAME
+              value: "my-little-op"
+            - name: JAEGER_ENDPOINT
+              value: "http://my-jaeger-collector-headless:14268/api/traces"
+            - name: JAEGER_QUERY
+              value: "http://my-jaeger-query:16686/api/traces"
+      restartPolicy: OnFailure
+  backoffLimit: 10
+---
+# Check if the spans are available
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: query-span
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: local/asserts:e2e
+          command: ["./query", --service-name=my-test-service, "--query-host=my-jaeger-query:16686"]
+      restartPolicy: OnFailure
+  backoffLimit: 10
