@@ -500,6 +500,8 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
+# This is needed for the generate test
+	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
 # This is needed for the upgrade test
 	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
@@ -514,7 +516,7 @@ kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 
 .PHONY: run-kuttl-e2e
 run-kuttl-e2e:
-	$(KUTTL) test
+	$(VECHO)$(KUTTL) test
 
 start-kind:
 	$(VECHO)kind create cluster --config $(KIND_CONFIG)
@@ -528,6 +530,10 @@ start-kind:
 build-assert-job:
 	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
 	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+
+.PHONY: build-assert-job
+install-git-hooks:
+	$(VECHO)cp scripts/git-hooks/pre-commit .git/hooks
 
 .PHONY: prepare-release
 prepare-release:
