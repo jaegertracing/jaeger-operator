@@ -508,14 +508,18 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
 	$(VECHO)${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
-
+# This is needed for the streaming tests
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/00-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/00-assert.yaml
+	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/05-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/05-assert.yaml
 
 # end-to-tests
 .PHONY: kuttl-e2e
 kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 
 .PHONY: run-kuttl-e2e
-run-kuttl-e2e:
+run-kuttl-e2e: kafka
 	$(KUTTL) test
 
 start-kind:

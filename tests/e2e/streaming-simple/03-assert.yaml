@@ -1,0 +1,8 @@
+# Ensure the entity operator is up and running
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-cluster-entity-operator
+  namespace: kafka
+status:
+  readyReplicas: 1

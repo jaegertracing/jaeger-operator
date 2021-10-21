@@ -1,0 +1,8 @@
+# Assert the Kafka stateful set is up and running
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-cluster-kafka
+  namespace: kafka
+status:
+  readyReplicas: 1
