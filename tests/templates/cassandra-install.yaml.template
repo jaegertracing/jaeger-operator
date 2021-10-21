@@ -99,14 +99,22 @@ spec:
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: with-cassandra
+  name: {{ .Env.INSTANCE_NAME }}
 spec:
   strategy: allInOne
   storage:
     type: cassandra
+{{- if (has .Env "DEP_SCHEDULE")}}
+    dependencies:
+      # run immediately
+      schedule: "*/1 * * * *" 
+{{- end }}
     options:
       cassandra:
         servers: cassandra
         keyspace: jaeger_v1_datacenter1
     cassandraCreateSchema:
       datacenter: "datacenter1"
+{{- if (has .Env "CASSANDRA_MODE") }}
+      mode: "{{ .Env.CASSANDRA_MODE }}"
+{{- end }}
