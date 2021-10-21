@@ -1,4 +1,4 @@
-# Report some spans
+# Report some spans to run a smoke test
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -19,5 +19,20 @@ spec:
               value: "http://my-jaeger-collector-headless:14268/api/traces"
             - name: JAEGER_QUERY
               value: "http://my-jaeger-query:16686/api/traces"
+      restartPolicy: OnFailure
+  backoffLimit: 10
+---
+# Check if the spans are available
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: query-span
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: local/asserts:e2e
+          command: ["./query", --service-name=my-test-service, "--query-host=my-jaeger-query:16686"]
       restartPolicy: OnFailure
   backoffLimit: 10
