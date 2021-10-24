@@ -516,7 +516,7 @@ kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 
 .PHONY: run-kuttl-e2e
 run-kuttl-e2e:
-	$(KUTTL) test
+	$(VECHO)$(KUTTL) test
 
 start-kind:
 	$(VECHO)kind create cluster --config $(KIND_CONFIG)
@@ -530,6 +530,10 @@ start-kind:
 build-assert-job:
 	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
 	$(VECHO)docker build -t local/asserts:e2e  -f Dockerfile.asserts .
+
+.PHONY: build-assert-job
+install-git-hooks:
+	$(VECHO)cp scripts/git-hooks/pre-commit .git/hooks
 
 .PHONY: prepare-release
 prepare-release:
