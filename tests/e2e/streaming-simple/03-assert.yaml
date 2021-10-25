@@ -1,6 +1,6 @@
 # Ensure the entity operator is up and running
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: my-cluster-entity-operator
   namespace: kafka
