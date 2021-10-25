@@ -533,7 +533,7 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
 
 .PHONY: run-kuttl-e2e
-run-kuttl-e2e:
+run-kuttl-e2e: istio
 	$(VECHO)$(KUTTL) test
 
 start-kind:
