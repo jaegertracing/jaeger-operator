@@ -7,4 +7,3 @@ spec:
     strategy: DaemonSet
     options:
       log-level: debug
-
