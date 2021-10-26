@@ -1,0 +1,9 @@
+# Assert the Jaeger is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Env.INSTANCE_NAME }}
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
