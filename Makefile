@@ -511,8 +511,19 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 # This is needed for the streaming tests
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/00-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/03-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/05-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/05-assert.yaml
+# streaming-with-tls
+	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-tls/00-install.yaml
+	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-tls/00-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-tls/01-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-tls/02-assert.yaml
+	$(VECHO)gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-tls/03-assert.yaml
+	$(VECHO)JAEGER_NAMESPACE=$(KAFKA_NAMESPACE) JAEGER_SERVICE=streaming-with-tls JAEGER_OPERATION=smoketestoperation JAEGER_NAME=tls-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-tls/06-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-tls/06-assert.yaml
 # examples-agent-as-daemonset
 	$(VECHO)gomplate -f examples/agent-as-daemonset.yaml -o tests/e2e/examples-agent-as-daemonset/00-install.yaml
 	$(VECHO)JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-agent-as-daemonset/00-assert.yaml

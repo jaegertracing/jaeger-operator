@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
+  {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
   labels:
     app: jaeger
     jaeger-infra: elasticsearch-statefulset
@@ -56,6 +57,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch
+  {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
   labels:
     app: jaeger
     jaeger-infra: elasticsearch-service
