@@ -2,11 +2,16 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -231,4 +236,62 @@ func WaitForSecret(secretName, secretNamespace string) {
 		}
 	})
 	require.NoError(t, err)
+}
+
+func WaitForHttpResponse(httpClient http.Client, method, url string, response interface{}) (err error) {
+	logrus.Infof("calling url: %s", url)
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return err
+	}
+	eofCount := 0
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		res, err := httpClient.Do(req)
+		logrus.Infof("response status code: %d", res.StatusCode)
+		if err != nil {
+			if strings.Contains(err.Error(), "Timeout exceeded") {
+				log.Infof("Retrying request after error %v", err)
+				return false, nil
+			}
+			// ignore only EOF error
+			if strings.HasSuffix(err.Error(), "EOF") {
+				eofCount++
+				logrus.Infof("EOL error hits: [%s]", err.Error())
+				return false, nil
+			}
+
+			if eofCount > 2 {
+				return false, err
+			}
+			return false, err
+		}
+
+		if res.StatusCode == http.StatusServiceUnavailable {
+			logrus.Warnf("Ignoring http response %d", res.StatusCode)
+			return false, nil
+		}
+		if res.StatusCode == http.StatusForbidden {
+			return false, errors.New("status code Forbidden(403) received")
+		}
+
+		if !(res.StatusCode >= 200 && res.StatusCode <= 299) {
+			return false, nil
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return false, err
+		}
+
+		logrus.Infof("response: %s", string(body))
+
+		err = json.Unmarshal(body, response)
+		if err != nil {
+			return false, err
+		}
+
+		return len(body) > 0, nil
+	})
+
+	return err
 }

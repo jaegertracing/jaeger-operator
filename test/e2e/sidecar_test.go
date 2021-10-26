@@ -1,11 +1,10 @@
+//go:build smoke
 // +build smoke
 
 package e2e
 
 import (
 	goctx "context"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -19,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
@@ -83,22 +81,10 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Failed waiting for"+vertxDeploymentName+" deployment")
 
 	url, httpClient := getQueryURLAndHTTPClient(firstJaegerInstanceName, "%s/api/traces?service=order", true)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := httpClient.Do(req)
-		require.NoError(t, err)
-
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		resp := &resp{}
-		err = json.Unmarshal(body, &resp)
-		require.NoError(t, err)
-
-		return len(resp.Data) > 0, nil
-	})
+	resp := &resp{}
+	err = WaitForHttpResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
+	require.True(t, len(resp.Data) > 0)
 
 	/* Testing other instance */
 	secondJaegerInstanceName := "agent-as-sidecar2"
@@ -119,21 +105,9 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Error waiting for jaeger instance deletion")
 
 	url, httpClient = getQueryURLAndHTTPClient(secondJaegerInstanceName, "%s/api/traces?service=order", true)
-	req, err = http.NewRequest(http.MethodGet, url, nil)
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := httpClient.Do(req)
-		require.NoError(t, err)
-
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		resp := &resp{}
-		err = json.Unmarshal(body, &resp)
-		require.NoError(t, err)
-
-		return len(resp.Data) > 0, nil
-	})
+	err = WaitForHttpResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
+	require.True(t, len(resp.Data) > 0)
 }
 
 func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {

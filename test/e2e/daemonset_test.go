@@ -1,11 +1,10 @@
+//go:build smoke
 // +build smoke
 
 package e2e
 
 import (
 	goctx "context"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"strconv"
@@ -24,7 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -126,29 +124,10 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 	url := "http://localhost:" + queryPort + "/api/traces?service=order"
 	c := http.Client{Timeout: time.Second}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
-
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil {
-			return false, err
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return false, err
-		}
-
-		resp := &resp{}
-		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, err
-		}
-
-		return len(resp.Data) > 0, nil
-	})
+	resp := &resp{}
+	err = WaitForHttpResponse(c, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
+	require.True(t, len(resp.Data) > 0)
 }
 
 func getVertxDeployment(namespace string, selector map[string]string) *appsv1.Deployment {
