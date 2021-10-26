@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-cluster-entity-operator
-  namespace: kafka
+  name: {{ .Env.CLUSTER_NAME }}-entity-operator
+  {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
 status:
   readyReplicas: 1

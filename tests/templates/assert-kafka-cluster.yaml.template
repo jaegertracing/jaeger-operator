@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: my-cluster-kafka
-  namespace: kafka
+  name: {{ .Env.CLUSTER_NAME }}-kafka
+  {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
 status:
   readyReplicas: 1

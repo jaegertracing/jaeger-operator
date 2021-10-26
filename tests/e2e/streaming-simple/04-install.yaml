@@ -22,5 +22,4 @@ spec:
     type: elasticsearch
     options:
       es:
-        # Note: This assumes elasticsearch is running in the "default" namespace.
         server-urls: http://elasticsearch:9200
