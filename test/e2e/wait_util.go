@@ -245,8 +245,12 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 	if err != nil {
 		return err
 	}
+
 	eofCount := 0
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	malFormedErrors := 0
+	maximunErrors := 5
+
+	err = wait.Poll(retryInterval, timeout*2, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
 
 		if res != nil {
@@ -265,10 +269,15 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 				return false, nil
 			}
 
-			if eofCount > 2 {
+			if strings.Contains(err.Error(), "malformed") {
+				malFormedErrors++
+				return false, nil
+			}
+
+			if eofCount > maximunErrors || malFormedErrors > maximunErrors {
 				return false, err
 			}
-			return false, err
+			return false, nil
 		}
 
 		if res.StatusCode == http.StatusServiceUnavailable {
