@@ -109,7 +109,7 @@ func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
 	c := http.Client{Timeout: 3 * time.Second}
 
 	resp := ""
-	err = WaitForHttpResponse(c, http.MethodGet, url, &resp)
+	err = WaitForHTTPResponse(c, http.MethodGet, url, &resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp) > 0, "Empty body")
 

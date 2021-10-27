@@ -82,7 +82,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 	url, httpClient := getQueryURLAndHTTPClient(firstJaegerInstanceName, "%s/api/traces?service=order", true)
 	resp := &resp{}
-	err = WaitForHttpResponse(httpClient, http.MethodGet, url, resp)
+	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp.Data) > 0)
 
@@ -105,7 +105,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	require.NoError(t, err, "Error waiting for jaeger instance deletion")
 
 	url, httpClient = getQueryURLAndHTTPClient(secondJaegerInstanceName, "%s/api/traces?service=order", true)
-	err = WaitForHttpResponse(httpClient, http.MethodGet, url, resp)
+	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp.Data) > 0)
 }

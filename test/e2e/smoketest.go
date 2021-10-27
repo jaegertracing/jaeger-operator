@@ -123,7 +123,7 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 	c := http.Client{Timeout: 3 * time.Second, Transport: transport}
 
 	resp := ""
-	err = WaitForHttpResponse(c, http.MethodGet, tracesEndpoint, &resp)
+	err = WaitForHTTPResponse(c, http.MethodGet, tracesEndpoint, &resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp) > 0)
 	require.Contains(t, resp, "errors\":null", "query service returns errors: %s", resp)

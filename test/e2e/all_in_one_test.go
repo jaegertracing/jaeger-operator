@@ -94,7 +94,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	url, httpClient := getQueryURLAndHTTPClient(name, "%s/api/services", true)
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
 	resp := &resp{}
-	err = WaitForHttpResponse(httpClient, http.MethodGet, url, resp)
+	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp.Data) > 0)
 
@@ -123,7 +123,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	c := http.Client{Timeout: 3 * time.Second}
 
 	resp := ""
-	err = WaitForHttpResponse(c, http.MethodGet, url, &resp)
+	err = WaitForHTTPResponse(c, http.MethodGet, url, &resp)
 	require.NoError(t, err, "Failed waiting for expected content")
 	require.True(t, len(resp) > 0)
 	require.Contains(t, resp, TrackingID, "body does not include tracking id: %s", TrackingID)

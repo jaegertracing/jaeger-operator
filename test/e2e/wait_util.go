@@ -238,7 +238,8 @@ func WaitForSecret(secretName, secretNamespace string) {
 	require.NoError(t, err)
 }
 
-func WaitForHttpResponse(httpClient http.Client, method, url string, response interface{}) (err error) {
+// WaitForHTTPResponse waits for an HTTP valid response
+func WaitForHTTPResponse(httpClient http.Client, method, url string, response interface{}) (err error) {
 	logrus.Infof("calling url: %s", url)
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
