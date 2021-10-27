@@ -4,4 +4,4 @@ kind: StatefulSet
 metadata:
   name: cassandra
 status:
-  readyReplicas: 1
+  readyReplicas: 2
