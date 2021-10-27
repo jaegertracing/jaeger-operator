@@ -290,9 +290,11 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 
 		logrus.Infof("response: %s", string(body))
 
-		err = json.Unmarshal(body, response)
-		if err != nil {
-			return false, err
+		if res.Header.Get("Content-Type") == "application/json" {
+			err = json.Unmarshal(body, response)
+			if err != nil {
+				return false, err
+			}
 		}
 
 		return len(body) > 0, nil
