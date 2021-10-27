@@ -95,9 +95,9 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
 	resp := &resp{}
 	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
-	require.NoError(t, err, "Failed waiting for expected content")
-	require.True(t, len(resp.Data) > 0)
 
+	// We just need to check there ere not errors in the HTTP response and the REST API is available
+	require.NoError(t, err, "Failed waiting for expected content")
 }
 
 func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
