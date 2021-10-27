@@ -248,7 +248,11 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 	eofCount := 0
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
-		logrus.Infof("response status code: %d", res.StatusCode)
+
+		if res != nil {
+			logrus.Infof("response status code: %d", res.StatusCode)
+		}
+
 		if err != nil {
 			if strings.Contains(err.Error(), "Timeout exceeded") {
 				log.Infof("Retrying request after error %v", err)
