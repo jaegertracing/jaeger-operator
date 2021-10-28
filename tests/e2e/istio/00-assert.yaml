@@ -1,25 +1,10 @@
-# Assert the Jaeger deployment
+# Assert the Istio is up and running
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simplest
+  name: istiod
+  namespace: istio-system
 spec:
   replicas: 1
----
-# Assert the bussiness application deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-spec:
-  replicas: 1
----
-# Assert there is a pod with these three container names
-apiVersion: v1
-kind: Pod
-spec:
-  # Note: if the order of the container names is changed, the test will fail
-  containers:
-    - name: myapp
-    - name: jaeger-agent
-    - name: istio-proxy
+status:
+  readyReplicas: 1
