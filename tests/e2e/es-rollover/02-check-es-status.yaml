@@ -11,9 +11,7 @@ spec:
           image: local/asserts:e2e
           command: ["./index",
             "--pattern", "jaeger-span-\\d{4}-\\d{2}-\\d{2}",
-            "--assert-count-indices", "2",
-            "--assert-count-docs", "2",
-            "--jaeger-service", "my-test-service",
+            "--assert-exist",
             "--verbose"
           ]
           env:
