@@ -476,10 +476,24 @@ endif
 
 .PHONY: prepare-e2e-kuttl-tests
 prepare-e2e-kuttl-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
-prepare-e2e-kuttl-tests: build docker build-assert-job
+prepare-e2e-kuttl-tests: prepare-kuttl-images generate-kuttl-files
+
+.PHONY: prepare-kuttl-images
+prepare-kuttl-images: docker build-assert-job
+	$(ECHO) Building the container images needed to run the KUTTL E2E tests
+	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+
+# Image for the upgrade E2E test
+	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+
+.PHONY: generate-kuttl-files
+generate-kuttl-files: build
+	$(ECHO) Generating the files needed to run the KUTTL E2E tests
 	$(VECHO)mkdir -p  tests/_build/manifests
 	$(VECHO)mkdir -p  tests/_build/crds
 
+# Generate the Jaeger manifest
 	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
 	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
@@ -497,13 +511,10 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)${SED} "0,/fieldPath: metadata.namespace/s/fieldPath: metadata.namespace/fieldPath: metadata.annotations['olm.targetNamespaces']/gi" tests/_build/manifests/01-jaeger-operator.yaml -i
 
 	$(VECHO)cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
-	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
-# This is needed for the generate test
+# generate
 	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
-# This is needed for the upgrade test
-	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+# upgrade
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
 	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
@@ -532,11 +543,12 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO) gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/cassandra/00-assert.yaml
 	$(VECHO)INSTANCE_NAME=with-cassandra  gomplate -f tests/templates/cassandra-jaeger-install.yaml.template -o tests/e2e/cassandra/01-install.yaml
 	$(VECHO)INSTANCE_NAME=with-cassandra  gomplate -f tests/templates/cassandra-jaeger-assert.yaml.template -o tests/e2e/cassandra/01-assert.yaml
-# cassamdra spark
+# cassandra-spark
 	$(VECHO) gomplate -f tests/templates/cassandra-install.yaml.template -o tests/e2e/cassandra-spark/00-install.yaml
 	$(VECHO) gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/cassandra-spark/00-assert.yaml
 	$(VECHO)INSTANCE_NAME=test-spark-deps DEP_SCHEDULE=true CASSANDRA_MODE=prod gomplate -f tests/templates/cassandra-jaeger-install.yaml.template -o tests/e2e/cassandra-spark/01-install.yaml
-	
+
+
 # end-to-tests
 .PHONY: kuttl-e2e
 kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
