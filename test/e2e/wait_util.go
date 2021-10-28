@@ -3,7 +3,7 @@ package e2e
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -248,6 +248,7 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 
 	eofCount := 0
 	malFormedErrors := 0
+	unexpectedResponseErrors := 0
 	maximunErrors := 5
 
 	err = wait.Poll(retryInterval, timeout*2, func() (done bool, err error) {
@@ -280,15 +281,14 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 			return false, nil
 		}
 
-		if res.StatusCode == http.StatusServiceUnavailable {
-			logrus.Warnf("Ignoring http response %d", res.StatusCode)
-			return false, nil
-		}
-		if res.StatusCode == http.StatusForbidden {
-			return false, errors.New("status code Forbidden(403) received")
-		}
-
 		if !(res.StatusCode >= 200 && res.StatusCode <= 299) {
+			unexpectedResponseErrors++
+			if unexpectedResponseErrors < maximunErrors {
+				logrus.Warnf("Ignoring HTTP response %d", res.StatusCode)
+			} else {
+				return false, fmt.Errorf("Status code %d received", res.StatusCode)
+			}
+
 			return false, nil
 		}
 
