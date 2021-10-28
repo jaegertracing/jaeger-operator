@@ -1,0 +1,9 @@
+# Assert there is a pod with these three container names
+apiVersion: v1
+kind: Pod
+spec:
+  # Note: if the order of the container names is changed, the test will fail
+  containers:
+    - name: myapp
+    - name: jaeger-agent
+    - name: istio-proxy
