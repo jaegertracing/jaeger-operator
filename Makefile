@@ -548,7 +548,6 @@ generate-kuttl-files: build
 	$(VECHO) gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/cassandra-spark/00-assert.yaml
 	$(VECHO)INSTANCE_NAME=test-spark-deps DEP_SCHEDULE=true CASSANDRA_MODE=prod gomplate -f tests/templates/cassandra-jaeger-install.yaml.template -o tests/e2e/cassandra-spark/01-install.yaml
 
-
 # end-to-tests
 .PHONY: kuttl-e2e
 kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
