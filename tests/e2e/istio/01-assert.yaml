@@ -1,7 +1,6 @@
-# Assert the find-service job was run successfully
-apiVersion: batch/v1
-kind: Job
+# Assert the namespace was labeled properly
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: find-service
-status:
-  succeeded: 1
+  labels:
+    istio-injection: enabled
