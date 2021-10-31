@@ -102,7 +102,13 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		res, err := httpClient.Do(req)
-		require.NoError(t, err)
+		if err != nil {
+			/* Sometimes, the Jaeger instance is deployed but the endpoints are not available
+			yet. This situation can produce an error 50x here. Instead of returning the error
+			and make the test fail, we keep querying the URL until the endpoint is available.
+			*/
+			return false, nil
+		}
 
 		body, err := ioutil.ReadAll(res.Body)
 		require.NoError(t, err)
