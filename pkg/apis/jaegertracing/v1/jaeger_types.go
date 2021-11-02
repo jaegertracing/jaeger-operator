@@ -236,6 +236,9 @@ type JaegerCommonSpec struct {
 
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// +optional
+	LivenessProbe *v1.Probe `json:"livenessProbe,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query

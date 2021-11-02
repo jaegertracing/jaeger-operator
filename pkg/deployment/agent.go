@@ -89,10 +89,27 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			dnsPolicy = corev1.DNSClusterFirstWithHostNet
 		}
 	}
+
 	priorityClassName := ""
 	if a.jaeger.Spec.Agent.PriorityClassName != "" {
 		priorityClassName = a.jaeger.Spec.Agent.PriorityClassName
 	}
+
+	livenessProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(adminPort)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}
+	if a.jaeger.Spec.Agent.LivenessProbe != nil {
+		livenessProbe = a.jaeger.Spec.Agent.LivenessProbe
+	}
+
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -154,17 +171,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 								Name:          "admin-http",
 							},
 						},
-						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
+						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{

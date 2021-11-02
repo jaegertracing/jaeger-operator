@@ -110,6 +110,22 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
+	livenessProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(adminPort)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}
+
+	if a.jaeger.Spec.Collector.LivenessProbe != nil {
+		livenessProbe = a.jaeger.Spec.Collector.LivenessProbe
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -204,17 +220,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Name:          "grpc",
 							},
 						},
-						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
+						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
 							Handler: corev1.Handler{
 								HTTPGet: &corev1.HTTPGetAction{
