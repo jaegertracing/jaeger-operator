@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +17,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -77,21 +76,28 @@ func (c *Collector) Get() *appsv1.Deployment {
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
-	tls.Update(c.jaeger, commonSpec, &options)
-	ca.Update(c.jaeger, commonSpec)
-
-	otelConf, err := c.jaeger.Spec.Collector.Config.GetMap()
-	if err != nil {
-		c.jaeger.Logger().WithField("error", err).
-			WithField("component", "collector").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(c.jaeger, "collector", c.jaeger.Spec.Collector.Options, otelConf, commonSpec, &options)
+	if len(util.FindItem("--collector.grpc.tls.enabled=", args)) == 0 {
+		tls.Update(c.jaeger, commonSpec, &options)
 	}
+	ca.Update(c.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(c.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	priorityClassName := ""
+	if c.jaeger.Spec.Collector.PriorityClassName != "" {
+		priorityClassName = c.jaeger.Spec.Collector.PriorityClassName
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if c.jaeger.Spec.Collector.Strategy != nil {
+		strategy = *c.jaeger.Spec.Collector.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -116,6 +122,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
@@ -132,8 +139,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 								Value: string(storageType),
 							},
 							{
-								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-								Value: "9411",
+								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+								Value: ":9411",
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
@@ -182,12 +189,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, account.CollectorComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(c.jaeger, commonSpec),
 				},
 			},
 		},

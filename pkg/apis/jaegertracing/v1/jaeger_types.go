@@ -1,6 +1,7 @@
 package v1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -103,6 +104,10 @@ const (
 	// JaegerBadgerStorage indicates that the Jaeger storage type is badger
 	// +k8s:openapi-gen=true
 	JaegerBadgerStorage JaegerStorageType = "badger"
+
+	// JaegerGRPCPluginStorage indicates that the Jaeger storage type is grpc-plugin
+	// +k8s:openapi-gen=true
+	JaegerGRPCPluginStorage JaegerStorageType = "grpc-plugin"
 )
 
 // ValidStorageTypes returns the list of valid storage types
@@ -113,6 +118,7 @@ func ValidStorageTypes() []JaegerStorageType {
 		JaegerESStorage,
 		JaegerKafkaStorage,
 		JaegerBadgerStorage,
+		JaegerGRPCPluginStorage,
 	}
 }
 
@@ -120,6 +126,9 @@ func ValidStorageTypes() []JaegerStorageType {
 func (storageType JaegerStorageType) OptionsPrefix() string {
 	if storageType == JaegerESStorage {
 		return "es"
+	}
+	if storageType == JaegerGRPCPluginStorage {
+		return "grpc-storage-plugin"
 	}
 	return string(storageType)
 }
@@ -240,6 +249,7 @@ type JaegerQuerySpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
@@ -253,16 +263,31 @@ type JaegerQuerySpec struct {
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 
 	// +optional
+	// NodePort represents the port at which the NodePort service to allocate
+	NodePort int32 `json:"nodePort,omitempty"`
+
+	// +optional
+	// NodePort represents the port at which the NodePort service to allocate
+	GRPCNodePort int32 `json:"grpcNodePort,omitempty"`
+
+	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
 // +k8s:openapi-gen=true
 type JaegerUISpec struct {
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options FreeForm `json:"options,omitempty"`
 }
 
@@ -270,6 +295,7 @@ type JaegerUISpec struct {
 // +k8s:openapi-gen=true
 type JaegerSamplingSpec struct {
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options FreeForm `json:"options,omitempty"`
 }
 
@@ -301,7 +327,11 @@ type JaegerIngressSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
+
+	// +optional
+	IngressClassName *string `json:"ingressClassName,omitempty"`
 }
 
 // JaegerIngressTLSSpec defines the TLS configuration to be used when deploying the query ingress
@@ -320,7 +350,7 @@ type JaegerIngressTLSSpec struct {
 // +k8s:openapi-gen=true
 type JaegerIngressOpenShiftSpec struct {
 	// +optional
-	SAR string `json:"sar,omitempty"`
+	SAR *string `json:"sar,omitempty"`
 
 	// +optional
 	DelegateUrls string `json:"delegateUrls,omitempty"`
@@ -340,9 +370,11 @@ type JaegerAllInOneSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -353,6 +385,9 @@ type JaegerAllInOneSpec struct {
 	// agent container from the query component to disable tracing requests to the query service.
 	// The default, if ommited, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs
@@ -385,12 +420,14 @@ type JaegerCollectorSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -399,6 +436,12 @@ type JaegerCollectorSpec struct {
 	// The default, if omitted, is ClusterIP.
 	// See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -415,13 +458,18 @@ type JaegerIngesterSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -439,12 +487,14 @@ type JaegerAgentSpec struct {
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
@@ -452,6 +502,12 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	HostNetwork *bool `json:"hostNetwork,omitempty"`
+
+	// +optional
+	DNSPolicy v1.DNSPolicy `json:"dnsPolicy,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector
@@ -464,6 +520,7 @@ type JaegerStorageSpec struct {
 	SecretName string `json:"secretName,omitempty"`
 
 	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
 	// +optional
@@ -480,6 +537,9 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	Elasticsearch ElasticsearchSpec `json:"elasticsearch,omitempty"`
+
+	// +optional
+	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
@@ -545,7 +605,18 @@ type JaegerCassandraCreateSchemaSpec struct {
 	Timeout string `json:"timeout,omitempty"`
 
 	// +optional
+	Affinity *v1.Affinity `json:"affinity,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+}
+
+// GRPCPluginSpec represents the grpc-plugin configuration options.
+// +k8s:openapi-gen=true
+type GRPCPluginSpec struct {
+	// This image is used as an init-container to copy plugin binary into /plugin directory.
+	// +optional
+	Image string `json:"image,omitempty"`
 }
 
 // JaegerDependenciesSpec defined options for running spark-dependencies.
@@ -579,7 +650,14 @@ type JaegerDependenciesSpec struct {
 	ElasticsearchNodesWanOnly *bool `json:"elasticsearchNodesWanOnly,omitempty"`
 
 	// +optional
+	ElasticsearchTimeRange string `json:"elasticsearchTimeRange,omitempty"`
+
+	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
@@ -606,6 +684,10 @@ type JaegerEsIndexCleanerSpec struct {
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
 
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
+
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
@@ -626,6 +708,10 @@ type JaegerEsRolloverSpec struct {
 
 	// +optional
 	TTLSecondsAfterFinished *int32 `json:"ttlSecondsAfterFinished,omitempty"`
+
+	// BackoffLimit sets the Kubernetes back-off limit
+	// +optional
+	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
 	// we parse it with time.ParseDuration
 	// +optional

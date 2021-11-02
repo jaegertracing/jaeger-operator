@@ -28,7 +28,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
-	if val, ok := jaeger.Spec.Storage.Options.Map()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
+	if val, ok := jaeger.Spec.Storage.Options.StringMap()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
 		envs = append(envs, corev1.EnvVar{Name: "ROLLOVER", Value: "true"})
 	}
 
@@ -68,6 +68,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 				Spec: batchv1.JobSpec{
 					Parallelism:             &one,
 					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished,
+					BackoffLimit:            jaeger.Spec.Storage.EsIndexCleaner.BackoffLimit,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{

@@ -85,7 +85,8 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
-					Parallelism: &one,
+					Parallelism:  &one,
+					BackoffLimit: jaeger.Spec.Storage.Dependencies.BackoffLimit,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
@@ -93,9 +94,10 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 									Image: image,
 									Name:  name,
 									// let spark job use its default values
-									Env:       util.RemoveEmptyVars(envVars),
-									EnvFrom:   envFromSource,
-									Resources: commonSpec.Resources,
+									Env:          util.RemoveEmptyVars(envVars),
+									EnvFrom:      envFromSource,
+									Resources:    commonSpec.Resources,
+									VolumeMounts: jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
 								},
 							},
 							RestartPolicy:      corev1.RestartPolicyNever,
@@ -103,6 +105,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							Tolerations:        commonSpec.Tolerations,
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
+							Volumes:            jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,
@@ -116,7 +119,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 }
 
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
-	sFlagsMap := s.Options.Map()
+	sFlagsMap := s.Options.StringMap()
 	switch s.Type {
 	case v1.JaegerCassandraStorage:
 		keyspace := sFlagsMap["cassandra.keyspace"]
@@ -138,6 +141,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
+			{Name: "ES_TIME_RANGE", Value: s.Dependencies.ElasticsearchTimeRange},
 		}
 		if s.Dependencies.ElasticsearchNodesWanOnly != nil {
 			vars = append(vars, corev1.EnvVar{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(*s.Dependencies.ElasticsearchNodesWanOnly)})
@@ -152,7 +156,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 }
 
 func logTLSNotSupported(j *v1.Jaeger) {
-	sFlagsMap := j.Spec.Storage.Options.Map()
+	sFlagsMap := j.Spec.Storage.Options.StringMap()
 	if strings.EqualFold(sFlagsMap["es.tls.enabled"], "true") || strings.EqualFold(sFlagsMap["es.tls"], "true") {
 		j.Logger().Warn("Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies")
 	}

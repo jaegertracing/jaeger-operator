@@ -80,19 +80,16 @@ func (suite *SelfProvisionedTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SelfProvisionedTestSuite) TestSelfProvisionedESSmokeTest() {
 	// create jaeger custom resource
 	jaegerInstanceName := "simple-prod"
-	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+	jaegerInstance := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, 1)
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	jaegerInstanceName := "simple-prod2"
-	jaegerInstance := getJaegerSelfProvSimpleProd(jaegerInstanceName, namespace, 1)
+	jaegerInstance := GetJaegerSelfProvSimpleProdCR(jaegerInstanceName, namespace, 1)
 	createESSelfProvDeployment(jaegerInstance, jaegerInstanceName, namespace)
 	defer undeployJaegerInstance(jaegerInstance)
 
@@ -164,9 +161,6 @@ func (suite *SelfProvisionedTestSuite) TestIncreasingReplicas() {
 	require.NoError(t, err)
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
 }
 
 func esDeploymentName(ns, jaegerName string, instances int) string {

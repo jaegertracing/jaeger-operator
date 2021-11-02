@@ -1,6 +1,75 @@
 Changes by Version
 ==================
 
+1.27.0 (2021-10-07)
+-------------------
+* Allow sidecar injection for query pod from other Jaeger instances ([#1569](https://github.com/jaegertracing/jaeger-operator/pull/1569), [@pavolloffay](https://github.com/pavolloffay))
+* Avoid touching jaeger deps on deployment/ns controller ([#1529](https://github.com/jaegertracing/jaeger-operator/pull/1529), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.26.0 (2021-09-30)
+-------------------
+* Add ingressClassName field to query ingress ([#1557](https://github.com/jaegertracing/jaeger-operator/pull/1557), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add disconnected annotation to csv ([#1536](https://github.com/jaegertracing/jaeger-operator/pull/1536), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.25.0 (2021-08-08)
+-------------------
+* Add support repetitive arguments to operand ([#1434](https://github.com/jaegertracing/jaeger-operator/pull/1434), [@rubenvp8510](https://github.com/rubenvp8510))
+* Allow TLS flags to be disabled ([#1440](https://github.com/jaegertracing/jaeger-operator/pull/1440), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add gRPC port for jaeger-query into its service resource ([#1521](https://github.com/jaegertracing/jaeger-operator/pull/1521), [@rubenvp8510](https://github.com/rubenvp8510))
+* Sidecar removed when annotation is false ([#1508](https://github.com/jaegertracing/jaeger-operator/pull/1508), [@mfz85](https://github.com/mfz85))
+* Add support for GRPC storage plugin ([#1517](https://github.com/jaegertracing/jaeger-operator/pull/1517), [@pavolloffay](https://github.com/pavolloffay))
+* Fix overwritten default labels in label selectors of `Service` ([#1490](https://github.com/jaegertracing/jaeger-operator/pull/1490), [@rudeigerc](https://github.com/rudeigerc))
+* Add resources requests and limits to the operator ([#1515](https://github.com/jaegertracing/jaeger-operator/pull/1515), [@brunopadz](https://github.com/brunopadz))
+* Instrument instances types ([#1484](https://github.com/jaegertracing/jaeger-operator/pull/1484), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.24.0 (2021-07-08)
+-------------------
+* Include OIDC plugin in binary ([#1501](https://github.com/jaegertracing/jaeger-operator/pull/1501), [@esnible](https://github.com/esnible))
+* Update jaeger operator to support strimzi operator 0.23.0 ([#1495](https://github.com/jaegertracing/jaeger-operator/pull/1495), [@rubenvp8510](https://github.com/rubenvp8510))
+* Feature/add deployment strategy to crd ([#1499](https://github.com/jaegertracing/jaeger-operator/pull/1499), [@ethernoy](https://github.com/ethernoy))
+* Add cassandraCreateSchema affinity ([#1475](https://github.com/jaegertracing/jaeger-operator/pull/1475), [@chasekiefer](https://github.com/chasekiefer))
+* Allow to pass ES_TIME_RANGE var to Spark dependencies job ([#1481](https://github.com/jaegertracing/jaeger-operator/pull/1481), [@Gr1N](https://github.com/Gr1N))
+* Pass secretName to cassandra dependencies job (#1162) ([#1447](https://github.com/jaegertracing/jaeger-operator/pull/1447), [@Gerrit-K](https://github.com/Gerrit-K))
+
+1.23.0 (2021-06-11)
+-------------------
+* Implement backoff limit for jobs ([#1468](https://github.com/jaegertracing/jaeger-operator/pull/1468), [@chasekiefer](https://github.com/chasekiefer))
+* Remove OwnerReferences from CA configmaps ([#1467](https://github.com/jaegertracing/jaeger-operator/pull/1467), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add compatibility matrix ([#1465](https://github.com/jaegertracing/jaeger-operator/pull/1465), [@jpkrohling](https://github.com/jpkrohling))
+* Promote crd to apiextensions.k8s.io/v1 ([#1456](https://github.com/jaegertracing/jaeger-operator/pull/1456), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add preserve unknown fields annotation to FreeForm and Options fields ([#1435](https://github.com/jaegertracing/jaeger-operator/pull/1435), [@rubenvp8510](https://github.com/rubenvp8510))
+* Migrate remaining flags and some env vars to 1.22 ([#1449](https://github.com/jaegertracing/jaeger-operator/pull/1449), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix override storage and ingress values when upgrade to 1.22 ([#1439](https://github.com/jaegertracing/jaeger-operator/pull/1439), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add agent dnsPolicy option ([#1370](https://github.com/jaegertracing/jaeger-operator/pull/1370), [@faceair](https://github.com/faceair))
+
+1.22.1 (2021-04-19)
+-------------------
+* Allow configure custom certificates to collector ([#1418](https://github.com/jaegertracing/jaeger-operator/pull/1418), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for NodePort in Jaeger Query Service ([#1394](https://github.com/jaegertracing/jaeger-operator/pull/1394), [@CSP197](https://github.com/CSP197))
+
+1.22.0 (2021-03-16)
+-------------------
+* Add ability to indicate PriorityClass for collector and query ([#1413](https://github.com/jaegertracing/jaeger-operator/pull/1413), [@majidazimi](https://github.com/majidazimi))
+* simplest example file should be as simplest ([#1404](https://github.com/jaegertracing/jaeger-operator/pull/1404), [@jkandasa](https://github.com/jkandasa))
+* Add ability to indicate PriorityClass for agent ([#1392](https://github.com/jaegertracing/jaeger-operator/pull/1392), [@elkh510](https://github.com/elkh510))
+* Migrate jaeger.tags in existing CRs ([#1380](https://github.com/jaegertracing/jaeger-operator/pull/1380), [@jpkrohling](https://github.com/jpkrohling))
+
+1.21.3 (2021-02-09)
+-------------------
+
+* Remove support for the experimental OpenTelemetry-based Jaeger ([#1379](https://github.com/jaegertracing/jaeger-operator/pull/1379), [@jpkrohling](https://github.com/jpkrohling))
+* Fix way we force es secret reconcile ([#1374](https://github.com/jaegertracing/jaeger-operator/pull/1374), [@kevinearls](https://github.com/kevinearls))
+* added the codeql.yml ([#1313](https://github.com/jaegertracing/jaeger-operator/pull/1313), [@KrishnaSindhur](https://github.com/KrishnaSindhur))
+* Fix service port naming convention ([#1368](https://github.com/jaegertracing/jaeger-operator/pull/1368), [@lujiajing1126](https://github.com/lujiajing1126))
+* Add volumes and volume-mounts for spark dependencies ([#1359](https://github.com/jaegertracing/jaeger-operator/pull/1359), [@kevinearls](https://github.com/kevinearls))
+* Create missing CA config maps on deployment controller ([#1347](https://github.com/jaegertracing/jaeger-operator/pull/1347), [@jpkrohling](https://github.com/jpkrohling))
+* set non root group ([#1339](https://github.com/jaegertracing/jaeger-operator/pull/1339), [@UsaninMax](https://github.com/UsaninMax))
+* Kafka 2.4 not supported by RH AMQ operator 1.6 ([#1335](https://github.com/jaegertracing/jaeger-operator/pull/1335), [@jkandasa](https://github.com/jkandasa))
+* Trigger deployments reconciliation when jaeger instance is created ([#1334](https://github.com/jaegertracing/jaeger-operator/pull/1334), [@rubenvp8510](https://github.com/rubenvp8510))
+* Copy common spec to avoid touching persisted CR spec ([#1333](https://github.com/jaegertracing/jaeger-operator/pull/1333), [@rubenvp8510](https://github.com/rubenvp8510))
+* Try to resolve container.name from the injected agent args ([#1319](https://github.com/jaegertracing/jaeger-operator/pull/1319), [@lujiajing1126](https://github.com/lujiajing1126))
+* Fix typo in CONTRIBUTING.md ([#1321](https://github.com/jaegertracing/jaeger-operator/pull/1321), [@sniperking1234](https://github.com/sniperking1234))
+
 1.21.2 (2020-11-20)
 -------------------
 

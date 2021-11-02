@@ -3,18 +3,18 @@ package deployment
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -38,8 +38,8 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Value: "",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 		{
 			Name:  "JAEGER_DISABLED",
@@ -92,6 +92,42 @@ func TestAllInOneLabels(t *testing.T) {
 	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
 	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
 	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
+}
+
+func TestAllInOneOverwrittenDefaultLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneOverwrittenDefaultLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"name":                   "operator",
+		"hello":                  "jaeger",
+		"app.kubernetes.io/name": "my-jaeger", // Override default labels
+	}
+	jaeger.Spec.AllInOne.Labels = map[string]string{
+		"hello":   "world", // Override top level annotation
+		"another": "false",
+	}
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
+	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Template.Labels["app.kubernetes.io/name"])
+
+	// Deployment selectors should be the same as the template labels.
+	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
+	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
+	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
+	assert.Equal(t, "my-jaeger", dep.Spec.Selector.MatchLabels["app.kubernetes.io/name"])
+
+	// Service selectors should be the same as the template labels.
+	services := allinone.Services()
+	for _, svc := range services {
+		assert.Equal(t, "operator", svc.Spec.Selector["name"])
+		assert.Equal(t, "world", svc.Spec.Selector["hello"])
+		assert.Equal(t, "false", svc.Spec.Selector["another"])
+		assert.Equal(t, "my-jaeger", svc.Spec.Selector["app.kubernetes.io/name"])
+	}
 }
 
 func TestAllInOneHasOwner(t *testing.T) {
@@ -302,52 +338,85 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/etc/tls-config/tls.crt",
+				"--collector.grpc.tls.key=/etc/tls-config/tls.key",
+				"--sampling.strategies-file",
+				"--reporter.grpc.tls.ca",
+				"--reporter.grpc.tls.enabled",
+				"--reporter.grpc.tls.server-name",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"reporter.grpc.tls.enabled":  "false",
+				"collector.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.tls.enabled=false",
+				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+		{
+			name: "Do not implicitly enable TLS when grpc.host-port is provided",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                "a-value",
+				"reporter.grpc.host-port": "my.host-port.com",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=my.host-port.com",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+	} {
+		jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+		jaeger.Spec.AllInOne.Options = tt.options
 
-	// test
-	a := NewAllInOne(jaeger)
-	dep := a.Get()
+		// test
+		a := NewAllInOne(jaeger)
+		dep := a.Get()
 
-	// verify
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 8)
-	assert.NotEmpty(t, util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args))
+		// verify
+		assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+		assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.ca", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.enabled", dep.Spec.Template.Spec.Containers[0].Args))
-	assert.NotEmpty(t, util.FindItem("--reporter.grpc.tls.server-name", dep.Spec.Template.Spec.Containers[0].Args))
-}
+		for _, arg := range tt.expectedArgs {
+			assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
+		}
 
-func TestAllInOneOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.AllInOne.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+		if tt.nonExpectedArgs != nil {
+			for _, arg := range tt.nonExpectedArgs {
+				assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			}
+		}
+	}
 
-	c := NewAllInOne(jaeger)
-	d := c.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
-}
-
-func TestAllInOneOTELConfig_error(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.AllInOne.Config = v1.NewFreeForm(map[string]interface{}{})
-	jaeger.Spec.AllInOne.Config.UnmarshalJSON([]byte(""))
-	_, err := jaeger.Spec.AllInOne.Config.GetMap()
-	require.Error(t, err)
-
-	c := NewAllInOne(jaeger)
-	d := c.Get()
-	assert.False(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.False(t, hasVolume("instance-all-in-one-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.False(t, hasVolumeMount("instance-all-in-one-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func TestAllInOneServiceLinks(t *testing.T) {
@@ -363,6 +432,60 @@ func TestAllInOneTracingDisabled(t *testing.T) {
 	jaeger.Spec.AllInOne.TracingEnabled = &falseVar
 	d := NewAllInOne(jaeger).Get()
 	assert.Equal(t, "true", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
+}
+
+func TestAllInOneRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.Strategy = &strategy
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestAllInOneEmptyStrategyType(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestAllInOneGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneGRPCPlugin"})
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	allinone := NewAllInOne(jaeger)
+	dep := allinone.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "testallinonegrpcplugin-sampling-configuration-volume",
+					MountPath: "/etc/jaeger/sampling",
+					ReadOnly:  true,
+				},
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {

@@ -9,17 +9,14 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
@@ -45,10 +42,10 @@ func (suite *SelfProvisionedESWithKafkaTestSuite) SetupSuite() {
 			APIVersion: "logging.openshift.io/v1",
 		},
 	}))
-	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &kafkav1beta1.KafkaList{
+	assert.NoError(t, framework.AddToFrameworkScheme(apis.AddToScheme, &kafkav1beta2.KafkaList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Kafka",
-			APIVersion: "kafka.strimzi.io/v1beta1",
+			APIVersion: "kafka.strimzi.io/v1beta2",
 		},
 	}))
 	addToFrameworkSchemeForSmokeTests(t)
@@ -110,46 +107,4 @@ func (suite *SelfProvisionedESWithKafkaTestSuite) TestSelfProvisionedESAndKafkaS
 	require.NoError(t, err, "Error waiting for ingester deployment")
 
 	ProductionSmokeTest(jaegerInstanceName)
-
-	// Make sure we were using the correct collector image
-	verifyCollectorImage(jaegerInstanceName, namespace, specifyOtelImages)
-}
-
-func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
-	ingressEnabled := true
-	jaegerInstance := &v1.Jaeger{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Jaeger",
-			APIVersion: "jaegertracing.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName,
-			Namespace: namespace,
-		},
-		Spec: v1.JaegerSpec{
-			Ingress: v1.JaegerIngressSpec{
-				Enabled:  &ingressEnabled,
-				Security: v1.IngressSecurityNoneExplicit,
-			},
-			Strategy: v1.DeploymentStrategyStreaming,
-			Storage: v1.JaegerStorageSpec{
-				Type: v1.JaegerESStorage,
-				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount: 1,
-					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
-					},
-				},
-			},
-		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		jaegerInstance.Spec.Collector.Image = otelCollectorImage
-		jaegerInstance.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	return jaegerInstance
 }

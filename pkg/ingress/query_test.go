@@ -16,7 +16,7 @@ func TestQueryIngress(t *testing.T) {
 
 	dep := ingress.Get()
 
-	assert.Contains(t, dep.Spec.Backend.ServiceName, "testqueryingress-query")
+	assert.Contains(t, dep.Spec.DefaultBackend.Service.Name, "testqueryingress-query")
 }
 
 func TestQueryIngressDisabled(t *testing.T) {
@@ -41,7 +41,7 @@ func TestQueryIngressEnabled(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.NotNil(t, dep.Spec.Backend)
+	assert.NotNil(t, dep.Spec.DefaultBackend)
 }
 
 func TestQueryIngressAllInOneBasePath(t *testing.T) {
@@ -56,7 +56,7 @@ func TestQueryIngressAllInOneBasePath(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.Backend)
+	assert.Nil(t, dep.Spec.DefaultBackend)
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
@@ -77,7 +77,7 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.Backend)
+	assert.Nil(t, dep.Spec.DefaultBackend)
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
@@ -135,7 +135,7 @@ func TestQueryIngressWithHosts(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.Backend)
+	assert.Nil(t, dep.Spec.DefaultBackend)
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
@@ -155,7 +155,7 @@ func TestQueryIngressWithMultipleHosts(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.Backend)
+	assert.Nil(t, dep.Spec.DefaultBackend)
 	assert.Len(t, dep.Spec.Rules, 2)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
@@ -179,7 +179,7 @@ func TestQueryIngressWithoutHosts(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.NotNil(t, dep.Spec.Backend)
+	assert.NotNil(t, dep.Spec.DefaultBackend)
 	assert.Empty(t, dep.Spec.Rules)
 }
 
@@ -196,7 +196,7 @@ func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.Backend)
+	assert.Nil(t, dep.Spec.DefaultBackend)
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
@@ -249,6 +249,24 @@ func TestQueryIngressTLSSecret(t *testing.T) {
 	dep := ingress.Get()
 
 	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
+}
+
+func TestQueryIngressClass(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
+	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
+
+	inressClassName := "nginx"
+	jaeger.Spec.Ingress.IngressClassName = &inressClassName
+
+	ingress := NewQueryIngress(jaeger)
+	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep.Spec.IngressClassName)
+	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
+	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
+
 }
 
 func TestQueryIngressTLSHosts(t *testing.T) {

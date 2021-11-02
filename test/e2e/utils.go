@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,15 +15,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-
 	osv1 "github.com/openshift/api/route/v1"
 	osv1sec "github.com/openshift/api/security/v1"
+	"github.com/opentracing/opentracing-go"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/jaeger-client-go/config"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -36,6 +38,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/apis"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -44,22 +47,18 @@ var (
 	timeout            = time.Duration(getIntEnv("TEST_TIMEOUT", 2)) * time.Minute
 	storageNamespace   = os.Getenv("STORAGE_NAMESPACE")
 	kafkaNamespace     = os.Getenv("KAFKA_NAMESPACE")
-	debugMode          = getBoolEnv("DEBUG_MODE", false)
+	debugMode          = getBoolEnv("DEBUG_MODE", true)
 	usingOLM           = getBoolEnv("OLM", false)
 	usingJaegerViaOLM  = getBoolEnv("JAEGER_OLM", false)
 	saveLogs           = getBoolEnv("SAVE_LOGS", false)
 	skipCassandraTests = getBoolEnv("SKIP_CASSANDRA_TESTS", false)
-	specifyOtelImages  = getBoolEnv("SPECIFY_OTEL_IMAGES", false)
-	specifyOtelConfig  = getBoolEnv("SPECIFY_OTEL_CONFIG", false)
+	skipESExternal     = getBoolEnv("SKIP_ES_EXTERNAL", false)
 
 	esServerUrls         = "http://elasticsearch." + storageNamespace + ".svc:9200"
 	cassandraServiceName = "cassandra." + storageNamespace + ".svc"
 	cassandraKeyspace    = "jaeger_v1_datacenter1"
 	cassandraDatacenter  = "datacenter1"
-	otelCollectorImage   = "jaegertracing/jaeger-opentelemetry-collector:latest"
-	otelIngesterImage    = "jaegertracing/jaeger-opentelemetry-ingester:latest"
-	otelAgentImage       = "jaegertracing/jaeger-opentelemetry-agent:latest"
-	otelAllInOneImage    = "jaegertracing/opentelemetry-all-in-one:latest"
+	jaegerCollectorPort  = 14268
 	vertxExampleImage    = getStringEnv("VERTX_EXAMPLE_IMAGE", "jaegertracing/vertx-create-span:operator-e2e-tests")
 	vertxDelaySeconds    = int32(getIntEnv("VERTX_DELAY_SECONDS", 1))
 	vertxTimeoutSeconds  = int32(getIntEnv("VERTX_TIMEOUT_SECONDS", 1))
@@ -434,7 +433,7 @@ type services struct {
 	Data   []string    `json:"data"`
 	total  int         `json:"total"`
 	limit  int         `json:"limit"`
-	offset int         `json:offset`
+	offset int         `json:"offset"`
 	errors interface{} `json:"errors"`
 }
 
@@ -576,70 +575,10 @@ func deletePersistentVolumeClaims(namespace string) {
 	}
 }
 
-func verifyIngesterImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelIngester(jaegerInstanceName, namespace))
-}
-
-// Was this Jaeger Instance using the OTEL ingester?
-func wasUsingOtelIngester(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-ingester", metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger-ingester" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-ingester")
-		}
-	}
-
-	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
-	return false
-}
-
-func verifyCollectorImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelCollector(jaegerInstanceName, namespace))
-}
-
-// Was this Jaeger Instance using the OTEL collector?
-func wasUsingOtelCollector(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName+"-collector", metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger-collector" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-collector")
-		}
-	}
-
-	require.Failf(t, "Did not find a collector image for %s in namespace %s", jaegerInstanceName, namespace)
-	return false
-}
-
-func verifyAllInOneImage(jaegerInstanceName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelAllInOne(jaegerInstanceName, namespace))
-}
-
-func wasUsingOtelAllInOne(jaegerInstanceName, namespace string) bool {
-	deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), jaegerInstanceName, metav1.GetOptions{})
-	require.NoError(t, err)
-	containers := deployment.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == "jaeger" {
-			logrus.Infof("Test %s is using image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "opentelemetry-all-in-one")
-		}
-	}
-
-	return false
-}
-
-func verifyAgentImage(appName, namespace string, expected bool) {
-	require.Equal(t, expected, wasUsingOtelAgent(appName, namespace))
-}
-
-// Was this Jaeger Instance using the OTEL agent?
-func wasUsingOtelAgent(appName, namespace string) bool {
+// testContainerInPod is a general function to test if the container exists in the pod
+// provided that the pod has `app` label. Return true if and only if the container exists and
+// the user-defined function `predicate` returns true if given.
+func testContainerInPod(namespace, appName, containerName string, predicate func(corev1.Container) bool) bool {
 	var pods *corev1.PodList
 	var pod corev1.Pod
 
@@ -670,22 +609,16 @@ func wasUsingOtelAgent(appName, namespace string) bool {
 
 	containers := pod.Spec.Containers
 	for _, container := range containers {
-		if container.Name == "jaeger-agent" {
-			logrus.Infof("Test %s is using agent image %s", t.Name(), container.Image)
-			return strings.Contains(container.Image, "jaeger-opentelemetry-agent")
+		if container.Name == containerName {
+			if predicate != nil {
+				return predicate(container)
+			}
+			return true
 		}
 	}
 
-	require.Failf(t, "Did not find an agent image for %s in namespace %s", appName, namespace)
+	require.Failf(t, "Did not find container %s for pod with label{app=%s} in namespace %s", containerName, appName, namespace)
 	return false
-}
-
-func getOtelConfigForHealthCheckPort(healthCheckPort string) map[string]interface{} {
-	return map[string]interface{}{
-		"extensions": map[string]interface{}{
-			"health_check": map[string]string{"port": healthCheckPort},
-		},
-	}
 }
 
 func logWarningEvents() {
@@ -704,7 +637,7 @@ func logWarningEvents() {
 }
 
 func waitForKafkaInstance() {
-	kafkaInstance := &v1beta1.Kafka{}
+	kafkaInstance := &v1beta2.Kafka{}
 
 	err := WaitForStatefulset(t, fw.KubeClient, kafkaNamespace, "my-cluster-zookeeper", retryInterval, timeout+1*time.Minute)
 	require.NoError(t, err)
@@ -732,9 +665,82 @@ func waitForElasticSearch() {
 	require.NoError(t, err, "Error waiting for elasticsearch")
 }
 
-func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32) *v1.Jaeger {
+func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying example Jaeger")
+
+	// Wait for all elasticsearch instances to appear
+	waitForESDeployment(jaegerInstance)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstanceName, jaegerNamespace)
+}
+
+func createSimpleProdDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying example Jaeger")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstanceName, jaegerNamespace)
+}
+
+func createESKafkaSelfProvDeployment(jaegerInstance *v1.Jaeger) {
+	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+	require.NoError(t, err, "Error deploying example Jaeger")
+
+	// Wait for the kafka instance to start
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstance.Name+"-zookeeper", retryInterval, timeout+1*time.Minute)
+	require.NoError(t, err)
+
+	err = WaitForStatefulset(t, fw.KubeClient, namespace, jaegerInstance.Name+"-kafka", retryInterval, timeout)
+	require.NoError(t, err)
+
+	err = WaitForDeployment(t, fw.KubeClient, namespace, jaegerInstance.Name+"-entity-operator", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for entity-operator deployment")
+
+	waitForESDeployment(jaegerInstance)
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerInstance.Namespace, jaegerInstance.Name+"-collector", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for collector deployment")
+
+	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerInstance.Namespace, jaegerInstance.Name+"-query", 1, retryInterval, timeout)
+	require.NoError(t, err, "Error waiting for query deployment")
+	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstance.Name, jaegerInstance.Namespace)
+}
+
+func waitForESDeployment(jaegerInstance *v1.Jaeger) {
+	// Wait for all elasticsearch instances to appear
+	listOptions := &metav1.ListOptions{LabelSelector: "component=elasticsearch"}
+	var deployments []appsv1.Deployment
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		esDeployments, err := fw.KubeClient.AppsV1().Deployments(jaegerInstance.Namespace).List(context.Background(), *listOptions)
+		if int32(len(esDeployments.Items)) == jaegerInstance.Spec.Storage.Elasticsearch.NodeCount {
+			deployments = esDeployments.Items
+			return true, nil
+		}
+		return false, nil
+	})
+	require.NoError(t, err, "Failed waiting for elasticsearch deployments to be available")
+
+	// And then wait for them to finish deploying
+	for _, deployment := range deployments {
+		logrus.Infof("Waiting for deployment of %s", deployment.Name)
+		err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerInstance.Namespace, deployment.Name, 1, retryInterval, 5*time.Minute)
+		require.NoError(t, err, "Failed waiting for elasticsearch deployment(s) %s to start", deployment.Name)
+	}
+}
+
+func getJaegerSelfProvisionedESAndKafka(instanceName string) *v1.Jaeger {
 	ingressEnabled := true
-	exampleJaeger := &v1.Jaeger{
+	jaegerInstance := &v1.Jaeger{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Jaeger",
 			APIVersion: "jaegertracing.io/v1",
@@ -748,13 +754,13 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 				Enabled:  &ingressEnabled,
 				Security: v1.IngressSecurityNoneExplicit,
 			},
-			Strategy: v1.DeploymentStrategyProduction,
+			Strategy: v1.DeploymentStrategyStreaming,
 			Storage: v1.JaegerStorageSpec{
 				Type: v1.JaegerESStorage,
 				Elasticsearch: v1.ElasticsearchSpec{
-					NodeCount: nodeCount,
+					NodeCount: 1,
 					Resources: &corev1.ResourceRequirements{
-						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
+						Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 						Requests: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("1Gi")},
 					},
 				},
@@ -762,43 +768,49 @@ func getJaegerSelfProvSimpleProd(instanceName, namespace string, nodeCount int32
 		},
 	}
 
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL collector for %s", instanceName)
-		exampleJaeger.Spec.Collector.Image = otelCollectorImage
-		exampleJaeger.Spec.Collector.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-	}
-
-	return exampleJaeger
+	return jaegerInstance
 }
 
-func createESSelfProvDeployment(jaegerInstance *v1.Jaeger, jaegerInstanceName, jaegerNamespace string) {
-	err := fw.Client.Create(context.TODO(), jaegerInstance, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
-	require.NoError(t, err, "Error deploying example Jaeger")
-
-	// Wait for all elasticsearch instances to appear
-	listOptions := &metav1.ListOptions{LabelSelector: "component=elasticsearch"}
-	var deployments []appsv1.Deployment
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		esDeployments, err := fw.KubeClient.AppsV1().Deployments(jaegerNamespace).List(context.Background(), *listOptions)
-		if int32(len(esDeployments.Items)) == jaegerInstance.Spec.Storage.Elasticsearch.NodeCount {
-			deployments = esDeployments.Items
-			return true, nil
-		}
-		return false, nil
-	})
-	require.NoError(t, err, "Failed waiting for elasticsearch deployments to be available")
-
-	// And then wait for them to finish deploying
-	for _, deployment := range deployments {
-		logrus.Infof("Waiting for deployment of %s", deployment.Name)
-		err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, deployment.Name, 1, retryInterval, timeout)
-		require.NoError(t, err, "Failed waiting for elasticsearch deployment(s) %s to start", deployment.Name)
+func getTracingClientWithCollectorEndpoint(serviceName, collectorEndpoint string) (opentracing.Tracer, io.Closer, error) {
+	if collectorEndpoint == "" {
+		collectorEndpoint = fmt.Sprintf("http://localhost:%d/api/traces", jaegerCollectorPort)
 	}
+	cfg := config.Configuration{
+		Reporter:    &config.ReporterConfig{CollectorEndpoint: collectorEndpoint},
+		Sampler:     &config.SamplerConfig{Type: "const", Param: 1},
+		ServiceName: serviceName,
+	}
+	return cfg.NewTracer()
+}
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-collector", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for collector deployment")
+func waitForDeploymentAndUpdate(deploymentName, containerName string, update func(container *corev1.Container)) error {
+	return wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		deployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
+		require.NoError(t, err)
+		containers := deployment.Spec.Template.Spec.Containers
+		for index, container := range containers {
+			if container.Name == containerName {
+				update(&deployment.Spec.Template.Spec.Containers[index])
+				updatedDeployment, err := fw.KubeClient.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+				if err != nil {
+					log.Warnf("Error %v updating container, retrying", err)
+					return false, nil
+				}
+				log.Infof("Updated deployment %v", updatedDeployment.Name)
+				return true, nil
+			}
+		}
+		return false, fmt.Errorf("container %s in deployment %s not found", containerName, deploymentName)
+	})
+}
 
-	err = e2eutil.WaitForDeployment(t, fw.KubeClient, jaegerNamespace, jaegerInstanceName+"-query", 1, retryInterval, timeout)
-	require.NoError(t, err, "Error waiting for query deployment")
-	logrus.Infof("Jaeger instance %s finished deploying in %s", jaegerInstanceName, jaegerNamespace)
+func getBusinessAppCR() *os.File {
+	content, err := ioutil.ReadFile("../../examples/business-application-injected-sidecar.yaml")
+	require.NoError(t, err)
+	newContent := strings.Replace(string(content), "image: jaegertracing/vertx-create-span:operator-e2e-tests", "image: "+vertxExampleImage, 1)
+	file, err := ioutil.TempFile("", "vertx-example")
+	require.NoError(t, err)
+	err = ioutil.WriteFile(file.Name(), []byte(newContent), 0666)
+	require.NoError(t, err)
+	return file
 }

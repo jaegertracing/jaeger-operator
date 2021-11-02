@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
@@ -24,7 +23,7 @@ import (
 )
 
 func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newAllInOneStrategy")
 	defer span.End()
 
@@ -59,10 +58,6 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the service CA config map
 	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
 		c.configMaps = append(c.configMaps, *cm)
-	}
-
-	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
-		c.configMaps = append(c.configMaps, cm...)
 	}
 
 	// add the deployments

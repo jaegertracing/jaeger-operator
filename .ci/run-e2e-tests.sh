@@ -11,12 +11,6 @@ if [ "${TEST_GROUP}" = "es" ]; then
     echo "Running elasticsearch tests"
     make es
     make e2e-tests-es
-elif [ "${TEST_GROUP}" = "es-otel" ]; then
-    echo "Running elasticsearch tests with OTEL collector"
-    export SPECIFY_OTEL_IMAGES=true
-    export SPECIFY_OTEL_CONFIG=true
-    make es
-    make e2e-tests-es
 elif [ "${TEST_GROUP}" = "es-self-provisioned" ]; then
     echo "Running self provisioned elasticsearch tests"
     make e2e-tests-self-provisioned-es
@@ -38,12 +32,6 @@ elif [ "${TEST_GROUP}" = "streaming" ]
 then
     echo "Running Streaming Tests"
     make e2e-tests-streaming
-elif [ "${TEST_GROUP}" = "streaming-otel" ]
-then
-    echo "Running Streaming Tests with OTEL collector and ingester"
-    export SPECIFY_OTEL_IMAGES=true
-    export SPECIFY_OTEL_CONFIG=true
-    make e2e-tests-streaming
 elif [ "${TEST_GROUP}" = "examples1" ]
 then
     echo "Running Examples1 Tests"
@@ -64,12 +52,10 @@ elif [ "${TEST_GROUP}" = "upgrade" ]
 then
     echo "Running upgrade tests"
     make e2e-tests-upgrade
-elif [ "${TEST_GROUP}" = "smoke-otel" ]
+elif [ "${TEST_GROUP}" = "istio" ]
 then
-    echo "Running Smoke Tests with OTEL collector"
-    export SPECIFY_OTEL_IMAGES=true
-    export SPECIFY_OTEL_CONFIG=true
-    make e2e-tests-smoke
+    echo "Running Smoke Tests with istio"
+    make e2e-tests-istio
 else
     echo "Unknown TEST_GROUP [${TEST_GROUP}]"; exit 1
 fi

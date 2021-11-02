@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +45,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 	// Enable tls by default for openshift platform
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
@@ -79,24 +77,22 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
 
-	otelConf, err := a.jaeger.Spec.Agent.Config.GetMap()
-	if err != nil {
-		a.jaeger.Logger().WithField("error", err).
-			WithField("component", "agent").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else {
-		otelconfig.Sync(a.jaeger, "agent", a.jaeger.Spec.Agent.Options, otelConf, commonSpec, &args)
-	}
-
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
 	hostNetwork := false
+	dnsPolicy := a.jaeger.Spec.Agent.DNSPolicy
 	if a.jaeger.Spec.Agent.HostNetwork != nil {
 		hostNetwork = *a.jaeger.Spec.Agent.HostNetwork
+		if dnsPolicy == "" {
+			dnsPolicy = corev1.DNSClusterFirstWithHostNet
+		}
 	}
-
+	priorityClassName := ""
+	if a.jaeger.Spec.Agent.PriorityClassName != "" {
+		priorityClassName = a.jaeger.Spec.Agent.PriorityClassName
+	}
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -181,7 +177,9 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Resources:    commonSpec.Resources,
 						VolumeMounts: commonSpec.VolumeMounts,
 					}},
+					DNSPolicy:          dnsPolicy,
 					HostNetwork:        hostNetwork,
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

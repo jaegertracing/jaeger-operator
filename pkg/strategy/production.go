@@ -3,19 +3,17 @@ package strategy
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
@@ -28,7 +26,7 @@ import (
 )
 
 func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "newProductionStrategy")
 	defer span.End()
 
@@ -65,10 +63,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		c.configMaps = append(c.configMaps, *cm)
 	}
 
-	if cm := otelconfig.Get(jaeger); len(cm) > 0 {
-		c.configMaps = append(c.configMaps, cm...)
-	}
-
 	// add the daemonsets
 	if ds := agent.Get(); ds != nil {
 		c.daemonSets = []appsv1.DaemonSet{*ds}
@@ -92,7 +86,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 			}
 		}
 	} else {
-		span.SetAttribute(key.String("Platform", v1.FlagPlatformKubernetes))
+		span.SetAttributes(attribute.String("Platform", v1.FlagPlatformKubernetes))
 		if q := ingress.NewQueryIngress(jaeger).Get(); nil != q {
 			c.ingresses = append(c.ingresses, *q)
 		}
@@ -126,9 +120,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled == true {
-		queryDep = inject.Sidecar(jaeger, queryDep)
-	}
 	c.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator

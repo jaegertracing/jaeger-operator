@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -28,7 +28,7 @@ var (
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
 
@@ -54,7 +54,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 // normalize changes the incoming Jaeger object so that the defaults are applied when
 // needed and incompatible options are cleaned
 func normalize(ctx context.Context, jaeger *v1.Jaeger) {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "normalize")
 	defer span.End()
 
@@ -76,6 +76,22 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 			"known-options": v1.ValidStorageTypes(),
 		}).Info("The provided storage type is unknown. Falling back to 'memory'")
 		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
+	}
+
+	// remove reserved labels
+	for _, labels := range []map[string]string{
+		jaeger.Spec.JaegerCommonSpec.Labels,
+		jaeger.Spec.AllInOne.JaegerCommonSpec.Labels,
+		jaeger.Spec.Query.JaegerCommonSpec.Labels,
+	} {
+		if _, ok := labels["app.kubernetes.io/instance"]; ok {
+			span.AddEvent(fmt.Sprintf("the reserved label 'app.kubernetes.io/instance' is overwritten, falling back to %s", jaeger.Name))
+			delete(labels, "app.kubernetes.io/instance")
+		}
+		if _, ok := labels["app.kubernetes.io/managed-by"]; ok {
+			span.AddEvent("the reserved label 'app.kubernetes.io/managed-by' is overwritten, falling back to jaeger-operator")
+			delete(labels, "app.kubernetes.io/managed-by")
+		}
 	}
 
 	// normalize the deployment strategy
@@ -100,6 +116,12 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+		jaeger.Spec.Ingress.Openshift.SAR == nil {
+		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
+		jaeger.Spec.Ingress.Openshift.SAR = &sar
+	}
+
 	// note that the order normalization matters - UI norm expects all normalized properties
 	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
@@ -113,7 +135,7 @@ func distributedStorage(storage v1.JaegerStorageType) bool {
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
-	sFlagsMap := spec.Options.Map()
+	sFlagsMap := spec.Options.StringMap()
 	tlsEnabled := sFlagsMap["es.tls"]
 	tlsSkipHost := sFlagsMap["es.tls.skip-host-verify"]
 	tlsCa := sFlagsMap["es.tls.ca"]
@@ -185,7 +207,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 			uiOpts = m
 		}
 	}
-	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	enableArchiveButton(uiOpts, spec.Storage.Options.StringMap())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
 	enableDocumentationLink(uiOpts, spec)
 	enableLogOut(uiOpts, spec)

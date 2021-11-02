@@ -5,9 +5,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -51,7 +52,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	return nil
+	return c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(r.(*ReconcileDeployment).syncOnJaegerChanges),
+	})
 }
 
 var _ reconcile.Reconciler = &ReconcileDeployment{}
@@ -77,15 +80,16 @@ type ReconcileDeployment struct {
 func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileDeployment")
+	span.SetAttributes(attribute.String("name", request.Name), attribute.String("namespace", request.Namespace))
 	defer span.End()
 
-	span.SetAttributes(key.String("name", request.Name), key.String("namespace", request.Namespace))
-	log.WithFields(log.Fields{
+	logger := log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Trace("Reconciling Deployment")
+	})
+	logger.Debug("Reconciling Deployment")
 
 	// Fetch the Deployment instance
 	dep := &appsv1.Deployment{}
@@ -95,100 +99,195 @@ func (r *ReconcileDeployment) Reconcile(request reconcile.Request) (reconcile.Re
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			span.SetStatus(codes.NotFound)
+			span.SetStatus(codes.Error, err.Error())
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
+	if dep.Labels["app"] == "jaeger" && dep.Labels["app.kubernetes.io/component"] != "query" {
+		// Don't touch jaeger deployments
+		return reconcile.Result{}, nil
+	}
+
 	ns := &corev1.Namespace{}
 	err = r.rClient.Get(ctx, types.NamespacedName{Name: request.Namespace}, ns)
 	// we shouldn't fail if the namespace object can't be obtained
 	if err != nil {
-		log.WithField("namespace", request.Namespace).WithError(err).Trace("failed to get the namespace for the deployment, skipping injection based on namespace annotation")
-		tracing.HandleError(err, span)
+		msg := "failed to get the namespace for the deployment, skipping injection based on namespace annotation"
+		logger.WithError(err).Debug(msg)
+		span.AddEvent(msg, trace.WithAttributes(attribute.String("error", err.Error())))
+	}
+
+	jaegers := &v1.JaegerList{}
+	opts := []client.ListOption{}
+
+	if viper.GetString(v1.ConfigOperatorScope) == v1.OperatorScopeNamespace {
+		opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
+	}
+
+	if err := r.rClient.List(ctx, jaegers, opts...); err != nil {
+		logger.WithError(err).Error("failed to get the available Jaeger pods")
+		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
 	if inject.Needed(dep, ns) {
-		jaegers := &v1.JaegerList{}
-		opts := []client.ListOption{}
-
-		if viper.GetString(v1.ConfigOperatorScope) == v1.OperatorScopeNamespace {
-			opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
-		}
-
-		if err := r.rClient.List(ctx, jaegers, opts...); err != nil {
-			log.WithError(err).Error("failed to get the available Jaeger pods")
-			return reconcile.Result{}, tracing.HandleError(err, span)
-		}
-
 		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-			if jaeger.Namespace != request.Namespace {
-				log.WithFields(log.Fields{
-					"jaeger-namespace": jaeger.Namespace,
-					"app-namespace":    request.Namespace,
-				}).Debug("different namespaces, so check whether trusted CA bundle configmap should be created")
-				if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
-					// Update the namespace to be the same as the Deployment being injected
-					cm.Namespace = request.Namespace
-					jaeger.Logger().WithFields(log.Fields{
-						"configMap": cm.Name,
-						"namespace": cm.Namespace,
-					}).Debug("creating Trusted CA bundle config maps")
-					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
-						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
-						return reconcile.Result{}, tracing.HandleError(err, span)
-					}
-				}
-
-				if cm := ca.GetServiceCABundle(jaeger); cm != nil {
-					// Update the namespace to be the same as the Deployment being injected
-					cm.Namespace = request.Namespace
-					jaeger.Logger().WithFields(log.Fields{
-						"configMap": cm.Name,
-						"namespace": cm.Namespace,
-					}).Debug("creating service CA config map")
-					if err := r.client.Create(ctx, cm); err != nil && !errors.IsAlreadyExists(err) {
-						log.WithField("namespace", request.Namespace).WithError(err).Error("failed to create trusted CA bundle")
-						return reconcile.Result{}, tracing.HandleError(err, span)
-					}
+			logger := logger.WithFields(log.Fields{
+				"jaeger":           jaeger.Name,
+				"jaeger-namespace": jaeger.Namespace,
+			})
+			if jaeger.Namespace != dep.Namespace {
+				if err := r.reconcileConfigMaps(ctx, jaeger, dep); err != nil {
+					msg := "failed to reconcile config maps for the namespace"
+					logger.WithError(err).Error(msg)
+					span.AddEvent(msg)
 				}
 			}
 
-			depHasAgent, depAgentIndex := inject.HasJaegerAgent(dep)
-			patch := client.MergeFrom(dep.DeepCopy())
-			if !depHasAgent {
-				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-				// Verified that jaeger instance was found and is not marked for deletion.
-				log.WithFields(log.Fields{
-					"deployment":       dep.Name,
-					"namespace":        dep.Namespace,
-					"jaeger":           jaeger.Name,
-					"jaeger-namespace": jaeger.Namespace,
-				}).Info("Injecting Jaeger Agent sidecar")
-				injectedDep := inject.Sidecar(jaeger, dep)
-				if err := r.client.Patch(ctx, injectedDep, patch); err != nil {
-					log.WithField("deployment", injectedDep).WithError(err).Error("failed to update")
-					return reconcile.Result{}, tracing.HandleError(err, span)
-				}
-			} else {
-				// This could be an update, re-inject the sidecar in case the parameters changed.
-				// if any change is detected the cluster will create a new version of the deployment
-				// otherwise it will do nothing.
-				containers := dep.Spec.Template.Spec.Containers
-				dep.Spec.Template.Spec.Containers = append(containers[:depAgentIndex], containers[depAgentIndex+1:]...)
-				injectedDep := inject.Sidecar(jaeger, dep)
-				if err := r.client.Patch(ctx, injectedDep, patch); err != nil {
-					log.WithField("deployment", injectedDep).WithError(err).Error("failed to update")
-					return reconcile.Result{}, tracing.HandleError(err, span)
-				}
+			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
+			// Verified that jaeger instance was found and is not marked for deletion.
+			{
+				msg := "injecting Jaeger Agent sidecar"
+				logger.Info(msg)
+				span.AddEvent(msg)
 			}
+
+			dep = inject.Sidecar(jaeger, dep)
+			if err := r.client.Update(ctx, dep); err != nil {
+				logger.WithError(err).Error("failed to update deployment with sidecar")
+				return reconcile.Result{}, tracing.HandleError(err, span)
+			}
+
 		} else {
-			log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
+			msg := "no suitable Jaeger instances found to inject a sidecar"
+			span.AddEvent(msg)
+			logger.Debug(msg)
 		}
+
+	} else {
+		hasAgent, _ := inject.HasJaegerAgent(dep)
+		if hasAgent {
+			_, hasLabel := dep.Labels[inject.Label]
+			if hasLabel {
+				r.removeSidecar(ctx, dep)
+			}
+
+		}
+		return reconcile.Result{}, nil
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileDeployment) removeSidecar(ctx context.Context, dep *appsv1.Deployment) {
+	jaegerInstance := dep.Labels[inject.Label]
+	log.WithFields(log.Fields{
+		"deployment": dep.Name,
+		"namespace":  dep.Namespace,
+		"jaeger":     jaegerInstance,
+	}).Info("Removing Jaeger Agent sidecar")
+	patch := client.MergeFrom(dep.DeepCopy())
+	inject.CleanSidecar(jaegerInstance, dep)
+	if err := r.client.Patch(ctx, dep, patch); err != nil {
+		log.WithFields(log.Fields{
+			"deploymentName":      dep.Name,
+			"deploymentNamespace": dep.Namespace,
+		}).WithError(err).Error("error cleaning orphaned deployment")
+	}
+}
+
+func (r *ReconcileDeployment) syncOnJaegerChanges(event handler.MapObject) []reconcile.Request {
+	reconciliations := []reconcile.Request{}
+	nss := map[string]corev1.Namespace{} // namespace cache
+
+	jaeger, ok := event.Object.(*v1.Jaeger)
+	if !ok {
+		return reconciliations
+	}
+
+	deployments := appsv1.DeploymentList{}
+	err := r.client.List(context.Background(), &deployments)
+	if err != nil {
+		return reconciliations
+	}
+
+	for _, dep := range deployments.Items {
+		nsn := types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}
+		req := reconcile.Request{NamespacedName: nsn}
+
+		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
+		// we don't need to trigger a reconciliation for it
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaeger.Name {
+			continue
+		}
+
+		// if the deployment has the sidecar annotation, trigger a reconciliation
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			reconciliations = append(reconciliations, req)
+			continue
+		}
+
+		// if we don't have the namespace in the cache yet, retrieve it
+		var ns corev1.Namespace
+		if ns, ok = nss[dep.Namespace]; !ok {
+			err := r.client.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+			if err != nil {
+				continue
+			}
+			nss[ns.Name] = ns
+		}
+
+		// if the namespace has the sidecar annotation, trigger a reconciliation
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			reconciliations = append(reconciliations, req)
+			continue
+		}
+
+	}
+	return reconciliations
+}
+
+func (r *ReconcileDeployment) reconcileConfigMaps(ctx context.Context, jaeger *v1.Jaeger, dep *appsv1.Deployment) error {
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "reconcileConfigMaps")
+	defer span.End()
+
+	cms := []*corev1.ConfigMap{}
+	if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
+		cms = append(cms, cm)
+	}
+	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+		cms = append(cms, cm)
+	}
+
+	for _, cm := range cms {
+		if err := r.reconcileConfigMap(ctx, cm, dep); err != nil {
+			return tracing.HandleError(err, span)
+		}
+	}
+
+	return nil
+}
+
+func (r *ReconcileDeployment) reconcileConfigMap(ctx context.Context, cm *corev1.ConfigMap, dep *appsv1.Deployment) error {
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
+	ctx, span := tracer.Start(ctx, "reconcileConfigMap")
+	defer span.End()
+
+	// Update the namespace to be the same as the Deployment being injected
+	cm.Namespace = dep.Namespace
+	span.SetAttributes(attribute.String("name", cm.Name), attribute.String("namespace", cm.Namespace))
+
+	if err := r.client.Create(ctx, cm); err != nil {
+		if errors.IsAlreadyExists(err) {
+			span.AddEvent("config map exists already")
+		} else {
+			return tracing.HandleError(err, span)
+		}
+	}
+
+	return nil
 }

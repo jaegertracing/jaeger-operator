@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -28,6 +26,8 @@ import (
 )
 
 var ingressEnabled = true
+var trueVar = true
+var falseVar = true
 
 type SidecarTestSuite struct {
 	suite.Suite
@@ -70,11 +70,9 @@ func (suite *SidecarTestSuite) AfterTest(suiteName, testName string) {
 func (suite *SidecarTestSuite) TestSidecar() {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
-	firstJaegerInstanceName := "agent-as-sidecar"
-	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace)
+	firstJaegerInstanceName := "agent-as-sidecar-with-hostnetwork"
+	firstJaegerInstance := createJaegerAgentAsSidecarInstance(firstJaegerInstanceName, namespace, &trueVar)
 	defer undeployJaegerInstance(firstJaegerInstance)
-
-	verifyAllInOneImage(firstJaegerInstanceName, namespace, specifyOtelImages)
 
 	vertxDeploymentName := "vertx-create-span-sidecar"
 	dep := getVertxDefinition(vertxDeploymentName, map[string]string{inject.Annotation: "true"})
@@ -104,7 +102,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 
 	/* Testing other instance */
 	secondJaegerInstanceName := "agent-as-sidecar2"
-	secondJaegerInstance := createJaegerAgentAsSidecarInstance(secondJaegerInstanceName, namespace)
+	secondJaegerInstance := createJaegerAgentAsSidecarInstance(secondJaegerInstanceName, namespace, &falseVar)
 	defer undeployJaegerInstance(secondJaegerInstance)
 
 	persisted := &appsv1.Deployment{}
@@ -113,7 +111,7 @@ func (suite *SidecarTestSuite) TestSidecar() {
 		Namespace: namespace,
 	}, persisted)
 	require.NoError(t, err, "Error getting jaeger instance")
-	require.Equal(t, "agent-as-sidecar", persisted.Labels[inject.Label])
+	require.Equal(t, firstJaegerInstanceName, persisted.Labels[inject.Label])
 
 	err = fw.Client.Delete(goctx.TODO(), firstJaegerInstance)
 	require.NoError(t, err, "Error deleting instance")
@@ -136,7 +134,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 		return len(resp.Data) > 0, nil
 	})
 	require.NoError(t, err, "Failed waiting for expected content")
-	verifyAgentImage(vertxDeploymentName, namespace, specifyOtelImages)
 }
 
 func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {
@@ -196,7 +193,7 @@ func getVertxDefinition(deploymentName string, annotations map[string]string) *a
 	return dep
 }
 
-func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
+func createJaegerAgentAsSidecarInstance(name, namespace string, hostNetwork *bool) *v1.Jaeger {
 	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval}
 
 	j := &v1.Jaeger{
@@ -216,6 +213,7 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 			},
 			AllInOne: v1.JaegerAllInOneSpec{},
 			Agent: v1.JaegerAgentSpec{
+				HostNetwork: hostNetwork,
 				Options: v1.NewOptions(map[string]interface{}{
 					"log-level": "debug",
 				}),
@@ -225,16 +223,6 @@ func createJaegerAgentAsSidecarInstance(name, namespace string) *v1.Jaeger {
 				Security: v1.IngressSecurityNoneExplicit,
 			},
 		},
-	}
-
-	if specifyOtelImages {
-		logrus.Infof("Using OTEL AllInOne image for %s", name)
-		j.Spec.AllInOne.Image = otelAllInOneImage
-		logrus.Infof("Using OTEL Agent for %s", name)
-		j.Spec.Agent.Image = otelAgentImage
-
-		j.Spec.AllInOne.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
-		j.Spec.Agent.Config = v1.NewFreeForm(getOtelConfigForHealthCheckPort("14269"))
 	}
 
 	err := fw.Client.Create(goctx.TODO(), j, cleanupOptions)

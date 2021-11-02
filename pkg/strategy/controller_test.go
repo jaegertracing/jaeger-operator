@@ -178,6 +178,19 @@ func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
 	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
 }
 
+func TestRemoveReservedLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestRemoveReservedLabels"})
+	jaeger.Spec.Labels = map[string]string{
+		"app.kubernetes.io/instance":   "custom-instance",
+		"app.kubernetes.io/managed-by": "custom-managed-by",
+	}
+
+	normalize(context.Background(), jaeger)
+
+	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/instance")
+	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/managed-by")
+}
+
 func TestNormalizeIndexCleaner(t *testing.T) {
 	trueVar := true
 	falseVar := false
@@ -687,4 +700,24 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 	for k, v := range consoleLinks {
 		assert.True(t, v, "Expected %s to have been returned from the list of console links", k)
 	}
+}
+
+func TestNormalizeSAR(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{
+		Namespace: "foo",
+		Name:      t.Name(),
+	})
+
+	t.Run("not on openshift", func(t *testing.T) {
+		normalize(context.Background(), j)
+		assert.Nil(t, j.Spec.Ingress.Openshift.SAR)
+	})
+
+	t.Run("on openshift", func(t *testing.T) {
+		j.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+		viper.Set("platform", "openshift")
+		defer viper.Reset()
+		normalize(context.Background(), j)
+		assert.Equal(t, "{\"namespace\": \"foo\", \"resource\": \"pods\", \"verb\": \"get\"}", *j.Spec.Ingress.Openshift.SAR)
+	})
 }

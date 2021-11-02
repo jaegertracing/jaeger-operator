@@ -1,44 +1,89 @@
 package tracing
 
 import (
-	"log"
+	"context"
+	"strings"
 
-	"go.opentelemetry.io/otel/exporter/trace/jaeger"
-	"go.opentelemetry.io/otel/global"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv"
+
+	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 var (
-	provider *sdktrace.Provider
-	closers  []func()
+	processor tracesdk.SpanProcessor
 )
 
 // Bootstrap prepares a new tracer to be used by the operator
-func Bootstrap() {
-	sampling := sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}
+func Bootstrap(ctx context.Context, namespace string) {
+	if viper.GetBool("tracing-enabled") {
+		err := buildSpanProcessor()
+		if err != nil {
+			log.WithError(err).Warn("could not configure a Jaeger tracer for the operator")
+		} else {
+			buildJaegerExporter(ctx, namespace, "")
+		}
+	}
+}
 
-	var err error
-	provider, err = sdktrace.NewProvider(sdktrace.WithConfig(sampling))
-	if err != nil {
-		log.Fatal(err)
+//SetInstanceID set the computed instance id on the tracing provider
+func SetInstanceID(ctx context.Context, namespace string) {
+	if viper.GetBool("tracing-enabled") {
+		// Rebuild the provider with the same exporter
+		buildJaegerExporter(ctx, namespace, viper.GetString(v1.ConfigIdentity))
+	}
+}
+
+func buildSpanProcessor() error {
+	agentHostPort := viper.GetString("jaeger-agent-hostport")
+	hostPort := strings.Split(agentHostPort, ":")
+
+	var endpoint jaeger.EndpointOption
+	if len(hostPort) >= 2 {
+		endpoint = jaeger.WithAgentEndpoint(
+			jaeger.WithAgentHost(hostPort[0]),
+			jaeger.WithAgentPort(hostPort[1]),
+		)
+	} else {
+		endpoint = jaeger.WithAgentEndpoint(
+			jaeger.WithAgentHost(hostPort[0]),
+		)
 	}
 
-	global.SetTraceProvider(provider)
+	jexporter, err := jaeger.NewRawExporter(endpoint)
+
+	if err != nil {
+		return err
+	}
+	processor = tracesdk.NewBatchSpanProcessor(jexporter)
+	return nil
 }
 
-// AddJaegerExporter includes the given exporter into the existing provider
-func AddJaegerExporter(exporter *jaeger.Exporter) {
-	closers = append(closers, func() {
-		exporter.Flush()
-	})
+func buildJaegerExporter(ctx context.Context, namespace string, instanceID string) {
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "buildJaegerExporter")
+	defer span.End()
+	attr := []attribute.KeyValue{
+		semconv.ServiceNameKey.String("jaeger-operator"),
+		semconv.ServiceVersionKey.String(version.Get().Operator),
+		semconv.ServiceNamespaceKey.String(namespace),
+	}
 
-	ssp := sdktrace.NewSimpleSpanProcessor(exporter)
-	provider.RegisterSpanProcessor(ssp)
-}
-
-// Close runs the closer functions collected from all relevant exporters
-func Close() {
-	for _, c := range closers {
-		c()
+	if instanceID != "" {
+		attr = append(attr, semconv.ServiceInstanceIDKey.String(instanceID))
+	}
+	if processor != nil {
+		traceProvider := tracesdk.NewTracerProvider(
+			tracesdk.WithSpanProcessor(processor),
+			tracesdk.WithResource(resource.NewWithAttributes(attr...)),
+		)
+		otel.SetTracerProvider(traceProvider)
 	}
 }

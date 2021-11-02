@@ -15,6 +15,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -68,6 +69,7 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	configmap.Update(q.jaeger, commonSpec, &options)
 	ca.Update(q.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(q.jaeger, commonSpec)
 
 	var envFromSource []corev1.EnvFromSource
 	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
@@ -83,6 +85,19 @@ func (q *Query) Get() *appsv1.Deployment {
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	priorityClassName := ""
+	if q.jaeger.Spec.Query.PriorityClassName != "" {
+		priorityClassName = q.jaeger.Spec.Query.PriorityClassName
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if q.jaeger.Spec.Query.Strategy != nil {
+		strategy = *q.jaeger.Spec.Query.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -107,6 +122,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
@@ -161,12 +177,14 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 						Resources: commonSpec.Resources,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger, account.QueryComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(q.jaeger, commonSpec),
 				},
 			},
 		},

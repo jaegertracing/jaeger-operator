@@ -5,9 +5,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -80,11 +80,11 @@ type ReconcileNamespace struct {
 func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileNamespace")
 	defer span.End()
 
-	span.SetAttributes(key.String("name", request.Name), key.String("namespace", request.Namespace))
+	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))
 	log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
@@ -97,7 +97,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			span.SetStatus(codes.NotFound)
+			span.SetStatus(codes.Error, err.Error())
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -124,6 +124,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 
 	for i := 0; i < len(deps.Items); i++ {
 		dep := &deps.Items[i]
+		if dep.Labels["app"] == "jaeger" {
+			// Don't touch jaeger deployments
+			continue
+		}
+
 		if inject.Needed(dep, ns) {
 			jaegers := &v1.JaegerList{}
 			opts := []client.ListOption{}
