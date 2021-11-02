@@ -1,9 +1,8 @@
-# Assert the Istio is up and running
+# Assert the Jaeger is up and running
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: istiod
-  namespace: istio-system
+  name: {{ .Env.INSTANCE_NAME }}
 spec:
   replicas: 1
 status:
