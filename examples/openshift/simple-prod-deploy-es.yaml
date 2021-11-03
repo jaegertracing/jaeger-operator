@@ -11,7 +11,7 @@ spec:
       nodeCount: 1
       resources:
         requests:
-          cpu: 200m
+          cpu: 1
           memory: 1Gi
-        limits:
-          memory: 1Gi
+#        limits:
+#          memory: 1Gi

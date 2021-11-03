@@ -98,7 +98,6 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
-
 		})
 
 		b.detectElasticsearch(ctx, apiList)
@@ -109,16 +108,11 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
-func (b *Background) availableAPIs(ctx context.Context) (*metav1.APIGroupList, error) {
-	apiList, err := b.dcl.ServerGroups()
-	if err != nil {
-		return nil, err
-	}
-
-	return apiList, nil
+func (b *Background) availableAPIs(_ context.Context) ([]*metav1.APIResourceList, error) {
+	return b.dcl.ServerPreferredResources()
 }
 
-func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
 		log.Trace("Attempting to auto-detect the platform")
@@ -134,7 +128,7 @@ func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGrou
 	}
 }
 
-func (b *Background) detectElasticsearch(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect whether the Elasticsearch operator is available
 	if b.retryDetectEs {
 		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
@@ -154,7 +148,7 @@ func (b *Background) detectElasticsearch(ctx context.Context, apiList *metav1.AP
 }
 
 // detectKafka checks whether the Kafka Operator is available
-func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourceList) {
 	// viper has a "IsSet" method that we could use, except that it returns "true" even
 	// when nothing is set but it finds a 'Default' value...
 	if b.retryDetectKafka {
@@ -261,30 +255,31 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 	}
 }
 
-func isOpenShift(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "route.openshift.io" {
+func isOpenShift(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "route.openshift.io") {
 			return true
 		}
 	}
 	return false
 }
 
-func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "logging.openshift.io" {
-			return true
+func isElasticsearchOperatorAvailable(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "logging.openshift.io") {
+			for _, api := range r.APIResources {
+				if api.Kind == "Elasticsearch" {
+					return true
+				}
+			}
 		}
 	}
 	return false
 }
 
-func isKafkaOperatorAvailable(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "kafka.strimzi.io" {
+func isKafkaOperatorAvailable(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "kafka.strimzi.io") {
 			return true
 		}
 	}
