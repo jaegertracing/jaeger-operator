@@ -1,0 +1,5 @@
+      index-prefix: ""
+    esIndexCleaner:
+      enabled: false
+      numberOfDays: 3
+      schedule: "*/1 * * * *"

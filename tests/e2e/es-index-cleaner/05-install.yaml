@@ -1,0 +1,16 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: test-es-index-cleaner-with-prefix
+spec:
+  strategy: production
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+      index-prefix: ""
+    esIndexCleaner:
+      enabled: true
+      numberOfDays: 3
+      schedule: "*/1 * * * *"
