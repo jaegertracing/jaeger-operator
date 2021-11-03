@@ -1,4 +1,4 @@
-# Assert the spark job was succeded
+# Assert the cron job was succeded
 apiVersion: batch/v1
 kind: Job
 metadata:

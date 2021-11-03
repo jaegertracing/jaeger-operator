@@ -1,4 +1,4 @@
-# Check the indices are generated
+# Check the index cleaner job cleaned all the indices
 apiVersion: batch/v1
 kind: Job
 metadata:

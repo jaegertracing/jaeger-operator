@@ -1,3 +1,4 @@
+# Wait for a new execution of the cronjob
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:

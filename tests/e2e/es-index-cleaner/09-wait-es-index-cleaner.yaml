@@ -1,4 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - script: "go run ../../cmd-utils/wait-cronjob/main.go --cronjob test-es-index-cleaner-with-prefix-es-index-cleaner --namespace $NAMESPACE"
