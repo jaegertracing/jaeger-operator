@@ -2,11 +2,6 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestSuite
 crdDir: ./tests/_build/crds/
 artifactsDir: ./tests/_build/artifacts/
-kindContainers:
-  - local/jaeger-operator:e2e
-  - local/asserts:e2e
-  - jaegertracing/vertx-create-span:operator-e2e-tests
-  - local/jaeger-operator:next
 commands:
   - script: kubectl create namespace jaeger-operator-system 2>&1 | grep -v "already exists" || true
   - command: kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system
@@ -14,7 +9,6 @@ commands:
   - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
   - command: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=150s
   - command: sleep 5s
-
 testDirs:
   - ./tests/e2e/
 timeout: 330
