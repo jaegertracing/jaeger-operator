@@ -5,4 +5,4 @@ metadata:
   name: {{ .Env.CLUSTER_NAME }}-kafka
   {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
 status:
-  readyReplicas: 1
+  readyReplicas: {{ .Env.REPLICAS }}

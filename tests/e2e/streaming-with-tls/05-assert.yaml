@@ -1,32 +1,5 @@
-# Assert the Jaeger collector is up and running
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
 metadata:
-  name: tls-streaming-ingester
+  name: my-user
   namespace: kafka
-spec:
-  replicas: 1
-status:
-  readyReplicas: 1
----
-# Assert the Jaeger query is up and running
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tls-streaming-query
-  namespace: kafka
-spec:
-  replicas: 1
-status:
-  readyReplicas: 1
----
-# Assert the Jaeger collector is up and running
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tls-streaming-collector
-  namespace: kafka
-spec:
-  replicas: 1
-status:
-  readyReplicas: 1
