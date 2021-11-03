@@ -546,6 +546,18 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/es-simple-prod/01-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/es-simple-prod/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/es-simple-prod/02-assert.yaml
+# es-index-cleaner
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/es-index-cleaner/00-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/es-index-cleaner/00-assert.yaml
+	$(VECHO)JAEGER_NAME=test-es-index-cleaner-with-prefix gomplate -f tests/templates/production-jaeger-install.yaml.template -o tests/e2e/es-index-cleaner/01-install.yaml
+	$(VECHO)cat tests/e2e/es-index-cleaner/es-index.template >> tests/e2e/es-index-cleaner/01-install.yaml
+	$(VECHO)JAEGER_NAME=test-es-index-cleaner-with-prefix gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/es-index-cleaner/01-assert.yaml
+	$(VECHO)$(SED) "s~enabled: false~enabled: true~gi" tests/e2e/es-index-cleaner/01-install.yaml > tests/e2e/es-index-cleaner/03-install.yaml
+	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/03-install.yaml -o tests/e2e/es-index-cleaner/05-install.yaml
+	$(VECHO)$(SED) "s~index-prefix: \"\"~index-prefix: \"my-prefix\"~gi" tests/e2e/es-index-cleaner/03-install.yaml > tests/e2e/es-index-cleaner/08-install.yaml
+	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/04-wait-es-index-cleaner.yaml -o tests/e2e/es-index-cleaner/09-wait-es-index-cleaner.yaml
+	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/10-install.yaml
+
 
 # end-to-tests
 .PHONY: kuttl-e2e

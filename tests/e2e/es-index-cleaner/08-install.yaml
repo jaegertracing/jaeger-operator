@@ -9,7 +9,7 @@ spec:
     options:
       es:
         server-urls: http://elasticsearch:9200
-      index-prefix: ""
+      index-prefix: "my-prefix"
     esIndexCleaner:
       enabled: true
       numberOfDays: 0
