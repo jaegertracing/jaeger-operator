@@ -98,6 +98,7 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
+
 		})
 
 		b.detectElasticsearch(ctx, apiList)
