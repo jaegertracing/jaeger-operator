@@ -5,8 +5,6 @@ package e2e
 import (
 	"context"
 	goctx "context"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
@@ -90,20 +87,9 @@ func (suite *SidecarNamespaceTestSuite) TestSidecarNamespace() {
 	require.NoError(t, err, "Failed waiting for %s deployment", dep.Name)
 
 	url, httpClient := getQueryURLAndHTTPClient(jaegerInstanceName, "%s/api/traces?service=order", true)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := httpClient.Do(req)
-		require.NoError(t, err)
 
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
+	resp := &resp{}
+	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, &resp)
 
-		resp := &resp{}
-		err = json.Unmarshal(body, &resp)
-		require.NoError(t, err)
-
-		return len(resp.Data) > 0, nil
-	})
 	require.NoError(t, err, "Failed waiting for expected content")
 }
