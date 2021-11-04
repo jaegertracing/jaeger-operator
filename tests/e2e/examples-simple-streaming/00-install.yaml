@@ -1,0 +1,5 @@
+# Start Kafka
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "pwd && cd ../../.. && make kafka"

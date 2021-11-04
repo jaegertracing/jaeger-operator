@@ -1,6 +1,9 @@
 00-assert.yaml
-00-install.yaml
 01-assert.yaml
-01-install.yaml
+02-assert.yaml
 03-assert.yaml
-03-smoke-test.yaml
+03-install.yaml
+04-install.yaml
+04-assert.yaml
+06-smoke-test.yaml
+06-assert.yaml
