@@ -1,3 +1,4 @@
+//go:build generate
 // +build generate
 
 package e2e
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,7 +16,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type GeneratorAllInOneTestSuite struct {
@@ -109,27 +108,10 @@ func (suite *GeneratorAllInOneTestSuite) TestAllInOne() {
 	url := fmt.Sprintf("http://localhost:%d/search", forwardedPorts[0].Local)
 	c := http.Client{Timeout: 3 * time.Second}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
-
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil && strings.Contains(err.Error(), "Timeout exceeded") {
-			t.Logf("Retrying request after error %v", err)
-			return false, nil
-		}
-		require.NoError(t, err)
-
-		require.Equal(t, 200, res.StatusCode)
-
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		require.NotEqual(t, 0, len(body), "Empty body")
-
-		return true, nil
-	})
+	resp := ""
+	err = WaitForHTTPResponse(c, http.MethodGet, url, &resp)
 	require.NoError(t, err, "Failed waiting for expected content")
+	require.True(t, len(resp) > 0, "Empty body")
 
 	queryPort := forwardedPorts[0].Local
 	collectorPort := forwardedPorts[1].Local
