@@ -1,4 +1,4 @@
-# Assert the ElasticSearch is up and running
+# Assert ElasticSearch is up and running
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
