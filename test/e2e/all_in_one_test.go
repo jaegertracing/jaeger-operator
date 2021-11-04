@@ -96,7 +96,7 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	resp := &resp{}
 	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 
-	// We just need to check there ere not errors in the HTTP response and the REST API is available
+	// We just need to check there are not errors in the HTTP response and the REST API is available
 	require.NoError(t, err, "Failed waiting for expected content")
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
@@ -259,7 +260,7 @@ func WaitForHTTPResponse(httpClient http.Client, method, url string, response in
 		}
 
 		if err != nil {
-			if strings.Contains(err.Error(), "Timeout exceeded") {
+			if e, ok := err.(net.Error); ok && e.Timeout() {
 				log.Infof("Retrying request after error %v", err)
 				return false, nil
 			}
