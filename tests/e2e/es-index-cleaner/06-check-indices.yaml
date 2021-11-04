@@ -9,7 +9,8 @@ spec:
       containers:
         - name: assert-indexes-no-prefix
           image: local/asserts:e2e
-          command: ["./index",
+          command: [
+            "./index",
             "--pattern", "jaeger-span-\\d{4}-\\d{2}-\\d{2}",
             "--assert-count-indices", "0",
             "--verbose"

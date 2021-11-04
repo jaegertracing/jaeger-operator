@@ -1,7 +1,0 @@
-# Assert the job was executed properly
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: report-span-1
-status:
-  succeeded: 1

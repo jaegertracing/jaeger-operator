@@ -9,7 +9,8 @@ spec:
       containers:
         - name: report-span-1
           image: local/asserts:e2e
-          command: ["./reporter",
+          command: [
+            "./reporter",
             "--days", "5",
             "--services", "1",
             "--verbose"

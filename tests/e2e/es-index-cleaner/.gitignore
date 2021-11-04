@@ -4,6 +4,10 @@
 01-assert.yaml
 03-install.yaml
 05-install.yaml
-08-install.yaml
-09-wait-es-index-cleaner.yaml
-10-install.yaml
+07-install.yaml
+09-install.yaml
+11-wait-es-index-cleaner.yaml
+12-install.yaml
+es-index
+es-index2
+jaeger-deployment

@@ -1,7 +1,0 @@
-# Check the job was run properly
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: assert-indexes-prefix
-status:
-  succeeded: 1
