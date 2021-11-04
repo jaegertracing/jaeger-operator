@@ -11,6 +11,7 @@ spec:
           image: local/asserts:e2e
           command: [
             "./reporter",
+            "--days", "4",
             "--verbose"
           ]
           env:
