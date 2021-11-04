@@ -3,17 +3,14 @@ package e2e
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/require"
 	"github.com/uber/jaeger-client-go/config"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -122,26 +119,10 @@ func executeSmokeTest(apiTracesEndpoint, collectorEndpoint string, hasInsecureEn
 	}
 	tracesEndpoint := apiTracesEndpoint + "?service=" + serviceName
 	logrus.Infof("Using traces URL %s", tracesEndpoint)
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		c := http.Client{Timeout: 3 * time.Second, Transport: transport}
-		req, err := http.NewRequest(http.MethodGet, tracesEndpoint, nil)
-		require.NoError(t, err)
 
-		resp, err := c.Do(req)
-		if err != nil {
-			logrus.Warnf("Ignoring error on request: %v", err)
-			return false, nil
-		}
-		defer resp.Body.Close()
+	c := http.Client{Timeout: 3 * time.Second, Transport: transport}
 
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		bodyString := string(bodyBytes)
-
-		// The first requests to newly created ES might fail
-		if !strings.Contains(bodyString, "errors\":null") {
-			return false, fmt.Errorf("query service returns errors: %s", bodyString)
-		}
-		return strings.Contains(bodyString, tStr), nil
-	})
-	require.NoError(t, err, "SmokeTest failed")
+	resp := &resp{}
+	err = WaitForHTTPResponse(c, http.MethodGet, tracesEndpoint, &resp)
+	require.NoError(t, err, "Failed waiting for expected content")
 }
