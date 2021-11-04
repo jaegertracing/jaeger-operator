@@ -1,0 +1,17 @@
+# Asser the Jaeger deployment is there
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jaeger
+spec:
+  replicas: 1
+---
+# Assert the spark job was succeded
+apiVersion: batch/v1
+kind: Job
+metadata:
+  ownerReferences:
+  - kind: CronJob
+    name:  my-jaeger-spark-dependencies
+status:
+  succeeded: 1

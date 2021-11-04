@@ -1,0 +1,9 @@
+# Assert the cron job was succeded
+apiVersion: batch/v1
+kind: Job
+metadata:
+  ownerReferences:
+  - kind: CronJob
+    name: test-es-index-cleaner-with-prefix-es-index-cleaner
+status:
+  succeeded: 1
