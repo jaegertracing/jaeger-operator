@@ -1,15 +1,13 @@
+//go:build smoke
 // +build smoke
 
 package e2e
 
 import (
 	goctx "context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
@@ -95,38 +92,11 @@ func (suite *AllInOneTestSuite) TestAllInOneWithIngress() {
 	require.NoError(t, err, "Error waiting for Jaeger deployment")
 
 	url, httpClient := getQueryURLAndHTTPClient(name, "%s/api/services", true)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
 	// Hit this url once to make Jaeger itself create a trace, then it will show up in services
-	httpClient.Do(req)
+	resp := &resp{}
+	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := httpClient.Do(req)
-		if err != nil {
-			/* Sometimes, the Jaeger instance is deployed but the endpoints are not available
-			yet. This situation can produce an error 50x here. Instead of returning the error
-			and make the test fail, we keep querying the URL until the endpoint is available.
-			*/
-			return false, nil
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		resp := &services{}
-		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			return false, nil
-		}
-
-		for _, v := range resp.Data {
-			if v == "jaeger-query" {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	})
+	// We just need to check there are not errors in the HTTP response and the REST API is available
 	require.NoError(t, err, "Failed waiting for expected content")
 }
 
@@ -152,35 +122,11 @@ func (suite *AllInOneTestSuite) TestAllInOneWithUIConfig() {
 	url := fmt.Sprintf("http://localhost:%s/%s/search", queryPort, basePath)
 	c := http.Client{Timeout: 3 * time.Second}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err, "Failed to create httpRequest")
-
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		res, err := c.Do(req)
-		if err != nil && strings.Contains(err.Error(), "Timeout exceeded") {
-			log.Infof("Retrying request after error %v", err)
-			return false, nil
-		}
-		require.NoError(t, err)
-
-		if res.StatusCode != 200 {
-			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		if len(body) == 0 {
-			return false, fmt.Errorf("empty body")
-		}
-
-		if !strings.Contains(string(body), TrackingID) {
-			return false, fmt.Errorf("body does not include tracking id: %s", TrackingID)
-		}
-
-		return true, nil
-	})
+	resp := ""
+	err = WaitForHTTPResponse(c, http.MethodGet, url, &resp)
 	require.NoError(t, err, "Failed waiting for expected content")
+	require.True(t, len(resp) > 0)
+	require.Contains(t, resp, TrackingID, "body does not include tracking id: %s", TrackingID)
 }
 
 func getJaegerAllInOneWithUiDefinition(basePath string) *v1.Jaeger {
