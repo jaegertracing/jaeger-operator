@@ -2,7 +2,6 @@ apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: tls-streaming
-  namespace: kafka
 spec:
   ingress:
     enabled: true
@@ -14,7 +13,7 @@ spec:
         producer:
           authentication: tls
           topic: jaeger-spans
-          brokers: my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9093
+          brokers: my-cluster-kafka-bootstrap:9093
           tls:
             ca: /var/run/secrets/cluster-ca/ca.crt
             cert: /var/run/secrets/kafkauser/user.crt
@@ -25,7 +24,7 @@ spec:
         consumer:
           authentication: tls
           topic: jaeger-spans
-          brokers: my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9093
+          brokers: my-cluster-kafka-bootstrap:9093
           tls:
             ca: /var/run/secrets/cluster-ca/ca.crt
             cert: /var/run/secrets/kafkauser/user.crt

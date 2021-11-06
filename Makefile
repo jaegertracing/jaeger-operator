@@ -304,7 +304,8 @@ else
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	$(VECHO)curl --fail --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml --create-dirs
-	$(VECHO)${SED} 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml | kubectl -n $(KAFKA_NAMESPACE) apply -f - 2>&1 | grep -v "already exists" || true
+	$(VECHO)${SED} -i 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml
+	$(VECHO) kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-operator.yaml | grep -v "already exists" || true
 	$(VECHO)kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
 
@@ -511,18 +512,18 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 # This is needed for the streaming tests
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/00-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/03-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
+	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/03-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/05-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/05-assert.yaml
 # streaming-with-tls
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-tls/01-install.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-tls/01-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-tls/02-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-tls/03-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-tls/04-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) JAEGER_SERVICE=streaming-with-tls JAEGER_OPERATION=smoketestoperation JAEGER_NAME=tls-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-tls/07-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-tls/01-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-tls/01-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-tls/02-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-tls/03-assert.yaml
+	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-tls/04-assert.yaml
+	$(VECHO)JAEGER_SERVICE=streaming-with-tls JAEGER_OPERATION=smoketestoperation JAEGER_NAME=tls-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-tls/07-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-tls/07-assert.yaml
 # streaming-with-autoprovisioning
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-autoprovisioning/00-install.yaml
@@ -586,7 +587,6 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)$(SED) "s~enabled: false~enabled: true~gi" tests/e2e/es-index-cleaner/07-install.yaml > tests/e2e/es-index-cleaner/09-install.yaml
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/04-wait-es-index-cleaner.yaml -o tests/e2e/es-index-cleaner/11-wait-es-index-cleaner.yaml
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/12-install.yaml
-
 
 # end-to-tests
 .PHONY: kuttl-e2e
