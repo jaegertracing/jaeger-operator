@@ -127,7 +127,6 @@ func (suite *DaemonSetTestSuite) TestDaemonSet() {
 	resp := &resp{}
 	err = WaitForHTTPResponse(c, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
-	require.True(t, len(resp.Data) > 0)
 }
 
 func getVertxDeployment(namespace string, selector map[string]string) *appsv1.Deployment {
