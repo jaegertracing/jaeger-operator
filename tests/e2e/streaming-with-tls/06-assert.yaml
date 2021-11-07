@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tls-streaming-ingester
-  namespace: kafka
 spec:
   replicas: 1
 status:
@@ -14,7 +13,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tls-streaming-query
-  namespace: kafka
 spec:
   replicas: 1
 status:
@@ -25,7 +23,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tls-streaming-collector
-  namespace: kafka
 spec:
   replicas: 1
 status:

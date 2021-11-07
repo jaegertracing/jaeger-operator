@@ -510,13 +510,13 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
 	$(VECHO)${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
 # This is needed for the streaming tests
-	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/00-install.yaml
-	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/00-assert.yaml
-	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
-	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
-	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/03-assert.yaml
-	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/05-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/05-assert.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/01-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-simple/03-assert.yaml
+	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/04-assert.yaml
+	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/06-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/06-assert.yaml
 # streaming-with-tls
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-tls/01-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-tls/01-assert.yaml
@@ -526,13 +526,13 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)JAEGER_SERVICE=streaming-with-tls JAEGER_OPERATION=smoketestoperation JAEGER_NAME=tls-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-tls/07-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-tls/07-assert.yaml
 # streaming-with-autoprovisioning
-	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-autoprovisioning/00-install.yaml
-	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/00-assert.yaml
-	$(VECHO)REPLICAS=3 CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-autoprovisioning/01-assert.yaml
-	$(VECHO)REPLICAS=3 CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-autoprovisioning/02-assert.yaml
-	$(VECHO)CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-autoprovisioning/03-assert.yaml
-	$(VECHO)JAEGER_SERVICE=streaming-with-autoprovisioning JAEGER_OPERATION=smoketestoperation JAEGER_NAME=auto-provisioned gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-autoprovisioning/05-smoke-test.yaml
-	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/05-assert.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-autoprovisioning/01-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/01-assert.yaml
+	$(VECHO)REPLICAS=3 CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-autoprovisioning/02-assert.yaml
+	$(VECHO)REPLICAS=3 CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-autoprovisioning/03-assert.yaml
+	$(VECHO)CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-autoprovisioning/04-assert.yaml
+	$(VECHO)JAEGER_SERVICE=streaming-with-autoprovisioning JAEGER_OPERATION=smoketestoperation JAEGER_NAME=auto-provisioned gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-autoprovisioning/06-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/06-assert.yaml
 # examples-agent-as-daemonset
 	$(VECHO)gomplate -f examples/agent-as-daemonset.yaml -o tests/e2e/examples-agent-as-daemonset/00-install.yaml
 	$(VECHO)JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-agent-as-daemonset/00-assert.yaml
