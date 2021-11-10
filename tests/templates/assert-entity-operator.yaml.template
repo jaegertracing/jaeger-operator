@@ -1,0 +1,8 @@
+# Ensure the entity operator is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Env.CLUSTER_NAME }}-entity-operator
+  {{if getenv "KUBERNETES_NAMESPACE"}}namespace: "{{ .Env.KUBERNETES_NAMESPACE }}"{{end}}
+status:
+  readyReplicas: 1

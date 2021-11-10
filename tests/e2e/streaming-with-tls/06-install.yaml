@@ -1,0 +1,48 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: tls-streaming
+spec:
+  ingress:
+    enabled: true
+    security: "none"
+  strategy: streaming
+  collector:
+    options:
+      kafka:
+        producer:
+          authentication: tls
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-bootstrap:9093
+          tls:
+            ca: /var/run/secrets/cluster-ca/ca.crt
+            cert: /var/run/secrets/kafkauser/user.crt
+            key: /var/run/secrets/kafkauser/user.key
+  ingester:
+    options:
+      kafka:
+        consumer:
+          authentication: tls
+          topic: jaeger-spans
+          brokers: my-cluster-kafka-bootstrap:9093
+          tls:
+            ca: /var/run/secrets/cluster-ca/ca.crt
+            cert: /var/run/secrets/kafkauser/user.crt
+            key: /var/run/secrets/kafkauser/user.key
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+  volumes:
+    - name: kafkauser
+      secret:
+        secretName: "my-user"
+    - name: cluster-ca
+      secret:
+        secretName: "my-cluster-cluster-ca-cert"
+  volumeMounts:
+    - name: kafkauser
+      mountPath: /var/run/secrets/kafkauser
+    - name: cluster-ca
+      mountPath: /var/run/secrets/cluster-ca
