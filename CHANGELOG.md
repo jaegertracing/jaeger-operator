@@ -1,6 +1,13 @@
 Changes by Version
 ==================
 
+1.28.0 (2021-11-08)
+-------------------
+* Use CRDs to detect features in the cluster ([#1608](https://github.com/jaegertracing/jaeger-operator/pull/1608), [@pavolloffay](https://github.com/pavolloffay))
+* Make ServiceMonitor creation optional ([#1323](https://github.com/jaegertracing/jaeger-operator/pull/1323), [@igorwwwwwwwwwwwwwwwwwwww](https://github.com/igorwwwwwwwwwwwwwwwwwwww))
+* Change default OpenShift query ingress SAR to pods in the jaeger namespace ([#1583](https://github.com/jaegertracing/jaeger-operator/pull/1583), [@pavolloffay](https://github.com/pavolloffay))
+* Fix gRPC flags for OpenShift when 'reporter.grpc.host-port' is defined ([#1584](https://github.com/jaegertracing/jaeger-operator/pull/1584), [@Git-Jiro](https://github.com/Git-Jiro))
+
 1.27.0 (2021-10-07)
 -------------------
 * Allow sidecar injection for query pod from other Jaeger instances ([#1569](https://github.com/jaegertracing/jaeger-operator/pull/1569), [@pavolloffay](https://github.com/pavolloffay))
