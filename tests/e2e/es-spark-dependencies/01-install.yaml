@@ -1,0 +1,14 @@
+# Deploy the Jaeger instance
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: my-jaeger
+spec:
+  strategy: allinone
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+    dependencies:
+      schedule: "*/1 * * * *"
