@@ -1,6 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: simple-streaming-ingester
-spec:
-  replicas: 1
