@@ -539,13 +539,14 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)JAEGER_SERVICE=simple-prod-with-volumes JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-assert.yaml
 # examples-simple-streaming
-	$(VECHO)REPLICAS=1 KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/examples-simple-streaming/00-assert.yaml
-	$(VECHO)REPLICAS=1 KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/examples-simple-streaming/01-assert.yaml
-	$(VECHO)KUBERNETES_NAMESPACE=$(KAFKA_NAMESPACE) CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/examples-simple-streaming/02-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/examples-simple-streaming/00-assert.yaml
+	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/examples-simple-streaming/01-assert.yaml
+	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/examples-simple-streaming/02-assert.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-streaming/03-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-streaming/03-assert.yaml
 	$(VECHO)gomplate -f examples/simple-streaming.yaml -o tests/e2e/examples-simple-streaming/04-install.yaml
 	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-streaming/04-install.yaml
+	$(VECHO)${SED} -i "s~my-cluster-kafka-brokers.kafka:9092~my-cluster-kafka-brokers:9092~gi" tests/e2e/examples-simple-streaming/04-install.yaml
 	$(VECHO)JAEGER_NAME=simple-streaming gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-streaming/04-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-streaming/06-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-streaming/06-assert.yaml
