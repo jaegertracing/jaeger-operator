@@ -84,7 +84,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	resp := &resp{}
 	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
-	require.True(t, len(resp.Data) > 0)
 
 	/* Testing other instance */
 	secondJaegerInstanceName := "agent-as-sidecar2"
@@ -107,7 +106,6 @@ func (suite *SidecarTestSuite) TestSidecar() {
 	url, httpClient = getQueryURLAndHTTPClient(secondJaegerInstanceName, "%s/api/traces?service=order", true)
 	err = WaitForHTTPResponse(httpClient, http.MethodGet, url, resp)
 	require.NoError(t, err, "Failed waiting for expected content")
-	require.True(t, len(resp.Data) > 0)
 }
 
 func getVertxDefinition(deploymentName string, annotations map[string]string) *appsv1.Deployment {

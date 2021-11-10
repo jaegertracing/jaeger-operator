@@ -16,7 +16,7 @@ spec:
 status:
   readyReplicas: 1
 ---
-# Assert the schena job was succeded
+# Assert the schema job was succeded
 apiVersion: batch/v1
 kind: Job
 metadata:
