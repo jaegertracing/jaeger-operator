@@ -86,3 +86,4 @@ fmt.log
 import.log
 ### Kubernetes ###
 kubeconfig
+bin

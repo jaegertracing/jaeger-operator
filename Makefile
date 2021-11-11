@@ -90,8 +90,6 @@ build: format
 gobuild:
 	$(ECHO) Building...
 	$(VECHO)${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
-# compile the tests without running them
-	$(VECHO)${GO_FLAGS} go test -c ./test/e2e/...
 
 .PHONY: docker
 docker:
@@ -114,106 +112,6 @@ endif
 unit-tests:
 	$(ECHO) Running unit tests...
 	$(VECHO)go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
-
-.PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
-
-.PHONY: prepare-e2e-tests
-prepare-e2e-tests: build docker push
-	$(VECHO)mkdir -p deploy/test
-	$(VECHO)cp deploy/service_account.yaml deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)cat deploy/role.yaml >> deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)# ClusterRoleBinding is created in test codebase because we don't know service account namespace
-	$(VECHO)cat deploy/role_binding.yaml >> deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" test/operator.yaml >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)cp deploy/crds/jaegertracing.io_jaegers_crd.yaml deploy/test/global-manifests.yaml
-	$(ECHO) "---" >> deploy/test/global-manifests.yaml
-	$(VECHO)cat deploy/cluster_role.yaml >> deploy/test/global-manifests.yaml
-
-.PHONY: e2e-tests-smoke
-e2e-tests-smoke: prepare-e2e-tests
-	$(ECHO) Running Smoke end-to-end tests...
-	$(VECHO)BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-generate
-e2e-tests-generate: prepare-e2e-tests
-	$(ECHO) Running generate end-to-end tests...
-	$(VECHO)BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=generate ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-cassandra
-e2e-tests-cassandra: prepare-e2e-tests cassandra
-	$(ECHO) Running Cassandra end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-es
-e2e-tests-es: prepare-e2e-tests es
-	$(ECHO) Running Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-self-provisioned-es
-e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running Self provisioned Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-self-provisioned-es-kafka
-e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator deploy-es-operator
-	$(ECHO) Running Self provisioned Elasticsearch and Kafka end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-token-propagation-es
-e2e-tests-token-propagation-es: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running Token Propagation Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) TEST_TIMEOUT=5 ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-streaming
-e2e-tests-streaming: prepare-e2e-tests es kafka
-	$(ECHO) Running Streaming end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples1
-e2e-tests-examples1: prepare-e2e-tests cassandra
-	$(ECHO) Running Example end-to-end tests part 1...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples2
-e2e-tests-examples2: prepare-e2e-tests es kafka
-	$(ECHO) Running Example end-to-end tests part 2...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples-openshift
-e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running OpenShift Example end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples_openshift ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-autoscale
-e2e-tests-autoscale: prepare-e2e-tests es kafka
-	$(ECHO) Running Autoscale end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-multi-instance
-e2e-tests-multi-instance: prepare-e2e-tests es kafka
-	$(ECHO) Running Multiple Instance end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=multiple ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-upgrade
-e2e-tests-upgrade: prepare-e2e-tests
-	$(ECHO) Prepare next version image...
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "$(NAMESPACE)/$(OPERATOR_NAME):next" .
-	BUILD_IMAGE="$(NAMESPACE)/$(OPERATOR_NAME):next" $(MAKE) push
-	$(ECHO) Running Upgrade end-to-end tests...
-	UPGRADE_TEST_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) go test -tags=upgrade  ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-istio
-e2e-tests-istio: prepare-e2e-tests istio
-	$(ECHO) Running Istio end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=istio ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
@@ -268,7 +166,7 @@ es: storage
 ifeq ($(SKIP_ES_EXTERNAL),true)
 	$(ECHO) Skipping creation of external Elasticsearch instance
 else
-	$(VECHO)kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	$(VECHO)kubectl create -f ./tests/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 endif
 
 .PHONY: istio
@@ -286,7 +184,7 @@ undeploy-istio:
 
 .PHONY: cassandra
 cassandra: storage
-	$(VECHO)kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	$(VECHO)kubectl create -f ./tests/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: storage
 storage:
@@ -359,8 +257,8 @@ endif
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
 	$(VECHO)rm -f deploy/test/*.yaml
 	$(VECHO)if [ -d deploy/test ]; then rmdir deploy/test ; fi
-	$(VECHO)kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	$(VECHO)kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	$(VECHO)kubectl delete -f deploy/crds/jaegertracing.io_jaegers_crd.yaml --ignore-not-found=true || true
 	$(VECHO)kubectl delete -f deploy/operator.yaml --ignore-not-found=true || true
 	$(VECHO)kubectl delete -f deploy/role_binding.yaml --ignore-not-found=true || true
@@ -475,26 +373,24 @@ else
 KIND=$(shell which kind)
 endif
 
-.PHONY: prepare-e2e-kuttl-tests
-prepare-e2e-kuttl-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
-prepare-e2e-kuttl-tests: prepare-kuttl-images generate-kuttl-files
-
-.PHONY: prepare-kuttl-images
-prepare-kuttl-images: docker build-assert-job
-	$(ECHO) Building the container images needed to run the KUTTL E2E tests
-	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
-
-# Image for the upgrade E2E test
-	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
-
-.PHONY: generate-kuttl-files
-generate-kuttl-files: build
-	$(ECHO) Generating the files needed to run the KUTTL E2E tests
+.PHONY: prepare-e2e-tests
+prepare-e2e-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
+prepare-e2e-tests: prepare-e2e-images generate-e2e-files
 	$(VECHO)mkdir -p  tests/_build/manifests
 	$(VECHO)mkdir -p  tests/_build/crds
 
-# Generate the Jaeger manifest
+.PHONY: prepare-e2e-images
+prepare-e2e-images: docker build-assert-job
+	$(ECHO) Building the container images needed to run the E2E tests
+	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	@# Image for the upgrade E2E test
+	$(VECHO)docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "local/jaeger-operator:next" .
+
+.PHONY: generate-e2e-files
+generate-e2e-files: build
+	$(ECHO) Generating the files needed to run the E2E tests
+	@# Generate the Jaeger manifest
 	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
 	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
@@ -513,14 +409,15 @@ generate-kuttl-files: build
 
 	$(VECHO)cp deploy/crds/jaegertracing.io_jaegers_crd.yaml tests/_build/crds/jaegertracing.io_jaegers_crd.yaml
 
-# generate
+	@# Generate all the files for the steps performed by the E2E tests
+	@# generate
 	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
-# upgrade
+	@# upgrade
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/00-assert.yaml
 	$(VECHO)JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/01-assert.yaml
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/upgrade/deployment-assert.yaml.template -o tests/e2e/upgrade/02-assert.yaml
 	$(VECHO)${SED} "s~local/jaeger-operator:e2e~local/jaeger-operator:next~gi" tests/_build/manifests/01-jaeger-operator.yaml > tests/e2e/upgrade/operator-upgrade.yaml
-# This is needed for the streaming tests
+	@# This is needed for the streaming tests
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-simple/01-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-simple/01-assert.yaml
 	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-simple/02-assert.yaml
@@ -528,7 +425,7 @@ generate-kuttl-files: build
 	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-simple/04-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-streaming JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-simple/06-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-simple/06-assert.yaml
-# streaming-with-tls
+	@# streaming-with-tls
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-tls/01-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-tls/01-assert.yaml
 	$(VECHO)REPLICAS=1 CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-kafka-cluster.yaml.template -o tests/e2e/streaming-with-tls/02-assert.yaml
@@ -536,7 +433,7 @@ generate-kuttl-files: build
 	$(VECHO)CLUSTER_NAME=my-cluster gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-tls/04-assert.yaml
 	$(VECHO)JAEGER_SERVICE=streaming-with-tls JAEGER_OPERATION=smoketestoperation JAEGER_NAME=tls-streaming gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-tls/07-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-tls/07-assert.yaml
-# streaming-with-autoprovisioning
+	@# streaming-with-autoprovisioning
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/streaming-with-autoprovisioning/01-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/01-assert.yaml
 	$(VECHO)REPLICAS=3 CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-zookeeper-cluster.yaml.template -o tests/e2e/streaming-with-autoprovisioning/02-assert.yaml
@@ -544,12 +441,12 @@ generate-kuttl-files: build
 	$(VECHO)CLUSTER_NAME=auto-provisioned gomplate -f tests/templates/assert-entity-operator.yaml.template -o tests/e2e/streaming-with-autoprovisioning/04-assert.yaml
 	$(VECHO)JAEGER_SERVICE=streaming-with-autoprovisioning JAEGER_OPERATION=smoketestoperation JAEGER_NAME=auto-provisioned gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/streaming-with-autoprovisioning/06-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/streaming-with-autoprovisioning/06-assert.yaml
-# examples-agent-as-daemonset
+	@# examples-agent-as-daemonset
 	$(VECHO)gomplate -f examples/agent-as-daemonset.yaml -o tests/e2e/examples-agent-as-daemonset/00-install.yaml
 	$(VECHO)JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-agent-as-daemonset/00-assert.yaml
 	$(VECHO)JAEGER_SERVICE=agent-as-daemonset JAEGER_OPERATION=smoketestoperation JAEGER_NAME=agent-as-daemonset gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-agent-as-daemonset/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-agent-as-daemonset/02-assert.yaml
-# examples-with-cassandra
+	@# examples-with-cassandra
 	$(VECHO)gomplate -f tests/templates/cassandra-install.yaml.template -o tests/e2e/examples-with-cassandra/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/examples-with-cassandra/00-assert.yaml
 	$(VECHO)gomplate -f examples/with-cassandra.yaml -o tests/e2e/examples-with-cassandra/01-install.yaml
@@ -557,34 +454,34 @@ generate-kuttl-files: build
 	$(VECHO)JAEGER_NAME=with-cassandra gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-cassandra/01-assert.yaml
 	$(VECHO)JAEGER_SERVICE=with-cassandra JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-cassandra gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-cassandra/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-cassandra/02-assert.yaml
-# examples-business-application-injected-sidecar
+	@# examples-business-application-injected-sidecar
 	$(VECHO)cat examples/business-application-injected-sidecar.yaml tests/e2e/examples-business-application-injected-sidecar/livenessProbe.yaml >  tests/e2e/examples-business-application-injected-sidecar/00-install.yaml
 	$(VECHO)gomplate -f  examples/simplest.yaml -o tests/e2e/examples-business-application-injected-sidecar/01-install.yaml
 	$(VECHO)JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-business-application-injected-sidecar/01-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simplest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-business-application-injected-sidecar/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-business-application-injected-sidecar/02-assert.yaml
-# istio
+	@# istio
 	$(VECHO)cat examples/business-application-injected-sidecar.yaml tests/e2e/istio/livelinessprobe.template > tests/e2e/istio/03-install.yaml
-# cassandra
+	@# cassandra
 	$(VECHO)gomplate -f tests/templates/cassandra-install.yaml.template -o tests/e2e/cassandra/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/cassandra/00-assert.yaml
 	$(VECHO)INSTANCE_NAME=with-cassandra  gomplate -f tests/templates/cassandra-jaeger-install.yaml.template -o tests/e2e/cassandra/01-install.yaml
 	$(VECHO)INSTANCE_NAME=with-cassandra  gomplate -f tests/templates/cassandra-jaeger-assert.yaml.template -o tests/e2e/cassandra/01-assert.yaml
-# cassandra-spark
+	@# cassandra-spark
 	$(VECHO) gomplate -f tests/templates/cassandra-install.yaml.template -o tests/e2e/cassandra-spark/00-install.yaml
 	$(VECHO) gomplate -f tests/templates/cassandra-assert.yaml.template -o tests/e2e/cassandra-spark/00-assert.yaml
 	$(VECHO)INSTANCE_NAME=test-spark-deps DEP_SCHEDULE=true CASSANDRA_MODE=prod gomplate -f tests/templates/cassandra-jaeger-install.yaml.template -o tests/e2e/cassandra-spark/01-install.yaml
-# es-spark-dependencies
+	@# es-spark-dependencies
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/es-spark-dependencies/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/es-spark-dependencies/00-assert.yaml
-# es-simple-prod
+	@# es-simple-prod
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/es-simple-prod/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/es-simple-prod/00-assert.yaml
 	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-install.yaml.template -o tests/e2e/es-simple-prod/01-install.yaml
 	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/es-simple-prod/01-assert.yaml
 	$(VECHO)JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/es-simple-prod/02-smoke-test.yaml
 	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/es-simple-prod/02-assert.yaml
-# es-index-cleaner
+	@# es-index-cleaner
 	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/es-index-cleaner/00-install.yaml
 	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/es-index-cleaner/00-assert.yaml
 	$(VECHO)JAEGER_NAME=test-es-index-cleaner-with-prefix gomplate -f tests/templates/production-jaeger-install.yaml.template -o tests/e2e/es-index-cleaner/jaeger-deployment
@@ -600,14 +497,14 @@ generate-kuttl-files: build
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/12-install.yaml
 
 # end-to-tests
-.PHONY: kuttl-e2e
-kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
+.PHONY: e2e-tests
+e2e-tests: prepare-e2e-tests start-kind run-e2e-tests
 
-.PHONY: run-kuttl-e2e
-run-kuttl-e2e:
+.PHONY: run-e2e-tests
+run-e2e-tests:
 	$(VECHO)$(KUTTL) test
 
-start-kind:
+start-kind: prepare-e2e-tests
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
 # file), the cluster is created here. There are multiple reasons to do this:
 # 	* The kubectl command will not work outside KUTTL
