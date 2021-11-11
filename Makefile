@@ -380,16 +380,16 @@ prepare-e2e-tests: build docker build-assert-job
 	$(VECHO)mkdir -p  tests/_build/crds
 
 	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)cat deploy/role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)cat deploy/cluster_role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)${SED} "s~namespace: .*~namespace: jaeger-operator-system~gi" deploy/cluster_role_binding.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
 	$(VECHO)${SED} "s~imagePullPolicy: Always~imagePullPolicy: Never~gi" tests/_build/manifests/01-jaeger-operator.yaml -i
@@ -399,6 +399,51 @@ prepare-e2e-tests: build docker build-assert-job
 	$(VECHO)docker pull jaegertracing/vertx-create-span:operator-e2e-tests
 	$(VECHO)docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
+# This files are needed for the examples
+# examples-simplest
+	$(VECHO)gomplate -f examples/simplest.yaml -o tests/e2e/examples-simplest/00-install.yaml
+	$(VECHO)JAEGER_NAME=simplest gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-simplest/00-assert.yaml
+	$(VECHO)JAEGER_SERVICE=smoketest JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simplest gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simplest/01-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simplest/01-assert.yaml
+# examples-with-badger
+	$(VECHO)gomplate -f examples/with-badger.yaml -o tests/e2e/examples-with-badger/00-install.yaml
+	$(VECHO)JAEGER_NAME=with-badger gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger/00-assert.yaml
+	$(VECHO)JAEGER_SERVICE=with-badger JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger/01-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger/01-assert.yaml
+# examples-with-badger-and-volume
+	$(VECHO)gomplate -f examples/with-badger-and-volume.yaml -o tests/e2e/examples-with-badger-and-volume/00-install.yaml
+	$(VECHO)JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/00-assert.yaml
+	$(VECHO)JAEGER_SERVICE=with-badger-and-volume JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-badger-and-volume gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-badger-and-volume/01-assert.yaml
+# examples-service-types
+	$(VECHO)gomplate -f examples/service-types.yaml -o tests/e2e/examples-service-types/00-install.yaml
+	$(VECHO)JAEGER_NAME=service-types gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-service-types/00-assert.yaml
+	$(VECHO)JAEGER_SERVICE=service-types JAEGER_OPERATION=smoketestoperation JAEGER_NAME=service-types gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-service-types/01-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-service-types/01-assert.yaml
+# examples-simple-prod
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod/00-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod/00-assert.yaml
+	$(VECHO)gomplate -f examples/simple-prod.yaml -o tests/e2e/examples-simple-prod/01-install.yaml
+	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod/01-install.yaml
+	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod/01-assert.yaml
+	$(VECHO)JAEGER_SERVICE=simple-prod JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod/02-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod/02-assert.yaml
+# examples-simple-prod-with-volumes
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/00-assert.yaml
+	$(VECHO)gomplate -f examples/simple-prod-with-volumes.yaml -o tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
+	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-simple-prod-with-volumes/01-install.yaml
+	$(VECHO)JAEGER_NAME=simple-prod gomplate -f tests/templates/production-jaeger-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/01-assert.yaml
+	$(VECHO)JAEGER_SERVICE=simple-prod-with-volumes JAEGER_OPERATION=smoketestoperation JAEGER_NAME=simple-prod gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-simple-prod-with-volumes/02-assert.yaml
+# examples-with-sampling
+	$(VECHO)gomplate -f tests/templates/elasticsearch-install.yaml.template -o tests/e2e/examples-with-sampling/00-install.yaml
+	$(VECHO)gomplate -f tests/templates/elasticsearch-assert.yaml.template -o tests/e2e/examples-with-sampling/00-assert.yaml
+	$(VECHO)gomplate -f examples/with-sampling.yaml -o tests/e2e/examples-with-sampling/01-install.yaml
+	$(VECHO)${SED} -i "s~server-urls: http://elasticsearch.default.svc:9200~server-urls: http://elasticsearch:9200~gi" tests/e2e/examples-with-sampling/01-install.yaml
+	$(VECHO)JAEGER_NAME=with-sampling gomplate -f tests/templates/allinone-jaeger-assert.yaml.template -o tests/e2e/examples-with-sampling/01-assert.yaml
+	$(VECHO)JAEGER_SERVICE=with-sampling JAEGER_OPERATION=smoketestoperation JAEGER_NAME=with-sampling gomplate -f tests/templates/smoke-test.yaml.template -o tests/e2e/examples-with-sampling/02-smoke-test.yaml
+	$(VECHO)gomplate -f tests/templates/smoke-test-assert.yaml.template -o tests/e2e/examples-with-sampling/02-assert.yaml
 # This is needed for the generate test
 	$(VECHO)@JAEGER_VERSION=${JAEGER_VERSION} gomplate -f tests/e2e/generate/jaeger-template.yaml.template -o tests/e2e/generate/jaeger-deployment.yaml
 # This is needed for the upgrade test
