@@ -1,0 +1,14 @@
+# Assert the services are LoadBalancer type
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-types-collector
+spec:
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-types-query
+spec:
+  type: LoadBalancer
