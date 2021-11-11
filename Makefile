@@ -380,16 +380,16 @@ prepare-e2e-tests: build docker build-assert-job
 	$(VECHO)mkdir -p  tests/_build/crds
 
 	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)cat deploy/role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)cat deploy/cluster_role.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)${SED} "s~namespace: .*~namespace: jaeger-operator-system~gi" deploy/cluster_role_binding.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
-	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
+	$(VECHO)echo "---" >> tests/_build/manifests/01-jaeger-operator.yaml
 
 	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" deploy/operator.yaml >> tests/_build/manifests/01-jaeger-operator.yaml
 	$(VECHO)${SED} "s~imagePullPolicy: Always~imagePullPolicy: Never~gi" tests/_build/manifests/01-jaeger-operator.yaml -i
