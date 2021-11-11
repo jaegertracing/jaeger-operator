@@ -376,8 +376,6 @@ endif
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
 prepare-e2e-tests: prepare-e2e-images generate-e2e-files
-	$(VECHO)mkdir -p  tests/_build/manifests
-	$(VECHO)mkdir -p  tests/_build/crds
 
 .PHONY: prepare-e2e-images
 prepare-e2e-images: docker build-assert-job
@@ -390,6 +388,9 @@ prepare-e2e-images: docker build-assert-job
 .PHONY: generate-e2e-files
 generate-e2e-files: build
 	$(ECHO) Generating the files needed to run the E2E tests
+	$(VECHO)mkdir -p  tests/_build/manifests
+	$(VECHO)mkdir -p  tests/_build/crds
+
 	@# Generate the Jaeger manifest
 	$(VECHO)cp deploy/service_account.yaml tests/_build/manifests/01-jaeger-operator.yaml
 	$(ECHO) "---" >> tests/_build/manifests/01-jaeger-operator.yaml
