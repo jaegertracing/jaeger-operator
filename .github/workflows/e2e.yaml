@@ -1,4 +1,4 @@
-name: "End-to-end tests (kuttl)"
+name: "End-to-end tests"
 
 on:
   push:
@@ -33,4 +33,4 @@ jobs:
       - name: "run tests"
         env:
           KUBE_VERSION: ${{ matrix.kube-version }}
-        run: make install kuttl-e2e KUBE_VERSION=$KUBE_VERSION
+        run: make install e2e-tests KUBE_VERSION=$KUBE_VERSION

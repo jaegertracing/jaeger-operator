@@ -90,8 +90,6 @@ build: format
 gobuild:
 	$(ECHO) Building...
 	$(VECHO)${GO_FLAGS} go build -o $(OUTPUT_BINARY) -ldflags $(LD_FLAGS)
-# compile the tests without running them
-	$(VECHO)${GO_FLAGS} go test -c ./test/e2e/...
 
 .PHONY: docker
 docker:
@@ -114,106 +112,6 @@ endif
 unit-tests:
 	$(ECHO) Running unit tests...
 	$(VECHO)go test $(VERBOSE) $(UNIT_TEST_PACKAGES) -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
-
-.PHONY: e2e-tests
-e2e-tests: prepare-e2e-tests e2e-tests-smoke e2e-tests-cassandra e2e-tests-es e2e-tests-self-provisioned-es e2e-tests-streaming e2e-tests-examples1 e2e-tests-examples2 e2e-tests-examples-openshift e2e-tests-generate
-
-.PHONY: prepare-e2e-tests
-prepare-e2e-tests: build docker push
-	$(VECHO)mkdir -p deploy/test
-	$(VECHO)cp deploy/service_account.yaml deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)cat deploy/role.yaml >> deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)# ClusterRoleBinding is created in test codebase because we don't know service account namespace
-	$(VECHO)cat deploy/role_binding.yaml >> deploy/test/namespace-manifests.yaml
-	$(ECHO) "---" >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)${SED} "s~image: jaegertracing\/jaeger-operator\:.*~image: $(BUILD_IMAGE)~gi" test/operator.yaml >> deploy/test/namespace-manifests.yaml
-
-	$(VECHO)cp deploy/crds/jaegertracing.io_jaegers_crd.yaml deploy/test/global-manifests.yaml
-	$(ECHO) "---" >> deploy/test/global-manifests.yaml
-	$(VECHO)cat deploy/cluster_role.yaml >> deploy/test/global-manifests.yaml
-
-.PHONY: e2e-tests-smoke
-e2e-tests-smoke: prepare-e2e-tests
-	$(ECHO) Running Smoke end-to-end tests...
-	$(VECHO)BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=smoke ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-generate
-e2e-tests-generate: prepare-e2e-tests
-	$(ECHO) Running generate end-to-end tests...
-	$(VECHO)BUILD_IMAGE=$(BUILD_IMAGE) go test -tags=generate ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-cassandra
-e2e-tests-cassandra: prepare-e2e-tests cassandra
-	$(ECHO) Running Cassandra end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=cassandra ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-es
-e2e-tests-es: prepare-e2e-tests es
-	$(ECHO) Running Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) go test -tags=elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-self-provisioned-es
-e2e-tests-self-provisioned-es: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running Self provisioned Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-self-provisioned-es-kafka
-e2e-tests-self-provisioned-es-kafka: prepare-e2e-tests deploy-kafka-operator deploy-es-operator
-	$(ECHO) Running Self provisioned Elasticsearch and Kafka end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=self_provisioned_elasticsearch_kafka ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-token-propagation-es
-e2e-tests-token-propagation-es: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running Token Propagation Elasticsearch end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) ES_OPERATOR_NAMESPACE=$(ES_OPERATOR_NAMESPACE) TEST_TIMEOUT=5 ES_OPERATOR_IMAGE=$(ES_OPERATOR_IMAGE) go test -tags=token_propagation_elasticsearch ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-streaming
-e2e-tests-streaming: prepare-e2e-tests es kafka
-	$(ECHO) Running Streaming end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=streaming ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples1
-e2e-tests-examples1: prepare-e2e-tests cassandra
-	$(ECHO) Running Example end-to-end tests part 1...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples1 ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples2
-e2e-tests-examples2: prepare-e2e-tests es kafka
-	$(ECHO) Running Example end-to-end tests part 2...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples2 ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-examples-openshift
-e2e-tests-examples-openshift: prepare-e2e-tests deploy-es-operator
-	$(ECHO) Running OpenShift Example end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=examples_openshift ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-autoscale
-e2e-tests-autoscale: prepare-e2e-tests es kafka
-	$(ECHO) Running Autoscale end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=autoscale ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-multi-instance
-e2e-tests-multi-instance: prepare-e2e-tests es kafka
-	$(ECHO) Running Multiple Instance end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=multiple ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-upgrade
-e2e-tests-upgrade: prepare-e2e-tests
-	$(ECHO) Prepare next version image...
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY}  --build-arg=JAEGER_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) --file build/Dockerfile -t "$(NAMESPACE)/$(OPERATOR_NAME):next" .
-	BUILD_IMAGE="$(NAMESPACE)/$(OPERATOR_NAME):next" $(MAKE) push
-	$(ECHO) Running Upgrade end-to-end tests...
-	UPGRADE_TEST_VERSION=$(shell .ci/get_test_upgrade_version.sh ${JAEGER_VERSION}) go test -tags=upgrade  ./test/e2e/... $(TEST_OPTIONS)
-
-.PHONY: e2e-tests-istio
-e2e-tests-istio: prepare-e2e-tests istio
-	$(ECHO) Running Istio end-to-end tests...
-	$(VECHO)STORAGE_NAMESPACE=$(STORAGE_NAMESPACE) KAFKA_NAMESPACE=$(KAFKA_NAMESPACE) go test -tags=istio ./test/e2e/... $(TEST_OPTIONS)
 
 .PHONY: run
 run: crd
@@ -268,7 +166,7 @@ es: storage
 ifeq ($(SKIP_ES_EXTERNAL),true)
 	$(ECHO) Skipping creation of external Elasticsearch instance
 else
-	$(VECHO)kubectl create -f ./test/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	$(VECHO)kubectl create -f ./tests/elasticsearch.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 endif
 
 .PHONY: istio
@@ -286,7 +184,7 @@ undeploy-istio:
 
 .PHONY: cassandra
 cassandra: storage
-	$(VECHO)kubectl create -f ./test/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
+	$(VECHO)kubectl create -f ./tests/cassandra.yml --namespace $(STORAGE_NAMESPACE) 2>&1 | grep -v "already exists" || true
 
 .PHONY: storage
 storage:
@@ -359,8 +257,8 @@ endif
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
 	$(VECHO)rm -f deploy/test/*.yaml
 	$(VECHO)if [ -d deploy/test ]; then rmdir deploy/test ; fi
-	$(VECHO)kubectl delete -f ./test/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	$(VECHO)kubectl delete -f ./test/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
+	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	$(VECHO)kubectl delete -f deploy/crds/jaegertracing.io_jaegers_crd.yaml --ignore-not-found=true || true
 	$(VECHO)kubectl delete -f deploy/operator.yaml --ignore-not-found=true || true
 	$(VECHO)kubectl delete -f deploy/role_binding.yaml --ignore-not-found=true || true
@@ -475,9 +373,9 @@ else
 KIND=$(shell which kind)
 endif
 
-.PHONY: prepare-e2e-kuttl-tests
-prepare-e2e-kuttl-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
-prepare-e2e-kuttl-tests: build docker build-assert-job
+.PHONY: prepare-e2e-tests
+prepare-e2e-tests: BUILD_IMAGE="local/jaeger-operator:e2e"
+prepare-e2e-tests: build docker build-assert-job
 	$(VECHO)mkdir -p  tests/_build/manifests
 	$(VECHO)mkdir -p  tests/_build/crds
 
@@ -634,11 +532,11 @@ prepare-e2e-kuttl-tests: build docker build-assert-job
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/12-install.yaml
 
 # end-to-tests
-.PHONY: kuttl-e2e
-kuttl-e2e: prepare-e2e-kuttl-tests start-kind run-kuttl-e2e
+.PHONY: e2e-tests
+e2e-tests: prepare-e2e-tests start-kind run-e2e-tests
 
-.PHONY: run-kuttl-e2e
-run-kuttl-e2e: kafka
+.PHONY: run-e2e-tests
+run-e2e-tests:
 	$(VECHO)$(KUTTL) test
 
 start-kind:
