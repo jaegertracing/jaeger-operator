@@ -13,8 +13,7 @@ resources:
     namespaced: true
   controller: true
   domain: jaegertracing.io
-  group: jaegertracing.io
   kind: Jaeger
-  path: github.com/jaegertracing/jaeger-operator/apis/jaegertracing.io/v1
+  path: github.com/jaegertracing/jaeger-operator/apis/v1
   version: v1
 version: "3"

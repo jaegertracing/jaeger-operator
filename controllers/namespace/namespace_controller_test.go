@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/controllers/namespace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

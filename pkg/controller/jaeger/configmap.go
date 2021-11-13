@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
