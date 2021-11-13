@@ -404,19 +404,6 @@ render-kuttl-templates:
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/04-wait-es-index-cleaner.yaml -o tests/e2e/es-index-cleaner/11-wait-es-index-cleaner.yaml
 	$(VECHO)gomplate -f tests/e2e/es-index-cleaner/05-install.yaml -o tests/e2e/es-index-cleaner/12-install.yaml
 
-.PHONY: kafka
-kafka: deploy-kafka-operator
-ifeq ($(SKIP_KAFKA),true)
-	$(ECHO) Skipping Kafka/external ES related tests
-else
-	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
-	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
-	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
-endif
-
 .PHONY: deploy-kafka-operator
 deploy-kafka-operator:
 	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
