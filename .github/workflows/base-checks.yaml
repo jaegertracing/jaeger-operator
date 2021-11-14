@@ -19,7 +19,7 @@ jobs:
         operator-sdk-version: v1.12.0
 
     - name: "basic checks"
-      run: make test
+      run: make ci
 
     - name: "upload test coverage report"
       env:
