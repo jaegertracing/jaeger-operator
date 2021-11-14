@@ -16,6 +16,7 @@ COPY apis/ apis/
 COPY cmd/ cmd/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
+
 COPY versions.txt versions.txt
 
 ARG JAEGER_VERSION
@@ -26,11 +27,22 @@ ARG VERSION_DATE
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o manager main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM registry.access.redhat.com/ubi8/ubi
+
+ENV USER_UID=1001 \
+    USER_NAME=jaeger-operator
+
+RUN INSTALL_PKGS="openssl" && \
+    yum install -y $INSTALL_PKGS && \
+    rpm -V $INSTALL_PKGS && \
+    yum clean all && \
+    mkdir /tmp/_working_dir && \
+    chmod og+w /tmp/_working_dir
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+COPY scripts/ scripts/
+
+USER ${USER_UID}:${USER_UID}
 
 ENTRYPOINT ["/manager"]
