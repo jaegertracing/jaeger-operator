@@ -16,12 +16,11 @@ FMT_LOG=fmt.log
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME ?= jaeger-operator
+IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
 VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
-IMG_PREFIX ?= ghcr.io/${USER}/$(OPERATOR_NAME)
-IMG_REPO ?= $(OPERATOR_NAME)
-IMG ?= ${IMG_PREFIX}/${IMG_REPO}:$(addprefix v,${VERSION})
-BUNDLE_IMG ?= ${IMG_PREFIX}/${IMG_REPO}-bundle:${VERSION}
+IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:$(addprefix v,${VERSION})
+BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= $(shell grep -v '\#' versions.txt | grep jaeger | awk -F= '{print $$2}')
