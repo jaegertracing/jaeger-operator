@@ -69,7 +69,6 @@ GOTEST_OPTS=-v
 endif
 
 all: manager
-ci: test
 
 .PHONY: check
 check:
