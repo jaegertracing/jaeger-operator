@@ -12,22 +12,23 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/controller/namespace"
 )
 
-// DeploymentReconciler reconciles a Deployment object
+// NamespaceReconciler reconciles a Deployment object
 type NamespaceReconciler struct {
 	reconcilier *namespace.ReconcileNamespace
 }
 
+// NewReconciler creates a new namespace reconcilier controller
 func NewReconciler(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *NamespaceReconciler {
 	return &NamespaceReconciler{
 		reconcilier: namespace.New(client, clientReader, scheme),
 	}
 }
 
+// Reconcile namespace resource
 // +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=namespaces/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
-
 func (r *NamespaceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(request)
 }

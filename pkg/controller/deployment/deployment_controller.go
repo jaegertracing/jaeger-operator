@@ -37,6 +37,7 @@ type ReconcileDeployment struct {
 	scheme *runtime.Scheme
 }
 
+// New creates new deployment controller
 func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileDeployment {
 	return &ReconcileDeployment{
 		client:  client,
@@ -170,6 +171,7 @@ func (r *ReconcileDeployment) removeSidecar(ctx context.Context, dep *appsv1.Dep
 	}
 }
 
+// SyncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
 func (r *ReconcileDeployment) SyncOnJaegerChanges(object client.Object) []reconcile.Request {
 	reconciliations := []reconcile.Request{}
 	nss := map[string]corev1.Namespace{} // namespace cache

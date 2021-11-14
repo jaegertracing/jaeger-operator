@@ -32,12 +32,14 @@ type JaegerReconciler struct {
 	reconcilier *jaeger.ReconcileJaeger
 }
 
+// NewReconciler creates a new jaeger reconcilier controller
 func NewReconciler(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *JaegerReconciler {
 	return &JaegerReconciler{
 		reconcilier: jaeger.New(client, clientReader, scheme),
 	}
 }
 
+// Reconcile jaeger resource
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/finalizers,verbs=update
@@ -53,7 +55,6 @@ func NewReconciler(client client.Client, clientReader client.Reader, scheme *run
 // +kubebuilder:rbac:groups=logging.openshift.io,resources=elasticsearches,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kafka.strimzi.io,resources=kafkas;kafkausers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
-
 func (r *JaegerReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(request)
 }

@@ -36,15 +36,16 @@ type DeploymentReconciler struct {
 	reconcilier *deployment.ReconcileDeployment
 }
 
+// NewReconciler creates a new deployment reconcilier controller
 func NewReconciler(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *DeploymentReconciler {
 	return &DeploymentReconciler{
 		reconcilier: deployment.New(client, clientReader, scheme),
 	}
 }
 
+// Reconcile deployment resource
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
-
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(ctx, request)
 }

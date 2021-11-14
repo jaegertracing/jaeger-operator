@@ -36,6 +36,7 @@ type ReconcileJaeger struct {
 	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
 }
 
+// New creates new jaeger controller
 func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileJaeger {
 	return &ReconcileJaeger{
 		client:          client,

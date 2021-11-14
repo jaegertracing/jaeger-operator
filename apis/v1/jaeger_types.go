@@ -9,15 +9,12 @@ import (
 )
 
 // IngressSecurityType represents the possible values for the security type
-
 type IngressSecurityType string
 
 // JaegerPhase represents the current phase of Jaeger instances
-
 type JaegerPhase string
 
 // JaegerStorageType represents the Jaeger storage type
-
 type JaegerStorageType string
 
 const (
@@ -154,9 +151,9 @@ type JaegerStatus struct {
 	Phase   JaegerPhase `json:"phase"`
 }
 
+// Jaeger is the Schema for the jaegers API
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// Jaeger is the Schema for the jaegers API
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Jaeger"
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Jaeger instance's status"

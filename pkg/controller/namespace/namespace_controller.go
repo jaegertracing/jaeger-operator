@@ -33,6 +33,7 @@ type ReconcileNamespace struct {
 	scheme *runtime.Scheme
 }
 
+// New creates new namespace controller
 func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileNamespace {
 	return &ReconcileNamespace{
 		client:  client,

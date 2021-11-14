@@ -17,6 +17,7 @@ import (
 // or cluster mode (currently only used for local mode)
 var ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
 
+// RunModeType cluster run mode
 type RunModeType string
 
 const (
