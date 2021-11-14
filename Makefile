@@ -33,7 +33,8 @@ ES_OPERATOR_BRANCH ?= release-4.4
 ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 # Istio binary path and version
 ISTIO_VERSION ?= 1.11.2
-ISTIOCTL="./tests/_build/istio/istio/bin/istioctl"
+ISTIO_PATH = ./tests/_build/
+ISTIOCTL="${ISTIO_PATH}istio/bin/istioctl"
 GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
 
@@ -193,8 +194,8 @@ endif
 .PHONY: istio
 istio:
 	$(ECHO) Install istio with minimal profile
-	$(VECHO)mkdir -p deploy/test
-	$(VECHO)[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ./deploy/test/istio)
+	$(VECHO)mkdir -p ${ISTIO_PATH}
+	[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ${ISTIO_PATH}/istio/)
 	$(VECHO)${ISTIOCTL} install --set profile=minimal -y
 
 .PHONY: undeploy-istio
