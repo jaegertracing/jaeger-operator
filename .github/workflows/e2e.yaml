@@ -36,4 +36,4 @@ jobs:
       - name: "run tests"
         env:
           KUBE_VERSION: ${{ matrix.kube-version }}
-        run: make prepare-kuttl-e2e kuttl-e2e KUBE_VERSION=$KUBE_VERSION
+        run: make e2e-tests KUBE_VERSION=$KUBE_VERSION
