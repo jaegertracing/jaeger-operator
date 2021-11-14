@@ -34,9 +34,8 @@ import (
 	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	deploymentcontrollers "github.com/jaegertracing/jaeger-operator/controllers/deployment"
+	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
-	namespacecontrollers "github.com/jaegertracing/jaeger-operator/controllers/namespace"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	opmetrics "github.com/jaegertracing/jaeger-operator/pkg/metrics"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
@@ -335,12 +334,12 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 		os.Exit(1)
 	}
 
-	if err := namespacecontrollers.NewReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+	if err := appsv1controllers.NewNamespaceReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
 		os.Exit(1)
 	}
 
-	if err := deploymentcontrollers.NewReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+	if err := appsv1controllers.NewDeploymentReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Deployment")
 		os.Exit(1)
 	}

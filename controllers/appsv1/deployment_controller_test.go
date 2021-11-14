@@ -1,4 +1,4 @@
-package deployment_test
+package appsv1_test
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 	k8sreconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/controllers/deployment"
+	"github.com/jaegertracing/jaeger-operator/controllers/appsv1"
 )
 
 func TestNewJaegerInstance(t *testing.T) {
 	// prepare
 	nsn := types.NamespacedName{Name: "my-instance", Namespace: "default"}
-	reconciler := deployment.NewReconciler(
+	reconciler := appsv1.NewDeploymentReconciler(
 		k8sClient,
 		k8sClient,
 		testScheme,
@@ -36,13 +36,13 @@ func TestNewJaegerInstance(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestRegisterWithManager(t *testing.T) {
+func TestDeploymentControllerRegisterWithManager(t *testing.T) {
 	t.Skip("this test requires a real cluster, otherwise the GetConfigOrDie will die")
 
 	// prepare
 	mgr, err := manager.New(k8sconfig.GetConfigOrDie(), manager.Options{})
 	require.NoError(t, err)
-	reconciler := deployment.NewReconciler(
+	reconciler := appsv1.NewDeploymentReconciler(
 		k8sClient,
 		k8sClient,
 		testScheme,

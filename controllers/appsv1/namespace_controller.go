@@ -1,4 +1,4 @@
-package namespace
+package appsv1
 
 import (
 	"context"
@@ -17,8 +17,8 @@ type NamespaceReconciler struct {
 	reconcilier *namespace.ReconcileNamespace
 }
 
-// NewReconciler creates a new namespace reconcilier controller
-func NewReconciler(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *NamespaceReconciler {
+// NewNamespaceReconciler creates a new namespace reconcilier controller
+func NewNamespaceReconciler(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *NamespaceReconciler {
 	return &NamespaceReconciler{
 		reconcilier: namespace.New(client, clientReader, scheme),
 	}

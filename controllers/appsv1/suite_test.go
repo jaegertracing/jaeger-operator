@@ -1,4 +1,4 @@
-package namespace_test
+package appsv1_test
 
 import (
 	"fmt"
