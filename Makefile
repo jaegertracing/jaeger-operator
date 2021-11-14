@@ -133,7 +133,7 @@ endif
 .PHONY: unit-tests
 unit-tests:
 	@echo Running unit tests...
-	@KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
+	go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: run
 run: manifests generate format vet
