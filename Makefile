@@ -23,11 +23,14 @@ IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:$(addprefix v,${VERSION})
 BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/$(OPERATOR_NAME)"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
-JAEGER_VERSION ?= $(shell grep -v '\#' versions.txt | grep jaeger | awk -F= '{print $$2}')
+JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
 # Kafka and kafka operator variables
 KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
+ES_OPERATOR_NAMESPACE ?= openshift-logging
+ES_OPERATOR_BRANCH ?= release-4.4
+ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 # Istio binary path and version
 ISTIO_VERSION ?= 1.11.2
 ISTIOCTL="./tests/_build/istio/istio/bin/istioctl"
@@ -85,7 +88,7 @@ ensure-generate-is-noop: set-image-controller generate bundle
 
 
 .PHONY: format
-format: ## Run go fmt against code.
+format:
 	$(ECHO) Formatting code...
 	$(VECHO)GOPATH=${GOPATH} .ci/format.sh
 
@@ -108,7 +111,7 @@ build: format
 	$(MAKE) gobuild
 
 .PHONY: gobuild
-gobuild: generate format vet ## Build manager binary.
+gobuild:
 	$(ECHO) Building...
 	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go 
 
@@ -135,7 +138,7 @@ unit-tests:
 	@KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate format vet
 	$(VECHO)rm -rf /tmp/_cert*
 	go run -ldflags ${LD_FLAGS} ./main.go
 
