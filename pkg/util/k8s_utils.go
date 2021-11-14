@@ -21,7 +21,9 @@ var ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
 type RunModeType string
 
 const (
-	LocalRunMode   RunModeType = "local"
+	//LocalRunMode local run mode
+	LocalRunMode RunModeType = "local"
+	//ClusterRunMode cluster run mode
 	ClusterRunMode RunModeType = "cluster"
 )
 
