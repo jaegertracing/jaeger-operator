@@ -1,5 +1,6 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.16 as builder
+
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -17,11 +18,10 @@ COPY controllers/ controllers/
 COPY pkg/ pkg/
 COPY versions.txt versions.txt
 
+ARG JAEGER_VERSION
 ARG VERSION_PKG
 ARG VERSION
 ARG VERSION_DATE
-ARG JAEGER_VERSION
-
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o manager main.go

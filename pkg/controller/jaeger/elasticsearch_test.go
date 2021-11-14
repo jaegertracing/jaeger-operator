@@ -11,9 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
-	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 func TestElasticsearchesCreate(t *testing.T) {

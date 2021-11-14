@@ -1,6 +1,8 @@
 ignore:
-  - "apis/jaegertracing/v1/zz_generated.deepcopy.go"
-  - "apis/jaegertracing/v1/zz_generated.defaults.go"
-  - "apis/jaegertracing/v1/zz_generated.openapi.go"
+  - "apis/v1/zz_generated.deepcopy.go"
+  - "apis/v1/zz_generated.defaults.go"
+  - "apis/v1/zz_generated.openapi.go"
+  - "apis/v1/groupversion_info.go"
   - "apis/kafka/v1beta2/zz_generated.deepcopy.go"
   - "apis/kafka/v1beta2/zz_generated.openapi.go"
+  - "apis/kafka/v1beta2/groupversion_info.go"

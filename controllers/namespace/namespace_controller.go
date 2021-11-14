@@ -6,9 +6,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/controller/namespace"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/jaegertracing/jaeger-operator/pkg/controller/namespace"
 )
 
 // DeploymentReconciler reconciles a Deployment object

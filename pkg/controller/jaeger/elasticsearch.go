@@ -13,10 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
-	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 var (
