@@ -5,16 +5,15 @@ else
 VECHO = @
 endif
 
-# Current Operator version
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x
 GOARCH ?= $(go env GOARCH)
 GOOS ?= $(go env GOOS)
 GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
+WATCH_NAMESPACE ?= ""
 BIN_DIR ?= bin
 FMT_LOG=fmt.log
 
-# Image URL to use all building/pushing image targets
 OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
@@ -25,6 +24,7 @@ OUTPUT_BINARY ?= "$(BIN_DIR)/manager"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
 # Kafka and kafka operator variables
+STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
@@ -37,21 +37,22 @@ ISTIO_PATH = ./tests/_build/
 ISTIOCTL="${ISTIO_PATH}istio/bin/istioctl"
 GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
-
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
+
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
+# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+ENVTEST_K8S_VERSION = 1.22
 # Options for kuttl testing
 KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.22
+.DEFAULT_GOAL := build
 
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
@@ -83,10 +84,10 @@ check:
 ensure-generate-is-noop: VERSION=$(OPERATOR_VERSION)
 ensure-generate-is-noop: USER=jaegertracing
 ensure-generate-is-noop: set-image-controller generate bundle
-	@# on make bundle config/manager/kustomization.yaml includes changes, which should be ignored for the below check
-	@git restore config/manager/kustomization.yaml
-	@git diff -s --exit-code api/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
-	@git diff -s --exit-code bundle config || (echo "Build failed: the bundle, config files has been changed but the generated bundle, config files aren't up to date. Run 'make bundle' and update your PR." && git diff && exit 1)
+	$(VECHO)# on make bundle config/manager/kustomization.yaml includes changes, which should be ignored for the below check
+	$(VECHO)git restore config/manager/kustomization.yaml
+	$(VECHO)git diff -s --exit-code api/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
+	$(VECHO)git diff -s --exit-code bundle config || (echo "Build failed: the bundle, config files has been changed but the generated bundle, config files aren't up to date. Run 'make bundle' and update your PR." && git diff && exit 1)
 
 
 .PHONY: format
@@ -110,10 +111,6 @@ security:
 
 .PHONY: build
 build: format
-	$(MAKE) gobuild
-
-.PHONY: gobuild
-gobuild:
 	$(ECHO) Building...
 	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go 
 
@@ -142,7 +139,11 @@ unit-tests: envtest
 .PHONY: run
 run: manifests generate format vet
 	$(VECHO)rm -rf /tmp/_cert*
-	go run -ldflags ${LD_FLAGS} ./main.go
+	$(VECHO)go run -ldflags ${LD_FLAGS} ./main.go start ${CLI_FLAGS}
+
+.PHONY: run-debug
+run-debug: run
+run-debug: CLI_FLAGS = --log-level=debug --tracing-enabled=true
 
 .PHONY: set-max-map-count
 set-max-map-count:
@@ -202,7 +203,7 @@ istio:
 undeploy-istio:
 	$(VECHO)[ -f "${ISTIOCTL}" ] && (${ISTIOCTL} manifest generate --set profile=demo | kubectl delete --ignore-not-found=true -f -) || true
 	$(VECHO)kubectl delete namespace istio-system --ignore-not-found=true || true
-	$(VECHO)rm -rf deploy/test/istio
+	$(VECHO)rm -rf ${ISTIO_PATH}
 
 .PHONY: cassandra
 cassandra: storage
@@ -223,9 +224,9 @@ else
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_YAML) --output deploy/test/kafka-operator.yaml --create-dirs
-	$(VECHO)${SED} -i 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' deploy/test/kafka-operator.yaml
-	$(VECHO) kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-operator.yaml | grep -v "already exists" || true
+	$(VECHO)curl --fail --location $(KAFKA_YAML) --output tests/_build/kafka-operator.yaml --create-dirs
+	$(VECHO)${SED} -i 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' tests/_build/kafka-operator.yaml
+	$(VECHO) kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-operator.yaml | grep -v "already exists" || true
 	$(VECHO)kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
 endif
 
@@ -234,7 +235,7 @@ undeploy-kafka-operator:
 ifeq ($(OLM),true)
 	$(ECHO) Skiping kafka-operator undeploy
 else
-	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
+	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f tests/_build/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-namespaced --ignore-not-found=true || true
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --ignore-not-found=true || true
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --ignore-not-found=true || true
@@ -247,16 +248,17 @@ ifeq ($(SKIP_KAFKA),true)
 	$(ECHO) Skipping Kafka/external ES related tests
 else
 	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
+	$(VECHO)mkdir -p tests/_build/
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output deploy/test/kafka-example.yaml --create-dirs
-	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f deploy/test/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f deploy/test/kafka-example.yaml 2>&1 | grep -v "already exists" || true
+	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output tests/_build/kafka-example.yaml --create-dirs
+	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' tests/_build/kafka-example.yaml
+	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f  tests/_build/kafka-example.yaml
+	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 endif
 
 .PHONY: undeploy-kafka
 undeploy-kafka: undeploy-kafka-operator
-	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f deploy/test/kafka-example.yaml 2>&1 || true
+	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f tests/_build/kafka-example.yaml 2>&1 || true
 
 
 .PHONY: deploy-prometheus-operator
@@ -277,15 +279,9 @@ endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
-	$(VECHO)rm -f deploy/test/*.yaml
-	$(VECHO)if [ -d deploy/test ]; then rmdir deploy/test ; fi
+	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
-	$(VECHO)kubectl delete -f deploy/crds/jaegertracing.io_jaegers_crd.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/operator.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/role_binding.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/role.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f deploy/service_account.yaml --ignore-not-found=true || true
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -320,6 +316,11 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+.PHONY: check-operatorhub-pr-template
+check-operatorhub-pr-template:
+	$(VECHO)curl https://raw.githubusercontent.com/operator-framework/community-operators/master/docs/pull_request_template.md -o .ci/.operatorhub-pr-template.md -s > /dev/null 2>&1
+	$(VECHO)git diff -s --exit-code .ci/.operatorhub-pr-template.md || (echo "Build failed: the PR template for OperatorHub has changed. Sync it and try again." && exit 1)
 
 .PHONY: changelog
 changelog:
