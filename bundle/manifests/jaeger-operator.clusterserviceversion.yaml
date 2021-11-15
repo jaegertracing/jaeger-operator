@@ -323,7 +323,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/rvargasp/jaeger-operator:v1.28.0
+                image: quay.io/jaegertracing/jaeger-operator:v1.28.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
