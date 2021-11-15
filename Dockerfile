@@ -24,8 +24,14 @@ ARG VERSION_PKG
 ARG VERSION
 ARG VERSION_DATE
 
+# Dockerfile `FROM --platform=${BUILDPLATFORM}` means
+# prepare image for build for matched BUILDPLATFORM, eq. linux/amd64
+# by this way, we could avoid to using qemu, which slow down compiling process.
+# and usefully for language who support multi-arch build like go.
+# see last part of https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
+ARG TARGETARCH
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o manager main.go
 
 FROM registry.access.redhat.com/ubi8/ubi
 

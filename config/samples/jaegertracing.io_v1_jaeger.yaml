@@ -1,7 +1,9 @@
 apiVersion: jaegertracing.io/v1
-kind: Jaeger
+kind: "Jaeger"
 metadata:
-  name: jaeger-sample
+  name: "my-jaeger"
 spec:
-  # Add fields here
-  foo: bar
+  strategy: allInOne
+  allInOne:
+    image: jaegertracing/all-in-one:1.28
+
