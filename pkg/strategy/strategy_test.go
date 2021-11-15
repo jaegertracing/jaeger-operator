@@ -15,7 +15,7 @@ import (
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 )
 
 func TestWithAccounts(t *testing.T) {

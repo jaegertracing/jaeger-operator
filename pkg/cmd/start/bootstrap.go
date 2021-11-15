@@ -31,12 +31,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	opmetrics "github.com/jaegertracing/jaeger-operator/pkg/metrics"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"

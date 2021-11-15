@@ -16,8 +16,8 @@ import (
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 )
 
 // S knows what type of deployments to build based on a given spec

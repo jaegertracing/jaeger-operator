@@ -14,9 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 

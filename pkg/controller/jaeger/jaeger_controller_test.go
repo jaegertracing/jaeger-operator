@@ -19,8 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 

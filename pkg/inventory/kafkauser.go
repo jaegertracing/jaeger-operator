@@ -3,7 +3,7 @@ package inventory
 import (
 	"fmt"
 
-	"github.com/jaegertracing/jaeger-operator/apis/kafka/v1beta2"
+	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
