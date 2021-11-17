@@ -3,7 +3,7 @@ package storage
 import (
 	corev1 "k8s.io/api/core/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 // UpdateGRPCPlugin configures storage grpc-plugin. It adds storage flags, volume and volume mount for the plugin binary.

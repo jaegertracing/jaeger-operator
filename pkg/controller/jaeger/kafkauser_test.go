@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -37,7 +37,7 @@ func TestKafkaUserCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithKafkaUsers([]v1beta2.KafkaUser{{
+		s := strategy.New().WithKafkaUsers([]kafkav1beta2.KafkaUser{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      jaeger.Name,
 				Namespace: jaeger.Namespace,

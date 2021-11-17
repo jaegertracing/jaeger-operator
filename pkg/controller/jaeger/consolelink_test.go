@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
