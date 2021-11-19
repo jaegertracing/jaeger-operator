@@ -317,6 +317,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+.PHONY: operatorhub
+operatorhub: check-operatorhub-pr-template
+	$(VECHO)./.ci/operatorhub.sh
+
 .PHONY: check-operatorhub-pr-template
 check-operatorhub-pr-template:
 	$(VECHO)curl https://raw.githubusercontent.com/operator-framework/community-operators/master/docs/pull_request_template.md -o .ci/.operatorhub-pr-template.md -s > /dev/null 2>&1
@@ -589,6 +593,13 @@ install-git-hooks:
 set-test-image-vars:
 	$(eval IMG=local/jaeger-operator:e2e)
 
+
+# Generates the released manifests
+release-artifacts: set-image-controller
+	mkdir -p dist
+	$(KUSTOMIZE) build config/default -o dist/jaeger-operator.yaml
+
+
 kuttl:
 ifeq (, $(shell which kubectl-kuttl))
 	echo ${PATH}
@@ -635,3 +646,8 @@ install-tools:
 		golang.org/x/tools/cmd/goimports \
 		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
 	./.ci/install-gomplate.sh
+
+.PHONY: prepare-release
+prepare-release:
+	$(VECHO)./.ci/prepare-release.sh
+
