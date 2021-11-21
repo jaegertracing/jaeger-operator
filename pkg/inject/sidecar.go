@@ -162,7 +162,8 @@ func getJaegerFromNamespace(namespace string, jaegers *v1.JaegerList) []*v1.Jaeg
 	for _, p := range jaegers.Items {
 		if p.Namespace == namespace {
 			// matched the namespace!
-			instances = append(instances, &p)
+			j := p
+			instances = append(instances, &j)
 		}
 	}
 	return instances
