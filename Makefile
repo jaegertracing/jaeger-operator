@@ -112,7 +112,7 @@ security:
 .PHONY: build
 build: format
 	$(ECHO) Building...
-	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go 
+	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go
 
 .PHONY: docker
 docker:
@@ -569,8 +569,17 @@ run-e2e-tests:
 	$(VECHO)$(KUTTL) test
 
 .PHONY: start-kind
-start-kind: 
-	$(VECHO)kind create cluster --config $(KIND_CONFIG)
+start-kind:
+# Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
+# file), the cluster is created here. There are multiple reasons to do this:
+# 	* The kubectl command will not work outside KUTTL
+#	* Some KUTTL versions are not able to start properly a Kind cluster
+#	* The cluster will be removed after running KUTTL (this can be disabled). Sometimes,
+#		the cluster teardown is not done properly and KUTTL can not be run with the --start-kind flag
+# When the Kind cluster is not created by Kuttl, the
+# kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
+# container images here.
+	$(VECHO)kind create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
 	$(VECHO)kind load docker-image local/jaeger-operator:e2e
 	$(VECHO)kind load docker-image local/asserts:e2e
 	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
