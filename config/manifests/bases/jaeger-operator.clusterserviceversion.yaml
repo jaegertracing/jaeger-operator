@@ -79,7 +79,14 @@ spec:
   links:
   - name: Jaeger Operator Source Code
     url: https://github.com/jaegertracing/jaeger-operator
+  maintainers:
+  - email: jaeger-tracing@googlegroups.com
+    name: Jaeger Google Group
   maturity: alpha
   provider:
     name: CNCF
+  replaces: jaeger-operator.v1.27.0
+  selector:
+    matchLabels:
+      name: jaeger-operator
   version: 0.0.0
