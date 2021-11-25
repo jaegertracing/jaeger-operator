@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ $# = 0 ]; then
-    usage: vgot cmdpackage[@version]... >&2
+    echo usage: vgot cmdpackage[@version]... >&2
     exit 2
 fi
 d=`mktemp -d`
