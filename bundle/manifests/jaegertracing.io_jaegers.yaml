@@ -4,6 +4,8 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
+  labels:
+    name: jaeger-operator
   name: jaegers.jaegertracing.io
 spec:
   group: jaegertracing.io

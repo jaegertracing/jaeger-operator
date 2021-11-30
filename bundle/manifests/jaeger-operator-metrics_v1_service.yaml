@@ -3,8 +3,9 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    control-plane: controller-manager
-  name: jaeger-operator-controller-manager-metrics-service
+    control-plane: jaeger-operator
+    name: jaeger-operator
+  name: jaeger-operator-metrics
 spec:
   ports:
   - name: https
@@ -12,6 +13,6 @@ spec:
     protocol: TCP
     targetPort: https
   selector:
-    control-plane: controller-manager
+    name: jaeger-operator
 status:
   loadBalancer: {}
