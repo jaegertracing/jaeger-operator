@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: jaeger-operator-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jaeger-operator-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: jaeger-operator-controller-manager
+  namespace: jaeger-operator-system
