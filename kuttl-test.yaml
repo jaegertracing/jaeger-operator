@@ -4,7 +4,7 @@ crdDir: ./tests/_build/crds/
 artifactsDir: ./tests/_build/artifacts/
 commands:
   - script: kubectl create namespace jaeger-operator-system 2>&1 | grep -v "already exists" || true
-  - command: kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/release-0.9/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
+  - command: make deploy-prometheus-operator
   - command: kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system
   - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n jaeger-operator-system
   - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
