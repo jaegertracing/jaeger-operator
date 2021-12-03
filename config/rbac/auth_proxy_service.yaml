@@ -4,7 +4,6 @@ metadata:
   labels:
     control-plane:  jaeger-operator
   name: jaeger-operator-metrics
-  namespace: system
 spec:
   ports:
   - name: https
