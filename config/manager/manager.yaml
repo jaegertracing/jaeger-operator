@@ -1,36 +1,25 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: system
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
-  namespace: system
+  name: jaeger-operator
   labels:
-    control-plane: controller-manager
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: controller-manager
     spec:
       securityContext:
         runAsNonRoot: true
       containers:
       - command:
-        - /manager
+        - /jaeger-operator
         args:
         - --leader-elect
         image: controller:latest
-        name: manager
+        name: jaeger-operator
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
@@ -47,10 +36,21 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 200m
-            memory: 100Mi
+            cpu: 500m
+            memory: 512Mi
           requests:
             cpu: 100m
-            memory: 20Mi
-      serviceAccountName: controller-manager
+            memory: 128Mi
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.annotations['olm.targetNamespaces']
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: OPERATOR_NAME
+          value: "jaeger-operator"
+      serviceAccountName: jaeger-operator
       terminationGracePeriodSeconds: 10
