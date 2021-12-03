@@ -5,16 +5,17 @@ kind: ServiceMonitor
 metadata:
   labels:
     control-plane: controller-manager
-  name: controller-manager-metrics-monitor
-  namespace: system
+  name: jaeger-operator-metrics-monitor
 spec:
   endpoints:
     - path: /metrics
-      port: https
+      targetPort: 8443
       scheme: https
+      interval: 30s
+      scrapeTimeout: 10s
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
         insecureSkipVerify: true
   selector:
     matchLabels:
-      control-plane: controller-manager
+      name: jaeger-operator
