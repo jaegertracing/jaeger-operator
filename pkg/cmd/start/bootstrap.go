@@ -256,7 +256,9 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	ctx, span := tracer.Start(ctx, "createManager")
 	defer span.End()
 
-	metricsAddr := viper.GetString("metrics-bind-address")
+	metricsHost := viper.GetString("metrics-host")
+	metricsPort := viper.GetInt("metrics-port")
+	metricsAddr := fmt.Sprintf("%s:%d", metricsHost, metricsPort)
 	enableLeaderElection := viper.GetBool("leader-elect")
 	probeAddr := viper.GetString("health-probe-bind-address")
 

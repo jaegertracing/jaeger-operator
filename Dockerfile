@@ -31,7 +31,7 @@ ARG VERSION_DATE
 # see last part of https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 ARG TARGETARCH
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o jaeger-operator main.go
 
 FROM registry.access.redhat.com/ubi8/ubi
 
@@ -46,9 +46,9 @@ RUN INSTALL_PKGS="openssl" && \
     chmod og+w /tmp/_working_dir
 
 WORKDIR /
-COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/jaeger-operator .
 COPY scripts/ scripts/
 
 USER ${USER_UID}:${USER_UID}
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/jaeger-operator"]
