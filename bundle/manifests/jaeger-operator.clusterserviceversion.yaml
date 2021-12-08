@@ -27,7 +27,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.28.0
+  name: jaeger-operator.v1.29.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -384,7 +384,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: quay.io/jaegertracing/jaeger-operator:v1.28.0
+                image: quay.io/jaegertracing/jaeger-operator:v1.29.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -468,8 +468,8 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.27.0
+  replaces: jaeger-operator.v1.28.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.28.0
+  version: 1.29.0
