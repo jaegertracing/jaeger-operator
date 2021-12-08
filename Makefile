@@ -669,4 +669,5 @@ scorecard-tests-local: kind
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
 	$(VECHO)docker pull $(SCORECARD_TEST_IMG)
 	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
+	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
 	$(VECHO)$(MAKE) scorecard-tests
