@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     matchLabels:
+  strategy: {}
   replicas: 1
   template:
     metadata:
