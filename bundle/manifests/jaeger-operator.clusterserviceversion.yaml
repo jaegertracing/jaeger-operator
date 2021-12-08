@@ -37,6 +37,45 @@ spec:
       displayName: Jaeger
       kind: Jaeger
       name: jaegers.jaegertracing.io
+      resources:
+      - kind: ConfigMaps
+        name: ""
+        version: v1
+      - kind: CronJob
+        name: ""
+        version: v1beta1
+      - kind: DaemonSets
+        name: ""
+        version: apps/v1
+      - kind: Deployment
+        name: ""
+        version: apps/v1
+      - kind: Ingress
+        name: ""
+        version: networking/v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
+      - kind: StatefulSets
+        name: ""
+        version: apps/v1
+      specDescriptors:
+      - displayName: Strategy
+        path: allInOne.strategy
+      - displayName: Strategy
+        path: collector.strategy
+      - displayName: Strategy
+        path: query.strategy
+      - displayName: Strategy
+        path: strategy
+      statusDescriptors:
+      - displayName: Phase
+        path: phase
+      - displayName: Version
+        path: version
       version: v1
   description: |-
     Jaeger, inspired by [Dapper](https://research.google.com/pubs/pub36356.html) and [OpenZipkin](http://zipkin.io/), is a distributed tracing system released as open source by Uber Technologies. It is used for monitoring and troubleshooting microservices-based distributed systems.
