@@ -111,6 +111,7 @@ func (storageType JaegerStorageType) OptionsPrefix() string {
 // JaegerSpec defines the desired state of Jaeger
 type JaegerSpec struct {
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy DeploymentStrategy `json:"strategy,omitempty"`
 
 	// +optional
@@ -147,14 +148,19 @@ type JaegerSpec struct {
 
 // JaegerStatus defines the observed state of Jaeger
 type JaegerStatus struct {
-	Version string      `json:"version"`
-	Phase   JaegerPhase `json:"phase"`
+	// +operator-sdk:csv:customresourcedefinitions:type=status
+	// +operator-sdk:csv:customresourcedefinitions:displayName="Version"
+	Version string `json:"version"`
+	// +operator-sdk:csv:customresourcedefinitions:type=status
+	// +operator-sdk:csv:customresourcedefinitions:displayName="Phase"
+	Phase JaegerPhase `json:"phase"`
 }
 
 // Jaeger is the Schema for the jaegers API
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Jaeger"
+// +operator-sdk:csv:customresourcedefinitions:resources={{CronJob,v1beta1},{Pod,v1},{Deployment,apps/v1}, {Ingress,networking/v1},{DaemonSets,apps/v1},{StatefulSets,apps/v1},{ConfigMaps,v1},{Service,v1}}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Jaeger instance's status"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Jaeger Version"
@@ -250,6 +256,7 @@ type JaegerQuerySpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
@@ -351,6 +358,7 @@ type JaegerAllInOneSpec struct {
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 
@@ -403,6 +411,7 @@ type JaegerCollectorSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 
 	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
 }
 

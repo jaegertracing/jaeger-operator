@@ -52,6 +52,8 @@ ENVTEST_K8S_VERSION = 1.22
 KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
+SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v1.13.1
+
 .DEFAULT_GOAL := build
 
 # Options for 'bundle-build'
@@ -573,7 +575,7 @@ run-e2e-tests:
 	$(VECHO)$(KUTTL) test
 
 .PHONY: start-kind
-start-kind:
+start-kind: kind
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
 # file), the cluster is created here. There are multiple reasons to do this:
 # 	* The kubectl command will not work outside KUTTL
@@ -583,12 +585,12 @@ start-kind:
 # When the Kind cluster is not created by Kuttl, the
 # kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
 # container images here.
-	$(VECHO)kind create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
-	$(VECHO)kind load docker-image local/jaeger-operator:e2e
-	$(VECHO)kind load docker-image local/asserts:e2e
-	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)kind load docker-image local/jaeger-operator:next
-	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+	$(VECHO)$(KIND) load docker-image local/jaeger-operator:e2e
+	$(VECHO)$(KIND) load docker-image local/asserts:e2e
+	$(VECHO)$(KIND) load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)$(KIND) load docker-image local/jaeger-operator:next
+	$(VECHO)$(KIND) load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 .PHONY: build-assert-job
 build-assert-job:
@@ -637,7 +639,7 @@ ifeq (, $(shell which kind))
 	@{ \
 	set -e ;\
 	echo "" ;\
-	echo "ERROR: kind not found." ;\
+	echo "ERROR: KIND not found." ;\
 	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
 	echo "" ;\
 	exit 1 ;\
@@ -659,3 +661,13 @@ install-tools:
 .PHONY: prepare-release
 prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
+
+scorecard-tests:
+	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+
+scorecard-tests-local: kind
+	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+	$(VECHO)docker pull $(SCORECARD_TEST_IMG)
+	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
+	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
+	$(VECHO)$(MAKE) scorecard-tests
