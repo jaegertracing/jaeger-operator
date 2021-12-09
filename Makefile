@@ -655,8 +655,8 @@ install-tools:
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
-		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
-	./.ci/install-gomplate.sh
+		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336
+	$(VECHO)./.ci/install-gomplate.sh
 
 .PHONY: prepare-release
 prepare-release:
