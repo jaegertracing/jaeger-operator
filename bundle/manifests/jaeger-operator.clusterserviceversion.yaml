@@ -37,6 +37,45 @@ spec:
       displayName: Jaeger
       kind: Jaeger
       name: jaegers.jaegertracing.io
+      resources:
+      - kind: ConfigMaps
+        name: ""
+        version: v1
+      - kind: CronJob
+        name: ""
+        version: v1beta1
+      - kind: DaemonSets
+        name: ""
+        version: apps/v1
+      - kind: Deployment
+        name: ""
+        version: apps/v1
+      - kind: Ingress
+        name: ""
+        version: networking/v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
+      - kind: StatefulSets
+        name: ""
+        version: apps/v1
+      specDescriptors:
+      - displayName: Strategy
+        path: allInOne.strategy
+      - displayName: Strategy
+        path: collector.strategy
+      - displayName: Strategy
+        path: query.strategy
+      - displayName: Strategy
+        path: strategy
+      statusDescriptors:
+      - displayName: Phase
+        path: phase
+      - displayName: Version
+        path: version
       version: v1
   description: |-
     Jaeger, inspired by [Dapper](https://research.google.com/pubs/pub36356.html) and [OpenZipkin](http://zipkin.io/), is a distributed tracing system released as open source by Uber Technologies. It is used for monitoring and troubleshooting microservices-based distributed systems.
@@ -68,6 +107,18 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
         - apiGroups:
           - apps
           resources:
@@ -289,40 +340,50 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
-        serviceAccountName: jaeger-operator-controller-manager
+        serviceAccountName: jaeger-operator
       deployments:
-      - name: jaeger-operator-controller-manager
+      - name: jaeger-operator
         spec:
           replicas: 1
           selector:
             matchLabels:
-              control-plane: controller-manager
+              name: jaeger-operator
           strategy: {}
           template:
             metadata:
               labels:
-                control-plane: controller-manager
+                name: jaeger-operator
             spec:
               containers:
               - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources: {}
+              - args:
                 - start
                 - --health-probe-bind-address=:8081
-                - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
                 command:
-                - /manager
+                - /jaeger-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: OPERATOR_NAME
+                  value: jaeger-operator
                 image: quay.io/jaegertracing/jaeger-operator:v1.28.0
                 livenessProbe:
                   httpGet:
@@ -330,7 +391,7 @@ spec:
                     port: 8081
                   initialDelaySeconds: 15
                   periodSeconds: 20
-                name: manager
+                name: jaeger-operator
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -339,16 +400,16 @@ spec:
                   periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 200m
-                    memory: 100Mi
+                    cpu: 500m
+                    memory: 512Mi
                   requests:
                     cpu: 100m
-                    memory: 20Mi
+                    memory: 128Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:
                 runAsNonRoot: true
-              serviceAccountName: jaeger-operator-controller-manager
+              serviceAccountName: jaeger-operator
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
@@ -383,7 +444,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: jaeger-operator-controller-manager
+        serviceAccountName: jaeger-operator
     strategy: deployment
   installModes:
   - supported: false
