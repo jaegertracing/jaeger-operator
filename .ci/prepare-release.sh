@@ -11,7 +11,7 @@ PREVIOUS_VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 # change the versions.txt, bump only operator version.
 sed "s~operator=${PREVIOUS_VERSION}~operator=${OPERATOR_VERSION}~gi" -i versions.txt
 
-VERSION=${OPERATOR_VERSION} USER=jaegertracing make bundle
-
 # changes to deploy/operator.yaml
-sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${OPERATOR_VERSION}~i" -i config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
+sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${PREVIOUS_VERSION}~i" -i config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
+
+VERSION=${OPERATOR_VERSION} USER=jaegertracing make bundle
