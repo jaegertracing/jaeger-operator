@@ -1,6 +1,12 @@
 Changes by Version
 ==================
 
+1.29.0 (2021-12-10)
+-------------------
+* Fix default namespace ([#1651](https://github.com/jaegertracing/jaeger-operator/pull/1651), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix finding the correct instance when there are multiple jaeger instances during injecting the sidecar ([#1639](https://github.com/jaegertracing/jaeger-operator/pull/1639), [@alibo](https://github.com/alibo))
+* Migrate to operator-sdk 1.13 ([#1623](https://github.com/jaegertracing/jaeger-operator/pull/1623), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.28.0 (2021-11-08)
 -------------------
 * Use CRDs to detect features in the cluster ([#1608](https://github.com/jaegertracing/jaeger-operator/pull/1608), [@pavolloffay](https://github.com/pavolloffay))
