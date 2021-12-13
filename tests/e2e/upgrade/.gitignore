@@ -1,4 +1,1 @@
-00-assert.yaml
-01-assert.yaml
-02-assert.yaml
-operator-upgrade.yaml
+kuttl-test.yaml

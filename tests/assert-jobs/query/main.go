@@ -31,7 +31,7 @@ const (
 func main() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
-	viper.SetDefault(flagIngressHost, "localhost")
+	viper.SetDefault(flagIngressHost, "http://localhost")
 	flag.String(flagIngressHost, "", "Query service hostname")
 	flag.String(flagServiceName, "", "Service name expected")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -47,7 +47,7 @@ func main() {
 	host := viper.GetString(flagIngressHost)
 	serviceName := viper.GetString(flagServiceName)
 
-	url := fmt.Sprintf("http://%s/api/services", host)
+	url := fmt.Sprintf("%s/api/services", host)
 
 	err = utils.TestGetHTTP(url, params, func(response *http.Response, body []byte) (done bool, err error) {
 		resp := &services{}
