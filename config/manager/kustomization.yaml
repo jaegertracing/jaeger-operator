@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/jaegertracing/jaeger-operator
-  newTag: v1.29.0
+  newTag: 1.29.0

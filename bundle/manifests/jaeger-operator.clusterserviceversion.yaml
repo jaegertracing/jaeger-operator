@@ -384,7 +384,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: quay.io/jaegertracing/jaeger-operator:v1.29.0
+                image: quay.io/jaegertracing/jaeger-operator:1.29.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
