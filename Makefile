@@ -18,7 +18,7 @@ OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
 VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
-IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:$(addprefix v,${VERSION})
+IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:${VERSION}
 BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
