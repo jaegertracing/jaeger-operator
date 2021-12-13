@@ -18,7 +18,7 @@ metadata:
     capabilities: Deep Insights
     categories: Logging & Tracing
     certified: "false"
-    containerImage: docker.io/jaegertracing/jaeger-operator
+    containerImage: quay.io/jaegertracing/jaeger-operator
     createdAt: "2019-09-04T13:28:40+00:00"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
