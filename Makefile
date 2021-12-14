@@ -256,6 +256,7 @@ else
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output tests/_build/kafka-example.yaml --create-dirs
 	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' tests/_build/kafka-example.yaml
+	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=client -f  tests/_build/kafka-example.yaml
 	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 endif
 
