@@ -6,7 +6,7 @@ VECHO = @
 endif
 
 VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/pcc64le
+PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 GOARCH ?= $(go env GOARCH)
 GOOS ?= $(go env GOOS)
 GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
