@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
 
 	osimagev1 "github.com/openshift/api/image/v1"
@@ -354,6 +355,11 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Deployment")
 		os.Exit(1)
 	}
+
+	// register webhook
+	mgr.GetWebhookServer().Register("/mutate-v1-pod", &webhook.Admission{
+		Handler: appsv1controllers.NewPodInjectorWebhook(client),
+	})
 }
 
 func getNamespace(ctx context.Context) string {

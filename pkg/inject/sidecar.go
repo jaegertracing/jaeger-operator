@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"sort"
 	"strings"
@@ -55,7 +56,7 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		return dep
 	}
 	decorate(dep)
-	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
+	hasAgent, agentContainerIndex := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 	logFields.Debug("injecting sidecar")
 	if hasAgent { // This is an update
 		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
@@ -74,17 +75,17 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
-func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+// desired determines whether a sidecar is desired, based on the annotation from both the deployment/pod and the namespace
+func desired(accessor metav1.ObjectMetaAccessor, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
-		"namespace":  dep.Namespace,
-		"deployment": dep.Name,
+		"namespace": accessor.GetObjectMeta().GetNamespace(),
+		"name":      accessor.GetObjectMeta().GetName(), // resource name
 	})
-	depAnnotationValue, depExist := dep.Annotations[Annotation]
+	appAnnotationValue, appExist := accessor.GetObjectMeta().GetAnnotations()[Annotation]
 	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
-	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
-		logger.Debug("annotation present on deployment")
+	if appExist && !strings.EqualFold(appAnnotationValue, "false") {
+		logger.Debug("annotation present on deployment/pod")
 		return true
 	}
 
@@ -96,8 +97,8 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	return false
 }
 
-// Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+// DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
+func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	if !desired(dep, ns) {
 		return false
 	}
@@ -108,7 +109,7 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		return false
 	}
 
-	hasAgent, _ := HasJaegerAgent(dep)
+	hasAgent, _ := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 
 	if hasAgent {
 		// has already a sidecar injected and managed by the operator
@@ -121,8 +122,8 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 }
 
 // Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
-	jaegerNameDep := target.Annotations[Annotation]
+func Select(target metav1.ObjectMetaAccessor, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+	jaegerNameDep := target.GetObjectMeta().GetAnnotations()[Annotation]
 	jaegerNameNs := ns.Annotations[Annotation]
 
 	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
@@ -146,7 +147,7 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 		// If there is more than one available instance in all watched namespaces
 		// then we should find if there is only *one* on the same namespace
 		// if that is the case. we should use it.
-		instancesInNamespace := getJaegerFromNamespace(target.Namespace, availableJaegerPods)
+		instancesInNamespace := getJaegerFromNamespace(target.GetObjectMeta().GetNamespace(), availableJaegerPods)
 		if len(instancesInNamespace) == 1 {
 			jaeger := instancesInNamespace[0]
 			return jaeger
@@ -371,12 +372,12 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	}
 }
 
-// HasJaegerAgent checks whether deployment has Jaeger Agent container
-func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
+// HasJaegerAgent checks whether the given container list from either Deployment or Pod has Jaeger Agent container being injected
+func HasJaegerAgent(containers []corev1.Container) (bool, int) {
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	for i, container := range dep.Spec.Template.Spec.Containers {
-		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
+	for i, c := range containers {
+		if c.Name == "jaeger-agent" { // we don't have labels/annotations on containers, so, we rely on its name
 			return true, i
 		}
 	}
@@ -385,8 +386,8 @@ func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
 
 // EqualSidecar check if two deployments sidecar are equal
 func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
-	depHasAgent, depAgentIndex := HasJaegerAgent(dep)
-	oldDepHasAgent, oldDepIndex := HasJaegerAgent(oldDep)
+	depHasAgent, depAgentIndex := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
+	oldDepHasAgent, oldDepIndex := HasJaegerAgent(oldDep.Spec.Template.Spec.Containers)
 	if depHasAgent != oldDepHasAgent {
 		return false
 	}

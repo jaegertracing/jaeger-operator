@@ -1,0 +1,229 @@
+package inject
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
+	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
+)
+
+// SidecarPod adds a new container to the pod, connecting to the given jaeger instance
+func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
+	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
+	logFields := jaeger.Logger().WithField("deployment", pod.Name)
+
+	if jaeger == nil {
+		logFields.Trace("no Jaeger instance found, skipping sidecar injection")
+		return pod
+	}
+
+	if val, ok := pod.Labels[Label]; ok && val != jaeger.Name {
+		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
+		return pod
+	}
+	decoratePod(pod)
+	hasAgent, agentContainerIndex := HasJaegerAgent(pod.Spec.Containers)
+	logFields.Debug("injecting sidecar")
+	if hasAgent { // This is an update
+		pod.Spec.Containers[agentContainerIndex] = containerPod(jaeger, pod, agentContainerIndex)
+	} else {
+		pod.Spec.Containers = append(pod.Spec.Containers, containerPod(jaeger, pod, -1))
+	}
+
+	jaegerName := util.Truncate(jaeger.Name, 63)
+
+	if pod.Labels == nil {
+		pod.Labels = map[string]string{Label: jaegerName}
+	} else {
+		pod.Labels[Label] = jaegerName
+	}
+
+	return pod
+}
+
+// PodNeeded determines whether a pod needs to get a sidecar injected or not
+func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
+	if !desired(pod, ns) {
+		return false
+	}
+
+	// do not inject jaeger due to port collision
+	// do not inject if deployment's Annotation value is false
+	if pod.Labels["app"] == "jaeger" && pod.Labels["app.kubernetes.io/component"] != "query" {
+		return false
+	}
+
+	hasAgent, _ := HasJaegerAgent(pod.Spec.Containers)
+
+	if hasAgent {
+		// has already a sidecar injected and managed by the operator
+		// return true because could require an update.
+		_, hasLabel := pod.Labels[Label]
+		return hasLabel
+	}
+	// If no agent but has annotations
+	return true
+}
+
+func decoratePod(pod *corev1.Pod) {
+	app, found := pod.Labels["app.kubernetes.io/instance"]
+	if !found {
+		app, found = pod.Labels["app.kubernetes.io/name"]
+	}
+	if !found {
+		app, found = pod.Labels["app"]
+	}
+	if found {
+		// Append the namespace to the app name. Using the DNS style "<app>.<namespace>""
+		// which also matches with the style used in Istio.
+		if len(pod.Namespace) > 0 {
+			app += "." + pod.Namespace
+		} else {
+			app += ".default"
+		}
+		for i := 0; i < len(pod.Spec.Containers); i++ {
+			if !hasEnv(envVarServiceName, pod.Spec.Containers[i].Env) {
+				pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  envVarServiceName,
+					Value: app,
+				})
+			}
+			if !hasEnv(envVarPropagation, pod.Spec.Containers[i].Env) {
+				pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, corev1.EnvVar{
+					Name:  envVarPropagation,
+					Value: "jaeger,b3,w3c",
+				})
+			}
+		}
+	}
+	for key, value := range PrometheusDefaultAnnotations {
+		_, ok := pod.Annotations[key]
+		if !ok {
+			pod.Annotations[key] = value
+		}
+	}
+}
+
+func containerPod(jaeger *v1.Jaeger, pod *corev1.Pod, agentIdx int) corev1.Container {
+	args := append(jaeger.Spec.Agent.Options.ToArgs())
+
+	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
+	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
+		args = append(args, fmt.Sprintf("--reporter.grpc.host-port=dns:///%s.%s.svc:14250", service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace))
+	}
+
+	// Enable tls by default for openshift platform
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
+			args = append(args, "--reporter.grpc.tls.enabled=true")
+			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
+		}
+	}
+
+	zkCompactTrft := util.GetPort("--processor.zipkin-compact.server-host-port=", args, 5775)
+	configRest := util.GetPort("--http-server.host-port=", args, 5778)
+	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
+	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
+	adminPort := util.GetAdminPort(args, 14271)
+
+	if len(util.FindItem("--agent.tags=", args)) == 0 {
+		defaultAgentTagsMap := make(map[string]string)
+		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+		defaultAgentTagsMap["deployment.name"] = pod.Name
+		defaultAgentTagsMap["pod.namespace"] = pod.Namespace
+		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
+		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
+
+		defaultContainerName := getContainerName(pod.Spec.Containers, agentIdx)
+
+		// if we can deduce the container name from the PodSpec
+		if defaultContainerName != "" {
+			defaultAgentTagsMap["container.name"] = defaultContainerName
+		}
+
+		if agentIdx > -1 {
+			existingAgentTags := parseAgentTags(pod.Spec.Containers[agentIdx].Args)
+			// merge two maps
+			for key, value := range defaultAgentTagsMap {
+				existingAgentTags[key] = value
+			}
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(existingAgentTags)))
+		} else {
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(defaultAgentTagsMap)))
+		}
+
+	}
+
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
+
+	// Use only the agent common spec for volumes and mounts.
+	// We don't want to mount all Jaeger internal volumes into user's deployments
+	volumesAndMountsSpec := jaeger.Spec.Agent.JaegerCommonSpec
+	ca.Update(jaeger, &volumesAndMountsSpec)
+	ca.AddServiceCA(jaeger, &volumesAndMountsSpec)
+
+	// ensure we have a consistent order of the arguments
+	// see https://github.com/jaegertracing/jaeger-operator/issues/334
+	sort.Strings(args)
+
+	pod.Spec.ImagePullSecrets = util.RemoveDuplicatedImagePullSecrets(append(pod.Spec.ImagePullSecrets, jaeger.Spec.Agent.ImagePullSecrets...))
+	pod.Spec.Volumes = util.RemoveDuplicatedVolumes(append(pod.Spec.Volumes, volumesAndMountsSpec.Volumes...))
+	return corev1.Container{
+		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
+		Name:  "jaeger-agent",
+		Args:  args,
+		Env: []corev1.EnvVar{
+			{
+				Name: envVarPodName,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.name",
+					},
+				},
+			},
+			{
+				Name: envVarHostIP,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.hostIP",
+					},
+				},
+			},
+		},
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: zkCompactTrft,
+				Name:          "zk-compact-trft",
+				Protocol:      corev1.ProtocolUDP,
+			},
+			{
+				ContainerPort: configRest,
+				Name:          "config-rest",
+			},
+			{
+				ContainerPort: jgCompactTrft,
+				Name:          "jg-compact-trft",
+				Protocol:      corev1.ProtocolUDP,
+			},
+			{
+				ContainerPort: jgBinaryTrft,
+				Name:          "jg-binary-trft",
+				Protocol:      corev1.ProtocolUDP,
+			},
+			{
+				ContainerPort: adminPort,
+				Name:          "admin-http",
+			},
+		},
+		Resources:       commonSpec.Resources,
+		SecurityContext: jaeger.Spec.Agent.SidecarSecurityContext,
+		VolumeMounts:    volumesAndMountsSpec.VolumeMounts,
+	}
+}

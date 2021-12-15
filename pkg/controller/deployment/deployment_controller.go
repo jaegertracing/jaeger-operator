@@ -104,7 +104,7 @@ func (r *ReconcileDeployment) Reconcile(ctx context.Context, request ctrl.Reques
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
-	if inject.Needed(dep, ns) {
+	if inject.DeploymentNeeded(dep, ns) {
 		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
@@ -140,7 +140,7 @@ func (r *ReconcileDeployment) Reconcile(ctx context.Context, request ctrl.Reques
 		}
 
 	} else {
-		hasAgent, _ := inject.HasJaegerAgent(dep)
+		hasAgent, _ := inject.HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 		if hasAgent {
 			_, hasLabel := dep.Labels[inject.Label]
 			if hasLabel {

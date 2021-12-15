@@ -354,7 +354,7 @@ func TestSidecarNeeded(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
-			assert.Equal(t, test.needed, Needed(test.dep, test.ns))
+			assert.Equal(t, test.needed, DeploymentNeeded(test.dep, test.ns))
 			assert.LessOrEqual(t, len(test.dep.Spec.Template.Spec.Containers), 2)
 		})
 	}
@@ -992,7 +992,7 @@ func TestGetContainerNameWithAppContainerAndJaegerAgent(t *testing.T) {
 	deploy = Sidecar(jaeger, deploy)
 
 	assert.Len(t, deploy.Spec.Template.Spec.Containers, 2)
-	hasAgent, agentIdx := HasJaegerAgent(deploy)
+	hasAgent, agentIdx := HasJaegerAgent(deploy.Spec.Template.Spec.Containers)
 	assert.True(t, hasAgent)
 	assert.Greater(t, agentIdx, -1)
 	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, agentIdx)
