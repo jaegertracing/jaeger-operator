@@ -1,6 +1,10 @@
 Changes by Version
 ==================
 
+1.29.1 (2021-12-15)
+-------------------
+* Register oschema for openshift resources  ([#1673](https://github.com/jaegertracing/jaeger-operator/pull/1673), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.29.0 (2021-12-10)
 -------------------
 * Fix default namespace ([#1651](https://github.com/jaegertracing/jaeger-operator/pull/1651), [@rubenvp8510](https://github.com/rubenvp8510))
