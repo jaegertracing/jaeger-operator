@@ -29,7 +29,7 @@ func NewPodInjectorWebhook(c client.Client) webhook.AdmissionHandler {
 }
 
 // You need to ensure the path here match the path in the marker.
-// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,verbs=create;update,versions=v1,name=mpod.kb.io
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=mpod.kb.io,admissionReviewVersions=v1;v1beta1
 
 // podInjector inject Sidecar to Pods
 type podInjector struct {

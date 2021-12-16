@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	osimagev1 "github.com/openshift/api/image/v1"
 	log "github.com/sirupsen/logrus"
