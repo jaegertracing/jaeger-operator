@@ -1,0 +1,15 @@
+# Assert the spans are reported
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: report-span
+status:
+  succeeded: 1
+---
+# Assert the spans can be queried
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-span
+status:
+  succeeded: 1

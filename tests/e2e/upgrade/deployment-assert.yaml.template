@@ -1,0 +1,11 @@
+# Template to assert the the correct container version is used
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jaeger
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - image: jaegertracing/all-in-one:{{ .Env.JAEGER_VERSION }}

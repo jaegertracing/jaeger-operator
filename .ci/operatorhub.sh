@@ -20,15 +20,6 @@ fi
 OLD_PWD=$(pwd)
 VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 
-PKG_FILE=deploy/olm-catalog/jaeger-operator/jaeger-operator.package.yaml
-CSV_FILE=deploy/olm-catalog/jaeger-operator/manifests/jaeger-operator.clusterserviceversion.yaml
-CRD_FILE=deploy/crds/jaegertracing.io_jaegers_crd.yaml
-
-# once we get a clarification on the following item, we might not need to have different file names
-# https://github.com/operator-framework/community-operators/issues/701
-DEST_PKG_FILE=jaeger.package.yaml
-DEST_CSV_FILE=jaeger.v${VERSION}.clusterserviceversion.yaml
-
 for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
     cd "${LOCAL_REPOSITORIES_PATH}/${dest}"
     git remote | grep upstream > /dev/null
@@ -41,11 +32,7 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
     git checkout -q main
     git rebase -q upstream/main
 
-    mkdir -p "${dest}/operators/jaeger/${VERSION}"
-
-    cp "${OLD_PWD}/${PKG_FILE}" "${dest}/operators/jaeger/${DEST_PKG_FILE}"
-    cp "${OLD_PWD}/${CSV_FILE}" "${dest}/operators/jaeger/${VERSION}/${DEST_CSV_FILE}"
-    cp "${OLD_PWD}/${CRD_FILE}" "${dest}/operators/jaeger/${VERSION}"
+    cp -r "${OLD_PWD}/bundle" "operators/jaeger/${VERSION}"
 
     git checkout -q -b Update-Jaeger-to-${VERSION}
     if [[ $? != 0 ]]; then
@@ -53,7 +40,7 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
         exit 1
     fi
 
-    git add ${dest}
+    git add .
     git commit -sqm "Update Jaeger to v${VERSION}"
 
 
@@ -65,7 +52,6 @@ for dest in ${COMMUNITY_OPERATORS_REPOSITORY} ${UPSTREAM_REPOSITORY}; do
 
     echo "Submitting PR on your behalf via 'hub'"
     gh pr create --title  "Update Jaeger to v${VERSION}" --body-file "${OLD_PWD}/.ci/.checked-pr-template.md"
-    rm ${tmpfile}
 done
 
 cd ${OLD_PWD}

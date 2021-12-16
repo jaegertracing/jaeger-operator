@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -371,6 +371,22 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 				"--a-option=a-value",
 				"--reporter.grpc.tls.enabled=false",
 				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+		{
+			name: "Do not implicitly enable TLS when grpc.host-port is provided",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                "a-value",
+				"reporter.grpc.host-port": "my.host-port.com",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=my.host-port.com",
 				"--sampling.strategies-file",
 			},
 			nonExpectedArgs: []string{

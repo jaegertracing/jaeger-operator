@@ -1,6 +1,44 @@
 Changes by Version
 ==================
 
+1.29.1 (2021-12-15)
+-------------------
+* Register oschema for openshift resources  ([#1673](https://github.com/jaegertracing/jaeger-operator/pull/1673), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.29.0 (2021-12-10)
+-------------------
+* Fix default namespace ([#1651](https://github.com/jaegertracing/jaeger-operator/pull/1651), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix finding the correct instance when there are multiple jaeger instances during injecting the sidecar ([#1639](https://github.com/jaegertracing/jaeger-operator/pull/1639), [@alibo](https://github.com/alibo))
+* Migrate to operator-sdk 1.13 ([#1623](https://github.com/jaegertracing/jaeger-operator/pull/1623), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.28.0 (2021-11-08)
+-------------------
+* Use CRDs to detect features in the cluster ([#1608](https://github.com/jaegertracing/jaeger-operator/pull/1608), [@pavolloffay](https://github.com/pavolloffay))
+* Make ServiceMonitor creation optional ([#1323](https://github.com/jaegertracing/jaeger-operator/pull/1323), [@igorwwwwwwwwwwwwwwwwwwww](https://github.com/igorwwwwwwwwwwwwwwwwwwww))
+* Change default OpenShift query ingress SAR to pods in the jaeger namespace ([#1583](https://github.com/jaegertracing/jaeger-operator/pull/1583), [@pavolloffay](https://github.com/pavolloffay))
+* Fix gRPC flags for OpenShift when 'reporter.grpc.host-port' is defined ([#1584](https://github.com/jaegertracing/jaeger-operator/pull/1584), [@Git-Jiro](https://github.com/Git-Jiro))
+
+1.27.0 (2021-10-07)
+-------------------
+* Allow sidecar injection for query pod from other Jaeger instances ([#1569](https://github.com/jaegertracing/jaeger-operator/pull/1569), [@pavolloffay](https://github.com/pavolloffay))
+* Avoid touching jaeger deps on deployment/ns controller ([#1529](https://github.com/jaegertracing/jaeger-operator/pull/1529), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.26.0 (2021-09-30)
+-------------------
+* Add ingressClassName field to query ingress ([#1557](https://github.com/jaegertracing/jaeger-operator/pull/1557), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add disconnected annotation to csv ([#1536](https://github.com/jaegertracing/jaeger-operator/pull/1536), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.25.0 (2021-08-08)
+-------------------
+* Add support repetitive arguments to operand ([#1434](https://github.com/jaegertracing/jaeger-operator/pull/1434), [@rubenvp8510](https://github.com/rubenvp8510))
+* Allow TLS flags to be disabled ([#1440](https://github.com/jaegertracing/jaeger-operator/pull/1440), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add gRPC port for jaeger-query into its service resource ([#1521](https://github.com/jaegertracing/jaeger-operator/pull/1521), [@rubenvp8510](https://github.com/rubenvp8510))
+* Sidecar removed when annotation is false ([#1508](https://github.com/jaegertracing/jaeger-operator/pull/1508), [@mfz85](https://github.com/mfz85))
+* Add support for GRPC storage plugin ([#1517](https://github.com/jaegertracing/jaeger-operator/pull/1517), [@pavolloffay](https://github.com/pavolloffay))
+* Fix overwritten default labels in label selectors of `Service` ([#1490](https://github.com/jaegertracing/jaeger-operator/pull/1490), [@rudeigerc](https://github.com/rudeigerc))
+* Add resources requests and limits to the operator ([#1515](https://github.com/jaegertracing/jaeger-operator/pull/1515), [@brunopadz](https://github.com/brunopadz))
+* Instrument instances types ([#1484](https://github.com/jaegertracing/jaeger-operator/pull/1484), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.24.0 (2021-07-08)
 -------------------
 * Include OIDC plugin in binary ([#1501](https://github.com/jaegertracing/jaeger-operator/pull/1501), [@esnible](https://github.com/esnible))

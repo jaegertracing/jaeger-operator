@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -192,8 +192,9 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 	c := newProductionStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
-			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+			assert.Equal(t, "TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction", dep.Annotations["sidecar.jaegertracing.io/inject"])
+			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+			assert.Equal(t, "jaeger-query", dep.Spec.Template.Spec.Containers[0].Name)
 		}
 	}
 }

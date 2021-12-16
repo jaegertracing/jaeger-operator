@@ -1,0 +1,7 @@
+# Assert the ElasticSearch is up and running
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+status:
+  readyReplicas: 2

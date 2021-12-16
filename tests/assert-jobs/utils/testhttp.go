@@ -19,9 +19,9 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		return err
 	}
 
-	client := http.Client{Timeout: 3 * time.Second}
+	client := http.Client{Timeout: 30 * time.Second}
 
-	logrus.Info("Polling to %s", url)
+	logrus.Info("Polling to ", url)
 
 	return wait.Poll(params.RetryInterval, params.Timeout, func() (done bool, err error) {
 		logrus.Info("Doing request..")

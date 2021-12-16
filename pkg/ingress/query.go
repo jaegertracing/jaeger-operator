@@ -6,7 +6,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -49,6 +49,10 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 	i.addRulesSpec(&spec, &backend)
 
 	i.addTLSSpec(&spec)
+
+	if i.jaeger.Spec.Ingress.IngressClassName != nil {
+		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
+	}
 
 	return &networkingv1.Ingress{
 		TypeMeta: metav1.TypeMeta{

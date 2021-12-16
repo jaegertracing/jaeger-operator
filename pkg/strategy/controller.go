@@ -11,10 +11,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 )
 
 const (
@@ -114,6 +115,12 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		// - omitted on Kubernetes
 		// - 'none' on any platform
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
+	}
+
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+		jaeger.Spec.Ingress.Openshift.SAR == nil {
+		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
+		jaeger.Spec.Ingress.Openshift.SAR = &sar
 	}
 
 	// note that the order normalization matters - UI norm expects all normalized properties

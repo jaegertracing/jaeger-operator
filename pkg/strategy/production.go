@@ -10,8 +10,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
@@ -120,9 +120,6 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled == true {
-		queryDep = inject.Sidecar(jaeger, queryDep)
-	}
 	c.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator

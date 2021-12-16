@@ -1,0 +1,7 @@
+# Assert the Zookeeper stateful set is up and running
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Env.CLUSTER_NAME }}-zookeeper
+status:
+  readyReplicas: {{ .Env.REPLICAS }}

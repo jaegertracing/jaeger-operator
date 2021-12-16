@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 )
 
 func TestKafkaInventory(t *testing.T) {
@@ -21,7 +21,7 @@ func TestKafkaInventory(t *testing.T) {
 			Name: "to-update",
 		},
 		Spec: v1beta2.KafkaSpec{
-			v1.NewFreeForm(map[string]interface{}{
+			FreeForm: v1.NewFreeForm(map[string]interface{}{
 				"key": "original",
 			}),
 		},
@@ -33,7 +33,7 @@ func TestKafkaInventory(t *testing.T) {
 			Labels:      map[string]string{"gopher": "jaeger"},
 		},
 		Spec: v1beta2.KafkaSpec{
-			v1.NewFreeForm(map[string]interface{}{
+			FreeForm: v1.NewFreeForm(map[string]interface{}{
 				"key": "changed",
 			}),
 		},
