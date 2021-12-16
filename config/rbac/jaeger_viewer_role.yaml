@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: jaeger-viewer-role
+  name: jaeger-operator-viewer-role
 rules:
 - apiGroups:
   - jaegertracing.io

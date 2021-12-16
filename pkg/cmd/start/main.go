@@ -36,7 +36,6 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
 	cmd.Flags().String("secure-listen-address", "", "")
 	cmd.Flags().String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	cmd.Flags().String("metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 
@@ -58,7 +57,7 @@ func NewStartCommand() *cobra.Command {
 
 	AddFlags(cmd)
 	cmd.Flags().String("metrics-host", "0.0.0.0", "The host to bind the metrics port")
-	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
+	cmd.Flags().Int32("metrics-port", 8080, "The metrics port")
 	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
 	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")

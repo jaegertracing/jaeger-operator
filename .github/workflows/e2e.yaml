@@ -27,11 +27,11 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2.4.0
 
+      - name: "Install KIND"
+        run: ./.ci/install-kind.sh
+
       - name: "install kuttl"
         run: ./.ci/install-kuttl.sh
-
-      - name: "install gomplate"
-        run: ./.ci/install-gomplate.sh
 
       - name: "run tests"
         env:

@@ -18,9 +18,9 @@ OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
 VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
-IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:$(addprefix v,${VERSION})
+IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:${VERSION}
 BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
-OUTPUT_BINARY ?= "$(BIN_DIR)/manager"
+OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
 # Kafka and kafka operator variables
@@ -51,6 +51,8 @@ ENVTEST_K8S_VERSION = 1.22
 # Options for kuttl testing
 KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
+
+SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v1.13.1
 
 .DEFAULT_GOAL := build
 
@@ -112,7 +114,7 @@ security:
 .PHONY: build
 build: format
 	$(ECHO) Building...
-	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go 
+	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go
 
 .PHONY: docker
 docker:
@@ -252,7 +254,7 @@ else
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output tests/_build/kafka-example.yaml --create-dirs
 	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' tests/_build/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f  tests/_build/kafka-example.yaml
+	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=client -f  tests/_build/kafka-example.yaml
 	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 endif
 
@@ -316,6 +318,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+.PHONY: operatorhub
+operatorhub: check-operatorhub-pr-template
+	$(VECHO)./.ci/operatorhub.sh
 
 .PHONY: check-operatorhub-pr-template
 check-operatorhub-pr-template:
@@ -569,13 +575,22 @@ run-e2e-tests:
 	$(VECHO)$(KUTTL) test
 
 .PHONY: start-kind
-start-kind: 
-	$(VECHO)kind create cluster --config $(KIND_CONFIG)
-	$(VECHO)kind load docker-image local/jaeger-operator:e2e
-	$(VECHO)kind load docker-image local/asserts:e2e
-	$(VECHO)kind load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)kind load docker-image local/jaeger-operator:next
-	$(VECHO)kind load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+start-kind: kind
+# Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
+# file), the cluster is created here. There are multiple reasons to do this:
+# 	* The kubectl command will not work outside KUTTL
+#	* Some KUTTL versions are not able to start properly a Kind cluster
+#	* The cluster will be removed after running KUTTL (this can be disabled). Sometimes,
+#		the cluster teardown is not done properly and KUTTL can not be run with the --start-kind flag
+# When the Kind cluster is not created by Kuttl, the
+# kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
+# container images here.
+	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+	$(VECHO)$(KIND) load docker-image local/jaeger-operator:e2e
+	$(VECHO)$(KIND) load docker-image local/asserts:e2e
+	$(VECHO)$(KIND) load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
+	$(VECHO)$(KIND) load docker-image local/jaeger-operator:next
+	$(VECHO)$(KIND) load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 
 .PHONY: build-assert-job
 build-assert-job:
@@ -588,6 +603,13 @@ install-git-hooks:
 
 set-test-image-vars:
 	$(eval IMG=local/jaeger-operator:e2e)
+
+
+# Generates the released manifests
+release-artifacts: set-image-controller
+	mkdir -p dist
+	$(KUSTOMIZE) build config/default -o dist/jaeger-operator.yaml
+
 
 kuttl:
 ifeq (, $(shell which kubectl-kuttl))
@@ -617,7 +639,7 @@ ifeq (, $(shell which kind))
 	@{ \
 	set -e ;\
 	echo "" ;\
-	echo "ERROR: kind not found." ;\
+	echo "ERROR: KIND not found." ;\
 	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
 	echo "" ;\
 	exit 1 ;\
@@ -633,5 +655,19 @@ install-tools:
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
-		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
-	./.ci/install-gomplate.sh
+		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336
+	$(VECHO)./.ci/install-gomplate.sh
+
+.PHONY: prepare-release
+prepare-release:
+	$(VECHO)./.ci/prepare-release.sh
+
+scorecard-tests:
+	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+
+scorecard-tests-local: kind
+	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+	$(VECHO)docker pull $(SCORECARD_TEST_IMG)
+	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
+	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
+	$(VECHO)$(MAKE) scorecard-tests

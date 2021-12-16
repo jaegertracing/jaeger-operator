@@ -42,6 +42,9 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
+	consolev1 "github.com/openshift/api/console/v1"
+	routev1 "github.com/openshift/api/route/v1"
 )
 
 var (
@@ -53,6 +56,9 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(jaegertracingv1.AddToScheme(scheme))
 	utilruntime.Must(kafkav1beta2.AddToScheme(scheme))
+	utilruntime.Must(routev1.Install(scheme))
+	utilruntime.Must(osimagev1.Install(scheme))
+	utilruntime.Must(consolev1.Install(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -256,7 +262,9 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	ctx, span := tracer.Start(ctx, "createManager")
 	defer span.End()
 
-	metricsAddr := viper.GetString("metrics-bind-address")
+	metricsHost := viper.GetString("metrics-host")
+	metricsPort := viper.GetInt("metrics-port")
+	metricsAddr := fmt.Sprintf("%s:%d", metricsHost, metricsPort)
 	enableLeaderElection := viper.GetBool("leader-elect")
 	probeAddr := viper.GetString("health-probe-bind-address")
 

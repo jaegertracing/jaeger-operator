@@ -15,7 +15,7 @@ metadata:
     capabilities: Deep Insights
     categories: Logging & Tracing
     certified: "false"
-    containerImage: docker.io/jaegertracing/jaeger-operator
+    containerImage: quay.io/jaegertracing/jaeger-operator
     createdAt: "2019-09-04T13:28:40+00:00"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
@@ -32,6 +32,45 @@ spec:
       displayName: Jaeger
       kind: Jaeger
       name: jaegers.jaegertracing.io
+      resources:
+      - kind: ConfigMaps
+        name: ""
+        version: v1
+      - kind: CronJob
+        name: ""
+        version: v1beta1
+      - kind: DaemonSets
+        name: ""
+        version: apps/v1
+      - kind: Deployment
+        name: ""
+        version: apps/v1
+      - kind: Ingress
+        name: ""
+        version: networking/v1
+      - kind: Pod
+        name: ""
+        version: v1
+      - kind: Service
+        name: ""
+        version: v1
+      - kind: StatefulSets
+        name: ""
+        version: apps/v1
+      specDescriptors:
+      - displayName: Strategy
+        path: allInOne.strategy
+      - displayName: Strategy
+        path: collector.strategy
+      - displayName: Strategy
+        path: query.strategy
+      - displayName: Strategy
+        path: strategy
+      statusDescriptors:
+      - displayName: Phase
+        path: phase
+      - displayName: Version
+        path: version
       version: v1
   description: |-
     Jaeger, inspired by [Dapper](https://research.google.com/pubs/pub36356.html) and [OpenZipkin](http://zipkin.io/), is a distributed tracing system released as open source by Uber Technologies. It is used for monitoring and troubleshooting microservices-based distributed systems.
@@ -62,7 +101,7 @@ spec:
   install:
     spec:
       deployments: null
-    strategy: ""
+    strategy: deployment
   installModes:
   - supported: false
     type: OwnNamespace
@@ -79,7 +118,14 @@ spec:
   links:
   - name: Jaeger Operator Source Code
     url: https://github.com/jaegertracing/jaeger-operator
+  maintainers:
+  - email: jaeger-tracing@googlegroups.com
+    name: Jaeger Google Group
   maturity: alpha
   provider:
     name: CNCF
+  replaces: jaeger-operator.v1.28.0
+  selector:
+    matchLabels:
+      name: jaeger-operator
   version: 0.0.0
