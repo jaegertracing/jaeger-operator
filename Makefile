@@ -18,7 +18,7 @@ OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
 VERSION ?= "$(shell git describe --tags | sed 's/^v//')"
-IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:$(addprefix v,${VERSION})
+IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:${VERSION}
 BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -254,7 +254,7 @@ else
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
 	$(VECHO)curl --fail --location $(KAFKA_EXAMPLE) --output tests/_build/kafka-example.yaml --create-dirs
 	$(VECHO)${SED} -i 's/size: 100Gi/size: 10Gi/g' tests/_build/kafka-example.yaml
-	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=true -f  tests/_build/kafka-example.yaml
+	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply --dry-run=client -f  tests/_build/kafka-example.yaml
 	$(VECHO)kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-example.yaml 2>&1 | grep -v "already exists" || true
 endif
 
@@ -655,8 +655,8 @@ install-tools:
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
-		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336 \
-	./.ci/install-gomplate.sh
+		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336
+	$(VECHO)./.ci/install-gomplate.sh
 
 .PHONY: prepare-release
 prepare-release:
