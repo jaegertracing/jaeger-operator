@@ -3,6 +3,8 @@ kind: TestSuite
 crdDir: ../../_build/crds/
 artifactsDir: ../../_build/artifacts/
 commands:
+  - command: kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+  - command: kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.kubernetes.io/instance=cert-manager --timeout=150s
   - script: kubectl create namespace observability 2>&1 | grep -v "already exists" || true
   - command: kubectl apply -f ../../_build/manifests/01-jaeger-operator.yaml -n observability
   - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
