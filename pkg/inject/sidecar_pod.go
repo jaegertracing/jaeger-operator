@@ -3,7 +3,9 @@ package inject
 import (
 	"fmt"
 	"sort"
+	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 
@@ -17,7 +19,7 @@ import (
 // SidecarPod adds a new container to the pod, connecting to the given jaeger instance
 func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := jaeger.Logger().WithField("deployment", pod.Name)
+	logFields := jaeger.Logger().WithField("pod", pod.Name)
 
 	if jaeger == nil {
 		logFields.Trace("no Jaeger instance found, skipping sidecar injection")
@@ -25,7 +27,7 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 	}
 
 	if val, ok := pod.Labels[Label]; ok && val != jaeger.Name {
-		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
+		logFields.Trace("pod is assigned to a different Jaeger instance, skipping sidecar injection")
 		return pod
 	}
 	decoratePod(pod)
@@ -49,27 +51,60 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 }
 
 // PodNeeded determines whether a pod needs to get a sidecar injected or not
+// For pod injection, we only inject if and only if
+// 1. no label "sidecar.jaegertracing.io/injected"
+// 2. no container named "jaeger-agent"
+// the fulfillment of the above conditions normally imply the pod has been taken over the pod controller
 func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
-	if !desired(pod, ns) {
+	if !desiredPod(pod, ns) {
 		return false
 	}
 
 	// do not inject jaeger due to port collision
-	// do not inject if deployment's Annotation value is false
+	// do not inject if pod's Annotation value is false
 	if pod.Labels["app"] == "jaeger" && pod.Labels["app.kubernetes.io/component"] != "query" {
 		return false
 	}
 
+	// A simple test
+	// Skip if hasLabel is true which means the agent should have been injected
+	if _, hasLabel := pod.Labels[Label]; hasLabel {
+		return false
+	}
+
+	// A detailed check, whether there is a jaeger-agent container being injected
 	hasAgent, _ := HasJaegerAgent(pod.Spec.Containers)
 
 	if hasAgent {
-		// has already a sidecar injected and managed by the operator
-		// return true because could require an update.
-		_, hasLabel := pod.Labels[Label]
-		return hasLabel
+		return false
 	}
-	// If no agent but has annotations
+
+	// If no agent at all but has annotations!
 	return true
+}
+
+// desiredPod determines whether a sidecar is desired, based on the annotation from both the pod and the namespace
+func desiredPod(pod *corev1.Pod, ns *corev1.Namespace) bool {
+	logger := log.WithFields(log.Fields{
+		"namespace": pod.Namespace,
+		"pod":       pod.Name, // resource name
+	})
+	appLabelValue, appExist := pod.Labels[PodLabel]
+	nsInjectionLabelValue, nsExist := ns.Labels[NamespaceLabel]
+
+	// TODO: support annotation like istio
+
+	if appExist && !strings.EqualFold(appLabelValue, "false") {
+		logger.Debug("annotation present on pod")
+		return true
+	}
+
+	if nsExist && strings.EqualFold(nsInjectionLabelValue, "enabled") {
+		logger.Debug("injection label present on namespace")
+		return true
+	}
+
+	return false
 }
 
 func decoratePod(pod *corev1.Pod) {
@@ -136,9 +171,8 @@ func containerPod(jaeger *v1.Jaeger, pod *corev1.Pod, agentIdx int) corev1.Conta
 	if len(util.FindItem("--agent.tags=", args)) == 0 {
 		defaultAgentTagsMap := make(map[string]string)
 		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
-		defaultAgentTagsMap["deployment.name"] = pod.Name
 		defaultAgentTagsMap["pod.namespace"] = pod.Namespace
-		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
+		defaultAgentTagsMap["pod.name"] = pod.Name
 		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
 
 		defaultContainerName := getContainerName(pod.Spec.Containers, agentIdx)
@@ -164,7 +198,7 @@ func containerPod(jaeger *v1.Jaeger, pod *corev1.Pod, agentIdx int) corev1.Conta
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	// Use only the agent common spec for volumes and mounts.
-	// We don't want to mount all Jaeger internal volumes into user's deployments
+	// We don't want to mount all Jaeger internal volumes into user's pods
 	volumesAndMountsSpec := jaeger.Spec.Agent.JaegerCommonSpec
 	ca.Update(jaeger, &volumesAndMountsSpec)
 	ca.AddServiceCA(jaeger, &volumesAndMountsSpec)

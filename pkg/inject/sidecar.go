@@ -6,12 +6,11 @@ import (
 	"sort"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
@@ -21,10 +20,17 @@ import (
 )
 
 var (
-	// Annotation is the annotation name to look for when deciding whether or not to inject
+	// NamespaceLabel is the label name to look for in order to make a pre-selection
+	// Only "enabled" is the valid value for namespace-scoped injection
+	NamespaceLabel = "jaeger-injection"
+	// Annotation is the annotation name to look for when deciding whether to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
-	// Label is the label name the operator put on injected deployments.
+	// Label is the label name the operator put on injected deployments or pods.
 	Label = "sidecar.jaegertracing.io/injected"
+	// PodLabel is the label name on the pod level to look for when deciding whether to inject
+	// This is required and recommended approach to make use of mutating-webhook
+	// TODO: support sidecar injection via annotation-level declaration like istio
+	PodLabel = "sidecar.jaertracing.io/inject"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
 	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
@@ -76,17 +82,17 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// desired determines whether a sidecar is desired, based on the annotation from both the deployment/pod and the namespace
-func desired(accessor metav1.ObjectMetaAccessor, ns *corev1.Namespace) bool {
+// desiredDeployment determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
+func desiredDeployment(deployment *appsv1.Deployment, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
-		"namespace": accessor.GetObjectMeta().GetNamespace(),
-		"name":      accessor.GetObjectMeta().GetName(), // resource name
+		"namespace":  deployment.Namespace,
+		"deployment": deployment.Name, // resource name
 	})
-	appAnnotationValue, appExist := accessor.GetObjectMeta().GetAnnotations()[Annotation]
+	appAnnotationValue, appExist := deployment.Annotations[Annotation]
 	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
 	if appExist && !strings.EqualFold(appAnnotationValue, "false") {
-		logger.Debug("annotation present on deployment/pod")
+		logger.Debug("annotation present on deployment")
 		return true
 	}
 
@@ -100,7 +106,7 @@ func desired(accessor metav1.ObjectMetaAccessor, ns *corev1.Namespace) bool {
 
 // DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
 func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !desired(dep, ns) {
+	if !desiredDeployment(dep, ns) {
 		return false
 	}
 

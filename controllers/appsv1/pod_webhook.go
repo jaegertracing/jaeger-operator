@@ -29,7 +29,8 @@ func NewPodInjectorWebhook(c client.Client) webhook.AdmissionHandler {
 }
 
 // You need to ensure the path here match the path in the marker.
-// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=mpod.kb.io,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=object.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=namespace.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1;v1beta1
 
 // podInjector inject Sidecar to Pods
 type podInjector struct {
@@ -38,7 +39,6 @@ type podInjector struct {
 }
 
 // Handle adds a sidecar to a generated pod
-// TODO(backwards-compatibility): I guess it is not possible to know if the already injected sidecar belongs to the current jaeger instance
 func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admission.Response {
 	pod := &corev1.Pod{}
 

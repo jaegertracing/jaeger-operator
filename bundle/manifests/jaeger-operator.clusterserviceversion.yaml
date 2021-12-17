@@ -372,16 +372,6 @@ spec:
                 name: jaeger-operator
             spec:
               containers:
-              - name: manager
-                ports:
-                - containerPort: 9443
-                  name: webhook-server
-                  protocol: TCP
-                resources: {}
-                volumeMounts:
-                - mountPath: /tmp/k8s-webhook-server/serving-certs
-                  name: cert
-                  readOnly: true
               - args:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8383/
@@ -419,6 +409,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: jaeger-operator
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -434,6 +428,10 @@ spec:
                     memory: 128Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: jaeger-operator
@@ -512,7 +510,43 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
-    generateName: mpod.kb.io
+    generateName: namespace.sidecar-injector.jaegertracing.io
+    objectSelector:
+      matchExpressions:
+      - key: sidecar.jaegertracing.io/inject
+        operator: NotIn
+        values:
+        - "false"
+      - key: sidecar.jaegertracing.io/injected
+        operator: DoesNotExist
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
+  - admissionReviewVersions:
+    - v1
+    - v1beta1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
+    generateName: object.sidecar-injector.jaegertracing.io
+    objectSelector:
+      matchExpressions:
+      - key: sidecar.jaegertracing.io/inject
+        operator: In
+        values:
+        - "true"
+      - key: sidecar.jaegertracing.io/injected
+        operator: DoesNotExist
     rules:
     - apiGroups:
       - ""

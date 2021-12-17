@@ -4,3 +4,7 @@ resources:
 
 configurations:
   - kustomizeconfig.yaml
+
+patchesStrategicMerge:
+  - namespace_inject_patch.yaml
+  - pod_inject_patch.yaml
