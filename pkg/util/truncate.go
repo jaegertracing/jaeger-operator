@@ -22,6 +22,8 @@ func Truncate(format string, max int, values ...interface{}) string {
 		// we try to reduce the first string we find
 		for _, value := range values {
 			if excess == 0 {
+				// add the values to the truncated so no formatting issues are encountered
+				truncated = append(truncated, value)
 				continue
 			}
 
