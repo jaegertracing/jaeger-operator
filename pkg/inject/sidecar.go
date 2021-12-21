@@ -19,10 +19,17 @@ import (
 )
 
 var (
+	// NamespaceLabel is the label name to look for in order to make a pre-selection
+	// Only "enabled" is the valid value for namespace-scoped injection
+	NamespaceLabel = "jaeger-injection"
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
 	Label = "sidecar.jaegertracing.io/injected"
+	// PodLabel is the label name on the pod level to look for when deciding whether to inject
+	// This is required and recommended approach to make use of mutating-webhook
+	// TODO: support sidecar injection via annotation-level declaration like istio
+	PodLabel = "sidecar.jaegertracing.io/inject"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
 	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
@@ -55,7 +62,7 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		return dep
 	}
 	decorate(dep)
-	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
+	hasAgent, agentContainerIndex := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 	logFields.Debug("injecting sidecar")
 	if hasAgent { // This is an update
 		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
@@ -74,16 +81,16 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
-func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+// desiredDeployment determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
+func desiredDeployment(deployment *appsv1.Deployment, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
-		"namespace":  dep.Namespace,
-		"deployment": dep.Name,
+		"namespace":  deployment.Namespace,
+		"deployment": deployment.Name, // resource name
 	})
-	depAnnotationValue, depExist := dep.Annotations[Annotation]
+	appAnnotationValue, appExist := deployment.Annotations[Annotation]
 	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
-	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
+	if appExist && !strings.EqualFold(appAnnotationValue, "false") {
 		logger.Debug("annotation present on deployment")
 		return true
 	}
@@ -96,9 +103,9 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	return false
 }
 
-// Needed determines whether a pod needs to get a sidecar injected or not
-func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !desired(dep, ns) {
+// DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
+func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+	if !desiredDeployment(dep, ns) {
 		return false
 	}
 
@@ -108,7 +115,7 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		return false
 	}
 
-	hasAgent, _ := HasJaegerAgent(dep)
+	hasAgent, _ := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 
 	if hasAgent {
 		// has already a sidecar injected and managed by the operator
@@ -120,9 +127,9 @@ func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	return true
 }
 
-// Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
-	jaegerNameDep := target.Annotations[Annotation]
+// Select a suitable Jaeger from the JaegerList for the given Deployment, or nil of none is suitable
+func Select(deploy *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+	jaegerNameDep := deploy.Annotations[Annotation]
 	jaegerNameNs := ns.Annotations[Annotation]
 
 	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
@@ -146,7 +153,7 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 		// If there is more than one available instance in all watched namespaces
 		// then we should find if there is only *one* on the same namespace
 		// if that is the case. we should use it.
-		instancesInNamespace := getJaegerFromNamespace(target.Namespace, availableJaegerPods)
+		instancesInNamespace := getJaegerFromNamespace(deploy.GetNamespace(), availableJaegerPods)
 		if len(instancesInNamespace) == 1 {
 			jaeger := instancesInNamespace[0]
 			return jaeger
@@ -371,12 +378,12 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	}
 }
 
-// HasJaegerAgent checks whether deployment has Jaeger Agent container
-func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
+// HasJaegerAgent checks whether the given container list from either Deployment or Pod has Jaeger Agent container being injected
+func HasJaegerAgent(containers []corev1.Container) (bool, int) {
 	// this pod is annotated, it should have a sidecar
 	// but does it already have one?
-	for i, container := range dep.Spec.Template.Spec.Containers {
-		if container.Name == "jaeger-agent" { // we don't labels/annotations on containers, so, we rely on its name
+	for i, c := range containers {
+		if c.Name == "jaeger-agent" { // we don't have labels/annotations on containers, so, we rely on its name
 			return true, i
 		}
 	}
@@ -385,8 +392,8 @@ func HasJaegerAgent(dep *appsv1.Deployment) (bool, int) {
 
 // EqualSidecar check if two deployments sidecar are equal
 func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
-	depHasAgent, depAgentIndex := HasJaegerAgent(dep)
-	oldDepHasAgent, oldDepIndex := HasJaegerAgent(oldDep)
+	depHasAgent, depAgentIndex := HasJaegerAgent(dep.Spec.Template.Spec.Containers)
+	oldDepHasAgent, oldDepIndex := HasJaegerAgent(oldDep.Spec.Template.Spec.Containers)
 	if depHasAgent != oldDepHasAgent {
 		return false
 	}

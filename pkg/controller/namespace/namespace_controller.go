@@ -99,7 +99,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			continue
 		}
 
-		if inject.Needed(dep, ns) {
+		if inject.DeploymentNeeded(dep, ns) {
 			jaegers := &v1.JaegerList{}
 			opts := []client.ListOption{}
 
@@ -134,7 +134,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			// Don't need injection, may be need to remove the sidecar?
 			// If deployment don't have the annotation and has an hasAgent, this may be injected by the namespace
 			// we need to clean it.
-			hasAgent, _ := inject.HasJaegerAgent(dep)
+			hasAgent, _ := inject.HasJaegerAgent(dep.Spec.Template.Spec.Containers)
 			_, hasDepAnnotation := dep.Annotations[inject.Annotation]
 			if hasAgent && !hasDepAnnotation {
 				jaegerInstance, hasLabel := dep.Labels[inject.Label]
