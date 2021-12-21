@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Sometimes, the Ingress route is there but not 100% ready so, when kubectl tries to get the
+  # hostname, it returns an empty string
+  - command: ./ensure-ingress-host.sh
+  - script: "go run ../../../assert-jobs/query/main.go --service-name={{ .Env.JAEGER_SERVICE }} --query-host={{ .Env.QUERY_HOST }}"

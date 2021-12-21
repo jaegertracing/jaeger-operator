@@ -1,0 +1,20 @@
+#!/bin/bash
+
+KUBECTL=$(which kubectl)
+echo "Checking the Ingress host value was populated"
+n=0
+until [ "$n" -ge 30 ]
+do
+   echo "Try number $n"
+   INGRESS_HOSTNAME=$({{ .Env.GET_URL_COMMAND }})
+   if [[ $INGRESS_HOSTNAME != "" ]]
+   then
+      echo "Hostname is $INGRESS_HOSTNAME"
+      exit 0
+   fi
+
+   n=$((n+1))
+   sleep 10
+done
+
+exit 1

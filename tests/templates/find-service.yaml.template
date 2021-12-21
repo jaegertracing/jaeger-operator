@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: find-service{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: local/asserts:e2e
+          command: ["./query"]
+          env:
+            - name: SERVICE_NAME
+              value: "{{ .Env.JAEGER_SERVICE }}"
+            - name: QUERY_HOST
+              value: "http://{{ .Env.JAEGER_NAME }}-query{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:16686"
+      restartPolicy: OnFailure
