@@ -510,6 +510,36 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
+    generateName: component.sidecar-injector.jaegertracing.io
+    objectSelector:
+      matchExpressions:
+      - key: app
+        operator: In
+        values:
+        - jaeger
+      - key: app.kubernetes.io/component
+        operator: NotIn
+        values:
+        - query
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
+  - admissionReviewVersions:
+    - v1
+    - v1beta1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
     generateName: object.sidecar-injector.jaegertracing.io
     objectSelector:
       matchExpressions:

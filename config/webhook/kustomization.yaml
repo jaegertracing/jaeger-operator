@@ -8,3 +8,4 @@ configurations:
 patchesStrategicMerge:
   - namespace_inject_patch.yaml
   - pod_inject_patch.yaml
+  - component_inject_patch.yaml
