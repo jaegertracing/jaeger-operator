@@ -43,6 +43,13 @@ func TestTruncate(t *testing.T) {
 			cap:      "first value gets dropped, second truncated",
 		},
 		{
+			format:   "%s-%s-collector",
+			max:      63,
+			values:   []interface{}{"4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11ea-b174-c85b7644b6b5", "d0c1e62"},
+			expected: "4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11e-d0c1e62-collector",
+			cap:      "first value gets truncated, second added",
+		},
+		{
 			format:   "%d-%s-collector",
 			max:      63,
 			values:   []interface{}{42, "d0c1e62-4d96-11ea-b174-c85b7644b6b5-5d0c1e62-4d96-11ea-b174-c85b7644b6b5"},
