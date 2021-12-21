@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vertx-create-span-sidecar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vertx-create-span-sidecar
+  template:
+    metadata:
+      labels:
+        app: vertx-create-span-sidecar
+        "sidecar.jaegertracing.io/inject": "true"
+    spec:
+      containers:
+        - name: vertx-create-span-sidecar
+          image: "jaegertracing/vertx-create-span:operator-e2e-tests"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: "/"
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: "/"
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 1

@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: kubectl patch deployment vertx-create-span-sidecar -p '{"spec":{"template":{"metadata":{"labels":{"sidecar.jaegertracing.io/inject":"false"}}}}}'
+    namespaced: true
