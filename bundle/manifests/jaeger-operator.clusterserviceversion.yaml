@@ -510,13 +510,13 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
-    generateName: namespace.sidecar-injector.jaegertracing.io
+    generateName: object.sidecar-injector.jaegertracing.io
     objectSelector:
       matchExpressions:
       - key: sidecar.jaegertracing.io/inject
-        operator: NotIn
+        operator: In
         values:
-        - "false"
+        - "true"
       - key: sidecar.jaegertracing.io/injected
         operator: DoesNotExist
     rules:
@@ -538,13 +538,13 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
-    generateName: object.sidecar-injector.jaegertracing.io
+    generateName: namespace.sidecar-injector.jaegertracing.io
     objectSelector:
       matchExpressions:
       - key: sidecar.jaegertracing.io/inject
-        operator: In
+        operator: NotIn
         values:
-        - "true"
+        - "false"
       - key: sidecar.jaegertracing.io/injected
         operator: DoesNotExist
     rules:
