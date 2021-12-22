@@ -22,6 +22,7 @@ var (
 	_ webhook.AdmissionHandler  = (*podInjector)(nil)
 )
 
+// NewPodInjectorWebhook creates a new pod injector webhook to be registered
 func NewPodInjectorWebhook(c client.Client) webhook.AdmissionHandler {
 	return &podInjector{
 		client: c,
@@ -97,10 +98,10 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 			}
 
 			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
-		} else {
-			msg := "no suitable Jaeger instances found to inject a sidecar"
-			logger.Debug(msg)
 		}
+
+		msg := "no suitable Jaeger instances found to inject a sidecar"
+		logger.Debug(msg)
 	}
 
 	return admission.Allowed("jaeger is not necessary")
