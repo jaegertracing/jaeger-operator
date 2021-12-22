@@ -1,7 +1,0 @@
-# Assert the find-service job was run successfully
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: find-service
-status:
-  succeeded: 1

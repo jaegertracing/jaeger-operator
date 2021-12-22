@@ -16,13 +16,13 @@ spec:
           ]
           env:
             - name: JAEGER_SERVICE_NAME
-              value: "{{ .Env.JAEGER_SERVICE }}"
+              value: "streaming-with-autoprovisioning"
             - name: OPERATION_NAME
-              value: "{{ .Env.JAEGER_OPERATION }}"
+              value: "smoketestoperation"
             - name: JAEGER_ENDPOINT
-              value: "http://{{ .Env.JAEGER_NAME }}-collector-headless{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:14268/api/traces"
+              value: "http://auto-provisioned-collector-headless:14268/api/traces"
             - name: JAEGER_QUERY
-              value: "http://{{ .Env.JAEGER_NAME }}-query{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:16686/api/traces"
+              value: "http://auto-provisioned-query:16686/api/traces"
       restartPolicy: OnFailure
 ---
 apiVersion: batch/v1
@@ -38,7 +38,7 @@ spec:
           command: ["./query"]
           env:
             - name: SERVICE_NAME
-              value: "{{ .Env.JAEGER_SERVICE }}"
+              value: "streaming-with-autoprovisioning"
             - name: QUERY_HOST
-              value: "http://{{ .Env.JAEGER_NAME }}-query{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:16686"
+              value: "http://auto-provisioned-query:16686"
       restartPolicy: OnFailure

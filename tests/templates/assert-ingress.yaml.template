@@ -1,0 +1,8 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Env.ROUTE_NAME }}
+spec:
+  defaultBackend:
+    service:
+      name: {{ .Env.DESTINATION_NAME }}
