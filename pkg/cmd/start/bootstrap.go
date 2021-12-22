@@ -45,6 +45,7 @@ import (
 
 	consolev1 "github.com/openshift/api/console/v1"
 	routev1 "github.com/openshift/api/route/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 var (
@@ -59,6 +60,7 @@ func init() {
 	utilruntime.Must(routev1.Install(scheme))
 	utilruntime.Must(osimagev1.Install(scheme))
 	utilruntime.Must(consolev1.Install(scheme))
+	utilruntime.Must(esv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
