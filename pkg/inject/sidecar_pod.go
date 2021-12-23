@@ -83,6 +83,43 @@ func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
 	return true
 }
 
+// SelectForPod a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
+func SelectForPod(pod *corev1.Pod, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+	jaegerNameDep := pod.Labels[PodLabel]
+	jaegerNameNs := ns.Annotations[Annotation]
+
+	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
+		// name on the deployment has precedence
+		if jaeger := getJaeger(jaegerNameDep, availableJaegerPods); jaeger != nil {
+			return jaeger
+		}
+		return nil
+	}
+	if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
+		return jaeger
+	}
+
+	if strings.EqualFold(jaegerNameDep, "true") || strings.EqualFold(jaegerNameNs, "true") {
+		// If there is only *one* available instance in all watched namespaces
+		// then that's what we'll use
+		if len(availableJaegerPods.Items) == 1 {
+			jaeger := &availableJaegerPods.Items[0]
+			return jaeger
+		}
+		// If there is more than one available instance in all watched namespaces
+		// then we should find if there is only *one* on the same namespace
+		// if that is the case. we should use it.
+		instancesInNamespace := getJaegerFromNamespace(pod.GetNamespace(), availableJaegerPods)
+		if len(instancesInNamespace) == 1 {
+			jaeger := instancesInNamespace[0]
+			return jaeger
+		}
+		// At this point, we have more than one instance that could be used to inject
+		// we should just not inject, as it's not clear which one should be used.
+	}
+	return nil
+}
+
 // desiredPod determines whether a sidecar is desired, based on the annotation from both the pod and the namespace
 func desiredPod(pod *corev1.Pod, ns *corev1.Namespace) bool {
 	logger := log.WithFields(log.Fields{
@@ -137,6 +174,9 @@ func decoratePod(pod *corev1.Pod) {
 				})
 			}
 		}
+	}
+	if pod.Annotations == nil {
+		pod.Annotations = make(map[string]string, len(PrometheusDefaultAnnotations))
 	}
 	for key, value := range PrometheusDefaultAnnotations {
 		_, ok := pod.Annotations[key]

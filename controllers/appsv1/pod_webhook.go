@@ -77,7 +77,7 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 	}
 
 	if inject.PodNeeded(pod, ns) {
-		jaeger := inject.Select(pod, ns, jaegers)
+		jaeger := inject.SelectForPod(pod, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
 				"jaeger":           jaeger.Name,

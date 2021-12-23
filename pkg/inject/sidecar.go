@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
@@ -128,9 +127,9 @@ func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	return true
 }
 
-// Select a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func Select(target metav1.ObjectMetaAccessor, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
-	jaegerNameDep := target.GetObjectMeta().GetAnnotations()[Annotation]
+// Select a suitable Jaeger from the JaegerList for the given Deployment, or nil of none is suitable
+func Select(deploy *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
+	jaegerNameDep := deploy.Annotations[Annotation]
 	jaegerNameNs := ns.Annotations[Annotation]
 
 	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
@@ -154,7 +153,7 @@ func Select(target metav1.ObjectMetaAccessor, ns *corev1.Namespace, availableJae
 		// If there is more than one available instance in all watched namespaces
 		// then we should find if there is only *one* on the same namespace
 		// if that is the case. we should use it.
-		instancesInNamespace := getJaegerFromNamespace(target.GetObjectMeta().GetNamespace(), availableJaegerPods)
+		instancesInNamespace := getJaegerFromNamespace(deploy.GetNamespace(), availableJaegerPods)
 		if len(instancesInNamespace) == 1 {
 			jaeger := instancesInNamespace[0]
 			return jaeger
