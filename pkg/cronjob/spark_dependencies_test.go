@@ -228,13 +228,13 @@ func TestSparkDependenciesResources(t *testing.T) {
 }
 
 func TestDefaultSparkDependenciesImage(t *testing.T) {
-	viper.SetDefault("jaeger-spark-dependencies-image", "jaegertracing/spark-dependencies")
+	viper.SetDefault("jaeger-spark-dependencies-image", "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies")
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
 
 	cjob := CreateSparkDependencies(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
-	assert.Equal(t, "jaegertracing/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestCustomSparkDependenciesImage(t *testing.T) {
