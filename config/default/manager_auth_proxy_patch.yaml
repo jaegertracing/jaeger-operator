@@ -12,7 +12,7 @@ spec:
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
         args:
         - "--secure-listen-address=0.0.0.0:8443"
-        - "--upstream=http://127.0.0.1:8080/"
+        - "--upstream=http://127.0.0.1:8383/"
         - "--logtostderr=true"
         - "--v=10"
         ports:
