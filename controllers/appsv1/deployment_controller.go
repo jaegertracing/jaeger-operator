@@ -30,6 +30,7 @@ func NewDeploymentReconciler(client client.Client, clientReader client.Reader, s
 // Reconcile deployment resource
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(ctx, request)
 }

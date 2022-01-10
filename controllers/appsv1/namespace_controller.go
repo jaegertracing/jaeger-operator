@@ -29,6 +29,7 @@ func NewNamespaceReconciler(client client.Client, clientReader client.Reader, sc
 // +kubebuilder:rbac:groups=core,resources=namespaces/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+
 func (r *NamespaceReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(request)
 }
