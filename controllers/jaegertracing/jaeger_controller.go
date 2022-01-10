@@ -39,7 +39,6 @@ func NewReconciler(client client.Client, clientReader client.Reader, scheme *run
 	}
 }
 
-// Reconcile jaeger resource
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jaegertracing.io,resources=jaegers/finalizers,verbs=update
@@ -57,6 +56,7 @@ func NewReconciler(client client.Client, clientReader client.Reader, scheme *run
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
+// Reconcile jaeger resource
 func (r *JaegerReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(request)
 }
