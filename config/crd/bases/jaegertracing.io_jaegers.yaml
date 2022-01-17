@@ -9390,7 +9390,11 @@ spec:
                     type: object
                   elasticsearch:
                     properties:
+                      doNotProvision:
+                        type: boolean
                       image:
+                        type: string
+                      name:
                         type: string
                       nodeCount:
                         format: int32

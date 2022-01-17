@@ -31,7 +31,8 @@ NOTE: Make sure to read the documentation to learn the performance switches that
 Once minikube has finished starting, get the Operator running:
 
 ```
-make run
+make cert-manager
+IMG=docker.io/$USER/jaeger-operator:latest make generate bundle docker push deploy
 ```
 
 At this point, a Jaeger instance can be installed:
