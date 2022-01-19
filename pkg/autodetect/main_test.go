@@ -118,8 +118,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	}
 
 }
-
-func TestAutoDetectWithError(t *testing.T) {
+func TestAutoDetectWithServerGroupsError(t *testing.T) {
 	// prepare
 	defer viper.Reset()
 
@@ -130,6 +129,41 @@ func TestAutoDetectWithError(t *testing.T) {
 	// sanity check
 	assert.False(t, viper.IsSet("platform"))
 	assert.False(t, viper.IsSet("es-provision"))
+
+	// set the error
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{}, fmt.Errorf("faked error")
+	}
+
+	// Check initial value of "platform"
+	assert.Equal(t, "", viper.GetString("platform"))
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, "", viper.GetString("platform"))
+	assert.False(t, viper.GetBool("es-provision"))
+}
+
+func TestAutoDetectWithServerResourcesForGroupVersionError(t *testing.T) {
+	// prepare
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// sanity check
+	assert.False(t, viper.IsSet("platform"))
+	assert.False(t, viper.IsSet("es-provision"))
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "route.openshift.io",
+		}}}, nil
+	}
 
 	// set the error
 	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
