@@ -22,7 +22,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
-var listenedGroupsMap = map[string]struct{}{"logging.openshift.io": struct{}{}, "kafka.strimzi.io": struct{}{}, "route.openshift.io": struct{}{}}
+var listenedGroupsMap = map[string]bool{"logging.openshift.io": true, "kafka.strimzi.io": true, "route.openshift.io": true}
 
 // Background represents a procedure that runs in the background, periodically auto-detecting features
 type Background struct {
@@ -113,8 +113,7 @@ func (b *Background) autoDetectCapabilities() {
 }
 
 func (b *Background) isInListenedGroups(group metav1.APIGroup) bool {
-	_, exists := listenedGroupsMap[group.Name]
-	return exists
+	return listenedGroupsMap[group.Name]
 }
 
 func (b *Background) availableAPIs(_ context.Context) ([]*metav1.APIResourceList, error) {
