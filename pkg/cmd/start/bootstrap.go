@@ -105,6 +105,12 @@ func bootstrap(ctx context.Context) manager.Manager {
 
 	mgr := createManager(ctx, cfg)
 
+	if d, err := autodetect.New(mgr); err != nil {
+		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
+	} else {
+		d.Start()
+	}
+
 	detectNamespacePermissions(ctx, mgr)
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
@@ -112,11 +118,6 @@ func bootstrap(ctx context.Context) manager.Manager {
 	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
 	if err != nil {
 		log.WithError(err).Error("failed to initialize metrics")
-	}
-	if d, err := autodetect.New(mgr); err != nil {
-		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
-	} else {
-		d.Start()
 	}
 	return mgr
 }
