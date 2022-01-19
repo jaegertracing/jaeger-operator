@@ -66,18 +66,12 @@ func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.
 func (b *Background) Start() {
 	// periodically attempts to auto detect all the capabilities for this operator
 	b.ticker = time.NewTicker(5 * time.Second)
-
-	done := make(chan bool)
-	go func() {
-		b.autoDetectCapabilities()
-		done <- true
-	}()
+	b.autoDetectCapabilities()
+	log.Trace("finished the first auto-detection")
 
 	go func() {
 		for {
 			select {
-			case <-done:
-				log.Trace("finished the first auto-detection")
 			case <-b.ticker.C:
 				b.autoDetectCapabilities()
 			}
