@@ -21,6 +21,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
+var groupsListened = []string{"logging.openshift.io", "kafka.strimzi.io", "route.openshift.io"}
+
 // Background represents a procedure that runs in the background, periodically auto-detecting features
 type Background struct {
 	cl       client.Client
@@ -109,8 +111,29 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
+func (b *Background) isInListenedGroups(group *metav1.APIGroup) bool {
+	for _, groupName := range groupsListened {
+		if group.Name == groupName {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *Background) availableAPIs(_ context.Context) ([]*metav1.APIResourceList, error) {
-	return b.dcl.ServerPreferredResources()
+	apiLists := []*metav1.APIResourceList{}
+	groupList, _ := b.dcl.ServerGroups()
+	for _, sg := range groupList.Groups {
+		if b.isInListenedGroups(&sg) {
+			groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(sg.PreferredVersion.GroupVersion)
+			if err != nil {
+				return apiLists, err
+			}
+			apiLists = append(apiLists, groupAPIList)
+		}
+
+	}
+	return apiLists, nil
 }
 
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
