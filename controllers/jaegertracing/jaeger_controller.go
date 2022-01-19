@@ -55,6 +55,7 @@ func NewReconciler(client client.Client, clientReader client.Reader, scheme *run
 // +kubebuilder:rbac:groups=kafka.strimzi.io,resources=kafkas;kafkausers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
+// +kubebuilder:rbac:groups=image.openshift.io,resources=imagestreams,verbs=get;list;watch
 
 // Reconcile jaeger resource
 func (r *JaegerReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
