@@ -31,9 +31,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 	client := http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+			TLSClientConfig: &tls.Config{},
 		},
 	}
 

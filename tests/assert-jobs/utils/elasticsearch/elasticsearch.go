@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
@@ -47,7 +48,7 @@ func (connection *EsConnection) LoadCertificate(secretPath string) error {
 		return fmt.Errorf("Something failed while loading the x509 key pair: %s", err)
 	}
 
-	caCert, err := ioutil.ReadFile(caFile)
+	caCert, err := ioutil.ReadFile(filepath.Clean(caFile))
 	if err != nil {
 		return fmt.Errorf("Something failed while reading the CA file: %s", err)
 	}
