@@ -2,6 +2,7 @@ package autodetect
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
+
+var listenedGroupsMap = map[string]bool{"logging.openshift.io": true, "kafka.strimzi.io": true, "route.openshift.io": true}
 
 // Background represents a procedure that runs in the background, periodically auto-detecting features
 type Background struct {
@@ -103,8 +106,30 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
+func (b *Background) isInListenedGroups(group metav1.APIGroup) bool {
+	return listenedGroupsMap[group.Name]
+}
+
 func (b *Background) availableAPIs(_ context.Context) ([]*metav1.APIResourceList, error) {
-	return b.dcl.ServerPreferredResources()
+	apiLists := []*metav1.APIResourceList{}
+	groupList, err := b.dcl.ServerGroups()
+	if err != nil {
+		return apiLists, err
+	}
+
+	var errors error
+
+	for _, sg := range groupList.Groups {
+		if b.isInListenedGroups(sg) {
+			groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(sg.PreferredVersion.GroupVersion)
+			if err == nil {
+				apiLists = append(apiLists, groupAPIList)
+			} else {
+				errors = fmt.Errorf("%v; Error getting resources for server group %s: %v", errors, sg.Name, err)
+			}
+		}
+	}
+	return apiLists, errors
 }
 
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
