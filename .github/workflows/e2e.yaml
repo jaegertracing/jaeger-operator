@@ -199,6 +199,33 @@ jobs:
         env:
           KUBE_VERSION: ${{ matrix.kube-version }}
         run: make run-e2e-tests-outside-cluster
+  smoke-e2e-sidecard:
+    name: Sidecard E2E tests
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+       kube-version:
+       - "1.19"
+       - "1.20"
+       - "1.21"
+       - "1.22"
+    steps:
+      - name: "Set up Go"
+        uses: actions/setup-go@v2.1.4
+        with:
+          go-version: 1.16
+      - name: "Check out code into the Go module directory"
+        uses: actions/checkout@v2.4.0
+      - name: "Install KUTTL"
+        run: ./.ci/install-kuttl.sh
+      - name: "install gomplate"
+        run: ./.ci/install-gomplate.sh
+      - name: "Install dependencies"
+        run: make install-tools
+      - name: "Run E2E test suite"
+        env:
+          KUBE_VERSION: ${{ matrix.kube-version }}
+        run: make run-e2e-tests-sidecard
   smoke-e2e-tests:
     name: Smoke E2E tests
     runs-on: ubuntu-20.04
