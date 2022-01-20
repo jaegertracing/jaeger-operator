@@ -200,7 +200,7 @@ jobs:
           KUBE_VERSION: ${{ matrix.kube-version }}
         run: make run-e2e-tests-outside-cluster
   smoke-e2e-sidecard:
-    name: Sidecard E2E tests
+    name: Sidecar E2E tests
     runs-on: ubuntu-20.04
     strategy:
       matrix:
