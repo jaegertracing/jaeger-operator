@@ -1,0 +1,29 @@
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-provisioned-ingester
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+---
+# Assert the Jaeger query is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-provisioned-query
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+---
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-provisioned-collector
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1

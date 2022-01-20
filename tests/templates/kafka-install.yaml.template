@@ -1,0 +1,6 @@
+# Start Kafka
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy-kafka KAFKA_NAMESPACE=$NAMESPACE"
+  - script: "cd {{ .Env.ROOT_DIR }} && make kafka KAFKA_NAMESPACE=$NAMESPACE"

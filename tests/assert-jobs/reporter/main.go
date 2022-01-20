@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
 
 var log logrus.Logger
@@ -63,8 +62,8 @@ func initTracer(serviceName string) (opentracing.Tracer, io.Closer) {
 // spanDate: start date of the reported span
 // serviceName: name of the span service
 func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
-	startQueryTime := spanDate.Add(time.Minute * -1)
-	finishQueryTime := spanDate.Add(time.Minute)
+	startQueryTime := spanDate.Add(time.Minute * -2)
+	finishQueryTime := spanDate.Add(time.Minute * 2)
 
 	jaegerCollectorEndpoint := viper.GetString(enVarJaegerQuery)
 
@@ -75,7 +74,10 @@ func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
 		startQueryTime.UnixNano()/1000,
 		finishQueryTime.UnixNano()/1000,
 	)
-	params := utils.TestParams{Timeout: time.Second * 20, RetryInterval: time.Second * 5}
+	params := utils.TestParams{}
+	params.Parse()
+	params.Timeout = time.Minute
+	params.RetryInterval = time.Second * 5
 
 	err := utils.TestGetHTTP(url, &params, func(response *http.Response, body []byte) (done bool, err error) {
 		resp := struct {
@@ -228,11 +230,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+	logrus.SetOutput(os.Stdout)
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
 	if jaegerEndpoint == "" {
-		log.Errorln("Please, specify a Jaeger Collector endpoint")
+		logrus.Errorln("Please, specify a Jaeger Collector endpoint")
 		os.Exit(1)
 	}
 
@@ -240,7 +245,7 @@ func main() {
 	// REST API is not operative yet
 	err = waitUntilRestAPIAvailable(jaegerEndpoint)
 	if err != nil {
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 		os.Exit(1)
 	}
 

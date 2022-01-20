@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
         - name: asserts-container
-          image: local/asserts:e2e
+          image: {{ .Env.ASSERT_IMG }}
           command: ["./uiconfig"]
           env:
             - name: QUERY_HOSTNAME
