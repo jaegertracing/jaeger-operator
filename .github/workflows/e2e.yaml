@@ -26,6 +26,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KIND"
         run: ./.ci/install-kind.sh
       - name: "Install KUTTL"
@@ -41,6 +43,8 @@ jobs:
   cassandra-e2e-tests:
     name: Cassandra E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -56,6 +60,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -69,6 +75,8 @@ jobs:
   elasticsearch-e2e-tests:
     name: Elasticsearch E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -83,6 +91,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -96,6 +106,8 @@ jobs:
   examples-e2e-tests:
     name: Examples E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -110,6 +122,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -123,6 +137,8 @@ jobs:
   generate-e2e-tests:
     name: Generate E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -137,6 +153,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -150,6 +168,8 @@ jobs:
   istio-e2e-tests:
     name: Istio E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -164,6 +184,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -177,6 +199,8 @@ jobs:
   outside-cluster-e2e-tests:
     name: Outside cluster E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -191,6 +215,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -204,6 +230,8 @@ jobs:
   smoke-e2e-tests:
     name: Smoke E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -218,6 +246,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -231,6 +261,8 @@ jobs:
   streaming-e2e-tests:
     name: Streaming E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -245,6 +277,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
@@ -258,6 +292,8 @@ jobs:
   upgrade-e2e-tests:
     name: Upgrade E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
@@ -272,6 +308,8 @@ jobs:
           go-version: 1.16
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: 0
       - name: "Install KUTTL"
         run: ./.ci/install-kuttl.sh
       - name: "install gomplate"
