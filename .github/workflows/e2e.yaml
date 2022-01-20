@@ -10,6 +10,8 @@ jobs:
   allinone-e2e-tests:
     name: All in one E2E tests
     runs-on: ubuntu-20.04
+    env:
+      VERBOSE: true
     strategy:
       matrix:
        kube-version:
