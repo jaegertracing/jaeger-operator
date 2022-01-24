@@ -3,6 +3,7 @@ package route
 import (
 	corev1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -67,6 +68,9 @@ func (r *QueryRoute) Get() *corev1.Route {
 			To: corev1.RouteTargetReference{
 				Kind: "Service",
 				Name: service.GetNameForQueryService(r.jaeger),
+			},
+			Port: &corev1.RoutePort{
+				TargetPort: intstr.FromString(service.GetPortNameForQueryService(r.jaeger)),
 			},
 			TLS: &corev1.TLSConfig{
 				Termination: termination,
