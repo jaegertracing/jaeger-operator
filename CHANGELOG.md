@@ -1,5 +1,19 @@
 Changes by Version
 ==================
+1.30.0 (2022-01-18)
+-------------------
+* Only expose the query-http[s] port in the OpenShift route ([#1719](https://github.com/jaegertracing/jaeger-operator/pull/1719), [@rkukura](https://github.com/rkukura))
+* Add CR Metrics for Jaeger Kind. ([#1706](https://github.com/jaegertracing/jaeger-operator/pull/1706), [@rubenvp8510](https://github.com/rubenvp8510))
+* Avoid calling k8s api for each resource kind on the cluster ([#1712](https://github.com/jaegertracing/jaeger-operator/pull/1712), [@rubenvp8510](https://github.com/rubenvp8510))
+* First call of autodetect should be synchronous ([#1713](https://github.com/jaegertracing/jaeger-operator/pull/1713), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add permissions for imagestreams ([#1714](https://github.com/jaegertracing/jaeger-operator/pull/1714), [@rubenvp8510](https://github.com/rubenvp8510))
+* Restore default metrics port to avoid breaking helm ([#1703](https://github.com/jaegertracing/jaeger-operator/pull/1703), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add leases permissions to manifest. ([#1704](https://github.com/jaegertracing/jaeger-operator/pull/1704), [@rubenvp8510](https://github.com/rubenvp8510))
+* Change spark-dependencies image to GHCR ([#1701](https://github.com/jaegertracing/jaeger-operator/pull/1701), [@pavolloffay](https://github.com/pavolloffay))
+* Register ES types ([#1688](https://github.com/jaegertracing/jaeger-operator/pull/1688), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for IBM Power (ppc64le) arch ([#1672](https://github.com/jaegertracing/jaeger-operator/pull/1672), [@Abhijit-Mane](https://github.com/Abhijit-Mane))
+* util.Truncate add the values to the truncated after the excess is 0 ([#1678](https://github.com/jaegertracing/jaeger-operator/pull/1678), [@mmatache](https://github.com/mmatache))
+
 
 1.29.1 (2021-12-15)
 -------------------
