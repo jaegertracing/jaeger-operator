@@ -52,7 +52,6 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				logrus.Debug("No cronjobs were found")
-				return false, nil
 			}
 			return false, nil
 		}
