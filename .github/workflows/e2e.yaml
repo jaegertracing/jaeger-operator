@@ -253,7 +253,7 @@ jobs:
       - name: "Run E2E test suite"
         env:
           KUBE_VERSION: ${{ matrix.kube-version }}
-        run: make run-e2e-tests-sidecard
+        run: make run-e2e-tests-sidecar
   smoke-e2e-tests:
     name: Smoke E2E tests
     runs-on: ubuntu-20.04
