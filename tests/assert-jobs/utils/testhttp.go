@@ -28,10 +28,10 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		logrus.Info("Secret provided for the Authorization header")
 	}
 
-	/* #nosec G402 -- No verify the certificate in tests */
 	client := http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
+			// #nosec
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
