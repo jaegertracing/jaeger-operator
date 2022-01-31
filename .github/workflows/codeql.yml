@@ -3,8 +3,12 @@ name: "CodeQL"
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - "tests"
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - "tests"
 
 jobs:
   codeql-analyze:
