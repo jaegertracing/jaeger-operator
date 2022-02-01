@@ -551,6 +551,10 @@ function skip_test(){
     test_name=$1
     message=$2
 
+    if [ "$(basename `pwd`)" != "_build" ]; then
+        cd ..
+    fi
+
     # Remove the folder of the test because some files could be copied
     rm -rf $test_name
 
