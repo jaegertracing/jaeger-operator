@@ -114,6 +114,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 	detectNamespacePermissions(ctx, mgr)
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
+	setupWebhooks(ctx, mgr)
 	detectOAuthProxyImageStream(ctx, mgr)
 	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
 	if err != nil {
@@ -352,6 +353,13 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 
 	if err := appsv1controllers.NewDeploymentReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Deployment")
+		os.Exit(1)
+	}
+}
+
+func setupWebhooks(_ context.Context, mgr manager.Manager) {
+	if err := (&v1.Jaeger{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
 		os.Exit(1)
 	}
 }

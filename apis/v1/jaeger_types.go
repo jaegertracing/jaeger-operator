@@ -510,8 +510,16 @@ type JaegerStorageSpec struct {
 	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
 }
 
-// ElasticsearchSpec represents the ES configuration options that we pass down to the Elasticsearch operator
+// ElasticsearchSpec represents the ES configuration options that we pass down to the OpenShift Elasticsearch operator.
 type ElasticsearchSpec struct {
+	// Name of the OpenShift Elasticsearch instance. Defaults to elasticsearch.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Whether Elasticsearch should be provisioned or not.
+	// +optional
+	DoNotProvision bool `json:"doNotProvision,omitempty"`
+
 	// +optional
 	Image string `json:"image,omitempty"`
 
