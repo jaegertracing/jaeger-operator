@@ -28,6 +28,7 @@ jobs:
         uses: github/codeql-action/init@v1
         with:
           languages: go
+          config-file: ./.github/codeql/config.yaml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v1
