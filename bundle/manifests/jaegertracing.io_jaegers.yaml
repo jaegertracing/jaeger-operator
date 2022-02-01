@@ -9828,6 +9828,8 @@ spec:
                         type: object
                       numberOfDays:
                         type: integer
+                      priorityClassName:
+                        type: string
                       resources:
                         nullable: true
                         properties:
