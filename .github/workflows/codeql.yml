@@ -3,12 +3,8 @@ name: "CodeQL"
 on:
   push:
     branches: [ master ]
-    paths-ignore:
-      - "tests"
   pull_request:
     branches: [ master ]
-    paths-ignore:
-      - "tests"
 
 jobs:
   codeql-analyze:
@@ -28,7 +24,7 @@ jobs:
         uses: github/codeql-action/init@v1
         with:
           languages: go
-          config-file: ./.github/codeql/config.yaml
+          config-file: ./hack/codeql/config.yaml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v1
