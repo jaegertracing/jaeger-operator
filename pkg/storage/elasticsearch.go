@@ -15,16 +15,15 @@ import (
 )
 
 const (
-	volumeName       = "certs"
-	volumeMountPath  = "/certs"
-	caPath           = volumeMountPath + "/ca"
-	keyPath          = volumeMountPath + "/key"
-	certPath         = volumeMountPath + "/cert"
-	elasticsearchURL = "https://elasticsearch:9200"
+	volumeName      = "certs"
+	volumeMountPath = "/certs"
+	caPath          = volumeMountPath + "/ca-bundle.crt"
+	keyPath         = volumeMountPath + "/tls.key"
+	certPath        = volumeMountPath + "/tls.crt"
 )
 
-// ShouldDeployElasticsearch determines whether a new instance of Elasticsearch should be deployed
-func ShouldDeployElasticsearch(s v1.JaegerStorageSpec) bool {
+// ShouldInjectElasticsearchConfiguration determines whether a new instance of Elasticsearch should be deployed
+func ShouldInjectElasticsearchConfiguration(s v1.JaegerStorageSpec) bool {
 	if s.Type != v1.JaegerESStorage {
 		return false
 	}
@@ -40,7 +39,7 @@ type ElasticsearchDeployment struct {
 }
 
 func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
-	container.Args = append(container.Args, "--es.server-urls="+elasticsearchURL)
+	container.Args = append(container.Args, fmt.Sprintf("--es.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
 	if util.FindItem("--es.tls=", container.Args) == "" && util.FindItem("--es.tls.enabled=", container.Args) == "" {
 		container.Args = append(container.Args, "--es.tls.enabled=true")
 	}
@@ -62,9 +61,7 @@ func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) 
 			calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
 	}
 	if strings.EqualFold(util.FindItem("--es-archive.enabled", container.Args), "--es-archive.enabled=true") {
-		container.Args = append(container.Args,
-			"--es-archive.server-urls="+elasticsearchURL,
-		)
+		container.Args = append(container.Args, fmt.Sprintf("--es-archive.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
 		if util.FindItem("--es-archive.tls=", container.Args) == "" && util.FindItem("--es-archive.tls.enabled=", container.Args) == "" {
 			container.Args = append(container.Args, "--es-archive.tls.enabled=true")
 		}
@@ -94,7 +91,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: jaegerSecret.instanceName(ed.Jaeger),
+				SecretName: jaegerESSecretName(ed.Jaeger.Spec.Storage.Elasticsearch.Name),
 			},
 		},
 	})
@@ -115,14 +112,14 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: curatorSecret.instanceName(ed.Jaeger),
+				SecretName: jaegerESSecretName(ed.Jaeger.Spec.Storage.Elasticsearch.Name),
 			},
 		},
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
 		// the size of arguments array should be always 2
-		p.Containers[0].Args[1] = elasticsearchURL
+		p.Containers[0].Args[1] = fmt.Sprintf("https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
 		p.Containers[0].Env = append(p.Containers[0].Env,
 			corev1.EnvVar{Name: "ES_TLS", Value: "true"},
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
@@ -141,6 +138,12 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.DoNotProvision {
+		// Do not provision ES
+		// The ES instance will be reused from already provisioned one
+		return nil
+	}
+
 	// this might yield names like:
 	// elasticsearch-cdm-osdke2ee7864afba6854e498f316bd37347f666simpleprod-1
 	// for the above value to contain at most 63 chars, our uuid has to have at most 42 chars
@@ -152,16 +155,22 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ed.Jaeger.Namespace,
-			Name:      esSecret.name,
+			Name:      ed.Jaeger.Spec.Storage.Elasticsearch.Name,
 			Labels: map[string]string{
 				"app":                         "jaeger",
-				"app.kubernetes.io/name":      util.Truncate(esSecret.name, 63),
+				"app.kubernetes.io/name":      util.Truncate(ed.Jaeger.Spec.Storage.Elasticsearch.Name, 63),
 				"app.kubernetes.io/instance":  util.Truncate(ed.Jaeger.Name, 63),
 				"app.kubernetes.io/component": "elasticsearch",
 				"app.kubernetes.io/part-of":   "jaeger",
 				// We cannot use jaeger-operator label because our controllers would try
 				// to manipulate with objects created by ES operator.
 				//"app.kubernetes.io/managed-by": "jaeger-operator",
+			},
+			Annotations: map[string]string{
+				"logging.openshift.io/elasticsearch-cert-management": "true",
+				// The value has to match searchguard configuration
+				// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34
+				fmt.Sprintf("logging.openshift.io/elasticsearch-cert.%s", jaegerESSecretName(ed.Jaeger.Spec.Storage.Elasticsearch.Name)): "user.jaeger",
 			},
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(ed.Jaeger)},
 		},
@@ -223,4 +232,8 @@ func calculateReplicaShards(policyType esv1.RedundancyPolicyType, dataNodes int)
 	default:
 		return 1
 	}
+}
+
+func jaegerESSecretName(elasticsearch string) string {
+	return fmt.Sprintf("jaeger-%s", elasticsearch)
 }

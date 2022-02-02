@@ -33,7 +33,7 @@ docker-e2e-upgrade-image: Dockerfile $(shell find apis bundle cmd config control
 	$(VECHO)touch $@
 
 .PHONY: prepare-e2e-images
-prepare-e2e-images: docker push build-assert-job docker-e2e-upgrade-image set-assert-e2e-img-name
+prepare-e2e-images: cert-manager docker push build-assert-job docker-e2e-upgrade-image set-assert-e2e-img-name
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Loading the Jaeger Operator Docker image in the KIND cluster...
 	$(VECHO)kind load docker-image ${IMG}
