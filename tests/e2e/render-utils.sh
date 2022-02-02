@@ -230,6 +230,29 @@ function render_install_jaeger() {
 }
 
 
+# Run steps needed before running a Jaeger as DaemonSet
+#   prepare_daemonset <test_step>
+#
+# Example:
+#   prepare_daemonset "simplest" "00"
+# Generates a `00-install.yaml` file with all the steps needed to un a Jaeger
+# instance as DaemonSet.
+function prepare_daemonset(){
+    if [ "$#" -ne 1 ]; then
+        error "Wrong number of parameters used for prepare_daemonset. Usage: prepare_daemonset <test_step>"
+        exit 1
+    fi
+
+    test_step=$1
+
+    if [ $IS_OPENSHIFT = true ]; then
+        cat $EXAMPLES_DIR/openshift/hostport-scc-daemonset.yaml > ./$test_step-install.yaml
+        echo "---" >> ./$test_step-install.yaml
+        cat $EXAMPLES_DIR/openshift/service_account_jaeger-agent-daemonset.yaml >> ./$test_step-install.yaml
+    fi
+}
+
+
 # Render the files to install the given example.
 #   render_install_example <example_name> <test_step>
 #

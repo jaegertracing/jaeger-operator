@@ -5,8 +5,9 @@ source $(dirname "$0")/../render-utils.sh
 start_test "examples-agent-as-daemonset"
 example_name="agent-as-daemonset"
 
-render_install_example "$example_name" "00"
-render_smoke_test_example "$example_name" "01"
+prepare_daemonset "00"
+render_install_example "$example_name" "01"
+render_smoke_test_example "$example_name" "02"
 
 
 start_test "examples-business-application-injected-sidecar"
@@ -22,19 +23,26 @@ render_install_example "$example_name" "00"
 render_smoke_test_example "$example_name" "01"
 
 
-start_test "examples-simple-prod"
-example_name="simple-prod"
-render_install_elasticsearch "00"
-render_install_example "$example_name" "01"
-render_smoke_test_example "$example_name" "02"
+if [ "$SKIP_ES_EXTERNAL" = true ]; then
+    skip_test "examples-simple-prod" "This test requires an external ElasticSearch instance"
+else
+    start_test "examples-simple-prod"
+    example_name="simple-prod"
+    render_install_elasticsearch "00"
+    render_install_example "$example_name" "01"
+    render_smoke_test_example "$example_name" "02"
+fi
 
 
-start_test "examples-simple-prod-with-volumes"
-example_name="simple-prod-with-volumes"
-render_install_elasticsearch "00"
-render_install_example "$example_name" "01"
-render_smoke_test_example "$example_name" "02"
-
+if [ "$SKIP_ES_EXTERNAL" = true ]; then
+    skip_test "examples-simple-prod-with-volumes" "This test requires an external ElasticSearch instance"
+else
+    start_test "examples-simple-prod-with-volumes"
+    example_name="simple-prod-with-volumes"
+    render_install_elasticsearch "00"
+    render_install_example "$example_name" "01"
+    render_smoke_test_example "$example_name" "02"
+fi
 
 
 start_test "examples-simplest"
