@@ -21,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -211,34 +210,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// ES cert handling requires secrets from environment
-	// therefore running this here and not in the strategy
-	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
-		opts := client.MatchingLabels(map[string]string{
-			"app.kubernetes.io/instance":   jaeger.Name,
-			"app.kubernetes.io/managed-by": "jaeger-operator",
-		})
-		secrets := &corev1.SecretList{}
-		if err := r.rClient.List(ctx, secrets, opts); err != nil {
-			jaeger.Status.Phase = v1.JaegerPhaseFailed
-			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
-				// we let it return the real error later
-				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
-			}
-			return jaeger, tracing.HandleError(err, span)
-		}
-		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
-
-		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secretsForNamespace}
-		err = es.CreateCerts()
-		if err != nil {
-			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
-			return jaeger, err
-		}
-		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
-	}
-
-	// secrets have to be created before ES - they are mounted to the ES pod
+	// TODO this can be removed after previously released version is using cert management from EO e.g. in 1.32.0
 	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}

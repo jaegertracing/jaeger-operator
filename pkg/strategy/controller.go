@@ -18,10 +18,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-const (
-	esCertGenerationScript = "./scripts/cert_generation.sh"
-)
-
 var (
 	defaultEsMemory     = resource.MustParse("16Gi")
 	defaultEsCPURequest = resource.MustParse("1")
@@ -129,6 +125,10 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.EsRollover)
 	normalizeUI(&jaeger.Spec)
+
+	if jaeger.Spec.Storage.Elasticsearch.Name == "" {
+		jaeger.Spec.Storage.Elasticsearch.Name = "elasticsearch"
+	}
 }
 
 func distributedStorage(storage v1.JaegerStorageType) bool {
@@ -146,7 +146,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
 		spec.Dependencies.Enabled == nil &&
-		!storage.ShouldDeployElasticsearch(*spec) &&
+		!storage.ShouldInjectElasticsearchConfiguration(*spec) &&
 		tlsIsNotEnabled {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar

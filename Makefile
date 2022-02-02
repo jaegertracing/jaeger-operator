@@ -30,9 +30,6 @@ STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.nam
 KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
-ES_OPERATOR_NAMESPACE ?= openshift-logging
-ES_OPERATOR_BRANCH ?= release-4.4
-ES_OPERATOR_IMAGE ?= quay.io/openshift/origin-elasticsearch-operator:4.4
 # Istio binary path and version
 ISTIO_VERSION ?= 1.11.2
 ISTIO_PATH = ./tests/_build/
@@ -41,10 +38,17 @@ GOPATH ?= "$(HOME)/go"
 GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
+CERTMANAGER_VERSION ?= 1.6.1
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
 
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
@@ -140,15 +144,6 @@ unit-tests: envtest
 	@echo Running unit tests...
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
-.PHONY: run
-run: manifests generate format vet
-	$(VECHO)rm -rf /tmp/_cert*
-	$(VECHO)go run -ldflags ${LD_FLAGS} ./main.go start ${CLI_FLAGS}
-
-.PHONY: run-debug
-run-debug: run
-run-debug: CLI_FLAGS = --log-level=debug --tracing-enabled=true
-
 .PHONY: set-max-map-count
 set-max-map-count:
 	# This is not required in OCP 4.1. The node tuning operator configures the property automatically
@@ -161,31 +156,22 @@ set-node-os-linux:
 	# Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
 	$(VECHO)kubectl label nodes --all kubernetes.io/os=linux --overwrite
 
-.PHONY: deploy-es-operator
-deploy-es-operator: set-node-os-linux set-max-map-count deploy-prometheus-operator
-ifeq ($(OLM),true)
-	$(ECHO) Skipping es-operator deployment, assuming it has been installed via OperatorHub
-else
-	$(VECHO)kubectl create namespace ${ES_OPERATOR_NAMESPACE} 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE}
-	$(VECHO)kubectl set image deployment/elasticsearch-operator elasticsearch-operator=${ES_OPERATOR_IMAGE} -n ${ES_OPERATOR_NAMESPACE}
-endif
+cert-manager: cmctl
+	# Consider using cmctl to install the cert-manager once install command is not experimental
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
+	cmctl check api --wait=5m
 
-.PHONY: undeploy-es-operator
-undeploy-es-operator:
-ifeq ($(OLM),true)
-	$(ECHO) Skipping es-operator undeployment, as it should have been installed via OperatorHub
+cmctl:
+ifeq (, $(shell which cmctl))
+	@{ \
+	curl -L -o /tmp/cmctl.tar.gz https://github.com/jetstack/cert-manager/releases/download/v$(CERTMANAGER_VERSION)/cmctl-`go env GOOS`-`go env GOARCH`.tar.gz ;\
+	cd /tmp ;\
+	tar xzf cmctl.tar.gz ;\
+	mv cmctl $(GOBIN) ;\
+	}
+CTL=$(GOBIN)/cmctl
 else
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/05-deployment.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/04-crd.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/03-role-bindings.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/02-role.yaml --ignore-not-found=true || true
-	$(VECHO)kubectl delete -f https://raw.githubusercontent.com/openshift/elasticsearch-operator/${ES_OPERATOR_BRANCH}/manifests/01-service-account.yaml -n ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true || true
-	$(VECHO)kubectl delete namespace ${ES_OPERATOR_NAMESPACE} --ignore-not-found=true 2>&1 || true
+CTL=$(shell which cmctl)
 endif
 
 .PHONY: es
