@@ -12,4 +12,6 @@ else
     $GOMPLATE -f ./jaeger-template.yaml.template -o ./jaeger-deployment.yaml
 
     render_smoke_test "$JAEGER_NAME" "allInOne" "01"
+
+    unset JAEGER_NAME
 fi

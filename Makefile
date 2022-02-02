@@ -41,7 +41,7 @@ SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
 
 USE_KIND_CLUSTER ?= true
-OLM ?= false
+export OLM ?= false
 SKIP_ES_EXTERNAL ?= false
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0

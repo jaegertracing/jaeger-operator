@@ -40,10 +40,12 @@ function render_smoke_test() {
 
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
     export JAEGER_COLLECTOR_ENDPOINT="http://$jaeger-collector-headless:14268"
+    export JAEGER_NAME=$jaeger
 
     $GOMPLATE -f $template -o ./$test_step-smoke-test.yaml
     $GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./$test_step-assert.yaml
 
+    unset JAEGER_NAME
     unset JAEGER_QUERY_ENDPOINT
     unset JAEGER_COLLECTOR_ENDPOINT
 }
@@ -668,9 +670,10 @@ cd _build
 info "Rendering kuttl-test.yaml"
 
 if [ $IS_OPENSHIFT = true ]; then
-    export CRD_DIR=""
+    CRD_DIR=""
 else
-    export CRD_DIR="../../../_build/crds/"
+    CRD_DIR="../../../_build/crds/"
 fi
+export CRD_DIR
 
 $GOMPLATE -f ../../../templates/kuttl-test.yaml -o ./kuttl-test.yaml

@@ -31,6 +31,9 @@ $GOMPLATE -f ./01-install.yaml -o ./05-install.yaml
 # Check if the indexes were cleaned or not
 render_check_indices "00" "06" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-count-indices', '0',"
 
+unset JAEGER_NAME
+unset CRONJOB_NAME
+
 
 if [ "$SKIP_ES_EXTERNAL" = true ]; then
     skip_test "es-simple-prod" "skipping es-simple-prod test tests because SKIP_ES_EXTERNAL is true. Covered by the self_provisioned_elasticsearch_test"
