@@ -666,4 +666,11 @@ find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -n 1 -I {} cp 
 cd _build
 
 info "Rendering kuttl-test.yaml"
+
+if [ $IS_OPENSHIFT = true ]; then
+    export CRD_DIR=""
+else
+    export CRD_DIR="../../../_build/crds/"
+fi
+
 $GOMPLATE -f ../../../templates/kuttl-test.yaml -o ./kuttl-test.yaml
