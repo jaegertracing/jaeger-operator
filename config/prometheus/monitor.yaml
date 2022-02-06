@@ -4,7 +4,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
+    name: jaeger-operator
   name: jaeger-operator-metrics-monitor
 spec:
   endpoints:
@@ -19,3 +19,4 @@ spec:
   selector:
     matchLabels:
       name: jaeger-operator
+      app.kubernetes.io/component: metrics
