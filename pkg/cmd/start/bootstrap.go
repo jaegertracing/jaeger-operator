@@ -34,6 +34,7 @@ import (
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
+	esv1controllers "github.com/jaegertracing/jaeger-operator/controllers/elasticsearch"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
@@ -353,6 +354,11 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 
 	if err := appsv1controllers.NewDeploymentReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Deployment")
+		os.Exit(1)
+	}
+
+	if err := esv1controllers.NewElasticsearchReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Elasticsearch")
 		os.Exit(1)
 	}
 }
