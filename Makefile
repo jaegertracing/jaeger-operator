@@ -416,7 +416,7 @@ ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
 # file), the cluster is created here. There are multiple reasons to do this:
-#	* The kubectl command will not work outside KUTTL
+# 	* The kubectl command will not work outside KUTTL
 #	* Some KUTTL versions are not able to start properly a Kind cluster
 #	* The cluster will be removed after running KUTTL (this can be disabled). Sometimes,
 #		the cluster teardown is not done properly and KUTTL can not be run with the --start-kind flag
@@ -514,26 +514,19 @@ operator-sdk:
 	chmod +x $(OPERATOR_SDK) ;\
 	}
 
+BIN_LOCAL = $(shell pwd)/bin
+CRDOC = $(BIN_LOCAL)/crdoc
 api-docs: crdoc kustomize
 	@{ \
 	set -e ;\
 	TMP_DIR=$$(mktemp -d) ; \
 	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
-	$(API_REF_GEN) crdoc --resources $$TMP_DIR/crd-output.yaml --output docs/api.md ;\
+	$(CRDOC) --resources $$TMP_DIR/crd-output.yaml --output docs/api.md ;\
 	}
+
 
 # Find or download crdoc
 crdoc:
-ifeq (, $(shell which crdoc))
-	@{ \
-	set -e ;\
-	API_REF_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$API_REF_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go install fybrik.io/crdoc@v0.5.2 ;\
-	rm -rf $$API_REF_GEN_TMP_DIR ;\
-	}
-API_REF_GEN=$(GOBIN)/crdoc
-else
-API_REF_GEN=$(shell which crdoc)
+ifeq (, $(shell which $(CRDOC)))
+	@GOBIN=$(BIN_LOCAL) go install fybrik.io/crdoc@v0.5.2
 endif
