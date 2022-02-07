@@ -12,12 +12,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 const metricPrefix = "jaeger_operator_instances"
 const agentStrategiesMetric = "agent_strategies"
 const storageMetric = "storage_types"
 const strategiesMetric = "strategies"
+const autoprovisioningMetric = "autoprovisioning"
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
@@ -35,7 +37,10 @@ func (i *instancesView) reset() {
 }
 
 func (i *instancesView) Record(jaeger v1.Jaeger) {
-	i.Count[i.KeyFn(jaeger)]++
+	label := i.KeyFn(jaeger)
+	if label != "" {
+		i.Count[label]++
+	}
 }
 
 func (i *instancesView) Report(result metric.BatchObserverResult) {
@@ -115,6 +120,21 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 		return err
 	}
 	i.observations = append(i.observations, obs)
+
+	obs, err = newObservation(batch, autoprovisioningMetric,
+		"Number of instances using autoprovisioning",
+		"type",
+		func(jaeger v1.Jaeger) string {
+			if storage.ShouldInjectElasticsearchConfiguration(jaeger.Spec.Storage) {
+				return "elasticsearch"
+			}
+			return ""
+		})
+	if err != nil {
+		return err
+	}
+	i.observations = append(i.observations, obs)
+
 	return nil
 }
 
