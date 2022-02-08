@@ -139,6 +139,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: a.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
