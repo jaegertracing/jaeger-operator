@@ -47,7 +47,16 @@ render-e2e-tests: generate-e2e-files list-test-suites
 
 .PHONY: list-test-suites
 list-test-suites:
-	$(VECHO)$(eval TEST_SUITES := $(shell find tests/e2e -name Makefile | grep  -E -o '(\w|\-)*' | grep -v 'test' | grep -v 'Makefile' | grep -v 'e2e'))
+	$(eval TEST_SUITES := $(shell find tests/e2e -name Makefile | grep  -E -o '(\w|\-)*' | grep -v 'test' | grep -v 'Makefile' | grep -v 'e2e'))
+
+.PHONE: e2e-test-suites
+e2e-test-suites: list-test-suites
+	@echo "Test suites to run"
+	@for test_suite in $(TEST_SUITES) ; do \
+		echo -e "\t $$test_suite" ; \
+	done
+
+	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
 
 run-suite-tests:
 	$(VECHO)$(MAKE) prepare-e2e-tests render-e2e-tests-$(TEST_SUITE_NAME) start-kind
