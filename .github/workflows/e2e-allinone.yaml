@@ -1,0 +1,26 @@
+name: All in One E2E tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run-e2e-allinone-test-suite:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+       kube-version:
+       - "1.19"
+       - "1.20"
+       - "1.21"
+       - "1.22"
+    name: Run all in one E2E tests
+    steps:
+      - name: "Check out code into the Go module directory"
+        uses: actions/checkout@v2
+      - uses: ./hack/actions/e2e
+        with:
+          testsuite_name: allinone
+          kube_version: ${{ matrix.kube-version }}

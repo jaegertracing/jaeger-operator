@@ -1,0 +1,44 @@
+# GitHub action to run the E2E tests.
+# For this purpose, it would be a better idea to use a reusable workflow. There
+# is some documentation about how to use a local reusable workflow:
+#   https://github.blog/changelog/2022-01-25-github-actions-reusable-workflows-can-be-referenced-locally/
+# But it seems it doesn't work properly:
+#   https://github.community/t/allow-reusable-workflows-to-be-located-at-arbitrary-locations-and-be-local/212745/7
+# So, the CI uses a local GitHub action as a template to run all the tests.
+name: Run E2E tests
+description: "Run an E2E test suite"
+
+inputs:
+  testsuite_name:
+    description: "Name of the test suite to run"
+    required: true
+  kube_version:
+    description: "Kubernetes version to use"
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Set up Go"
+      uses: actions/setup-go@v2.1.4
+      with:
+        go-version: 1.16
+    - name: "Install KIND"
+      run: ./.ci/install-kind.sh
+      shell: bash
+    - name: "Install KUTTL"
+      run: ./.ci/install-kuttl.sh
+      shell: bash
+    - name: "Install gomplate"
+      run: ./.ci/install-gomplate.sh
+      shell: bash
+    - name: "Install dependencies"
+      run: make install-tools
+      shell: bash
+    - name: "Run E2E ${{ inputs.testsuite_name }} test suite on ${{ inputs.kube_version }}"
+      env:
+        VERBOSE: "true"
+        KUBE_VERSION: "${{ inputs.kube_version }}"
+      run: make run-e2e-tests-${{ inputs.testsuite_name }}
+      shell: bash
