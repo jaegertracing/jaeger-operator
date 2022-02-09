@@ -76,6 +76,10 @@ func TestUnmarshalToArgs(t *testing.T) {
 			in:   `{"a": 5000000000, "b": 15.222, "c":true, "d": "foo"}`,
 			args: []string{"--a=5000000000", "--b=15.222", "--c=true", "--d=foo"},
 		},
+		{
+			in:  `{"a": {"b": {"c": [{"d": "e", "f": {"g": {"h": "i"}}}]}}}`,
+			err: "invalid option type, expect: string, got: map[string]interface {}",
+		},
 	}
 	for _, test := range tests {
 		opts := Options{}
