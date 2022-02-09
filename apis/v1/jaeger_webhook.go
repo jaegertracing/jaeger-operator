@@ -93,6 +93,7 @@ func (j *Jaeger) ValidateDelete() error {
 	return nil
 }
 
+// OpenShiftElasticsearchNodeCount returns total node count of Elasticsearch nodes.
 func OpenShiftElasticsearchNodeCount(spec esv1.ElasticsearchSpec) int32 {
 	nodes := int32(0)
 	for i := 0; i < len(spec.Nodes); i++ {
@@ -101,6 +102,7 @@ func OpenShiftElasticsearchNodeCount(spec esv1.ElasticsearchSpec) int32 {
 	return nodes
 }
 
+// ShouldInjectOpenShiftElasticsearchConfiguration returns true if OpenShift Elasticsearch is used and its configuration should be used.
 func ShouldInjectOpenShiftElasticsearchConfiguration(s JaegerStorageSpec) bool {
 	if s.Type != JaegerESStorage {
 		return false

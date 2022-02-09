@@ -357,7 +357,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 		os.Exit(1)
 	}
 
-	if err := esv1controllers.NewElasticsearchReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
+	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Elasticsearch")
 		os.Exit(1)
 	}

@@ -10,14 +10,14 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/controller/elasticsearch"
 )
 
-// ElasticsearchReconciler reconciles a Deployment object
-type ElasticsearchReconciler struct {
+// Reconciler reconciles a Deployment object
+type Reconciler struct {
 	reconcilier *elasticsearch.ReconcileElasticsearch
 }
 
-// NewElasticsearchReconciler creates a new deployment reconciler controller
-func NewElasticsearchReconciler(client client.Client, clientReader client.Reader) *ElasticsearchReconciler {
-	return &ElasticsearchReconciler{
+// NewReconciler creates a new deployment reconciler controller
+func NewReconciler(client client.Client, clientReader client.Reader) *Reconciler {
+	return &Reconciler{
 		reconcilier: elasticsearch.New(client, clientReader),
 	}
 }
@@ -25,12 +25,12 @@ func NewElasticsearchReconciler(client client.Client, clientReader client.Reader
 // +kubebuilder:rbac:groups=logging.openshift.io,resources=elasticsearch,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile deployment resource
-func (r *ElasticsearchReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	return r.reconcilier.Reconcile(ctx, request)
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ElasticsearchReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&esv1.Elasticsearch{}).
 		Complete(r)
