@@ -33,11 +33,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
-	esKindInstalled, err := isOpenShiftElasticsearchController(mgr)
+	esCRDInstalled, err := isOpenShiftESCRDAvailable(mgr)
 	if err != nil {
 		return err
 	}
-	if esKindInstalled {
+	if esCRDInstalled {
 		return ctrl.NewControllerManagedBy(mgr).
 			For(&esv1.Elasticsearch{}).
 			Complete(r)
@@ -47,7 +47,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 const elasticsearchGroup = "logging.openshift.io"
 
-func isOpenShiftElasticsearchController(mgr ctrl.Manager) (bool, error) {
+func isOpenShiftESCRDAvailable(mgr ctrl.Manager) (bool, error) {
 	dcl, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return false, err
