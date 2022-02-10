@@ -156,3 +156,79 @@ func TestValueObservedMetrics(t *testing.T) {
 		assertLabelAndValues(t, e.name, meter.MeasurementBatches, e.labels, e.value)
 	}
 }
+
+func TestAutoProvisioningESObservedMetric(t *testing.T) {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{}, &v1.JaegerList{})
+
+	nsn := types.NamespacedName{
+		Name:      "my-jaeger-prod",
+		Namespace: "test",
+	}
+
+	esOptionsMap := map[string]interface{}{
+		"es.server-urls": "http://localhost:9200",
+	}
+
+	noAutoProvisioningInstance := v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nsn.Name,
+			Namespace: nsn.Namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1.JaegerStorageSpec{
+				Type:    v1.JaegerESStorage,
+				Options: v1.NewOptions(esOptionsMap),
+			},
+		},
+	}
+
+	autoprovisioningInstance := v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nsn.Name,
+			Namespace: nsn.Namespace,
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "production",
+			Storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		&autoprovisioningInstance,
+	}
+
+	cl := fake.NewFakeClientWithScheme(s, objs...)
+	meter, provider := oteltest.NewMeterProvider()
+	global.SetMeterProvider(provider)
+
+	instancesObservedValue := newInstancesMetric(cl)
+	err := instancesObservedValue.Setup(context.Background())
+	require.NoError(t, err)
+	meter.RunAsyncInstruments()
+
+	expectedMetric := newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 1)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+
+	// Test deleting autoprovisioning
+	err = cl.Delete(context.Background(), &autoprovisioningInstance)
+	require.NoError(t, err)
+
+	// Reset measurement batches
+	meter.MeasurementBatches = []oteltest.Batch{}
+	meter.RunAsyncInstruments()
+
+	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+
+	// Create no autoprovisioned instance
+	err = cl.Delete(context.Background(), &noAutoProvisioningInstance)
+	meter.MeasurementBatches = []oteltest.Batch{}
+	meter.RunAsyncInstruments()
+	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+
+}
