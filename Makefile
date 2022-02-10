@@ -464,6 +464,7 @@ set-image-controller: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 
 kind:
+ifeq ($(USE_KIND_CLUSTER),true)
 ifeq (, $(shell which kind))
 	@{ \
 	set -e ;\
@@ -475,6 +476,7 @@ ifeq (, $(shell which kind))
 	}
 else
 KIND=$(shell which kind)
+endif
 endif
 
 tools: kustomize controller-gen operator-sdk
