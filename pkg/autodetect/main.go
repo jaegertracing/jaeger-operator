@@ -106,6 +106,7 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
+// AvailableAPIs returns available list of CRDs from the cluster.
 func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]bool) ([]*metav1.APIResourceList, error) {
 	var apiLists []*metav1.APIResourceList
 	groupList, err := discovery.ServerGroups()
@@ -279,6 +280,7 @@ func isOpenShift(apiList []*metav1.APIResourceList) bool {
 	return false
 }
 
+// IsElasticsearchOperatorAvailable returns true if OpenShift Elasticsearch CRD is available in the cluster.
 func IsElasticsearchOperatorAvailable(apiList []*metav1.APIResourceList) bool {
 	for _, r := range apiList {
 		if strings.HasPrefix(r.GroupVersion, "logging.openshift.io") {
