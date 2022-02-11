@@ -2,7 +2,7 @@ name: "Publish images"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   publish:
@@ -17,5 +17,5 @@ jobs:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
         QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-        OPERATOR_VERSION: master
+        OPERATOR_VERSION: main
       run: ./.ci/publish-images.sh

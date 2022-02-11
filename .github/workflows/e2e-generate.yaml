@@ -2,9 +2,9 @@ name: Generate E2E tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   run-e2e-generate-test-suite:
