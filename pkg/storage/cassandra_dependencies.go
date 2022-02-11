@@ -112,7 +112,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	podTimeout := &podTimeoutSeconds
 
 	// TTL for trace data, in seconds (default: 172800, 2 days)
-	// see: https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/schema/create.sh
+	// see: https://github.com/jaegertracing/jaeger/blob/main/plugin/storage/cassandra/schema/create.sh
 	traceTTLSeconds := "172800"
 	if jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL)
