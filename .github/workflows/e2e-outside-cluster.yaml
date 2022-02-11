@@ -2,9 +2,9 @@ name: Outside cluster E2E tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   run-e2e-outside-cluster-test-suite:
