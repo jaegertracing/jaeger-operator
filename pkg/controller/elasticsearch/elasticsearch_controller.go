@@ -92,7 +92,7 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 				logger.WithField("jaeger", jaeger.Name).WithField("old-es-node-count", jaeger.Spec.Storage.Elasticsearch.NodeCount).WithField("new-es-node-count", esNodeCount).Info("Updating Jaeger CR because OpenShift ES number of nodes changed")
 				jaeger.Spec.Storage.Elasticsearch.NodeCount = esNodeCount
 				if err := r.client.Update(ctx, jaeger); err != nil {
-					log.WithError(err).Error("failed to update deployment with sidecar")
+					log.WithError(err).Error("failed to update Jaeger instance")
 					return reconcile.Result{}, tracing.HandleError(err, span)
 				}
 			}
