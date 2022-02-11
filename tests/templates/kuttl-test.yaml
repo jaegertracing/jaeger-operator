@@ -3,9 +3,8 @@ kind: TestSuite
 crdDir: ../../_build/crds/
 artifactsDir: ../../_build/artifacts/
 commands:
-  - script: cd ../../.. && make cert-manager
+  - script: cd ../../.. && make cert-manager && make deploy-prometheus-operator
   - script: kubectl create namespace observability 2>&1 | grep -v "already exists" || true
-  - command: make deploy-prometheus-operator
   - command: kubectl apply -f ../../_build/manifests/01-jaeger-operator.yaml -n observability
   - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
   - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
