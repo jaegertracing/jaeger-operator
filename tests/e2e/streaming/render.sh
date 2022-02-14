@@ -2,49 +2,23 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-cd $SUITE_DIR
+start_test "streaming-simple"
+render_install_elasticsearch "00"
+render_install_kafka "my-cluster" "1" "01"
+render_smoke_test "simple-streaming" "production" "05"
 
-echo "Rendering templates for streaming-simple test"
-cd streaming-simple
-export CLUSTER_NAME=my-cluster
-export REPLICAS=1
-export JAEGER_SERVICE=simple-streaming
-export JAEGER_OPERATION=smoketestoperation
-export JAEGER_NAME=simple-streaming
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-install.yaml.template -o ./01-install.yaml
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./01-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./02-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./04-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test.yaml.template -o ./06-smoke-test.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./06-assert.yaml
 
-cd ..
+start_test "streaming-with-tls"
+render_install_kafka "my-cluster" "1" "00"
+render_install_elasticsearch "01"
+render_smoke_test "tls-streaming" "production" "06"
 
-echo "Rendering templates for streaming-with-tls test"
-cd streaming-with-tls
-export JAEGER_SERVICE=streaming-with-tls
-export JAEGER_NAME=tls-streaming
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-install.yaml.template -o ./01-install.yaml
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./01-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./02-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./04-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test.yaml.template -o ./07-smoke-test.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./07-assert.yaml
-
-cd ..
-
-echo "Rendering templates for streaming-with-autoprovisioning test"
-cd streaming-with-autoprovisioning
-export CLUSTER_NAME=auto-provisioned
+start_test "streaming-with-autoprovisioning"
+export CLUSTER_NAME="auto-provisioned"
 export REPLICAS=3
-export JAEGER_SERVICE=streaming-with-autoprovisioning
-export JAEGER_NAME=auto-provisioned
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-install.yaml.template -o ./01-install.yaml
-$GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./01-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./02-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./03-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./04-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test.yaml.template -o ./05-smoke-test.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./05-assert.yaml
+jaeger_name="auto-provisioned"
+render_install_elasticsearch "01"
+$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
+$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./04-assert.yaml
+$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./05-assert.yaml
+render_smoke_test "$jaeger_name" "production" "06"

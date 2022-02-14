@@ -20,10 +20,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2.4.0
 
+      # Disable CodeQL for tests
+      # https://github.com/github/codeql/issues/4786
+      - run: rm -rf ./tests
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
         with:
           languages: go
+          config-file: ./hack/codeql/config.yaml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v1
