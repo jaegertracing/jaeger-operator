@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./reporter 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./query -a ./tests/assert-jobs/query/main.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./index -a ./tests/assert-jobs/index/main.go
 
-FROM scratch
+FROM golang:1.16
 WORKDIR /
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/uiconfig .
 COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/reporter .

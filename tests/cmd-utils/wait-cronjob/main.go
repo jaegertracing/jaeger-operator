@@ -19,8 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
 
 const (
@@ -192,17 +190,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+	logrus.SetOutput(os.Stdout)
+
 	clientset := getKubernetesClient()
 
 	err = checkCronJobExists(clientset)
 	if err != nil {
-		log.Errorln(err)
+		logrus.Errorln(err)
 		os.Exit(1)
 	}
 
 	err = waitForNextJob(clientset)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
