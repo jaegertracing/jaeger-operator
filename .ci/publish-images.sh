@@ -4,7 +4,7 @@ BASE_BUILD_IMAGE=${BASE_BUILD_IMAGE:-"jaegertracing/jaeger-operator"}
 OPERATOR_VERSION=${OPERATOR_VERSION:-$(git describe --tags)}
 
 ## if we are on a release tag, let's extract the version number
-## the other possible value, currently, is 'master' (or another branch name)
+## the other possible value, currently, is 'main' (or another branch name)
 ## if we are not running in the CI, it fallsback to the `git describe` above
 if [[ $OPERATOR_VERSION == v* ]]; then
     OPERATOR_VERSION=$(echo ${OPERATOR_VERSION} | grep -Po "([\d\.]+)")

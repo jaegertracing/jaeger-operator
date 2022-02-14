@@ -2,9 +2,9 @@ name: All in One E2E tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   run-e2e-allinone-test-suite:

@@ -550,7 +550,7 @@ type JaegerCassandraCreateSchemaSpec struct {
 
 	// Image specifies the container image to use to create the cassandra schema.
 	// The Image is used by a Kubernetes Job, defaults to the image provided through the cli flag "jaeger-cassandra-schema-image" (default: jaegertracing/jaeger-cassandra-schema).
-	// See here for the jaeger-provided image: https://github.com/jaegertracing/jaeger/tree/master/plugin/storage/cassandra
+	// See here for the jaeger-provided image: https://github.com/jaegertracing/jaeger/tree/main/plugin/storage/cassandra
 	// +optional
 	Image string `json:"image,omitempty"`
 
