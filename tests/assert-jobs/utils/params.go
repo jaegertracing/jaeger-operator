@@ -15,8 +15,8 @@ const (
 )
 
 const (
-	timeOutDefault       = 600
-	retryIntervalDefault = 8
+	timeOutDefault       = 600 // seconds
+	retryIntervalDefault = 8   // seconds
 	secretDefault        = ""
 )
 

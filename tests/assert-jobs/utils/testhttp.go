@@ -28,6 +28,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		logrus.Info("Secret provided for the Authorization header")
 	}
 
+	// TODO: https://github.com/jaegertracing/jaeger-operator/issues/951
 	client := http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{

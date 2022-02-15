@@ -81,8 +81,7 @@ func main() {
 	})
 
 	if err != nil {
-		logrus.Error("Error querying the Jaeger instance: ", err)
-		os.Exit(1)
+		logrus.Fatalln("Error querying the Jaeger instance: ", err)
 	}
 	logrus.Info("Successfully terminates")
 }

@@ -16,8 +16,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/elasticsearch"
 )
 
-var log logrus.Logger
-
 const (
 	flagEsNamespace        = "es-namespace"
 	flagEsPort             = "es-port"
@@ -115,8 +113,7 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	if viper.GetBool(flagVerbose) == true {
@@ -136,15 +133,13 @@ func main() {
 	if viper.GetString(flagCertificatePath) != "" {
 		err = connection.LoadCertificate(viper.GetString(flagCertificatePath))
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			logrus.Fatalln(err)
 		}
 	}
 
 	err = elasticsearch.CheckESConnection(connection)
 	if err != nil {
 		logrus.Fatalln(err)
-		logrus.Exit(1)
 	}
 
 	var matchingIndices []elasticsearch.EsIndex
@@ -152,13 +147,11 @@ func main() {
 		indices, err := elasticsearch.GetEsIndices(connection)
 		if err != nil {
 			logrus.Fatalln("There was an error while getting the ES indices: ", err)
-			logrus.Exit(1)
 		}
 
 		matchingIndices, err = filterIndices(&indices, viper.GetString(flagPattern))
 		if err != nil {
 			logrus.Fatalln(err)
-			os.Exit(1)
 		}
 	} else {
 		index := elasticsearch.GetEsIndex(connection, viper.GetString(flagName))
@@ -168,7 +161,6 @@ func main() {
 	if viper.GetBool(flagExist) {
 		if len(matchingIndices) == 0 {
 			logrus.Fatalln("No indices match the pattern")
-			os.Exit(1)
 		}
 	}
 
@@ -177,7 +169,6 @@ func main() {
 	} else if viper.GetString(flagPattern) != "" && viper.GetInt(flagAssertCountIndices) > -1 {
 		if len(matchingIndices) != viper.GetInt(flagAssertCountIndices) {
 			logrus.Fatalln(len(matchingIndices), "indices found.", viper.GetInt(flagAssertCountIndices), "expected")
-			os.Exit(1)
 		}
 	}
 
@@ -195,7 +186,6 @@ func main() {
 
 		if foundDocs != viper.GetInt(flagAssertCountDocs) {
 			logrus.Fatalln(foundDocs, "docs found.", viper.GetInt(flagAssertCountDocs), "expected")
-			os.Exit(1)
 		}
 	}
 
