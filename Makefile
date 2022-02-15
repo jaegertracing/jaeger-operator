@@ -421,7 +421,7 @@ ifeq ($(USE_KIND_CLUSTER),true)
 # When the Kind cluster is not created by Kuttl, the
 # kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
 # container images here.
-	$(VECHO)kind create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
 	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
 else
 	$(ECHO)KIND cluster creation disabled. Skipping...
