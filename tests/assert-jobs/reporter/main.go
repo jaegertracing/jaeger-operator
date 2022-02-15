@@ -22,8 +22,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
 )
 
-var log logrus.Logger
-
 const (
 	flagJaegerServiceName   = "jaeger-service-name"
 	flagJaegerOperationName = "operation-name"
@@ -117,11 +115,11 @@ func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
 // days: number of days to generate spans
 func generateSpansHistoryService(serviceName, operationName string, days int) {
 	if days < 1 {
-		log.Warn("days parameter for generateSpansHistory is less than 1. Doing nothing")
+		logrus.Warn("days parameter for generateSpansHistory is less than 1. Doing nothing")
 		return
 	}
 
-	log.Info("Generating spans for the last ", days, " days for service ", serviceName)
+	logrus.Info("Generating spans for the last ", days, " days for service ", serviceName)
 
 	currentDate := time.Now()
 	tracer, closer := initTracer(serviceName)
@@ -190,7 +188,7 @@ func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
 			return false, err
 		}
 
-		log.Warningln(jaegerEndpoint, "is not available. Is", envVarJaegerEndpoint, "environment variable properly set?")
+		logrus.Warningln(jaegerEndpoint, "is not available. Is", envVarJaegerEndpoint, "environment variable properly set?")
 		return false, nil
 	})
 	return err
@@ -226,8 +224,7 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		logrus.Fatal(err)
 	}
 
 	if viper.GetBool(flagVerbose) == true {
@@ -237,8 +234,7 @@ func main() {
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
 	if jaegerEndpoint == "" {
-		logrus.Errorln("Please, specify a Jaeger Collector endpoint")
-		os.Exit(1)
+		logrus.Fatal("Please, specify a Jaeger Collector endpoint")
 	}
 
 	// Sometimes, Kubernetes reports the Jaeger service is there but there is an interval where the service is up but the
@@ -246,7 +242,6 @@ func main() {
 	err = waitUntilRestAPIAvailable(jaegerEndpoint)
 	if err != nil {
 		logrus.Fatalln(err)
-		os.Exit(1)
 	}
 
 	generateSpansHistory(viper.GetString(flagJaegerServiceName), viper.GetString(flagJaegerOperationName), viper.GetInt(flagDays), viper.GetInt(flagServices))

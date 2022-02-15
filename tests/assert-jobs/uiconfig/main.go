@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -41,8 +40,7 @@ func main() {
 		return true, nil
 	})
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	logrus.Info("Success")
