@@ -30,8 +30,6 @@ const (
 	flagTimeout       = "timeout"
 )
 
-var log logrus.Logger
-
 // Check if a CronJob exists in the given Kubernetes context
 // clientset: Kubernetes API client
 func checkCronJobExists(clientset *kubernetes.Clientset) error {
@@ -186,8 +184,7 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	if viper.GetBool(flagVerbose) == true {
@@ -199,8 +196,7 @@ func main() {
 
 	err = checkCronJobExists(clientset)
 	if err != nil {
-		logrus.Errorln(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	err = waitForNextJob(clientset)

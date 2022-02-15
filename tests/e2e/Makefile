@@ -37,21 +37,21 @@ prepare-e2e-images: docker push build-assert-job docker-e2e-upgrade-image set-as
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(MAKE) cert-manager
 	$(ECHO) Loading the Jaeger Operator Docker image in the KIND cluster...
-	$(VECHO)kind load docker-image ${IMG}
+	$(VECHO)$(KIND) load docker-image ${IMG}
 
 	$(ECHO) Loading the VERTX Docker image in the KIND cluster
 	$(VECHO)docker pull $(VERTX_IMG)
-	$(VECHO)kind load docker-image $(VERTX_IMG)
+	$(VECHO)$(KIND) load docker-image $(VERTX_IMG)
 
 	$(ECHO) Loading the Elasticsearch Docker image in the KIND cluster
 	$(VECHO)docker pull $(ELASTIC_IMG)
-	$(VECHO)kind load docker-image $(ELASTIC_IMG)
+	$(VECHO)$(KIND) load docker-image $(ELASTIC_IMG)
 
 	$(ECHO) Loading the Operator Docker image for the E2E upgrade test in the KIND cluster
-	$(VECHO)kind load docker-image $(OPERATOR_IMAGE_NEXT)
+	$(VECHO)$(KIND) load docker-image $(OPERATOR_IMAGE_NEXT)
 
 	$(ECHO) Loading the E2E Test asserts Docker image in the KIND cluster...
-	$(VECHO)kind load docker-image $(ASSERT_IMG)
+	$(VECHO)$(KIND) load docker-image $(ASSERT_IMG)
 else
 	$(ECHO)KIND cluster creation disabled. Skipping...
 
