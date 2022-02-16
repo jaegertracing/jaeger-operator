@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
@@ -33,7 +32,7 @@ const (
 func filterIndices(indices *[]elasticsearch.EsIndex, pattern string) ([]elasticsearch.EsIndex, error) {
 	regexPattern, err := regexp.Compile(pattern)
 	if err != nil {
-		return nil, fmt.Errorf("There was a problem with the pattern: %s", err)
+		return nil, fmt.Errorf("there was a problem with the pattern: %s", err)
 	}
 
 	var matchingIndices []elasticsearch.EsIndex
@@ -119,7 +118,6 @@ func main() {
 	if viper.GetBool(flagVerbose) == true {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	logrus.SetOutput(os.Stdout)
 
 	connection := elasticsearch.EsConnection{
 		Port:        viper.GetString(flagEsPort),

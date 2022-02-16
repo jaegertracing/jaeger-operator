@@ -53,7 +53,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 			failed = true
 			logrus.Warn("Timeout exceeded!")
 		} else if res != nil && res.StatusCode != http.StatusOK {
-			err = fmt.Errorf("Unexpected status code %d", res.StatusCode)
+			err = fmt.Errorf("unexpected status code %d", res.StatusCode)
 			failed = true
 			logrus.Warn("Status code: ", res.StatusCode)
 		} else if err != nil {
@@ -73,7 +73,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		body, err := ioutil.ReadAll(res.Body)
 		if len(body) == 0 {
 			failed = true
-			err = fmt.Errorf("Empty body response")
+			err = fmt.Errorf("empty body response")
 			logrus.Warn("Empty body response")
 		} else if err != nil {
 			failed = true
