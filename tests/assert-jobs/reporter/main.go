@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
@@ -230,7 +229,6 @@ func main() {
 	if viper.GetBool(flagVerbose) == true {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	logrus.SetOutput(os.Stdout)
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
 	if jaegerEndpoint == "" {

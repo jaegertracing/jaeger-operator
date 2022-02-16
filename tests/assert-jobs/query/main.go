@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -55,7 +54,6 @@ func main() {
 	if viper.GetBool(flagVerbose) == true {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	logrus.SetOutput(os.Stdout)
 
 	url := fmt.Sprintf("%s/api/services", host)
 

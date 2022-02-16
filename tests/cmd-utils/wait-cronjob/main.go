@@ -171,11 +171,11 @@ func initCmd() error {
 	}
 
 	if viper.GetString(flagcronJobName) == "" {
-		return fmt.Errorf(fmt.Sprintf("Parameter --%s must be set", flagcronJobName))
+		return fmt.Errorf("parameter --%s must be set", flagcronJobName)
 	}
 
 	if _, err := os.Stat(viper.GetString(flagKubeconfig)); err != nil {
-		return fmt.Errorf(fmt.Sprintf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig))
+		return fmt.Errorf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig)
 	}
 
 	return nil
@@ -190,7 +190,6 @@ func main() {
 	if viper.GetBool(flagVerbose) == true {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	logrus.SetOutput(os.Stdout)
 
 	clientset := getKubernetesClient()
 
