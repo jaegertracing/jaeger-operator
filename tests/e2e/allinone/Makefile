@@ -1,4 +1,4 @@
-render-e2e-tests-allinone: set-assert-e2e-img-name
+render-e2e-tests-allinone: load-assert-job
 	./tests/e2e/allinone/render.sh
 
 run-e2e-tests-allinone: TEST_SUITE_NAME=allinone
