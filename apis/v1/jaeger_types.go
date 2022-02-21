@@ -341,6 +341,12 @@ type JaegerAllInOneSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+
+	// +optional
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 

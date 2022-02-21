@@ -110,7 +110,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
-	return &appsv1.Deployment{
+	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -237,6 +237,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			},
 		},
 	}
+	if a.jaeger.Spec.AllInOne.ImagePullPolicy != "" {
+		dep.Spec.Template.Spec.Containers[0].ImagePullPolicy = a.jaeger.Spec.AllInOne.ImagePullPolicy
+	}
+	if a.jaeger.Spec.AllInOne.ImagePullSecrets != nil {
+		dep.Spec.Template.Spec.ImagePullSecrets = a.jaeger.Spec.AllInOne.ImagePullSecrets
+	}
+
+	return dep
 }
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
