@@ -39,7 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
-OPERATOR_SDK_VERSION ?= 1.17.0
+OPERATOR_SDK_VERSION ?= 1.13.1
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
