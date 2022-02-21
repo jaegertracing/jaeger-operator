@@ -2,16 +2,16 @@ name: "CI Workflow"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   basic-checks:
     runs-on: ubuntu-20.04
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v2.1.4
+      uses: actions/setup-go@v2.2.0
       with:
         go-version: 1.16
 
