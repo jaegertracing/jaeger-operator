@@ -242,7 +242,7 @@ func TestSidecarImagePullSecrets(t *testing.T) {
 	}}
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.ImagePullSecrets = agentImagePullSecrets
+	jaeger.Spec.Agent.JaegerCommonSpec.ImagePullSecrets = agentImagePullSecrets
 
 	dep := dep(map[string]string{}, map[string]string{})
 	dep.Spec.Template.Spec.ImagePullSecrets = deploymentImagePullSecrets

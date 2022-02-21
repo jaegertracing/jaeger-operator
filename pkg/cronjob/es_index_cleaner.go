@@ -73,13 +73,14 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								{
-									Name:         util.Truncate(name, 63),
-									Image:        util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
-									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:          util.RemoveEmptyVars(envs),
-									EnvFrom:      envFromSource,
-									Resources:    commonSpec.Resources,
-									VolumeMounts: commonSpec.VolumeMounts,
+									Name:            util.Truncate(name, 63),
+									Image:           util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
+									Args:            []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+									Env:             util.RemoveEmptyVars(envs),
+									EnvFrom:         envFromSource,
+									Resources:       commonSpec.Resources,
+									VolumeMounts:    commonSpec.VolumeMounts,
+									ImagePullPolicy: commonSpec.ImagePullPolicy,
 								},
 							},
 							RestartPolicy:      corev1.RestartPolicyNever,
@@ -88,6 +89,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
 							Volumes:            commonSpec.Volumes,
+							ImagePullSecrets:   commonSpec.ImagePullSecrets,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,

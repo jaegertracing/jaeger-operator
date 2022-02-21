@@ -110,7 +110,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
-	dep := &appsv1.Deployment{
+	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -224,7 +224,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),
@@ -233,18 +234,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
 					InitContainers:     storage.GetGRPCPluginInitContainers(a.jaeger, commonSpec),
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 				},
 			},
 		},
 	}
-	if a.jaeger.Spec.AllInOne.ImagePullPolicy != "" {
-		dep.Spec.Template.Spec.Containers[0].ImagePullPolicy = a.jaeger.Spec.AllInOne.ImagePullPolicy
-	}
-	if a.jaeger.Spec.AllInOne.ImagePullSecrets != nil {
-		dep.Spec.Template.Spec.ImagePullSecrets = a.jaeger.Spec.AllInOne.ImagePullSecrets
-	}
-
-	return dep
 }
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
