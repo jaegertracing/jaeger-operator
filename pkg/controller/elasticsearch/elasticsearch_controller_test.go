@@ -17,7 +17,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
-func TestElasticsearchController(t *testing.T) {
+func TestControllerReconcile(t *testing.T) {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "prod",
@@ -75,4 +75,20 @@ func TestElasticsearchController(t *testing.T) {
 		Name:      "jaeger",
 	}, updated)
 	assert.Equal(t, int32(3), updated.Spec.Storage.Elasticsearch.NodeCount)
+}
+
+func TestControllerReconcile_not_found(t *testing.T) {
+	esv1.AddToScheme(scheme.Scheme)
+	v1.AddToScheme(scheme.Scheme)
+	cl := fake.NewClientBuilder().WithRuntimeObjects().Build()
+	reconciler := New(cl, cl)
+
+	result, err := reconciler.Reconcile(context.Background(), reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: "prod",
+			Name:      "my-es",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
 }
