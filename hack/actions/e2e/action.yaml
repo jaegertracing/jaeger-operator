@@ -20,6 +20,8 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Get startup time""
+      run: date
     - name: "Set up Go"
       uses: actions/setup-go@v2.1.4
       with:
@@ -36,6 +38,8 @@ runs:
     - name: "Install dependencies"
       run: make install-tools
       shell: bash
+    - name: "Get time after setup"
+      run: date
     - name: "Run E2E ${{ inputs.testsuite_name }} test suite on ${{ inputs.kube_version }}"
       env:
         VERBOSE: "true"
