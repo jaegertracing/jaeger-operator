@@ -12,21 +12,26 @@ This project is a regular [Kubernetes Operator](https://coreos.com/operators/)  
 
 ### Installing the Operator SDK command line tool
 
-Follow the installation guidelines from [Operator SDK GitHub page](https://github.com/operator-framework/operator-sdk) or run `make install-sdk`.
+Follow the installation guidelines from [Operator SDK GitHub page](https://github.com/operator-framework/operator-sdk)
 
 ### Developing
 
 As usual for operators following the Operator SDK in recent versions, the dependencies are managed using [`go modules`](https://golang.org/doc/go1.11#modules). Refer to that project's documentation for instructions on how to add or update dependencies.
 
-The first step is to get a local Kubernetes instance up and running. The recommended approach is using `minikube`. Refer to the Kubernetes'  [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/) for instructions on how to install it.
+The first step is to get a local Kubernetes instance up and running. The recommended approach for development is using `minikube` with *ingress* enabled. Refer to the Kubernetes'  [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/) for instructions on how to install it.
 
 Once `minikube` is installed, it can be started with:
 
 ```
-minikube start
+minikube start --addons=ingress
 ```
 
 NOTE: Make sure to read the documentation to learn the performance switches that can be applied to your platform.
+
+Log into docker (or another image registry):
+```
+docker login --username <dockerusername>
+```
 
 Once minikube has finished starting, get the Operator running:
 
@@ -35,19 +40,22 @@ make cert-manager
 IMG=docker.io/$USER/jaeger-operator:latest make generate bundle docker push deploy
 ```
 
+NOTE: If your registry username is not the same as $USER, modify the previous command before executing it.  Also change *docker.io* if you are using a different image registry.
+
 At this point, a Jaeger instance can be installed:
 
 ```
 kubectl apply -f examples/simplest.yaml
 kubectl get jaegers
-kubectl get pods
+kubectl get pods 
 ```
 
-To remove the instance:
-
+To verify the Jaeger instance is running, execute *minikube ip* and open that address in a browser, or follow the steps below
 ```
-kubectl delete -f examples/simplest.yaml
+export MINIKUBE_IP=`minikube ip`
+curl http://{$MINIKUBE_IP}/api/services
 ```
+NOTE: you may have to execute the *curl* command twice to get a non-empty result
 
 Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
 
@@ -55,37 +63,18 @@ Tests should be simple unit tests and/or end-to-end tests. For small changes, un
 make test
 ```
 
-NOTE: you can adjust the Docker image namespace by overriding the variable `NAMESPACE`, like: `make test NAMESPACE=quay.io/my-username`. The full Docker image name can be customized by overriding `BUILD_IMAGE` instead, like: `make test BUILD_IMAGE=quay.io/my-username/jaeger-operator:0.0.1`
+#### Cleaning up
+To remove the instance:
+
+```
+kubectl delete -f examples/simplest.yaml
+```
+
+
 
 #### Model changes
 
 The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.*.go` files via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
-
-#### Ingress configuration
-
-Kubernetes comes with no ingress provider by default. For development purposes, when running `minikube`, the following command can be executed to install an ingress provider:
-
-```
-make ingress
-```
-
-This will install the `NGINX` ingress provider. It's recommended to wait for the ingress pods to be in the `READY` and `RUNNING` state before starting the operator. You can check it by running:
-
-```
-kubectl get pods -n ingress-nginx
-```
-
-To verify that it's working, deploy the `simplest.yaml` and check the ingress routes:
-
-```
-$ kubectl apply -f examples/simplest.yaml
-jaeger.jaegertracing.io/simplest created
-$ kubectl get ingress
-NAME             HOSTS     ADDRESS          PORTS     AGE
-simplest-query   *         192.168.122.69   80        12s
-```
-
-Accessing the provided "address" in your web browser should display the Jaeger UI.
 
 #### Storage configuration
 
