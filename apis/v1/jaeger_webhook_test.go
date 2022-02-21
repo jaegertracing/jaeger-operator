@@ -147,7 +147,6 @@ func TestValidate(t *testing.T) {
 		name         string
 		objsToCreate []runtime.Object
 		current      *Jaeger
-		old          *Jaeger
 		err          string
 	}{
 		{
@@ -221,7 +220,7 @@ func TestValidate(t *testing.T) {
 			fakeCl := fake.NewClientBuilder().WithRuntimeObjects(test.objsToCreate...).Build()
 			cl = fakeCl
 
-			err := test.current.ValidateUpdate(test.old)
+			err := test.current.ValidateCreate()
 			if test.err != "" {
 				assert.Equal(t, test.err, err.Error())
 			} else {
