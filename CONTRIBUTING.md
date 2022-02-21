@@ -37,10 +37,10 @@ Once minikube has finished starting, get the Operator running:
 
 ```
 make cert-manager
-export IMG_PREFIX=docker.io/<dockerusername>
-export IMG=${IMG_PREFIX}/jaeger-operator:latest
-make generate bundle docker push deploy
+IMG=docker.io/$USER/jaeger-operator:latest make generate bundle docker push deploy
 ```
+
+NOTE: If your registry username is not the same as $USER, modify the previous command before executing it.  Also change *docker.io* if you are using a different image registry.
 
 At this point, a Jaeger instance can be installed:
 
@@ -55,7 +55,7 @@ To verify the Jaeger instance is running, execute *minikube ip* and open that ad
 export MINIKUBE_IP=`minikube ip`
 curl http://{$MINIKUBE_IP}/api/services
 ```
-(Note: you may have to execute the *curl* command twice to get a non-empty result)
+NOTE: you may have to execute the *curl* command twice to get a non-empty result
 
 Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
 
