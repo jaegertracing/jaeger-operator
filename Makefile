@@ -282,7 +282,7 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: test
-test: unit-tests e2e-tests
+test: unit-tests
 
 .PHONY: all
 all: check format lint security build test
