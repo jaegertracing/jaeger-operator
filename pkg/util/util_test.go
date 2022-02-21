@@ -569,3 +569,76 @@ func TestReplaceArgument(t *testing.T) {
 	}
 
 }
+
+func TestImagePullPolicyAndSecrets(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullAlways,
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "secret-1",
+			},
+			{
+				Name: "secret-2",
+			},
+		},
+	}
+
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullNever,
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "secret-3",
+			},
+			{
+				Name: "secret-2",
+			},
+		},
+	}
+
+	expectedSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullNever,
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "secret-3",
+			},
+			{
+				Name: "secret-2",
+			},
+			{
+				Name: "secret-1",
+			},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Equal(t, expectedSpec.ImagePullPolicy, merged.ImagePullPolicy)
+	assert.Equal(t, expectedSpec.ImagePullSecrets, merged.ImagePullSecrets)
+}
+
+func TestEmptyImagePullPolicy(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "secret-1",
+			},
+			{
+				Name: "secret-2",
+			},
+		},
+	}
+
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "secret-3",
+			},
+			{
+				Name: "secret-2",
+			},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+	assert.Equal(t, corev1.PullPolicy(""), merged.ImagePullPolicy)
+}

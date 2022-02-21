@@ -88,3 +88,4 @@ import.log
 ### Kubernetes ###
 kubeconfig
 bin
+temp
