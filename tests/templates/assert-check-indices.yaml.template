@@ -1,0 +1,7 @@
+# Assert the job finishes properly
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{if getenv "JOB_NUMBER"}}{{ .Env.JOB_NUMBER }}-{{end}}check-indices
+status:
+  succeeded: 1

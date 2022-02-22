@@ -1,7 +1,0 @@
-# Assert the spans are reported
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: report-span-2
-status:
-  succeeded: 1

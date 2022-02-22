@@ -1,0 +1,34 @@
+# Check the index cleaner job cleaned all the indices
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{if getenv "JOB_NUMBER"}}{{ .Env.JOB_NUMBER }}-{{end}}check-indices
+spec:
+  template:
+    spec:
+    {{if getenv "MOUNT_SECRET"}}
+      volumes:
+      - name: certs
+        secret:
+          secretName: {{ .Env.MOUNT_SECRET }}
+    {{ end }}
+      containers:
+        - name: asserts-container
+          image: {{ .Env.ASSERT_IMG }}
+          command: [
+            "./index",
+            {{ .Env.CMD_PARAMETERS }}
+            "--verbose"
+          ]
+          env:
+            - name: ES_URL
+              value: "{{ .Env.ELASTICSEARCH_URL }}"
+          {{if getenv "MOUNT_SECRET"}}
+            - name: CERTIFICATE_PATH
+              value: "/certs"
+          volumeMounts:
+          - mountPath: /certs
+            name: certs
+          {{ end }}
+      restartPolicy: OnFailure
+  backoffLimit: 15
