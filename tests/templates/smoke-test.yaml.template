@@ -6,9 +6,15 @@ metadata:
 spec:
   template:
     spec:
+    {{if getenv "MOUNT_SECRET"}}
+      volumes:
+      - name: token-api-volume
+        secret:
+          secretName: {{ .Env.MOUNT_SECRET }}
+    {{ end }}
       containers:
         - name: report-span
-          image: local/asserts:e2e
+          image: {{ .Env.ASSERT_IMG }}
           command: [
             "./reporter",
             "--days", "4",
@@ -16,14 +22,24 @@ spec:
           ]
           env:
             - name: JAEGER_SERVICE_NAME
-              value: "{{ .Env.JAEGER_SERVICE }}"
+              value: "smoke-test-service"
             - name: OPERATION_NAME
-              value: "{{ .Env.JAEGER_OPERATION }}"
+              value: "smoke-test-operation"
             - name: JAEGER_ENDPOINT
-              value: "http://{{ .Env.JAEGER_NAME }}-collector-headless{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:14268/api/traces"
+              value: "{{ .Env.JAEGER_COLLECTOR_ENDPOINT }}/api/traces"
             - name: JAEGER_QUERY
-              value: "http://{{ .Env.JAEGER_NAME }}-query{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:16686/api/traces"
+              value: "{{ .Env.JAEGER_QUERY_ENDPOINT }}/api/traces"
+            {{if getenv "MOUNT_SECRET"}}
+            - name: SECRET_PATH
+              value: "/var/run/secrets/api-token/token"
+            {{ end }}
+          {{if getenv "MOUNT_SECRET"}}
+          volumeMounts:
+          - mountPath: /var/run/secrets/api-token
+            name: token-api-volume
+          {{ end }}
       restartPolicy: OnFailure
+  backoffLimit: 15
 ---
 apiVersion: batch/v1
 kind: Job
@@ -32,13 +48,29 @@ metadata:
 spec:
   template:
     spec:
+    {{if getenv "MOUNT_SECRET"}}
+      volumes:
+      - name: token-api-volume
+        secret:
+          secretName: {{ .Env.MOUNT_SECRET }}
+    {{ end }}
       containers:
         - name: asserts-container
-          image: local/asserts:e2e
+          image: {{ .Env.ASSERT_IMG }}
           command: ["./query"]
           env:
             - name: SERVICE_NAME
-              value: "{{ .Env.JAEGER_SERVICE }}"
+              value: "smoke-test-service"
             - name: QUERY_HOST
-              value: "http://{{ .Env.JAEGER_NAME }}-query{{if getenv "KUBERNETES_NAMESPACE"}}.{{ .Env.KUBERNETES_NAMESPACE }}{{end}}:16686"
+              value: "{{ .Env.JAEGER_QUERY_ENDPOINT }}"
+            {{if getenv "MOUNT_SECRET"}}
+            - name: SECRET_PATH
+              value: "/var/run/secrets/api-token/token"
+            {{ end }}
+          {{if getenv "MOUNT_SECRET"}}
+          volumeMounts:
+          - mountPath: /var/run/secrets/api-token
+            name: token-api-volume
+          {{ end }}
       restartPolicy: OnFailure
+  backoffLimit: 15

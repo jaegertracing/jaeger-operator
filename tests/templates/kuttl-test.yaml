@@ -1,15 +1,7 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestSuite
-crdDir: ../../_build/crds/
-artifactsDir: ../../_build/artifacts/
-commands:
-  - script: cd ../../.. && make cert-manager
-  - script: kubectl create namespace observability 2>&1 | grep -v "already exists" || true
-  - command: kubectl apply -f ../../_build/manifests/01-jaeger-operator.yaml -n observability
-  - command: kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
-  - command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
-  - command: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=150s
-  - command: sleep 5s
+crdDir: {{ .Env.CRD_DIR }}
+artifactsDir: ../../../_build/artifacts/
 testDirs:
   - .
 timeout: 330
