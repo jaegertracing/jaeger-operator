@@ -1,5 +1,5 @@
 # Streaming - With autoprovisioning
 ## What is this test case testing?
 
-Test the `streaming` deploymnet strategy when the Kafka cluster is
+Test the `streaming` deployment strategy when the Kafka cluster is
 autoprovisioned.

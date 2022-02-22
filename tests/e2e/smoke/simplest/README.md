@@ -1,4 +1,4 @@
 # Smoke - Simplest
 ## What is this test case testing?
 
-Simplest smoke test.
+Simple smoke test. Uses all the default parameters.
