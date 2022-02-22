@@ -36,9 +36,9 @@ runs:
     - name: "Install dependencies"
       run: make install-tools
       shell: bash
-    - name: "Run E2E ${{ inputs.testsuite_name }} test suite on Kubernetes 1.22"
+    - name: "Run E2E ${{ inputs.testsuite_name }} test suite on ${{ inputs.kube_version }}"
       env:
         VERBOSE: "true"
-        KUBE_VERSION: "1.22"
+        KUBE_VERSION: "${{ inputs.kube_version }}"
       run: make run-e2e-tests-${{ inputs.testsuite_name }}
       shell: bash
