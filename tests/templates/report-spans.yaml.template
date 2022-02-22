@@ -1,0 +1,44 @@
+# Generate some traces in the Jaeger instance
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{if getenv "JOB_NUMBER"}}{{ .Env.JOB_NUMBER }}-{{end}}report-span
+spec:
+  template:
+    spec:
+    {{if getenv "MOUNT_SECRET"}}
+      volumes:
+      - name: token-api-volume
+        secret:
+          secretName: {{ .Env.MOUNT_SECRET }}
+    {{ end }}
+      containers:
+        - name: asserts-container
+          image: {{ .Env.ASSERT_IMG }}
+          command: [
+            "./reporter",
+            "--days", "{{ .Env.DAYS }}",
+            "--verbose"
+          ]
+          env:
+            - name: JAEGER_SERVICE_NAME
+              value: "smoke-test-service"
+            - name: OPERATION_NAME
+              value: "smoke-test-operation"
+            - name: JAEGER_ENDPOINT
+              value: "{{ .Env.JAEGER_COLLECTOR_ENDPOINT }}/api/traces"
+            {{if getenv "JAEGER_QUERY_ENDPOINT"}}
+            - name: JAEGER_QUERY
+              value: "{{ .Env.JAEGER_QUERY_ENDPOINT }}/api/traces"
+            {{ end }}
+            {{if getenv "MOUNT_SECRET"}}
+            - name: SECRET_PATH
+              value: "/var/run/secrets/api-token/token"
+            {{ end }}
+          {{if getenv "MOUNT_SECRET"}}
+          volumeMounts:
+          - mountPath: /var/run/secrets/api-token
+            name: token-api-volume
+          {{ end }}
+      restartPolicy: OnFailure
+  backoffLimit: 15

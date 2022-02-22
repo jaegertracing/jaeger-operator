@@ -1,9 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
@@ -13,10 +13,7 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/elasticsearch"
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
-
-var log logrus.Logger
 
 const (
 	flagEsNamespace        = "es-namespace"
@@ -28,25 +25,26 @@ const (
 	flagAssertCountIndices = "assert-count-indices"
 	flagAssertCountDocs    = "assert-count-docs"
 	flagJaegerService      = "jaeger-service"
+	flagCertificatePath    = "certificate-path"
 	flagVerbose            = "verbose"
 )
 
 func filterIndices(indices *[]elasticsearch.EsIndex, pattern string) ([]elasticsearch.EsIndex, error) {
 	regexPattern, err := regexp.Compile(pattern)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("There was a problem with the pattern: %s", err))
+		return nil, fmt.Errorf("there was a problem with the pattern: %s", err)
 	}
 
 	var matchingIndices []elasticsearch.EsIndex
 
 	for _, index := range *indices {
 		if regexPattern.MatchString(index.Index) {
-			log.Debugf("Index '%s' matched", index.Index)
+			logrus.Debugf("Index '%s' matched", index.Index)
 			matchingIndices = append(matchingIndices, index)
 		}
 	}
 
-	log.Debugf("%d indices matches the pattern '%s'", len(matchingIndices), pattern)
+	logrus.Debugf("%d indices matches the pattern '%s'", len(matchingIndices), pattern)
 
 	return matchingIndices, nil
 
@@ -87,6 +85,9 @@ func initCmd() error {
 	viper.SetDefault(flagAssertCountDocs, "-1")
 	flag.Int(flagAssertCountDocs, -1, "Assert the number of documents")
 
+	viper.SetDefault(flagCertificatePath, "")
+	flag.String(flagCertificatePath, "", "Path to the secret to use during the API calls")
+
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
@@ -98,11 +99,11 @@ func initCmd() error {
 	params.Parse()
 
 	if viper.GetString(flagName) != "" && viper.GetString(flagPattern) != "" {
-		return fmt.Errorf(fmt.Sprintf("--%s and --%s provided. Provide just one", flagName, flagPattern))
+		return fmt.Errorf("--%s and --%s provided. Provide just one", flagName, flagPattern)
 	} else if viper.GetString(flagName) == "" && viper.GetString(flagPattern) == "" {
-		return fmt.Errorf(fmt.Sprintf("--%s nor --%s provided. Provide one at least", flagName, flagPattern))
+		return fmt.Errorf("--%s nor --%s provided. Provide one at least", flagName, flagPattern)
 	} else if viper.GetBool(flagAssertCountDocs) && viper.GetString(flagJaegerService) == "" {
-		return fmt.Errorf(fmt.Sprintf("--%s provided. Provide --%s", flagAssertCountDocs, flagJaegerService))
+		return fmt.Errorf("--%s provided. Provide --%s", flagAssertCountDocs, flagJaegerService)
 	}
 
 	return nil
@@ -111,37 +112,44 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	connection := elasticsearch.EsConnection{
-		Port:      viper.GetString(flagEsPort),
-		Namespace: viper.GetString(flagEsNamespace),
-		URL:       viper.GetString(flagEsURL),
+		Port:        viper.GetString(flagEsPort),
+		Namespace:   viper.GetString(flagEsNamespace),
+		URL:         viper.GetString(flagEsURL),
+		RootCAs:     nil,
+		Certificate: tls.Certificate{},
 	}
-	connection.PrettyString(log.Debug)
+	connection.PrettyString(logrus.Debug)
+
+	if viper.GetString(flagCertificatePath) != "" {
+		err = connection.LoadCertificate(viper.GetString(flagCertificatePath))
+		if err != nil {
+			logrus.Fatalln(err)
+		}
+	}
 
 	err = elasticsearch.CheckESConnection(connection)
 	if err != nil {
-		log.Fatalln(err)
-		log.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	var matchingIndices []elasticsearch.EsIndex
 	if viper.GetString(flagPattern) != "" {
 		indices, err := elasticsearch.GetEsIndices(connection)
 		if err != nil {
-			log.Fatalln("There was an error while getting the ES indices: ", err)
-			log.Exit(1)
+			logrus.Fatalln("There was an error while getting the ES indices: ", err)
 		}
 
 		matchingIndices, err = filterIndices(&indices, viper.GetString(flagPattern))
 		if err != nil {
-			log.Fatalln(err)
-			os.Exit(1)
+			logrus.Fatalln(err)
 		}
 	} else {
 		index := elasticsearch.GetEsIndex(connection, viper.GetString(flagName))
@@ -150,17 +158,15 @@ func main() {
 
 	if viper.GetBool(flagExist) {
 		if len(matchingIndices) == 0 {
-			log.Fatalln("No indices match the pattern")
-			os.Exit(1)
+			logrus.Fatalln("No indices match the pattern")
 		}
 	}
 
 	if viper.GetString(flagName) != "" && viper.GetString(flagAssertCountIndices) != "" {
-		log.Warnln("Ignoring parameter", flagAssertCountIndices, "because we are checking the info for one index")
+		logrus.Warnln("Ignoring parameter", flagAssertCountIndices, "because we are checking the info for one index")
 	} else if viper.GetString(flagPattern) != "" && viper.GetInt(flagAssertCountIndices) > -1 {
 		if len(matchingIndices) != viper.GetInt(flagAssertCountIndices) {
-			log.Fatalln(len(matchingIndices), "indices found.", viper.GetInt(flagAssertCountIndices), "expected")
-			os.Exit(1)
+			logrus.Fatalln(len(matchingIndices), "indices found.", viper.GetInt(flagAssertCountIndices), "expected")
 		}
 	}
 
@@ -170,15 +176,14 @@ func main() {
 		for _, index := range matchingIndices {
 			spans, err := index.GetServiceIndexSpans(jaegerServiceName)
 			if err != nil {
-				log.Errorln("Something failed while getting the index spans:", err)
+				logrus.Errorln("Something failed while getting the index spans:", err)
 			}
 			foundDocs += len(spans)
 		}
-		log.Debug(foundDocs, " in ", len(matchingIndices), " indices")
+		logrus.Debug(foundDocs, " in ", len(matchingIndices), " indices")
 
 		if foundDocs != viper.GetInt(flagAssertCountDocs) {
-			log.Fatalln(foundDocs, "docs found.", viper.GetInt(flagAssertCountDocs), "expected")
-			os.Exit(1)
+			logrus.Fatalln(foundDocs, "docs found.", viper.GetInt(flagAssertCountDocs), "expected")
 		}
 	}
 
