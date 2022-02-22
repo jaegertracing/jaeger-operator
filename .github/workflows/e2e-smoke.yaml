@@ -23,4 +23,3 @@ jobs:
       - uses: ./hack/actions/e2e
         with:
           testsuite_name: smoke
-          kube_version: ${{ matrix.kube-version }}
