@@ -1,5 +1,4 @@
-render-e2e-tests-istio: TEST_SUITE_NAME=istio
-render-e2e-tests-istio: generate-kuttl-config
+render-e2e-tests-istio: set-assert-e2e-img-name
 	./tests/e2e/istio/render.sh
 
 run-e2e-tests-istio: TEST_SUITE_NAME=istio
