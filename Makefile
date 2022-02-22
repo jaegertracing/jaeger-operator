@@ -351,10 +351,10 @@ endef
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
+	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -488,7 +488,8 @@ prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
 
 scorecard-tests: operator-sdk
-	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+	echo "Operator sdk is " $(OPERATOR_SDK)
+	$(OPERATOR_SDK) scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
 
 scorecard-tests-local: kind
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
