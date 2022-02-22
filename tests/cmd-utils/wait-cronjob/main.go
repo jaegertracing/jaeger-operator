@@ -19,8 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
 
 const (
@@ -31,8 +29,6 @@ const (
 	flagRetryInterval = "retry-interval"
 	flagTimeout       = "timeout"
 )
-
-var log logrus.Logger
 
 // Check if a CronJob exists in the given Kubernetes context
 // clientset: Kubernetes API client
@@ -175,11 +171,11 @@ func initCmd() error {
 	}
 
 	if viper.GetString(flagcronJobName) == "" {
-		return fmt.Errorf(fmt.Sprintf("Parameter --%s must be set", flagcronJobName))
+		return fmt.Errorf("parameter --%s must be set", flagcronJobName)
 	}
 
 	if _, err := os.Stat(viper.GetString(flagKubeconfig)); err != nil {
-		return fmt.Errorf(fmt.Sprintf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig))
+		return fmt.Errorf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig)
 	}
 
 	return nil
@@ -188,21 +184,22 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	clientset := getKubernetesClient()
 
 	err = checkCronJobExists(clientset)
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	err = waitForNextJob(clientset)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
