@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
@@ -20,10 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
-
-var log logrus.Logger
 
 const (
 	flagJaegerServiceName   = "jaeger-service-name"
@@ -63,8 +59,8 @@ func initTracer(serviceName string) (opentracing.Tracer, io.Closer) {
 // spanDate: start date of the reported span
 // serviceName: name of the span service
 func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
-	startQueryTime := spanDate.Add(time.Minute * -1)
-	finishQueryTime := spanDate.Add(time.Minute)
+	startQueryTime := spanDate.Add(time.Minute * -2)
+	finishQueryTime := spanDate.Add(time.Minute * 2)
 
 	jaegerCollectorEndpoint := viper.GetString(enVarJaegerQuery)
 
@@ -75,7 +71,10 @@ func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
 		startQueryTime.UnixNano()/1000,
 		finishQueryTime.UnixNano()/1000,
 	)
-	params := utils.TestParams{Timeout: time.Second * 20, RetryInterval: time.Second * 5}
+	params := utils.TestParams{}
+	params.Parse()
+	params.Timeout = time.Minute
+	params.RetryInterval = time.Second * 5
 
 	err := utils.TestGetHTTP(url, &params, func(response *http.Response, body []byte) (done bool, err error) {
 		resp := struct {
@@ -115,11 +114,11 @@ func assertSpanWasCreated(spanDate time.Time, serviceName string) bool {
 // days: number of days to generate spans
 func generateSpansHistoryService(serviceName, operationName string, days int) {
 	if days < 1 {
-		log.Warn("days parameter for generateSpansHistory is less than 1. Doing nothing")
+		logrus.Warn("days parameter for generateSpansHistory is less than 1. Doing nothing")
 		return
 	}
 
-	log.Info("Generating spans for the last ", days, " days for service ", serviceName)
+	logrus.Info("Generating spans for the last ", days, " days for service ", serviceName)
 
 	currentDate := time.Now()
 	tracer, closer := initTracer(serviceName)
@@ -188,7 +187,7 @@ func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
 			return false, err
 		}
 
-		log.Warningln(jaegerEndpoint, "is not available. Is", envVarJaegerEndpoint, "environment variable properly set?")
+		logrus.Warningln(jaegerEndpoint, "is not available. Is", envVarJaegerEndpoint, "environment variable properly set?")
 		return false, nil
 	})
 	return err
@@ -224,24 +223,23 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		logrus.Fatal(err)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	jaegerEndpoint := viper.GetString(envVarJaegerEndpoint)
 	if jaegerEndpoint == "" {
-		log.Errorln("Please, specify a Jaeger Collector endpoint")
-		os.Exit(1)
+		logrus.Fatal("Please, specify a Jaeger Collector endpoint")
 	}
 
 	// Sometimes, Kubernetes reports the Jaeger service is there but there is an interval where the service is up but the
 	// REST API is not operative yet
 	err = waitUntilRestAPIAvailable(jaegerEndpoint)
 	if err != nil {
-		log.Fatalln(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	generateSpansHistory(viper.GetString(flagJaegerServiceName), viper.GetString(flagJaegerOperationName), viper.GetInt(flagDays), viper.GetInt(flagServices))

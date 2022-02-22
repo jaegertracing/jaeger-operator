@@ -41,6 +41,10 @@ SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
 OPERATOR_SDK_VERSION ?= 1.13.1
 
+USE_KIND_CLUSTER ?= true
+export OLM ?= false
+SKIP_ES_EXTERNAL ?= false
+
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
@@ -231,7 +235,6 @@ else
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --ignore-not-found=true || true
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --ignore-not-found=true || true
 endif
-	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 
 .PHONY: kafka
 kafka: deploy-kafka-operator
@@ -270,6 +273,7 @@ endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
+	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -407,6 +411,8 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: start-kind
 start-kind: kind
+ifeq ($(USE_KIND_CLUSTER),true)
+	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
 # file), the cluster is created here. There are multiple reasons to do this:
 # 	* The kubectl command will not work outside KUTTL
@@ -417,11 +423,10 @@ start-kind: kind
 # kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
 # container images here.
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
-	$(VECHO)$(KIND) load docker-image local/jaeger-operator:e2e
-	$(VECHO)$(KIND) load docker-image local/asserts:e2e
-	$(VECHO)$(KIND) load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)$(KIND) load docker-image local/jaeger-operator:next
-	$(VECHO)$(KIND) load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
+else
+	$(ECHO)KIND cluster creation disabled. Skipping...
+endif
 
 stop-kind:
 	$(ECHO)Stopping the kind cluster

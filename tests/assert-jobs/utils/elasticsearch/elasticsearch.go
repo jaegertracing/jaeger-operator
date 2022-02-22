@@ -2,17 +2,25 @@ package elasticsearch
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
+	"path/filepath"
+
+	"github.com/sirupsen/logrus"
 )
 
 // EsConnection details to the ElasticSearch database
 type EsConnection struct {
-	Port      string
-	URL       string
-	Namespace string
+	Port        string
+	URL         string
+	Namespace   string
+	Certificate tls.Certificate
+	RootCAs     *x509.CertPool
 }
 
 // EsSpan maps spans data from ES REST API response
@@ -21,6 +29,40 @@ type EsSpan struct {
 	ID            string
 	ServiceName   string
 	OperationName string
+}
+
+// LoadCertificate loads the certificates to authenticate in the connection.
+// secretPath: path to the folder where the secrets are located.
+func (connection *EsConnection) LoadCertificate(secretPath string) error {
+	certFile := path.Join(secretPath, "cert")
+	keyFile := path.Join(secretPath, "key")
+	caFile := path.Join(secretPath, "ca")
+	var err error
+
+	logrus.Debugln("cerFile: ", certFile)
+	logrus.Debugln("keyFile: ", keyFile)
+	logrus.Debugln("caFile: ", caFile)
+
+	certificate, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return fmt.Errorf("something failed while loading the x509 key pair: %s", err)
+	}
+
+	caCert, err := ioutil.ReadFile(filepath.Clean(caFile))
+	if err != nil {
+		return fmt.Errorf("something failed while reading the CA file: %s", err)
+	}
+
+	rootCAs := x509.NewCertPool()
+	ok := rootCAs.AppendCertsFromPEM(caCert)
+	if !ok {
+		return fmt.Errorf("something went wrong while appending the certificates from PEM")
+	}
+
+	logrus.Debugln("Certificate read properly from", secretPath)
+	connection.RootCAs = rootCAs
+	connection.Certificate = certificate
+	return nil
 }
 
 // PrettyString prints the ES connection details in a nice way
@@ -90,12 +132,12 @@ func (index *EsIndex) GetIndexSpans() ([]EsSpan, error) {
 
 	bodyBytes, err := executeEsRequest(index.es, http.MethodPost, fmt.Sprintf("/%s/_search?format=json", index.Index), bodyReq)
 	if err != nil {
-		return []EsSpan{}, fmt.Errorf(fmt.Sprintf("Something failed while quering the ES REST API: %s", err))
+		return []EsSpan{}, fmt.Errorf("something failed while quering the ES REST API: %s", err)
 	}
 
 	err = json.Unmarshal(bodyBytes, &searchResponse)
 	if err != nil {
-		return []EsSpan{}, fmt.Errorf(fmt.Sprintf("Something failed while unmarshalling API response: %s", err))
+		return []EsSpan{}, fmt.Errorf("something failed while unmarshalling API response: %s", err)
 	}
 
 	spans := []EsSpan{}
@@ -111,7 +153,7 @@ func (index *EsIndex) GetIndexSpans() ([]EsSpan, error) {
 func CheckESConnection(es EsConnection) error {
 	_, err := executeEsRequest(es, http.MethodGet, "/", nil)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprint("There was a problem while connecting to the ES instance: ", err))
+		return fmt.Errorf("there was a problem while connecting to the ES instance: %s", err)
 	}
 	return nil
 }
@@ -140,14 +182,16 @@ func GetEsIndex(es EsConnection, indexName string) EsIndex {
 func GetEsIndices(es EsConnection) ([]EsIndex, error) {
 	bodyBytes, err := executeEsRequest(es, http.MethodGet, "/_cat/indices?format=json", nil)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("Something failed while quering the ES REST API: %s", err))
+		return nil, fmt.Errorf("something failed while quering the ES REST API: %s", err)
 	}
 
 	// Convert JSON data to struct format
 	esIndices := make([]EsIndex, 0)
 	err = json.Unmarshal(bodyBytes, &esIndices)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("Something failed while unmarshalling API response: %s", err))
+		logrus.Debugln("Response:")
+		logrus.Debugf("%s", bodyBytes)
+		return nil, fmt.Errorf("something failed while unmarshalling API response: %s", err)
 	}
 
 	for i := range esIndices {
@@ -162,34 +206,36 @@ func GetEsIndices(es EsConnection) ([]EsIndex, error) {
 // httpMethod: HTTP method to use for the query
 // api: API endpoint to query
 func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]byte, error) {
+	logrus.Debugln("Executing", httpMethod, "request to", api)
 	esURL := fmt.Sprintf("%s:%s%s", es.URL, es.Port, api)
 
-	// Create the HTTP client to interact with the API
-	transport := &http.Transport{}
+	// Create the client to interact with the API
+	var transport *http.Transport
+	if es.RootCAs == nil {
+		logrus.Debugln("The request does not use secure certificates")
+		transport = &http.Transport{}
+	} else {
+		logrus.Debugln("The request uses secure certificates")
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{es.Certificate},
+			RootCAs:      es.RootCAs,
+		}
+		tlsConfig.BuildNameToCertificate()
+		transport = &http.Transport{TLSClientConfig: tlsConfig}
+	}
 	client := http.Client{Transport: transport}
 
-	var bodyReq []byte
-	var err error
-
-	if body == nil {
-		bodyReq = nil
-	} else {
-		bodyReq = body
-		if err != nil {
-			return nil, fmt.Errorf(fmt.Sprintf("Something failed while marshalling the body: %s", err))
-		}
-	}
-
-	req, err := http.NewRequest(httpMethod, esURL, bytes.NewBuffer(bodyReq))
+	req, err := http.NewRequest(httpMethod, esURL, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("The HTTP client creation failed: %s", err))
+		return nil, fmt.Errorf("the HTTP request creation failed: %s", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
+	logrus.Debugln("Executing request...")
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("The HTTP request failed: %s", err))
+		return nil, fmt.Errorf("the HTTP request failed: %s", err)
 	}
 
 	defer resp.Body.Close()

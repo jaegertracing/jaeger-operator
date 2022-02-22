@@ -1,0 +1,15 @@
+# Enable the ES Rollover feature
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: my-jaeger
+spec:
+  storage:
+    options:
+      es:
+        use-aliases: true
+    esRollover:
+      enabled: true
+      conditions: "{\"max_docs\": \"20\"}"
+      readTTL: 72h
+      schedule: "* * * * *"
