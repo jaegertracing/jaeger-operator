@@ -165,7 +165,7 @@ $ make e2e-test-suites
 ### Developing new E2E tests
 
 E2E tests are located under `tests/e2e`. Each folder is associated to an E2E test suite. The
-tests are developed using KUTTL. Before developing a new test, [learn how KUTTL test works](https://kuttl.dev/docs/what-is-kuttl.html).
+Tests are developed using KUTTL. Before developing a new test, [learn how KUTTL test works](https://kuttl.dev/docs/what-is-kuttl.html).
 
 To add a new suite, it is needed to create a new folder with the name of the suite under `tests/e2e`.
 
