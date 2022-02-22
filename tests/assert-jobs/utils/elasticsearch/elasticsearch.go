@@ -153,7 +153,7 @@ func (index *EsIndex) GetIndexSpans() ([]EsSpan, error) {
 func CheckESConnection(es EsConnection) error {
 	_, err := executeEsRequest(es, http.MethodGet, "/", nil)
 	if err != nil {
-		return fmt.Errorf("there was a problem while connecting to the ES instance: ", err)
+		return fmt.Errorf("there was a problem while connecting to the ES instance: %s", err)
 	}
 	return nil
 }
