@@ -22,9 +22,6 @@ jobs:
     - name: "install kustomize"
       run: ./hack/install-kustomize.sh
 
-    - uses: jpkrohling/setup-operator-sdk@v1.1.0
-      with:
-        operator-sdk-version: v1.13.1
     - uses: docker/setup-qemu-action@v1.2.0
     - uses: docker/setup-buildx-action@v1.6.0
 

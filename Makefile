@@ -39,6 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
+OPERATOR_SDK_VERSION ?= 1.13.1
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
@@ -349,7 +350,7 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -475,7 +476,7 @@ endif
 tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
-install-tools:
+install-tools: operator-sdk
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
@@ -486,7 +487,7 @@ install-tools:
 prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
 
-scorecard-tests:
+scorecard-tests: operator-sdk
 	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
 
 scorecard-tests-local: kind
@@ -495,3 +496,13 @@ scorecard-tests-local: kind
 	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
 	$(VECHO)$(MAKE) scorecard-tests
+
+OPERATOR_SDK = $(shell pwd)/bin/operator-sdk
+.PHONY: operator-sdk
+operator-sdk:
+	@{ \
+	set -e ;\
+	[ -d bin ] || mkdir bin ;\
+	curl -L -o $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`;\
+	chmod +x $(OPERATOR_SDK) ;\
+	}
