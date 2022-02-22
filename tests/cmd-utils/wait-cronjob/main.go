@@ -44,7 +44,7 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		cronjobs, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
+		cronjobs, err := clientset.BatchV1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				logrus.Debug("No cronjobs were found")

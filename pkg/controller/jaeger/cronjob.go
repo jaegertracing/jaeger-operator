@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -13,7 +13,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
+func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []batchv1.CronJob) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyCronJobs")
 	defer span.End()
@@ -25,7 +25,7 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 			"app.kubernetes.io/managed-by": "jaeger-operator",
 		}),
 	}
-	list := &batchv1beta1.CronJobList{}
+	list := &batchv1.CronJobList{}
 	if err := r.rClient.List(ctx, list, opts...); err != nil {
 		return tracing.HandleError(err, span)
 	}

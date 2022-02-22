@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -43,7 +42,7 @@ func TestWithConfigMaps(t *testing.T) {
 }
 
 func TestWithCronJobs(t *testing.T) {
-	c := New().WithCronJobs([]batchv1beta1.CronJob{{}})
+	c := New().WithCronJobs([]batchv1.CronJob{{}})
 	assert.Len(t, c.CronJobs(), 1)
 	assert.Len(t, c.All(), 1)
 }

@@ -4,42 +4,42 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCronJobInventory(t *testing.T) {
-	toCreate := batchv1beta1.CronJob{
+	toCreate := batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-create",
 		},
 	}
-	toUpdate := batchv1beta1.CronJob{
+	toUpdate := batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-update",
 		},
-		Spec: batchv1beta1.CronJobSpec{
+		Spec: batchv1.CronJobSpec{
 			Schedule: "0 1 * * *",
 		},
 	}
-	updated := batchv1beta1.CronJob{
+	updated := batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "to-update",
 			Annotations: map[string]string{"gopher": "jaeger"},
 			Labels:      map[string]string{"gopher": "jaeger"},
 		},
-		Spec: batchv1beta1.CronJobSpec{
+		Spec: batchv1.CronJobSpec{
 			Schedule: "0 2 * * *",
 		},
 	}
-	toDelete := batchv1beta1.CronJob{
+	toDelete := batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "to-delete",
 		},
 	}
 
-	existing := []batchv1beta1.CronJob{toUpdate, toDelete}
-	desired := []batchv1beta1.CronJob{updated, toCreate}
+	existing := []batchv1.CronJob{toUpdate, toDelete}
+	desired := []batchv1.CronJob{updated, toCreate}
 
 	inv := ForCronJobs(existing, desired)
 	assert.Len(t, inv.Create, 1)
@@ -54,7 +54,7 @@ func TestCronJobInventory(t *testing.T) {
 }
 
 func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
-	create := []batchv1beta1.CronJob{{
+	create := []batchv1.CronJob{{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "to-create",
 			Namespace: "tenant1",
@@ -66,7 +66,7 @@ func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
 		},
 	}}
 
-	inv := ForCronJobs([]batchv1beta1.CronJob{}, create)
+	inv := ForCronJobs([]batchv1.CronJob{}, create)
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, inv.Create, create[0])
 	assert.Contains(t, inv.Create, create[1])
