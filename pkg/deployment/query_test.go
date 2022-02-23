@@ -115,6 +115,21 @@ func TestQuerySecrets(t *testing.T) {
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
+func TestQueryImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
 func TestQueryPodName(t *testing.T) {
 	name := "TestQueryPodName"
 	query := NewQuery(v1.NewJaeger(types.NamespacedName{Name: name}))

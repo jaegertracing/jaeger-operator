@@ -119,6 +119,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: i.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
 						Name:  "jaeger-ingester",
