@@ -1,0 +1,43 @@
+# In order to requests programatically to the Jaeger Query, some extra
+# configuration is required
+# More info: https://www.jaegertracing.io/docs/1.29/operator/#openshift-1
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jaeger-operator-with-auth-delegator
+  namespace: openshift-operators
+subjects:
+- kind: ServiceAccount
+  name: jaeger-operator
+  namespace: openshift-operators
+roleRef:
+  kind: ClusterRole
+  name: system:auth-delegator
+  apiGroup: rbac.authorization.k8s.io
+---
+# We enable some extra configuration to the Jaeger deployment
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: {{ .Env.JAEGER_NAME }}
+spec:
+  query:
+    options:
+      query.bearer-token-propagation: true
+  ingress:
+    openshift:
+      sar: '{"namespace": "default", "resource": "pods", "verb": "get"}'
+      delegateUrls: '{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}'
+    options:
+      pass-access-token: true
+      pass-user-bearer-token: true
+      scope: "user:info user:check-access user:list-projects"
+      pass-basic-auth: false
+---
+# The ClusterRoleBinding needs the namespace in the YAML file. That file is
+# generated while running the tests
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "gomplate -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o cluster-role.yaml"
+  - script: "kubectl apply -f cluster-role.yaml -n $NAMESPACE"

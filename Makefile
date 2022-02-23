@@ -39,6 +39,11 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
+OPERATOR_SDK_VERSION ?= 1.13.1
+
+USE_KIND_CLUSTER ?= true
+export OLM ?= false
+SKIP_ES_EXTERNAL ?= false
 
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
@@ -230,7 +235,6 @@ else
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --ignore-not-found=true || true
 	$(VECHO)kubectl delete clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --ignore-not-found=true || true
 endif
-	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 
 .PHONY: kafka
 kafka: deploy-kafka-operator
@@ -269,6 +273,7 @@ endif
 
 .PHONY: clean
 clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
+	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
 	$(VECHO)kubectl delete -f ./tests/elasticsearch.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -282,7 +287,7 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: test
-test: unit-tests e2e-tests
+test: unit-tests
 
 .PHONY: all
 all: check format lint security build test
@@ -349,11 +354,11 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
+bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -406,6 +411,8 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: start-kind
 start-kind: kind
+ifeq ($(USE_KIND_CLUSTER),true)
+	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
 # file), the cluster is created here. There are multiple reasons to do this:
 # 	* The kubectl command will not work outside KUTTL
@@ -416,11 +423,10 @@ start-kind: kind
 # kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
 # container images here.
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
-	$(VECHO)$(KIND) load docker-image local/jaeger-operator:e2e
-	$(VECHO)$(KIND) load docker-image local/asserts:e2e
-	$(VECHO)$(KIND) load docker-image jaegertracing/vertx-create-span:operator-e2e-tests
-	$(VECHO)$(KIND) load docker-image local/jaeger-operator:next
-	$(VECHO)$(KIND) load docker-image docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
+else
+	$(ECHO)KIND cluster creation disabled. Skipping...
+endif
 
 stop-kind:
 	$(ECHO)Stopping the kind cluster
@@ -475,7 +481,7 @@ endif
 tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
-install-tools:
+install-tools: operator-sdk
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
@@ -486,8 +492,9 @@ install-tools:
 prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
 
-scorecard-tests:
-	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+scorecard-tests: operator-sdk
+	echo "Operator sdk is " $(OPERATOR_SDK)
+	$(OPERATOR_SDK) scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
 
 scorecard-tests-local: kind
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
@@ -495,3 +502,13 @@ scorecard-tests-local: kind
 	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
 	$(VECHO)$(MAKE) scorecard-tests
+
+OPERATOR_SDK = $(shell pwd)/bin/operator-sdk
+.PHONY: operator-sdk
+operator-sdk:
+	@{ \
+	set -e ;\
+	[ -d bin ] || mkdir bin ;\
+	curl -L -o $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`;\
+	chmod +x $(OPERATOR_SDK) ;\
+	}

@@ -1,21 +1,27 @@
-# Check the assert jobs were run succesfully
-apiVersion: batch/v1
-kind: Job
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: assert-indexes-after-0
+  name: my-jaeger-collector
+spec:
+  replicas: 1
 status:
-  succeeded: 1
+  readyReplicas: 1
 ---
-apiVersion: batch/v1
-kind: Job
+# Assert the Jaeger collector is up and running
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: assert-indexes-after-1
+  name: my-jaeger-query
+spec:
+  replicas: 1
 status:
-  succeeded: 1
+  readyReplicas: 1
 ---
+# Assert the ES Rollover mapping is run
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: assert-indexes-after-2
+  name: my-jaeger-es-rollover-create-mapping
 status:
   succeeded: 1
