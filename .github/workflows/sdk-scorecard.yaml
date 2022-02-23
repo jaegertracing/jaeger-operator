@@ -13,9 +13,6 @@ jobs:
     steps:
       - name: "Check out code"
         uses: actions/checkout@v2.4.0
-      - uses: jpkrohling/setup-operator-sdk@v1.1.0
-        with:
-          operator-sdk-version: v1.13.1
       - name: "Install KIND"
         run: ./.ci/install-kind.sh
       - name: "Install KUTTL"
