@@ -39,6 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
+OPERATOR_SDK_VERSION ?= 1.13.1
 
 USE_KIND_CLUSTER ?= true
 export OLM ?= false
@@ -353,11 +354,11 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
+bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -480,7 +481,7 @@ endif
 tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
-install-tools:
+install-tools: operator-sdk
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
@@ -491,8 +492,9 @@ install-tools:
 prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
 
-scorecard-tests:
-	operator-sdk scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+scorecard-tests: operator-sdk
+	echo "Operator sdk is " $(OPERATOR_SDK)
+	$(OPERATOR_SDK) scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
 
 scorecard-tests-local: kind
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
@@ -500,3 +502,13 @@ scorecard-tests-local: kind
 	$(VECHO)$(KIND) load docker-image $(SCORECARD_TEST_IMG)
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
 	$(VECHO)$(MAKE) scorecard-tests
+
+OPERATOR_SDK = $(shell pwd)/bin/operator-sdk
+.PHONY: operator-sdk
+operator-sdk:
+	@{ \
+	set -e ;\
+	[ -d bin ] || mkdir bin ;\
+	curl -L -o $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`;\
+	chmod +x $(OPERATOR_SDK) ;\
+	}
