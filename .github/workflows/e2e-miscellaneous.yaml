@@ -1,4 +1,4 @@
-name: Cassandra E2E tests
+name: Miscellaneous E2E tests
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
     branches: [ main ]
 
 jobs:
-  run-e2e-cassandra-test-suite:
+  run-e2e-miscellaneous-test-suite:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
        kube-version:
        - "1.19"
        - "1.22"
-    name: Run Cassandra E2E tests
+    name: Run miscellaneous E2E tests
     steps:
       - name: "Check out code into the Go module directory"
         uses: actions/checkout@v2
@@ -22,5 +22,5 @@ jobs:
           fetch-depth: 0
       - uses: ./hack/actions/e2e
         with:
-          testsuite_name: cassandra
+          testsuite_name: miscellaneous
           kube_version: ${{ matrix.kube-version }}
