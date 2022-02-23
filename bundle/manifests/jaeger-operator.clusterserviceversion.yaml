@@ -440,7 +440,7 @@ spec:
               - name: cert
                 secret:
                   defaultMode: 420
-                  secretName: jaeger-operator-webhook-server-cert
+                  secretName: jaeger-operator-service-cert
       permissions:
       - rules:
         - apiGroups:

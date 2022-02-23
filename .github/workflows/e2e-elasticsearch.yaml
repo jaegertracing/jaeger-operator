@@ -13,8 +13,6 @@ jobs:
       matrix:
        kube-version:
        - "1.19"
-       - "1.20"
-       - "1.21"
        - "1.22"
     name: Run Elasticsearch E2E tests
     steps:
