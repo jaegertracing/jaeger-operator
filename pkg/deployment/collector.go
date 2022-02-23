@@ -129,6 +129,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
 						Name:  "jaeger-collector",
