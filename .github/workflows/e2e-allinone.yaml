@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: e2e-tests-${{ github.ref }}-allinone
+  cancel-in-progress: true
+
 jobs:
   run-e2e-allinone-test-suite:
     runs-on: ubuntu-20.04
