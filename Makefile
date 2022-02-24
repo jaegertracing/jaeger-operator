@@ -63,7 +63,7 @@ ENVTEST_K8S_VERSION = 1.22
 KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
-SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v1.13.1
+SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v$(OPERATOR_SDK_VERSION)
 
 .DEFAULT_GOAL := build
 
