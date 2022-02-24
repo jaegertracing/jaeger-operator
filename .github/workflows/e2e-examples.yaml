@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: e2e-tests-${{ github.ref }}-examples
+  group: e2e-tests-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
