@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: e2e-tests-${{ github.ref }}-miscellaneous
+  cancel-in-progress: true
+
 jobs:
   run-e2e-miscellaneous-test-suite:
     runs-on: ubuntu-20.04
