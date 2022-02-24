@@ -213,6 +213,10 @@ type JaegerCommonSpec struct {
 
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// +optional
+	// +listType=atomic
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -450,10 +454,6 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	Image string `json:"image,omitempty"`
-
-	// +optional
-	// +listType=atomic
-	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
