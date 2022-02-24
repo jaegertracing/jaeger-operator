@@ -9,7 +9,7 @@ require (
 	github.com/openshift/api v0.0.0-20210713130143-be21c6cb1bea
 	github.com/openshift/elasticsearch-operator v0.0.0-20210921091239-caf25067d56d
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/operator-framework/operator-lib v0.9.0
+	github.com/operator-framework/operator-lib v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
@@ -27,10 +27,10 @@ require (
 	go.opentelemetry.io/otel/sdk/export/metric v0.20.0
 	go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace v0.20.0
-	k8s.io/api v0.21.3
-	k8s.io/apimachinery v0.21.3
+	k8s.io/api v0.23.0
+	k8s.io/apimachinery v0.23.0
 	k8s.io/client-go v12.0.0+incompatible
-	sigs.k8s.io/controller-runtime v0.9.6
+	sigs.k8s.io/controller-runtime v0.11.0
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.21.2 // Required by prometheus-operator
