@@ -129,7 +129,7 @@ build: format
 
 .PHONY: docker
 docker:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" .
+	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" . --cache-from	type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max --load
 
 .PHONY: dockerx
 dockerx:

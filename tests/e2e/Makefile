@@ -20,7 +20,7 @@ generate-e2e-files: set-image-controller build-assert-job
 	$(VECHO)$(KUSTOMIZE) build config/crd -o tests/_build/crds/
 
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
-	docker build -t $(ASSERT_IMG)  -f Dockerfile.asserts .
+	docker build -t $(ASSERT_IMG)  -f Dockerfile.asserts . --cache-from	type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max --load
 	$(VECHO)echo $(ASSERT_IMG) > $@
 
 
