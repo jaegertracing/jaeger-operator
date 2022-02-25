@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	osimagev1 "github.com/openshift/api/image/v1"
 	log "github.com/sirupsen/logrus"
@@ -282,6 +283,8 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 
+	// see https://github.com/openshift/library-go/blob/4362aa519714a4b62b00ab8318197ba2bba51cb7/pkg/config/leaderelection/leaderelection.go#L104
+	renewDeadline := time.Second * 137
 	options := ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -289,6 +292,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
+		RenewDeadline:          &renewDeadline,
 		Namespace:              namespace,
 	}
 
