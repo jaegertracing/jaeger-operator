@@ -7,6 +7,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      USER: jaegertracing
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: docker/setup-qemu-action@v1.2.0

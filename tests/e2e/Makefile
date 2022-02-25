@@ -77,7 +77,7 @@ list-test-suites:
 	$(VECHO)$(eval TEST_SUITES := $(shell find tests/e2e -name Makefile | grep  -E -o '(\w|\-)*' | grep -v 'test' | grep -v 'Makefile' | grep -v 'e2e'))
 
 run-suite-tests: start-kind prepare-e2e-tests
-	$(VECHO)$(MAKE) render-e2e-tests-$(TEST_SUITE_NAME)
+	$(VECHO)PATH=${PATH}:$(shell pwd)/bin $(MAKE) render-e2e-tests-$(TEST_SUITE_NAME)
 
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
@@ -93,7 +93,7 @@ else
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 endif
 	$(ECHO) Running $(TEST_SUITE_NAME) E2E tests
-	$(VECHO)cd tests/e2e/$(TEST_SUITE_NAME)/_build && $(KUTTL) test $(KUTTL_OPTIONS)
+	$(VECHO)cd tests/e2e/$(TEST_SUITE_NAME)/_build && PATH=${PATH}:$(shell pwd)/bin $(KUTTL) test $(KUTTL_OPTIONS)
 
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)$(MAKE) stop-kind

@@ -25,13 +25,13 @@ runs:
       with:
         go-version: 1.16
     - name: "Install KIND"
-      run: ./.ci/install-kind.sh
+      run: ./hack/install/install-kind.sh
       shell: bash
     - name: "Install KUTTL"
-      run: ./.ci/install-kuttl.sh
+      run: ./hack/install/install-kuttl.sh
       shell: bash
     - name: "Install gomplate"
-      run: ./.ci/install-gomplate.sh
+      run: ./hack/install/install-gomplate.sh
       shell: bash
     - name: "Install dependencies"
       run: make install-tools

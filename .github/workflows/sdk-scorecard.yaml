@@ -14,8 +14,8 @@ jobs:
       - name: "Check out code"
         uses: actions/checkout@v2.4.0
       - name: "Install KIND"
-        run: ./.ci/install-kind.sh
+        run: ./hack/install/install-kind.sh
       - name: "Install KUTTL"
-        run: ./.ci/install-kuttl.sh
+        run: ./hack/install/install-kuttl.sh
       - name: "Run Operator-SDK scorecard test"
         run: make scorecard-tests-local
