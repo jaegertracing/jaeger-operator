@@ -9,14 +9,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 func upgrade1_31_0(ctx context.Context, c client.Client, jaeger v1.Jaeger) (v1.Jaeger, error) {
 
 	// Delete ES instance if self-provisioned ES is used.
 	// The newly created instance will use cert-management from EO operator.
-	if storage.ShouldInjectElasticsearchConfiguration(jaeger.Spec.Storage) {
+	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) {
 		es := esv1.Elasticsearch{
 			ObjectMeta: metav1.ObjectMeta{
 				// The only possible name
