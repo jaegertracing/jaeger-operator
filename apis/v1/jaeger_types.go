@@ -1,11 +1,10 @@
 package v1
 
 import (
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 // IngressSecurityType represents the possible values for the security type
