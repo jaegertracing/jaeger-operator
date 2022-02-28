@@ -187,6 +187,18 @@ rules:
 - apiGroups:
   - logging.openshift.io
   resources:
+  - elasticsearch
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - logging.openshift.io
+  resources:
   - elasticsearches
   verbs:
   - create
