@@ -14,21 +14,6 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
-func TestShouldDeployElasticsearch(t *testing.T) {
-	tests := []struct {
-		j        v1.JaegerStorageSpec
-		expected bool
-	}{
-		{j: v1.JaegerStorageSpec{}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}, expected: true},
-	}
-	for _, test := range tests {
-		assert.Equal(t, test.expected, ShouldInjectElasticsearchConfiguration(test.j))
-	}
-}
-
 func TestCreateElasticsearchCR(t *testing.T) {
 	storageClassName := "floppydisk"
 	genuuid1 := "myprojectfoo"
