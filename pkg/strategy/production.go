@@ -123,7 +123,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	c.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
-	if storage.ShouldInjectElasticsearchConfiguration(jaeger.Spec.Storage) {
+	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) {
 		var jobs []*corev1.PodSpec
 		for i := range c.dependencies {
 			jobs = append(jobs, &c.dependencies[i].Spec.Template.Spec)
