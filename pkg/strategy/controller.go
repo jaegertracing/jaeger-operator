@@ -15,7 +15,6 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 var (
@@ -146,7 +145,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
 		spec.Dependencies.Enabled == nil &&
-		!storage.ShouldInjectElasticsearchConfiguration(*spec) &&
+		!v1.ShouldInjectOpenShiftElasticsearchConfiguration(*spec) &&
 		tlsIsNotEnabled {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar

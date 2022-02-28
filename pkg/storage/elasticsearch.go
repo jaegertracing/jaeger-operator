@@ -22,15 +22,6 @@ const (
 	certPath        = volumeMountPath + "/tls.crt"
 )
 
-// ShouldInjectElasticsearchConfiguration determines whether a new instance of Elasticsearch should be deployed
-func ShouldInjectElasticsearchConfiguration(s v1.JaegerStorageSpec) bool {
-	if s.Type != v1.JaegerESStorage {
-		return false
-	}
-	_, ok := s.Options.Map()["es.server-urls"]
-	return !ok
-}
-
 // ElasticsearchDeployment represents an ES deployment for Jaeger
 type ElasticsearchDeployment struct {
 	Jaeger     *v1.Jaeger
