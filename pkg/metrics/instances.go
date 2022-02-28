@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
 const metricPrefix = "jaeger_operator_instances"
@@ -125,7 +124,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 		"Number of instances using autoprovisioning",
 		"type",
 		func(jaeger v1.Jaeger) string {
-			if storage.ShouldInjectElasticsearchConfiguration(jaeger.Spec.Storage) {
+			if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) {
 				return "elasticsearch"
 			}
 			return ""
