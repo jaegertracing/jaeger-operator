@@ -773,6 +773,8 @@ spec:
                     type: boolean
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -2026,6 +2028,8 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -3243,6 +3247,8 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -4098,6 +4104,8 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              imagePullPolicy:
+                type: string
               imagePullSecrets:
                 items:
                   properties:
@@ -4473,6 +4481,8 @@ spec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   image:
+                    type: string
+                  imagePullPolicy:
                     type: string
                   imagePullSecrets:
                     items:
@@ -5693,6 +5703,8 @@ spec:
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -6916,6 +6928,8 @@ spec:
                     format: int32
                     type: integer
                   image:
+                    type: string
+                  imagePullPolicy:
                     type: string
                   imagePullSecrets:
                     items:
@@ -8611,6 +8625,8 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullPolicy:
+                        type: string
                       imagePullSecrets:
                         items:
                           properties:
@@ -9882,6 +9898,8 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullPolicy:
+                        type: string
                       imagePullSecrets:
                         items:
                           properties:
@@ -11080,6 +11098,8 @@ spec:
                       conditions:
                         type: string
                       image:
+                        type: string
+                      imagePullPolicy:
                         type: string
                       imagePullSecrets:
                         items:
