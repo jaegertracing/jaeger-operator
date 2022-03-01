@@ -6,15 +6,13 @@ This project is [Apache 2.0 licensed](LICENSE) and accepts contributions via Git
 
 We gratefully welcome improvements to documentation as well as to code.
 
-## Getting Started
-
 This project is a regular [Kubernetes Operator](https://coreos.com/operators/)  built using the Operator SDK. Refer to the Operator SDK documentation to understand the basic architecture of this operator.
 
-### Installing the Operator SDK command line tool
+## Installing the Operator SDK command line tool
 
 Follow the installation guidelines from [Operator SDK GitHub page](https://github.com/operator-framework/operator-sdk)
 
-### Developing
+## Developing
 
 As usual for operators following the Operator SDK in recent versions, the dependencies are managed using [`go modules`](https://golang.org/doc/go1.11#modules). Refer to that project's documentation for instructions on how to add or update dependencies.
 
@@ -76,7 +74,7 @@ kubectl delete -f examples/simplest.yaml
 
 The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.*.go` files via the command `make generate`. This should be executed whenever there's a model change (`pkg/apis/jaegertracing/v1/jaeger_types.go`)
 
-#### Storage configuration
+### Storage configuration
 
 There are a set of templates under the `test` directory that can be used to setup an Elasticsearch and/or Cassandra cluster. Alternatively, the following commands can be executed to install it:
 
@@ -85,7 +83,7 @@ make es
 make cassandra
 ```
 
-#### Operator-Lifecycle-Manager Integration
+### Operator-Lifecycle-Manager Integration
 
 The [Operator-Lifecycle-Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager/) can install, manage, and upgrade operators and their dependencies in a cluster.
 
@@ -136,44 +134,76 @@ OLM Integration:
 Total Score: 4/18 points
 ```
 
-#### E2E tests
+## E2E tests
 
+### Requisites
+
+Before running the E2E tests you need to install:
+
+* [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation): a tool for running local Kubernetes clusters
+* [KUTTL](https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin): a tool to run the Kubernetes tests
+
+
+### Runing the E2E tests
 The whole set of end-to-end tests can be executed via:
 
-```
-$ make e2e-tests
+```sh
+$ make run-e2e-tests
 ```
 
 The end-to-end tests are split into tags and can be executed in separate groups, such as:
 
-```
-$ make e2e-tests-smoke
-```
-
-Other targets include `e2e-tests-cassandra` and `e2e-tests-elasticsearch`. Refer to the `Makefile` for an up-to-date list of targets.
-
-If you face issues like the one below, make sure you don't have any Jaeger instances (`kubectl get jaegers`) running nor Ingresses (`kubectl get ingresses`):
-
-```
---- FAIL: TestSmoke (316.59s)
-    --- FAIL: TestSmoke/smoke (316.55s)
-        --- FAIL: TestSmoke/smoke/daemonset (115.54s)
-...
-...
-            daemonset.go:30: timed out waiting for the condition
-...
-...
+```sh
+$ make run-e2e-tests-smoke
 ```
 
-##### Kuttl E2E tests
-
-There are some tests that uses [Kuttl](https://kuttl.dev/), those tests can be executed via:
-
-```
-$ make kuttl-e2e
+Other targets include `run-e2e-tests-cassandra` and `run-e2e-tests-elasticsearch`. You can list them running:
+```sh
+$ make e2e-test-suites
 ```
 
-You first need to install [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) in order to run the based kuttle e2e tests
+### Developing new E2E tests
+
+E2E tests are located under `tests/e2e`. Each folder is associated to an E2E test suite. The
+Tests are developed using KUTTL. Before developing a new test, [learn how KUTTL test works](https://kuttl.dev/docs/what-is-kuttl.html).
+
+To add a new suite, it is needed to create a new folder with the name of the suite under `tests/e2e`.
+
+Each suite folder contains:
+* `Makefile`: describes the rules associated to rendering the files needed for your tests and run the tests
+* `render.sh`: renders all the files needed for your tests (or to skip them)
+* A folder per test to run
+
+When the test are rendered, each test folder is copied to `_build`. The files generated
+by `render.sh` are created under `_build/<test name>`.
+
+##### Makefile
+The `Makefile` file must contain two rules:
+
+```Makefile
+render-e2e-tests-<suite name>: set-assert-e2e-img-name
+	./tests/e2e/<suite name>/render.sh
+
+run-e2e-tests-<suite name>: TEST_SUITE_NAME=<suite name>
+run-e2e-tests-<suite name>: run-suite-tests
+```
+
+Where `<suite name>` is the name of your E2E test suite. Your E2E test suite
+will be automatically indexed in the `run-e2e-tests` Makefile target.
+
+##### render.sh
+
+This file renders all the YAML files that are part of the E2E test. The `render.sh`
+file must start with:
+
+```bash
+#!/bin/bash
+
+source $(dirname "$0")/../render-utils.sh
+```
+
+The `render-utils.sh` file contains multiple functions to make easier to develop E2E tests and reuse logic. You can go to it and review the documentation of each one of the functions to
+understand their parameters and effects.
 
 #### Building [OCI Images](https://github.com/opencontainers/image-spec/blob/master/spec.md) for multiple arch (linux/arm64, linux/amd64)
 
