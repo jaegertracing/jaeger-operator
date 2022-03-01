@@ -52,6 +52,7 @@ runs:
       env:
         VERBOSE: "true"
         KUBE_VERSION: "${{ inputs.kube_version }}"
+        DOCKER_BUILD_OPTIONS: "--cache-from	type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max --load"
       run: make run-e2e-tests-${{ inputs.testsuite_name }}
       shell: bash
     -

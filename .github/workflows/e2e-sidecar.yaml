@@ -3,8 +3,12 @@ name: Sidecar E2E tests
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 concurrency:
   group: e2e-tests-${{ github.ref }}-sidecar
