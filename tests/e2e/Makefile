@@ -37,7 +37,7 @@ build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 .PHONY: load-assert-job
 load-assert-job: build-assert-job set-assert-e2e-img-name
 ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)./hack/load-kind-image.sh $(ASSERT_IMG) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(ASSERT_IMG)
 else
 	$(ECHO)Pushing the E2E Test asserts Docker image to the remote repository
 	$(VECHO)if [ "$(shell docker manifest inspect $(ASSERT_IMG) 2>/dev/null)" != "" ]; then echo "The image is in the registry. Not pushing"; else docker push $(shell cat build-assert-job); fi;
@@ -56,7 +56,7 @@ build-e2e-upgrade-image: Dockerfile $(shell find apis bundle cmd config controll
 .PHONY: load-e2e-upgrade-image
 load-e2e-upgrade-image: build-e2e-upgrade-image
 ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)./hack/load-kind-image.sh $(OPERATOR_IMAGE_NEXT) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(OPERATOR_IMAGE_NEXT)
 endif
 
 .PHONY: load-elasticsarch-image
@@ -64,7 +64,7 @@ load-elasticsarch-image:
 ifneq ($(SKIP_ES_EXTERNAL),true)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)./hack/pull-docker-image.sh $(ELASTIC_IMG)
-	$(VECHO)./hack/load-kind-image.sh $(ELASTIC_IMG) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(ELASTIC_IMG)
 else
 	$(ECHO) The Elasticsearch Docker image will be pulled from the registry by the cluster
 endif
