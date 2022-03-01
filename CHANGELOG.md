@@ -1,6 +1,8 @@
 Changes by Version
 ==================
 
+* add METRICS_STORAGE_TYPE for metrics query
+
 1.31.0 (2022-02-09)
 -------------------
 * Fix panic caused by an invalid type assertion ([#1738](https://github.com/jaegertracing/jaeger-operator/pull/1738), [@frzifus](https://github.com/frzifus))
