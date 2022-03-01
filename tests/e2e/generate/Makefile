@@ -1,4 +1,4 @@
-render-e2e-tests-generate: set-assert-e2e-img-name
+render-e2e-tests-generate: load-assert-job
 	JAEGER_VERSION=${JAEGER_VERSION} ./tests/e2e/generate/render.sh
 
 run-e2e-tests-generate: TEST_SUITE_NAME=generate
