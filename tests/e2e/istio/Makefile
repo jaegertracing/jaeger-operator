@@ -1,4 +1,4 @@
-render-e2e-tests-istio: set-assert-e2e-img-name
+render-e2e-tests-istio: load-assert-job
 	./tests/e2e/istio/render.sh
 
 run-e2e-tests-istio: TEST_SUITE_NAME=istio
