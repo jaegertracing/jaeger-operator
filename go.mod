@@ -33,4 +33,4 @@ require (
 	sigs.k8s.io/controller-runtime v0.10.0
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.21.2 // Required by prometheus-operator
+replace k8s.io/client-go => k8s.io/client-go v0.22.1 // Required by prometheus-operator
