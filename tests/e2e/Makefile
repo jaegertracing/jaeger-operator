@@ -30,7 +30,7 @@ endif
 
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 	$(ECHO) Building E2E asserts image
-	$(VECHO)docker build -t $(ASSERT_IMG)  -f Dockerfile.asserts .
+	$(VECHO)docker build -t $(ASSERT_IMG)  -f Dockerfile.asserts . $(DOCKER_BUILD_OPTIONS)
 	$(VECHO)echo $(ASSERT_IMG) > $@
 
 
