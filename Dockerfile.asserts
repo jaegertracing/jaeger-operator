@@ -1,28 +1,30 @@
 # Build the manager binary
 FROM golang:1.16 as builder
 
-WORKDIR /go/src/github.com/jaegertracing/jaeger-operator
+WORKDIR /workspace
 
 # Download the dependencies. Doing this, if there are changes in the source
 # code but not in the dependencies to download, the tool to build the image will
 # use the cached dependencies
-COPY go.mod /go/src/github.com/jaegertracing/jaeger-operator/go.mod
-COPY go.sum /go/src/github.com/jaegertracing/jaeger-operator/go.sum
+COPY go.mod go.mod
+COPY go.sum go.sum
 RUN go mod download
 
-COPY . /go/src/github.com/jaegertracing/jaeger-operator/
+COPY tests tests
+
+ENV CGO_ENABLED=0
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./uiconfig -a ./tests/assert-jobs/uiconfig/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./query -a ./tests/assert-jobs/query/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o ./index -a ./tests/assert-jobs/index/main.go
+RUN go build -o ./uiconfig -a ./tests/assert-jobs/uiconfig/main.go
+RUN go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
+RUN go build -o ./query -a ./tests/assert-jobs/query/main.go
+RUN go build -o ./index -a ./tests/assert-jobs/index/main.go
 
 # Use the curl container image to ensure we have curl installed. Also, it is a
 # minimal container image
 FROM curlimages/curl:7.81.0
 WORKDIR /
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/uiconfig .
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/reporter .
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/query .
-COPY --from=builder /go/src/github.com/jaegertracing/jaeger-operator/index .
+COPY --from=builder /workspace/uiconfig .
+COPY --from=builder /workspace/reporter .
+COPY --from=builder /workspace/query .
+COPY --from=builder /workspace/index .
