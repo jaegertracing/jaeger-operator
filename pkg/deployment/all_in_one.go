@@ -150,6 +150,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: string(a.jaeger.Spec.Storage.Type),
 							},
 							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
+							},
+							{
 								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 								Value: ":9411",
 							},
