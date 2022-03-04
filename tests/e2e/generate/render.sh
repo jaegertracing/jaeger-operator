@@ -2,14 +2,16 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-cd $SUITE_DIR
+if [ $IS_OPENSHIFT = true ]; then
+    skip_test "generate" "This test was skipped until https://github.com/jaegertracing/jaeger-operator/issues/1278 is fixed"
+else
+    start_test "generate"
+    # JAEGER_VERSION environment variable is set before this script is called
+    export JAEGER_NAME=my-jaeger
 
-echo "Rendering templates for generate test"
-cd generate
-# JAEGER_VERSION environment variable is set before this script is called
-export JAEGER_NAME=my-jaeger
-export JAEGER_SERVICE=test-service
-export JAEGER_OPERATION=smoketestoperation
-$GOMPLATE -f ./jaeger-template.yaml.template -o ./jaeger-deployment.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test.yaml.template -o ./01-smoke-test.yaml
-$GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./01-assert.yaml
+    $GOMPLATE -f ./jaeger-template.yaml.template -o ./jaeger-deployment.yaml
+
+    render_smoke_test "$JAEGER_NAME" "allInOne" "01"
+
+    unset JAEGER_NAME
+fi

@@ -2,31 +2,31 @@ name: "CI Workflow"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   basic-checks:
     runs-on: ubuntu-20.04
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v2.1.4
+      uses: actions/setup-go@v2.2.0
       with:
         go-version: 1.16
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
 
     - name: "install kubebuilder"
       run: ./hack/install-kubebuilder.sh
 
     - name: "install kustomize"
       run: ./hack/install-kustomize.sh
-
-    - uses: jpkrohling/setup-operator-sdk@v1.1.0
-      with:
-        operator-sdk-version: v1.13.1
 
     - name: "basic checks"
       run: make install-tools ci

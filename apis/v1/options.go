@@ -63,7 +63,9 @@ func (o *Options) UnmarshalJSON(b []byte) error {
 	if err := d.Decode(&entries); err != nil {
 		return err
 	}
-	o.parse(entries)
+	if err := o.parse(entries); err != nil {
+		return err
+	}
 	o.json = &b
 	return nil
 }
@@ -85,30 +87,43 @@ func (o Options) MarshalJSON() ([]byte, error) {
 	return *o.json, nil
 }
 
-func (o *Options) parse(entries map[string]interface{}) {
+func (o *Options) parse(entries map[string]interface{}) error {
 	o.opts = make(map[string]interface{})
+	var err error
 	for k, v := range entries {
-		o.opts = entry(o.opts, k, v)
+		o.opts, err = entry(o.opts, k, v)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func entry(entries map[string]interface{}, key string, value interface{}) map[string]interface{} {
-	switch value.(type) {
+func entry(entries map[string]interface{}, key string, value interface{}) (map[string]interface{}, error) {
+	switch val := value.(type) {
 	case map[string]interface{}:
-		for k, v := range value.(map[string]interface{}) {
-			entries = entry(entries, fmt.Sprintf("%s.%v", key, k), v)
+		var err error
+		for k, v := range val {
+			entries, err = entry(entries, fmt.Sprintf("%s.%v", key, k), v)
+			if err != nil {
+				return nil, err
+			}
 		}
-	case []interface{}:
-		values := make([]string, 0, len(value.([]interface{})))
-		for _, v := range value.([]interface{}) {
-			values = append(values, v.(string))
+	case []interface{}: // NOTE: content of the argument list is not returned as []string when decoding json.
+		values := make([]string, 0, len(val))
+		for _, v := range val {
+			str, ok := v.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid option type, expect: string, got: %T", v)
+			}
+			values = append(values, str)
 		}
 		entries[key] = values
 	case interface{}:
 		entries[key] = fmt.Sprintf("%v", value)
 	}
 
-	return entries
+	return entries, nil
 }
 
 // ToArgs converts the options to a value suitable for the Container.Args field

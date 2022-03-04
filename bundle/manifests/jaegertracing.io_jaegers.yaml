@@ -2,6 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: observability/jaeger-operator-serving-cert
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
   labels:
@@ -2026,6 +2027,14 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullSecrets:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
                   labels:
                     additionalProperties:
                       type: string
@@ -3235,6 +3244,14 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullSecrets:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
                   labels:
                     additionalProperties:
                       type: string
@@ -4082,6 +4099,14 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              imagePullSecrets:
+                items:
+                  properties:
+                    name:
+                      type: string
+                  type: object
+                type: array
+                x-kubernetes-list-type: atomic
               ingester:
                 properties:
                   affinity:
@@ -4450,6 +4475,14 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullSecrets:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
                   labels:
                     additionalProperties:
                       type: string
@@ -5659,6 +5692,14 @@ spec:
                   hosts:
                     items:
                       type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  imagePullSecrets:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      type: object
                     type: array
                     x-kubernetes-list-type: atomic
                   ingressClassName:
@@ -6877,6 +6918,14 @@ spec:
                     type: integer
                   image:
                     type: string
+                  imagePullSecrets:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
                   labels:
                     additionalProperties:
                       type: string
@@ -8563,6 +8612,14 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullSecrets:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
                       javaOpts:
                         type: string
                       labels:
@@ -9390,7 +9447,11 @@ spec:
                     type: object
                   elasticsearch:
                     properties:
+                      doNotProvision:
+                        type: boolean
                       image:
+                        type: string
+                      name:
                         type: string
                       nodeCount:
                         format: int32
@@ -9822,6 +9883,14 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullSecrets:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
                       labels:
                         additionalProperties:
                           type: string
@@ -11015,6 +11084,14 @@ spec:
                         type: string
                       image:
                         type: string
+                      imagePullSecrets:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
                       labels:
                         additionalProperties:
                           type: string

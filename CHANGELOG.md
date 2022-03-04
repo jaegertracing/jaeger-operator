@@ -1,5 +1,12 @@
 Changes by Version
 ==================
+
+1.31.0 (2022-02-09)
+-------------------
+* Fix panic caused by an invalid type assertion ([#1738](https://github.com/jaegertracing/jaeger-operator/pull/1738), [@frzifus](https://github.com/frzifus))
+* Add ES autoprovisioning CR metric ([#1728](https://github.com/jaegertracing/jaeger-operator/pull/1728), [@rubenvp8510](https://github.com/rubenvp8510))
+* Use Elasticsearch provisioning from OpenShift Elasticsearch operator ([#1708](https://github.com/jaegertracing/jaeger-operator/pull/1708), [@pavolloffay](https://github.com/pavolloffay))
+
 1.30.0 (2022-01-18)
 -------------------
 * Only expose the query-http[s] port in the OpenShift route ([#1719](https://github.com/jaegertracing/jaeger-operator/pull/1719), [@rkukura](https://github.com/rkukura))
@@ -13,7 +20,6 @@ Changes by Version
 * Register ES types ([#1688](https://github.com/jaegertracing/jaeger-operator/pull/1688), [@rubenvp8510](https://github.com/rubenvp8510))
 * Add support for IBM Power (ppc64le) arch ([#1672](https://github.com/jaegertracing/jaeger-operator/pull/1672), [@Abhijit-Mane](https://github.com/Abhijit-Mane))
 * util.Truncate add the values to the truncated after the excess is 0 ([#1678](https://github.com/jaegertracing/jaeger-operator/pull/1678), [@mmatache](https://github.com/mmatache))
-
 
 1.29.1 (2021-12-15)
 -------------------
