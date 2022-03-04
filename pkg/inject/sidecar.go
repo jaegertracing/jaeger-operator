@@ -352,7 +352,7 @@ func hasEnv(name string, vars []corev1.EnvVar) bool {
 	return false
 }
 
-// CleanSidecar of  deployments  associated with the jaeger instance.
+// CleanSidecar of deployments associated with the jaeger instance.
 func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	delete(deployment.Labels, Label)
 	for c := 0; c < len(deployment.Spec.Template.Spec.Containers); c++ {
@@ -372,6 +372,32 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 			if _, ok := names[deployment.Spec.Template.Spec.Volumes[v].Name]; ok {
 				// delete managed volume
 				deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes[:v], deployment.Spec.Template.Spec.Volumes[v+1:]...)
+				v--
+			}
+		}
+	}
+}
+
+// CleanSidecarFromPod of pods associated with the jaeger instance.
+func CleanSidecarFromPod(instanceName string, pod *corev1.Pod) {
+	delete(pod.Labels, Label)
+	for c := 0; c < len(pod.Spec.Containers); c++ {
+		if pod.Spec.Containers[c].Name == "jaeger-agent" {
+			// delete jaeger-agent container
+			pod.Spec.Containers = append(pod.Spec.Containers[:c], pod.Spec.Containers[c+1:]...)
+			break
+		}
+	}
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		names := map[string]bool{
+			ca.TrustedCANameFromString(instanceName): true,
+			ca.ServiceCANameFromString(instanceName): true,
+		}
+		// Remove the managed volumes, if present
+		for v := 0; v < len(pod.Spec.Volumes); v++ {
+			if _, ok := names[pod.Spec.Volumes[v].Name]; ok {
+				// delete managed volume
+				pod.Spec.Volumes = append(pod.Spec.Volumes[:v], pod.Spec.Volumes[v+1:]...)
 				v--
 			}
 		}

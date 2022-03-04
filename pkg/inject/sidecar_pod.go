@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -74,32 +75,35 @@ func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
 
 	// A detailed check, whether there is a jaeger-agent container being injected
 	hasAgent, _ := HasJaegerAgent(pod.Spec.Containers)
-
-	if hasAgent {
-		return false
-	}
-
 	// If no agent at all but has annotations!
-	return true
+	return !hasAgent
 }
 
-// SelectForPod a suitable Jaeger from the JaegerList for the given Pod, or nil of none is suitable
-func SelectForPod(pod *corev1.Pod, ns *corev1.Namespace, availableJaegerPods *v1.JaegerList) *v1.Jaeger {
-	jaegerNameDep := pod.Labels[PodLabel]
+// SelectForPod a suitable Jaeger from the JaegerList for the given Pod,
+// Deployment, Namespace or nil if none is suitable
+func SelectForPod(
+	pod *corev1.Pod,
+	deploy *appsv1.Deployment,
+	ns *corev1.Namespace,
+	availableJaegerPods *v1.JaegerList,
+) *v1.Jaeger {
+	jaegerNamePod := pod.Labels[PodLabel]
 	jaegerNameNs := ns.Annotations[Annotation]
+	jaegerNameDeploy := deploy.Annotations[Annotation]
 
-	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
-		// name on the deployment has precedence
-		if jaeger := getJaeger(jaegerNameDep, availableJaegerPods); jaeger != nil {
-			return jaeger
-		}
-		return nil
+	if jaeger := getJaeger(jaegerNamePod, availableJaegerPods); jaeger != nil {
+		return jaeger
+	}
+	if jaeger := getJaeger(jaegerNameDeploy, availableJaegerPods); jaeger != nil {
+		return jaeger
 	}
 	if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
 		return jaeger
 	}
 
-	if strings.EqualFold(jaegerNameDep, "true") || strings.EqualFold(jaegerNameNs, "true") {
+	if strings.EqualFold(jaegerNamePod, "true") ||
+		strings.EqualFold(jaegerNameDeploy, "true") ||
+		strings.EqualFold(jaegerNameNs, "true") {
 		// If there is only *one* available instance in all watched namespaces
 		// then that's what we'll use
 		if len(availableJaegerPods.Items) == 1 {
