@@ -677,3 +677,4 @@ fi
 export CRD_DIR
 
 $GOMPLATE -f ../../../templates/kuttl-test.yaml -o ./kuttl-test.yaml
+mkdir -p artifacts

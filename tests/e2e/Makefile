@@ -77,27 +77,7 @@ list-test-suites:
 	$(VECHO)$(eval TEST_SUITES := $(shell find tests/e2e -name Makefile | grep  -E -o '(\w|\-)*' | grep -v 'test' | grep -v 'Makefile' | grep -v 'e2e'))
 
 run-suite-tests: start-kind prepare-e2e-tests
-	$(VECHO)$(MAKE) render-e2e-tests-$(TEST_SUITE_NAME)
-
-ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
-	$(VECHO)kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
-endif
-
-ifeq ($(OLM),true)
-	$(ECHO) Skipping Jaeger Operator installation because OLM=true
-else
-	$(ECHO) Installing Jaeger Operator...
-	$(VECHO)kubectl create namespace observability 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n observability
-	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
-endif
-	$(ECHO) Running $(TEST_SUITE_NAME) E2E tests
-	$(VECHO)cd tests/e2e/$(TEST_SUITE_NAME)/_build && $(KUTTL) test $(KUTTL_OPTIONS)
-
-ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)$(MAKE) stop-kind
-endif
+	./hack/run-e2e-tests.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)
 
 clean-generated-files:
 	$(VECHO)git clean -Xdf tests/e2e
