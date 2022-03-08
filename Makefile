@@ -39,7 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
-OPERATOR_SDK_VERSION ?= 1.14.0
+OPERATOR_SDK_VERSION ?= 1.13.1
 
 USE_KIND_CLUSTER ?= true
 export OLM ?= false
@@ -77,7 +77,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:maxDescLen=0,generateEmbeddedObjectMeta=true"
+CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false,maxDescLen=0,generateEmbeddedObjectMeta=true"
 
 # If we are running in CI, run go test in verbose mode
 ifeq (,$(CI))
