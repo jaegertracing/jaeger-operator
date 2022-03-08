@@ -216,6 +216,17 @@ func TestAllInOneImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestAllInOneImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	allInOne := NewAllInOne(jaeger)
+	dep := allInOne.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
 func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	name := "TestAllInOneMountGlobalVolumes"
 
