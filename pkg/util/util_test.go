@@ -107,6 +107,23 @@ func TestMergeImagePullSecrets(t *testing.T) {
 	assert.Equal(t, "hij", merged.ImagePullSecrets[3].Name)
 }
 
+func TestMergeImagePullPolicy(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Never"),
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Always"),
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Equal(t, corev1.PullPolicy("Always"), merged.ImagePullPolicy)
+}
+
 func TestMergeAnnotations(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
