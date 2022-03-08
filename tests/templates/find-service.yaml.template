@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{if getenv "JOB_NUMBER"}}{{ .Env.JOB_NUMBER }}-{{end}}find-service
+spec:
+  template:
+    spec:
+    {{if getenv "MOUNT_SECRET"}}
+      volumes:
+      - name: token-api-volume
+        secret:
+          secretName: {{ .Env.MOUNT_SECRET }}
+    {{ end }}
+      containers:
+        - name: asserts-container
+          image: {{ .Env.ASSERT_IMG }}
+          command: ["./query"]
+          args: []
+          env:
+            - name: SERVICE_NAME
+              value: "{{ .Env.SERVICE_NAME }}"
+            - name: QUERY_HOST
+              value: "{{ .Env.JAEGER_QUERY_ENDPOINT }}"
+            {{if getenv "MOUNT_SECRET"}}
+            - name: SECRET_PATH
+              value: "/var/run/secrets/api-token/token"
+            {{ end }}
+          {{if getenv "MOUNT_SECRET"}}
+          volumeMounts:
+          - mountPath: /var/run/secrets/api-token
+            name: token-api-volume
+          {{ end }}
+      restartPolicy: OnFailure
+  backoffLimit: 15

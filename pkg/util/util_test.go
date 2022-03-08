@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {
@@ -63,6 +63,65 @@ func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
 	assert.Len(t, RemoveDuplicatedImagePullSecrets(imagePullSecrets), 2)
 	assert.Equal(t, "secret1", imagePullSecrets[0].Name)
 	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
+}
+
+func TestMergeImagePullSecrets(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+			{
+				Name: "def",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "hij",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Len(t, merged.ImagePullSecrets, 4)
+	assert.Equal(t, "abc", merged.ImagePullSecrets[0].Name)
+	assert.Equal(t, "def", merged.ImagePullSecrets[1].Name)
+	assert.Equal(t, "xyz", merged.ImagePullSecrets[2].Name)
+	assert.Equal(t, "hij", merged.ImagePullSecrets[3].Name)
+}
+
+func TestMergeImagePullPolicy(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Never"),
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Always"),
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Equal(t, corev1.PullPolicy("Always"), merged.ImagePullPolicy)
 }
 
 func TestMergeAnnotations(t *testing.T) {

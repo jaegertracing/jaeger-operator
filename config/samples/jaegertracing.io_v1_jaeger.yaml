@@ -1,0 +1,6 @@
+apiVersion: jaegertracing.io/v1
+kind: "Jaeger"
+metadata:
+  name: "my-jaeger"
+spec:
+  strategy: allInOne

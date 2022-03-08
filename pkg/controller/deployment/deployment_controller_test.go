@@ -15,10 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -105,10 +104,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	}
 
 	// test
-	requests := r.syncOnJaegerChanges(handler.MapObject{
-		Meta:   &jaeger.ObjectMeta,
-		Object: jaeger,
-	})
+	requests := r.SyncOnJaegerChanges(jaeger)
 
 	// verify
 	assert.Len(t, requests, 4)
@@ -218,8 +214,8 @@ func TestReconcilieDeployment(t *testing.T) {
 	})
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 
 	testCases := []struct {
 		desc              string
@@ -296,7 +292,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				},
 			}
 
-			_, err := r.Reconcile(req)
+			_, err := r.Reconcile(context.Background(), req)
 			persisted := &appsv1.Deployment{}
 			cl.Get(context.Background(), req.NamespacedName, persisted)
 

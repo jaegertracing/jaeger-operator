@@ -14,9 +14,10 @@ import (
 
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 )
 
 // S knows what type of deployments to build based on a given spec

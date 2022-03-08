@@ -11,8 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
@@ -145,6 +145,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
 						Name:  "jaeger-collector",
@@ -193,7 +194,8 @@ func (c *Collector) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,

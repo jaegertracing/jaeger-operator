@@ -1,0 +1,18 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: all-in-one-with-ui-config
+  anotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  strategy: allinone
+  allInOne:
+    options:
+      query.base-path: "/jaeger"
+  ui:
+    options:
+      tracking:
+        gaID: "MyTrackingId"
+  ingress:
+    enabled: true
+    security: "none"

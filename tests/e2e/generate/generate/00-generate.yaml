@@ -1,0 +1,12 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Sometimes, there are issues calling the "validate.nginx.ingress.kubernetes.io" webhook. We need to ensure it is there
+  # before calling generate
+  - command: "kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx"
+  - command: "kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m"
+  # Generate the manifest from the CRDs
+  - command: "../../../../../bin/jaeger-operator generate --cr jaeger-deployment.yaml --output generated-manifest.yaml"
+  # Deploy the manifest
+  - command: "kubectl apply -f generated-manifest.yaml"
+    namespaced: true

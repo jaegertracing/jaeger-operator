@@ -1,8 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  # Generate the manifest from the CRDs
-  - script: "../../../build/_output/bin/jaeger-operator generate --cr jaeger-deployment.yaml --output generated-manifest.yaml"
-  # Deploy the manifest
-  - command: "kubectl apply -f generated-manifest.yaml"
-    namespaced: true

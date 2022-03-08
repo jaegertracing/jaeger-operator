@@ -11,7 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -162,7 +162,8 @@ func getJaegerFromNamespace(namespace string, jaegers *v1.JaegerList) []*v1.Jaeg
 	for _, p := range jaegers.Items {
 		if p.Namespace == namespace {
 			// matched the namespace!
-			instances = append(instances, &p)
+			j := p
+			instances = append(instances, &j)
 		}
 	}
 	return instances

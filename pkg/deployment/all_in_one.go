@@ -13,8 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
@@ -155,6 +155,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
@@ -163,6 +164,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: string(a.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
 							},
 							{
 								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
@@ -230,7 +235,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),

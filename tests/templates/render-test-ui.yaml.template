@@ -1,0 +1,8 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Sometimes, the Ingress route is there but not 100% ready so, when kubectl tries to get the
+  # hostname, it returns an empty string
+  - command: ./ensure-ingress-host.sh
+  - script: "QUERY_BASE_PATH={{ .Env.QUERY_BASE_PATH }} ASSERT_IMG={{ .Env.ASSERT_IMG }} TRACKING_ID={{ .Env.TRACKING_ID }} QUERY_HOSTNAME={{ .Env.GET_URL_COMMAND }} gomplate -f {{ .Env.TEMPLATES_DIR }}/test-uiconfig.yaml.template -o run-assert.yaml"
+  - script: "kubectl create -f run-assert.yaml -n $NAMESPACE"

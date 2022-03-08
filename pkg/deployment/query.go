@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -145,6 +145,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: q.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
@@ -153,6 +154,10 @@ func (q *Query) Get() *appsv1.Deployment {
 							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: string(q.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
 							},
 							{
 								Name:  "JAEGER_DISABLED",
@@ -181,7 +186,8 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,

@@ -1,0 +1,6 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{if getenv "JOB_NUMBER"}}{{ .Env.JOB_NUMBER }}-{{end}}find-service
+status:
+  succeeded: 1

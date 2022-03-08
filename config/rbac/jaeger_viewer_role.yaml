@@ -1,0 +1,20 @@
+# permissions for end users to view jaegers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jaeger-operator-viewer-role
+rules:
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - jaegers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - jaegers/status
+  verbs:
+  - get

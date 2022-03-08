@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -24,7 +24,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("jaeger-ingester-image", "jaegertracing/jaeger-ingester", "The Docker image for the Jaeger Ingester")
 	cmd.Flags().String("jaeger-all-in-one-image", "jaegertracing/all-in-one", "The Docker image for the Jaeger all-in-one")
 	cmd.Flags().String("jaeger-cassandra-schema-image", "jaegertracing/jaeger-cassandra-schema", "The Docker image for the Jaeger Cassandra Schema")
-	cmd.Flags().String("jaeger-spark-dependencies-image", "jaegertracing/spark-dependencies", "The Docker image for the Spark Dependencies Job")
+	cmd.Flags().String("jaeger-spark-dependencies-image", "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", "The Docker image for the Spark Dependencies Job")
 	cmd.Flags().String("jaeger-es-index-cleaner-image", "jaegertracing/jaeger-es-index-cleaner", "The Docker image for the Jaeger Elasticsearch Index Cleaner")
 	cmd.Flags().String("jaeger-es-rollover-image", "jaegertracing/jaeger-es-rollover", "The Docker image for the Jaeger Elasticsearch Rollover")
 	cmd.Flags().String("openshift-oauth-proxy-image", "openshift/oauth-proxy:latest", "The Docker image location definition for the OpenShift OAuth Proxy")
@@ -34,6 +34,10 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("es-provision", "auto", "Whether to auto-provision an Elasticsearch cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'logging.openshift.io' is available, auto-provisioning is enabled.")
 	cmd.Flags().String("kafka-provision", "auto", "Whether to auto-provision a Kafka cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'kafka.strimzi.io' is available, auto-provisioning is enabled.")
 	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
+	cmd.Flags().String("secure-listen-address", "", "")
+	cmd.Flags().String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
+		"Enabling this will ensure there is only one active controller manager.")
 
 	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
 	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
@@ -54,10 +58,8 @@ func NewStartCommand() *cobra.Command {
 	AddFlags(cmd)
 	cmd.Flags().String("metrics-host", "0.0.0.0", "The host to bind the metrics port")
 	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
-	cmd.Flags().Int32("cr-metrics-port", 8686, "The metrics port for Operator and/or Custom Resource based metrics")
 	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
-	cmd.Flags().Bool("service-monitor-enabled", true, "Whether the Operator should create a ServiceMonitor object for the jaeger-operator service")
 
 	return cmd
 }
@@ -66,7 +68,7 @@ func start(cmd *cobra.Command, args []string) error {
 	mgr := bootstrap(context.Background())
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		log.Fatal(err, "Manager exited non-zero")
 		return err
 	}

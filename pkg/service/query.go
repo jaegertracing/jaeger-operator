@@ -5,7 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -20,7 +20,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 
 	ports := []corev1.ServicePort{
 		{
-			Name:       getPortNameForQueryService(jaeger),
+			Name:       GetPortNameForQueryService(jaeger),
 			Port:       int32(GetPortForQueryService(jaeger)),
 			TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
 		},
@@ -74,7 +74,7 @@ func GetTLSSecretNameForQueryService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-ui-oauth-proxy-tls", 63, jaeger.Name))
 }
 
-// GetPortForQueryService returns the query service name for this Jaeger instance
+// GetPortForQueryService returns the query service port number for this Jaeger instance
 func GetPortForQueryService(jaeger *v1.Jaeger) int {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return 443
@@ -82,7 +82,8 @@ func GetPortForQueryService(jaeger *v1.Jaeger) int {
 	return 16686
 }
 
-func getPortNameForQueryService(jaeger *v1.Jaeger) string {
+// GetPortNameForQueryService returns the query service port name for this Jaeger instance
+func GetPortNameForQueryService(jaeger *v1.Jaeger) string {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return "https-query"
 	}

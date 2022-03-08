@@ -1,0 +1,27 @@
+# Assert the Jaeger is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-spark-deps
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+---
+# Assert the schema job was succeded
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-spark-deps-cassandra-schema-job
+status:
+  succeeded: 1
+---
+# Assert the spark job was succeded
+apiVersion: batch/v1
+kind: Job
+metadata:
+  ownerReferences:
+  - kind: CronJob
+    name: test-spark-deps-spark-dependencies
+status:
+  succeeded: 1

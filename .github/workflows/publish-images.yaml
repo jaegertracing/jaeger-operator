@@ -2,13 +2,15 @@ name: "Publish images"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v1.2.0
     - uses: docker/setup-buildx-action@v1.6.0
     - name: "publishes the images"
@@ -17,5 +19,5 @@ jobs:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
         QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-        OPERATOR_VERSION: master
+        OPERATOR_VERSION: main
       run: ./.ci/publish-images.sh

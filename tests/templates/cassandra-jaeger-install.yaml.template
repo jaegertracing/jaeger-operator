@@ -2,7 +2,7 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: {{ .Env.INSTANCE_NAME }}
+  name: {{ .Env.JAEGER_NAME }}
 spec:
   strategy: allInOne
   storage:
@@ -10,7 +10,7 @@ spec:
 {{- if (has .Env "DEP_SCHEDULE")}}
     dependencies:
       # run immediately
-      schedule: "*/1 * * * *" 
+      schedule: "*/1 * * * *"
 {{- end }}
     options:
       cassandra:

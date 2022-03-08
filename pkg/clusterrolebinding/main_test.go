@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 )
 
 func TestGetClusterRoleBinding(t *testing.T) {

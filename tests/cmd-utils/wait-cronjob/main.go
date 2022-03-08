@@ -19,8 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils/logger"
 )
 
 const (
@@ -32,8 +30,6 @@ const (
 	flagTimeout       = "timeout"
 )
 
-var log logrus.Logger
-
 // Check if a CronJob exists in the given Kubernetes context
 // clientset: Kubernetes API client
 func checkCronJobExists(clientset *kubernetes.Clientset) error {
@@ -42,7 +38,7 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 	retryInterval := viper.GetDuration(flagRetryInterval)
 	timeout := viper.GetDuration(flagTimeout)
 
-	log.Debugln("Checking if the", cronjobName, "CronJob exists")
+	logrus.Debugln("Checking if the", cronjobName, "CronJob exists")
 
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
@@ -51,10 +47,9 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 		cronjobs, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				log.Debug("No cronjobs were found")
-				return false, nil
+				logrus.Debug("No cronjobs were found")
 			}
-			return false, err
+			return false, nil
 		}
 
 		for _, cronjob := range cronjobs.Items {
@@ -63,10 +58,15 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 			}
 		}
 
-		return false, fmt.Errorf(fmt.Sprintf("The %s CronJob was not found", cronjobName))
+		logrus.Warningln("The Cronjob", cronjobName, "was not found")
+		logrus.Debugln("Found cronjobs:")
+		for _, cronjob := range cronjobs.Items {
+			logrus.Debugln("\t", cronjob.Name)
+		}
+		return false, nil
 	})
 
-	log.Debugln("Cronjob", cronjobName, "found successfully")
+	logrus.Infoln("Cronjob", cronjobName, "found successfully")
 	return err
 }
 
@@ -79,7 +79,7 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 	timeout := viper.GetDuration(flagTimeout)
 	start := time.Now()
 
-	log.Debugln("Waiting for the next scheduled job from", cronjobName, "cronjob")
+	logrus.Debugln("Waiting for the next scheduled job from", cronjobName, "cronjob")
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -87,7 +87,7 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 		jobList, err := clientset.BatchV1().Jobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				log.Debugf("No jobs provided by the Kubernetes API")
+				logrus.Debug("No jobs provided by the Kubernetes API")
 				return false, nil
 			}
 			return false, err
@@ -117,10 +117,10 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 			}
 		}
 
-		log.Debugln("Waiting for next job from", cronjobName, "to succeed")
+		logrus.Debugln("Waiting for next job from", cronjobName, "to succeed")
 		return false, nil
 	})
-	log.Debugln("Job of owner", cronjobName, "succeeded after", cronjobName, time.Since(start))
+	logrus.Infoln("Job of owner", cronjobName, "succeeded after", cronjobName, time.Since(start))
 	return err
 }
 
@@ -147,11 +147,11 @@ func initCmd() error {
 	viper.SetDefault(flagcronJobName, "")
 	flag.String(flagcronJobName, "", "Cronjob name")
 
-	viper.SetDefault(flagRetryInterval, time.Second*5)
-	flag.Duration(flagRetryInterval, time.Second*5, "Retry interval")
+	viper.SetDefault(flagRetryInterval, time.Second*10)
+	flag.Duration(flagRetryInterval, time.Second*10, "Retry interval")
 
-	viper.SetDefault(flagTimeout, time.Minute)
-	flag.Duration(flagTimeout, time.Minute, "Timeout")
+	viper.SetDefault(flagTimeout, time.Hour)
+	flag.Duration(flagTimeout, time.Hour, "Timeout")
 
 	viper.SetDefault(flagNamespace, "default")
 	flag.String(flagNamespace, "", "Kubernetes namespace")
@@ -171,11 +171,11 @@ func initCmd() error {
 	}
 
 	if viper.GetString(flagcronJobName) == "" {
-		return fmt.Errorf(fmt.Sprintf("Parameter --%s must be set", flagcronJobName))
+		return fmt.Errorf("parameter --%s must be set", flagcronJobName)
 	}
 
 	if _, err := os.Stat(viper.GetString(flagKubeconfig)); err != nil {
-		return fmt.Errorf(fmt.Sprintf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig))
+		return fmt.Errorf("%s file does not exists. Point to the correct one using the --%s flag", viper.GetString(flagKubeconfig), flagKubeconfig)
 	}
 
 	return nil
@@ -184,21 +184,22 @@ func initCmd() error {
 func main() {
 	err := initCmd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
-	log = *logger.InitLog(viper.GetBool(flagVerbose))
+	if viper.GetBool(flagVerbose) == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	clientset := getKubernetesClient()
 
 	err = checkCronJobExists(clientset)
 	if err != nil {
-		log.Errorln(err)
-		os.Exit(1)
+		logrus.Fatalln(err)
 	}
 
 	err = waitForNextJob(clientset)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }

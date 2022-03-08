@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -70,7 +70,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	// prepare
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+	cl.CreateFunc = func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl, cl)
@@ -118,8 +118,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	}
 
 }
-
-func TestAutoDetectWithError(t *testing.T) {
+func TestAutoDetectWithServerGroupsError(t *testing.T) {
 	// prepare
 	defer viper.Reset()
 
@@ -132,7 +131,42 @@ func TestAutoDetectWithError(t *testing.T) {
 	assert.False(t, viper.IsSet("es-provision"))
 
 	// set the error
-	dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{}, fmt.Errorf("faked error")
+	}
+
+	// Check initial value of "platform"
+	assert.Equal(t, "", viper.GetString("platform"))
+
+	// test
+	b.autoDetectCapabilities()
+
+	// verify
+	assert.Equal(t, "", viper.GetString("platform"))
+	assert.False(t, viper.GetBool("es-provision"))
+}
+
+func TestAutoDetectWithServerResourcesForGroupVersionError(t *testing.T) {
+	// prepare
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// sanity check
+	assert.False(t, viper.IsSet("platform"))
+	assert.False(t, viper.IsSet("es-provision"))
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "route.openshift.io",
+		}}}, nil
+	}
+
+	// set the error
+	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
 		return nil, fmt.Errorf("faked error")
 	}
 
@@ -156,12 +190,14 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl, cl)
 
-	dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
-		return []*metav1.APIResourceList{
-			{
-				GroupVersion: "route.openshift.io/v1",
-			},
-		}, nil
+	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
+		return &metav1.APIResourceList{GroupVersion: "route.openshift.io/v1"}, nil
+	}
+
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "route.openshift.io",
+		}}}, nil
 	}
 
 	// test
@@ -171,7 +207,7 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
 
 	// set the error
-	dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
+	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
 		return nil, fmt.Errorf("faked error")
 	}
 
@@ -239,15 +275,20 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl, cl)
 
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "logging.openshift.io",
+		}}}, nil
+	}
+
 	t.Run("kind Elasticsearch", func(t *testing.T) {
-		dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
-			return []*metav1.APIResourceList{
-				{
-					GroupVersion: "logging.openshift.io/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Kind: "Elasticsearch",
-						},
+
+		dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
+			return &metav1.APIResourceList{
+				GroupVersion: "logging.openshift.io/v1",
+				APIResources: []metav1.APIResource{
+					{
+						Kind: "Elasticsearch",
 					},
 				},
 			}, nil
@@ -257,14 +298,13 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	})
 
 	t.Run("no kind Elasticsearch", func(t *testing.T) {
-		dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
-			return []*metav1.APIResourceList{
-				{
-					GroupVersion: "logging.openshift.io/v1",
-					APIResources: []metav1.APIResource{
-						{
-							Kind: "Kibana",
-						},
+		dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
+			return &metav1.APIResourceList{
+
+				GroupVersion: "logging.openshift.io/v1",
+				APIResources: []metav1.APIResource{
+					{
+						Kind: "Kibana",
 					},
 				},
 			}, nil
@@ -299,12 +339,14 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl, cl)
 
-	dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
-		return []*metav1.APIResourceList{
-			{
-				GroupVersion: "kafka.strimzi.io/v1",
-			},
-		}, nil
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "kafka.strimzi.io",
+		}}}, nil
+	}
+
+	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
+		return &metav1.APIResourceList{GroupVersion: "kafka.strimzi.io/v1"}, nil
 	}
 
 	// test
@@ -370,13 +412,14 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	dcl := &fakeDiscoveryClient{}
 	cl := fake.NewFakeClient()
 	b := WithClients(cl, dcl, cl)
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name: "kafka.strimzi.io",
+		}}}, nil
+	}
 
-	dcl.ServerGroupsFunc = func() (apiGroupList []*metav1.APIResourceList, err error) {
-		return []*metav1.APIResourceList{
-			{
-				GroupVersion: "kafka.strimzi.io/v1",
-			},
-		}, nil
+	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
+		return &metav1.APIResourceList{GroupVersion: "kafka.strimzi.io/v1"}, nil
 	}
 
 	// test
@@ -409,7 +452,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+	cl.CreateFunc = func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl, cl)
@@ -428,7 +471,7 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 
 	dcl := &fakeDiscoveryClient{}
 	cl := customFakeClient()
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+	cl.CreateFunc = func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl, cl)
@@ -455,7 +498,7 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	b.detectClusterRoles(context.Background())
 	assert.True(t, viper.GetBool("auth-delegator-available"))
 
-	cl.CreateFunc = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+	cl.CreateFunc = func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b.detectClusterRoles(context.Background())
@@ -544,8 +587,8 @@ func TestCleanDeployments(t *testing.T) {
 
 			// prepare the client
 			s := scheme.Scheme
-			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
-			s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+			s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
+			s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 			cl := fake.NewFakeClient(objs...)
 			b := WithClients(cl, &fakeDiscoveryClient{}, cl)
 
@@ -574,7 +617,7 @@ func TestCleanDeployments(t *testing.T) {
 
 type fakeClient struct {
 	client.Client
-	CreateFunc func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
+	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
 }
 
 func customFakeClient() *fakeClient {
@@ -582,21 +625,28 @@ func customFakeClient() *fakeClient {
 	return &fakeClient{Client: c, CreateFunc: c.Create}
 }
 
-func (f *fakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+func (f *fakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return f.CreateFunc(ctx, obj)
 }
 
 type fakeDiscoveryClient struct {
 	discovery.DiscoveryInterface
-	ServerGroupsFunc func() (apiGroupList []*metav1.APIResourceList, err error)
+	ServerGroupsFunc                   func() (apiGroupList *metav1.APIGroupList, err error)
+	ServerResourcesForGroupVersionFunc func(groupVersion string) (resources *metav1.APIResourceList, err error)
 }
 
 func (d *fakeDiscoveryClient) ServerGroups() (apiGroupList *metav1.APIGroupList, err error) {
-	return &metav1.APIGroupList{}, nil
+	if d.ServerGroupsFunc == nil {
+		return &metav1.APIGroupList{}, nil
+	}
+	return d.ServerGroupsFunc()
 }
 
 func (d *fakeDiscoveryClient) ServerResourcesForGroupVersion(groupVersion string) (resources *metav1.APIResourceList, err error) {
-	return &metav1.APIResourceList{}, nil
+	if d.ServerGroupsFunc == nil {
+		return &metav1.APIResourceList{}, nil
+	}
+	return d.ServerResourcesForGroupVersionFunc(groupVersion)
 }
 
 func (d *fakeDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, error) {
@@ -604,10 +654,7 @@ func (d *fakeDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, erro
 }
 
 func (d *fakeDiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
-	if d.ServerGroupsFunc == nil {
-		return []*metav1.APIResourceList{}, nil
-	}
-	return d.ServerGroupsFunc()
+	return []*metav1.APIResourceList{}, nil
 }
 
 func (d *fakeDiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {

@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-ui-config
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: {{ .Env.ASSERT_IMG }}
+          command: ["./uiconfig"]
+          env:
+            - name: QUERY_HOSTNAME
+              value: "{{ .Env.QUERY_HOSTNAME }}"
+            - name: QUERY_BASE_PATH
+              value: "{{ .Env.QUERY_BASE_PATH }}"
+            - name: TRACKING-ID
+              value: "{{ .Env.TRACKING_ID }}"
+      restartPolicy: OnFailure

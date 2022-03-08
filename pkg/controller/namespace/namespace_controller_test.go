@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -30,8 +30,8 @@ func TestReconcilieDeployment(t *testing.T) {
 	})
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.JaegerList{})
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 
 	testCases := []struct {
 		desc              string

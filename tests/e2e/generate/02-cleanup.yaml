@@ -1,9 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
-  # jaeger-operator-system namespace. During the deployment of the manifest in,
-  # this test, that deployment is modified For that reason, the test
-  # is not isolated. TODO: task #1575. To decrease the impact of #1579, the
-  # original configuration of the Jaeger Operator is applied here
-  - script: "kubectl apply -f ../../_build/manifests/01-jaeger-operator.yaml -n jaeger-operator-system"

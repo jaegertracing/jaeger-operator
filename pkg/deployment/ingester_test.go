@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -136,6 +136,32 @@ func TestIngesterSecrets(t *testing.T) {
 	dep := ingester.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestIngeterImagePullSecrets(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterImagePullSecrets")
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestIngesterImagePullPolicy(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterImagePullPolicy")
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
