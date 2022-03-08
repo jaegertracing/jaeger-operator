@@ -215,6 +215,8 @@ type JaegerCommonSpec struct {
 
 	// +optional
 	LivenessProbe *v1.Probe `json:"livenessProbe,omitempty"`
+
+	// +optional
 	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 

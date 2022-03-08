@@ -848,6 +848,9 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
@@ -2168,9 +2171,13 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
+                    type: object
                   metricsStorage:
                     properties:
                       type:
@@ -3456,6 +3463,9 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
@@ -4756,6 +4766,9 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
@@ -6044,6 +6057,9 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
@@ -6953,6 +6969,9 @@ spec:
                     required:
                     - port
                     type: object
+                  terminationGracePeriodSeconds:
+                    format: int64
+                    type: integer
                   timeoutSeconds:
                     format: int32
                     type: integer
@@ -7398,9 +7417,13 @@ spec:
                         required:
                         - port
                         type: object
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        type: integer
                       timeoutSeconds:
                         format: int32
                         type: integer
+                    type: object
                   metricsStorage:
                     properties:
                       type:
@@ -9165,6 +9188,9 @@ spec:
                             required:
                             - port
                             type: object
+                          terminationGracePeriodSeconds:
+                            format: int64
+                            type: integer
                           timeoutSeconds:
                             format: int32
                             type: integer
@@ -10501,6 +10527,9 @@ spec:
                             required:
                             - port
                             type: object
+                          terminationGracePeriodSeconds:
+                            format: int64
+                            type: integer
                           timeoutSeconds:
                             format: int32
                             type: integer
@@ -11767,6 +11796,9 @@ spec:
                             required:
                             - port
                             type: object
+                          terminationGracePeriodSeconds:
+                            format: int64
+                            type: integer
                           timeoutSeconds:
                             format: int32
                             type: integer
