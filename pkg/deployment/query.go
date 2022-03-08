@@ -140,6 +140,10 @@ func (q *Query) Get() *appsv1.Deployment {
 								Value: string(q.jaeger.Spec.Storage.Type),
 							},
 							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
+							},
+							{
 								Name:  "JAEGER_DISABLED",
 								Value: strconv.FormatBool(jaegerDisabled),
 							},

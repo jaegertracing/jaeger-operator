@@ -2043,6 +2043,11 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  metricsStorage:
+                    properties:
+                      type:
+                        type: string
+                    type: object
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
@@ -6943,6 +6948,11 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
+                    type: object
+                  metricsStorage:
+                    properties:
+                      type:
+                        type: string
                     type: object
                   nodePort:
                     format: int32

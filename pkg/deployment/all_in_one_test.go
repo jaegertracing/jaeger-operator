@@ -38,6 +38,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Value: "",
 		},
 		{
+			Name:  "METRICS_STORAGE_TYPE",
+			Value: "",
+		},
+		{
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
 		},

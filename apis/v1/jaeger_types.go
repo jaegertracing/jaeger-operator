@@ -235,6 +235,9 @@ type JaegerQuerySpec struct {
 	Options Options `json:"options,omitempty"`
 
 	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
@@ -353,6 +356,9 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
@@ -510,6 +516,12 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
+}
+
+// JaegerMetricsStorageSpec defines the Metrics storage options to be used for the query and collector.
+type JaegerMetricsStorageSpec struct {
+	// +optional
+	Type JaegerStorageType `json:"type,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the OpenShift Elasticsearch operator.
