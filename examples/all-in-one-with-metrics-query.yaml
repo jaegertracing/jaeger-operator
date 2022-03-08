@@ -1,0 +1,20 @@
+apiVersion: jaegertracing.io/v1
+kind: "Jaeger"
+metadata:
+  name: "my-jaeger"
+spec:
+  strategy: allInOne
+  allInOne:
+    image: jaegertracing/all-in-one:1.31
+    options:
+      log-level: debug
+      query:
+        base-path: /jaeger
+      prometheus:
+        server-url: "http://prometheus:9090"
+    metricsStorage:
+      type: prometheus
+  storage:
+    options:
+      memory:
+        max-traces: 100000

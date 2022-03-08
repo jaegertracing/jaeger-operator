@@ -38,6 +38,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Value: "",
 		},
 		{
+			Name:  "METRICS_STORAGE_TYPE",
+			Value: "",
+		},
+		{
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
 		},
@@ -195,6 +199,21 @@ func TestAllInOneSecrets(t *testing.T) {
 	dep := allInOne.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestAllInOneImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	allInOne := NewAllInOne(jaeger)
+	dep := allInOne.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
 func TestAllInOneMountGlobalVolumes(t *testing.T) {

@@ -139,6 +139,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
@@ -147,6 +148,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: string(a.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
 							},
 							{
 								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",

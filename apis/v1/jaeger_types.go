@@ -1,11 +1,10 @@
 package v1
 
 import (
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 // IngressSecurityType represents the possible values for the security type
@@ -213,6 +212,10 @@ type JaegerCommonSpec struct {
 
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// +optional
+	// +listType=atomic
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -227,6 +230,9 @@ type JaegerQuerySpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
+
+	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
@@ -349,6 +355,9 @@ type JaegerAllInOneSpec struct {
 	Config FreeForm `json:"config,omitempty"`
 
 	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
+
+	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
 	// +optional
@@ -452,10 +461,6 @@ type JaegerAgentSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// +optional
-	// +listType=atomic
-	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-
-	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
 
@@ -508,6 +513,12 @@ type JaegerStorageSpec struct {
 
 	// +optional
 	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
+}
+
+// JaegerMetricsStorageSpec defines the Metrics storage options to be used for the query and collector.
+type JaegerMetricsStorageSpec struct {
+	// +optional
+	Type JaegerStorageType `json:"type,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the OpenShift Elasticsearch operator.

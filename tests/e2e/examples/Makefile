@@ -1,5 +1,4 @@
-render-e2e-tests-examples: TEST_SUITE_NAME=examples
-render-e2e-tests-examples: generate-kuttl-config
+render-e2e-tests-examples: load-assert-job load-elasticsarch-image load-elasticsarch-image
 	./tests/e2e/examples/render.sh
 
 run-e2e-tests-examples: TEST_SUITE_NAME=examples

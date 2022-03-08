@@ -65,6 +65,48 @@ func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
 	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
 }
 
+func TestMergeImagePullSecrets(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+			{
+				Name: "def",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "hij",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Len(t, merged.ImagePullSecrets, 4)
+	assert.Equal(t, "abc", merged.ImagePullSecrets[0].Name)
+	assert.Equal(t, "def", merged.ImagePullSecrets[1].Name)
+	assert.Equal(t, "xyz", merged.ImagePullSecrets[2].Name)
+	assert.Equal(t, "hij", merged.ImagePullSecrets[3].Name)
+}
+
 func TestMergeAnnotations(t *testing.T) {
 	generalSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{

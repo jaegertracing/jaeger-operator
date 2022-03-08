@@ -1,6 +1,0 @@
-# Start Kafka
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - script: "cd ../../../.. && KAFKA_NAMESPACE=$NAMESPACE make undeploy-kafka"
-  - script: "cd ../../../.. && KAFKA_NAMESPACE=$NAMESPACE make kafka"

@@ -129,6 +129,7 @@ func (q *Query) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: q.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
@@ -137,6 +138,10 @@ func (q *Query) Get() *appsv1.Deployment {
 							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: string(q.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
 							},
 							{
 								Name:  "JAEGER_DISABLED",
