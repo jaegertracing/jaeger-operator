@@ -296,6 +296,18 @@ func TestAgentImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestAgentImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
 func TestAgentServiceLinks(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
