@@ -122,8 +122,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		FailureThreshold:    5,
 	}
 
-	if a.jaeger.Spec.Collector.LivenessProbe != nil {
-		livenessProbe = a.jaeger.Spec.Collector.LivenessProbe
+	if a.jaeger.Spec.AllInOne.LivenessProbe != nil {
+		livenessProbe = a.jaeger.Spec.AllInOne.LivenessProbe
 	}
 
 	return &appsv1.Deployment{

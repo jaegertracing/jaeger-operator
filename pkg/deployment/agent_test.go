@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
@@ -347,4 +348,42 @@ func TestAgentPriorityClassName(t *testing.T) {
 	a := NewAgent(jaeger)
 	dep := a.Get()
 	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
+func TestAgentLivenessProbe(t *testing.T) {
+	livenessProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14271)),
+			},
+		},
+		InitialDelaySeconds: 60,
+		PeriodSeconds:       60,
+		FailureThreshold:    60,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.LivenessProbe = livenessProbe
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, livenessProbe, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
+}
+
+func TestAgentEmptyEmptyLivenessProbe(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14271)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
 }

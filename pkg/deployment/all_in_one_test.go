@@ -486,6 +486,42 @@ func TestAllInOneEmptyStrategyType(t *testing.T) {
 	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
 }
 
+func TestAllInOneLivenessProbe(t *testing.T) {
+	livenessProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14269)),
+			},
+		},
+		InitialDelaySeconds: 60,
+		PeriodSeconds:       60,
+		FailureThreshold:    60,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.LivenessProbe = livenessProbe
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, livenessProbe, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
+}
+
+func TestAllInOneEmptyEmptyLivenessProbe(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14269)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
+}
+
 func TestAllInOneGRPCPlugin(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneGRPCPlugin"})
 	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
