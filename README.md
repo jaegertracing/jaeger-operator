@@ -1,4 +1,3 @@
-
 [![Build Status][ci-img]][ci] [![Go Report Card][goreport-img]][goreport] [![Code Coverage][cov-img]][cov] [![GoDoc][godoc-img]][godoc]
 
 # Jaeger Operator for Kubernetes
@@ -33,6 +32,8 @@ simplest-query   *         192.168.122.34   80        3m
 In this example, the Jaeger UI is available at http://192.168.122.34.
 
 The official documentation for the Jaeger Operator, including all its customization options, are available under the main [Jaeger Documentation](https://www.jaegertracing.io/docs/latest/operator/).
+
+CRD-API documentation can be found [here](./docs/api.md).
 
 ## Compatibility matrix
 
