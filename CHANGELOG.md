@@ -1,6 +1,16 @@
 Changes by Version
 ==================
 
+1.32.0 (2022-03-09)
+-------------------
+
+* Custom Image Pull Policy ([#1798](https://github.com/jaegertracing/jaeger-operator/pull/1798), [@edenkoveshi](https://github.com/edenkoveshi))
+* add METRICS_STORAGE_TYPE for metrics query ([#1755](https://github.com/jaegertracing/jaeger-operator/pull/1755), [@JaredTan95](https://github.com/JaredTan95))
+* Make operator more resiliant to etcd defrag activity ([#1795](https://github.com/jaegertracing/jaeger-operator/pull/1795), [@pavolloffay](https://github.com/pavolloffay))
+* Automatically set num shards and replicas from referenced OCP ES ([#1737](https://github.com/jaegertracing/jaeger-operator/pull/1737), [@pavolloffay](https://github.com/pavolloffay))
+* support image pull secrets ([#1740](https://github.com/jaegertracing/jaeger-operator/pull/1740), [@frzifus](https://github.com/frzifus))
+* Fix webhook secret cert name ([#1772](https://github.com/jaegertracing/jaeger-operator/pull/1772), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.31.0 (2022-02-09)
 -------------------
 * Fix panic caused by an invalid type assertion ([#1738](https://github.com/jaegertracing/jaeger-operator/pull/1738), [@frzifus](https://github.com/frzifus))
