@@ -7,7 +7,7 @@ export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell date +%s)
 USE_KIND_CLUSTER ?= true
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: kuttl build prepare-e2e-images generate-e2e-files
+prepare-e2e-tests: kuttl build generate-e2e-files
 
 .PHONY: set-assert-e2e-img-name
 set-assert-e2e-img-name:
@@ -101,5 +101,5 @@ e2e-test-suites: list-test-suites
 
 	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
 
-run-suite-tests: start-kind prepare-e2e-tests
+run-suite-tests: start-kind prepare-e2e-tests load-operator-image
 	./hack/run-e2e-tests.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)
