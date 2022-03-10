@@ -63,8 +63,11 @@ endif
 .PHONY: run-e2e-tests
 run-e2e-tests: list-test-suites
 	$(VECHO) for suite in $(TEST_SUITES); do \
-		$(MAKE) run-e2e-tests-$$suite ; \
+		$(MAKE) run-e2e-tests-$$suite -i; \
 	done
+	# Show a final report
+	junitcli --report reports
+	cd reports && ! grep -nr failed
 
 .PHONY: render-e2e-tests
 render-e2e-tests: generate-e2e-files list-test-suites

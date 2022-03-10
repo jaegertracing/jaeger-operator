@@ -42,15 +42,19 @@ fi
 echo Running $test_suite_name E2E tests
 cd tests/e2e/$test_suite_name/_build
 
-kubectl kuttl test $(KUTTL_OPTIONS) --report xml || exit_code=$?
+kubectl kuttl test $KUTTL_OPTIONS --report xml
+exit_code=$?
 
-yq -p=xml e 'del(.testsuites.testsuite.testcase[] | select(.+name == "artifacts"))' ./artifacts/kuttl-test.xml -o xml > $reports_dir/$test_suite_name.xml
+# The output XML needs some work because it adds "artifacts" as a test case.
+# Also, the suites doesn't have a name so, we need to add one.
+go install github.com/iblancasa/junitcli/cmd/junitcli@latest
+junitcli --suite-name $test_suite_name --report --output $reports_dir/$test_suite_name.xml ./artifacts/kuttl-test.xml
 
 if [ "$exit_code" != 0 ]; then
 	exit $exit_code
 fi
 
-if [ "$use_kind_cluster" = true]; then
+if [ "$KIND_KEEP_CLUSTER" != true ]; then
 	cd $root_dir
 	make stop-kind
 fi
