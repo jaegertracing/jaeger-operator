@@ -43,24 +43,19 @@ type podInjector struct {
 
 // Handle adds a sidecar to a generated pod
 func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admission.Response {
+	logger := log.WithField("namespace", req.Namespace)
+	logger.Level = log.DebugLevel // TODO(frzifus): remove
+
 	pod := &corev1.Pod{}
-
-	logger := log.WithFields(log.Fields{
-		"namespace": req.Namespace,
-		"name":      req.Name,
-	})
-
 	err := pi.decoder.Decode(req, pod)
 	if err != nil {
 		logger.WithError(err).Error("failed to decode pod")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
-	logger.Debugf("verify pod")
 
 	ns := &corev1.Namespace{}
 	err = pi.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
-	// we shouldn't fail if the namespace object can't be obtained
-	if err != nil {
+	if err != nil { // we shouldn't fail if the namespace object can't be obtained
 		msg := "failed to get the namespace for the pod, skipping injection based on namespace annotation"
 		logger.WithError(err).Error(msg)
 		return admission.Errored(http.StatusNotFound, err)
@@ -81,12 +76,14 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 
 	deploy, err := deploymentByPod(ctx, pi.client, pod, req.Namespace)
 	if err != nil {
-		logger.WithError(err).Error("failed to get the deployment of pod")
-		return admission.Errored(http.StatusNotFound, err)
+		logger.WithError(err).Warn("failed to get the deployment of pod")
+		// return admission.Errored(http.StatusNotFound, err) // TODO(frzifus): remove?
+	} else {
+		logger = logger.WithField("deployment", deploy.GetName())
 	}
 
 	if inject.PodNeeded(pod, ns) || inject.DeploymentNeeded(deploy, ns) {
-		logger.Debugf("add sidecar")
+		logger.Debug("sidecar needed")
 		jaeger := inject.SelectForPod(pod, deploy, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
@@ -110,17 +107,19 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
 		}
 
-		logger.Debug("no suitable Jaeger instances found to inject a sidecar")
+		logger.Info("no suitable Jaeger instances found to inject a sidecar")
 	} else {
-		logger.Debugf("remove sidecar")
+		logger.Debug("sidecar not needed")
 		if ok, _ := inject.HasJaegerAgent(pod.Spec.Containers); ok {
 			if _, hasLabel := pod.Labels[inject.Label]; hasLabel {
+				logger.Debug("sidecar will be removed from pod")
 				removeSidecarPod(ctx, pi.client, pod)
 			}
 		}
 
 		if ok, _ := inject.HasJaegerAgent(deploy.Spec.Template.Spec.Containers); ok {
 			if _, hasLabel := deploy.Labels[inject.Label]; hasLabel {
+				logger.Debug("sidecar will be removed from deployment")
 				removeSidecarDeployment(ctx, pi.client, deploy)
 			}
 		}
