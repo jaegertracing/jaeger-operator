@@ -75,6 +75,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
 	var imagePullSecrets []corev1.LocalObjectReference
+	var imagePullPolicy corev1.PullPolicy
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -115,6 +116,10 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		for _, ips := range commonSpec.ImagePullSecrets {
 			imagePullSecrets = append(imagePullSecrets, ips)
 		}
+
+		if imagePullPolicy == corev1.PullPolicy("") {
+			imagePullPolicy = commonSpec.ImagePullPolicy
+		}
 	}
 
 	return &v1.JaegerCommonSpec{
@@ -123,6 +128,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		VolumeMounts:     RemoveDuplicatedVolumeMounts(volumeMounts),
 		Volumes:          RemoveDuplicatedVolumes(volumes),
 		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:  imagePullPolicy,
 		Resources:        *resources,
 		Affinity:         affinity,
 		Tolerations:      tolerations,

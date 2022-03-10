@@ -140,6 +140,10 @@ func (q *Query) Get() *appsv1.Deployment {
 								Value: string(q.jaeger.Spec.Storage.Type),
 							},
 							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
+							},
+							{
 								Name:  "JAEGER_DISABLED",
 								Value: strconv.FormatBool(jaegerDisabled),
 							},
@@ -176,7 +180,8 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,

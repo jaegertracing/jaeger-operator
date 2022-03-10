@@ -3,8 +3,12 @@ name: "CodeQL"
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   codeql-analyze:
@@ -18,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       # Disable CodeQL for tests
       # https://github.com/github/codeql/issues/4786

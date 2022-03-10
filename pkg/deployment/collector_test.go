@@ -156,6 +156,17 @@ func TestCollectorImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestCollectorImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
 	name := "my-instance"
 

@@ -3,8 +3,12 @@ name: "CI Workflow"
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   basic-checks:
@@ -16,7 +20,7 @@ jobs:
         go-version: 1.16
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
 
     - name: "install kubebuilder"
       run: ./hack/install-kubebuilder.sh
