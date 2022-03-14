@@ -187,12 +187,16 @@ function render_install_elasticsearch() {
 
     test_step=$1
 
-    if [ "$SKIP_ES_EXTERNAL" = true ]; then
-        warning "Skipping installation of Elasticsearch instance since SKIP_ES_EXTERNAL is 'true'"
+    if [ "$IS_OPENSHIFT" = true ]; then
+        template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
+        $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
+        $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
     else
-        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-install.yaml.template -o ./$test_step-install.yaml
-        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
+        template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
     fi
+
+    $GOMPLATE -f $template -o ./$test_step-install.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
 }
 
 
