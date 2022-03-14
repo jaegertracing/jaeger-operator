@@ -24,7 +24,7 @@ render_smoke_test_example "$example_name" "01"
 
 
 if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "examples-simple-prod" "This test requires an external ElasticSearch instance"
+    skip_test "examples-simple-prod" "This test requires an external Elasticsearch instance"
 else
     start_test "examples-simple-prod"
     example_name="simple-prod"
@@ -35,7 +35,7 @@ fi
 
 
 if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "examples-simple-prod-with-volumes" "This test requires an external ElasticSearch instance"
+    skip_test "examples-simple-prod-with-volumes" "This test requires an external Elasticsearch instance"
 else
     start_test "examples-simple-prod-with-volumes"
     example_name="simple-prod-with-volumes"
