@@ -216,6 +216,9 @@ type JaegerCommonSpec struct {
 	// +optional
 	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	// +optional
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
