@@ -273,7 +273,7 @@ else
 endif
 
 .PHONY: clean
-clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
+clean: undeploy-kafka undeploy-prometheus-operator undeploy-istio
 	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -466,6 +466,7 @@ set-image-controller: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 
 kind:
+ifeq ($(USE_KIND_CLUSTER),true)
 ifeq (, $(shell which kind))
 	@{ \
 	set -e ;\
@@ -477,6 +478,7 @@ ifeq (, $(shell which kind))
 	}
 else
 KIND=$(shell which kind)
+endif
 endif
 
 tools: kustomize controller-gen operator-sdk
