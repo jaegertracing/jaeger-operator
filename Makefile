@@ -39,7 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
-OPERATOR_SDK_VERSION ?= 1.14.0
+OPERATOR_SDK_VERSION ?= 1.17.0
 
 USE_KIND_CLUSTER ?= true
 export OLM ?= false
@@ -58,7 +58,7 @@ endif
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.22
+ENVTEST_K8S_VERSION = 1.23
 # Options for kuttl testing
 KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
@@ -329,7 +329,7 @@ changelog:
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
