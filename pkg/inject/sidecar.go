@@ -25,10 +25,6 @@ var (
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
 	Label = "sidecar.jaegertracing.io/injected"
-	// PodLabel is the label name on the pod level to look for when deciding whether to inject
-	// This is required and recommended approach to make use of mutating-webhook
-	// TODO: support sidecar injection via annotation-level declaration like istio
-	PodLabel = "sidecar.jaegertracing.io/inject"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
 	AnnotationLegacy = "inject-jaeger-agent"
 	// PrometheusDefaultAnnotations is a map containing annotations for prometheus to be inserted at sidecar in case it doesn't have any
