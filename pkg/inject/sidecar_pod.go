@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -57,7 +56,7 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 // 2. no container named "jaeger-agent"
 // the fulfillment of the above conditions normally imply the pod has been taken over the pod controller
 func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
-	if !desiredPod(pod, ns) {
+	if !desired(pod, ns) {
 		return false
 	}
 
@@ -122,30 +121,6 @@ func SelectForPod(
 		// we should just not inject, as it's not clear which one should be used.
 	}
 	return nil
-}
-
-// desiredPod determines whether a sidecar is desired, based on the annotation from both the pod and the namespace
-func desiredPod(pod *corev1.Pod, ns *corev1.Namespace) bool {
-	logger := log.WithFields(log.Fields{
-		"namespace": pod.Namespace,
-		"pod":       pod.Name, // resource name
-	})
-	appLabelValue, appExist := pod.Labels[PodLabel]
-	nsInjectionLabelValue, nsExist := ns.Labels[NamespaceLabel]
-
-	// TODO: support annotation like istio
-
-	if appExist && !strings.EqualFold(appLabelValue, "false") {
-		logger.Debug("annotation present on pod")
-		return true
-	}
-
-	if nsExist && strings.EqualFold(nsInjectionLabelValue, "enabled") {
-		logger.Debug("injection label present on namespace")
-		return true
-	}
-
-	return false
 }
 
 func decoratePod(pod *corev1.Pod) {

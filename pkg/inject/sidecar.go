@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,7 +21,7 @@ var (
 	// NamespaceLabel is the label name to look for in order to make a pre-selection
 	// Only "enabled" is the valid value for namespace-scoped injection
 	NamespaceLabel = "jaeger-injection"
-	// Annotation is the annotation name to look for when deciding whether or not to inject
+	// Annotation is the annotation name to look for when deciding whether to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
 	Label = "sidecar.jaegertracing.io/injected"
@@ -81,31 +80,24 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
-// desiredDeployment determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
-func desiredDeployment(deployment *appsv1.Deployment, ns *corev1.Namespace) bool {
-	logger := log.WithFields(log.Fields{
-		"namespace":  deployment.Namespace,
-		"deployment": deployment.Name, // resource name
-	})
-	appAnnotationValue, appExist := deployment.Annotations[Annotation]
-	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
+type desiredObject interface {
+	GetAnnotations() map[string]string
+}
 
-	if appExist && !strings.EqualFold(appAnnotationValue, "false") {
-		logger.Debug("annotation present on deployment")
-		return true
+// desired determines whether a sidecar is desired, based on the annotation
+func desired(objs ...desiredObject) bool {
+	for _, o := range objs {
+		anno, exist := o.GetAnnotations()[Annotation]
+		if exist && !strings.EqualFold(anno, "false") {
+			return true
+		}
 	}
-
-	if nsExist && !strings.EqualFold(nsAnnotationValue, "false") {
-		logger.Debug("annotation present on namespace")
-		return true
-	}
-
 	return false
 }
 
 // DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
 func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !desiredDeployment(dep, ns) {
+	if !desired(dep, ns) {
 		return false
 	}
 
