@@ -77,7 +77,7 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 	deploy, err := deploymentByPod(ctx, pi.client, pod, req.Namespace)
 	if err != nil {
 		logger.WithError(err).Warn("failed to get the deployment of pod")
-		// return admission.Errored(http.StatusNotFound, err) // TODO(frzifus): remove?
+		deploy = &appsv1.Deployment{}
 	} else {
 		logger = logger.WithField("deployment", deploy.GetName())
 	}
