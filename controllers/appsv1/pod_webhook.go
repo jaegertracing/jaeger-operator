@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -94,6 +95,13 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 				"jaeger":           jaeger.Name,
 				"jaeger-namespace": jaeger.Namespace,
 			})
+
+			if jaeger.Namespace != pod.Namespace {
+				if err := reconcileConfigMaps(ctx, pi.client, jaeger, pod); err != nil {
+					const msg = "failed to reconcile config maps for the namespace"
+					logger.WithError(err).Error(msg)
+				}
+			}
 
 			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
 			// Verified that jaeger instance was found and is not marked for deletion.
@@ -215,4 +223,22 @@ func removeSidecarPod(ctx context.Context, c client.Client, pod *corev1.Pod) {
 			"deploymentNamespace": pod.Namespace,
 		}).WithError(err).Error("error cleaning orphaned deployment")
 	}
+}
+
+func reconcileConfigMaps(ctx context.Context, c client.Client, jaeger *v1.Jaeger, pod *corev1.Pod) error {
+	cms := []*corev1.ConfigMap{}
+	if cm := ca.GetTrustedCABundle(jaeger); cm != nil {
+		cms = append(cms, cm)
+	}
+	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
+		cms = append(cms, cm)
+	}
+
+	for _, cm := range cms {
+		if err := c.Create(ctx, cm); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
