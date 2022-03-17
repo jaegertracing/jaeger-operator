@@ -74,12 +74,16 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	deploy, err := deploymentByPod(ctx, pi.client, pod, req.Namespace)
-	if err != nil {
-		logger.WithError(err).Warn("failed to get the deployment of pod")
-		deploy = &appsv1.Deployment{}
-	} else {
-		logger = logger.WithField("deployment", deploy.GetName())
+	deploy := &appsv1.Deployment{}
+	if !inject.PodHasAnnotation(pod) {
+		// NOTE: If pod does not have an annotation, it is checked for backward
+		// compatibility whether the corresponding deployment has an annotation.
+		deploy, err := deploymentByPod(ctx, pi.client, pod, req.Namespace)
+		if err != nil {
+			logger.WithError(err).Warn("failed to get the deployment of pod")
+		} else {
+			logger = logger.WithField("deployment", deploy.GetName())
+		}
 	}
 
 	if inject.PodNeeded(pod, ns) || inject.DeploymentNeeded(deploy, ns) {

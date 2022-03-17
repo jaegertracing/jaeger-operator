@@ -50,6 +50,12 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 	return pod
 }
 
+// PodHasAnnotation returns true if pod has jaeger annotation to inject
+func PodHasAnnotation(pod *corev1.Pod) bool {
+	_, exist := pod.GetAnnotations()[Annotation]
+	return exist
+}
+
 // PodNeeded determines whether a pod needs to get a sidecar injected or not
 // For pod injection, we only inject if and only if
 // 1. no label "sidecar.jaegertracing.io/injected"
