@@ -35,6 +35,13 @@ func NewPodInjectorWebhook(c client.Client) webhook.AdmissionHandler {
 
 // You need to ensure the path here match the path in the marker.
 // +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=object.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=component.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=namespace.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
+
+// +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=namespaces/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
 
 // podInjector inject Sidecar to Pods
 type podInjector struct {
