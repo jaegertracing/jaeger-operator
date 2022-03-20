@@ -3,13 +3,10 @@ package appsv1
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,14 +31,9 @@ func NewPodInjectorWebhook(c client.Client) webhook.AdmissionHandler {
 }
 
 // You need to ensure the path here match the path in the marker.
-// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=object.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=component.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
-// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create;update,versions=v1,name=namespace.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
-
-// +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=namespaces/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=object.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=component.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,sideEffects=None,verbs=create,versions=v1,name=namespace.sidecar-injector.jaegertracing.io,admissionReviewVersions=v1
 
 // podInjector inject Sidecar to Pods
 type podInjector struct {
@@ -82,21 +74,9 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	deploy := &appsv1.Deployment{}
-	if !inject.PodHasAnnotation(pod) {
-		// NOTE: If pod does not have an annotation, it is checked for backward
-		// compatibility whether the corresponding deployment has an annotation.
-		deploy, err := deploymentByPod(ctx, pi.client, pod, req.Namespace)
-		if err != nil {
-			logger.WithError(err).Warn("failed to get the deployment of pod")
-		} else {
-			logger = logger.WithField("deployment", deploy.GetName())
-		}
-	}
-
-	if inject.PodNeeded(pod, ns) || inject.DeploymentNeeded(deploy, ns) {
+	if inject.PodNeeded(pod, ns) {
 		logger.Debug("sidecar needed")
-		jaeger := inject.SelectForPod(pod, deploy, ns, jaegers)
+		jaeger := inject.SelectForPod(pod, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
 				"jaeger":           jaeger.Name,
@@ -127,24 +107,22 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 		}
 
 		logger.Info("no suitable Jaeger instances found to inject a sidecar")
-	} else {
-		logger.Debug("sidecar not needed")
-		if ok, _ := inject.HasJaegerAgent(pod.Spec.Containers); ok {
-			if _, hasLabel := pod.Labels[inject.Label]; hasLabel {
-				logger.Debug("sidecar will be removed from pod")
-				removeSidecarPod(ctx, pi.client, pod)
-			}
-		}
+	}
+	logger.Debug("sidecar not needed")
+	if ok, _ := inject.HasJaegerAgent(pod.Spec.Containers); ok {
+		if _, hasLabel := pod.Labels[inject.Label]; hasLabel {
+			logger.Debug("sidecar will be removed from pod")
 
-		if ok, _ := inject.HasJaegerAgent(deploy.Spec.Template.Spec.Containers); ok {
-			if _, hasLabel := deploy.Labels[inject.Label]; hasLabel {
-				logger.Debug("sidecar will be removed from deployment")
-				removeSidecarDeployment(ctx, pi.client, deploy)
+			pod := removeSidecarPod(pod)
+			marshaledPod, err := json.Marshal(pod)
+			if err != nil {
+				return admission.Errored(http.StatusInternalServerError, err)
 			}
+			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
 		}
 	}
 
-	return admission.Allowed("jaeger is not necessary")
+	return admission.Allowed("no action necessary")
 }
 
 // podInjector implements admission.DecoderInjector.
@@ -156,80 +134,16 @@ func (pi *podInjector) InjectDecoder(d *admission.Decoder) error {
 	return nil
 }
 
-func deploymentByPod(
-	ctx context.Context,
-	c client.Client,
-	pod *corev1.Pod,
-	namespaceName string,
-) (*appsv1.Deployment, error) {
-	podRefList := pod.GetOwnerReferences()
-	if len(podRefList) != 1 || podRefList[0].Kind != "ReplicaSet" {
-		return nil, errors.New("missing single ReplicaSet as owner")
-	}
-
-	replicaName := podRefList[0].Name
-	replicaSet := &appsv1.ReplicaSet{}
-	logger := log.WithFields(log.Fields{
-		"replicasetName":      replicaName,
-		"replicasetNamespace": namespaceName,
-	})
-	logger.Infof("fetch replicaset")
-
-	key := types.NamespacedName{Namespace: namespaceName, Name: replicaName}
-	if err := c.Get(ctx, key, replicaSet); err != nil {
-		return nil, errors.New("failed to get the available Pod ReplicaSet")
-	}
-
-	repRefList := replicaSet.GetOwnerReferences()
-	if len(repRefList) != 1 || repRefList[0].Kind != "Deployment" {
-		return nil, errors.New(
-			fmt.Sprintf("could not determine deployment, number of owner: %d", len(repRefList)),
-		)
-	}
-
-	deployName := repRefList[0].Name
-	deployment := &appsv1.Deployment{}
-	key = types.NamespacedName{Namespace: namespaceName, Name: deployName}
-	if err := c.Get(ctx, key, deployment); err != nil {
-		return nil, errors.New("failed to get the available Pod Deployment")
-	}
-
-	return deployment, nil
-
-}
-
-func removeSidecarDeployment(ctx context.Context, c client.Client, deploy *appsv1.Deployment) {
-	jaegerInstance := deploy.Labels[inject.Label]
-	log.WithFields(log.Fields{
-		"deployment": deploy.Name,
-		"namespace":  deploy.Namespace,
-		"jaeger":     jaegerInstance,
-	}).Info("Removing Jaeger Agent sidecar from Deployment")
-	patch := client.MergeFrom(deploy.DeepCopy())
-	inject.CleanSidecar(jaegerInstance, deploy)
-	if err := c.Patch(ctx, deploy, patch); err != nil {
-		log.WithFields(log.Fields{
-			"deploymentName":      deploy.Name,
-			"deploymentNamespace": deploy.Namespace,
-		}).WithError(err).Error("error cleaning orphaned deployment")
-	}
-}
-
-func removeSidecarPod(ctx context.Context, c client.Client, pod *corev1.Pod) {
-	jaegerInstance := pod.Labels[inject.Label]
+func removeSidecarPod(pod *corev1.Pod) *corev1.Pod {
+	p := pod.DeepCopy()
+	jaegerInstance := p.Labels[inject.Label]
 	log.WithFields(log.Fields{
 		"pod":       pod.Name,
 		"namespace": pod.Namespace,
 		"jaeger":    jaegerInstance,
 	}).Info("Removing Jaeger Agent sidecar from Pod")
-	patch := client.MergeFrom(pod.DeepCopy())
-	inject.CleanSidecarFromPod(jaegerInstance, pod)
-	if err := c.Patch(ctx, pod, patch); err != nil {
-		log.WithFields(log.Fields{
-			"deploymentName":      pod.Name,
-			"deploymentNamespace": pod.Namespace,
-		}).WithError(err).Error("error cleaning orphaned deployment")
-	}
+	inject.CleanSidecarFromPod(jaegerInstance, p)
+	return p
 }
 
 func reconcileConfigMaps(ctx context.Context, c client.Client, jaeger *v1.Jaeger, pod *corev1.Pod) error {
