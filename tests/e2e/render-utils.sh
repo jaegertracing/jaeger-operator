@@ -412,7 +412,7 @@ function get_jaeger_name() {
 
     deployment_file=$1
 
-    jaeger_name=$(yq e '.metadata.name' $deployment_file)
+    jaeger_name=$($YQ e '.metadata.name' $deployment_file)
 
     if [ -z "$jaeger_name" ]; then
         error "No name for Jaeger deployment in file $deployment_file"
@@ -439,14 +439,14 @@ function get_jaeger_strategy() {
 
     deployment_file=$1
 
-    strategy=$(yq e '.spec.strategy' $deployment_file)
+    strategy=$($YQ e '.spec.strategy' $deployment_file)
 
     if [ "$strategy" != "null" ]; then
         echo $strategy
         return 0
     fi
 
-    strategy=$(yq e '.spec.agent.strategy' $deployment_file)
+    strategy=$($YQ e '.spec.agent.strategy' $deployment_file)
     if [ "$strategy" = "null" ]; then
         echo "allInOne"
         return 0
