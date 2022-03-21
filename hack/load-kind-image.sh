@@ -1,12 +1,15 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "$0 <image> <location of kind>"
+if [ "$#" -ne 1 ]; then
+    echo "$0 <image>"
     exit 1
 fi
 
 image=$1
-kind=$2
+
+current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+$current_dir/install/install-kind.sh
+kind=$current_dir/../bin/kind
 
 if [ "$(kubectl get no -o yaml | grep -F $image)" ]; then
     echo "The image $image is in the KIND cluster. It is not needed to load it again"
