@@ -614,25 +614,22 @@ fi
 
 export IS_OPENSHIFT
 
-# Check the dependencies are there
-export GOMPLATE=$(which gomplate)
-if [ -z "$GOMPLATE" ]; then
-    error "gomplate is not installed. Please, install it"
-    exit 1
-fi
-
-export YQ=$(which yq)
-if [ -z "$YQ" ]; then
-    error "yq is not installed. Please, install it"
-    exit 1
-fi
 
 # Important folders
-export ROOT_DIR=../../../../..
-export TEST_DIR=../../../..
+export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
+export TEST_DIR=$ROOT_DIR/tests
 export TEMPLATES_DIR=$TEST_DIR/templates
 export EXAMPLES_DIR=$ROOT_DIR/examples
 export SUITE_DIR=$(dirname "$0")
+
+
+# Check the dependencies are there
+export GOMPLATE=$ROOT_DIR/bin/gomplate
+$ROOT_DIR/hack/install/install-gomplate.sh
+
+export YQ=$ROOT_DIR/bin/yq
+$ROOT_DIR/hack/install/install-yq.sh
+
 
 # Elasticsearch settings
 export ELASTICSEARCH_NODECOUNT="1"

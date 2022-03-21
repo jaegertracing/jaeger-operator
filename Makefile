@@ -95,7 +95,6 @@ check:
 	$(VECHO)[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 ensure-generate-is-noop: VERSION=$(OPERATOR_VERSION)
-ensure-generate-is-noop: USER=jaegertracing
 ensure-generate-is-noop: set-image-controller generate bundle
 	$(VECHO)# on make bundle config/manager/kustomization.yaml includes changes, which should be ignored for the below check
 	$(VECHO)git restore config/manager/kustomization.yaml
@@ -335,10 +334,6 @@ CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
-
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
@@ -445,45 +440,11 @@ release-artifacts: set-image-controller
 	mkdir -p dist
 	$(KUSTOMIZE) build config/default -o dist/jaeger-operator.yaml
 
-
-kuttl:
-ifeq (, $(shell which kubectl-kuttl))
-	echo ${PATH}
-	ls -l /usr/local/bin
-	which kubectl-kuttl
-
-	@{ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: kuttl not found." ;\
-	echo "Please check https://kuttl.dev/docs/cli.html for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KUTTL=$(shell which kubectl-kuttl)
-endif
-
 # Set the controller image parameters
 set-image-controller: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 
-kind:
-ifeq ($(USE_KIND_CLUSTER),true)
-ifeq (, $(shell which kind))
-	@{ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: KIND not found." ;\
-	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KIND=$(shell which kind)
-endif
-endif
-
+.PHONY: tools
 tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
@@ -492,7 +453,21 @@ install-tools: operator-sdk
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
 		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336
-	$(VECHO)./.ci/install-gomplate.sh
+
+.PHONY: kustomize
+kustomize:
+	./hack/install/install-kustomize.sh
+	$(eval KUSTOMIZE=$(shell echo ${PWD}/bin/kustomize))
+
+.PHONY: kuttl
+kuttl:
+	./hack/install/install-kuttl.sh
+	$(eval KUTTL=$(shell echo ${PWD}/bin/kubectl-kuttl))
+
+.PHONY: kind
+kind:
+	./hack/install/install-kind.sh
+	$(eval KIND=$(shell echo ${PWD}/bin/kind))
 
 .PHONY: prepare-release
 prepare-release:
