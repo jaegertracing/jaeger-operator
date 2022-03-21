@@ -43,6 +43,10 @@ fi
 echo Running $test_suite_name E2E tests
 cd tests/e2e/$test_suite_name/_build
 
+# Don't stop if something fails because we want to process the
+# report anyway
+set -e
+
 kubectl kuttl test $KUTTL_OPTIONS --report xml
 exit_code=$?
 
@@ -51,11 +55,9 @@ exit_code=$?
 go install github.com/iblancasa/junitcli/cmd/junitcli@latest
 junitcli --suite-name $test_suite_name --report --output $reports_dir/$test_suite_name.xml ./artifacts/kuttl-test.xml
 
-if [ "$exit_code" != 0 ]; then
-	exit $exit_code
-fi
-
 if [ "$KIND_KEEP_CLUSTER" != true ] && [ "$use_kind_cluster" == true ]; then
 	cd $root_dir
 	make stop-kind
 fi
+
+exit $exit_code
