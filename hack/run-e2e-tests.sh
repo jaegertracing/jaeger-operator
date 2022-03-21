@@ -25,7 +25,7 @@ mkdir -p $reports_dir
 cd $root_dir
 make render-e2e-tests-$test_suite_name
 
-if [ "$use_kind_cluster" = true ]; then
+if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
 	make cert-manager
@@ -55,7 +55,7 @@ if [ "$exit_code" != 0 ]; then
 	exit $exit_code
 fi
 
-if [ "$KIND_KEEP_CLUSTER" != true ]; then
+if [ "$KIND_KEEP_CLUSTER" != true ] && [ "$use_kind_cluster" == true ]; then
 	cd $root_dir
 	make stop-kind
 fi
