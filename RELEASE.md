@@ -1,5 +1,16 @@
 # Releasing the Jaeger Operator for Kubernetes
 
+## Generating the changelog
+
+- Get the `OAUTH_TOKEN` from [Github](https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token), select `repo:status` scope.
+- Run  `OAUTH_TOKEN=... make changelog`
+- Remove the commits that are not relevant to users, like:
+  * CI or testing-specific commits (e2e, unit test, ...)
+  * bug fixes for problems that are not part of a release yet
+  * version bumps for internal dependencies
+
+## Releasing
+
 Steps to release a new version of the Jaeger Operator:
 
 
@@ -7,7 +18,7 @@ Steps to release a new version of the Jaeger Operator:
 
 1. Run `OPERATOR_VERSION=1.30.0 make prepare-release`, using the operator version that will be released.
 
-1. Prepare a changelog since last release. 
+1. Prepare a changelog since last release.
 
 1. Commit the changes and create a pull request:
 
@@ -32,16 +43,13 @@ Steps to release a new version of the Jaeger Operator:
 
 This can be done with the following steps:
 - Update main `git pull git@github.com:jaegertracing/jaeger-operator.git main`
-- Clone both repositories `upstream-community-operators` and `community-operators` 
+- Clone both repositories `upstream-community-operators` and `community-operators`
 - Run `make operatorhub`
   * If you have [`gh`](https://cli.github.com/) installed and configured, it will open the necessary PRs for you automatically.
   * If you don't have it, the branches will be pushed to `origin` and you should be able to open the PR from there
 
-## Generating the changelog
-
-- Get the `OAUTH_TOKEN` from [Github](https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token), select `repo:status` scope.
-- Run  `OAUTH_TOKEN=... make changelog`
-- Remove the commits that are not relevant to users, like:
-  * CI or testing-specific commits (e2e, unit test, ...)
-  * bug fixes for problems that are not part of a release yet
-  * version bumps for internal dependencies
+## Note
+After the PRs have been made it must be ensured that:
+- Images listed in the ClusterServiceVersion (CSV) have a versions tag [#1682](https://github.com/jaegertracing/jaeger-operator/issues/1682)
+- No `bundle` folder is included in the release
+- No foreign CRs like prometheus are in the manifests
