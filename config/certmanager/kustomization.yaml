@@ -1,0 +1,7 @@
+resources:
+- certificate.yaml
+
+namePrefix: jaeger-operator-
+
+configurations:
+- kustomizeconfig.yaml

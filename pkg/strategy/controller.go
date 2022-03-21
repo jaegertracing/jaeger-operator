@@ -11,14 +11,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
-)
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
-const (
-	esCertGenerationScript = "./scripts/cert_generation.sh"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 )
 
 var (
@@ -116,12 +112,22 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+		jaeger.Spec.Ingress.Openshift.SAR == nil {
+		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
+		jaeger.Spec.Ingress.Openshift.SAR = &sar
+	}
+
 	// note that the order normalization matters - UI norm expects all normalized properties
 	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.EsRollover)
 	normalizeUI(&jaeger.Spec)
+
+	if jaeger.Spec.Storage.Elasticsearch.Name == "" {
+		jaeger.Spec.Storage.Elasticsearch.Name = "elasticsearch"
+	}
 }
 
 func distributedStorage(storage v1.JaegerStorageType) bool {
@@ -139,7 +145,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
 		spec.Dependencies.Enabled == nil &&
-		!storage.ShouldDeployElasticsearch(*spec) &&
+		!v1.ShouldInjectOpenShiftElasticsearchConfiguration(*spec) &&
 		tlsIsNotEnabled {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar

@@ -13,51 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
-
-// Add creates a new Namespace Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNamespace{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// we only create this controller if we have cluster-scope, as watching namespaces is a cluster-wide operation
-	if !viper.GetBool(v1.ConfigEnableNamespaceController) {
-		log.Trace("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
-		return nil
-	}
-
-	// Create a new controller
-	c, err := controller.New("namespace-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &corev1.Namespace{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileNamespace{}
 
 // ReconcileNamespace reconciles a Namespace object
 type ReconcileNamespace struct {
@@ -70,6 +31,15 @@ type ReconcileNamespace struct {
 	rClient client.Reader
 
 	scheme *runtime.Scheme
+}
+
+// New creates new namespace controller
+func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileNamespace {
+	return &ReconcileNamespace{
+		client:  client,
+		rClient: clientReader,
+		scheme:  scheme,
+	}
 }
 
 // Reconcile reads that state of the cluster for a Namespace object and makes changes based on the state read
@@ -124,6 +94,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 
 	for i := 0; i < len(deps.Items); i++ {
 		dep := &deps.Items[i]
+		if dep.Labels["app"] == "jaeger" {
+			// Don't touch jaeger deployments
+			continue
+		}
+
 		if inject.Needed(dep, ns) {
 			jaegers := &v1.JaegerList{}
 			opts := []client.ListOption{}

@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -60,6 +60,11 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
+			log.WithFields(log.Fields{
+				"jaeger":                jaeger.Name,
+				"namespace":             jaeger.Namespace,
+				"latest-jaeger-version": latestVersion,
+			}).Error("Failed to upgrade", err)
 			continue
 		}
 		if !reflect.DeepEqual(jaeger, j) {

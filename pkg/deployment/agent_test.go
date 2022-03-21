@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -278,6 +278,34 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 		})
 	}
 
+}
+
+func TestAgentImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestAgentImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestAgentServiceLinks(t *testing.T) {

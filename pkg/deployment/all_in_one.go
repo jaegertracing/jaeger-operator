@@ -13,8 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
@@ -66,7 +66,6 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
 
-
 	// If tls is not explicitly set, update jaeger CR with the tls flags according to the platform
 	if len(util.FindItem("--collector.grpc.tls.enabled=", options)) == 0 {
 		tls.Update(a.jaeger, commonSpec, &options)
@@ -80,7 +79,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
 	// as it might receive connections from external agents
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
+		if len(util.FindItem("--reporter.grpc.host-port=", options)) == 0 &&
+			len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
@@ -139,6 +139,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
@@ -147,6 +148,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							{
 								Name:  "SPAN_STORAGE_TYPE",
 								Value: string(a.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
 							},
 							{
 								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
@@ -224,7 +229,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,24 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
-)
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
-func TestShouldDeployElasticsearch(t *testing.T) {
-	tests := []struct {
-		j        v1.JaegerStorageSpec
-		expected bool
-	}{
-		{j: v1.JaegerStorageSpec{}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})}},
-		{j: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}, expected: true},
-	}
-	for _, test := range tests {
-		assert.Equal(t, test.expected, ShouldDeployElasticsearch(test.j))
-	}
-}
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+)
 
 func TestCreateElasticsearchCR(t *testing.T) {
 	storageClassName := "floppydisk"
@@ -53,6 +40,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			name:      "foo",
 			namespace: "myproject",
 			jEsSpec: v1.ElasticsearchSpec{
+				Name:             "elasticsearch",
 				NodeCount:        2,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Storage: esv1.ElasticsearchStorageSpec{
@@ -77,6 +65,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			name:      "foo",
 			namespace: "myproject",
 			jEsSpec: v1.ElasticsearchSpec{
+				Name:             "elasticsearch",
 				NodeCount:        5,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Storage: esv1.ElasticsearchStorageSpec{
@@ -107,6 +96,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			name:      "foo-ba%r",
 			namespace: "myproje&ct",
 			jEsSpec: v1.ElasticsearchSpec{
+				Name:             "elasticsearch",
 				NodeCount:        5,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Storage: esv1.ElasticsearchStorageSpec{
@@ -137,6 +127,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			name:      "tolerations",
 			namespace: "mytolerableproject",
 			jEsSpec: v1.ElasticsearchSpec{
+				Name:             "elasticsearch",
 				NodeCount:        2,
 				RedundancyPolicy: esv1.FullRedundancy,
 				Tolerations:      tolerations,
@@ -180,17 +171,21 @@ func TestInject(t *testing.T) {
 		expected *corev1.PodSpec
 		es       v1.ElasticsearchSpec
 	}{
-		{pod: &corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Args:         []string{"foo"},
-				VolumeMounts: []corev1.VolumeMount{{Name: "lol"}},
-			}},
-		},
+		{
+			es: v1.ElasticsearchSpec{
+				Name: "elasticsearch",
+			},
+			pod: &corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Args:         []string{"foo"},
+					VolumeMounts: []corev1.VolumeMount{{Name: "lol"}},
+				}},
+			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
 						"foo",
-						"--es.server-urls=" + elasticsearchURL,
+						"--es.server-urls=https://elasticsearch:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -206,21 +201,23 @@ func TestInject(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "hoo-jaeger-elasticsearch"}}},
+						SecretName: "jaeger-elasticsearch"}}},
 				}},
 		},
-		{pod: &corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Args: []string{"--es.num-shards=15", "--es.num-replicas=55", "--es.timeout=99s"},
-			}},
-		},
+		{
+			es: v1.ElasticsearchSpec{Name: "elasticsearch"},
+			pod: &corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Args: []string{"--es.num-shards=15", "--es.num-replicas=55", "--es.timeout=99s"},
+				}},
+			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es.num-shards=15",
 						"--es.num-replicas=55",
 						"--es.timeout=99s",
-						"--es.server-urls=" + elasticsearchURL,
+						"--es.server-urls=https://elasticsearch:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -232,16 +229,20 @@ func TestInject(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "hoo-jaeger-elasticsearch"}}},
+						SecretName: "jaeger-elasticsearch"}}},
 				}},
 		},
 		{
 			pod: &corev1.PodSpec{Containers: []corev1.Container{{}}},
-			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1.FullRedundancy},
+			es: v1.ElasticsearchSpec{
+				Name:             "my-es",
+				NodeCount:        15,
+				RedundancyPolicy: esv1.FullRedundancy,
+			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
-						"--es.server-urls=" + elasticsearchURL,
+						"--es.server-urls=https://my-es:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -256,17 +257,27 @@ func TestInject(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "hoo-jaeger-elasticsearch"}}},
+						SecretName: "jaeger-my-es"}}},
 				}},
 		},
 		{
-			pod: &corev1.PodSpec{Containers: []corev1.Container{{Args: []string{"--es-archive.enabled=true"}}}},
-			es:  v1.ElasticsearchSpec{NodeCount: 15, RedundancyPolicy: esv1.FullRedundancy},
+			es: v1.ElasticsearchSpec{
+				Name:             "es-tenant2",
+				NodeCount:        15,
+				RedundancyPolicy: esv1.FullRedundancy,
+			},
+			pod: &corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Args: []string{"--es-archive.enabled=true"},
+					},
+				},
+			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es-archive.enabled=true",
-						"--es.server-urls=" + elasticsearchURL,
+						"--es.server-urls=https://es-tenant2:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -274,7 +285,7 @@ func TestInject(t *testing.T) {
 						"--es.timeout=15s",
 						"--es.num-shards=15",
 						"--es.num-replicas=14",
-						"--es-archive.server-urls=" + elasticsearchURL,
+						"--es-archive.server-urls=https://es-tenant2:9200",
 						"--es-archive.tls.enabled=true",
 						"--es-archive.tls.ca=" + caPath,
 						"--es-archive.tls.cert=" + certPath,
@@ -289,16 +300,18 @@ func TestInject(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "hoo-jaeger-elasticsearch"}}},
+						SecretName: "jaeger-es-tenant2"}}},
 				}},
 		},
 	}
 
-	for _, test := range tests {
-		es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "hoo"})}
-		es.Jaeger.Spec.Storage.Elasticsearch = test.es
-		es.InjectStorageConfiguration(test.pod)
-		assert.Equal(t, test.expected, test.pod)
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "hoo"})}
+			es.Jaeger.Spec.Storage.Elasticsearch = test.es
+			es.InjectStorageConfiguration(test.pod)
+			assert.Equal(t, test.expected, test.pod)
+		})
 	}
 
 }

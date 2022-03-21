@@ -6,6 +6,7 @@ import (
 
 	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -18,9 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta2"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -70,7 +70,7 @@ func TestDeletedInstance(t *testing.T) {
 	// all our objects should have an OwnerReference, so that when the jaeger object is deleted, the owned objects are deleted as well
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDeletedInstance"})
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
 
 	// no known objects
 	cl := fake.NewFakeClient()
@@ -106,7 +106,7 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 	jaeger := v1.NewJaeger(nsn)
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
 	cl := fake.NewFakeClient(jaeger)
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
@@ -134,7 +134,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	}
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
 	cl := fake.NewFakeClient(jaeger)
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
@@ -159,7 +159,7 @@ func TestGetResourceFromNonCachedClient(t *testing.T) {
 	jaeger := v1.NewJaeger(nsn)
 
 	s := scheme.Scheme
-	s.AddKnownTypes(v1.SchemeGroupVersion, jaeger)
+	s.AddKnownTypes(v1.GroupVersion, jaeger)
 
 	// simulates the case where the cache is stale: the instance has been deleted (client) but the cache hasn't been updated (cachedClient)
 	// we trigger the reconciliation and expect it to finish without errors, while we expect to not have an instance afterwards
@@ -219,13 +219,13 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	osconsolev1.Install(s)
 
 	// Jaeger
-	s.AddKnownTypes(v1.SchemeGroupVersion, &v1.Jaeger{})
+	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 
 	// Jaeger's Elasticsearch
-	s.AddKnownTypes(v1.SchemeGroupVersion, &esv1.Elasticsearch{}, &esv1.ElasticsearchList{})
+	s.AddKnownTypes(v1.GroupVersion, &esv1.Elasticsearch{}, &esv1.ElasticsearchList{})
 
 	// Kafka
-	s.AddKnownTypes(v1beta2.SchemeGroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
+	s.AddKnownTypes(v1beta2.GroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
 
 	cl := fake.NewFakeClient(objs...)
 	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl}, cl

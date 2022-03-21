@@ -1,0 +1,8 @@
+
+# Assert the Jaeger deployment was done properly
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Env.JAEGER_NAME }}
+spec:
+  replicas: 1

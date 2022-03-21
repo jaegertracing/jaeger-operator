@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -112,7 +112,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	podTimeout := &podTimeoutSeconds
 
 	// TTL for trace data, in seconds (default: 172800, 2 days)
-	// see: https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/schema/create.sh
+	// see: https://github.com/jaegertracing/jaeger/blob/main/plugin/storage/cassandra/schema/create.sh
 	traceTTLSeconds := "172800"
 	if jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL)

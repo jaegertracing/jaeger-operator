@@ -18,54 +18,12 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
-
-// Add creates a new Jaeger Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileJaeger{client: mgr.GetClient(), scheme: mgr.GetScheme(), rClient: mgr.GetAPIReader()}
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
-	c, err := controller.New("jaeger-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	if d, err := autodetect.New(mgr); err != nil {
-		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
-	} else {
-		d.Start()
-	}
-
-	// Watch for changes to primary resource Jaeger
-	err = c.Watch(&source.Kind{Type: &v1.Jaeger{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var _ reconcile.Reconciler = &ReconcileJaeger{}
 
 // ReconcileJaeger reconciles a Jaeger object
 type ReconcileJaeger struct {
@@ -75,6 +33,16 @@ type ReconcileJaeger struct {
 	rClient         client.Reader
 	scheme          *runtime.Scheme
 	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
+}
+
+// New creates new jaeger controller
+func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileJaeger {
+	return &ReconcileJaeger{
+		client:          client,
+		rClient:         clientReader,
+		scheme:          scheme,
+		strategyChooser: defaultStrategyChooser,
+	}
 }
 
 // Reconcile reads that state of the cluster for a Jaeger object and makes changes based on the state read
@@ -162,7 +130,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// workaround for https://github.com/jaegertracing/jaeger-operator/pull/558
-	instance.APIVersion = fmt.Sprintf("%s/%s", v1.SchemeGroupVersion.Group, v1.SchemeGroupVersion.Version)
+	instance.APIVersion = fmt.Sprintf("%s/%s", v1.GroupVersion.Group, v1.GroupVersion.Version)
 	instance.Kind = "Jaeger"
 
 	originalInstance := *instance
@@ -242,34 +210,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// ES cert handling requires secrets from environment
-	// therefore running this here and not in the strategy
-	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
-		opts := client.MatchingLabels(map[string]string{
-			"app.kubernetes.io/instance":   jaeger.Name,
-			"app.kubernetes.io/managed-by": "jaeger-operator",
-		})
-		secrets := &corev1.SecretList{}
-		if err := r.rClient.List(ctx, secrets, opts); err != nil {
-			jaeger.Status.Phase = v1.JaegerPhaseFailed
-			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
-				// we let it return the real error later
-				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
-			}
-			return jaeger, tracing.HandleError(err, span)
-		}
-		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
-
-		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: "./scripts/cert_generation.sh", Secrets: secretsForNamespace}
-		err = es.CreateCerts()
-		if err != nil {
-			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
-			return jaeger, err
-		}
-		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
-	}
-
-	// secrets have to be created before ES - they are mounted to the ES pod
+	// TODO this can be removed after previously released version is using cert management from EO e.g. in 1.32.0
 	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}

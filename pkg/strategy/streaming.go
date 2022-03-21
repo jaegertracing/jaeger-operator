@@ -10,8 +10,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
@@ -143,7 +143,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	manifest.dependencies = storage.Dependencies(jaeger)
 
 	// assembles the pieces for an elasticsearch self-provisioned deployment via the elasticsearch operator
-	if storage.ShouldDeployElasticsearch(jaeger.Spec.Storage) {
+	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) {
 		var jobs []*corev1.PodSpec
 		for i := range manifest.dependencies {
 			jobs = append(jobs, &manifest.dependencies[i].Spec.Template.Spec)

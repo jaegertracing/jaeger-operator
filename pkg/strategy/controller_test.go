@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestNewControllerForAllInOneAsDefault(t *testing.T) {
@@ -700,4 +700,24 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 	for k, v := range consoleLinks {
 		assert.True(t, v, "Expected %s to have been returned from the list of console links", k)
 	}
+}
+
+func TestNormalizeSAR(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{
+		Namespace: "foo",
+		Name:      t.Name(),
+	})
+
+	t.Run("not on openshift", func(t *testing.T) {
+		normalize(context.Background(), j)
+		assert.Nil(t, j.Spec.Ingress.Openshift.SAR)
+	})
+
+	t.Run("on openshift", func(t *testing.T) {
+		j.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+		viper.Set("platform", "openshift")
+		defer viper.Reset()
+		normalize(context.Background(), j)
+		assert.Equal(t, "{\"namespace\": \"foo\", \"resource\": \"pods\", \"verb\": \"get\"}", *j.Spec.Ingress.Openshift.SAR)
+	})
 }

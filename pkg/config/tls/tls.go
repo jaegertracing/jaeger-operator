@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -14,6 +14,10 @@ import (
 // Update will mount the tls secret on the collector pod.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		return
+	}
+
+	if len(util.FindItem("--reporter.grpc.host-port=", *options)) != 0 {
 		return
 	}
 

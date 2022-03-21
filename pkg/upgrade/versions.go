@@ -5,7 +5,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 type upgradeFunction = func(ctx context.Context, client client.Client, jaeger v1.Jaeger) (v1.Jaeger, error)
@@ -17,5 +17,7 @@ var (
 		"1.18.0": upgrade1_18_0,
 		"1.20.0": upgrade1_20_0,
 		"1.22.0": upgrade1_22_0,
+		"1.28.0": upgrade1_28_0,
+		"1.31.0": upgrade1_31_0,
 	}
 )

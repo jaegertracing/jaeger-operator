@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,35 +20,93 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 		return err
 	}
 
-	client := http.Client{Timeout: 3 * time.Second}
+	if params.Secret == "" {
+		logrus.Info("No secret provided for the Authorization header")
+	} else {
+		// This is needed to query the endpoints when using the OAuth Proxy
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", params.Secret))
+		logrus.Info("Secret provided for the Authorization header")
+	}
 
-	logrus.Info("Polling to %s", url)
+	// TODO: https://github.com/jaegertracing/jaeger-operator/issues/951
+	client := http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			// #nosec
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
+	maxRetries := 20
+	retries := 0
+	failed := false
+
+	logrus.Info("Polling to ", url)
 
 	return wait.Poll(params.RetryInterval, params.Timeout, func() (done bool, err error) {
-		logrus.Info("Doing request..")
+		logrus.Info("Doing request number ", retries)
+
 		res, err := client.Do(req)
 		if err != nil && strings.Contains(err.Error(), "Timeout exceeded") {
+			failed = true
+			logrus.Warn("Timeout exceeded!")
+		} else if res != nil && res.StatusCode != http.StatusOK {
+			err = fmt.Errorf("unexpected status code %d", res.StatusCode)
+			failed = true
+			logrus.Warn("Status code: ", res.StatusCode)
+		} else if err != nil {
+			failed = true
+			logrus.Warn("Something failed during doing the request: ", err.Error())
+		}
+
+		if failed {
+			failed = false
+			retries++
+			if retries > maxRetries {
+				return false, err
+			}
 			return false, nil
 		}
 
-		if err != nil {
-			return false, err
-		}
-
-		if res.StatusCode != http.StatusOK {
-			return false, fmt.Errorf("unexpected status code %d", res.StatusCode)
-		}
-
 		body, err := ioutil.ReadAll(res.Body)
+		if len(body) == 0 {
+			failed = true
+			err = fmt.Errorf("empty body response")
+			logrus.Warn("Empty body response")
+		} else if err != nil {
+			failed = true
+			logrus.Warn("Something failed reading the response: ", err.Error())
+		}
 
-		if err != nil {
+		if failed {
+			failed = false
+			retries++
+			if retries > maxRetries {
+				return false, err
+			}
+			return false, nil
+		}
+
+		ok, err := testFn(res, body)
+		if ok {
+			return true, nil
+		}
+		retries++
+
+		if retries > maxRetries {
+			logrus.Warn("Something failed while executing the test function: ", err.Error())
 			return false, err
 		}
 
-		if len(body) == 0 {
-			return false, fmt.Errorf("empty body")
+		if err == nil {
+			logrus.Warn("The condition of the test function was not accomplished")
+		} else {
+			logrus.Warn("There test function returned an error:", err.Error())
 		}
 
-		return testFn(res, body)
+		return false, nil
+
 	})
 }

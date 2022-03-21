@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -35,6 +35,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
+			Value: "",
+		},
+		{
+			Name:  "METRICS_STORAGE_TYPE",
 			Value: "",
 		},
 		{
@@ -195,6 +199,32 @@ func TestAllInOneSecrets(t *testing.T) {
 	dep := allInOne.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestAllInOneImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	allInOne := NewAllInOne(jaeger)
+	dep := allInOne.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestAllInOneImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	allInOne := NewAllInOne(jaeger)
+	dep := allInOne.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestAllInOneMountGlobalVolumes(t *testing.T) {
@@ -371,6 +401,22 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 				"--a-option=a-value",
 				"--reporter.grpc.tls.enabled=false",
 				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+		{
+			name: "Do not implicitly enable TLS when grpc.host-port is provided",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                "a-value",
+				"reporter.grpc.host-port": "my.host-port.com",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=my.host-port.com",
 				"--sampling.strategies-file",
 			},
 			nonExpectedArgs: []string{

@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "JAEGER_SERVICE_NAME=my-test-service OPERATION_NAME=my-little-op JAEGER_ENDPOINT=http://localhost/collector/api/traces go run {{ .Env.REPORTER_PROGRAM }} --verbose"
+  - script: "go run {{ .Env.QUERY_PROGRAM }} --service-name my-test-service --query-host http://localhost/query"

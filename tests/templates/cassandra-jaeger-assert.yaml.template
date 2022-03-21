@@ -1,0 +1,9 @@
+# Assert the Cassandra deployment is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Env.JAEGER_NAME }}
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1

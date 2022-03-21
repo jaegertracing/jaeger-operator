@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
 )
 
 var (
@@ -16,32 +14,29 @@ var (
 
 // Version holds this Operator's version as well as the version of some of the components it uses
 type Version struct {
-	Operator    string `json:"jaeger-operator"`
-	BuildDate   string `json:"build-date"`
-	Jaeger      string `json:"jaeger-version"`
-	Go          string `json:"go-version"`
-	OperatorSdk string `json:"operator-sdk-version"`
+	Operator  string `json:"jaeger-operator"`
+	BuildDate string `json:"build-date"`
+	Jaeger    string `json:"jaeger-version"`
+	Go        string `json:"go-version"`
 }
 
 // Get returns the Version object with the relevant information
 func Get() Version {
 	return Version{
-		Operator:    version,
-		BuildDate:   buildDate,
-		Jaeger:      DefaultJaeger(),
-		Go:          runtime.Version(),
-		OperatorSdk: sdkVersion.Version,
+		Operator:  version,
+		BuildDate: buildDate,
+		Jaeger:    DefaultJaeger(),
+		Go:        runtime.Version(),
 	}
 }
 
 func (v Version) String() string {
 	return fmt.Sprintf(
-		"Version(Operator='%v', BuildDate='%v', Jaeger='%v', Go='%v', OperatorSDK='%v')",
+		"Version(Operator='%v', BuildDate='%v', Jaeger='%v', Go='%v')",
 		v.Operator,
 		v.BuildDate,
 		v.Jaeger,
 		v.Go,
-		v.OperatorSdk,
 	)
 }
 

@@ -1,0 +1,27 @@
+name: "Operator-SDK Scorecard"
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  operator-sdk-scorecard:
+    name: "Operator-SDK Scorecard"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check out code"
+        uses: actions/checkout@v3
+      - name: "Install KIND"
+        run: ./hack/install/install-kind.sh
+      - name: "Install KUTTL"
+        run: ./hack/install/install-kuttl.sh
+      - name: "Run Operator-SDK scorecard test"
+        env:
+          DOCKER_BUILD_OPTIONS: "--cache-from	type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max --load"
+        run: make scorecard-tests-local

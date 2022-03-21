@@ -1,0 +1,7 @@
+# Ensure the entity operator is up and running
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Env.CLUSTER_NAME }}-entity-operator
+status:
+  readyReplicas: 1

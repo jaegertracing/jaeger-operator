@@ -3,7 +3,7 @@ package storage
 import (
 	batchv1 "k8s.io/api/batch/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 // Dependencies return a list of Jobs that have to be finished before the other components are deployed

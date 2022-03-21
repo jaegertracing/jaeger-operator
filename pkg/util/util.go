@@ -11,7 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -74,6 +74,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
+	var imagePullSecrets []corev1.LocalObjectReference
+	var imagePullPolicy corev1.PullPolicy
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -110,18 +112,28 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		if serviceAccount == "" {
 			serviceAccount = commonSpec.ServiceAccount
 		}
+
+		for _, ips := range commonSpec.ImagePullSecrets {
+			imagePullSecrets = append(imagePullSecrets, ips)
+		}
+
+		if imagePullPolicy == corev1.PullPolicy("") {
+			imagePullPolicy = commonSpec.ImagePullPolicy
+		}
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:     annotations,
-		Labels:          labels,
-		VolumeMounts:    RemoveDuplicatedVolumeMounts(volumeMounts),
-		Volumes:         RemoveDuplicatedVolumes(volumes),
-		Resources:       *resources,
-		Affinity:        affinity,
-		Tolerations:     tolerations,
-		SecurityContext: securityContext,
-		ServiceAccount:  serviceAccount,
+		Annotations:      annotations,
+		Labels:           labels,
+		VolumeMounts:     RemoveDuplicatedVolumeMounts(volumeMounts),
+		Volumes:          RemoveDuplicatedVolumes(volumes),
+		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:  imagePullPolicy,
+		Resources:        *resources,
+		Affinity:         affinity,
+		Tolerations:      tolerations,
+		SecurityContext:  securityContext,
+		ServiceAccount:   serviceAccount,
 	}
 }
 

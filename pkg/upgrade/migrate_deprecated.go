@@ -3,7 +3,7 @@ package upgrade
 import (
 	log "github.com/sirupsen/logrus"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 // deprecationFlagMap is a map from deprecated flags to their new variants

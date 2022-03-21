@@ -1,6 +1,63 @@
 Changes by Version
 ==================
 
+1.32.0 (2022-03-09)
+-------------------
+
+* Custom Image Pull Policy ([#1798](https://github.com/jaegertracing/jaeger-operator/pull/1798), [@edenkoveshi](https://github.com/edenkoveshi))
+* add METRICS_STORAGE_TYPE for metrics query ([#1755](https://github.com/jaegertracing/jaeger-operator/pull/1755), [@JaredTan95](https://github.com/JaredTan95))
+* Make operator more resiliant to etcd defrag activity ([#1795](https://github.com/jaegertracing/jaeger-operator/pull/1795), [@pavolloffay](https://github.com/pavolloffay))
+* Automatically set num shards and replicas from referenced OCP ES ([#1737](https://github.com/jaegertracing/jaeger-operator/pull/1737), [@pavolloffay](https://github.com/pavolloffay))
+* support image pull secrets ([#1740](https://github.com/jaegertracing/jaeger-operator/pull/1740), [@frzifus](https://github.com/frzifus))
+* Fix webhook secret cert name ([#1772](https://github.com/jaegertracing/jaeger-operator/pull/1772), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.31.0 (2022-02-09)
+-------------------
+* Fix panic caused by an invalid type assertion ([#1738](https://github.com/jaegertracing/jaeger-operator/pull/1738), [@frzifus](https://github.com/frzifus))
+* Add ES autoprovisioning CR metric ([#1728](https://github.com/jaegertracing/jaeger-operator/pull/1728), [@rubenvp8510](https://github.com/rubenvp8510))
+* Use Elasticsearch provisioning from OpenShift Elasticsearch operator ([#1708](https://github.com/jaegertracing/jaeger-operator/pull/1708), [@pavolloffay](https://github.com/pavolloffay))
+
+1.30.0 (2022-01-18)
+-------------------
+* Only expose the query-http[s] port in the OpenShift route ([#1719](https://github.com/jaegertracing/jaeger-operator/pull/1719), [@rkukura](https://github.com/rkukura))
+* Add CR Metrics for Jaeger Kind. ([#1706](https://github.com/jaegertracing/jaeger-operator/pull/1706), [@rubenvp8510](https://github.com/rubenvp8510))
+* Avoid calling k8s api for each resource kind on the cluster ([#1712](https://github.com/jaegertracing/jaeger-operator/pull/1712), [@rubenvp8510](https://github.com/rubenvp8510))
+* First call of autodetect should be synchronous ([#1713](https://github.com/jaegertracing/jaeger-operator/pull/1713), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add permissions for imagestreams ([#1714](https://github.com/jaegertracing/jaeger-operator/pull/1714), [@rubenvp8510](https://github.com/rubenvp8510))
+* Restore default metrics port to avoid breaking helm ([#1703](https://github.com/jaegertracing/jaeger-operator/pull/1703), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add leases permissions to manifest. ([#1704](https://github.com/jaegertracing/jaeger-operator/pull/1704), [@rubenvp8510](https://github.com/rubenvp8510))
+* Change spark-dependencies image to GHCR ([#1701](https://github.com/jaegertracing/jaeger-operator/pull/1701), [@pavolloffay](https://github.com/pavolloffay))
+* Register ES types ([#1688](https://github.com/jaegertracing/jaeger-operator/pull/1688), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for IBM Power (ppc64le) arch ([#1672](https://github.com/jaegertracing/jaeger-operator/pull/1672), [@Abhijit-Mane](https://github.com/Abhijit-Mane))
+* util.Truncate add the values to the truncated after the excess is 0 ([#1678](https://github.com/jaegertracing/jaeger-operator/pull/1678), [@mmatache](https://github.com/mmatache))
+
+1.29.1 (2021-12-15)
+-------------------
+* Register oschema for openshift resources  ([#1673](https://github.com/jaegertracing/jaeger-operator/pull/1673), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.29.0 (2021-12-10)
+-------------------
+* Fix default namespace ([#1651](https://github.com/jaegertracing/jaeger-operator/pull/1651), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix finding the correct instance when there are multiple jaeger instances during injecting the sidecar ([#1639](https://github.com/jaegertracing/jaeger-operator/pull/1639), [@alibo](https://github.com/alibo))
+* Migrate to operator-sdk 1.13 ([#1623](https://github.com/jaegertracing/jaeger-operator/pull/1623), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.28.0 (2021-11-08)
+-------------------
+* Use CRDs to detect features in the cluster ([#1608](https://github.com/jaegertracing/jaeger-operator/pull/1608), [@pavolloffay](https://github.com/pavolloffay))
+* Make ServiceMonitor creation optional ([#1323](https://github.com/jaegertracing/jaeger-operator/pull/1323), [@igorwwwwwwwwwwwwwwwwwwww](https://github.com/igorwwwwwwwwwwwwwwwwwwww))
+* Change default OpenShift query ingress SAR to pods in the jaeger namespace ([#1583](https://github.com/jaegertracing/jaeger-operator/pull/1583), [@pavolloffay](https://github.com/pavolloffay))
+* Fix gRPC flags for OpenShift when 'reporter.grpc.host-port' is defined ([#1584](https://github.com/jaegertracing/jaeger-operator/pull/1584), [@Git-Jiro](https://github.com/Git-Jiro))
+
+1.27.0 (2021-10-07)
+-------------------
+* Allow sidecar injection for query pod from other Jaeger instances ([#1569](https://github.com/jaegertracing/jaeger-operator/pull/1569), [@pavolloffay](https://github.com/pavolloffay))
+* Avoid touching jaeger deps on deployment/ns controller ([#1529](https://github.com/jaegertracing/jaeger-operator/pull/1529), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.26.0 (2021-09-30)
+-------------------
+* Add ingressClassName field to query ingress ([#1557](https://github.com/jaegertracing/jaeger-operator/pull/1557), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add disconnected annotation to csv ([#1536](https://github.com/jaegertracing/jaeger-operator/pull/1536), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.25.0 (2021-08-08)
 -------------------
 * Add support repetitive arguments to operand ([#1434](https://github.com/jaegertracing/jaeger-operator/pull/1434), [@rubenvp8510](https://github.com/rubenvp8510))
