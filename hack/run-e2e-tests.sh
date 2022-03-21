@@ -45,10 +45,12 @@ cd tests/e2e/$test_suite_name/_build
 
 # Don't stop if something fails because we want to process the
 # report anyway
-set -e
+set +e
 
 kubectl kuttl test $KUTTL_OPTIONS --report xml
 exit_code=$?
+
+set -e
 
 # The output XML needs some work because it adds "artifacts" as a test case.
 # Also, the suites doesn't have a name so, we need to add one.
