@@ -3,21 +3,21 @@ package inventory
 import (
 	"fmt"
 
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // CronJob represents the inventory of cronjobs based on the current and desired states
 type CronJob struct {
-	Create []batchv1beta1.CronJob
-	Update []batchv1beta1.CronJob
-	Delete []batchv1beta1.CronJob
+	Create []batchv1.CronJob
+	Update []batchv1.CronJob
+	Delete []batchv1.CronJob
 }
 
 // ForCronJobs builds an inventory of cronjobs based on the existing and desired states
-func ForCronJobs(existing []batchv1beta1.CronJob, desired []batchv1beta1.CronJob) CronJob {
-	update := []batchv1beta1.CronJob{}
+func ForCronJobs(existing []batchv1.CronJob, desired []batchv1.CronJob) CronJob {
+	update := []batchv1.CronJob{}
 	mcreate := jobsMap(desired)
 	mdelete := jobsMap(existing)
 
@@ -51,16 +51,16 @@ func ForCronJobs(existing []batchv1beta1.CronJob, desired []batchv1beta1.CronJob
 	}
 }
 
-func jobsMap(deps []batchv1beta1.CronJob) map[string]batchv1beta1.CronJob {
-	m := map[string]batchv1beta1.CronJob{}
+func jobsMap(deps []batchv1.CronJob) map[string]batchv1.CronJob {
+	m := map[string]batchv1.CronJob{}
 	for _, d := range deps {
 		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }
 
-func jobsList(m map[string]batchv1beta1.CronJob) []batchv1beta1.CronJob {
-	l := []batchv1beta1.CronJob{}
+func jobsList(m map[string]batchv1.CronJob) []batchv1.CronJob {
+	l := []batchv1.CronJob{}
 	for _, v := range m {
 		l = append(l, v)
 	}

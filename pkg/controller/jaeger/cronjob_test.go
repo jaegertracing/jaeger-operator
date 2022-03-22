@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,7 +31,7 @@ func TestCronJobsCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithCronJobs([]batchv1beta1.CronJob{{
+		s := strategy.New().WithCronJobs([]batchv1.CronJob{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestCronJobsCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &batchv1beta1.CronJob{}
+	persisted := &batchv1.CronJob{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -62,7 +62,7 @@ func TestCronJobsUpdate(t *testing.T) {
 		Name: "TestCronJobsUpdate",
 	}
 
-	orig := batchv1beta1.CronJob{}
+	orig := batchv1.CronJob{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 	orig.Labels = map[string]string{
@@ -77,11 +77,11 @@ func TestCronJobsUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		updated := batchv1beta1.CronJob{}
+		updated := batchv1.CronJob{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithCronJobs([]batchv1beta1.CronJob{updated})
+		s := strategy.New().WithCronJobs([]batchv1.CronJob{updated})
 		return s
 	}
 
@@ -90,7 +90,7 @@ func TestCronJobsUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &batchv1beta1.CronJob{}
+	persisted := &batchv1.CronJob{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -106,7 +106,7 @@ func TestCronJobsDelete(t *testing.T) {
 		Name: "TestCronJobsDelete",
 	}
 
-	orig := batchv1beta1.CronJob{}
+	orig := batchv1.CronJob{}
 	orig.Name = nsn.Name
 	orig.Labels = map[string]string{
 		"app.kubernetes.io/instance":   orig.Name,
@@ -128,7 +128,7 @@ func TestCronJobsDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &batchv1beta1.CronJob{}
+	persisted := &batchv1.CronJob{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -152,7 +152,7 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
-		&batchv1beta1.CronJob{
+		&batchv1.CronJob{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
@@ -166,7 +166,7 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithCronJobs([]batchv1beta1.CronJob{{
+		s := strategy.New().WithCronJobs([]batchv1.CronJob{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
@@ -182,13 +182,13 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &batchv1beta1.CronJob{}
+	persisted := &batchv1.CronJob{}
 	err = cl.Get(context.Background(), nsn, persisted)
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
-	persistedExisting := &batchv1beta1.CronJob{}
+	persistedExisting := &batchv1.CronJob{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)

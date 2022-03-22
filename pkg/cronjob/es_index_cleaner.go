@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -18,7 +17,7 @@ import (
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
 
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
-func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
+func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1.CronJob {
 	esUrls := util.GetEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	one := int32(1)
@@ -45,7 +44,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	ca.Update(jaeger, commonSpec)
 
-	return &batchv1beta1.CronJob{
+	return &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
 			Namespace:   jaeger.Namespace,
@@ -61,10 +60,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 				},
 			},
 		},
-		Spec: batchv1beta1.CronJobSpec{
+		Spec: batchv1.CronJobSpec{
 			Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
 			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit,
-			JobTemplate: batchv1beta1.JobTemplateSpec{
+			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism:             &one,
 					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished,

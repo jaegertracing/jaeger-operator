@@ -39,7 +39,7 @@ GOROOT ?= "$(shell go env GOROOT)"
 ECHO ?= @echo $(echo_prefix)
 SED ?= "sed"
 CERTMANAGER_VERSION ?= 1.6.1
-OPERATOR_SDK_VERSION ?= 1.13.1
+OPERATOR_SDK_VERSION ?= 1.14.0
 
 USE_KIND_CLUSTER ?= true
 export OLM ?= false

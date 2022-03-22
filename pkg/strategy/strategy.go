@@ -6,7 +6,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -28,7 +27,7 @@ type S struct {
 	clusterRoleBindings      []rbac.ClusterRoleBinding
 	configMaps               []corev1.ConfigMap
 	consoleLinks             []osconsolev1.ConsoleLink
-	cronJobs                 []batchv1beta1.CronJob
+	cronJobs                 []batchv1.CronJob
 	daemonSets               []appsv1.DaemonSet
 	dependencies             []batchv1.Job
 	deployments              []appsv1.Deployment
@@ -77,7 +76,7 @@ func (s S) WithConfigMaps(c []corev1.ConfigMap) S {
 }
 
 // WithCronJobs returns the strategy with the given list of cron jobs
-func (s S) WithCronJobs(c []batchv1beta1.CronJob) S {
+func (s S) WithCronJobs(c []batchv1.CronJob) S {
 	s.cronJobs = c
 	return s
 }
@@ -169,7 +168,7 @@ func (s S) ConsoleLinks(routes []osv1.Route) []osconsolev1.ConsoleLink {
 }
 
 // CronJobs returns the list of cron jobs for this strategy
-func (s S) CronJobs() []batchv1beta1.CronJob {
+func (s S) CronJobs() []batchv1.CronJob {
 	return s.cronJobs
 }
 
