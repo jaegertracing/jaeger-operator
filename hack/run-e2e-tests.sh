@@ -20,6 +20,10 @@ olm=$3
 root_dir=$current_dir/../
 reports_dir=$root_dir/reports
 
+# Ensure KUTTL is installed
+/install/install-kuttl.sh
+export KUTTL=$current_dir/bin/kubectl-kuttl
+
 mkdir -p $reports_dir
 
 cd $root_dir
@@ -47,7 +51,7 @@ cd tests/e2e/$test_suite_name/_build
 # report anyway
 set +e
 
-kubectl kuttl test $KUTTL_OPTIONS --report xml
+$KUTTL test $KUTTL_OPTIONS --report xml
 exit_code=$?
 
 set -e
