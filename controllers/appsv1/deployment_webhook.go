@@ -43,20 +43,19 @@ type deploymentInterceptor struct {
 }
 
 // Handle adds a label to a generated pod if deployment or namespace provide annotaion
-func (di *deploymentInterceptor) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Request) admission.Response {
 	logger := log.WithField("namespace", req.Namespace)
-	logger.Level = log.DebugLevel // TODO(frzifus): remove
-	logger.Info("verify deployment")
+	logger.Debug("verify deployment")
 
 	deploy := &appsv1.Deployment{}
-	err := di.decoder.Decode(req, deploy)
+	err := d.decoder.Decode(req, deploy)
 	if err != nil {
 		logger.WithError(err).Error("failed to decode deployment")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
 	ns := &corev1.Namespace{}
-	err = di.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
+	err = d.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
 	if err != nil { // we shouldn't fail if the namespace object can't be obtained
 		msg := "failed to get the namespace for the pod, skipping injection based on namespace annotation"
 		logger.WithError(err).Error(msg)
@@ -64,7 +63,7 @@ func (di *deploymentInterceptor) Handle(ctx context.Context, req admission.Reque
 	}
 
 	if inject.DeploymentNeeded(deploy, ns) {
-		logger.Info("update deployment")
+		logger.Debug("update pod annotation")
 		if deploy.Spec.Template.Labels == nil {
 			deploy.Spec.Template.Labels = make(map[string]string, 0)
 		}
@@ -75,7 +74,11 @@ func (di *deploymentInterceptor) Handle(ctx context.Context, req admission.Reque
 		if deploy.Spec.Template.Annotations == nil {
 			deploy.Spec.Template.Annotations = make(map[string]string)
 		}
-		deploy.Spec.Template.Annotations[inject.Annotation] = "true"
+		if _, ok := deploy.Spec.Template.Annotations[inject.Annotation]; !ok {
+			deploy.Spec.Template.Annotations[inject.Annotation] = "true"
+		} else {
+			logger.Warnf("annotation in PodTemplateSpec already present")
+		}
 
 		marshaledDeploy, err := json.Marshal(deploy)
 		if err != nil {
@@ -85,14 +88,14 @@ func (di *deploymentInterceptor) Handle(ctx context.Context, req admission.Reque
 		return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeploy)
 	}
 
-	return admission.Allowed("pod template update not needed")
+	return admission.Allowed("no need to update PodTemplateSpec")
 }
 
 // deploymentInterceptor implements admission.DecoderInjector.
 // A decoder will be automatically injected.
 
 // InjectDecoder injects the decoder.
-func (di *deploymentInterceptor) InjectDecoder(d *admission.Decoder) error {
-	di.decoder = d
+func (d *deploymentInterceptor) InjectDecoder(decoder *admission.Decoder) error {
+	d.decoder = decoder
 	return nil
 }

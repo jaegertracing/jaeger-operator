@@ -42,19 +42,18 @@ type podInjector struct {
 }
 
 // Handle adds a sidecar to a generated pod
-func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (p *podInjector) Handle(ctx context.Context, req admission.Request) admission.Response {
 	logger := log.WithField("namespace", req.Namespace)
-	logger.Level = log.DebugLevel // TODO(frzifus): remove
 
 	pod := &corev1.Pod{}
-	err := pi.decoder.Decode(req, pod)
+	err := p.decoder.Decode(req, pod)
 	if err != nil {
 		logger.WithError(err).Error("failed to decode pod")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
 	ns := &corev1.Namespace{}
-	err = pi.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
+	err = p.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
 	if err != nil { // we shouldn't fail if the namespace object can't be obtained
 		msg := "failed to get the namespace for the pod, skipping injection based on namespace annotation"
 		logger.WithError(err).Error(msg)
@@ -69,7 +68,7 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 		opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
 	}
 
-	if err := pi.client.List(ctx, jaegers, opts...); err != nil {
+	if err := p.client.List(ctx, jaegers, opts...); err != nil {
 		logger.WithError(err).Error("failed to get the available Jaeger pods")
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
@@ -84,7 +83,7 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 			})
 
 			if jaeger.Namespace != pod.Namespace {
-				if err := reconcileConfigMaps(ctx, pi.client, jaeger, pod); err != nil {
+				if err := reconcileConfigMaps(ctx, p.client, jaeger, pod); err != nil {
 					const msg = "failed to reconcile config maps for the namespace"
 					logger.WithError(err).Error(msg)
 				}
@@ -116,8 +115,8 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 // A decoder will be automatically injected.
 
 // InjectDecoder injects the decoder.
-func (pi *podInjector) InjectDecoder(d *admission.Decoder) error {
-	pi.decoder = d
+func (p *podInjector) InjectDecoder(d *admission.Decoder) error {
+	p.decoder = d
 	return nil
 }
 
