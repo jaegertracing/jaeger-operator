@@ -21,7 +21,7 @@ root_dir=$current_dir/../
 reports_dir=$root_dir/reports
 
 # Ensure KUTTL is installed
-$current_dir/install/install-kuttl.sh
+$root_dir/install/install-kuttl.sh
 export KUTTL=$current_dir/bin/kubectl-kuttl
 
 mkdir -p $reports_dir
