@@ -108,19 +108,6 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 
 		logger.Info("no suitable Jaeger instances found to inject a sidecar")
 	}
-	logger.Debug("sidecar not needed")
-	if ok, _ := inject.HasJaegerAgent(pod.Spec.Containers); ok {
-		if _, hasLabel := pod.Labels[inject.Label]; hasLabel {
-			logger.Debug("sidecar will be removed from pod")
-
-			pod := removeSidecarPod(pod)
-			marshaledPod, err := json.Marshal(pod)
-			if err != nil {
-				return admission.Errored(http.StatusInternalServerError, err)
-			}
-			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
-		}
-	}
 
 	return admission.Allowed("no action necessary")
 }
@@ -132,18 +119,6 @@ func (pi *podInjector) Handle(ctx context.Context, req admission.Request) admiss
 func (pi *podInjector) InjectDecoder(d *admission.Decoder) error {
 	pi.decoder = d
 	return nil
-}
-
-func removeSidecarPod(pod *corev1.Pod) *corev1.Pod {
-	p := pod.DeepCopy()
-	jaegerInstance := p.Labels[inject.Label]
-	log.WithFields(log.Fields{
-		"pod":       pod.Name,
-		"namespace": pod.Namespace,
-		"jaeger":    jaegerInstance,
-	}).Info("Removing Jaeger Agent sidecar from Pod")
-	inject.CleanSidecarFromPod(jaegerInstance, p)
-	return p
 }
 
 func reconcileConfigMaps(ctx context.Context, c client.Client, jaeger *v1.Jaeger, pod *corev1.Pod) error {
