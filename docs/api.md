@@ -37315,6 +37315,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>priorityClassName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstorageesindexcleanerresources">resources</a></b></td>
         <td>object</td>
         <td>
