@@ -37503,6 +37503,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>useESCertManagement</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

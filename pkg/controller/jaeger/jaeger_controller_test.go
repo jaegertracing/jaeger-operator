@@ -9,6 +9,7 @@ import (
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -199,6 +200,44 @@ func TestGetSecretsForNamespace(t *testing.T) {
 	assert.Contains(t, filteredSecrets, secretThree)
 }
 
+func TestElasticsearchProvisioning(t *testing.T) {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "jaeger",
+		},
+	}
+	namespacedName := types.NamespacedName{Name: "prod", Namespace: "jaeger"}
+	j := v1.NewJaeger(namespacedName)
+	j.Spec.Storage.Type = "elasticsearch"
+	j.Spec.Storage.Elasticsearch.Name = "elasticserach"
+	j.Spec.Storage.Elasticsearch.NodeCount = 1
+
+	reconciler, cl := getReconciler([]runtime.Object{ns, j})
+
+	req := reconcile.Request{NamespacedName: namespacedName}
+	result, err := reconciler.Reconcile(req)
+	require.NoError(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
+
+	secrets := &corev1.SecretList{}
+	err = cl.List(context.Background(), secrets, client.InNamespace("jaeger"))
+	require.NoError(t, err)
+	assert.Equal(t, 4, len(secrets.Items))
+	assert.NotNil(t, getSecret("prod-jaeger-elasticsearch", *secrets))
+	assert.NotNil(t, getSecret("prod-master-certs", *secrets))
+	assert.NotNil(t, getSecret("prod-curator", *secrets))
+	assert.NotNil(t, getSecret("elasticsearch", *secrets))
+}
+
+func getSecret(name string, secrets corev1.SecretList) *corev1.Secret {
+	for _, s := range secrets.Items {
+		if s.Name == name {
+			return &s
+		}
+	}
+	return nil
+}
+
 func createSecret(secretNamespace, secretName string) corev1.Secret {
 	return corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -228,5 +267,5 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	s.AddKnownTypes(v1beta2.GroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
 
 	cl := fake.NewFakeClient(objs...)
-	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl}, cl
+	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl, certGenerationScript: "../../../scripts/cert_generation.sh"}, cl
 }

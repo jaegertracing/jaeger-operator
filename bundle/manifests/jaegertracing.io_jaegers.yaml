@@ -9642,6 +9642,8 @@ spec:
                           type: object
                         type: array
                         x-kubernetes-list-type: atomic
+                      useESCertManagement:
+                        type: boolean
                     type: object
                   esIndexCleaner:
                     properties:

@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -29,19 +30,21 @@ import (
 type ReconcileJaeger struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client          client.Client
-	rClient         client.Reader
-	scheme          *runtime.Scheme
-	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
+	client               client.Client
+	rClient              client.Reader
+	scheme               *runtime.Scheme
+	strategyChooser      func(context.Context, *v1.Jaeger) strategy.S
+	certGenerationScript string
 }
 
 // New creates new jaeger controller
 func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileJaeger {
 	return &ReconcileJaeger{
-		client:          client,
-		rClient:         clientReader,
-		scheme:          scheme,
-		strategyChooser: defaultStrategyChooser,
+		client:               client,
+		rClient:              clientReader,
+		scheme:               scheme,
+		strategyChooser:      defaultStrategyChooser,
+		certGenerationScript: "./scripts/cert_generation.sh",
 	}
 }
 
@@ -210,7 +213,37 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// TODO this can be removed after previously released version is using cert management from EO e.g. in 1.32.0
+	// ES cert handling requires secrets from environment
+	// therefore running this here and not in the strategy
+	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) &&
+		// generate the certs only if cert management is disabled
+		(jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == nil ||
+			*jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == false) {
+
+		opts := client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		})
+		secrets := &corev1.SecretList{}
+		if err := r.rClient.List(ctx, secrets, opts); err != nil {
+			jaeger.Status.Phase = v1.JaegerPhaseFailed
+			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
+				// we let it return the real error later
+				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
+			}
+			return jaeger, tracing.HandleError(err, span)
+		}
+		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
+
+		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: r.certGenerationScript, Secrets: secretsForNamespace}
+		err = es.CreateCerts()
+		if err != nil {
+			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+			return jaeger, err
+		}
+		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
+	}
+
 	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}
