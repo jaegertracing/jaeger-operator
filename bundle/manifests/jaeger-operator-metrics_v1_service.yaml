@@ -3,7 +3,7 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    control-plane: jaeger-operator
+    app.kubernetes.io/component: metrics
     name: jaeger-operator
   name: jaeger-operator-metrics
 spec:
