@@ -9,9 +9,10 @@ spec:
       app: vertx-create-span-sidecar
   template:
     metadata:
+      annotations:
+        "sidecar.jaegertracing.io/inject": "true"
       labels:
         app: vertx-create-span-sidecar
-        "sidecar.jaegertracing.io/inject": "true"
     spec:
       containers:
         - name: vertx-create-span-sidecar
@@ -30,4 +31,3 @@ spec:
               port: 8080
             initialDelaySeconds: 1
             periodSeconds: 1
-

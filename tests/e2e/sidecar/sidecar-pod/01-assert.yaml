@@ -9,4 +9,3 @@ spec:
     - name: jaeger-agent
 status:
   phase: Running
-

@@ -24,5 +24,4 @@ while (( "$#" )); do
   esac
 done
 
-kubectl label --overwrite namespaces ${NAMESPACE} "jaeger-injection"="enabled"
-
+kubectl annotate --overwrite namespaces ${NAMESPACE} "sidecar.jaegertracing.io/inject"="true"
