@@ -267,5 +267,7 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	s.AddKnownTypes(v1beta2.GroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
 
 	cl := fake.NewFakeClient(objs...)
-	return &ReconcileJaeger{client: cl, scheme: s, rClient: cl, certGenerationScript: "../../../scripts/cert_generation.sh"}, cl
+	r := New(cl, cl, s)
+	r.certGenerationScript = "../../../scripts/cert_generation.sh"
+	return New(cl, cl, s), cl
 }
