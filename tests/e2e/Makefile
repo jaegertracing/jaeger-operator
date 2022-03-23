@@ -37,7 +37,7 @@ build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 .PHONY: load-assert-job
 load-assert-job: build-assert-job set-assert-e2e-img-name
 ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)./hack/load-kind-image.sh $(ASSERT_IMG) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(ASSERT_IMG)
 else
 	$(ECHO)Pushing the E2E Test asserts Docker image to the remote repository
 	$(VECHO)if [ "$(shell docker manifest inspect $(ASSERT_IMG) 2>/dev/null)" != "" ]; then echo "The image is in the registry. Not pushing"; else docker push $(shell cat build-assert-job); fi;
@@ -56,7 +56,7 @@ build-e2e-upgrade-image: Dockerfile $(shell find apis bundle cmd config controll
 .PHONY: load-e2e-upgrade-image
 load-e2e-upgrade-image: build-e2e-upgrade-image
 ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)./hack/load-kind-image.sh $(OPERATOR_IMAGE_NEXT) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(OPERATOR_IMAGE_NEXT)
 endif
 
 .PHONY: load-elasticsarch-image
@@ -64,7 +64,7 @@ load-elasticsarch-image:
 ifneq ($(SKIP_ES_EXTERNAL),true)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)./hack/pull-docker-image.sh $(ELASTIC_IMG)
-	$(VECHO)./hack/load-kind-image.sh $(ELASTIC_IMG) $(KIND)
+	$(VECHO)./hack/load-kind-image.sh $(ELASTIC_IMG)
 else
 	$(ECHO) The Elasticsearch Docker image will be pulled from the registry by the cluster
 endif
@@ -99,7 +99,7 @@ e2e-test-suites: list-test-suites
 	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
 
 run-suite-tests: start-kind kuttl build load-operator-image generate-e2e-files
-	$(VECHO)$(MAKE) render-e2e-tests-$(TEST_SUITE_NAME)
+	$(VECHO)PATH=${PATH}:$(shell pwd)/bin $(MAKE) render-e2e-tests-$(TEST_SUITE_NAME)
 
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
@@ -116,7 +116,7 @@ else
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 endif
 	$(ECHO) Running $(TEST_SUITE_NAME) E2E tests
-	$(VECHO)cd tests/e2e/$(TEST_SUITE_NAME)/_build && $(KUTTL) test $(KUTTL_OPTIONS)
+	$(VECHO)cd tests/e2e/$(TEST_SUITE_NAME)/_build && PATH=${PATH}:$(shell pwd)/bin $(KUTTL) test $(KUTTL_OPTIONS)
 
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)$(MAKE) stop-kind
