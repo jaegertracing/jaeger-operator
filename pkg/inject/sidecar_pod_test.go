@@ -294,43 +294,43 @@ func TestSidecarInPodNeeded(t *testing.T) {
 			needed: false,
 		},
 		{ // annotation cannot work anymore
-			pod:    pod(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
+			pod:    pod(map[string]string{}, map[string]string{}),
 			ns:     ns(map[string]string{}),
 			needed: false,
 		},
 		{
-			pod:    pod(map[string]string{}, map[string]string{PodLabel: "some-jaeger-instance"}),
+			pod:    pod(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
 			ns:     ns(map[string]string{}),
 			needed: true,
 		},
 		{
 			pod:    pod(map[string]string{Annotation: "some-jaeger-instance"}, map[string]string{}),
-			ns:     nsWithLabel(map[string]string{}, map[string]string{NamespaceLabel: "enabled"}),
+			ns:     nsWithLabel(map[string]string{Annotation: "true"}, map[string]string{}),
 			needed: true,
 		},
 		{
 			pod:    pod(map[string]string{}, map[string]string{}),
-			ns:     nsWithLabel(map[string]string{}, map[string]string{NamespaceLabel: "enabled"}),
+			ns:     nsWithLabel(map[string]string{Annotation: "true"}, map[string]string{}),
 			needed: true,
 		},
 		{
 			pod:    pod(map[string]string{}, map[string]string{}),
-			ns:     nsWithLabel(map[string]string{}, map[string]string{NamespaceLabel: "disabled"}),
+			ns:     nsWithLabel(map[string]string{Annotation: "false"}, map[string]string{}),
 			needed: false,
 		},
 		{
 			pod:    pod(map[string]string{}, map[string]string{}),
-			ns:     nsWithLabel(map[string]string{}, map[string]string{NamespaceLabel: "strange-value"}),
+			ns:     nsWithLabel(map[string]string{}, map[string]string{Label: "strange-value"}),
 			needed: false,
 		},
 		{
 			pod:    pod(map[string]string{}, map[string]string{}),
-			ns:     ns(map[string]string{Annotation: "enabled"}),
-			needed: false,
+			ns:     ns(map[string]string{Annotation: "true"}),
+			needed: true,
 		},
 		{
 			pod:    pod(map[string]string{}, map[string]string{}),
-			ns:     ns(map[string]string{Annotation: "some-jaeger-instance"}),
+			ns:     ns(map[string]string{Label: "some-jaeger-instance"}),
 			needed: false,
 		},
 		{
