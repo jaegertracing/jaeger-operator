@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -51,6 +52,7 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 		logger.WithError(err).Error("failed to decode pod")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
+	pod.Namespace = req.Namespace // NOTE: namespace is not present in request body
 
 	ns := &corev1.Namespace{}
 	err = p.client.Get(ctx, types.NamespacedName{Name: req.Namespace}, ns)
@@ -130,7 +132,12 @@ func reconcileConfigMaps(ctx context.Context, c client.Client, jaeger *v1.Jaeger
 	}
 
 	for _, cm := range cms {
+		// Update the namespace to be the same as the Pod being injected
+		cm.Namespace = pod.Namespace
 		if err := c.Create(ctx, cm); err != nil {
+			if errors.IsAlreadyExists(err) {
+				continue
+			}
 			return err
 		}
 	}

@@ -366,32 +366,6 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 	}
 }
 
-// CleanSidecarFromPod of pods associated with the jaeger instance.
-func CleanSidecarFromPod(instanceName string, pod *corev1.Pod) {
-	delete(pod.Labels, Label)
-	for c := 0; c < len(pod.Spec.Containers); c++ {
-		if pod.Spec.Containers[c].Name == "jaeger-agent" {
-			// delete jaeger-agent container
-			pod.Spec.Containers = append(pod.Spec.Containers[:c], pod.Spec.Containers[c+1:]...)
-			break
-		}
-	}
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		names := map[string]bool{
-			ca.TrustedCANameFromString(instanceName): true,
-			ca.ServiceCANameFromString(instanceName): true,
-		}
-		// Remove the managed volumes, if present
-		for v := 0; v < len(pod.Spec.Volumes); v++ {
-			if _, ok := names[pod.Spec.Volumes[v].Name]; ok {
-				// delete managed volume
-				pod.Spec.Volumes = append(pod.Spec.Volumes[:v], pod.Spec.Volumes[v+1:]...)
-				v--
-			}
-		}
-	}
-}
-
 // HasJaegerAgent checks whether the given container list from either Deployment or Pod has Jaeger Agent container being injected
 func HasJaegerAgent(containers []corev1.Container) (bool, int) {
 	// this pod is annotated, it should have a sidecar

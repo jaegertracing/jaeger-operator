@@ -14,6 +14,217 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
+func TestSelectForPod(t *testing.T) {
+	tests := []struct {
+		name                string
+		pod                 metav1.ObjectMeta
+		ns                  metav1.ObjectMeta
+		availableJaegerPods *v1.JaegerList
+		isMatch             bool
+	}{
+		{
+			name: "nil",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{},
+			},
+		},
+		{
+			name: "pod match",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "123",
+				},
+				Namespace: "",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "123"},
+					},
+				},
+			},
+			isMatch: true,
+		},
+		{
+			name: "ns match",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "123",
+				},
+				Namespace: "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "123"},
+					},
+				},
+			},
+			isMatch: true,
+		},
+		{
+			name: "pod true",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "true",
+				},
+				Namespace: "",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "123"},
+					},
+				},
+			},
+			isMatch: true,
+		},
+		{
+			name: "ns true",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "true",
+				},
+				Namespace: "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "123"},
+					},
+				},
+			},
+			isMatch: true,
+		},
+		{
+			name: "jaeger in namespace",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "abc",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "true",
+				},
+				Namespace: "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "123",
+							Namespace: "abc",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "234",
+							Namespace: "def",
+						},
+					},
+				},
+			},
+			isMatch: true,
+		},
+		{
+			name: "jaeger not in namespace",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "xyz",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "true",
+				},
+				Namespace: "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "123",
+							Namespace: "abc",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "234",
+							Namespace: "def",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple jaegers in namespace",
+			pod: metav1.ObjectMeta{
+				Annotations: map[string]string{},
+				Namespace:   "abc",
+			},
+			ns: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					Annotation: "true",
+				},
+				Namespace: "",
+			},
+			availableJaegerPods: &v1.JaegerList{
+				Items: []v1.Jaeger{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "123",
+							Namespace: "abc",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "234",
+							Namespace: "abc",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			pod := &corev1.Pod{ObjectMeta: tc.pod}
+			ns := &corev1.Namespace{ObjectMeta: tc.ns}
+			j := SelectForPod(pod, ns, tc.availableJaegerPods)
+			if tc.isMatch {
+				assert.NotNil(t, j)
+			} else {
+				assert.Nil(t, j)
+			}
+		})
+	}
+
+}
+
 func TestInjectSidecarInPod(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	pod := pod(map[string]string{}, map[string]string{})
