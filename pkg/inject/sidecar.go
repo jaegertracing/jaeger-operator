@@ -23,6 +23,8 @@ var (
 	NamespaceLabel = "jaeger-injection"
 	// Annotation is the annotation name to look for when deciding whether to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
+	// AnnotationManagedBy is used to indicate that the annotation depends on another resource.
+	AnnotationManagedBy = "sidecar.jaegertracing.io/pod-annotation-managed-by"
 	// Label is the label name the operator put on injected deployments.
 	Label = "sidecar.jaegertracing.io/injected"
 	// AnnotationLegacy holds the annotation name we had in the past, which we keep for backwards compatibility
@@ -84,7 +86,7 @@ type desiredObject interface {
 func desired(objs ...desiredObject) bool {
 	for _, o := range objs {
 		anno, exist := o.GetAnnotations()[Annotation]
-		if exist && !strings.EqualFold(anno, "false") {
+		if exist && anno != "" && !strings.EqualFold(anno, "false") {
 			return true
 		}
 	}

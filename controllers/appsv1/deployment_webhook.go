@@ -74,8 +74,10 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 		if deploy.Spec.Template.Annotations == nil {
 			deploy.Spec.Template.Annotations = make(map[string]string)
 		}
+
 		if _, ok := deploy.Spec.Template.Annotations[inject.Annotation]; !ok {
 			deploy.Spec.Template.Annotations[inject.Annotation] = "true"
+			deploy.Spec.Template.Annotations[inject.AnnotationManagedBy] = deploy.Name
 		} else {
 			logger.Warnf("annotation in PodTemplateSpec already present")
 		}

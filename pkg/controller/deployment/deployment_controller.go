@@ -104,6 +104,22 @@ func (r *ReconcileDeployment) Reconcile(ctx context.Context, request ctrl.Reques
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
+	if dep.Spec.Template.Annotations != nil {
+		if owner, ok := dep.Spec.Template.Annotations[inject.AnnotationManagedBy]; ok && owner == dep.Name {
+			if dep.Spec.Template.Annotations == nil {
+				dep.Spec.Template.Annotations = make(map[string]string)
+			}
+			patch := client.MergeFrom(dep.DeepCopy())
+			dep.Spec.Template.Annotations[inject.Annotation] = dep.Annotations[inject.Annotation]
+			if err := r.client.Patch(ctx, dep, patch); err != nil {
+				log.WithFields(log.Fields{
+					"deploymentName":      dep.Name,
+					"deploymentNamespace": dep.Namespace,
+				}).WithError(err).Error("can not update pod annotations")
+			}
+		}
+	}
+
 	if inject.DeploymentNeeded(dep, ns) {
 		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {

@@ -97,7 +97,8 @@ func TestDeploymentInterceptor_Handle(t *testing.T) {
 						Operation: "add",
 						Path:      "/spec/template/metadata/annotations",
 						Value: map[string]interface{}{
-							"sidecar.jaegertracing.io/inject": "true",
+							inject.Annotation:          "true",
+							inject.AnnotationManagedBy: "pew",
 						},
 					},
 				},
@@ -115,6 +116,7 @@ func TestDeploymentInterceptor_Handle(t *testing.T) {
 						Raw: func() []byte {
 							deploy := &appsv1.Deployment{
 								ObjectMeta: metav1.ObjectMeta{
+									Name: "pew",
 									Annotations: map[string]string{
 										inject.Annotation: "true",
 									},
