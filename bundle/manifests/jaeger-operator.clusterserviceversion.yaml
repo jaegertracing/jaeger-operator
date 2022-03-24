@@ -524,7 +524,6 @@ spec:
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
@@ -545,7 +544,6 @@ spec:
     webhookPath: /mutate-jaegertracing-io-v1-jaeger
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
