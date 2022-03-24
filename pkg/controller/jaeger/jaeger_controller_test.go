@@ -201,18 +201,13 @@ func TestGetSecretsForNamespace(t *testing.T) {
 }
 
 func TestElasticsearchProvisioning(t *testing.T) {
-	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "jaeger",
-		},
-	}
 	namespacedName := types.NamespacedName{Name: "prod", Namespace: "jaeger"}
 	j := v1.NewJaeger(namespacedName)
 	j.Spec.Storage.Type = "elasticsearch"
 	j.Spec.Storage.Elasticsearch.Name = "elasticserach"
 	j.Spec.Storage.Elasticsearch.NodeCount = 1
 
-	reconciler, cl := getReconciler([]runtime.Object{ns, j})
+	reconciler, cl := getReconciler([]runtime.Object{j})
 
 	req := reconcile.Request{NamespacedName: namespacedName}
 	result, err := reconciler.Reconcile(req)
@@ -269,5 +264,5 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	cl := fake.NewFakeClient(objs...)
 	r := New(cl, cl, s)
 	r.certGenerationScript = "../../../scripts/cert_generation.sh"
-	return New(cl, cl, s), cl
+	return r, cl
 }
