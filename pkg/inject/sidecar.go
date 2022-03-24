@@ -93,7 +93,7 @@ func desired(objs ...desiredObject) bool {
 
 // DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
 func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !desired(dep, ns) {
+	if !desired(&dep.Spec.Template, dep, ns) {
 		return false
 	}
 
