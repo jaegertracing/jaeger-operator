@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # This sleep helps to ensure the operator webhook is up and running
+  - script: "sleep 60"
