@@ -217,8 +217,8 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	// therefore running this here and not in the strategy
 	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) &&
 		// generate the certs only if cert management is disabled
-		(jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == nil ||
-			*jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == false) {
+		(jaeger.Spec.Storage.Elasticsearch.UseCertManagement == nil ||
+			*jaeger.Spec.Storage.Elasticsearch.UseCertManagement == false) {
 
 		opts := client.MatchingLabels(map[string]string{
 			"app.kubernetes.io/instance":   jaeger.Name,

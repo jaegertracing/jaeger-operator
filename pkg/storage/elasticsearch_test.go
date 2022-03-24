@@ -72,9 +72,9 @@ func TestCreateElasticsearchCR(t *testing.T) {
 			name:      "foo",
 			namespace: "myproject",
 			jEsSpec: v1.ElasticsearchSpec{
-				Name:                "elasticsearch",
-				UseESCertManagement: &trueVar,
-				NodeCount:           1,
+				Name:              "elasticsearch",
+				UseCertManagement: &trueVar,
+				NodeCount:         1,
 			},
 			es: esv1.Elasticsearch{
 				ObjectMeta: metav1.ObjectMeta{
@@ -270,8 +270,8 @@ func TestInject(t *testing.T) {
 		},
 		{
 			es: v1.ElasticsearchSpec{
-				Name:                "elasticsearch",
-				UseESCertManagement: &trueVar,
+				Name:              "elasticsearch",
+				UseCertManagement: &trueVar,
 			},
 			pod: &corev1.PodSpec{
 				Containers: []corev1.Container{{
@@ -475,9 +475,9 @@ func TestInjectJobs(t *testing.T) {
 		{
 			name: "es-cert-management",
 			es: v1.ElasticsearchSpec{
-				Name:                "elasticsearch",
-				NodeCount:           3,
-				UseESCertManagement: &trueVar,
+				Name:              "elasticsearch",
+				NodeCount:         3,
+				UseCertManagement: &trueVar,
 			},
 			pod: &corev1.PodSpec{
 				Containers: []corev1.Container{{

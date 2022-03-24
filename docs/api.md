@@ -37504,7 +37504,7 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>useESCertManagement</b></td>
+        <td><b>useCertManagement</b></td>
         <td>boolean</td>
         <td>
           <br/>

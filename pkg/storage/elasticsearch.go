@@ -25,21 +25,21 @@ const (
 )
 
 func (ed *ElasticsearchDeployment) getCertPath() string {
-	if ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
 		return certPathESCertManagement
 	}
 	return certPath
 }
 
 func (ed *ElasticsearchDeployment) getCertKeyPath() string {
-	if ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
 		return keyPathESCertManagement
 	}
 	return keyPath
 }
 
 func (ed *ElasticsearchDeployment) getCertCaPath() string {
-	if ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
 		return caPathESCerManagement
 	}
 	return caPath
@@ -168,7 +168,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 	}
 
 	annotations := map[string]string{}
-	if ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == true {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement == true {
 		annotations["logging.openshift.io/elasticsearch-cert-management"] = "true"
 		// The value has to match searchguard configuration
 		// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34
@@ -255,7 +255,7 @@ func jaegerESSecretName(jaeger v1.Jaeger) string {
 	prefix := ""
 	// ES cert management creates cert named jaeger-<elasticsearch-name>
 	// Cert management in Jaeger creates cert named <jaeger-name>-jaeger-elasticsearch
-	if jaeger.Spec.Storage.Elasticsearch.UseESCertManagement == nil || !*jaeger.Spec.Storage.Elasticsearch.UseESCertManagement {
+	if jaeger.Spec.Storage.Elasticsearch.UseCertManagement == nil || !*jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
 		prefix = jaeger.Name + "-"
 	}
 	return fmt.Sprintf("%sjaeger-%s", prefix, jaeger.Spec.Storage.Elasticsearch.Name)
