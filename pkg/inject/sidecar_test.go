@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -356,6 +357,61 @@ func TestSidecarNeeded(t *testing.T) {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
 			assert.Equal(t, test.needed, DeploymentNeeded(test.dep, test.ns))
 			assert.LessOrEqual(t, len(test.dep.Spec.Template.Spec.Containers), 2)
+		})
+	}
+}
+
+func TestDesired(t *testing.T) {
+	mkObj := func(input string) desiredObject {
+		return &metav1.ObjectMeta{Annotations: map[string]string{Annotation: input}}
+	}
+	mkNil := func() desiredObject { return &metav1.ObjectMeta{} }
+	tests := []struct {
+		input []desiredObject
+		want  bool
+	}{
+		{
+			input: []desiredObject{
+				mkNil(),       // pod
+				mkObj("true"), // dep
+				mkObj(""),     // ns
+			},
+			want: true,
+		},
+		{
+			input: []desiredObject{
+				mkObj("false"), // pod
+				mkObj("true"),  // dep
+				mkObj(""),      // ns
+			},
+			want: true,
+		},
+		{
+			input: []desiredObject{
+				mkObj("false"), // something
+				mkObj("true"),  // pod
+				mkObj("false"), // dep
+				mkObj("false"), // ns
+			},
+			want: true,
+		},
+		{
+			input: []desiredObject{
+				mkObj("false"), // something
+			},
+			want: false,
+		},
+		{
+			input: []desiredObject{
+				mkObj(""), // something
+			},
+			want: false,
+		},
+	}
+
+	for i, tc := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			assert.Equal(t, tc.want, desired(tc.input...))
 		})
 	}
 }

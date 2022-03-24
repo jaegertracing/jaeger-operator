@@ -95,7 +95,12 @@ func desired(objs ...desiredObject) bool {
 
 // DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
 func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	if !desired(&dep.Spec.Template, dep, ns) {
+	objs := []desiredObject{dep, ns}
+	if _, exist := dep.Spec.Template.GetAnnotations()[AnnotationManagedBy]; !exist {
+		objs = append([]desiredObject{&dep.Spec.Template}, objs...)
+	}
+
+	if !desired(objs...) {
 		return false
 	}
 
