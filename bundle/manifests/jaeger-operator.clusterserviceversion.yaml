@@ -527,6 +527,44 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
+    generateName: component.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
+    generateName: deployment.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - deployments
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-deployment
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
     generateName: mjaeger.kb.io
     rules:
     - apiGroups:
@@ -542,6 +580,44 @@ spec:
     targetPort: 9443
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-jaegertracing-io-v1-jaeger
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
+    generateName: namespace.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
+    generateName: object.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-pod
   - admissionReviewVersions:
     - v1
     containerPort: 443
