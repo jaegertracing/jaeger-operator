@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -376,6 +377,12 @@ func setupWebhooks(_ context.Context, mgr manager.Manager) {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
 		os.Exit(1)
 	}
+
+	// register webhook
+	srv := mgr.GetWebhookServer()
+	srv.Register("/mutate-v1-deployment", &webhook.Admission{
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient()),
+	})
 }
 
 func getNamespace(ctx context.Context) string {
