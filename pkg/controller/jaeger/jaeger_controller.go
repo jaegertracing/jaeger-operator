@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,13 +15,16 @@ import (
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
@@ -351,4 +355,69 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 		}
 	}
 	return secretsForNamespace
+}
+
+// SyncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
+func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.Request {
+	deps := []appsv1.Deployment{}
+	nss := map[string]corev1.Namespace{} // namespace cache
+
+	reconciliations := []reconcile.Request{}
+
+	jaeger, ok := object.(*v1.Jaeger)
+	if !ok {
+		return reconciliations
+	}
+
+	deployments := appsv1.DeploymentList{}
+	err := r.rClient.List(context.Background(), &deployments)
+	if err != nil {
+		return reconciliations
+	}
+
+	for _, dep := range deployments.Items {
+		nsn := types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}
+		req := reconcile.Request{NamespacedName: nsn}
+
+		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
+		// we don't need to trigger a reconciliation for it
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaeger.Name {
+			continue
+		}
+
+		// if the deployment has the sidecar annotation, trigger a reconciliation
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			revStr := "0"
+			v := dep.Annotations[inject.AnnotationRev]
+			if rev, err := strconv.Atoi(v); err == nil {
+				revStr = strconv.Itoa(rev + 1)
+			}
+			dep.Annotations[inject.AnnotationRev] = revStr
+			deps = append(deps, dep)
+			continue
+		}
+
+		// if we don't have the namespace in the cache yet, retrieve it
+		var ns corev1.Namespace
+		if ns, ok = nss[dep.Namespace]; !ok {
+			err := r.rClient.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+			if err != nil {
+				continue
+			}
+			nss[ns.Name] = ns
+		}
+
+		// if the namespace has the sidecar annotation, trigger a reconciliation
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			reconciliations = append(reconciliations, req)
+			continue
+		}
+
+	}
+	for _, dep := range deps {
+		if err := r.client.Update(context.Background(), &dep); err != nil {
+			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+		}
+	}
+	return reconciliations
 }
