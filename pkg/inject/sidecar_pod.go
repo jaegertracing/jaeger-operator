@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -17,7 +16,7 @@ import (
 )
 
 // SidecarPod adds a new container to the pod, connecting to the given jaeger instance
-func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod, dep *appsv1.Deployment) *corev1.Pod {
+func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("pod", pod.Name)
 
@@ -45,12 +44,6 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod, dep *appsv1.Deployment) *cor
 		pod.Labels = map[string]string{Label: jaegerName}
 	} else {
 		pod.Labels[Label] = jaegerName
-	}
-
-	if dep.Labels == nil {
-		dep.Labels = map[string]string{Label: jaegerName}
-	} else {
-		dep.Labels = map[string]string{Label: jaegerName}
 	}
 
 	return pod
@@ -94,13 +87,11 @@ func PodNeeded(pod *corev1.Pod, ns *corev1.Namespace) bool {
 // Deployment, Namespace or nil if none is suitable
 func SelectForPod(
 	pod *corev1.Pod,
-	deploy *appsv1.Deployment,
 	ns *corev1.Namespace,
 	availableJaegerPods *v1.JaegerList,
 ) *v1.Jaeger {
 	jaegerNamePod := pod.GetAnnotations()[Annotation]
 	jaegerNameNs := ns.GetAnnotations()[Annotation]
-	jaegerNameDep := deploy.GetAnnotations()[Annotation]
 
 	if jaegerNamePod != "" && !strings.EqualFold(jaegerNamePod, "true") {
 		// name on the pod has precedence
@@ -110,25 +101,13 @@ func SelectForPod(
 		return nil
 	}
 
-	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
-		// name on the deployment has precedence
-		if jaeger := getJaeger(jaegerNameDep, availableJaegerPods); jaeger != nil {
-			return jaeger
-		}
-		return nil
-	}
-
-	if jaegerNameNs != "" && !strings.EqualFold(jaegerNameNs, "true") {
-		// name on the ns has precedence
-		if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
-			return jaeger
-		}
-		return nil
+	// name on the ns has precedence
+	if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
+		return jaeger
 	}
 
 	if strings.EqualFold(jaegerNamePod, "true") ||
-		strings.EqualFold(jaegerNameNs, "true") ||
-		strings.EqualFold(jaegerNameDep, "true") {
+		strings.EqualFold(jaegerNameNs, "true") {
 		// If there is only *one* available instance in all watched namespaces
 		// then that's what we'll use
 		if len(availableJaegerPods.Items) == 1 {

@@ -90,9 +90,9 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 		}
 	}
 
-	if inject.PodNeeded(pod, ns) || inject.DeploymentNeeded(deploy, ns) {
+	if inject.PodNeeded(pod, ns) && !inject.DeploymentNeeded(deploy, &corev1.Namespace{}) {
 		logger.Debug("sidecar needed")
-		jaeger := inject.SelectForPod(pod, deploy, ns, jaegers)
+		jaeger := inject.SelectForPod(pod, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
 				"jaeger":           jaeger.Name,
@@ -113,17 +113,7 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 				logger.Info(msg)
 			}
 
-			depPatch := client.MergeFrom(deploy.DeepCopy())
-			pod := inject.SidecarPod(jaeger, pod, deploy)
-			if inject.DeploymentNeeded(deploy, ns) && deploy.Labels != nil {
-				if _, ok := deploy.Labels[inject.Label]; ok {
-					logger.Info("patch deployment")
-					if err := p.client.Patch(ctx, deploy, depPatch); err != nil {
-						return admission.Errored(http.StatusInternalServerError, err)
-					}
-				}
-			}
-
+			pod := inject.SidecarPod(jaeger, pod)
 			marshaledPod, err := json.Marshal(pod)
 			if err != nil {
 				return admission.Errored(http.StatusInternalServerError, err)

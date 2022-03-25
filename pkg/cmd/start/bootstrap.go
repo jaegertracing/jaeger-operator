@@ -376,6 +376,9 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 	srv.Register("/mutate-v1-pod", &webhook.Admission{
 		Handler: appsv1controllers.NewPodInjectorWebhook(client),
 	})
+	srv.Register("/mutate-v1-deployment", &webhook.Admission{
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(client),
+	})
 }
 
 func setupWebhooks(_ context.Context, mgr manager.Manager) {
