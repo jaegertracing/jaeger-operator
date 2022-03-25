@@ -86,7 +86,7 @@ type desiredObject interface {
 func desired(objs ...desiredObject) bool {
 	for _, o := range objs {
 		anno, exist := o.GetAnnotations()[Annotation]
-		if exist && anno != "" && !strings.EqualFold(anno, "false") {
+		if exist && !strings.EqualFold(anno, "false") {
 			return true
 		}
 	}
@@ -95,12 +95,7 @@ func desired(objs ...desiredObject) bool {
 
 // DeploymentNeeded determines whether a deployment needs to get a sidecar injected or not
 func DeploymentNeeded(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	objs := []desiredObject{dep, ns}
-	if _, exist := dep.Spec.Template.GetAnnotations()[AnnotationManagedBy]; !exist {
-		objs = append([]desiredObject{&dep.Spec.Template}, objs...)
-	}
-
-	if !desired(objs...) {
+	if !desired(dep, ns) {
 		return false
 	}
 

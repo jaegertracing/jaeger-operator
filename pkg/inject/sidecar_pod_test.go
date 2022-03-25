@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -214,7 +215,7 @@ func TestSelectForPod(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pod := &corev1.Pod{ObjectMeta: tc.pod}
 			ns := &corev1.Namespace{ObjectMeta: tc.ns}
-			j := SelectForPod(pod, ns, tc.availableJaegerPods)
+			j := SelectForPod(pod, &appsv1.Deployment{}, ns, tc.availableJaegerPods)
 			if tc.isMatch {
 				assert.NotNil(t, j)
 			} else {

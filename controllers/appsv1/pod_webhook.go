@@ -3,10 +3,12 @@ package appsv1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -75,9 +77,22 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	if inject.PodNeeded(pod, ns) {
+	deploy := &appsv1.Deployment{}
+	if _, exist := pod.GetAnnotations()[inject.Annotation]; !exist {
+		// NOTE: If pod does not have an annotation, it is checked for backward
+		// compatibility whether the corresponding deployment has an annotation.
+		d, err := deploymentByPod(ctx, p.client, pod, req.Namespace)
+		if err != nil {
+			logger.WithError(err).Warn("failed to get the deployment of pod")
+		} else {
+			logger = logger.WithField("deployment", deploy.GetName())
+			deploy = d
+		}
+	}
+
+	if inject.PodNeeded(pod, ns) || inject.DeploymentNeeded(deploy, ns) {
 		logger.Debug("sidecar needed")
-		jaeger := inject.SelectForPod(pod, ns, jaegers)
+		jaeger := inject.SelectForPod(pod, deploy, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
 			logger := logger.WithFields(log.Fields{
 				"jaeger":           jaeger.Name,
@@ -108,6 +123,8 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 		}
 
 		logger.Info("no suitable Jaeger instances found to inject a sidecar")
+	} else {
+		logger.Debug("sidecar not needed")
 	}
 
 	return admission.Allowed("no action necessary")
@@ -120,6 +137,46 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 func (p *podInjector) InjectDecoder(d *admission.Decoder) error {
 	p.decoder = d
 	return nil
+}
+
+func deploymentByPod(
+	ctx context.Context,
+	c client.Client,
+	pod *corev1.Pod,
+	namespaceName string,
+) (*appsv1.Deployment, error) {
+	podRefList := pod.GetOwnerReferences()
+	if len(podRefList) != 1 || podRefList[0].Kind != "ReplicaSet" {
+		return nil, fmt.Errorf("missing single ReplicaSet as owner")
+	}
+
+	replicaName := podRefList[0].Name
+	replicaSet := &appsv1.ReplicaSet{}
+	logger := log.WithFields(log.Fields{
+		"replicasetName":      replicaName,
+		"replicasetNamespace": namespaceName,
+	})
+	logger.Infof("fetch replicaset")
+
+	key := types.NamespacedName{Namespace: namespaceName, Name: replicaName}
+	if err := c.Get(ctx, key, replicaSet); err != nil {
+		return nil, fmt.Errorf("failed to get the available Pod ReplicaSet")
+	}
+
+	repRefList := replicaSet.GetOwnerReferences()
+	if len(repRefList) != 1 || repRefList[0].Kind != "Deployment" {
+		return nil, fmt.Errorf("could not determine deployment, number of owner: %d", len(repRefList))
+	}
+
+	logger.Infof("fetch deployment")
+	deployName := repRefList[0].Name
+	deployment := &appsv1.Deployment{}
+	key = types.NamespacedName{Namespace: namespaceName, Name: deployName}
+	if err := c.Get(ctx, key, deployment); err != nil {
+		return nil, fmt.Errorf("failed to get the available Pod Deployment")
+	}
+
+	return deployment, nil
 }
 
 func reconcileConfigMaps(ctx context.Context, c client.Client, jaeger *v1.Jaeger, pod *corev1.Pod) error {
