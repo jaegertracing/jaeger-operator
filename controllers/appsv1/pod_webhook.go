@@ -113,7 +113,17 @@ func (p *podInjector) Handle(ctx context.Context, req admission.Request) admissi
 				logger.Info(msg)
 			}
 
-			pod := inject.SidecarPod(jaeger, pod)
+			depPatch := client.MergeFrom(deploy.DeepCopy())
+			pod := inject.SidecarPod(jaeger, pod, deploy)
+			if inject.DeploymentNeeded(deploy, ns) && deploy.Labels != nil {
+				if _, ok := deploy.Labels[inject.Label]; ok {
+					logger.Info("patch deployment")
+					if err := p.client.Patch(ctx, deploy, depPatch); err != nil {
+						return admission.Errored(http.StatusInternalServerError, err)
+					}
+				}
+			}
+
 			marshaledPod, err := json.Marshal(pod)
 			if err != nil {
 				return admission.Errored(http.StatusInternalServerError, err)

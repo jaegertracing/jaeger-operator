@@ -17,7 +17,7 @@ import (
 )
 
 // SidecarPod adds a new container to the pod, connecting to the given jaeger instance
-func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
+func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod, dep *appsv1.Deployment) *corev1.Pod {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithField("pod", pod.Name)
 
@@ -45,6 +45,12 @@ func SidecarPod(jaeger *v1.Jaeger, pod *corev1.Pod) *corev1.Pod {
 		pod.Labels = map[string]string{Label: jaegerName}
 	} else {
 		pod.Labels[Label] = jaegerName
+	}
+
+	if dep.Labels == nil {
+		dep.Labels = map[string]string{Label: jaegerName}
+	} else {
+		dep.Labels = map[string]string{Label: jaegerName}
 	}
 
 	return pod
