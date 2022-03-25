@@ -360,25 +360,21 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 // SyncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
 func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.Request {
 	deps := []appsv1.Deployment{}
+	nssupdate := []corev1.Namespace{}
 	nss := map[string]corev1.Namespace{} // namespace cache
-
-	reconciliations := []reconcile.Request{}
 
 	jaeger, ok := object.(*v1.Jaeger)
 	if !ok {
-		return reconciliations
+		return []reconcile.Request{}
 	}
 
 	deployments := appsv1.DeploymentList{}
 	err := r.rClient.List(context.Background(), &deployments)
 	if err != nil {
-		return reconciliations
+		return []reconcile.Request{}
 	}
 
 	for _, dep := range deployments.Items {
-		nsn := types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}
-		req := reconcile.Request{NamespacedName: nsn}
-
 		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
 		// we don't need to trigger a reconciliation for it
 		if val, ok := dep.Labels[inject.Label]; ok && val != jaeger.Name {
@@ -386,13 +382,7 @@ func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.
 		}
 
 		// if the deployment has the sidecar annotation, trigger a reconciliation
-		if _, ok := dep.Annotations[inject.Annotation]; ok {
-			revStr := "0"
-			v := dep.Annotations[inject.AnnotationRev]
-			if rev, err := strconv.Atoi(v); err == nil {
-				revStr = strconv.Itoa(rev + 1)
-			}
-			dep.Annotations[inject.AnnotationRev] = revStr
+		if ok := increaseRevision(dep.Annotations); ok {
 			deps = append(deps, dep)
 			continue
 		}
@@ -408,16 +398,33 @@ func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.
 		}
 
 		// if the namespace has the sidecar annotation, trigger a reconciliation
-		if _, ok := ns.Annotations[inject.Annotation]; ok {
-			reconciliations = append(reconciliations, req)
+		if ok := increaseRevision(ns.Annotations); ok {
+			nssupdate = append(nssupdate, ns)
 			continue
 		}
-
 	}
 	for _, dep := range deps {
 		if err := r.client.Update(context.Background(), &dep); err != nil {
 			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
 		}
 	}
-	return reconciliations
+	for _, ns := range nssupdate {
+		if err := r.client.Update(context.Background(), &ns); err != nil {
+			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+		}
+	}
+	return []reconcile.Request{}
+}
+
+func increaseRevision(annotations map[string]string) bool {
+	if _, ok := annotations[inject.Annotation]; ok {
+		revStr := "0"
+		v := annotations[inject.AnnotationRev]
+		if rev, err := strconv.Atoi(v); err == nil {
+			revStr = strconv.Itoa(rev + 1)
+		}
+		annotations[inject.AnnotationRev] = revStr
+		return true
+	}
+	return false
 }

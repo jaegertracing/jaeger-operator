@@ -2,6 +2,8 @@ package jaeger
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"testing"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
@@ -10,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,9 +24,151 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
+
+type modifiedClient struct {
+	client.WithWatch
+
+	counter int
+	listErr error
+	getErr  error
+}
+
+func (u *modifiedClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	u.counter++
+	return u.WithWatch.Update(ctx, obj, opts...)
+}
+
+func (u *modifiedClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	if u.listErr != nil {
+		return u.listErr
+	}
+	return u.WithWatch.List(ctx, list, opts...)
+}
+
+func (u *modifiedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+	if u.getErr != nil {
+		return u.getErr
+	}
+	return u.WithWatch.Get(ctx, key, obj)
+}
+
+func TestSyncOnJaegerChanges(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{
+		Namespace: "observability",
+		Name:      "my-instance",
+	})
+
+	objs := []runtime.Object{
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+			Name: "ns-with-annotation",
+			Annotations: map[string]string{
+				inject.Annotation: "true",
+			},
+		}},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-without-annotation",
+				Namespace: "ns-with-annotation",
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-with-annotation",
+				Namespace: "ns-with-annotation",
+				Annotations: map[string]string{
+					inject.Annotation: "true",
+				},
+			},
+		},
+
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+			Name: "ns-without-annotation",
+		}},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-without-annotation",
+				Namespace: "ns-without-annotation",
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-with-annotation",
+				Namespace: "ns-without-annotation",
+				Annotations: map[string]string{
+					inject.Annotation: "true",
+				},
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-with-another-jaegers-label",
+				Namespace: "ns-without-annotation",
+				Annotations: map[string]string{
+					inject.Annotation: "true",
+				},
+				Labels: map[string]string{
+					inject.Label: "some-other-jaeger",
+				},
+			},
+		},
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dep-affected-jaeger-label",
+				Namespace: "ns-without-annotation",
+				Annotations: map[string]string{
+					inject.Annotation: "true",
+				},
+				Labels: map[string]string{
+					inject.Label: jaeger.Name,
+				},
+			},
+		},
+	}
+
+	s := scheme.Scheme
+	cl := &modifiedClient{
+		WithWatch: fake.NewFakeClient(objs...),
+		listErr:   fmt.Errorf("no no listing"),
+		getErr:    fmt.Errorf("no no get"),
+	}
+	r := New(cl, cl, s)
+
+	got := r.SyncOnJaegerChanges(nil)
+	assert.Equal(t, []reconcile.Request{}, got)
+
+	got = r.SyncOnJaegerChanges(jaeger)
+	assert.Equal(t, []reconcile.Request{}, got)
+	cl.listErr = nil
+
+	got = r.SyncOnJaegerChanges(jaeger)
+	assert.Equal(t, cl.counter, 3)
+	assert.Equal(t, []reconcile.Request{}, got)
+	cl.getErr = nil
+	cl.counter = 0
+
+	// test
+	requests := r.SyncOnJaegerChanges(jaeger)
+
+	// verify
+	assert.Equal(t, cl.counter, 4)
+	assert.Len(t, requests, 0)
+
+	expected := []reconcile.Request{}
+
+	sort.Slice(requests, func(i, j int) bool {
+		return requests[i].NamespacedName.String() < requests[j].NamespacedName.String()
+	})
+	sort.Slice(expected, func(i, j int) bool {
+		return expected[i].NamespacedName.String() < expected[j].NamespacedName.String()
+	})
+	assert.Equal(t, expected, requests)
+
+}
 
 func TestNewJaegerInstance(t *testing.T) {
 	// prepare
