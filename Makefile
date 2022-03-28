@@ -330,7 +330,7 @@ check-operatorhub-pr-template:
 .PHONY: changelog
 changelog:
 	$(ECHO) "Set env variable OAUTH_TOKEN before invoking, https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token"
-	$(VECHO)docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --owner jaegertracing --repo jaeger-operator
+	$(VECHO)docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --branch main --owner jaegertracing --repo jaeger-operator
 
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
