@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 
 WORKDIR /workspace
 
@@ -20,7 +20,9 @@ RUN go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
 RUN go build -o ./query -a ./tests/assert-jobs/query/main.go
 RUN go build -o ./index -a ./tests/assert-jobs/index/main.go
 
-FROM golang:1.16
+# Use the curl container image to ensure we have curl installed. Also, it is a
+# minimal container image
+FROM curlimages/curl:7.81.0
 WORKDIR /
 COPY --from=builder /workspace/uiconfig .
 COPY --from=builder /workspace/reporter .

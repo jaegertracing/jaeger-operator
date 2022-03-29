@@ -187,12 +187,16 @@ function render_install_elasticsearch() {
 
     test_step=$1
 
-    if [ "$SKIP_ES_EXTERNAL" = true ]; then
-        warning "Skipping installation of Elasticsearch instance since SKIP_ES_EXTERNAL is 'true'"
+    if [ "$IS_OPENSHIFT" = true ]; then
+        template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
+        $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
+        $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
     else
-        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-install.yaml.template -o ./$test_step-install.yaml
-        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
+        template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
     fi
+
+    $GOMPLATE -f $template -o ./$test_step-install.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
 }
 
 
@@ -610,25 +614,22 @@ fi
 
 export IS_OPENSHIFT
 
-# Check the dependencies are there
-export GOMPLATE=$(which gomplate)
-if [ -z "$GOMPLATE" ]; then
-    error "gomplate is not installed. Please, install it"
-    exit 1
-fi
-
-export YQ=$(which yq)
-if [ -z "$YQ" ]; then
-    error "yq is not installed. Please, install it"
-    exit 1
-fi
 
 # Important folders
-export ROOT_DIR=../../../../..
-export TEST_DIR=../../../..
+export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
+export TEST_DIR=$ROOT_DIR/tests
 export TEMPLATES_DIR=$TEST_DIR/templates
 export EXAMPLES_DIR=$ROOT_DIR/examples
 export SUITE_DIR=$(dirname "$0")
+
+
+# Check the dependencies are there
+export GOMPLATE=$ROOT_DIR/bin/gomplate
+$ROOT_DIR/hack/install/install-gomplate.sh
+
+export YQ=$ROOT_DIR/bin/yq
+$ROOT_DIR/hack/install/install-yq.sh
+
 
 # Elasticsearch settings
 export ELASTICSEARCH_NODECOUNT="1"

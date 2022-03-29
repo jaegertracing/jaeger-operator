@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.16 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.17 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -32,9 +32,22 @@ ARG TARGETARCH
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o jaeger-operator main.go
 
-FROM gcr.io/distroless/static:nonroot
+FROM registry.access.redhat.com/ubi8/ubi
+
+ENV USER_UID=1001 \
+    USER_NAME=jaeger-operator
+
+RUN INSTALL_PKGS="openssl" && \
+    yum install -y $INSTALL_PKGS && \
+    rpm -V $INSTALL_PKGS && \
+    yum clean all && \
+    mkdir /tmp/_working_dir && \
+    chmod og+w /tmp/_working_dir
+
 WORKDIR /
 COPY --from=builder /workspace/jaeger-operator .
-USER 65532:65532
+COPY scripts/cert_generation.sh scripts/cert_generation.sh
+
+USER ${USER_UID}:${USER_UID}
 
 ENTRYPOINT ["/jaeger-operator"]
