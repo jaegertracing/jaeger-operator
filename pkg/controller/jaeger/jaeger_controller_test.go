@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 	"fmt"
-	"sort"
 	"testing"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
@@ -30,30 +29,65 @@ import (
 )
 
 type modifiedClient struct {
-	client.WithWatch
+	client.Client
 
-	counter int
-	listErr error
-	getErr  error
+	counter   int
+	listErr   error
+	getErr    error
+	updateErr error
 }
 
 func (u *modifiedClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
 	u.counter++
-	return u.WithWatch.Update(ctx, obj, opts...)
+	if u.updateErr != nil {
+		return u.updateErr
+	}
+	return u.Client.Update(ctx, obj, opts...)
 }
 
 func (u *modifiedClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	if u.listErr != nil {
 		return u.listErr
 	}
-	return u.WithWatch.List(ctx, list, opts...)
+	return u.Client.List(ctx, list, opts...)
 }
 
 func (u *modifiedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
 	if u.getErr != nil {
 		return u.getErr
 	}
-	return u.WithWatch.Get(ctx, key, obj)
+	return u.Client.Get(ctx, key, obj)
+}
+
+func TestReconcileSyncOnJaegerChanges(t *testing.T) {
+	// prepare
+	nsn := types.NamespacedName{
+		Name: "TestNewJaegerInstance",
+	}
+
+	objs := []runtime.Object{
+		v1.NewJaeger(nsn),
+	}
+
+	req := reconcile.Request{
+		NamespacedName: nsn,
+	}
+
+	r, cl := getReconciler(objs)
+	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
+		jaeger.Spec.Strategy = "custom-strategy"
+		return strategy.S{}
+	}
+
+	errList := fmt.Errorf("no no list")
+	r.rClient = &modifiedClient{
+		Client:  cl,
+		listErr: errList,
+	}
+
+	// test
+	_, err := r.Reconcile(req)
+	assert.Equal(t, errList, err)
 }
 
 func TestSyncOnJaegerChanges(t *testing.T) {
@@ -130,43 +164,36 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 		},
 	}
 
-	s := scheme.Scheme
+	var (
+		errList   = fmt.Errorf("no no listing")
+		errGet    = fmt.Errorf("no no get")
+		errUpdate = fmt.Errorf("no no update")
+	)
+
 	cl := &modifiedClient{
-		WithWatch: fake.NewFakeClient(objs...),
-		listErr:   fmt.Errorf("no no listing"),
-		getErr:    fmt.Errorf("no no get"),
+		Client:  fake.NewFakeClient(objs...),
+		listErr: errList,
+		getErr:  errGet,
 	}
-	r := New(cl, cl, s)
 
-	got := r.SyncOnJaegerChanges(nil)
-	assert.Equal(t, []reconcile.Request{}, got)
-
-	got = r.SyncOnJaegerChanges(jaeger)
-	assert.Equal(t, []reconcile.Request{}, got)
+	err := syncOnJaegerChanges(cl, cl, jaeger.Name)
+	assert.Equal(t, errList, err)
 	cl.listErr = nil
 
-	got = r.SyncOnJaegerChanges(jaeger)
-	assert.Equal(t, cl.counter, 3)
-	assert.Equal(t, []reconcile.Request{}, got)
+	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
+	assert.Equal(t, 3, cl.counter)
+	cl.counter = 0
 	cl.getErr = nil
+
+	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
+	assert.Equal(t, 4, cl.counter)
+	assert.Nil(t, err)
 	cl.counter = 0
 
-	// test
-	requests := r.SyncOnJaegerChanges(jaeger)
-
-	// verify
-	assert.Equal(t, cl.counter, 4)
-	assert.Len(t, requests, 0)
-
-	expected := []reconcile.Request{}
-
-	sort.Slice(requests, func(i, j int) bool {
-		return requests[i].NamespacedName.String() < requests[j].NamespacedName.String()
-	})
-	sort.Slice(expected, func(i, j int) bool {
-		return expected[i].NamespacedName.String() < expected[j].NamespacedName.String()
-	})
-	assert.Equal(t, expected, requests)
+	cl.updateErr = errUpdate
+	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
+	assert.Equal(t, 1, cl.counter)
+	assert.Equal(t, errUpdate, err)
 
 }
 

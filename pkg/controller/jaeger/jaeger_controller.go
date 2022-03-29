@@ -92,6 +92,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
+	if err := syncOnJaegerChanges(r.rClient, r.client, instance.Name); err != nil {
+		return reconcile.Result{}, tracing.HandleError(err, span)
+	}
+
 	logFields := instance.Logger().WithField("execution", execution)
 
 	if err := validate(instance); err != nil {
@@ -357,27 +361,22 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 	return secretsForNamespace
 }
 
-// SyncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
-func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.Request {
+// syncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
+func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName string) error {
 	deps := []appsv1.Deployment{}
 	nssupdate := []corev1.Namespace{}
 	nss := map[string]corev1.Namespace{} // namespace cache
 
-	jaeger, ok := object.(*v1.Jaeger)
-	if !ok {
-		return []reconcile.Request{}
-	}
-
 	deployments := appsv1.DeploymentList{}
-	err := r.rClient.List(context.Background(), &deployments)
+	err := rClient.List(context.Background(), &deployments)
 	if err != nil {
-		return []reconcile.Request{}
+		return err
 	}
 
 	for _, dep := range deployments.Items {
 		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
 		// we don't need to trigger a reconciliation for it
-		if val, ok := dep.Labels[inject.Label]; ok && val != jaeger.Name {
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaegerName {
 			continue
 		}
 
@@ -388,9 +387,9 @@ func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.
 		}
 
 		// if we don't have the namespace in the cache yet, retrieve it
-		var ns corev1.Namespace
-		if ns, ok = nss[dep.Namespace]; !ok {
-			err := r.rClient.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+		ns, ok := nss[dep.Namespace]
+		if !ok {
+			err := rClient.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
 			if err != nil {
 				continue
 			}
@@ -404,16 +403,18 @@ func (r *ReconcileJaeger) SyncOnJaegerChanges(object client.Object) []reconcile.
 		}
 	}
 	for _, dep := range deps {
-		if err := r.client.Update(context.Background(), &dep); err != nil {
+		if err := client.Update(context.Background(), &dep); err != nil {
 			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+			return err
 		}
 	}
 	for _, ns := range nssupdate {
-		if err := r.client.Update(context.Background(), &ns); err != nil {
+		if err := client.Update(context.Background(), &ns); err != nil {
 			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+			return err
 		}
 	}
-	return []reconcile.Request{}
+	return nil
 }
 
 func increaseRevision(annotations map[string]string) bool {
