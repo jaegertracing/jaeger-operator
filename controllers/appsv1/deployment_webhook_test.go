@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -395,6 +396,14 @@ func TestReconcilieDeployment(t *testing.T) {
 			require.NoError(t, err)
 			admission.InjectDecoderInto(decoder, r)
 			resp := r.Handle(context.Background(), req)
+
+			assert.Len(t, resp.Patches, len(tc.resp.Patches))
+			sort.Slice(resp.Patches, func(i, j int) bool {
+				return resp.Patches[i].Path < resp.Patches[j].Path
+			})
+			sort.Slice(tc.resp.Patches, func(i, j int) bool {
+				return tc.resp.Patches[i].Path < tc.resp.Patches[j].Path
+			})
 
 			assert.Equal(t, tc.resp, resp)
 
