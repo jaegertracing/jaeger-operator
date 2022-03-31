@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: jaegers.jaegertracing.io
 spec:
@@ -870,6 +869,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -931,6 +932,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -1188,6 +1191,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -2128,6 +2143,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -2405,6 +2422,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -3358,6 +3387,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -3635,6 +3666,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -4591,6 +4634,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -4866,6 +4911,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -5820,6 +5877,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -6090,6 +6149,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -7042,6 +7113,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -7321,6 +7394,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -7879,6 +7964,8 @@ spec:
                         type: string
                       gmsaCredentialSpecName:
                         type: string
+                      hostProcess:
+                        type: boolean
                       runAsUserName:
                         type: string
                     type: object
@@ -8731,6 +8818,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -8996,6 +9085,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -9539,6 +9640,8 @@ spec:
                           type: object
                         type: array
                         x-kubernetes-list-type: atomic
+                      useCertManagement:
+                        type: boolean
                     type: object
                   esIndexCleaner:
                     properties:
@@ -10006,6 +10109,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -10269,6 +10374,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -11207,6 +11324,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -11470,6 +11589,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -12216,6 +12347,18 @@ spec:
                                     type: string
                                   type: array
                                 dataSource:
+                                  properties:
+                                    apiGroup:
+                                      type: string
+                                    kind:
+                                      type: string
+                                    name:
+                                      type: string
+                                  required:
+                                  - kind
+                                  - name
+                                  type: object
+                                dataSourceRef:
                                   properties:
                                     apiGroup:
                                       type: string

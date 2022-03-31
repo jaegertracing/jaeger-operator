@@ -232,3 +232,68 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
 
 }
+
+func TestManagerByMetric(t *testing.T) {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{}, &v1.JaegerList{})
+
+	managed := v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "jaeger-managed",
+			Namespace: "ns",
+			Labels: map[string]string{
+				managedByLabel: "maistra-istio-operator",
+			},
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "allInOne",
+			Storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerMemoryStorage,
+			},
+		},
+	}
+
+	nonManaged := v1.Jaeger{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "jaeger-no-managed",
+			Namespace: "ns",
+		},
+		Spec: v1.JaegerSpec{
+			Strategy: "allInOne",
+			Storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerMemoryStorage,
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		&managed,
+		&nonManaged,
+	}
+
+	cl := fake.NewFakeClientWithScheme(s, objs...)
+	meter, provider := oteltest.NewMeterProvider()
+	global.SetMeterProvider(provider)
+
+	instancesObservedValue := newInstancesMetric(cl)
+	err := instancesObservedValue.Setup(context.Background())
+	require.NoError(t, err)
+	meter.RunAsyncInstruments()
+
+	expectedMetric := newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 1)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+
+	expectedMetric = newExpectedMetric(managedMetric, attribute.String("tool", "none"), 1)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+
+	// Test deleting managed
+	err = cl.Delete(context.Background(), &managed)
+	require.NoError(t, err)
+
+	// Reset measurement batches
+	meter.MeasurementBatches = []oteltest.Batch{}
+	meter.RunAsyncInstruments()
+
+	expectedMetric = newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 0)
+	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+}

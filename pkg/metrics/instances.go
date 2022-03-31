@@ -19,6 +19,8 @@ const agentStrategiesMetric = "agent_strategies"
 const storageMetric = "storage_types"
 const strategiesMetric = "strategies"
 const autoprovisioningMetric = "autoprovisioning"
+const managedMetric = "managed"
+const managedByLabel = "app.kubernetes.io/managed-by"
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
@@ -128,6 +130,21 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 				return "elasticsearch"
 			}
 			return ""
+		})
+	if err != nil {
+		return err
+	}
+	i.observations = append(i.observations, obs)
+
+	obs, err = newObservation(batch, managedMetric,
+		"Instances managed by other tool",
+		"tool",
+		func(jaeger v1.Jaeger) string {
+			managed, hasManagement := jaeger.Labels[managedByLabel]
+			if !hasManagement {
+				return "none"
+			}
+			return managed
 		})
 	if err != nil {
 		return err

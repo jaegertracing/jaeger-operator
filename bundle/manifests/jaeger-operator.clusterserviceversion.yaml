@@ -23,7 +23,7 @@ metadata:
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
@@ -436,14 +436,20 @@ spec:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8383/
                 - --logtostderr=true
-                - --v=10
+                - --v=0
                 image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
                   name: https
                   protocol: TCP
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 5m
+                    memory: 64Mi
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: jaeger-operator
@@ -518,7 +524,26 @@ spec:
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
-    - v1beta1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
+    generateName: deployment.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - deployments
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-deployment
+  - admissionReviewVersions:
+    - v1
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
@@ -539,7 +564,6 @@ spec:
     webhookPath: /mutate-jaegertracing-io-v1-jaeger
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail

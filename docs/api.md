@@ -3295,6 +3295,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -3548,6 +3555,13 @@ Resource Types:
       </tr><tr>
         <td><b>gmsaCredentialSpecName</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -4691,6 +4705,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -4730,6 +4751,47 @@ Resource Types:
 
 
 ### Jaeger.spec.agent.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -8273,6 +8335,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -9479,6 +9548,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -9518,6 +9594,47 @@ Resource Types:
 
 
 ### Jaeger.spec.allInOne.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.allInOne.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -13068,6 +13185,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -14274,6 +14398,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -14313,6 +14444,47 @@ Resource Types:
 
 
 ### Jaeger.spec.collector.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.collector.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -17876,6 +18048,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -19082,6 +19261,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -19121,6 +19307,47 @@ Resource Types:
 
 
 ### Jaeger.spec.ingester.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingester.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -22699,6 +22926,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -23871,6 +24105,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -23910,6 +24151,47 @@ Resource Types:
 
 
 ### Jaeger.spec.ingress.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingress.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -27487,6 +27769,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -28693,6 +28982,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -28732,6 +29028,47 @@ Resource Types:
 
 
 ### Jaeger.spec.query.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.query.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -30802,6 +31139,13 @@ Resource Types:
       </tr><tr>
         <td><b>gmsaCredentialSpecName</b></td>
         <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -34073,6 +34417,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -35211,6 +35562,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -35250,6 +35608,47 @@ Resource Types:
 
 
 ### Jaeger.spec.storage.dependencies.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.dependencies.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -37100,6 +37499,13 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstorageelasticsearchtolerationsindex">tolerations</a></b></td>
         <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useCertManagement</b></td>
+        <td>boolean</td>
         <td>
           <br/>
         </td>
@@ -38998,6 +39404,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -40136,6 +40549,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -40175,6 +40595,47 @@ Resource Types:
 
 
 ### Jaeger.spec.storage.esIndexCleaner.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esIndexCleaner.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -43704,6 +44165,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>hostProcess</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>runAsUserName</b></td>
         <td>string</td>
         <td>
@@ -44842,6 +45310,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -44881,6 +45356,47 @@ Resource Types:
 
 
 ### Jaeger.spec.storage.esRollover.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esRollover.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 
@@ -47834,6 +48350,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecvolumesindexephemeralvolumeclaimtemplatespecdatasourceref">dataSourceRef</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecvolumesindexephemeralvolumeclaimtemplatespecresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -47873,6 +48396,47 @@ Resource Types:
 
 
 ### Jaeger.spec.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSource
+<sup><sup>[↩ Parent](#jaegerspecvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiGroup</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.volumes[index].ephemeral.volumeClaimTemplate.spec.dataSourceRef
 <sup><sup>[↩ Parent](#jaegerspecvolumesindexephemeralvolumeclaimtemplatespec)</sup></sup>
 
 

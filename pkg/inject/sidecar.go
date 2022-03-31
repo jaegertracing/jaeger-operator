@@ -19,6 +19,8 @@ import (
 )
 
 var (
+	// AnnotationRev is the annotation name to look for when deciding whether or not to inject
+	AnnotationRev = "sidecar.jaegertracing.io/revision"
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
