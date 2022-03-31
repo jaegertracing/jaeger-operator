@@ -527,6 +527,26 @@ spec:
     containerPort: 443
     deploymentName: jaeger-operator
     failurePolicy: Fail
+    generateName: deployment.sidecar-injector.jaegertracing.io
+    rules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - deployments
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-v1-deployment
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: jaeger-operator
+    failurePolicy: Fail
     generateName: mjaeger.kb.io
     rules:
     - apiGroups:
