@@ -379,8 +379,9 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 			continue
 		}
 
-		// if the deployment has the sidecar annotation, trigger a reconciliation
-		if ok := inject.IncreaseRevision(dep.Annotations); ok {
+		// if the deployment has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
 			deps = append(deps, dep)
 			continue
 		}
@@ -395,9 +396,10 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 			nss[ns.Name] = ns
 		}
 
-		// if the namespace has the sidecar annotation, trigger a reconciliation
-		if ok := inject.IncreaseRevision(ns.Annotations); ok {
-			nssupdate = append(nssupdate, ns)
+		// if the namespace has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
 			continue
 		}
 	}

@@ -102,17 +102,16 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 // IncreaseRevision increases the revision counter if a inject annoation exists.
 // returns true if counter could be set or increased.
 // returns false if inject annotation doesnt exist.
-func IncreaseRevision(annotations map[string]string) bool {
-	if _, ok := annotations[Annotation]; ok {
-		revStr := "0"
-		v := annotations[AnnotationRev]
-		if rev, err := strconv.Atoi(v); err == nil {
-			revStr = strconv.Itoa(rev + 1)
-		}
-		annotations[AnnotationRev] = revStr
-		return true
+func IncreaseRevision(annotations map[string]string) {
+	if annotations == nil {
+		return
 	}
-	return false
+	revStr := "0"
+	v := annotations[AnnotationRev]
+	if rev, err := strconv.Atoi(v); err == nil {
+		revStr = strconv.Itoa(rev + 1)
+	}
+	annotations[AnnotationRev] = revStr
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not

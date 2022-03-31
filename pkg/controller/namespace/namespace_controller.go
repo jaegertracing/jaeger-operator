@@ -58,7 +58,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 		"namespace": request.Namespace,
 		"name":      request.Name,
 	})
-	logger.Trace("Reconciling Namespace")
+	logger.Debug("Reconciling Namespace")
 
 	ns := &corev1.Namespace{}
 	err := r.rClient.Get(ctx, request.NamespacedName, ns)
@@ -99,13 +99,20 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			continue
 		}
 
-		if inject.IncreaseRevision(dep.Annotations) {
+		// NOTE: If a deployment does not provide an "inject" annotation and
+		// has an agent, we need to verify if this is caused by a annotated
+		// namespace.
+		hasAgent, _ := inject.HasJaegerAgent(dep)
+		_, hasDepAnnotation := dep.Annotations[inject.Annotation]
+		verificationNeeded := hasAgent && !hasDepAnnotation
+
+		if inject.Needed(dep, ns) || verificationNeeded {
+			inject.IncreaseRevision(dep.Annotations)
 			if err := r.client.Update(context.Background(), dep); err != nil {
 				logger.Error(err)
 				return reconcile.Result{}, tracing.HandleError(err, span)
 			}
 		}
 	}
-
 	return reconcile.Result{}, nil
 }

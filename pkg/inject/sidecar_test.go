@@ -33,16 +33,15 @@ func reset() {
 }
 
 func TestIncreaseRevision(t *testing.T) {
-	assert.True(t, IncreaseRevision(map[string]string{
+	IncreaseRevision(nil)
+	in := map[string]string{
 		Annotation: "true",
-	}))
-	assert.True(t, IncreaseRevision(map[string]string{
-		Annotation:    "true",
-		AnnotationRev: "2",
-	}))
-	assert.False(t, IncreaseRevision(map[string]string{
-		AnnotationRev: "2",
-	}))
+	}
+	IncreaseRevision(in)
+	assert.Equal(t, "0", in[AnnotationRev])
+	IncreaseRevision(in)
+	IncreaseRevision(in)
+	assert.Equal(t, "2", in[AnnotationRev])
 }
 
 func TestInjectSidecar(t *testing.T) {
