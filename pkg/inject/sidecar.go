@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -95,6 +96,22 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 		return true
 	}
 
+	return false
+}
+
+// IncreaseRevision increases the revision counter if a inject annoation exists.
+// returns true if counter could be set or increased.
+// returns false if inject annotation doesnt exist.
+func IncreaseRevision(annotations map[string]string) bool {
+	if _, ok := annotations[Annotation]; ok {
+		revStr := "0"
+		v := annotations[AnnotationRev]
+		if rev, err := strconv.Atoi(v); err == nil {
+			revStr = strconv.Itoa(rev + 1)
+		}
+		annotations[AnnotationRev] = revStr
+		return true
+	}
 	return false
 }
 
