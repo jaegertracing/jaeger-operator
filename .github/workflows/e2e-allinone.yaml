@@ -21,7 +21,7 @@ jobs:
       matrix:
        kube-version:
        - "1.19"
-       - "1.22"
+       - "1.23"
     name: Run all in one E2E tests
     steps:
       - name: "Check out code into the Go module directory"
