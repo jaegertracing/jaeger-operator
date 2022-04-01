@@ -237,10 +237,7 @@ func TestCustomEsIndexCleanerImage(t *testing.T) {
 func TestPriorityClassName(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestPriorityClassName"})
 
-	priorityClassNameVal := "true"
+	priorityClassNameVal := ""
 
-	cjob := CreateEsIndexCleaner(jaeger)
-	cjob.Spec.JobTemplate.Spec.Template.Spec.PriorityClassName = priorityClassNameVal
-
-	assert.Equal(t, priorityClassNameVal, cjob.Spec.JobTemplate.Spec.Template.Spec.PriorityClassName)
+	assert.Equal(t, priorityClassNameVal, jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName)
 }
