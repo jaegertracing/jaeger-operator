@@ -18,6 +18,7 @@ spec:
       - command:
         - /jaeger-operator
         args:
+        - start
         - --leader-elect
         image: controller:latest
         name: jaeger-operator
