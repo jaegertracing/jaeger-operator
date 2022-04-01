@@ -130,6 +130,17 @@ func TestQueryImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestQueryImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
 func TestQueryPodName(t *testing.T) {
 	name := "TestQueryPodName"
 	query := NewQuery(v1.NewJaeger(types.NamespacedName{Name: name}))

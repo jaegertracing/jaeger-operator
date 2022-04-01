@@ -153,6 +153,17 @@ func TestIngeterImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestIngesterImagePullPolicy(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterImagePullPolicy")
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
 func TestIngesterVolumeMountsWithVolumes(t *testing.T) {
 	name := "TestIngesterVolumeMountsWithVolumes"
 

@@ -3,8 +3,16 @@ name: Examples E2E tests
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+
+concurrency:
+  group: e2e-tests-${{ github.ref }}-examples
+  cancel-in-progress: true
 
 jobs:
   run-e2e-examples-test-suite:
@@ -13,11 +21,11 @@ jobs:
       matrix:
        kube-version:
        - "1.19"
-       - "1.22"
+       - "1.23"
     name: Run examples E2E tests
     steps:
       - name: "Check out code into the Go module directory"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: ./hack/actions/e2e

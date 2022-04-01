@@ -3,7 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: observability/jaeger-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   labels:
     name: jaeger-operator
@@ -774,6 +774,8 @@ spec:
                     type: boolean
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -869,6 +871,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -930,6 +934,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -1187,6 +1193,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -2027,6 +2045,8 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -2038,6 +2058,11 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
+                    type: object
+                  metricsStorage:
+                    properties:
+                      type:
+                        type: string
                     type: object
                   options:
                     type: object
@@ -2120,6 +2145,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -2397,6 +2424,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -3244,6 +3283,8 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -3348,6 +3389,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -3625,6 +3668,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -4099,6 +4154,8 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              imagePullPolicy:
+                type: string
               imagePullSecrets:
                 items:
                   properties:
@@ -4475,6 +4532,8 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -4577,6 +4636,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -4852,6 +4913,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -5694,6 +5767,8 @@ spec:
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -5804,6 +5879,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -6074,6 +6151,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -6918,6 +7007,8 @@ spec:
                     type: integer
                   image:
                     type: string
+                  imagePullPolicy:
+                    type: string
                   imagePullSecrets:
                     items:
                       properties:
@@ -6929,6 +7020,11 @@ spec:
                   labels:
                     additionalProperties:
                       type: string
+                    type: object
+                  metricsStorage:
+                    properties:
+                      type:
+                        type: string
                     type: object
                   nodePort:
                     format: int32
@@ -7019,6 +7115,8 @@ spec:
                             type: string
                           gmsaCredentialSpecName:
                             type: string
+                          hostProcess:
+                            type: boolean
                           runAsUserName:
                             type: string
                         type: object
@@ -7298,6 +7396,18 @@ spec:
                                         type: string
                                       type: array
                                     dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - kind
+                                      - name
+                                      type: object
+                                    dataSourceRef:
                                       properties:
                                         apiGroup:
                                           type: string
@@ -7856,6 +7966,8 @@ spec:
                         type: string
                       gmsaCredentialSpecName:
                         type: string
+                      hostProcess:
+                        type: boolean
                       runAsUserName:
                         type: string
                     type: object
@@ -8612,6 +8724,8 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullPolicy:
+                        type: string
                       imagePullSecrets:
                         items:
                           properties:
@@ -8706,6 +8820,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -8971,6 +9087,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -9514,6 +9642,8 @@ spec:
                           type: object
                         type: array
                         x-kubernetes-list-type: atomic
+                      useCertManagement:
+                        type: boolean
                     type: object
                   esIndexCleaner:
                     properties:
@@ -9883,6 +10013,8 @@ spec:
                         type: boolean
                       image:
                         type: string
+                      imagePullPolicy:
+                        type: string
                       imagePullSecrets:
                         items:
                           properties:
@@ -9977,6 +10109,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -10240,6 +10374,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -11082,6 +11228,8 @@ spec:
                         type: string
                       image:
                         type: string
+                      imagePullPolicy:
+                        type: string
                       imagePullSecrets:
                         items:
                           properties:
@@ -11176,6 +11324,8 @@ spec:
                                 type: string
                               gmsaCredentialSpecName:
                                 type: string
+                              hostProcess:
+                                type: boolean
                               runAsUserName:
                                 type: string
                             type: object
@@ -11439,6 +11589,18 @@ spec:
                                             type: string
                                           type: array
                                         dataSource:
+                                          properties:
+                                            apiGroup:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - kind
+                                          - name
+                                          type: object
+                                        dataSourceRef:
                                           properties:
                                             apiGroup:
                                               type: string
@@ -12185,6 +12347,18 @@ spec:
                                     type: string
                                   type: array
                                 dataSource:
+                                  properties:
+                                    apiGroup:
+                                      type: string
+                                    kind:
+                                      type: string
+                                    name:
+                                      type: string
+                                  required:
+                                  - kind
+                                  - name
+                                  type: object
+                                dataSourceRef:
                                   properties:
                                     apiGroup:
                                       type: string

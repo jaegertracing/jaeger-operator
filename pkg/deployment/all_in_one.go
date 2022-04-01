@@ -150,6 +150,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 								Value: string(a.jaeger.Spec.Storage.Type),
 							},
 							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
+							},
+							{
 								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 								Value: ":9411",
 							},
@@ -206,7 +210,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -217,7 +221,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -225,7 +229,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),

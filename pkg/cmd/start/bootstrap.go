@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	osimagev1 "github.com/openshift/api/image/v1"
 	log "github.com/sirupsen/logrus"
@@ -30,10 +31,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
+	esv1controllers "github.com/jaegertracing/jaeger-operator/controllers/elasticsearch"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
@@ -282,6 +285,10 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 
+	// see https://github.com/openshift/library-go/blob/4362aa519714a4b62b00ab8318197ba2bba51cb7/pkg/config/leaderelection/leaderelection.go#L104
+	leaseDuration := time.Second * 137
+	renewDeadline := time.Second * 107
+	retryPeriod := time.Second * 26
 	options := ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -289,6 +296,9 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
+		RetryPeriod:            &retryPeriod,
 		Namespace:              namespace,
 	}
 
@@ -351,8 +361,8 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 		os.Exit(1)
 	}
 
-	if err := appsv1controllers.NewDeploymentReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Deployment")
+	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Elasticsearch")
 		os.Exit(1)
 	}
 }
@@ -362,6 +372,12 @@ func setupWebhooks(_ context.Context, mgr manager.Manager) {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
 		os.Exit(1)
 	}
+
+	// register webhook
+	srv := mgr.GetWebhookServer()
+	srv.Register("/mutate-v1-deployment", &webhook.Admission{
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient()),
+	})
 }
 
 func getNamespace(ctx context.Context) string {

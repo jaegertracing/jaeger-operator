@@ -87,7 +87,7 @@ func (b *Background) Stop() {
 func (b *Background) autoDetectCapabilities() {
 	ctx := context.Background()
 
-	apiList, err := b.availableAPIs(ctx)
+	apiList, err := AvailableAPIs(b.dcl, listenedGroupsMap)
 	if err != nil {
 		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will remain the same until next cycle.")
 	} else {
@@ -106,22 +106,18 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
-func (b *Background) isInListenedGroups(group metav1.APIGroup) bool {
-	return listenedGroupsMap[group.Name]
-}
-
-func (b *Background) availableAPIs(_ context.Context) ([]*metav1.APIResourceList, error) {
-	apiLists := []*metav1.APIResourceList{}
-	groupList, err := b.dcl.ServerGroups()
+// AvailableAPIs returns available list of CRDs from the cluster.
+func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]bool) ([]*metav1.APIResourceList, error) {
+	var apiLists []*metav1.APIResourceList
+	groupList, err := discovery.ServerGroups()
 	if err != nil {
 		return apiLists, err
 	}
 
 	var errors error
-
 	for _, sg := range groupList.Groups {
-		if b.isInListenedGroups(sg) {
-			groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(sg.PreferredVersion.GroupVersion)
+		if groups[sg.Name] {
+			groupAPIList, err := discovery.ServerResourcesForGroupVersion(sg.PreferredVersion.GroupVersion)
 			if err == nil {
 				apiLists = append(apiLists, groupAPIList)
 			} else {
@@ -153,7 +149,7 @@ func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.
 	if b.retryDetectEs {
 		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
 		previous := viper.GetString("es-provision")
-		if isElasticsearchOperatorAvailable(apiList) {
+		if IsElasticsearchOperatorAvailable(apiList) {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 		} else {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
@@ -284,7 +280,8 @@ func isOpenShift(apiList []*metav1.APIResourceList) bool {
 	return false
 }
 
-func isElasticsearchOperatorAvailable(apiList []*metav1.APIResourceList) bool {
+// IsElasticsearchOperatorAvailable returns true if OpenShift Elasticsearch CRD is available in the cluster.
+func IsElasticsearchOperatorAvailable(apiList []*metav1.APIResourceList) bool {
 	for _, r := range apiList {
 		if strings.HasPrefix(r.GroupVersion, "logging.openshift.io") {
 			for _, api := range r.APIResources {

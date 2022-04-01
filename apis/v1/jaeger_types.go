@@ -1,11 +1,10 @@
 package v1
 
 import (
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
 // IngressSecurityType represents the possible values for the security type
@@ -217,6 +216,9 @@ type JaegerCommonSpec struct {
 	// +optional
 	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+
+	// +optional
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 }
 
 // JaegerQuerySpec defines the options to be used when deploying the query
@@ -231,6 +233,9 @@ type JaegerQuerySpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Options Options `json:"options,omitempty"`
+
+	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
@@ -351,6 +356,9 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config FreeForm `json:"config,omitempty"`
+
+	// +optional
+	MetricsStorage JaegerMetricsStorageSpec `json:"metricsStorage,omitempty"`
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
@@ -510,6 +518,12 @@ type JaegerStorageSpec struct {
 	GRPCPlugin GRPCPluginSpec `json:"grpcPlugin,omitempty"`
 }
 
+// JaegerMetricsStorageSpec defines the Metrics storage options to be used for the query and collector.
+type JaegerMetricsStorageSpec struct {
+	// +optional
+	Type JaegerStorageType `json:"type,omitempty"`
+}
+
 // ElasticsearchSpec represents the ES configuration options that we pass down to the OpenShift Elasticsearch operator.
 type ElasticsearchSpec struct {
 	// Name of the OpenShift Elasticsearch instance. Defaults to elasticsearch.
@@ -519,6 +533,12 @@ type ElasticsearchSpec struct {
 	// Whether Elasticsearch should be provisioned or not.
 	// +optional
 	DoNotProvision bool `json:"doNotProvision,omitempty"`
+
+	// Whether Elasticsearch cert management feature should be used.
+	// This is a preferred setting for new Jaeger deployments on OCP versions newer than 4.6.
+	// The cert management feature was added to Red Hat Openshift logging 5.2 in OCP 4.7.
+	// +optional
+	UseCertManagement *bool `json:"useCertManagement,omitempty"`
 
 	// +optional
 	Image string `json:"image,omitempty"`

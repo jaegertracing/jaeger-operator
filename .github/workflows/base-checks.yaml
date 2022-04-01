@@ -3,26 +3,32 @@ name: "CI Workflow"
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   basic-checks:
     runs-on: ubuntu-20.04
+    env:
+      USER: jaegertracing
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v2.2.0
+      uses: actions/setup-go@v3
       with:
-        go-version: 1.16
+        go-version: 1.17
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
 
     - name: "install kubebuilder"
-      run: ./hack/install-kubebuilder.sh
+      run: ./hack/install/install-kubebuilder.sh
 
     - name: "install kustomize"
-      run: ./hack/install-kustomize.sh
+      run: ./hack/install/install-kustomize.sh
 
     - name: "basic checks"
       run: make install-tools ci
