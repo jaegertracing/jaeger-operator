@@ -1,5 +1,8 @@
 #!/bin/bash
 
+current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source $current_dir/install/install-utils.sh
+
 if [ "$#" -ne 1 ]; then
     echo "$0 <image>"
     exit 1
@@ -8,10 +11,4 @@ fi
 image=$1
 
 n=0
-until [ "$n" -ge 5 ]
-do
-    echo "Pulling image $image. Try $n..."
-    docker pull $image && break
-    n=$((n+1))
-    sleep 5
-done
+retry "docker pull $image && break"
