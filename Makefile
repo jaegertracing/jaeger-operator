@@ -166,6 +166,9 @@ cert-manager: cmctl
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 	cmctl check api --wait=5m
 
+undeploy-cert-manager:
+	kubectl delete -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
+
 cmctl:
 ifeq (, $(shell which cmctl))
 	@{ \
@@ -272,7 +275,7 @@ else
 endif
 
 .PHONY: clean
-clean: undeploy-kafka undeploy-prometheus-operator undeploy-istio
+clean: undeploy-kafka undeploy-prometheus-operator undeploy-istio undeploy-cert-manager
 	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true

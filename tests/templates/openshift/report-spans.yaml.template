@@ -40,7 +40,7 @@ spec:
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "gomplate -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o smoke-cluster-role.yaml"
+  - script: "{{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o smoke-cluster-role.yaml"
   - script: "kubectl apply -f smoke-cluster-role.yaml -n $NAMESPACE"
-  - script: "DAYS={{ .Env.DAYS }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} {{if getenv "JAEGER_QUERY_ENDPOINT"}}JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa e2e-token-api-user -n $NAMESPACE -o json | jq -r '.secrets[] |  select( .name | test(\"e2e-token-api-user-token-\")).name'){{end}} gomplate -f {{ .Env.TEMPLATES_DIR }}/report-spans.yaml.template -o report-span-{{ .Env.JOB_NUMBER }}-job.yaml"
+  - script: "DAYS={{ .Env.DAYS }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} {{if getenv "JAEGER_QUERY_ENDPOINT"}}JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa e2e-token-api-user -n $NAMESPACE -o json | jq -r '.secrets[] |  select( .name | test(\"e2e-token-api-user-token-\")).name'){{end}} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/report-spans.yaml.template -o report-span-{{ .Env.JOB_NUMBER }}-job.yaml"
   - script: "kubectl create -f report-span{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}-job.yaml -n $NAMESPACE"
