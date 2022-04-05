@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,14 +13,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -42,7 +41,12 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	args := append(a.jaeger.Spec.AllInOne.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 14269)
+	adminPort := util.GetAdminPort(args, 14269)
+
+	jaegerDisabled := false
+	if a.jaeger.Spec.AllInOne.TracingEnabled != nil && *a.jaeger.Spec.AllInOne.TracingEnabled == false {
+		jaegerDisabled = true
+	}
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -57,32 +61,30 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	options := allArgs(a.jaeger.Spec.AllInOne.Options,
-		a.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(a.jaeger.Spec.Storage.Type)))
+		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(a.jaeger, commonSpec, &options)
 	sampling.Update(a.jaeger, commonSpec, &options)
-	tls.Update(a.jaeger, commonSpec, &options)
+
+	// If tls is not explicitly set, update jaeger CR with the tls flags according to the platform
+	if len(util.FindItem("--collector.grpc.tls.enabled=", options)) == 0 {
+		tls.Update(a.jaeger, commonSpec, &options)
+	}
+
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(a.jaeger, commonSpec)
 
 	// Enable tls by default for openshift platform
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
 	// as it might receive connections from external agents
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls.enabled=true", options)) == 0 {
+		if len(util.FindItem("--reporter.grpc.host-port=", options)) == 0 &&
+			len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
 		}
-	}
-
-	otelConf, err := a.jaeger.Spec.AllInOne.Config.GetMap()
-	if err != nil {
-		a.jaeger.Logger().WithField("error", err).
-			WithField("component", "all-in-one").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.AllInOne.Options, otelConf) {
-		otelconfig.Update(a.jaeger, "all-in-one", commonSpec, &options)
 	}
 
 	// ensure we have a consistent order of the arguments
@@ -98,6 +100,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				},
 			},
 		})
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if a.jaeger.Spec.AllInOne.Strategy != nil {
+		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
 	return &appsv1.Deployment{
@@ -122,12 +132,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: commonSpec.Labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
 						Name:  "jaeger",
@@ -135,11 +147,19 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						Env: []corev1.EnvVar{
 							{
 								Name:  "SPAN_STORAGE_TYPE",
-								Value: a.jaeger.Spec.Storage.Type,
+								Value: string(a.jaeger.Spec.Storage.Type),
 							},
 							{
-								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-								Value: "9411",
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
+							},
+							{
+								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+								Value: ":9411",
+							},
+							{
+								Name:  "JAEGER_DISABLED",
+								Value: strconv.FormatBool(jaegerDisabled),
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
@@ -190,7 +210,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -201,7 +221,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -209,7 +229,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),
@@ -217,6 +238,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(a.jaeger, commonSpec),
 				},
 			},
 		},
@@ -225,7 +247,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
-	labels := a.labels()
+	// merge defined labels with default labels
+	spec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, v1.JaegerCommonSpec{Labels: a.labels()}})
+	labels := spec.Labels
+
 	return append(service.NewCollectorServices(a.jaeger, labels),
 		service.NewQueryService(a.jaeger, labels),
 		service.NewAgentService(a.jaeger, labels),

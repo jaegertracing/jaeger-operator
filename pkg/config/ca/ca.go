@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -34,7 +34,6 @@ func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	}
 
 	jaeger.Logger().Debug("CA: Creating the trustedCABundle configmap")
-	trueVar := true
 
 	name := TrustedCAName(jaeger)
 	labels := util.Labels(name, "ca-configmap", *jaeger)
@@ -50,13 +49,6 @@ func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 			Name:      name,
 			Namespace: jaeger.Namespace,
 			Labels:    labels,
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: jaeger.APIVersion,
-				Kind:       jaeger.Kind,
-				Name:       jaeger.Name,
-				UID:        jaeger.UID,
-				Controller: &trueVar,
-			}},
 		},
 		Data: map[string]string{
 			"ca-bundle.crt": "",
@@ -77,7 +69,6 @@ func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	}
 
 	jaeger.Logger().Debug("CA: Creating the service CA configmap")
-	trueVar := true
 
 	name := ServiceCAName(jaeger)
 	annotations := map[string]string{
@@ -94,13 +85,6 @@ func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 			Namespace:   jaeger.Namespace,
 			Labels:      util.Labels(name, "service-ca-configmap", *jaeger),
 			Annotations: annotations,
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: jaeger.APIVersion,
-				Kind:       jaeger.Kind,
-				Name:       jaeger.Name,
-				UID:        jaeger.UID,
-				Controller: &trueVar,
-			}},
 		},
 	}
 }

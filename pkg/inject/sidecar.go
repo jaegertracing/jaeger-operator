@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
-
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -15,13 +13,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 var (
+	// AnnotationRev is the annotation name to look for when deciding whether or not to inject
+	AnnotationRev = "sidecar.jaegertracing.io/revision"
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
@@ -61,10 +62,9 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
 	logFields.Debug("injecting sidecar")
 	if hasAgent { // This is an update
-		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep)
+		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
 	} else {
-		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep))
-
+		dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, container(jaeger, dep, -1))
 	}
 
 	jaegerName := util.Truncate(jaeger.Name, 63)
@@ -78,20 +78,52 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	return dep
 }
 
+// Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
+func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
+	logger := log.WithFields(log.Fields{
+		"namespace":  dep.Namespace,
+		"deployment": dep.Name,
+	})
+	depAnnotationValue, depExist := dep.Annotations[Annotation]
+	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
+
+	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
+		logger.Debug("annotation present on deployment")
+		return true
+	}
+
+	if nsExist && !strings.EqualFold(nsAnnotationValue, "false") {
+		logger.Debug("annotation present on namespace")
+		return true
+	}
+
+	return false
+}
+
+// IncreaseRevision increases the revision counter if a inject annoation exists.
+// returns true if counter could be set or increased.
+// returns false if inject annotation doesnt exist.
+func IncreaseRevision(annotations map[string]string) {
+	if annotations == nil {
+		return
+	}
+	revStr := "0"
+	v := annotations[AnnotationRev]
+	if rev, err := strconv.Atoi(v); err == nil {
+		revStr = strconv.Itoa(rev + 1)
+	}
+	annotations[AnnotationRev] = revStr
+}
+
 // Needed determines whether a pod needs to get a sidecar injected or not
 func Needed(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	_, depExist := dep.Annotations[Annotation]
-	_, nsExist := ns.Annotations[Annotation]
-	if !depExist && !nsExist {
-		log.WithFields(log.Fields{
-			"namespace":  dep.Namespace,
-			"deployment": dep.Name,
-		}).Trace("annotation not present, not injecting")
+	if !desired(dep, ns) {
 		return false
 	}
+
 	// do not inject jaeger due to port collision
 	// do not inject if deployment's Annotation value is false
-	if dep.Labels["app"] == "jaeger" {
+	if dep.Labels["app"] == "jaeger" && dep.Labels["app.kubernetes.io/component"] != "query" {
 		return false
 	}
 
@@ -149,7 +181,8 @@ func getJaegerFromNamespace(namespace string, jaegers *v1.JaegerList) []*v1.Jaeg
 	for _, p := range jaegers.Items {
 		if p.Namespace == namespace {
 			// matched the namespace!
-			instances = append(instances, &p)
+			j := p
+			instances = append(instances, &j)
 		}
 	}
 	return instances
@@ -165,7 +198,7 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 	return nil
 }
 
-func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
+func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
 	args := append(jaeger.Spec.Agent.Options.ToArgs())
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
@@ -175,7 +208,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 
 	// Enable tls by default for openshift platform
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls.enabled=true", args)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 		}
@@ -185,42 +218,43 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment) corev1.Container {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
-	adminPort := util.GetPort("--admin-http-port=", args, 14271)
+	adminPort := util.GetAdminPort(args, 14271)
 
-	if len(util.FindItem("--jaeger.tags=", args)) == 0 {
-		agentTags := fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
-			"cluster", "undefined", // this value isn't currently available
-			"deployment.name", dep.Name,
-			"pod.namespace", dep.Namespace,
-			"pod.name", fmt.Sprintf("${%s:}", envVarPodName),
-			"host.ip", fmt.Sprintf("${%s:}", envVarHostIP),
-		)
+	if len(util.FindItem("--agent.tags=", args)) == 0 {
+		defaultAgentTagsMap := make(map[string]string)
+		defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+		defaultAgentTagsMap["deployment.name"] = dep.Name
+		defaultAgentTagsMap["pod.namespace"] = dep.Namespace
+		defaultAgentTagsMap["pod.name"] = fmt.Sprintf("${%s:}", envVarPodName)
+		defaultAgentTagsMap["host.ip"] = fmt.Sprintf("${%s:}", envVarHostIP)
 
-		if len(dep.Spec.Template.Spec.Containers) == 1 {
-			agentTags = fmt.Sprintf("%s,%s=%s", agentTags,
-				"container.name", dep.Spec.Template.Spec.Containers[0].Name,
-			)
+		defaultContainerName := getContainerName(dep.Spec.Template.Spec.Containers, agentIdx)
+
+		// if we can deduce the container name from the PodSpec
+		if defaultContainerName != "" {
+			defaultAgentTagsMap["container.name"] = defaultContainerName
 		}
 
-		args = append(args, fmt.Sprintf(`--jaeger.tags=%s`, agentTags))
+		if agentIdx > -1 {
+			existingAgentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[agentIdx].Args)
+			// merge two maps
+			for key, value := range defaultAgentTagsMap {
+				existingAgentTags[key] = value
+			}
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(existingAgentTags)))
+		} else {
+			args = append(args, fmt.Sprintf(`--agent.tags=%s`, joinTags(defaultAgentTagsMap)))
+		}
+
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Agent.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec})
 
 	// Use only the agent common spec for volumes and mounts.
 	// We don't want to mount all Jaeger internal volumes into user's deployments
-	volumesAndMountsSpec := &jaeger.Spec.Agent.JaegerCommonSpec
-	otelConf, err := jaeger.Spec.Agent.Config.GetMap()
-	if err != nil {
-		jaeger.Logger().WithField("error", err).
-			WithField("component", "agent").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(jaeger, jaeger.Spec.Agent.Options, otelConf) {
-		otelconfig.Update(jaeger, "agent", volumesAndMountsSpec, &args)
-	}
-
-	ca.Update(jaeger, volumesAndMountsSpec)
-	ca.AddServiceCA(jaeger, volumesAndMountsSpec)
+	volumesAndMountsSpec := jaeger.Spec.Agent.JaegerCommonSpec
+	ca.Update(jaeger, &volumesAndMountsSpec)
+	ca.AddServiceCA(jaeger, &volumesAndMountsSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
@@ -413,4 +447,41 @@ func EqualSidecar(dep, oldDep *appsv1.Deployment) bool {
 	depContainer := dep.Spec.Template.Spec.Containers[depAgentIndex]
 	oldDepContainer := oldDep.Spec.Template.Spec.Containers[oldDepIndex]
 	return reflect.DeepEqual(depContainer, oldDepContainer)
+}
+
+func parseAgentTags(args []string) map[string]string {
+	tagsArg := util.FindItem("--agent.tags=", args)
+	if tagsArg == "" {
+		return map[string]string{}
+	}
+	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
+	tagsMap := make(map[string]string)
+	tagsArr := strings.Split(tagsParam, ",")
+	for _, tagsPairStr := range tagsArr {
+		tagsPair := strings.SplitN(tagsPairStr, "=", 2)
+		tagsMap[tagsPair[0]] = tagsPair[1]
+	}
+	return tagsMap
+}
+
+func joinTags(tags map[string]string) string {
+	tagsSlice := make([]string, 0)
+	for key, value := range tags {
+		tagsSlice = append(tagsSlice, fmt.Sprintf("%s=%s", key, value))
+	}
+	sort.Strings(tagsSlice)
+	return strings.Join(tagsSlice, ",")
+}
+
+func getContainerName(containers []corev1.Container, agentIdx int) string {
+	if agentIdx == -1 && len(containers) == 1 { // we only have one single container and it is not the agent
+		return containers[0].Name
+	} else if agentIdx > -1 && len(containers)-1 == 1 { // we have one single container besides the agent
+		// agent: 0, app: 1
+		// agent: 1, app: 0
+		return containers[1-agentIdx].Name
+	} else {
+		// otherwise, we cannot determine `container.name`
+		return ""
+	}
 }

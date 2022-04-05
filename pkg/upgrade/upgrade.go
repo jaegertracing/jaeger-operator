@@ -6,19 +6,18 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
 func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader, latestVersion string) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
 
@@ -57,16 +56,33 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 			}).Debug("skipping CR upgrade as we are not owners")
 			continue
 		}
-
+		patch := client.MergeFrom(j.DeepCopy())
 		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
+			log.WithFields(log.Fields{
+				"jaeger":                jaeger.Name,
+				"namespace":             jaeger.Namespace,
+				"latest-jaeger-version": latestVersion,
+			}).Error("Failed to upgrade", err)
 			continue
 		}
-
 		if !reflect.DeepEqual(jaeger, j) {
+			version := jaeger.Status.Version
 			// the CR has changed, store it!
-			if err := c.Update(ctx, &jaeger); err != nil {
+
+			if err := c.Patch(ctx, &jaeger, patch); err == nil {
+				patch := client.MergeFrom(jaeger.DeepCopy())
+				jaeger.Status.Version = version
+				if err := c.Status().Patch(ctx, &jaeger, patch); err != nil {
+					log.WithFields(log.Fields{
+						"instance":  jaeger.Name,
+						"namespace": jaeger.Namespace,
+						"version":   version,
+					}).WithError(err).Error("failed to update status the upgraded instance")
+					tracing.HandleError(err, span)
+				}
+			} else {
 				log.WithFields(log.Fields{
 					"instance":  jaeger.Name,
 					"namespace": jaeger.Namespace,
@@ -81,7 +97,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 
 // ManagedInstance performs the necessary changes to bring the given Jaeger instance to the current version
 func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string) (v1.Jaeger, error) {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
 

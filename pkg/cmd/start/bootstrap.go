@@ -2,102 +2,132 @@ package start
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	osimagev1 "github.com/openshift/api/image/v1"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/api/core"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/exporter/trace/jaeger"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	corev1 "k8s.io/api/core/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+
+	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/apis"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/controller"
+	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
+	esv1controllers "github.com/jaegertracing/jaeger-operator/controllers/elasticsearch"
+	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
+	opmetrics "github.com/jaegertracing/jaeger-operator/pkg/metrics"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/upgrade"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
+
+	consolev1 "github.com/openshift/api/console/v1"
+	routev1 "github.com/openshift/api/route/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
 
-func bootstrap(ctx context.Context) manager.Manager {
-	tracing.Bootstrap()
+var (
+	scheme   = k8sruntime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
+)
 
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(jaegertracingv1.AddToScheme(scheme))
+	utilruntime.Must(kafkav1beta2.AddToScheme(scheme))
+	utilruntime.Must(routev1.Install(scheme))
+	utilruntime.Must(osimagev1.Install(scheme))
+	utilruntime.Must(consolev1.Install(scheme))
+	utilruntime.Must(esv1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
+}
+
+func bootstrap(ctx context.Context) manager.Manager {
+
+	namespace := getNamespace(ctx)
+	tracing.Bootstrap(ctx, namespace)
+
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "bootstrap")
 	defer span.End()
 
 	setLogLevel(ctx)
 
-	namespace := getNamespace(ctx)
-
 	buildIdentity(ctx, namespace)
-
-	if viper.GetBool("tracing-enabled") {
-		buildJaegerExporter(ctx)
-	}
+	tracing.SetInstanceID(ctx, namespace)
 
 	log.WithFields(log.Fields{
 		"os":              runtime.GOOS,
 		"arch":            runtime.GOARCH,
 		"version":         runtime.Version(),
-		"operator-sdk":    version.Get().OperatorSdk,
 		"jaeger-operator": version.Get().Operator,
 		"identity":        viper.GetString(v1.ConfigIdentity),
 		"jaeger":          version.Get().Jaeger,
 	}).Info("Versions")
 
-	if err := leader.Become(ctx, "jaeger-operator-lock"); err != nil {
+	cfg, err := ctrl.GetConfig()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		log.Fatal(err)
 	}
 
-	cfg, err := config.GetConfig()
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.Fatal(err)
-	}
-
-	span.SetAttribute(key.String("Platform", viper.GetString("platform")))
-	watchNamespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Fatal("failed to get watch namespace")
+	span.SetAttributes(otelattribute.String("Platform", viper.GetString("platform")))
+	watchNamespace, found := os.LookupEnv("WATCH_NAMESPACE")
+	if found {
+		setupLog.Info("watching namespace(s)", "namespaces", watchNamespace)
+	} else {
+		setupLog.Info("the env var WATCH_NAMESPACE isn't set, watching all namespaces")
 	}
 
 	setOperatorScope(ctx, watchNamespace)
 
 	mgr := createManager(ctx, cfg)
 
+	if d, err := autodetect.New(mgr); err != nil {
+		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
+	} else {
+		d.Start()
+	}
+
 	detectNamespacePermissions(ctx, mgr)
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
-	serveCRMetrics(ctx, cfg, namespace)
-	createMetricsService(ctx, cfg, namespace)
+	setupWebhooks(ctx, mgr)
 	detectOAuthProxyImageStream(ctx, mgr)
-
+	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
+	if err != nil {
+		log.WithError(err).Error("failed to initialize metrics")
+	}
 	return mgr
 }
 
 func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
 
@@ -163,7 +193,7 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 }
 
 func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "detectNamespacePermissions")
 	defer span.End()
 
@@ -172,16 +202,16 @@ func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
 	if err := mgr.GetAPIReader().List(ctx, namespaces, opts...); err != nil {
 		log.WithError(err).Trace("could not get a list of namespaces, disabling namespace controller")
 		tracing.HandleError(err, span)
-		span.SetAttribute(key.Bool(v1.ConfigEnableNamespaceController, false))
+		span.SetAttributes(otelattribute.Bool(v1.ConfigEnableNamespaceController, false))
 		viper.Set(v1.ConfigEnableNamespaceController, false)
 	} else {
-		span.SetAttribute(key.Bool(v1.ConfigEnableNamespaceController, true))
+		span.SetAttributes(otelattribute.Bool(v1.ConfigEnableNamespaceController, true))
 		viper.Set(v1.ConfigEnableNamespaceController, true)
 	}
 }
 
 func setOperatorScope(ctx context.Context, namespace string) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "setOperatorScope")
 	defer span.End()
 
@@ -190,17 +220,17 @@ func setOperatorScope(ctx context.Context, namespace string) {
 
 	// for now, the logic is simple: if we are watching all namespaces, then we are cluster-wide
 	if viper.GetString(v1.ConfigWatchNamespace) == v1.WatchAllNamespaces {
-		span.SetAttribute(key.String(v1.ConfigOperatorScope, v1.OperatorScopeCluster))
+		span.SetAttributes(otelattribute.String(v1.ConfigOperatorScope, v1.OperatorScopeCluster))
 		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	} else {
 		log.Info("Consider running the operator in a cluster-wide scope for extra features")
-		span.SetAttribute(key.String(v1.ConfigOperatorScope, v1.OperatorScopeNamespace))
+		span.SetAttributes(otelattribute.String(v1.ConfigOperatorScope, v1.OperatorScopeNamespace))
 		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeNamespace)
 	}
 }
 
 func setLogLevel(ctx context.Context) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "setLogLevel")
 	defer span.End()
 
@@ -213,13 +243,14 @@ func setLogLevel(ctx context.Context) {
 }
 
 func buildIdentity(ctx context.Context, podNamespace string) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "buildIdentity")
 	defer span.End()
 
 	operatorName, found := os.LookupEnv("OPERATOR_NAME")
 	if !found {
 		log.Warn("the OPERATOR_NAME env var isn't set, this operator's identity might clash with another operator's instance")
+		operatorName = "jaeger-operator"
 	}
 
 	var identity string
@@ -229,46 +260,46 @@ func buildIdentity(ctx context.Context, podNamespace string) {
 		identity = fmt.Sprintf("%s", operatorName)
 	}
 
-	span.SetAttribute(key.String(v1.ConfigIdentity, identity))
+	span.SetAttributes(otelattribute.String(v1.ConfigIdentity, identity))
 	viper.Set(v1.ConfigIdentity, identity)
 }
 
-func buildJaegerExporter(ctx context.Context) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "buildJaegerExporter")
-	defer span.End()
-
-	agentHostPort := viper.GetString("jaeger-agent-hostport")
-	jaegerExporter, err := jaeger.NewExporter(
-		jaeger.WithAgentEndpoint(agentHostPort),
-		jaeger.WithProcess(jaeger.Process{
-			ServiceName: "jaeger-operator",
-			Tags: []core.KeyValue{
-				key.String("operator.identity", viper.GetString(v1.ConfigIdentity)),
-				key.String("operator.version", version.Get().Operator),
-			},
-		}),
-		jaeger.WithOnError(func(err error) {
-			log.WithError(err).Warn("failed to setup the Jaeger exporter")
-		}),
-	)
-	if err == nil {
-		tracing.AddJaegerExporter(jaegerExporter)
-	} else {
-		span.SetStatus(codes.Internal)
-		log.WithError(err).Warn("could not configure a Jaeger tracer for the operator")
-	}
-}
-
 func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "createManager")
 	defer span.End()
 
+	metricsHost := viper.GetString("metrics-host")
+	metricsPort := viper.GetInt("metrics-port")
+	metricsAddr := fmt.Sprintf("%s:%d", metricsHost, metricsPort)
+	enableLeaderElection := viper.GetBool("leader-elect")
+	probeAddr := viper.GetString("health-probe-bind-address")
+
+	opts := zap.Options{
+		Development: true,
+	}
+	opts.BindFlags(flag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
-	options := manager.Options{
-		Namespace:          namespace,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", viper.GetString("metrics-host"), viper.GetInt32("metrics-port")),
+
+	// see https://github.com/openshift/library-go/blob/4362aa519714a4b62b00ab8318197ba2bba51cb7/pkg/config/leaderelection/leaderelection.go#L104
+	leaseDuration := time.Second * 137
+	renewDeadline := time.Second * 107
+	retryPeriod := time.Second * 26
+	options := ctrl.Options{
+		Scheme:                 scheme,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "31e04290.jaegertracing.io",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
+		RetryPeriod:            &retryPeriod,
+		Namespace:              namespace,
 	}
 
 	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
@@ -281,60 +312,28 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	}
 
 	// Create a new manager to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, options)
+	mgr, err := ctrl.NewManager(cfg, options)
 	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
+		span.SetStatus(codes.Error, err.Error())
 		log.Fatal(err)
 	}
 
-	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.Fatal(err)
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
 	}
 
 	return mgr
 }
 
-// serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
-// It serves those metrics on "http://metricsHost:operatorMetricsPort".
-func serveCRMetrics(ctx context.Context, cfg *rest.Config, operatorNs string) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "serveCRMetrics")
-	defer span.End()
-
-	// The function below returns a list of filtered operator/CR specific GVKs. For more control, override the GVK list below
-	// with your own custom logic. Note that if you are adding third party API schemas, probably you will need to
-	// customize this implementation to avoid permissions issues.
-	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(v1.SchemeBuilder.AddToScheme)
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		log.WithError(err).Warn("could not retrieve group/version/kind managed by this operator")
-		return
-	}
-
-	// The metrics will be generated from the namespaces which are returned here.
-	// NOTE that passing nil or an empty list of namespaces in GenerateAndServeCRMetrics will result in an error.
-	ns, err := kubemetrics.GetNamespacesForMetrics(operatorNs)
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Warn("could not obtain the namespaces for metrics")
-		return
-	}
-
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, viper.GetString("metrics-host"), viper.GetInt32("cr-metrics-port"))
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Warn("could not generate and serve custom resource metrics")
-	}
-}
-
 func performUpgrades(ctx context.Context, mgr manager.Manager) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "performUpgrades")
 	defer span.End()
 
@@ -345,75 +344,56 @@ func performUpgrades(ctx context.Context, mgr manager.Manager) {
 }
 
 func setupControllers(ctx context.Context, mgr manager.Manager) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "setupControllers")
+	clientReader := mgr.GetAPIReader()
+	client := mgr.GetClient()
+	schema := mgr.GetScheme()
 	defer span.End()
 
-	if err := controller.AddToManager(mgr); err != nil {
-		log.Fatal(err)
+	if err := jaegertracingcontrollers.NewReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Jaeger")
+		os.Exit(1)
+	}
+
+	if err := appsv1controllers.NewNamespaceReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
+		os.Exit(1)
+	}
+
+	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Elasticsearch")
+		os.Exit(1)
 	}
 }
 
+func setupWebhooks(_ context.Context, mgr manager.Manager) {
+	if err := (&v1.Jaeger{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
+		os.Exit(1)
+	}
+
+	// register webhook
+	srv := mgr.GetWebhookServer()
+	srv.Register("/mutate-v1-deployment", &webhook.Admission{
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient()),
+	})
+}
+
 func getNamespace(ctx context.Context) string {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "getNamespace")
 	defer span.End()
 
 	podNamespace, found := os.LookupEnv("POD_NAMESPACE")
 	if !found {
 		log.Warn("the POD_NAMESPACE env var isn't set, trying to determine it from the service account info")
-
 		var err error
-		if podNamespace, err = k8sutil.GetOperatorNamespace(); err != nil {
-			span.SetStatus(codes.Internal)
-			span.SetAttribute(key.String("error", err.Error()))
+		if podNamespace, err = util.GetOperatorNamespace(); err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			log.WithError(err).Warn("could not read the namespace from the service account")
 		}
 	}
 
 	return podNamespace
-}
-
-func createMetricsService(ctx context.Context, cfg *rest.Config, namespace string) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "createMetricsService")
-	defer span.End()
-
-	metricsPort := viper.GetInt32("metrics-port")
-	operatorMetricsPort := viper.GetInt32("cr-metrics-port")
-
-	// Add to the below struct any other metrics ports you want to expose.
-	servicePorts := []corev1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: corev1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
-	}
-	// Create Service object to expose the metrics port(s).
-	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
-	if err != nil {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
-		log.WithError(err).Warn("could not create metrics Service")
-	}
-
-	createServiceMonitor(ctx, cfg, namespace, service)
-}
-
-func createServiceMonitor(ctx context.Context, cfg *rest.Config, namespace string, service *corev1.Service) {
-	tracer := global.TraceProvider().GetTracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "createServiceMonitor")
-	defer span.End()
-
-	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
-	// necessary to configure Prometheus to scrape metrics from this operator.
-	services := []*corev1.Service{service}
-	_, err := metrics.CreateServiceMonitors(cfg, namespace, services)
-	if err != nil {
-		if err == metrics.ErrServiceMonitorNotPresent {
-			log.WithError(err).Info("Install prometheus-operator in your cluster to create ServiceMonitor objects")
-		} else {
-			span.SetStatus(codes.Internal)
-			span.SetAttribute(key.String("error", err.Error()))
-			log.WithError(err).Warn("could not create ServiceMonitor object")
-		}
-	}
 }

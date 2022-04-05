@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestCreateEsIndexCleaner(t *testing.T) {
@@ -100,6 +100,19 @@ func TestEsIndexCleanerAnnotations(t *testing.T) {
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
+func TestEsIndexCleanerBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerAnnotations"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.EsIndexCleaner.BackoffLimit = &BackoffLimit
+
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	cjob := CreateEsIndexCleaner(jaeger)
+	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
+}
+
 func TestEsIndexCleanerLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerLabels"})
 	jaeger.Spec.Labels = map[string]string{
@@ -155,12 +168,12 @@ func TestEsIndexCleanerResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -170,7 +183,7 @@ func TestEsIndexCleanerResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					EsIndexCleaner: v1.JaegerEsIndexCleanerSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: childResources,

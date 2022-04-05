@@ -7,16 +7,16 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/api/key"
-	"go.opentelemetry.io/otel/global"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel"
+	otelattribute "go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -27,15 +27,13 @@ var (
 )
 
 func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "handleDependencies")
 	defer span.End()
 
 	for _, dep := range str.Dependencies() {
 		err := r.handleDependency(ctx, str, dep)
 		if err != nil {
-			span.SetStatus(codes.Internal)
-			span.SetAttribute(key.String("error", err.Error()))
 			return tracing.HandleError(err, span)
 		}
 	}
@@ -44,19 +42,17 @@ func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S
 }
 
 func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, dep batchv1.Job) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "handleDependency")
 	defer span.End()
 
 	span.SetAttributes(
-		key.String("dependency.name", dep.Name),
-		key.String("dependency.namespace", dep.Namespace),
+		otelattribute.String("dependency.name", dep.Name),
+		otelattribute.String("dependency.namespace", dep.Namespace),
 	)
 
 	err := r.client.Create(ctx, &dep)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		span.SetStatus(codes.Internal)
-		span.SetAttribute(key.String("error", err.Error()))
 		return tracing.HandleError(err, span)
 	}
 
@@ -80,8 +76,7 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 						"namespace": dep.Namespace,
 						"name":      dep.Name,
 					}).Warn("Dependency has been removed.")
-					span.SetStatus(codes.Internal)
-					span.SetAttribute(key.String("error", ErrDependencyRemoved.Error()))
+					span.SetStatus(codes.Error, ErrDependencyRemoved.Error())
 					return true, ErrDependencyRemoved
 				}
 

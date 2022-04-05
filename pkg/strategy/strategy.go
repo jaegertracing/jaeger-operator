@@ -8,15 +8,16 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	kafkav1beta1 "github.com/jaegertracing/jaeger-operator/pkg/apis/kafka/v1beta1"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 )
 
 // S knows what type of deployments to build based on a given spec
@@ -33,9 +34,9 @@ type S struct {
 	deployments              []appsv1.Deployment
 	elasticsearches          []esv1.Elasticsearch
 	horizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
-	ingresses                []v1beta1.Ingress
-	kafkas                   []kafkav1beta1.Kafka
-	kafkaUsers               []kafkav1beta1.KafkaUser
+	ingresses                []networkingv1.Ingress
+	kafkas                   []kafkav1beta2.Kafka
+	kafkaUsers               []kafkav1beta2.KafkaUser
 	routes                   []osv1.Route
 	services                 []corev1.Service
 	secrets                  []corev1.Secret
@@ -106,7 +107,7 @@ func (s S) WithElasticsearches(es []esv1.Elasticsearch) S {
 }
 
 // WithIngresses returns the strategy with the given list of dependencies
-func (s S) WithIngresses(i []v1beta1.Ingress) S {
+func (s S) WithIngresses(i []networkingv1.Ingress) S {
 	s.ingresses = i
 	return s
 }
@@ -124,13 +125,13 @@ func (s S) WithRoutes(r []osv1.Route) S {
 }
 
 // WithKafkas returns the strategy with the given list of Kafkas
-func (s S) WithKafkas(k []kafkav1beta1.Kafka) S {
+func (s S) WithKafkas(k []kafkav1beta2.Kafka) S {
 	s.kafkas = k
 	return s
 }
 
 // WithKafkaUsers returns the strategy with the given list of Kafka Users
-func (s S) WithKafkaUsers(k []kafkav1beta1.KafkaUser) S {
+func (s S) WithKafkaUsers(k []kafkav1beta2.KafkaUser) S {
 	s.kafkaUsers = k
 	return s
 }
@@ -188,7 +189,7 @@ func (s S) Elasticsearches() []esv1.Elasticsearch {
 }
 
 // Ingresses returns the list of ingress objects for this strategy. This might be platform-dependent
-func (s S) Ingresses() []v1beta1.Ingress {
+func (s S) Ingresses() []networkingv1.Ingress {
 	return s.ingresses
 }
 
@@ -198,12 +199,12 @@ func (s S) HorizontalPodAutoscalers() []autoscalingv2beta2.HorizontalPodAutoscal
 }
 
 // Kafkas returns the list of Kafkas for this strategy.
-func (s S) Kafkas() []kafkav1beta1.Kafka {
+func (s S) Kafkas() []kafkav1beta2.Kafka {
 	return s.kafkas
 }
 
 // KafkaUsers returns the list of KafkaUsers for this strategy.
-func (s S) KafkaUsers() []kafkav1beta1.KafkaUser {
+func (s S) KafkaUsers() []kafkav1beta2.KafkaUser {
 	return s.kafkaUsers
 }
 

@@ -5,15 +5,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -111,6 +113,32 @@ func TestQuerySecrets(t *testing.T) {
 	dep := query.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestQueryImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestQueryImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	query := NewQuery(jaeger)
+	dep := query.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestQueryPodName(t *testing.T) {
@@ -321,4 +349,71 @@ func TestQueryServiceLinks(t *testing.T) {
 	dep := query.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}
+
+func TestQueryTracingDisabled(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryJaegerDisabled"})
+	falseVar := false
+	jaeger.Spec.Query.TracingEnabled = &falseVar
+	query := NewQuery(jaeger)
+	dep := query.Get()
+	assert.Equal(t, "true", getEnvVarByName(dep.Spec.Template.Spec.Containers[0].Env, "JAEGER_DISABLED").Value)
+}
+
+func TestQueryPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Query.PriorityClassName = priorityClassName
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
+func TestQueryRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Query.Strategy = &strategy
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestQueryEmptyStrategyType(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	q := NewQuery(jaeger)
+	dep := q.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestQueryGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryGRPCPlugin"})
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	query := Query{jaeger: jaeger}
+	dep := query.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }

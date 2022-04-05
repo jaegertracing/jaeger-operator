@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -32,7 +32,9 @@ func headlessCollectorService(jaeger *v1.Jaeger, selector map[string]string) *co
 }
 
 func clusteripCollectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
-	return collectorService(jaeger, selector)
+	svc := collectorService(jaeger, selector)
+	svc.Spec.Type = getTypeForCollectorService(jaeger)
+	return svc
 }
 
 func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
@@ -95,29 +97,36 @@ func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		// we always have TLS certs when running on OpenShift, so, TLS is always enabled
-		return "https-grpc"
+		return "grpc-https"
 	}
 
 	// if we don't have a jaeger provided, it's certainly not TLS...
 	if nil == jaeger {
-		return "http-grpc"
+		return "grpc-http"
 	}
 
 	// perhaps the user has provisioned the certs and configured the CR manually?
 	// for that, we check whether the CLI option `collector.grpc.tls.enabled` was set for the collector
-	if val, ok := jaeger.Spec.Collector.Options.Map()["collector.grpc.tls.enabled"]; ok {
+	if val, ok := jaeger.Spec.Collector.Options.StringMap()["collector.grpc.tls.enabled"]; ok {
 		enabled, err := strconv.ParseBool(val)
 		if err != nil {
-			return "http-grpc" // not "true", defaults to false
+			return "grpc-http" // not "true", defaults to false
 		}
 
 		if enabled {
-			return "https-grpc" // explicit true
+			return "grpc-https" // explicit true
 		}
 
-		return "http-grpc" // explicit false
+		return "grpc-http" // explicit false
 	}
 
 	// doesn't look like we have TLS enabled
-	return "http-grpc"
+	return "grpc-http"
+}
+
+func getTypeForCollectorService(jaeger *v1.Jaeger) corev1.ServiceType {
+	if jaeger.Spec.Collector.ServiceType != "" {
+		return jaeger.Spec.Collector.ServiceType
+	}
+	return corev1.ServiceTypeClusterIP
 }

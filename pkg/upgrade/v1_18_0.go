@@ -6,8 +6,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -58,14 +57,7 @@ func migrateAgentOptions(jaeger *v1.Jaeger) v1.Options {
 	}
 
 	ops := migrateDeprecatedOptions(jaeger, jaeger.Spec.Agent.Options, deleteAgentFlags)
-	opsMap := ops.GenericMap()
-
-	// Removed support for tchannel, so we need to make sure grpc is enabled and properly configured.
-	if _, ok := opsMap["reporter.grpc.host-port"]; !ok {
-		opsMap["reporter.grpc.host-port"] = fmt.Sprintf("dns:///%s.%s:14250",
-			service.GetNameForHeadlessCollectorService(jaeger), jaeger.Namespace)
-	}
-	return v1.NewOptions(opsMap)
+	return v1.NewOptions(ops.GenericMap())
 }
 
 func transformCollectorPorts(logger *log.Entry, opts v1.Options, collectorNewFlagsMap []deprecationFlagMap) v1.Options {

@@ -1,0 +1,7 @@
+# Install the Jaeger instance
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: {{ .Env.JAEGER_NAME }}
+spec:
+  strategy: allInOne

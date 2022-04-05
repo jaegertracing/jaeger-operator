@@ -2,6 +2,7 @@ package autodetect
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -17,11 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/ingress"
-
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
+
+var listenedGroupsMap = map[string]bool{"logging.openshift.io": true, "kafka.strimzi.io": true, "route.openshift.io": true}
 
 // Background represents a procedure that runs in the background, periodically auto-detecting features
 type Background struct {
@@ -65,18 +66,12 @@ func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.
 func (b *Background) Start() {
 	// periodically attempts to auto detect all the capabilities for this operator
 	b.ticker = time.NewTicker(5 * time.Second)
-
-	done := make(chan bool)
-	go func() {
-		b.autoDetectCapabilities()
-		done <- true
-	}()
+	b.autoDetectCapabilities()
+	log.Trace("finished the first auto-detection")
 
 	go func() {
 		for {
 			select {
-			case <-done:
-				log.Trace("finished the first auto-detection")
 			case <-b.ticker.C:
 				b.autoDetectCapabilities()
 			}
@@ -92,7 +87,7 @@ func (b *Background) Stop() {
 func (b *Background) autoDetectCapabilities() {
 	ctx := context.Background()
 
-	apiList, err := b.availableAPIs(ctx)
+	apiList, err := AvailableAPIs(b.dcl, listenedGroupsMap)
 	if err != nil {
 		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will remain the same until next cycle.")
 	} else {
@@ -100,7 +95,6 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
-			b.detectIngressAPI()
 
 		})
 
@@ -112,16 +106,29 @@ func (b *Background) autoDetectCapabilities() {
 	b.cleanDeployments(ctx)
 }
 
-func (b *Background) availableAPIs(ctx context.Context) (*metav1.APIGroupList, error) {
-	apiList, err := b.dcl.ServerGroups()
+// AvailableAPIs returns available list of CRDs from the cluster.
+func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]bool) ([]*metav1.APIResourceList, error) {
+	var apiLists []*metav1.APIResourceList
+	groupList, err := discovery.ServerGroups()
 	if err != nil {
-		return nil, err
+		return apiLists, err
 	}
 
-	return apiList, nil
+	var errors error
+	for _, sg := range groupList.Groups {
+		if groups[sg.Name] {
+			groupAPIList, err := discovery.ServerResourcesForGroupVersion(sg.PreferredVersion.GroupVersion)
+			if err == nil {
+				apiLists = append(apiLists, groupAPIList)
+			} else {
+				errors = fmt.Errorf("%v; Error getting resources for server group %s: %v", errors, sg.Name, err)
+			}
+		}
+	}
+	return apiLists, errors
 }
 
-func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
 		log.Trace("Attempting to auto-detect the platform")
@@ -137,29 +144,12 @@ func (b *Background) detectPlatform(ctx context.Context, apiList *metav1.APIGrou
 	}
 }
 
-func (b *Background) detectIngressAPI() {
-	apiRes, err := b.dcl.ServerResourcesForGroupVersion("networking.k8s.io/v1beta1")
-	if err != nil {
-		viper.Set("ingress-api", ingress.ExtensionAPI)
-		log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
-		return
-	}
-
-	for _, r := range apiRes.APIResources {
-		if r.Name == "ingresses" {
-			viper.Set("ingress-api", ingress.NetworkingAPI)
-			log.WithField("ingress-api", viper.GetString("ingress-api")).Info("Auto-detected ingress api")
-			break
-		}
-	}
-}
-
-func (b *Background) detectElasticsearch(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect whether the Elasticsearch operator is available
 	if b.retryDetectEs {
 		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
 		previous := viper.GetString("es-provision")
-		if isElasticsearchOperatorAvailable(apiList) {
+		if IsElasticsearchOperatorAvailable(apiList) {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
 		} else {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
@@ -174,7 +164,7 @@ func (b *Background) detectElasticsearch(ctx context.Context, apiList *metav1.AP
 }
 
 // detectKafka checks whether the Kafka Operator is available
-func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupList) {
+func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourceList) {
 	// viper has a "IsSet" method that we could use, except that it returns "true" even
 	// when nothing is set but it finds a 'Default' value...
 	if b.retryDetectKafka {
@@ -196,6 +186,9 @@ func (b *Background) detectKafka(ctx context.Context, apiList *metav1.APIGroupLi
 }
 
 func (b *Background) detectClusterRoles(ctx context.Context) {
+	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		return
+	}
 	tr := &authenticationapi.TokenReview{
 		ObjectMeta: metav1.ObjectMeta{Name: "jaeger-operator-TEST"},
 		Spec: authenticationapi.TokenReviewSpec{
@@ -278,30 +271,32 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 	}
 }
 
-func isOpenShift(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "route.openshift.io" {
+func isOpenShift(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "route.openshift.io") {
 			return true
 		}
 	}
 	return false
 }
 
-func isElasticsearchOperatorAvailable(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "logging.openshift.io" {
-			return true
+// IsElasticsearchOperatorAvailable returns true if OpenShift Elasticsearch CRD is available in the cluster.
+func IsElasticsearchOperatorAvailable(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "logging.openshift.io") {
+			for _, api := range r.APIResources {
+				if api.Kind == "Elasticsearch" {
+					return true
+				}
+			}
 		}
 	}
 	return false
 }
 
-func isKafkaOperatorAvailable(apiList *metav1.APIGroupList) bool {
-	apiGroups := apiList.Groups
-	for i := 0; i < len(apiGroups); i++ {
-		if apiGroups[i].Name == "kafka.strimzi.io" {
+func isKafkaOperatorAvailable(apiList []*metav1.APIResourceList) bool {
+	for _, r := range apiList {
+		if strings.HasPrefix(r.GroupVersion, "kafka.strimzi.io") {
 			return true
 		}
 	}

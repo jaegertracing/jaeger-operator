@@ -1,20 +1,37 @@
 name: "CI Workflow"
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   basic-checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    env:
+      USER: jaegertracing
     steps:
-    - uses: actions/setup-go@v1
+    - name: Set up Go
+      uses: actions/setup-go@v3
       with:
-        go-version: '1.14.4'
-    - uses: actions/checkout@v1
-    - uses: jpkrohling/setup-operator-sdk@v1-release
-      with:
-        operator-sdk-version: v0.18.2
+        go-version: 1.17
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: "install kubebuilder"
+      run: ./hack/install/install-kubebuilder.sh
+
+    - name: "install kustomize"
+      run: ./hack/install/install-kustomize.sh
 
     - name: "basic checks"
-      run: ./.ci/script.sh
+      run: make install-tools ci
 
     - name: "upload test coverage report"
       env:

@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -31,7 +31,7 @@ func TestIngressesCreate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithIngresses([]v1beta1.Ingress{{
+		s := strategy.New().WithIngresses([]networkingv1.Ingress{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nsn.Name,
 			},
@@ -46,7 +46,7 @@ func TestIngressesCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.Ingress{}
+	persisted := &networkingv1.Ingress{}
 	persistedName := types.NamespacedName{
 		Name:      nsn.Name,
 		Namespace: nsn.Namespace,
@@ -62,7 +62,7 @@ func TestIngressesUpdate(t *testing.T) {
 		Name: "TestIngressesUpdate",
 	}
 
-	orig := v1beta1.Ingress{}
+	orig := networkingv1.Ingress{}
 	orig.Name = nsn.Name
 	orig.Annotations = map[string]string{"key": "value"}
 	orig.Labels = map[string]string{
@@ -77,11 +77,11 @@ func TestIngressesUpdate(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		updated := v1beta1.Ingress{}
+		updated := networkingv1.Ingress{}
 		updated.Name = orig.Name
 		updated.Annotations = map[string]string{"key": "new-value"}
 
-		s := strategy.New().WithIngresses([]v1beta1.Ingress{updated})
+		s := strategy.New().WithIngresses([]networkingv1.Ingress{updated})
 		return s
 	}
 
@@ -90,7 +90,7 @@ func TestIngressesUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Ingress{}
+	persisted := &networkingv1.Ingress{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -106,7 +106,7 @@ func TestIngressesDelete(t *testing.T) {
 		Name: "TestIngressesDelete",
 	}
 
-	orig := v1beta1.Ingress{}
+	orig := networkingv1.Ingress{}
 	orig.Name = nsn.Name
 	orig.Labels = map[string]string{
 		"app.kubernetes.io/instance":   nsn.Name,
@@ -128,7 +128,7 @@ func TestIngressesDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// verify
-	persisted := &v1beta1.Ingress{}
+	persisted := &networkingv1.Ingress{}
 	persistedName := types.NamespacedName{
 		Name:      orig.Name,
 		Namespace: orig.Namespace,
@@ -152,7 +152,7 @@ func TestIngressesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	objs := []runtime.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
-		&v1beta1.Ingress{
+		&networkingv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsnExisting.Name,
 				Namespace: nsnExisting.Namespace,
@@ -166,7 +166,7 @@ func TestIngressesCreateExistingNameInAnotherNamespace(t *testing.T) {
 
 	r, cl := getReconciler(objs)
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {
-		s := strategy.New().WithIngresses([]v1beta1.Ingress{{
+		s := strategy.New().WithIngresses([]networkingv1.Ingress{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsn.Name,
 				Namespace: nsn.Namespace,
@@ -182,13 +182,13 @@ func TestIngressesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
-	persisted := &v1beta1.Ingress{}
+	persisted := &networkingv1.Ingress{}
 	err = cl.Get(context.Background(), nsn, persisted)
 	assert.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
-	persistedExisting := &v1beta1.Ingress{}
+	persistedExisting := &networkingv1.Ingress{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 
@@ -66,12 +66,13 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 func TestOAuthProxyWithCustomSAR(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.SAR = `{"namespace": "default", "resource": "pods", "verb": "get"}`
+	sar := `{"namespace": "default", "resource": "pods", "verb": "get"}`
+	jaeger.Spec.Ingress.Openshift.SAR = &sar
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--openshift-sar=%s", jaeger.Spec.Ingress.Openshift.SAR) {
+		if a == fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR) {
 			found = true
 		}
 	}

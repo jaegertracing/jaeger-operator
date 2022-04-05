@@ -7,16 +7,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // EnableRollover returns true if rollover should be enabled
 func EnableRollover(spec v1.JaegerStorageSpec) bool {
-	useAliases := spec.Options.Map()["es.use-aliases"]
-	return strings.EqualFold(spec.Type, "elasticsearch") && strings.EqualFold(useAliases, "true")
+	useAliases := spec.Options.StringMap()["es.use-aliases"]
+	return (spec.Type == v1.JaegerESStorage) && strings.EqualFold(useAliases, "true")
 }
 
 func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
@@ -78,7 +78,7 @@ func envVars(opts v1.Options) []corev1.EnvVar {
 		{flag: "es.num-shards", envVar: "SHARDS"},
 		{flag: "es.num-replicas", envVar: "REPLICAS"},
 	}
-	options := opts.Map()
+	options := opts.StringMap()
 	for _, x := range scriptEnvVars {
 		if val, ok := options[x.flag]; ok {
 			envs = append(envs, corev1.EnvVar{Name: x.envVar, Value: val})

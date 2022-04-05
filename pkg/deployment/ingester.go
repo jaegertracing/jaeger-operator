@@ -5,16 +5,14 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -49,7 +47,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 14270)
+	adminPort := util.GetAdminPort(args, 14270)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -75,22 +73,22 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	}
 
 	options := allArgs(i.jaeger.Spec.Ingester.Options,
-		i.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(i.jaeger.Spec.Storage.Type)))
+		i.jaeger.Spec.Storage.Options.Filter(i.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	ca.Update(i.jaeger, commonSpec)
-
-	otelConf, err := i.jaeger.Spec.Ingester.Config.GetMap()
-	if err != nil {
-		i.jaeger.Logger().WithField("error", err).
-			WithField("component", "ingester").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(i.jaeger, i.jaeger.Spec.Ingester.Options, otelConf) {
-		otelconfig.Update(i.jaeger, "ingester", commonSpec, &options)
-	}
+	storage.UpdateGRPCPlugin(i.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if i.jaeger.Spec.Ingester.Strategy != nil {
+		strategy = *i.jaeger.Spec.Ingester.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -114,19 +112,21 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: i.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
 						Name:  "jaeger-ingester",
 						Args:  options,
 						Env: []corev1.EnvVar{{
 							Name:  "SPAN_STORAGE_TYPE",
-							Value: i.jaeger.Spec.Storage.Type,
+							Value: string(i.jaeger.Spec.Storage.Type),
 						}},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
@@ -137,7 +137,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -148,7 +148,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -156,7 +156,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, account.IngesterComponent),
@@ -164,6 +165,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(i.jaeger, commonSpec),
 				},
 			},
 		},

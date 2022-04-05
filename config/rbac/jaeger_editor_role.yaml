@@ -1,0 +1,24 @@
+# permissions for end users to edit jaegers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jaeger-operator-editor-role
+rules:
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - jaegers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jaegertracing.io
+  resources:
+  - jaegers/status
+  verbs:
+  - get

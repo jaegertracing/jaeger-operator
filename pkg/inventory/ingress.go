@@ -3,21 +3,21 @@ package inventory
 import (
 	"fmt"
 
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Ingress represents the inventory of ingresses based on the current and desired states
 type Ingress struct {
-	Create []v1beta1.Ingress
-	Update []v1beta1.Ingress
-	Delete []v1beta1.Ingress
+	Create []networkingv1.Ingress
+	Update []networkingv1.Ingress
+	Delete []networkingv1.Ingress
 }
 
 // ForIngresses builds an inventory of ingresses based on the existing and desired states
-func ForIngresses(existing []v1beta1.Ingress, desired []v1beta1.Ingress) Ingress {
-	update := []v1beta1.Ingress{}
+func ForIngresses(existing []networkingv1.Ingress, desired []networkingv1.Ingress) Ingress {
+	update := []networkingv1.Ingress{}
 	mcreate := ingressMap(desired)
 	mdelete := ingressMap(existing)
 
@@ -51,16 +51,16 @@ func ForIngresses(existing []v1beta1.Ingress, desired []v1beta1.Ingress) Ingress
 	}
 }
 
-func ingressMap(deps []v1beta1.Ingress) map[string]v1beta1.Ingress {
-	m := map[string]v1beta1.Ingress{}
+func ingressMap(deps []networkingv1.Ingress) map[string]networkingv1.Ingress {
+	m := map[string]networkingv1.Ingress{}
 	for _, d := range deps {
 		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }
 
-func ingressList(m map[string]v1beta1.Ingress) []v1beta1.Ingress {
-	l := []v1beta1.Ingress{}
+func ingressList(m map[string]networkingv1.Ingress) []networkingv1.Ingress {
+	l := []networkingv1.Ingress{}
 	for _, v := range m {
 		l = append(l, v)
 	}

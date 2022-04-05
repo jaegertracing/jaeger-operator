@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -45,7 +45,7 @@ var masterSecret = secret{
 
 // es secret is used by Elasticsearch nodes
 var esSecret = secret{
-	name: "elasticsearch",
+	name: string(v1.JaegerESStorage),
 	keyFileNameMap: map[string]string{
 		"elasticsearch.key": "elasticsearch.key",
 		"elasticsearch.crt": "elasticsearch.crt",

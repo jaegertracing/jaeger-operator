@@ -5,30 +5,44 @@ import (
 	"strconv"
 	"strings"
 
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 const (
-	volumeName       = "certs"
-	volumeMountPath  = "/certs"
-	caPath           = volumeMountPath + "/ca"
-	keyPath          = volumeMountPath + "/key"
-	certPath         = volumeMountPath + "/cert"
-	elasticsearchURL = "https://elasticsearch:9200"
+	volumeName               = "certs"
+	volumeMountPath          = "/certs"
+	caPathESCerManagement    = volumeMountPath + "/ca-bundle.crt"
+	keyPathESCertManagement  = volumeMountPath + "/tls.key"
+	certPathESCertManagement = volumeMountPath + "/tls.crt"
+	caPath                   = volumeMountPath + "/ca"
+	keyPath                  = volumeMountPath + "/key"
+	certPath                 = volumeMountPath + "/cert"
 )
 
-// ShouldDeployElasticsearch determines whether a new instance of Elasticsearch should be deployed
-func ShouldDeployElasticsearch(s v1.JaegerStorageSpec) bool {
-	if !strings.EqualFold(s.Type, "elasticsearch") {
-		return false
+func (ed *ElasticsearchDeployment) getCertPath() string {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
+		return certPathESCertManagement
 	}
-	_, ok := s.Options.Map()["es.server-urls"]
-	return !ok
+	return certPath
+}
+
+func (ed *ElasticsearchDeployment) getCertKeyPath() string {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
+		return keyPathESCertManagement
+	}
+	return keyPath
+}
+
+func (ed *ElasticsearchDeployment) getCertCaPath() string {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
+		return caPathESCerManagement
+	}
+	return caPath
 }
 
 // ElasticsearchDeployment represents an ES deployment for Jaeger
@@ -39,14 +53,14 @@ type ElasticsearchDeployment struct {
 }
 
 func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
-	container.Args = append(container.Args, "--es.server-urls="+elasticsearchURL)
+	container.Args = append(container.Args, fmt.Sprintf("--es.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
 	if util.FindItem("--es.tls=", container.Args) == "" && util.FindItem("--es.tls.enabled=", container.Args) == "" {
 		container.Args = append(container.Args, "--es.tls.enabled=true")
 	}
 	container.Args = append(container.Args,
-		"--es.tls.ca="+caPath,
-		"--es.tls.cert="+certPath,
-		"--es.tls.key="+keyPath)
+		"--es.tls.ca="+ed.getCertCaPath(),
+		"--es.tls.cert="+ed.getCertPath(),
+		"--es.tls.key="+ed.getCertKeyPath())
 
 	if util.FindItem("--es.timeout", container.Args) == "" {
 		container.Args = append(container.Args, "--es.timeout=15s")
@@ -61,16 +75,14 @@ func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) 
 			calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
 	}
 	if strings.EqualFold(util.FindItem("--es-archive.enabled", container.Args), "--es-archive.enabled=true") {
-		container.Args = append(container.Args,
-			"--es-archive.server-urls="+elasticsearchURL,
-		)
+		container.Args = append(container.Args, fmt.Sprintf("--es-archive.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
 		if util.FindItem("--es-archive.tls=", container.Args) == "" && util.FindItem("--es-archive.tls.enabled=", container.Args) == "" {
 			container.Args = append(container.Args, "--es-archive.tls.enabled=true")
 		}
 		container.Args = append(container.Args,
-			"--es-archive.tls.ca="+caPath,
-			"--es-archive.tls.cert="+certPath,
-			"--es-archive.tls.key="+keyPath,
+			"--es-archive.tls.ca="+ed.getCertCaPath(),
+			"--es-archive.tls.cert="+ed.getCertPath(),
+			"--es-archive.tls.key="+ed.getCertKeyPath(),
 		)
 		if util.FindItem("--es-archive.timeout", container.Args) == "" {
 			container.Args = append(container.Args, "--es-archive.timeout=15s")
@@ -93,7 +105,7 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: jaegerSecret.instanceName(ed.Jaeger),
+				SecretName: jaegerESSecretName(*ed.Jaeger),
 			},
 		},
 	})
@@ -114,19 +126,19 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: curatorSecret.instanceName(ed.Jaeger),
+				SecretName: jaegerESSecretName(*ed.Jaeger),
 			},
 		},
 	})
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
 		// the size of arguments array should be always 2
-		p.Containers[0].Args[1] = elasticsearchURL
+		p.Containers[0].Args[1] = fmt.Sprintf("https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
 		p.Containers[0].Env = append(p.Containers[0].Env,
 			corev1.EnvVar{Name: "ES_TLS", Value: "true"},
-			corev1.EnvVar{Name: "ES_TLS_CA", Value: caPath},
-			corev1.EnvVar{Name: "ES_TLS_KEY", Value: keyPath},
-			corev1.EnvVar{Name: "ES_TLS_CERT", Value: certPath},
+			corev1.EnvVar{Name: "ES_TLS_CA", Value: ed.getCertCaPath()},
+			corev1.EnvVar{Name: "ES_TLS_KEY", Value: ed.getCertKeyPath()},
+			corev1.EnvVar{Name: "ES_TLS_CERT", Value: ed.getCertPath()},
 			corev1.EnvVar{Name: "SHARDS", Value: strconv.Itoa(int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))},
 			corev1.EnvVar{Name: "REPLICAS", Value: strconv.Itoa(calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount)))},
 		)
@@ -140,6 +152,12 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 
 // Elasticsearch returns an ES CR for the deployment
 func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.DoNotProvision {
+		// Do not provision ES
+		// The ES instance will be reused from already provisioned one
+		return nil
+	}
+
 	// this might yield names like:
 	// elasticsearch-cdm-osdke2ee7864afba6854e498f316bd37347f666simpleprod-1
 	// for the above value to contain at most 63 chars, our uuid has to have at most 42 chars
@@ -148,13 +166,21 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 	if ed.Jaeger.Spec.Storage.Elasticsearch.Resources != nil {
 		res = *ed.Jaeger.Spec.Storage.Elasticsearch.Resources
 	}
+
+	annotations := map[string]string{}
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement == true {
+		annotations["logging.openshift.io/elasticsearch-cert-management"] = "true"
+		// The value has to match searchguard configuration
+		// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34
+		annotations[fmt.Sprintf("logging.openshift.io/elasticsearch-cert.%s", jaegerESSecretName(*ed.Jaeger))] = "user.jaeger"
+	}
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ed.Jaeger.Namespace,
-			Name:      esSecret.name,
+			Name:      ed.Jaeger.Spec.Storage.Elasticsearch.Name,
 			Labels: map[string]string{
 				"app":                         "jaeger",
-				"app.kubernetes.io/name":      util.Truncate(esSecret.name, 63),
+				"app.kubernetes.io/name":      util.Truncate(ed.Jaeger.Spec.Storage.Elasticsearch.Name, 63),
 				"app.kubernetes.io/instance":  util.Truncate(ed.Jaeger.Name, 63),
 				"app.kubernetes.io/component": "elasticsearch",
 				"app.kubernetes.io/part-of":   "jaeger",
@@ -162,14 +188,16 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 				// to manipulate with objects created by ES operator.
 				//"app.kubernetes.io/managed-by": "jaeger-operator",
 			},
+			Annotations:     annotations,
 			OwnerReferences: []metav1.OwnerReference{util.AsOwner(ed.Jaeger)},
 		},
 		Spec: esv1.ElasticsearchSpec{
 			ManagementState:  esv1.ManagementStateManaged,
 			RedundancyPolicy: ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy,
 			Spec: esv1.ElasticsearchNodeSpec{
-				Image:     ed.Jaeger.Spec.Storage.Elasticsearch.Image,
-				Resources: res,
+				Image:       ed.Jaeger.Spec.Storage.Elasticsearch.Image,
+				Resources:   res,
+				Tolerations: ed.Jaeger.Spec.Storage.Elasticsearch.Tolerations,
 			},
 			Nodes: getNodes(uuid, ed.Jaeger.Spec.Storage.Elasticsearch),
 		},
@@ -221,4 +249,14 @@ func calculateReplicaShards(policyType esv1.RedundancyPolicyType, dataNodes int)
 	default:
 		return 1
 	}
+}
+
+func jaegerESSecretName(jaeger v1.Jaeger) string {
+	prefix := ""
+	// ES cert management creates cert named jaeger-<elasticsearch-name>
+	// Cert management in Jaeger creates cert named <jaeger-name>-jaeger-elasticsearch
+	if jaeger.Spec.Storage.Elasticsearch.UseCertManagement == nil || !*jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
+		prefix = jaeger.Name + "-"
+	}
+	return fmt.Sprintf("%sjaeger-%s", prefix, jaeger.Spec.Storage.Elasticsearch.Name)
 }

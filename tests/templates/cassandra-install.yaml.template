@@ -1,0 +1,5 @@
+# Install Cassandra
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "cd {{ .Env.ROOT_DIR }} && make cassandra STORAGE_NAMESPACE=$NAMESPACE"

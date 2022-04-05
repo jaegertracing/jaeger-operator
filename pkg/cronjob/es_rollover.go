@@ -10,8 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -51,8 +51,9 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
-					Parallelism: &one,
-					Template:    *createTemplate(name, "rollover", jaeger, envs),
+					Parallelism:  &one,
+					BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
+					Template:     *createTemplate(name, "rollover", jaeger, envs),
 				},
 			},
 		},
@@ -154,7 +155,7 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 		{flag: "es.tls.key", envVar: "ES_TLS_KEY"},
 		{flag: "es.tls.skip-host-verify", envVar: "ES_TLS_SKIP_HOST_VERIFY"},
 	}
-	options := opts.Map()
+	options := opts.StringMap()
 	var envs []corev1.EnvVar
 	for _, x := range scriptEnvVars {
 		if val, ok := options[x.flag]; ok {

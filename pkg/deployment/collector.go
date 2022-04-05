@@ -5,16 +5,14 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
@@ -43,7 +41,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	args := append(c.jaeger.Spec.Collector.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 14269)
+	adminPort := util.GetAdminPort(args, 14269)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -72,27 +70,34 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// If strategy is DeploymentStrategyStreaming, then change storage type
 	// to Kafka, and the storage options will be used in the Ingester instead
 	if c.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
-		storageType = "kafka"
+		storageType = v1.JaegerKafkaStorage
 	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,
-		c.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(storageType)))
+		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
-	tls.Update(c.jaeger, commonSpec, &options)
-	ca.Update(c.jaeger, commonSpec)
-
-	otelConf, err := c.jaeger.Spec.Collector.Config.GetMap()
-	if err != nil {
-		c.jaeger.Logger().WithField("error", err).
-			WithField("component", "collector").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(c.jaeger, c.jaeger.Spec.Collector.Options, otelConf) {
-		otelconfig.Update(c.jaeger, "collector", commonSpec, &options)
+	if len(util.FindItem("--collector.grpc.tls.enabled=", args)) == 0 {
+		tls.Update(c.jaeger, commonSpec, &options)
 	}
+	ca.Update(c.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(c.jaeger, commonSpec)
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	priorityClassName := ""
+	if c.jaeger.Spec.Collector.PriorityClassName != "" {
+		priorityClassName = c.jaeger.Spec.Collector.PriorityClassName
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if c.jaeger.Spec.Collector.Strategy != nil {
+		strategy = *c.jaeger.Spec.Collector.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -117,12 +122,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
 						Name:  "jaeger-collector",
@@ -130,11 +137,11 @@ func (c *Collector) Get() *appsv1.Deployment {
 						Env: []corev1.EnvVar{
 							{
 								Name:  "SPAN_STORAGE_TYPE",
-								Value: storageType,
+								Value: string(storageType),
 							},
 							{
-								Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-								Value: "9411",
+								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+								Value: ":9411",
 							},
 						},
 						VolumeMounts: commonSpec.VolumeMounts,
@@ -162,7 +169,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -173,7 +180,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -181,14 +188,17 @@ func (c *Collector) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(c.jaeger, account.CollectorComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(c.jaeger, commonSpec),
 				},
 			},
 		},

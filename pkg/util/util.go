@@ -11,7 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
@@ -74,6 +74,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var serviceAccount string
+	var imagePullSecrets []corev1.LocalObjectReference
+	var imagePullPolicy corev1.PullPolicy
 
 	for _, commonSpec := range commonSpecs {
 		// Merge annotations
@@ -110,18 +112,28 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 		if serviceAccount == "" {
 			serviceAccount = commonSpec.ServiceAccount
 		}
+
+		for _, ips := range commonSpec.ImagePullSecrets {
+			imagePullSecrets = append(imagePullSecrets, ips)
+		}
+
+		if imagePullPolicy == corev1.PullPolicy("") {
+			imagePullPolicy = commonSpec.ImagePullPolicy
+		}
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:     annotations,
-		Labels:          labels,
-		VolumeMounts:    RemoveDuplicatedVolumeMounts(volumeMounts),
-		Volumes:         RemoveDuplicatedVolumes(volumes),
-		Resources:       *resources,
-		Affinity:        affinity,
-		Tolerations:     tolerations,
-		SecurityContext: securityContext,
-		ServiceAccount:  serviceAccount,
+		Annotations:      annotations,
+		Labels:           labels,
+		VolumeMounts:     RemoveDuplicatedVolumeMounts(volumeMounts),
+		Volumes:          RemoveDuplicatedVolumes(volumes),
+		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:  imagePullPolicy,
+		Resources:        *resources,
+		Affinity:         affinity,
+		Tolerations:      tolerations,
+		SecurityContext:  securityContext,
+		ServiceAccount:   serviceAccount,
 	}
 }
 
@@ -177,12 +189,16 @@ func Labels(name, component string, jaeger v1.Jaeger) map[string]string {
 }
 
 // GetEsHostname return first ES hostname from options map
-func GetEsHostname(opts map[string]string) string {
+func GetEsHostname(opts map[string]interface{}) string {
 	urls, ok := opts["es.server-urls"]
 	if !ok {
 		return ""
 	}
-	urlArr := strings.Split(urls, ",")
+	urlsString, isString := urls.(string)
+	if !isString {
+		return ""
+	}
+	urlArr := strings.Split(urlsString, ",")
 	return urlArr[0]
 }
 
@@ -220,6 +236,19 @@ func GetPort(arg string, args []string, port int32) int32 {
 				port = int32(newPort)
 			}
 		}
+	}
+
+	return port
+}
+
+// GetAdminPort returns a port, either from supplied default port, or extracted from supplied arg value.
+// If new admin port flag exists, it will extracted from the new flag, otherwise will try to extract
+// from deprecated flag.
+func GetAdminPort(args []string, port int32) int32 {
+	if portArg := FindItem("--admin.http.host-port=", args); len(portArg) > 0 {
+		port = GetPort("--admin.http.host-port=", args, port)
+	} else {
+		port = GetPort("--admin-http-port=", args, port)
 	}
 
 	return port

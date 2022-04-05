@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestStorageEnvs(t *testing.T) {
@@ -20,7 +20,7 @@ func TestStorageEnvs(t *testing.T) {
 		expected []corev1.EnvVar
 	}{
 		{storage: v1.JaegerStorageSpec{Type: "foo"}},
-		{storage: v1.JaegerStorageSpec{Type: "cassandra",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none"})},
 			expected: []corev1.EnvVar{
@@ -32,7 +32,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_LOCAL_DC", Value: ""},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "cassandra",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
 			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
 				"cassandra.username": "jdoe", "cassandra.password": "none", "cassandra.tls": "ofcourse!", "cassandra.local-dc": "no-remote"})},
 			expected: []corev1.EnvVar{
@@ -44,7 +44,7 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_LOCAL_DC", Value: "no-remote"},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
 				"es.username": "jdoe", "es.password": "none"})},
 			expected: []corev1.EnvVar{
@@ -52,8 +52,9 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: ""},
 			}},
-		{storage: v1.JaegerStorageSpec{Type: "elasticsearch",
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
 			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
 				"es.username": "jdoe", "es.password": "none"}),
 			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchClientNodeOnly: &trueVar, ElasticsearchNodesWanOnly: &falseVar}},
@@ -62,8 +63,20 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: ""},
 				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "true"},
+			}},
+		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
+			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+				"es.username": "jdoe", "es.password": "none"}),
+			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchTimeRange: "30m"}},
+			expected: []corev1.EnvVar{
+				{Name: "ES_NODES", Value: "lol:hol"},
+				{Name: "ES_INDEX_PREFIX", Value: "haha"},
+				{Name: "ES_USERNAME", Value: "jdoe"},
+				{Name: "ES_PASSWORD", Value: "none"},
+				{Name: "ES_TIME_RANGE", Value: "30m"},
 			}},
 	}
 	for _, test := range tests {
@@ -73,7 +86,7 @@ func TestStorageEnvs(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}))
+	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}))
 }
 
 func TestSparkDependenciesSecrets(t *testing.T) {
@@ -90,7 +103,7 @@ func TestSparkDependenciesSecrets(t *testing.T) {
 }
 
 func TestSparkDependencies(t *testing.T) {
-	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}}
+	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}
 	historyLimits := int32(3)
 	j.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit = &historyLimits
 	cjob := CreateSparkDependencies(j)
@@ -116,6 +129,16 @@ func TestDependenciesAnnotations(t *testing.T) {
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
+}
+
+func TestSparkDependenciesBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesSecrets"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.Dependencies.BackoffLimit = &BackoffLimit
+
+	cronJob := CreateSparkDependencies(jaeger)
+	assert.Equal(t, &BackoffLimit, cronJob.Spec.JobTemplate.Spec.BackoffLimit)
 }
 
 func TestDependenciesLabels(t *testing.T) {
@@ -168,12 +191,12 @@ func TestSparkDependenciesResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -183,7 +206,7 @@ func TestSparkDependenciesResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					Dependencies: v1.JaegerDependenciesSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: dependencyResources,
@@ -205,13 +228,13 @@ func TestSparkDependenciesResources(t *testing.T) {
 }
 
 func TestDefaultSparkDependenciesImage(t *testing.T) {
-	viper.SetDefault("jaeger-spark-dependencies-image", "jaegertracing/spark-dependencies")
+	viper.SetDefault("jaeger-spark-dependencies-image", "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies")
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
 
 	cjob := CreateSparkDependencies(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
-	assert.Equal(t, "jaegertracing/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
 
 func TestCustomSparkDependenciesImage(t *testing.T) {
@@ -223,4 +246,38 @@ func TestCustomSparkDependenciesImage(t *testing.T) {
 	cjob := CreateSparkDependencies(jaeger)
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
 	assert.Equal(t, "org/custom-spark-dependencies-image", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestDependenciesVolumes(t *testing.T) {
+	testVolumeName := "testDependenciesVolume"
+	testConfigMapName := "dvConfigMap"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDependenciesVolumes"})
+	testVolume := corev1.Volume{
+		Name: testVolumeName,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: testConfigMapName},
+			},
+		},
+	}
+	testVolumes := []corev1.Volume{testVolume}
+	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes = testVolumes
+
+	testVolumeMountName := "testVolumeMount"
+	testMountPath := "/es-tls"
+	testVolumeMount := corev1.VolumeMount{
+		Name:      testVolumeMountName,
+		ReadOnly:  false,
+		MountPath: testMountPath,
+	}
+	testVolumeMounts := []corev1.VolumeMount{testVolumeMount}
+	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts = testVolumeMounts
+
+	cjob := CreateSparkDependencies(jaeger)
+	assert.Equal(t, testVolumeMountName, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].Name)
+	assert.False(t, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].ReadOnly)
+	assert.Equal(t, testMountPath, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
+
+	assert.Equal(t, testVolumeName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].Name)
+	assert.Equal(t, testConfigMapName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].ConfigMap.Name)
 }

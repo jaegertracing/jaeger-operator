@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -142,6 +142,16 @@ func TestEsRolloverAnnotations(t *testing.T) {
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])
 }
 
+func TestEsRolloverBackoffLimit(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerAnnotations"})
+
+	BackoffLimit := int32(3)
+	jaeger.Spec.Storage.EsRollover.BackoffLimit = &BackoffLimit
+
+	cjob := rollover(jaeger)
+	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
+}
+
 func TestEsRolloverLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverLabels"})
 	jaeger.Spec.Labels = map[string]string{
@@ -189,12 +199,12 @@ func TestEsRolloverResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -204,7 +214,7 @@ func TestEsRolloverResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					EsRollover: v1.JaegerEsRolloverSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: childResources,
@@ -292,12 +302,12 @@ func TestEsRolloverLookbackResources(t *testing.T) {
 		expected corev1.ResourceRequirements
 	}{
 		{
-			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: "elasticsearch"}}},
+			jaeger:   &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}},
 			expected: corev1.ResourceRequirements{},
 		},
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
-				Storage: v1.JaegerStorageSpec{Type: "elasticsearch"},
+				Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 				JaegerCommonSpec: v1.JaegerCommonSpec{
 					Resources: parentResources,
 				},
@@ -307,7 +317,7 @@ func TestEsRolloverLookbackResources(t *testing.T) {
 		{
 			jaeger: &v1.Jaeger{Spec: v1.JaegerSpec{
 				Storage: v1.JaegerStorageSpec{
-					Type: "elasticsearch",
+					Type: v1.JaegerESStorage,
 					EsRollover: v1.JaegerEsRolloverSpec{
 						JaegerCommonSpec: v1.JaegerCommonSpec{
 							Resources: childResources,

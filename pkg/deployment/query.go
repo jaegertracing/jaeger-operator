@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -38,7 +38,7 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	args := append(q.jaeger.Spec.Query.Options.ToArgs())
 
-	adminPort := util.GetPort("--admin-http-port=", args, 16687)
+	adminPort := util.GetAdminPort(args, 16687)
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
@@ -46,24 +46,30 @@ func (q *Query) Get() *appsv1.Deployment {
 			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
 			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
-
-			// note that we are explicitly using a string here, not the value from `inject.Annotation`
-			// this has two reasons:
-			// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
-			// 2) this specific string is part of the "public API" of the operator: we should not change
-			// it at will. So, we leave this configured just like any other application would
-			"sidecar.jaegertracing.io/inject": q.jaeger.Name,
 		},
 		Labels: labels,
+	}
+
+	jaegerDisabled := false
+	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+		jaegerDisabled = true
+	} else {
+		// note that we are explicitly using a string here, not the value from `inject.Annotation`
+		// this has two reasons:
+		// 1) as it is, it would cause a circular dependency, so, we'd have to extract that constant to somewhere else
+		// 2) this specific string is part of the "public API" of the operator: we should not change
+		// it at will. So, we leave this configured just like any other application would
+		baseCommonSpec.Annotations["sidecar.jaegertracing.io/inject"] = q.jaeger.Name
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
-		q.jaeger.Spec.Storage.Options.Filter(storage.OptionsPrefix(q.jaeger.Spec.Storage.Type)))
+		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
 	ca.Update(q.jaeger, commonSpec)
+	storage.UpdateGRPCPlugin(q.jaeger, commonSpec)
 
 	var envFromSource []corev1.EnvFromSource
 	if len(q.jaeger.Spec.Storage.SecretName) > 0 {
@@ -79,6 +85,19 @@ func (q *Query) Get() *appsv1.Deployment {
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
+
+	priorityClassName := ""
+	if q.jaeger.Spec.Query.PriorityClassName != "" {
+		priorityClassName = q.jaeger.Spec.Query.PriorityClassName
+	}
+
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RecreateDeploymentStrategyType,
+	}
+
+	if q.jaeger.Spec.Query.Strategy != nil {
+		strategy = *q.jaeger.Spec.Query.Strategy
+	}
 
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -103,20 +122,32 @@ func (q *Query) Get() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
+			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: q.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
 						Name:  "jaeger-query",
 						Args:  options,
-						Env: []corev1.EnvVar{{
-							Name:  "SPAN_STORAGE_TYPE",
-							Value: q.jaeger.Spec.Storage.Type,
-						}},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "SPAN_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Storage.Type),
+							},
+							{
+								Name:  "METRICS_STORAGE_TYPE",
+								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
+							},
+							{
+								Name:  "JAEGER_DISABLED",
+								Value: strconv.FormatBool(jaegerDisabled),
+							},
+						},
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{
@@ -130,7 +161,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -141,7 +172,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -149,14 +180,17 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources: commonSpec.Resources,
+						Resources:       commonSpec.Resources,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(q.jaeger, account.QueryComponent),
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
 					SecurityContext:    commonSpec.SecurityContext,
 					EnableServiceLinks: &falseVar,
+					InitContainers:     storage.GetGRPCPluginInitContainers(q.jaeger, commonSpec),
 				},
 			},
 		},

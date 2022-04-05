@@ -3,7 +3,8 @@ package inventory
 import (
 	"fmt"
 
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 

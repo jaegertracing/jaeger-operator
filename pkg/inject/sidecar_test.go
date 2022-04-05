@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -30,6 +30,18 @@ func init() {
 func reset() {
 	viper.Reset()
 	setDefaults()
+}
+
+func TestIncreaseRevision(t *testing.T) {
+	IncreaseRevision(nil)
+	in := map[string]string{
+		Annotation: "true",
+	}
+	IncreaseRevision(in)
+	assert.Equal(t, "0", in[AnnotationRev])
+	IncreaseRevision(in)
+	IncreaseRevision(in)
+	assert.Equal(t, "2", in[AnnotationRev])
 }
 
 func TestInjectSidecar(t *testing.T) {
@@ -49,6 +61,9 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	defer reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
+	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
+
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
@@ -57,6 +72,10 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+
+	// CR should not be touched.
+	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
+	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
@@ -357,6 +376,11 @@ func TestSidecarNeeded(t *testing.T) {
 			ns:     ns(map[string]string{Annotation: "true"}),
 			needed: false,
 		},
+		{
+			dep:    dep(map[string]string{Annotation: "false"}, map[string]string{}),
+			ns:     ns(map[string]string{}),
+			needed: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("dep:%s, ns: %s", test.dep.Annotations, test.ns.Annotations), func(t *testing.T) {
@@ -524,16 +548,16 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--a-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--b-option")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--c-option")
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--jaeger.tags")
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{"jaeger.tags": "key=val"})
+	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{"agent.tags": "key=val"})
 	dep := dep(map[string]string{}, map[string]string{})
 
 	// test
@@ -541,8 +565,8 @@ func TestSidecarExplicitTags(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, []string{"key=val"}, agentTags)
+	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTags, map[string]string{"key": "val"})
 }
 
 func TestSidecarCustomReporterPort(t *testing.T) {
@@ -688,9 +712,30 @@ func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 3, "Expected 3 containers")
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[2].Name)
-	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--jaeger.tags")
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[2].Args)
-	assert.Equal(t, "", util.FindItem("container.name=", agentTags))
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[2].Args, "--agent.tags")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[2].Args)
+	assert.NotContains(t, agentTagsMap, "container.name")
+}
+
+func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	dep := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
+
+	// inject - 1st time
+	assert.Equal(t, dep.Labels[Label], jaeger.Name)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
+	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+
+	// inject - 2nd time due to deployment/namespace reconciliation
+	dep = Sidecar(jaeger, dep)
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2, "Expected 2 containers")
+	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
+	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
+	assert.Equal(t, agentTagsMap["container.name"], "only_container")
 }
 
 func ns(annotations map[string]string) *corev1.Namespace {
@@ -752,39 +797,88 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 	return false
 }
 
-func agentTags(args []string) []string {
-	tagsArg := util.FindItem("--jaeger.tags=", args)
-	if tagsArg == "" {
-		return []string{}
-	}
-	tagsParam := strings.SplitN(tagsArg, "=", 2)[1]
-	return strings.Split(tagsParam, ",")
-}
-
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
+
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "my-instance",
-		Namespace: "test",
-	})
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=" + ca.ServiceCAPath,
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--agent.tags=",
+			},
+		},
+		{
+			name: "Custom CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "true",
+				"reporter.grpc.tls.ca":      "/my/custom/ca",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=/my/custom/ca",
+				"--agent.tags=",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250",
+				"--reporter.grpc.tls.enabled=false",
+				"--agent.tags=",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Name:      "my-instance",
+				Namespace: "test",
+			})
+			jaeger.Spec.Agent.Options = tt.options
+			dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
+			dep = Sidecar(jaeger, dep)
 
-	dep := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
-	dep = Sidecar(jaeger, dep)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, len(tt.expectedArgs))
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--jaeger.tags", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test.svc:14250", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[1].Args)), 0)
-	agentTags := agentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Contains(t, agentTags, "container.name=only_container")
+			for _, arg := range tt.expectedArgs {
+				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+			}
+
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+				}
+			}
+
+			assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
+		})
+	}
 }
 
 func TestEqualSidecar(t *testing.T) {
@@ -802,7 +896,7 @@ func TestEqualSidecar(t *testing.T) {
 
 	// Change flags.
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"--jaeger.tags": "changed-tag=newvalue",
+		"--agent.tags": "changed-tag=newvalue",
 	})
 
 	dep2 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
@@ -812,21 +906,6 @@ func TestEqualSidecar(t *testing.T) {
 	// When no agent is present on the deploy
 	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	assert.False(t, EqualSidecar(dep1, dep3))
-}
-
-func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	d := Sidecar(jaeger, &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels:      map[string]string{Label: "my-instance"},
-			Annotations: map[string]string{},
-		},
-	})
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func hasVolume(name string, volumes []corev1.Volume) bool {
@@ -880,4 +959,72 @@ func TestSidecarWithSecurityContext(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].SecurityContext, expectedSecurityContext)
+}
+
+func TestSortedTags(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
+}
+
+func TestSortedTagsWithContainer(t *testing.T) {
+	defaultAgentTagsMap := make(map[string]string)
+	defaultAgentTagsMap["cluster"] = "undefined" // this value isn't currently available
+	defaultAgentTagsMap["deployment.name"] = "deploy"
+	defaultAgentTagsMap["pod.namespace"] = "ns"
+	defaultAgentTagsMap["pod.name"] = "pod_name"
+	defaultAgentTagsMap["host.ip"] = "0.0.0.0"
+	defaultAgentTagsMap["container.name"] = "only_container"
+	assert.Equal(t, joinTags(defaultAgentTagsMap), fmt.Sprintf("%s=%s,%s=%s,%s=%s,%s=%s,%s=%s,%s=%s",
+		"cluster", "undefined", // this value isn't currently available
+		"container.name", "only_container",
+		"deployment.name", "deploy",
+		"host.ip", "0.0.0.0",
+		"pod.name", "pod_name",
+		"pod.namespace", "ns",
+	))
+}
+
+func TestParseEmptyAgentTags(t *testing.T) {
+	tags := parseAgentTags([]string{})
+	assert.Equal(t, tags, map[string]string{})
+}
+
+func TestGetContainerNameWithOneAppContainer(t *testing.T) {
+	deploy := dep(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "only_container", containerName)
+}
+
+func TestGetContainerNameWithTwoAppContainers(t *testing.T) {
+	deploy := depWithTwoContainers(map[string]string{}, map[string]string{})
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, -1)
+	assert.Equal(t, "", containerName)
+}
+
+func TestGetContainerNameWithAppContainerAndJaegerAgent(t *testing.T) {
+	nsn := types.NamespacedName{
+		Name:      "my-instance",
+		Namespace: "Test",
+	}
+	jaeger := v1.NewJaeger(nsn)
+	deploy := dep(map[string]string{}, map[string]string{})
+	deploy = Sidecar(jaeger, deploy)
+
+	assert.Len(t, deploy.Spec.Template.Spec.Containers, 2)
+	hasAgent, agentIdx := HasJaegerAgent(deploy)
+	assert.True(t, hasAgent)
+	assert.Greater(t, agentIdx, -1)
+	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, agentIdx)
+	assert.Equal(t, "only_container", containerName)
 }

@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestCassandraCustomImage(t *testing.T) {
@@ -55,6 +55,21 @@ func TestCassandraCustomTraceTTLParseError(t *testing.T) {
 		}
 	}
 	assert.Equal(t, "172800", foundValue, "unexpected TRACE_TTL environment var value")
+}
+
+func TestCassandraDefaultPort(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+
+	b := cassandraDeps(jaeger)
+	assert.Len(t, b, 1)
+	assert.Len(t, b[0].Spec.Template.Spec.Containers, 1)
+	for _, e := range b[0].Spec.Template.Spec.Containers[0].Env {
+		if e.Name == "CQLSH_PORT" {
+			assert.Equal(t, "9042", e.Value, "unexpected CQLSH_PORT environment var value")
+			return
+		}
+	}
+	assert.Fail(t, "value for CQLSH_PORT environment var not found")
 }
 
 func TestDefaultImage(t *testing.T) {
@@ -133,4 +148,27 @@ func TestCassandraCreateSchemaSecurityContext(t *testing.T) {
 
 	assert.Len(t, b, 1)
 	assert.Equal(t, b[0].Spec.Template.Spec.SecurityContext, expectedSecurityContext)
+}
+
+func TestCassandraCreateSchemaSecret(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaSecret"})
+	secret := "cassandra-test-secret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	b := cassandraDeps(jaeger)
+
+	assert.Len(t, b, 1)
+	assert.Equal(t, secret, b[0].Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestCassandraCreateSchemaAffinity(t *testing.T) {
+	expectedAffinity := &corev1.Affinity{}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaAffinity"})
+	jaeger.Spec.Storage.CassandraCreateSchema.Affinity = expectedAffinity
+
+	b := cassandraDeps(jaeger)
+
+	assert.Len(t, b, 1)
+	assert.Equal(t, expectedAffinity, b[0].Spec.Template.Spec.Affinity)
 }

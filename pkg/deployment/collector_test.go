@@ -5,17 +5,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func init() {
@@ -81,8 +83,8 @@ func TestDefaultCollectorImage(t *testing.T) {
 			Value: "",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
@@ -137,6 +139,32 @@ func TestCollectorSecrets(t *testing.T) {
 	dep := collector.Get()
 
 	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
+func TestCollectorImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestCollectorImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestCollectorVolumeMountsWithVolumes(t *testing.T) {
@@ -320,7 +348,7 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 		},
 		Spec: v1.JaegerSpec{
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://somewhere",
 				}),
@@ -333,11 +361,11 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 	envvars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: "elasticsearch",
+			Value: string(v1.JaegerESStorage),
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
@@ -375,8 +403,8 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 			Value: "kafka",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
@@ -410,8 +438,8 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 			Value: "kafka",
 		},
 		{
-			Name:  "COLLECTOR_ZIPKIN_HTTP_PORT",
-			Value: "9411",
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
@@ -508,35 +536,80 @@ func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
+	for _, tt := range []struct {
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/etc/tls-config/tls.crt",
+				"--collector.grpc.tls.key=/etc/tls-config/tls.key",
+				"--sampling.strategies-file",
+			},
+		},
+		{
+			name: "Custom CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"collector.grpc.tls.enabled": "true",
+				"collector.grpc.tls.cert":    "/my/custom/cert",
+				"collector.grpc.tls.key":     "/my/custom/key",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=true",
+				"--collector.grpc.tls.cert=/my/custom/cert",
+				"--collector.grpc.tls.key=/my/custom/key",
+				"--sampling.strategies-file",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                   "a-value",
+				"collector.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--collector.grpc.tls.enabled=false",
+				"--sampling.strategies-file",
+			},
+			nonExpectedArgs: []string{
+				"--collector.grpc.tls.enabled=true",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+			jaeger.Spec.Collector.Options = tt.options
 
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+			a := NewCollector(jaeger)
+			dep := a.Get()
 
-	a := NewCollector(jaeger)
-	dep := a.Get()
+			// verify
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			for _, arg := range tt.expectedArgs {
+				assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
+			}
 
-	// the following are added automatically
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.cert=/etc/tls-config/tls.crt", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--collector.grpc.tls.key=/etc/tls-config/tls.key", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--sampling.strategies-file", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-}
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				}
+			}
+		})
+	}
 
-func TestCollectorOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "instance"})
-	jaeger.Spec.Collector.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
-
-	c := NewCollector(jaeger)
-	d := c.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("instance-collector-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("instance-collector-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
 }
 
 func TestCollectorServiceLinks(t *testing.T) {
@@ -544,6 +617,69 @@ func TestCollectorServiceLinks(t *testing.T) {
 	dep := c.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+}
+
+func TestCollectorPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Collector.PriorityClassName = priorityClassName
+	c := NewCollector(jaeger)
+	dep := c.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
+func TestCollectorRollingUpdateStrategyType(t *testing.T) {
+	strategy := appsv1.DeploymentStrategy{
+		Type: appsv1.RollingUpdateDeploymentStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDeployment{
+			MaxUnavailable: &intstr.IntOrString{},
+			MaxSurge:       &intstr.IntOrString{},
+		},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Collector.Strategy = &strategy
+	c := NewCollector(jaeger)
+	dep := c.Get()
+	assert.Equal(t, strategy.Type, dep.Spec.Strategy.Type)
+}
+
+func TestCollectorEmptyStrategyType(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	c := NewCollector(jaeger)
+	dep := c.Get()
+	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
+}
+
+func TestCollectorGRPCPlugin(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorGRPCPlugin"})
+	jaeger.Spec.Storage.Type = v1.JaegerGRPCPluginStorage
+	jaeger.Spec.Storage.GRPCPlugin.Image = "plugin/plugin:1.0"
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"grpc-storage-plugin.binary": "/plugin/plugin",
+	})
+
+	collector := Collector{jaeger: jaeger}
+	dep := collector.Get()
+
+	assert.Equal(t, []corev1.Container{
+		{
+			Image: "plugin/plugin:1.0",
+			Name:  "install-plugin",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "testcollectorgrpcplugin-sampling-configuration-volume",
+					MountPath: "/etc/jaeger/sampling",
+					ReadOnly:  true,
+				},
+				{
+					Name:      "plugin-volume",
+					MountPath: "/plugin",
+				},
+			},
+		},
+	}, dep.Spec.Template.Spec.InitContainers)
+	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 
 func hasVolume(name string, volumes []corev1.Volume) bool {

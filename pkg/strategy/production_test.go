@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -79,7 +79,7 @@ func TestOptionsArePassed(t *testing.T) {
 		Spec: v1.JaegerSpec{
 			Strategy: v1.DeploymentStrategyProduction,
 			Storage: v1.JaegerStorageSpec{
-				Type: "elasticsearch",
+				Type: v1.JaegerESStorage,
 				Options: v1.NewOptions(map[string]interface{}{
 					"es.server-urls": "http://elasticsearch.default.svc:9200",
 					"es.username":    "elastic",
@@ -112,7 +112,7 @@ func TestOptionsArePassed(t *testing.T) {
 func TestDelegateProductionDependencies(t *testing.T) {
 	// for now, we just have storage dependencies
 	j := v1.NewJaeger(types.NamespacedName{Name: "TestDelegateProductionDependencies"})
-	j.Spec.Storage.Type = "cassandra"
+	j.Spec.Storage.Type = v1.JaegerCassandraStorage
 	c := newProductionStrategy(context.Background(), j)
 	assert.Equal(t, c.Dependencies(), storage.Dependencies(j))
 }
@@ -192,15 +192,28 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 	c := newProductionStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
-			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+			assert.Equal(t, "TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction", dep.Annotations["sidecar.jaegertracing.io/inject"])
+			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+			assert.Equal(t, "jaeger-query", dep.Spec.Template.Spec.Containers[0].Name)
+		}
+	}
+}
+
+func TestAgentSidecarNotInjectedTracingEnabledFalseForProduction(t *testing.T) {
+	j := v1.NewJaeger(types.NamespacedName{Name: "TestAgentSidecarNotInjectedTracingEnabledFalseForProduction"})
+	falseVar := false
+	j.Spec.Query.TracingEnabled = &falseVar
+	c := newProductionStrategy(context.Background(), j)
+	for _, dep := range c.Deployments() {
+		if strings.HasSuffix(dep.Name, "-query") {
+			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
 		}
 	}
 }
 
 func TestElasticsearchInject(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: t.Name()})
-	j.Spec.Storage.Type = "elasticsearch"
+	j.Spec.Storage.Type = v1.JaegerESStorage
 	verdad := true
 	one := int(1)
 	j.Spec.Storage.EsIndexCleaner.Enabled = &verdad

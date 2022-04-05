@@ -6,16 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/config/otelconfig"
-
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -47,7 +45,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 
 	// Enable tls by default for openshift platform
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
-		if len(util.FindItem("--reporter.grpc.tls=true", args)) == 0 {
+		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
@@ -58,7 +56,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	configRest := util.GetPort("--http-server.host-port=", args, 5778)
 	jgCompactTrft := util.GetPort("--processor.jaeger-compact.server-host-port=", args, 6831)
 	jgBinaryTrft := util.GetPort("--processor.jaeger-binary.server-host-port=", args, 6832)
-	adminPort := util.GetPort("--admin-http-port=", args, 14271)
+	adminPort := util.GetAdminPort(args, 14271)
 
 	trueVar := true
 	falseVar := false
@@ -79,19 +77,22 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
 
-	otelConf, err := a.jaeger.Spec.Agent.Config.GetMap()
-	if err != nil {
-		a.jaeger.Logger().WithField("error", err).
-			WithField("component", "agent").
-			Errorf("Could not parse OTEL config, config map will not be created")
-	} else if otelconfig.ShouldCreate(a.jaeger, a.jaeger.Spec.Agent.Options, otelConf) {
-		otelconfig.Update(a.jaeger, "agent", commonSpec, &args)
-	}
-
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(args)
 
+	hostNetwork := false
+	dnsPolicy := a.jaeger.Spec.Agent.DNSPolicy
+	if a.jaeger.Spec.Agent.HostNetwork != nil {
+		hostNetwork = *a.jaeger.Spec.Agent.HostNetwork
+		if dnsPolicy == "" {
+			dnsPolicy = corev1.DNSClusterFirstWithHostNet
+		}
+	}
+	priorityClassName := ""
+	if a.jaeger.Spec.Agent.PriorityClassName != "" {
+		priorityClassName = a.jaeger.Spec.Agent.PriorityClassName
+	}
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -119,6 +120,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: a.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
@@ -154,7 +156,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -165,7 +167,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -173,9 +175,13 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 							},
 							InitialDelaySeconds: 1,
 						},
-						Resources:    commonSpec.Resources,
-						VolumeMounts: commonSpec.VolumeMounts,
+						Resources:       commonSpec.Resources,
+						VolumeMounts:    commonSpec.VolumeMounts,
+						ImagePullPolicy: commonSpec.ImagePullPolicy,
 					}},
+					DNSPolicy:          dnsPolicy,
+					HostNetwork:        hostNetwork,
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,

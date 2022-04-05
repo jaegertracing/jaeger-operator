@@ -11,11 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/version"
-
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
 func setDefaults() {
@@ -201,42 +200,112 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
-	jaeger := v1.NewJaeger(types.NamespacedName{
-		Name:      "my-instance",
-		Namespace: "test",
-	})
-	jaeger.Spec.Agent.Strategy = "daemonset"
-	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
-		"a-option": "a-value",
-	})
+	for _, tt := range []struct {
+		name            string
+		options         v1.Options
+		expectedArgs    []string
+		nonExpectedArgs []string
+	}{
+		{
+			name: "Openshift CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option": "a-value",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=" + ca.ServiceCAPath,
+				"--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local",
+			},
+		},
+		{
+			name: "Custom CA",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "true",
+				"reporter.grpc.tls.ca":      "/my/custom/ca",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=true",
+				"--reporter.grpc.tls.ca=/my/custom/ca",
+			},
+		},
+		{
+			name: "Explicit disable TLS",
+			options: v1.NewOptions(map[string]interface{}{
+				"a-option":                  "a-value",
+				"reporter.grpc.tls.enabled": "false",
+			}),
+			expectedArgs: []string{
+				"--a-option=a-value",
+				"--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250",
+				"--reporter.grpc.tls.enabled=false",
+			},
+			nonExpectedArgs: []string{
+				"--reporter.grpc.tls.enabled=true",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			jaeger := v1.NewJaeger(types.NamespacedName{
+				Name:      "my-instance",
+				Namespace: "test",
+			})
+			jaeger.Spec.Agent.Strategy = "daemonset"
+			jaeger.Spec.Agent.Options = tt.options
 
-	a := NewAgent(jaeger)
-	dep := a.Get()
+			a := NewAgent(jaeger)
+			dep := a.Get()
 
-	assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 5)
-	assert.Greater(t, len(util.FindItem("--a-option=a-value", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
-	// the following are added automatically
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.host-port=dns:///my-instance-collector-headless.test:14250", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.enabled=true", dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.ca="+ca.ServiceCAPath, dep.Spec.Template.Spec.Containers[0].Args)), 0)
-	assert.Greater(t, len(util.FindItem("--reporter.grpc.tls.server-name=my-instance-collector-headless.test.svc.cluster.local", dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			for _, arg := range tt.expectedArgs {
+				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+			}
 
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+			if tt.nonExpectedArgs != nil {
+				for _, arg := range tt.nonExpectedArgs {
+					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				}
+			}
+
+			assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
+			assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+		})
+	}
+
 }
 
-func TestAgentOTELConfig(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Agent.Config = v1.NewFreeForm(map[string]interface{}{"foo": "bar"})
+func TestAgentImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
+	const pullSecret = "mysecret"
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
 
-	a := NewAgent(jaeger)
-	d := a.Get()
-	assert.True(t, hasArgument("--config=/etc/jaeger/otel/config.yaml", d.Spec.Template.Spec.Containers[0].Args))
-	assert.True(t, hasVolume("my-instance-agent-otel-config", d.Spec.Template.Spec.Volumes))
-	assert.True(t, hasVolumeMount("my-instance-agent-otel-config", d.Spec.Template.Spec.Containers[0].VolumeMounts))
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestAgentImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentImagePullPolicy"})
+	const pullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	agent := NewAgent(jaeger)
+	dep := agent.Get()
+
+	assert.Equal(t, pullPolicy, dep.Spec.Template.Spec.Containers[0].ImagePullPolicy)
 }
 
 func TestAgentServiceLinks(t *testing.T) {
@@ -246,4 +315,36 @@ func TestAgentServiceLinks(t *testing.T) {
 	dep := a.Get()
 	falseVar := false
 	assert.Equal(t, &falseVar, dep.Spec.Template.Spec.EnableServiceLinks)
+	assert.Equal(t, falseVar, dep.Spec.Template.Spec.HostNetwork)
+}
+
+func TestAgentHostNetwork(t *testing.T) {
+	trueVar := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.HostNetwork = &trueVar
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
+}
+
+func TestAgentDNSPolicyWithHostNetwork(t *testing.T) {
+	trueVar := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.HostNetwork = &trueVar
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, trueVar, dep.Spec.Template.Spec.HostNetwork)
+	assert.Equal(t, corev1.DNSClusterFirstWithHostNet, dep.Spec.Template.Spec.DNSPolicy)
+}
+
+func TestAgentPriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.PriorityClassName = priorityClassName
+	a := NewAgent(jaeger)
+	dep := a.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
 }

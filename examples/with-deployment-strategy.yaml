@@ -1,0 +1,29 @@
+# setup an elasticsearch with `make es`
+# setup a kafka platform with `make kafka`  See https://strimzi.io for more information
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: with-deployment-strategy
+spec:
+  strategy: streaming
+  collector:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate: 
+        maxSurge: 10%
+  ingester:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate: 
+        maxSurge: 10%
+  query:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate: 
+        maxSurge: 10%
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        # Note: This assumes elasticsearch is running in the "default" namespace.
+        server-urls: http://elasticsearch.default.svc:9200

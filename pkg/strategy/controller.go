@@ -7,18 +7,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.opentelemetry.io/otel/global"
+	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
-)
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
-const (
-	esCertGenerationScript = "./scripts/cert_generation.sh"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 )
 
 var (
@@ -28,7 +24,7 @@ var (
 
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger) S {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
 
@@ -54,7 +50,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 // normalize changes the incoming Jaeger object so that the defaults are applied when
 // needed and incompatible options are cleaned
 func normalize(ctx context.Context, jaeger *v1.Jaeger) {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "normalize")
 	defer span.End()
 
@@ -67,15 +63,31 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	// normalize the storage type
 	if jaeger.Spec.Storage.Type == "" {
 		jaeger.Logger().Info("Storage type not provided. Falling back to 'memory'")
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
 		jaeger.Logger().WithFields(log.Fields{
 			"storage":       jaeger.Spec.Storage.Type,
-			"known-options": storage.ValidTypes(),
+			"known-options": v1.ValidStorageTypes(),
 		}).Info("The provided storage type is unknown. Falling back to 'memory'")
-		jaeger.Spec.Storage.Type = "memory"
+		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
+	}
+
+	// remove reserved labels
+	for _, labels := range []map[string]string{
+		jaeger.Spec.JaegerCommonSpec.Labels,
+		jaeger.Spec.AllInOne.JaegerCommonSpec.Labels,
+		jaeger.Spec.Query.JaegerCommonSpec.Labels,
+	} {
+		if _, ok := labels["app.kubernetes.io/instance"]; ok {
+			span.AddEvent(fmt.Sprintf("the reserved label 'app.kubernetes.io/instance' is overwritten, falling back to %s", jaeger.Name))
+			delete(labels, "app.kubernetes.io/instance")
+		}
+		if _, ok := labels["app.kubernetes.io/managed-by"]; ok {
+			span.AddEvent("the reserved label 'app.kubernetes.io/managed-by' is overwritten, falling back to jaeger-operator")
+			delete(labels, "app.kubernetes.io/managed-by")
+		}
 	}
 
 	// normalize the deployment strategy
@@ -100,20 +112,30 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+		jaeger.Spec.Ingress.Openshift.SAR == nil {
+		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
+		jaeger.Spec.Ingress.Openshift.SAR = &sar
+	}
+
 	// note that the order normalization matters - UI norm expects all normalized properties
 	normalizeSparkDependencies(&jaeger.Spec.Storage)
 	normalizeIndexCleaner(&jaeger.Spec.Storage.EsIndexCleaner, jaeger.Spec.Storage.Type)
 	normalizeElasticsearch(&jaeger.Spec.Storage.Elasticsearch)
 	normalizeRollover(&jaeger.Spec.Storage.EsRollover)
 	normalizeUI(&jaeger.Spec)
+
+	if jaeger.Spec.Storage.Elasticsearch.Name == "" {
+		jaeger.Spec.Storage.Elasticsearch.Name = "elasticsearch"
+	}
 }
 
-func distributedStorage(storage string) bool {
-	return !strings.EqualFold(storage, "memory") && !strings.EqualFold(storage, "badger")
+func distributedStorage(storage v1.JaegerStorageType) bool {
+	return (storage != v1.JaegerMemoryStorage) && (storage != v1.JaegerBadgerStorage)
 }
 
 func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
-	sFlagsMap := spec.Options.Map()
+	sFlagsMap := spec.Options.StringMap()
 	tlsEnabled := sFlagsMap["es.tls"]
 	tlsSkipHost := sFlagsMap["es.tls.skip-host-verify"]
 	tlsCa := sFlagsMap["es.tls.ca"]
@@ -123,7 +145,7 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	// auto enable only for supported storages
 	if cronjob.SupportedStorage(spec.Type) &&
 		spec.Dependencies.Enabled == nil &&
-		!storage.ShouldDeployElasticsearch(*spec) &&
+		!v1.ShouldInjectOpenShiftElasticsearchConfiguration(*spec) &&
 		tlsIsNotEnabled {
 		trueVar := true
 		spec.Dependencies.Enabled = &trueVar
@@ -133,9 +155,9 @@ func normalizeSparkDependencies(spec *v1.JaegerStorageSpec) {
 	}
 }
 
-func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage string) {
+func normalizeIndexCleaner(spec *v1.JaegerEsIndexCleanerSpec, storage v1.JaegerStorageType) {
 	// auto enable only for supported storages
-	if storage == "elasticsearch" && spec.Enabled == nil {
+	if storage == v1.JaegerESStorage && spec.Enabled == nil {
 		trueVar := true
 		spec.Enabled = &trueVar
 	}
@@ -185,7 +207,7 @@ func normalizeUI(spec *v1.JaegerSpec) {
 			uiOpts = m
 		}
 	}
-	enableArchiveButton(uiOpts, spec.Storage.Options.Map())
+	enableArchiveButton(uiOpts, spec.Storage.Options.StringMap())
 	disableDependenciesTab(uiOpts, spec.Storage.Type, spec.Storage.Dependencies.Enabled)
 	enableDocumentationLink(uiOpts, spec)
 	enableLogOut(uiOpts, spec)
@@ -205,9 +227,9 @@ func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string)
 	}
 }
 
-func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsEnabled *bool) {
+func disableDependenciesTab(uiOpts map[string]interface{}, storage v1.JaegerStorageType, depsEnabled *bool) {
 	// dependency tab is by default enabled and memory storage support it
-	if strings.EqualFold(storage, "memory") || (depsEnabled != nil && *depsEnabled == true) {
+	if (storage == v1.JaegerMemoryStorage) || (depsEnabled != nil && *depsEnabled == true) {
 		return
 	}
 	deps := map[string]interface{}{}
@@ -226,13 +248,53 @@ func disableDependenciesTab(uiOpts map[string]interface{}, storage string, depsE
 	}
 }
 
+func hasDocumentationLink(menus []interface{}) (bool, int) {
+	// Verify if a documentation entry exists.
+	// for now the only way we have to see if a documentation link exists is comparing labels
+	for menuIndex, menuItem := range menus {
+		converted, ok := menuItem.(map[string]interface{})
+		if !ok {
+			return false, 0
+		}
+		if label, ok := converted["label"]; ok && label == "About" {
+			items := converted["items"]
+			convertedItems, ok := items.([]interface{})
+			if !ok {
+				return false, 0
+			}
+			for _, item := range convertedItems {
+				itemMap, ok := item.(map[string]interface{})
+				if !ok {
+					return false, 0
+				}
+				if itemLabel, ok := itemMap["label"]; ok && itemLabel == "Documentation" {
+					return true, menuIndex
+				}
+			}
+		}
+	}
+	return false, 0
+}
+
 func enableDocumentationLink(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	if !viper.IsSet("documentation-url") {
 		return
 	}
 
-	// if a custom menu has been specified, do not add the link to the documentation
-	if _, ok := uiOpts["menu"]; ok {
+	if menus, ok := uiOpts["menu"]; ok {
+		menuArray := menus.([]interface{})
+		// If a documentation menu exists, update it, otherwise is a custom menu, don't touch it.
+		if hasDocLink, menuIndex := hasDocumentationLink(menuArray); hasDocLink {
+			// Update menu link
+			e := map[string]interface{}{
+				"label": "About",
+				"items": []interface{}{map[string]interface{}{
+					"label": "Documentation",
+					"url":   viper.GetString("documentation-url"),
+				}},
+			}
+			menuArray[menuIndex] = e
+		}
 		return
 	}
 
@@ -286,9 +348,9 @@ func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
 	uiOpts["menu"] = append(menuArray, logout)
 }
 
-func unknownStorage(typ string) bool {
-	for _, k := range storage.ValidTypes() {
-		if strings.EqualFold(typ, k) {
+func unknownStorage(typ v1.JaegerStorageType) bool {
+	for _, k := range v1.ValidStorageTypes() {
+		if typ == k {
 			return false
 		}
 	}

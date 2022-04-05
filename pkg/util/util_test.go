@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
 func TestRemoveDuplicatedVolumes(t *testing.T) {
@@ -63,6 +63,65 @@ func TestRemoveDuplicatedImagePullSecrets(t *testing.T) {
 	assert.Len(t, RemoveDuplicatedImagePullSecrets(imagePullSecrets), 2)
 	assert.Equal(t, "secret1", imagePullSecrets[0].Name)
 	assert.Equal(t, "secret2", imagePullSecrets[1].Name)
+}
+
+func TestMergeImagePullSecrets(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+		},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "abc",
+			},
+			{
+				Name: "def",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			{
+				Name: "hij",
+			},
+			{
+				Name: "xyz",
+			},
+		},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Len(t, merged.ImagePullSecrets, 4)
+	assert.Equal(t, "abc", merged.ImagePullSecrets[0].Name)
+	assert.Equal(t, "def", merged.ImagePullSecrets[1].Name)
+	assert.Equal(t, "xyz", merged.ImagePullSecrets[2].Name)
+	assert.Equal(t, "hij", merged.ImagePullSecrets[3].Name)
+}
+
+func TestMergeImagePullPolicy(t *testing.T) {
+	emptySpec := v1.JaegerCommonSpec{}
+	generalSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Never"),
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("Always"),
+	}
+	anotherSpec := v1.JaegerCommonSpec{
+		ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec, emptySpec, anotherSpec})
+
+	assert.Equal(t, corev1.PullPolicy("Always"), merged.ImagePullPolicy)
 }
 
 func TestMergeAnnotations(t *testing.T) {
@@ -288,14 +347,14 @@ func TestMergeTolerations(t *testing.T) {
 
 func TestGetEsHostname(t *testing.T) {
 	tests := []struct {
-		underTest map[string]string
+		underTest map[string]interface{}
 		hostname  string
 	}{
 		{hostname: ""},
-		{underTest: map[string]string{"": ""}, hostname: ""},
-		{underTest: map[string]string{"es.server-urls": ""}, hostname: ""},
-		{underTest: map[string]string{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
-		{underTest: map[string]string{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
+		{underTest: map[string]interface{}{"": ""}, hostname: ""},
+		{underTest: map[string]interface{}{"es.server-urls": ""}, hostname: ""},
+		{underTest: map[string]interface{}{"es.server-urls": "goo:tar"}, hostname: "goo:tar"},
+		{underTest: map[string]interface{}{"es.server-urls": "http://es:9000,https://es2:9200"}, hostname: "http://es:9000"},
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.hostname, GetEsHostname(test.underTest))
@@ -351,6 +410,42 @@ func TestGetPortSpecified(t *testing.T) {
 	args := opts.ToArgs()
 
 	assert.Equal(t, int32(6831), GetPort("--processor.jaeger-compact.server-host-port=", args, 1234))
+}
+
+func TestGetAdminPort(t *testing.T) {
+	tests := map[string]struct {
+		opts         v1.Options
+		defaultPort  int32
+		expectedPort int32
+	}{
+		"Use default port when no admin port flag provided": {
+			opts:         v1.NewOptions(map[string]interface{}{}),
+			defaultPort:  1234,
+			expectedPort: 1234,
+		},
+		"Use deprecated flag when new flag not provided and deprecated flag provided": {
+			opts: v1.NewOptions(map[string]interface{}{
+				"admin-http-port": ":1111",
+			}),
+			defaultPort:  1234,
+			expectedPort: 1111,
+		},
+		"Use new flag when provided": {
+			opts: v1.NewOptions(map[string]interface{}{
+				"admin-http-port":      ":1111",
+				"admin.http.host-port": ":2222",
+			}),
+			defaultPort:  1234,
+			expectedPort: 2222,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			args := test.opts.ToArgs()
+			assert.Equal(t, test.expectedPort, GetAdminPort(args, test.defaultPort))
+		})
+	}
 }
 
 func TestInitObjectMeta(t *testing.T) {

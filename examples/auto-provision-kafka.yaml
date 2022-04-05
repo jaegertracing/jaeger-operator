@@ -1,0 +1,19 @@
+# this example requires the strimzi operator to be running in the cluster:
+# https://strimzi.io/quickstarts/minikube/
+# basically:
+# $ kubectl create namespace kafka
+# $ curl -L https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml \
+#  | sed 's/namespace: .*/namespace: kafka/' \
+#  | kubectl apply -f - -n kafka 
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: auto-provision-kafka
+spec:
+  strategy: streaming
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        # Note: This assumes elasticsearch is running in the "default" namespace.
+        server-urls: http://elasticsearch.default.svc:9200

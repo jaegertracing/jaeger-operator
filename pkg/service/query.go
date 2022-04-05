@@ -5,7 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -16,6 +16,24 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 	annotations := map[string]string{}
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
+	}
+
+	ports := []corev1.ServicePort{
+		{
+			Name:       GetPortNameForQueryService(jaeger),
+			Port:       int32(GetPortForQueryService(jaeger)),
+			TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
+		},
+		{
+			Name:       "grpc-query",
+			Port:       int32(16685),
+			TargetPort: intstr.FromInt(16685),
+		},
+	}
+	if jaeger.Spec.Query.ServiceType == corev1.ServiceTypeNodePort {
+		ports[0].NodePort = GetNodePortForQueryService(jaeger)
+		ports[1].NodePort = GetGRPCNodePortForQueryService(jaeger)
+
 	}
 
 	return &corev1.Service{
@@ -41,13 +59,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		Spec: corev1.ServiceSpec{
 			Selector: selector,
 			Type:     getTypeForQueryService(jaeger),
-			Ports: []corev1.ServicePort{
-				{
-					Name:       getPortNameForQueryService(jaeger),
-					Port:       int32(GetPortForQueryService(jaeger)),
-					TargetPort: intstr.FromInt(getTargetPortForQueryService(jaeger)),
-				},
-			},
+			Ports:    ports,
 		},
 	}
 }
@@ -62,7 +74,7 @@ func GetTLSSecretNameForQueryService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-ui-oauth-proxy-tls", 63, jaeger.Name))
 }
 
-// GetPortForQueryService returns the query service name for this Jaeger instance
+// GetPortForQueryService returns the query service port number for this Jaeger instance
 func GetPortForQueryService(jaeger *v1.Jaeger) int {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return 443
@@ -70,7 +82,8 @@ func GetPortForQueryService(jaeger *v1.Jaeger) int {
 	return 16686
 }
 
-func getPortNameForQueryService(jaeger *v1.Jaeger) string {
+// GetPortNameForQueryService returns the query service port name for this Jaeger instance
+func GetPortNameForQueryService(jaeger *v1.Jaeger) string {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		return "https-query"
 	}
@@ -89,4 +102,14 @@ func getTypeForQueryService(jaeger *v1.Jaeger) corev1.ServiceType {
 		return jaeger.Spec.Query.ServiceType
 	}
 	return corev1.ServiceTypeClusterIP
+}
+
+// GetNodePortForQueryService returns the query service NodePort for this Jaeger instance
+func GetNodePortForQueryService(jaeger *v1.Jaeger) int32 {
+	return jaeger.Spec.Query.NodePort
+}
+
+// GetGRPCNodePortForQueryService returns the query service grpc NodePort for this Jaeger instance
+func GetGRPCNodePortForQueryService(jaeger *v1.Jaeger) int32 {
+	return jaeger.Spec.Query.GRPCNodePort
 }

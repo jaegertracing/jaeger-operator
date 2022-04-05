@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
@@ -193,4 +194,67 @@ func TestConfigMapCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
+}
+
+func TestConfigMapsClean(t *testing.T) {
+	// prepare
+	nsnNonExist := types.NamespacedName{
+		Name: "deleted-jaeger",
+	}
+
+	nsnExisting := types.NamespacedName{
+		Name: "existing-jaeger",
+	}
+
+	// Create trusted CA config maps for non existing jaeger
+	trustedCAConfig := &corev1.ConfigMap{}
+	trustedCAConfig.Name = fmt.Sprintf("%s-trusted-ca", nsnNonExist.Name)
+	trustedCAConfig.Labels = map[string]string{
+		"app.kubernetes.io/name":       nsnNonExist.Name,
+		"app.kubernetes.io/component":  "ca-configmap",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+
+	serviceCAConfig := &corev1.ConfigMap{}
+	serviceCAConfig.Name = fmt.Sprintf("%s-service-ca", nsnNonExist.Name)
+	serviceCAConfig.Labels = map[string]string{
+		"app.kubernetes.io/name":       nsnNonExist.Name,
+		"app.kubernetes.io/component":  "service-ca-configmap",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+
+	// Create trusted CA config maps for existing jaeger
+	serviceCAConfigExist := &corev1.ConfigMap{}
+	serviceCAConfigExist.Name = fmt.Sprintf("%s-service-ca", nsnExisting.Name)
+	serviceCAConfigExist.Labels = map[string]string{
+		"app.kubernetes.io/name":       nsnExisting.Name,
+		"app.kubernetes.io/component":  "service-ca-configmap",
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+
+	objs := []runtime.Object{
+		trustedCAConfig,
+		serviceCAConfig,
+		serviceCAConfigExist,
+		v1.NewJaeger(nsnExisting),
+	}
+
+	r, cl := getReconciler(objs)
+
+	// The three defined ConfigMaps exist
+	configMaps := &corev1.ConfigMapList{}
+	err := cl.List(context.Background(), configMaps)
+	assert.NoError(t, err)
+	assert.Len(t, configMaps.Items, 3)
+
+	// Reconcile non-exist jaeger
+	_, err = r.Reconcile(reconcile.Request{NamespacedName: nsnNonExist})
+	assert.NoError(t, err)
+
+	// Check that configmaps were clean up.
+	err = cl.List(context.Background(), configMaps)
+	assert.NoError(t, err)
+	assert.Len(t, configMaps.Items, 1)
+	assert.Equal(t, fmt.Sprintf("%s-service-ca", nsnExisting.Name), configMaps.Items[0].Name)
+
 }

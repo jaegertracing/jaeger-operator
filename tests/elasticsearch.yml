@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  labels:
+    app: jaeger
+    jaeger-infra: elasticsearch-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: jaeger-elasticsearch
+  serviceName: elasticsearch
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jaeger-elasticsearch
+        jaeger-infra: elasticsearch-replica
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
+          imagePullPolicy: Always
+          env:
+            - name: "http.host"
+              value: "0.0.0.0"
+            - name: "transport.host"
+              value: "127.0.0.1"
+            - name: "cluster.routing.allocation.disk.threshold_enabled"
+              value: "false"
+          ports:
+            - name: elasticsearch
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9200
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 4
+          securityContext:
+            capabilities:
+              add: ["SYS_CHROOT"]
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    app: jaeger
+    jaeger-infra: elasticsearch-service
+spec:
+  clusterIP: None
+  selector:
+    app: jaeger-elasticsearch
+  ports:
+  - port: 9200
+    name: elasticsearch
+  - port: 9300
+    name: transport

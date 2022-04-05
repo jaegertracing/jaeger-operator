@@ -5,17 +5,17 @@ import (
 	"sync"
 	"time"
 
+	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/global"
-	corev1 "k8s.io/api/apps/v1"
+	"go.opentelemetry.io/otel"
+	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/jaegertracing/jaeger-operator/pkg/apis/jaegertracing/v1"
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
-	esv1 "github.com/jaegertracing/jaeger-operator/pkg/storage/elasticsearch/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -25,7 +25,7 @@ var (
 )
 
 func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyElasticsearches")
 	defer span.End()
 
@@ -50,6 +50,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
+
 		if err := waitForAvailableElastic(ctx, r.client, d); err != nil {
 			return tracing.HandleError(errors.Wrap(err, "elasticsearch cluster didn't get to ready state"), span)
 		}
@@ -79,7 +80,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 }
 
 func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elasticsearch) error {
-	tracer := global.TraceProvider().GetTracer(v1.ReconciliationTracer)
+	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "waitForAvailableElastic")
 	defer span.End()
 
@@ -91,7 +92,7 @@ func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elast
 	seen := false
 	once := &sync.Once{}
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		depList := corev1.DeploymentList{}
+		depList := appsv1.DeploymentList{}
 		labels := map[string]string{
 			"cluster-name": es.Name,
 			"component":    "elasticsearch",
@@ -130,7 +131,7 @@ func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elast
 				availableDep++
 			}
 		}
-		ssList := corev1.StatefulSetList{}
+		ssList := appsv1.StatefulSetList{}
 		if err = c.List(ctx, &ssList, opts...); err != nil {
 			if k8serrors.IsNotFound(err) {
 				// the object might have not been created yet
