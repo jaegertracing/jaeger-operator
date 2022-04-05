@@ -10,5 +10,4 @@ fi
 
 image=$1
 
-n=0
-retry "docker pull $image && break"
+retry "docker pull $image"
