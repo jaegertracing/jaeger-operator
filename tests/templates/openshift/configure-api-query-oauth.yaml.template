@@ -39,5 +39,5 @@ spec:
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "gomplate -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o cluster-role.yaml"
+  - script: "{{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o cluster-role.yaml"
   - script: "kubectl apply -f cluster-role.yaml -n $NAMESPACE"
