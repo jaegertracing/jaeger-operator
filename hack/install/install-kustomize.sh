@@ -1,6 +1,8 @@
 #!/bin/bash
 VERSION="4.2.0"
 
+echo "Installing kustomize"
+
 current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $current_dir/install-utils.sh
 
