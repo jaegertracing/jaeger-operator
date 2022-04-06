@@ -1,6 +1,8 @@
 #!/bin/bash
 VERSION="4.20.2"
 
+echo "Installing yq"
+
 current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $current_dir/install-utils.sh
 
