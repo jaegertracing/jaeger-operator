@@ -664,7 +664,7 @@ build_dir="_build"
 rm -rf $build_dir
 mkdir $build_dir
 
-find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -n 1 -I {} cp -r {}  $build_dir
+find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
 
 cd _build
 
