@@ -1,6 +1,8 @@
 #!/bin/bash
 VERSION="0.11.1"
 
+echo "Installing kuttl"
+
 current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $current_dir/install-utils.sh
 
