@@ -412,7 +412,7 @@ function get_jaeger_name() {
 
     deployment_file=$1
 
-    jaeger_name=$(yq e '.metadata.name' $deployment_file)
+    jaeger_name=$($YQ e '.metadata.name' $deployment_file)
 
     if [ -z "$jaeger_name" ]; then
         error "No name for Jaeger deployment in file $deployment_file"
@@ -439,14 +439,14 @@ function get_jaeger_strategy() {
 
     deployment_file=$1
 
-    strategy=$(yq e '.spec.strategy' $deployment_file)
+    strategy=$($YQ e '.spec.strategy' $deployment_file)
 
     if [ "$strategy" != "null" ]; then
         echo $strategy
         return 0
     fi
 
-    strategy=$(yq e '.spec.agent.strategy' $deployment_file)
+    strategy=$($YQ e '.spec.agent.strategy' $deployment_file)
     if [ "$strategy" = "null" ]; then
         echo "allInOne"
         return 0
@@ -664,7 +664,7 @@ build_dir="_build"
 rm -rf $build_dir
 mkdir $build_dir
 
-find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -n 1 -I {} cp -r {}  $build_dir
+find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
 
 cd _build
 
@@ -678,3 +678,4 @@ fi
 export CRD_DIR
 
 $GOMPLATE -f ../../../templates/kuttl-test.yaml -o ./kuttl-test.yaml
+mkdir -p artifacts

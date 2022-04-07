@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -380,8 +379,9 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 			continue
 		}
 
-		// if the deployment has the sidecar annotation, trigger a reconciliation
-		if ok := increaseRevision(dep.Annotations); ok {
+		// if the deployment has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
 			deps = append(deps, dep)
 			continue
 		}
@@ -396,36 +396,24 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 			nss[ns.Name] = ns
 		}
 
-		// if the namespace has the sidecar annotation, trigger a reconciliation
-		if ok := increaseRevision(ns.Annotations); ok {
-			nssupdate = append(nssupdate, ns)
+		// if the namespace has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
 			continue
 		}
 	}
 	for _, dep := range deps {
 		if err := client.Update(context.Background(), &dep); err != nil {
-			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+			log.WithField("component", "jaeger-cr-sync").Error(err)
 			return err
 		}
 	}
 	for _, ns := range nssupdate {
 		if err := client.Update(context.Background(), &ns); err != nil {
-			log.WithField("compoennt", "jaeger-cr-sync").Error(err)
+			log.WithField("component", "jaeger-cr-sync").Error(err)
 			return err
 		}
 	}
 	return nil
-}
-
-func increaseRevision(annotations map[string]string) bool {
-	if _, ok := annotations[inject.Annotation]; ok {
-		revStr := "0"
-		v := annotations[inject.AnnotationRev]
-		if rev, err := strconv.Atoi(v); err == nil {
-			revStr = strconv.Itoa(rev + 1)
-		}
-		annotations[inject.AnnotationRev] = revStr
-		return true
-	}
-	return false
 }

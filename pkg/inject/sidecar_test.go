@@ -32,6 +32,18 @@ func reset() {
 	setDefaults()
 }
 
+func TestIncreaseRevision(t *testing.T) {
+	IncreaseRevision(nil)
+	in := map[string]string{
+		Annotation: "true",
+	}
+	IncreaseRevision(in)
+	assert.Equal(t, "0", in[AnnotationRev])
+	IncreaseRevision(in)
+	IncreaseRevision(in)
+	assert.Equal(t, "2", in[AnnotationRev])
+}
+
 func TestInjectSidecar(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := dep(map[string]string{}, map[string]string{})
