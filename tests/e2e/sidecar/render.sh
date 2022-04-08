@@ -19,3 +19,6 @@ jaeger_service_name="order"
 render_install_vertx "01"
 render_find_service "agent-as-sidecar" "$jaeger_service_name" "01" "02"
 render_find_service "agent-as-sidecar2" "$jaeger_service_name" "02" "05"
+
+start_test "sidecar-skip-webhook"
+render_install_vertx "01"
