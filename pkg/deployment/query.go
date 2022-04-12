@@ -86,10 +86,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
-	priorityClassName := ""
-	if q.jaeger.Spec.Query.PriorityClassName != "" {
-		priorityClassName = q.jaeger.Spec.Query.PriorityClassName
-	}
+	priorityClassName := q.jaeger.Spec.Query.PriorityClassName
 
 	strategy := appsv1.DeploymentStrategy{
 		Type: appsv1.RecreateDeploymentStrategyType,
