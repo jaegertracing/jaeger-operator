@@ -3,6 +3,7 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
+    app.kubernetes.io/name: jaeger-operator
     name: jaeger-operator
   name: jaeger-operator-webhook-service
 spec:
@@ -11,6 +12,7 @@ spec:
     protocol: TCP
     targetPort: 9443
   selector:
+    app.kubernetes.io/name: jaeger-operator
     name: jaeger-operator
 status:
   loadBalancer: {}
