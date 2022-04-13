@@ -1,6 +1,18 @@
 Changes by Version
 ==================
 
+1.33.0 (2022-04-14)
+-------------------
+* Adding priority-class for esIndexCleaner ([#1732](https://github.com/jaegertracing/jaeger-operator/pull/1732), [@swapnilpotnis](https://github.com/swapnilpotnis))
+* Fix: webhook deadlock  ([#1850](https://github.com/jaegertracing/jaeger-operator/pull/1850), [@frzifus](https://github.com/frzifus))
+* Fix: take namespace modifications into account ([#1839](https://github.com/jaegertracing/jaeger-operator/pull/1839), [@frzifus](https://github.com/frzifus))
+* Replace deployment reconciler with webhook ([#1828](https://github.com/jaegertracing/jaeger-operator/pull/1828), [@frzifus](https://github.com/frzifus))
+* Add managed by metric ([#1831](https://github.com/jaegertracing/jaeger-operator/pull/1831), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix admissionReviews version for operator-sdk upgrade ([#1827](https://github.com/jaegertracing/jaeger-operator/pull/1827), [@kevinearls](https://github.com/kevinearls))
+* Make RHOL Elasticsearch cert-management feature optional ([#1824](https://github.com/jaegertracing/jaeger-operator/pull/1824), [@pavolloffay](https://github.com/pavolloffay))
+* Update the operator-sdk to v1.17.0 ([#1825](https://github.com/jaegertracing/jaeger-operator/pull/1825), [@kevinearls](https://github.com/kevinearls))
+* Fix metrics selectors ([#1742](https://github.com/jaegertracing/jaeger-operator/pull/1742), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.32.0 (2022-03-09)
 -------------------
 
