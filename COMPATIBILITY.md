@@ -3,6 +3,7 @@ The following table shows the compatibility of jaeger operator with different co
 
 | Jaeger Operator | Kubernetes           | Strimzi Operator   |
 |-----------------|----------------------|---------------------
+| v1.33           | v1.19, v1.20, v1.21  | v0.23              |
 | v1.32           | v1.19, v1.20, v1.21  | v0.23              |
 | v1.31           | v1.19, v1.20, v1.21  | v0.23              |
 | v1.30           | v1.19, v1.20, v1.21  | v0.23              |
