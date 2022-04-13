@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +27,7 @@ func SupportedStorage(storage v1.JaegerStorageType) bool {
 }
 
 // CreateSparkDependencies creates a new cronjob for the Spark Dependencies task
-func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
+func CreateSparkDependencies(jaeger *v1.Jaeger) runtime.Object {
 	logTLSNotSupported(jaeger)
 	envVars := []corev1.EnvVar{
 		{Name: "STORAGE", Value: string(jaeger.Spec.Storage.Type)},
@@ -64,58 +66,84 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 		image = viper.GetString("jaeger-spark-dependencies-image")
 	}
 
-	return &batchv1beta1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: jaeger.Namespace,
-			Labels:    commonSpec.Labels,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: jaeger.APIVersion,
-					Kind:       jaeger.Kind,
-					Name:       jaeger.Name,
-					UID:        jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
-		},
-		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
-			Schedule:                   jaeger.Spec.Storage.Dependencies.Schedule,
-			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit,
-			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					Parallelism:  &one,
-					BackoffLimit: jaeger.Spec.Storage.Dependencies.BackoffLimit,
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Image: image,
-									Name:  name,
-									// let spark job use its default values
-									Env:          util.RemoveEmptyVars(envVars),
-									EnvFrom:      envFromSource,
-									Resources:    commonSpec.Resources,
-									VolumeMounts: jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
-								},
-							},
-							RestartPolicy:      corev1.RestartPolicyNever,
-							Affinity:           commonSpec.Affinity,
-							Tolerations:        commonSpec.Tolerations,
-							SecurityContext:    commonSpec.SecurityContext,
-							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
-							Volumes:            jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes,
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Labels:      commonSpec.Labels,
-							Annotations: commonSpec.Annotations,
-						},
-					},
-				},
+	objectMeta := metav1.ObjectMeta{
+		Name:      name,
+		Namespace: jaeger.Namespace,
+		Labels:    commonSpec.Labels,
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				APIVersion: jaeger.APIVersion,
+				Kind:       jaeger.Kind,
+				Name:       jaeger.Name,
+				UID:        jaeger.UID,
+				Controller: &trueVar,
 			},
 		},
 	}
+
+	jobSpec := batchv1.JobSpec{
+		Parallelism:  &one,
+		BackoffLimit: jaeger.Spec.Storage.Dependencies.BackoffLimit,
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Image: image,
+						Name:  name,
+						// let spark job use its default values
+						Env:          util.RemoveEmptyVars(envVars),
+						EnvFrom:      envFromSource,
+						Resources:    commonSpec.Resources,
+						VolumeMounts: jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
+					},
+				},
+				RestartPolicy:      corev1.RestartPolicyNever,
+				Affinity:           commonSpec.Affinity,
+				Tolerations:        commonSpec.Tolerations,
+				SecurityContext:    commonSpec.SecurityContext,
+				ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.DependenciesComponent),
+				Volumes:            jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.Volumes,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Labels:      commonSpec.Labels,
+				Annotations: commonSpec.Annotations,
+			},
+		},
+	}
+
+	var o runtime.Object
+	cronjobsVersion := viper.GetString("cronjobs-version")
+	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+		cj := &batchv1beta1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1beta1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.Dependencies.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1beta1.JobTemplateSpec{
+					Spec: jobSpec,
+				},
+			},
+		}
+
+		o = cj
+	} else {
+		cj := &batchv1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.Dependencies.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1.JobTemplateSpec{
+					Spec: jobSpec,
+				},
+			},
+		}
+
+		o = cj
+	}
+
+	return o
 }
 
 func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {

@@ -17,6 +17,12 @@ type JaegerPhase string
 type JaegerStorageType string
 
 const (
+	// CronJobsVersionBatchV1 represents the batch/v1 version of the kubernetes CronJob api, available as of 1.21
+	CronJobsVersionBatchV1 = "batch/v1"
+
+	// CronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the kubernetes CronJob api, no longer available as of 1.25
+	CronJobsVersionBatchV1Beta1 = "batch/v1beta1"
+
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
 

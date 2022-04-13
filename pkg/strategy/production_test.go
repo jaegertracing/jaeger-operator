@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	batchv1 "k8s.io/api/batch/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	"github.com/spf13/viper"
@@ -21,6 +23,7 @@ import (
 
 func init() {
 	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+	viper.SetDefault("cronjobs-version", v1.CronJobsVersionBatchV1)
 }
 
 func TestCreateProductionDeployment(t *testing.T) {
@@ -222,9 +225,9 @@ func TestElasticsearchInject(t *testing.T) {
 	c := newProductionStrategy(context.Background(), j)
 	// there should be index-cleaner, rollover, lookback
 	assert.Equal(t, 3, len(c.cronJobs))
-	assertEsInjectSecrets(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
-	assertEsInjectSecrets(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
-	assertEsInjectSecrets(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[0].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[1].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecrets(t, c.cronJobs[2].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 }
 
 func assertEsInjectSecrets(t *testing.T, p corev1.PodSpec) {
