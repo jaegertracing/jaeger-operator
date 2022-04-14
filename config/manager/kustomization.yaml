@@ -6,4 +6,3 @@ images:
 - name: controller
   newName: quay.io/jaegertracing/jaeger-operator
   newTag: 1.33.0
-
