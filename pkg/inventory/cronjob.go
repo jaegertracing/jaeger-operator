@@ -24,17 +24,16 @@ type CronJob struct {
 // ForCronJobs builds an inventory of cronjobs based on the existing and desired states
 func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
 	update := []runtime.Object{}
-	mcreate := jobsMap(desired)
-	mdelete := jobsMap(existing)
+	desiredCronjobsMap := jobsMap(desired)
+	existingCronJobsMap := jobsMap(existing)
 
 	cronjobsVersion := viper.GetString("cronjobs-version")
 
-	// FIXME: Use better variable names; combine redundant code
-	for k, v := range mcreate {
-		if t, ok := mdelete[k]; ok {
+	for desiredKey, desiredValue := range desiredCronjobsMap {
+		if existingValue, ok := existingCronJobsMap[desiredKey]; ok {
 			if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
-				t1 := t.(*batchv1beta1.CronJob)
-				v1 := v.(*batchv1beta1.CronJob)
+				t1 := existingValue.(*batchv1beta1.CronJob)
+				v1 := desiredValue.(*batchv1beta1.CronJob)
 				tp := t1.DeepCopy()
 				util.InitObjectMeta(tp)
 
@@ -52,8 +51,8 @@ func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
 
 				update = append(update, tp)
 			} else {
-				t1 := t.(*batchv1.CronJob)
-				v1 := v.(*batchv1.CronJob)
+				t1 := existingValue.(*batchv1.CronJob)
+				v1 := desiredValue.(*batchv1.CronJob)
 				tp := t1.DeepCopy()
 				util.InitObjectMeta(tp)
 
@@ -72,16 +71,17 @@ func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
 				update = append(update, tp)
 			}
 
-			delete(mcreate, k)
-			delete(mdelete, k)
+			delete(desiredCronjobsMap, desiredKey)
+			delete(existingCronJobsMap, desiredKey)
 		}
 	}
 
-	return CronJob{
-		Create: jobsList(mcreate),
+	result := CronJob{
+		Create: jobsList(desiredCronjobsMap),
 		Update: update,
-		Delete: jobsList(mdelete),
+		Delete: jobsList(existingCronJobsMap),
 	}
+	return result
 }
 
 func jobsMap(deps []runtime.Object) map[string]runtime.Object {
@@ -97,7 +97,7 @@ func jobsMap(deps []runtime.Object) map[string]runtime.Object {
 			cj := d.(*batchv1.CronJob)
 			key = fmt.Sprintf("%s.%s", cj.Namespace, cj.Name)
 		}
-		m[fmt.Sprintf(key)] = d
+		m[key] = d
 	}
 	return m
 }

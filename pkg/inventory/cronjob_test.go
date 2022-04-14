@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -86,4 +87,30 @@ func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
 	assert.Contains(t, inv.Create, createObj[1])
 	assert.Len(t, inv.Update, 0)
 	assert.Len(t, inv.Delete, 0)
+}
+
+func TestCronJobInventoryWithRepeats(t *testing.T) {
+	job1 := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-jaeger-spark-dependencies",
+		},
+	}
+	job2 := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-jaeger-es-index-cleaner",
+		},
+	}
+
+	existing := []runtime.Object{job1}
+	desired := []runtime.Object{job1, job2}
+	inventory := ForCronJobs(existing, desired)
+	assert.Len(t, inventory.Create, 1)
+	assert.Contains(t, inventory.Create, job2)
+	assert.Len(t, inventory.Update, 1)
+
+	assert.Equal(t, job1.Name, inventory.Update[0].(*batchv1.CronJob).Name)
+	for _, v := range inventory.Update {
+		fmt.Printf(v.(*batchv1.CronJob).Name)
+	}
+	assert.Len(t, inventory.Delete, 0)
 }

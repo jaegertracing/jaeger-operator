@@ -30,19 +30,21 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 		}),
 	}
 
-	// FIXME is there a way to reduce redundant code here?
+	// TODO is there a way to reduce redundant code here?
 	cronjobsVersion := viper.GetString("cronjobs-version")
 	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
 		list := &batchv1beta1.CronJobList{}
 		if err := r.rClient.List(ctx, list, opts...); err != nil {
 			return tracing.HandleError(err, span)
 		}
-		var f []runtime.Object // FIXME rename
+
+		var existing []runtime.Object
 		for _, i := range list.Items {
-			f = append(f, &i)
+			var z runtime.Object = i.DeepCopyObject()
+			existing = append(existing, z)
 		}
 
-		inv := inventory.ForCronJobs(f, desired)
+		inv := inventory.ForCronJobs(existing, desired)
 		for _, d1 := range inv.Create {
 			d := d1.(*batchv1beta1.CronJob)
 			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("creating cronjob")
@@ -71,12 +73,13 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 		if err := r.rClient.List(ctx, list, opts...); err != nil {
 			return tracing.HandleError(err, span)
 		}
-		var f []runtime.Object // FIXME rename
+		var existing []runtime.Object
 		for _, i := range list.Items {
-			f = append(f, &i)
+			var z runtime.Object = i.DeepCopyObject()
+			existing = append(existing, z)
 		}
 
-		inv := inventory.ForCronJobs(f, desired)
+		inv := inventory.ForCronJobs(existing, desired)
 		for _, d1 := range inv.Create {
 			d := d1.(*batchv1.CronJob)
 			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("creating cronjob")
