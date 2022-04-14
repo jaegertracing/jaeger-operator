@@ -86,10 +86,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334
 	sort.Strings(options)
 
-	priorityClassName := ""
-	if q.jaeger.Spec.Query.PriorityClassName != "" {
-		priorityClassName = q.jaeger.Spec.Query.PriorityClassName
-	}
+	priorityClassName := q.jaeger.Spec.Query.PriorityClassName
 
 	strategy := appsv1.DeploymentStrategy{
 		Type: appsv1.RecreateDeploymentStrategyType,
@@ -161,7 +158,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							},
 						},
 						LivenessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),
@@ -172,7 +169,7 @@ func (q *Query) Get() *appsv1.Deployment {
 							FailureThreshold:    5,
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),

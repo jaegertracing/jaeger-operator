@@ -3,7 +3,8 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    control-plane: jaeger-operator
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/name: jaeger-operator
     name: jaeger-operator
   name: jaeger-operator-metrics
 spec:
@@ -13,6 +14,7 @@ spec:
     protocol: TCP
     targetPort: https
   selector:
+    app.kubernetes.io/name: jaeger-operator
     name: jaeger-operator
 status:
   loadBalancer: {}

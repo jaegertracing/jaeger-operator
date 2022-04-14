@@ -534,6 +534,12 @@ type ElasticsearchSpec struct {
 	// +optional
 	DoNotProvision bool `json:"doNotProvision,omitempty"`
 
+	// Whether Elasticsearch cert management feature should be used.
+	// This is a preferred setting for new Jaeger deployments on OCP versions newer than 4.6.
+	// The cert management feature was added to Red Hat Openshift logging 5.2 in OCP 4.7.
+	// +optional
+	UseCertManagement *bool `json:"useCertManagement,omitempty"`
+
 	// +optional
 	Image string `json:"image,omitempty"`
 
@@ -675,6 +681,9 @@ type JaegerEsIndexCleanerSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover

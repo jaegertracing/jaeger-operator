@@ -19,21 +19,19 @@ As usual for operators following the Operator SDK in recent versions, the depend
 The first step is to get a local Kubernetes instance up and running. The recommended approach for development is using `minikube` with *ingress* enabled. Refer to the Kubernetes'  [documentation](https://kubernetes.io/docs/tasks/tools/install-minikube/) for instructions on how to install it.
 
 Once `minikube` is installed, it can be started with:
-
-```
+```sh
 minikube start --addons=ingress
 ```
 
 NOTE: Make sure to read the documentation to learn the performance switches that can be applied to your platform.
 
 Log into docker (or another image registry):
-```
+```sh
 docker login --username <dockerusername>
 ```
 
 Once minikube has finished starting, get the Operator running:
-
-```
+```sh
 make cert-manager
 IMG=docker.io/$USER/jaeger-operator:latest make generate bundle docker push deploy
 ```
@@ -41,30 +39,27 @@ IMG=docker.io/$USER/jaeger-operator:latest make generate bundle docker push depl
 NOTE: If your registry username is not the same as $USER, modify the previous command before executing it.  Also change *docker.io* if you are using a different image registry.
 
 At this point, a Jaeger instance can be installed:
-
-```
+```sh
 kubectl apply -f examples/simplest.yaml
 kubectl get jaegers
-kubectl get pods 
+kubectl get pods
 ```
 
 To verify the Jaeger instance is running, execute *minikube ip* and open that address in a browser, or follow the steps below
-```
+```sh
 export MINIKUBE_IP=`minikube ip`
 curl http://{$MINIKUBE_IP}/api/services
 ```
 NOTE: you may have to execute the *curl* command twice to get a non-empty result
 
 Tests should be simple unit tests and/or end-to-end tests. For small changes, unit tests should be sufficient, but every new feature should be accompanied with end-to-end tests as well. Tests can be executed with:
-
-```
+```sh
 make test
 ```
 
 #### Cleaning up
 To remove the instance:
-
-```
+```sh
 kubectl delete -f examples/simplest.yaml
 ```
 
@@ -78,7 +73,7 @@ The Operator SDK generates the `pkg/apis/jaegertracing/v1/zz_generated.*.go` fil
 
 There are a set of templates under the `test` directory that can be used to setup an Elasticsearch and/or Cassandra cluster. Alternatively, the following commands can be executed to install it:
 
-```
+```sh
 make es
 make cassandra
 ```
@@ -100,18 +95,17 @@ The Jaeger community provides and maintains a [ClusterServiceVersion (CSV) YAML]
 Starting from operator-sdk v0.5.0, one can generate and update CSVs based on the yaml files in the deploy folder.
 The Jaeger CSV can be updated to version 1.9.0 with the following command:
 
-```
+```sh
 $ operator-sdk generate csv --csv-version 1.9.0
 INFO[0000] Generating CSV manifest version 1.9.0
-INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml 
-INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml 
+INFO[0000] Create deploy/olm-catalog/jaeger-operator.csv.yaml
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
 ```
 
-The generated CSV yaml should then be compared and used to update the deploy/olm-catalog/jaeger.clusterserviceversion.yaml file which represents the stable version copied to the operatorhub following each jaeger operator release. Once merged, the jaeger-operator.csv.yaml file should be removed.
+The generated CSV yaml should then be compared and used to update the `deploy/olm-catalog/jaeger.clusterserviceversion.yaml` file which represents the stable version copied to the operatorhub following each jaeger operator release. Once merged, the `jaeger-operator.csv.yaml` file should be removed.
 
-The jaeger.clusterserviceversion.yaml file can then be tested with this command:
-
-```
+The `jaeger.clusterserviceversion.yaml` file can then be tested with this command:
+```sh
 $ operator-sdk scorecard --cr-manifest examples/simplest.yaml --csv-path deploy/olm-catalog/jaeger.clusterserviceversion.yaml --init-timeout 30
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
@@ -145,6 +139,8 @@ Before running the E2E tests you need to install:
 
 
 ### Runing the E2E tests
+
+#### Using KIND cluster
 The whole set of end-to-end tests can be executed via:
 
 ```sh
@@ -154,12 +150,24 @@ $ make run-e2e-tests
 The end-to-end tests are split into tags and can be executed in separate groups, such as:
 
 ```sh
-$ make run-e2e-tests-smoke
+$ make run-e2e-tests-examples
 ```
 
 Other targets include `run-e2e-tests-cassandra` and `run-e2e-tests-elasticsearch`. You can list them running:
 ```sh
 $ make e2e-test-suites
+```
+
+#### An external cluster (like OpenShift)
+The commands from the previous section are valid when running the E2E tests in an
+external cluster like OpenShift, minikube or other Kubernetes environment. The only
+difference are:
+* You need to log in your Kubernetes cluster before running the E2E tests
+* You need to provide the `USE_KIND_CLUSTER=false` parameter when calling `make`
+
+For instance, to run the `examples` E2E test suite in OpenShift, the command is:
+```sh
+$ make run-e2e-tests-examples USE_KIND_CLUSTER=false
 ```
 
 ### Developing new E2E tests
@@ -209,7 +217,7 @@ understand their parameters and effects.
 
 OCI images could be built and published by [buildx](https://github.com/docker/buildx), it could be executed for local test via:
 
-```
+```sh
 $ OPERATOR_VERSION=devel ./.ci/publish-images.sh
 ```
 
@@ -219,7 +227,7 @@ if we want to execute this in local env, need to setup buildx:
 
 1. install docker cli plugin
 
-```
+```sh
 $ export DOCKER_BUILDKIT=1
 $ docker build --platform=local -o . git://github.com/docker/buildx
 $ mkdir -p ~/.docker/cli-plugins
@@ -229,13 +237,13 @@ $ mv buildx ~/.docker/cli-plugins/docker-buildx
 
 2. install qemu for multi arch
 
-```
+```sh
 $ docker run --privileged --rm tonistiigi/binfmt --install all
 ```
 (via https://github.com/docker/buildx#building-multi-platform-images)
 
 3. create a builder
 
-```
+```sh
 $ docker buildx create --use --name builder
 ```

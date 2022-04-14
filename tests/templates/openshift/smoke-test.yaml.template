@@ -40,7 +40,7 @@ spec:
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "gomplate -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o smoke-cluster-role.yaml"
+  - script: "{{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o smoke-cluster-role.yaml"
   - script: "kubectl apply -f smoke-cluster-role.yaml -n $NAMESPACE"
-  - script: "ASSERT_IMG={{ .Env.ASSERT_IMG }} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa e2e-token-api-user -o yaml -n $NAMESPACE | yq eval '.secrets[] | select( .name == \"e2e-token-api-user-token-*\")'.name) gomplate -f {{ .Env.TEMPLATES_DIR }}/smoke-test.yaml.template -o smoke-test-job.yaml"
+  - script: "ASSERT_IMG={{ .Env.ASSERT_IMG }} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa e2e-token-api-user -o yaml -n $NAMESPACE | yq eval '.secrets[] | select( .name == \"e2e-token-api-user-token-*\")'.name) {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/smoke-test.yaml.template -o smoke-test-job.yaml"
   - script: "kubectl create -f smoke-test-job.yaml -n $NAMESPACE"

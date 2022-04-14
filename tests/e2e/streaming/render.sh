@@ -17,7 +17,6 @@ render_smoke_test "tls-streaming" "allInOne" "05"
 start_test "streaming-with-autoprovisioning"
 export CLUSTER_NAME="auto-provisioned"
 jaeger_name="auto-provisioned"
-
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
     rm ./00-install.yaml ./00-assert.yaml

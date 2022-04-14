@@ -6,3 +6,6 @@ namePrefix: jaeger-operator-
 
 configurations:
 - kustomizeconfig.yaml
+
+patchesStrategicMerge:
+  - deployment_inject_patch.yaml

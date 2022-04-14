@@ -4,7 +4,6 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -55,10 +54,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	defer span.End()
 
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))
-	log.WithFields(log.Fields{
+	logger := log.WithFields(log.Fields{
 		"namespace": request.Namespace,
 		"name":      request.Name,
-	}).Trace("Reconciling Namespace")
+	})
+	logger.Debug("Reconciling Namespace")
 
 	ns := &corev1.Namespace{}
 	err := r.rClient.Get(ctx, request.NamespacedName, ns)
@@ -99,63 +99,20 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 			continue
 		}
 
-		if inject.Needed(dep, ns) {
-			jaegers := &v1.JaegerList{}
-			opts := []client.ListOption{}
+		// NOTE: If a deployment does not provide an "inject" annotation and
+		// has an agent, we need to verify if this is caused by a annotated
+		// namespace.
+		hasAgent, _ := inject.HasJaegerAgent(dep)
+		_, hasDepAnnotation := dep.Annotations[inject.Annotation]
+		verificationNeeded := hasAgent && !hasDepAnnotation
 
-			if viper.GetString(v1.ConfigOperatorScope) == v1.OperatorScopeNamespace {
-				opts = append(opts, client.InNamespace(viper.GetString(v1.ConfigWatchNamespace)))
-			}
-
-			if err := r.rClient.List(ctx, jaegers, opts...); err != nil {
-				log.WithError(err).Error("failed to get the available Jaeger pods")
+		if inject.Needed(dep, ns) || verificationNeeded {
+			inject.IncreaseRevision(dep.Annotations)
+			if err := r.client.Update(context.Background(), dep); err != nil {
+				logger.Error(err)
 				return reconcile.Result{}, tracing.HandleError(err, span)
-			}
-			patch := client.MergeFrom(dep.DeepCopy())
-			jaeger := inject.Select(dep, ns, jaegers)
-			if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-				// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-				// Verified that jaeger instance was found and is not marked for deletion.
-				log.WithFields(log.Fields{
-					"deployment":       dep.Name,
-					"namespace":        dep.Namespace,
-					"jaeger":           jaeger.Name,
-					"jaeger-namespace": jaeger.Namespace,
-				}).Info("Injecting Jaeger Agent sidecar")
-				dep = inject.Sidecar(jaeger, dep)
-				if err := r.client.Patch(ctx, dep, patch); err != nil {
-					log.WithField("deployment", dep).WithError(err).Error("failed to update")
-					return reconcile.Result{}, tracing.HandleError(err, span)
-				}
-			} else {
-				log.WithField("deployment", dep.Name).Info("No suitable Jaeger instances found to inject a sidecar")
-			}
-		} else {
-			// Don't need injection, may be need to remove the sidecar?
-			// If deployment don't have the annotation and has an hasAgent, this may be injected by the namespace
-			// we need to clean it.
-			hasAgent, _ := inject.HasJaegerAgent(dep)
-			_, hasDepAnnotation := dep.Annotations[inject.Annotation]
-			if hasAgent && !hasDepAnnotation {
-				jaegerInstance, hasLabel := dep.Labels[inject.Label]
-				if hasLabel {
-					log.WithFields(log.Fields{
-						"deployment": dep.Name,
-						"namespace":  dep.Namespace,
-						"jaeger":     jaegerInstance,
-					}).Info("Removing Jaeger Agent sidecar")
-					patch := client.MergeFrom(dep.DeepCopy())
-					inject.CleanSidecar(jaegerInstance, dep)
-					if err := r.client.Patch(ctx, dep, patch); err != nil {
-						log.WithFields(log.Fields{
-							"deploymentName":      dep.Name,
-							"deploymentNamespace": dep.Namespace,
-						}).WithError(err).Error("error cleaning orphaned deployment")
-					}
-				}
 			}
 		}
 	}
-
 	return reconcile.Result{}, nil
 }
