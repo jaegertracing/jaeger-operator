@@ -14,7 +14,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 	trueVar := true
 
 	annotations := map[string]string{}
-	if jaeger.Spec.Query.Annotations !=nil{
+	if jaeger.Spec.Query.Annotations != nil {
 		annotations = jaeger.Spec.Query.Annotations
 	}
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
