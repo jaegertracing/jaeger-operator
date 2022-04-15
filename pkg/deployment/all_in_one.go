@@ -50,15 +50,20 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: a.labels(),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	podAnnotations := make(map[string]string)
+
+	for k, v := range commonSpec.Annotations {
+		podAnnotations[k] = v
+	}
+	podAnnotations["sidecar.istio.io/inject"] = "false"
 
 	options := allArgs(a.jaeger.Spec.AllInOne.Options,
 		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
@@ -136,7 +141,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
-					Annotations: commonSpec.Annotations,
+					Annotations: podAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: commonSpec.ImagePullSecrets,

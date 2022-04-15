@@ -42,10 +42,9 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: labels,
 	}
@@ -63,6 +62,12 @@ func (q *Query) Get() *appsv1.Deployment {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	podAnnotations := make(map[string]string)
+
+	for k, v := range commonSpec.Annotations {
+		podAnnotations[k] = v
+	}
+	podAnnotations["sidecar.istio.io/inject"] = "false"
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
@@ -123,7 +128,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
-					Annotations: commonSpec.Annotations,
+					Annotations: podAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: q.jaeger.Spec.ImagePullSecrets,
