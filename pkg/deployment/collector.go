@@ -53,14 +53,9 @@ func (c *Collector) Get() *appsv1.Deployment {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
-	podAnnotations := make(map[string]string)
-
-	for k, v := range commonSpec.Annotations {
-		podAnnotations[k] = v
-	}
-	_, ok := podAnnotations["sidecar.istio.io/inject"]
+	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
 	if !ok {
-		podAnnotations["sidecar.istio.io/inject"] = "false"
+		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
 	}
 
 	var envFromSource []corev1.EnvFromSource
@@ -134,7 +129,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      commonSpec.Labels,
-					Annotations: podAnnotations,
+					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
