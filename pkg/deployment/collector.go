@@ -58,7 +58,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 	for k, v := range commonSpec.Annotations {
 		podAnnotations[k] = v
 	}
-	podAnnotations["sidecar.istio.io/inject"] = "false"
+	_, ok := podAnnotations["sidecar.istio.io/inject"]
+	if !ok {
+		podAnnotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	var envFromSource []corev1.EnvFromSource
 	if len(c.jaeger.Spec.Storage.SecretName) > 0 {
@@ -113,7 +116,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Name:        c.name(),
 			Namespace:   c.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: c.jaeger.APIVersion,
 				Kind:       c.jaeger.Kind,

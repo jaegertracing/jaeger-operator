@@ -63,7 +63,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	for k, v := range commonSpec.Annotations {
 		podAnnotations[k] = v
 	}
-	podAnnotations["sidecar.istio.io/inject"] = "false"
+	_, ok := podAnnotations["sidecar.istio.io/inject"]
+	if !ok {
+		podAnnotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	options := allArgs(a.jaeger.Spec.AllInOne.Options,
 		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
@@ -124,7 +127,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Name:        a.jaeger.Name,
 			Namespace:   a.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: a.jaeger.APIVersion,
 				Kind:       a.jaeger.Kind,

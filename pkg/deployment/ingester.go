@@ -64,7 +64,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	for k, v := range commonSpec.Annotations {
 		podAnnotations[k] = v
 	}
-	podAnnotations["sidecar.istio.io/inject"] = "false"
+	_, ok := podAnnotations["sidecar.istio.io/inject"]
+	if !ok {
+		podAnnotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	var envFromSource []corev1.EnvFromSource
 	if len(i.jaeger.Spec.Storage.SecretName) > 0 {

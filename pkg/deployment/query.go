@@ -67,7 +67,10 @@ func (q *Query) Get() *appsv1.Deployment {
 	for k, v := range commonSpec.Annotations {
 		podAnnotations[k] = v
 	}
-	podAnnotations["sidecar.istio.io/inject"] = "false"
+	_, ok := podAnnotations["sidecar.istio.io/inject"]
+	if !ok {
+		podAnnotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	options := allArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
@@ -110,7 +113,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Name:        fmt.Sprintf("%s-query", q.jaeger.Name),
 			Namespace:   q.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: q.jaeger.APIVersion,
 				Kind:       q.jaeger.Kind,
