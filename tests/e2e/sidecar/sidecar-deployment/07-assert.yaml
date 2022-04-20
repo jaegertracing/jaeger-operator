@@ -1,3 +1,4 @@
+# Ensure the sidecar is not there anymore
 apiVersion: v1
 kind: Pod
 metadata:
