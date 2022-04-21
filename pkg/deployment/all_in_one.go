@@ -50,15 +50,18 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: a.labels(),
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
+	if !ok {
+		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	options := allArgs(a.jaeger.Spec.AllInOne.Options,
 		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
@@ -119,7 +122,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Name:        a.jaeger.Name,
 			Namespace:   a.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: a.jaeger.APIVersion,
 				Kind:       a.jaeger.Kind,
