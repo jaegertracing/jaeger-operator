@@ -51,15 +51,18 @@ func (i *Ingester) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: labels,
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingester.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
+	if !ok {
+		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	var envFromSource []corev1.EnvFromSource
 	if len(i.jaeger.Spec.Storage.SecretName) > 0 {
