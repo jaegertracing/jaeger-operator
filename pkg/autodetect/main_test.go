@@ -446,9 +446,8 @@ func TestAutoDetectCronJobsVersion(t *testing.T) {
 			if requestedApiVersion == apiGroup {
 				apiResourceList := &metav1.APIResourceList{GroupVersion: apiGroup, APIResources: []metav1.APIResource{{Name: "cronjobs"}}}
 				return apiResourceList, nil
-			} else {
-				return &metav1.APIResourceList{}, nil
 			}
+			return &metav1.APIResourceList{}, nil
 		}
 
 		// test
