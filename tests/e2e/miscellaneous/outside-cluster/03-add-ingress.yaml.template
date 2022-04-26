@@ -1,0 +1,18 @@
+# Create expose the collector using a route
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: collector-route
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /collector(/|$)(.*)
+        backend:
+          service:
+            name: my-jaeger-collector-headless
+            port:
+              number: 14268

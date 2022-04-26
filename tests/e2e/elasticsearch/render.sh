@@ -35,19 +35,18 @@ unset JAEGER_NAME
 unset CRONJOB_NAME
 
 
-if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "es-simple-prod" "skipping es-simple-prod test tests because SKIP_ES_EXTERNAL is true. Covered by the self_provisioned_elasticsearch_test"
-else
-    start_test "es-simple-prod"
-    jaeger_name="simple-prod"
 
+start_test "es-simple-prod"
+jaeger_name="simple-prod"
+if [ "$SKIP_ES_EXTERNAL" = false ]; then
     # Deploy Elasticsearch
     render_install_elasticsearch "00"
-    # Deploy Jaeger in production mode
-    render_install_jaeger "$jaeger_name" "production" "01"
-    # Run smoke test
-    render_smoke_test "$jaeger_name" "production" "02"
 fi
+# Deploy Jaeger in production mode
+render_install_jaeger "$jaeger_name" "production" "01"
+# Run smoke test
+render_smoke_test "$jaeger_name" "production" "02"
+
 
 
 start_test "es-rollover"

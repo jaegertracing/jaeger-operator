@@ -645,6 +645,8 @@ fi
 # Cassandra settings
 export CASSANDRA_SERVER="cassandra"
 
+export SERVICE_ACCOUNT_NAME="e2e-test"
+
 
 # Programs
 PROGRAMS_FOLDER=../../../..

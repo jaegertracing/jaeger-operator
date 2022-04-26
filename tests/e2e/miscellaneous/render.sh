@@ -40,6 +40,23 @@ fi
 
 start_test "outside-cluster"
 jaeger_name="my-jaeger"
-render_install_elasticsearch "00"
+
+if [ $IS_OPENSHIFT = false ]; then
+    render_install_elasticsearch "00"
+fi
+
 render_install_jaeger "$jaeger_name" "production" "01"
-$GOMPLATE -f ./03-check-collector.yaml.template -o 03-check-collector.yaml
+
+if [ $IS_OPENSHIFT = true ]; then
+    $GOMPLATE -f ./03-add-openshift-route.yaml.template -o ./03-create-route.yaml
+
+    export JAEGER_COLLECTOR_ENDPOINT="oc get routes my-jaeger -o yaml | $YQ e '.spec.host'"
+    export JAEGER_QUERY_ENDPOINT="http://localhost/query"
+else
+    $GOMPLATE -f ./03-add-ingress.yaml.template -o ./03-create-route.yaml
+
+    export JAEGER_COLLECTOR_ENDPOINT="echo http://localhost/collector/api/traces"
+    export JAEGER_QUERY_ENDPOINT="echo http://localhost/query"
+fi
+
+$GOMPLATE -f ./04-check-collector.yaml.template -o 03-check-collector.yaml

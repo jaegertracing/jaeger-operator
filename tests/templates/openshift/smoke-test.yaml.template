@@ -1,46 +1,10 @@
-# In order to requests programatically to the Jaeger Query, some extra
-# configuration is required
-# More info: https://www.jaegertracing.io/docs/1.29/operator/#openshift-1
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: jaeger-operator-with-auth-delegator
-  namespace: observability
-subjects:
-- kind: ServiceAccount
-  name: jaeger-operator
-  namespace: observability
-roleRef:
-  kind: ClusterRole
-  name: system:auth-delegator
-  apiGroup: rbac.authorization.k8s.io
----
-# We enable some extra configuration to the Jaeger deployment
-apiVersion: jaegertracing.io/v1
-kind: Jaeger
-metadata:
-  name: {{ .Env.JAEGER_NAME }}
-spec:
-  query:
-    options:
-      query.bearer-token-propagation: true
-  ingress:
-    openshift:
-      sar: '{"namespace": "default", "resource": "pods", "verb": "get"}'
-      delegateUrls: '{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}'
-    options:
-      pass-access-token: true
-      pass-user-bearer-token: true
-      scope: "user:info user:check-access user:list-projects"
-      pass-basic-auth: false
----
 # The ClusterRoleBinding needs the namespace in the YAML file. The smoke test
 # YAML file needs the secret name
 # Those files are generated while running the tests
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "{{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/api-query-cluster-role-binding.template.yaml -o smoke-cluster-role.yaml"
-  - script: "kubectl apply -f smoke-cluster-role.yaml -n $NAMESPACE"
-  - script: "ASSERT_IMG={{ .Env.ASSERT_IMG }} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa e2e-token-api-user -o yaml -n $NAMESPACE | yq eval '.secrets[] | select( .name == \"e2e-token-api-user-token-*\")'.name) {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/smoke-test.yaml.template -o smoke-test-job.yaml"
+  - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} JAEGER_NAME={{ .Env.JAEGER_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/configure-jaeger-sa.yaml.template -o service-account-config.yaml"
+  - script: "kubectl apply -f service-account-config.yaml -n $NAMESPACE"
+  - script: "ASSERT_IMG={{ .Env.ASSERT_IMG }} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa {{ .Env.SERVICE_ACCOUNT_NAME }} -o yaml -n $NAMESPACE | {{ .Env.YQ }} eval '.secrets[] | select( .name == \"{{ .Env.SERVICE_ACCOUNT_NAME }}-token-*\")'.name) {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/smoke-test.yaml.template -o smoke-test-job.yaml"
   - script: "kubectl create -f smoke-test-job.yaml -n $NAMESPACE"
