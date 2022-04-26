@@ -47,6 +47,11 @@ func rollover(jaeger *v1.Jaeger) runtime.Object {
 		Labels:          util.Labels(name, "cronjob-es-rollover", *jaeger),
 		OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
 	}
+	jobSpec := batchv1.JobSpec{
+		Parallelism:  &one,
+		BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
+		Template:     *createTemplate(name, "rollover", jaeger, envs),
+	}
 
 	var o runtime.Object
 	cronjobsVersion := viper.GetString("cronjobs-version")
@@ -58,11 +63,7 @@ func rollover(jaeger *v1.Jaeger) runtime.Object {
 				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
 				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
 				JobTemplate: batchv1beta1.JobTemplateSpec{
-					Spec: batchv1.JobSpec{
-						Parallelism:  &one,
-						BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
-						Template:     *createTemplate(name, "rollover", jaeger, envs),
-					},
+					Spec: jobSpec,
 				},
 			},
 		}
@@ -75,11 +76,7 @@ func rollover(jaeger *v1.Jaeger) runtime.Object {
 				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
 				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
 				JobTemplate: batchv1.JobTemplateSpec{
-					Spec: batchv1.JobSpec{
-						Parallelism:  &one,
-						BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
-						Template:     *createTemplate(name, "rollover", jaeger, envs),
-					},
+					Spec: jobSpec,
 				},
 			},
 		}

@@ -39,8 +39,7 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 
 		var existing []runtime.Object
 		for _, i := range list.Items {
-			var z runtime.Object = i.DeepCopyObject()
-			existing = append(existing, z)
+			existing = append(existing, i.DeepCopyObject())
 		}
 
 		inv := inventory.ForCronJobs(existing, desired)
