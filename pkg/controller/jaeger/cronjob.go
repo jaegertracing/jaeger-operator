@@ -30,7 +30,6 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 		}),
 	}
 
-	// TODO is there a way to reduce redundant code here?
 	cronjobsVersion := viper.GetString("cronjobs-version")
 	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
 		list := &batchv1beta1.CronJobList{}
