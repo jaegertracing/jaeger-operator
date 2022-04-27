@@ -30,8 +30,8 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 		}),
 	}
 
-	cronjobsVersion := viper.GetString("cronjobs-version")
-	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 		list := &batchv1beta1.CronJobList{}
 		if err := r.rClient.List(ctx, list, opts...); err != nil {
 			return tracing.HandleError(err, span)

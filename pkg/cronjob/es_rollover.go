@@ -54,8 +54,8 @@ func rollover(jaeger *v1.Jaeger) runtime.Object {
 	}
 
 	var o runtime.Object
-	cronjobsVersion := viper.GetString("cronjobs-version")
-	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 		cj := &batchv1beta1.CronJob{
 			ObjectMeta: objectMeta,
 			Spec: batchv1beta1.CronJobSpec{
@@ -153,8 +153,8 @@ func lookback(jaeger *v1.Jaeger) runtime.Object {
 	}
 
 	var o runtime.Object
-	cronjobsVersion := viper.GetString("cronjobs-version")
-	if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 		cj := &batchv1beta1.CronJob{
 			ObjectMeta: objectMeta,
 			Spec: batchv1beta1.CronJobSpec{

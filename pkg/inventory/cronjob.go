@@ -27,11 +27,11 @@ func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
 	desiredCronjobsMap := jobsMap(desired)
 	existingCronJobsMap := jobsMap(existing)
 
-	cronjobsVersion := viper.GetString("cronjobs-version")
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 
 	for desiredKey, desiredValue := range desiredCronjobsMap {
 		if existingValue, ok := existingCronJobsMap[desiredKey]; ok {
-			if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 				t1 := existingValue.(*batchv1beta1.CronJob)
 				v1 := desiredValue.(*batchv1beta1.CronJob)
 				tp := t1.DeepCopy()
@@ -87,10 +87,10 @@ func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
 func jobsMap(deps []runtime.Object) map[string]runtime.Object {
 	m := map[string]runtime.Object{}
 	var key string
-	cronjobsVersion := viper.GetString("cronjobs-version")
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 
 	for _, d := range deps {
-		if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+		if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 			cj := d.(*batchv1beta1.CronJob)
 			key = fmt.Sprintf("%s.%s", cj.Namespace, cj.Name)
 		} else {

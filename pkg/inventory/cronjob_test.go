@@ -16,7 +16,7 @@ import (
 
 func init() {
 	// Always test with v1.  It is available at compile time and is exactly the same as v1beta1
-	viper.SetDefault("cronjobs-version", v1.CronJobsVersionBatchV1)
+	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 }
 
 func TestCronJobInventory(t *testing.T) {

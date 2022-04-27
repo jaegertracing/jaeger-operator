@@ -117,7 +117,7 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 		}
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "cronjobs" {
-				viper.Set("cronjobs-version", apiGroupVersion)
+				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
 				log.Tracef("Found the cronjobs api in %s", apiGroupVersion)
 				return
 			}

@@ -430,7 +430,7 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 }
 
 func TestAutoDetectCronJobsVersion(t *testing.T) {
-	apiGroupVersions := []string{v1.CronJobsVersionBatchV1, v1.CronJobsVersionBatchV1Beta1}
+	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
 	for _, apiGroup := range apiGroupVersions {
 		dcl := &fakeDiscoveryClient{}
 		cl := fake.NewFakeClient()
@@ -454,7 +454,7 @@ func TestAutoDetectCronJobsVersion(t *testing.T) {
 		b.autoDetectCapabilities()
 
 		// verify
-		assert.Equal(t, apiGroup, viper.GetString("cronjobs-version"))
+		assert.Equal(t, apiGroup, viper.GetString(v1.FlagCronJobsVersion))
 		fmt.Printf("Test finished on [%s]\n", apiGroup)
 	}
 }

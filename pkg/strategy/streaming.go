@@ -151,16 +151,16 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		for i := range manifest.dependencies {
 			jobs = append(jobs, &manifest.dependencies[i].Spec.Template.Spec)
 		}
-		cronjobsVersion := viper.GetString("cronjobs-version")
+		cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 		if indexCleaner != nil {
-			if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 				jobs = append(jobs, &indexCleaner.(*batchv1beta1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 			} else {
 				jobs = append(jobs, &indexCleaner.(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 			}
 		}
 		for i := range esRollover {
-			if cronjobsVersion == v1.CronJobsVersionBatchV1Beta1 {
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 				jobs = append(jobs, &esRollover[i].(*batchv1beta1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 			} else {
 				jobs = append(jobs, &esRollover[i].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)

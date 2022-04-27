@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	viper.SetDefault("cronjobs-version", v1.CronJobsVersionBatchV1)
+	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 }
 
 func TestCronJobsCreate(t *testing.T) {
