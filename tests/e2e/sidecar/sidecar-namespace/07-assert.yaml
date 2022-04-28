@@ -1,3 +1,4 @@
+# Ensure the sidecar is not there anymore
 apiVersion: v1
 kind: Pod
 metadata:
@@ -6,7 +7,5 @@ metadata:
 spec:
   containers:
     - name: vertx-create-span-sidecar
-    # Assert the Jaeger agent is there
-    - name: jaeger-agent
 status:
   phase: Running
