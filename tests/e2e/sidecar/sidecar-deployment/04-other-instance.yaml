@@ -1,7 +1,8 @@
+# Create another Jaeger instance
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: agent-as-sidecar
+  name: agent-as-sidecar2
 spec:
   strategy: allinone
   allInOne:
