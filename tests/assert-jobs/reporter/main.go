@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -167,8 +168,11 @@ func generateSpansHistory(serviceName, operationName string, days, services int)
 
 // Block the execution until the Jaeger REST API is available (or timeout)
 func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
-	transport := &http.Transport{}
+	transport := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	client := http.Client{Transport: transport}
+
+	maxRetries := 5
+	retries := 0
 
 	err := wait.Poll(time.Second*5, time.Minute*5, func() (done bool, err error) {
 		req, err := http.NewRequest(http.MethodGet, jaegerEndpoint, nil)
@@ -183,7 +187,14 @@ func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
 		if resp != nil && resp.StatusCode == 405 {
 			return true, nil
 		}
+
 		if err != nil {
+			logrus.Warningln("Something failed while reaching", jaegerEndpoint, ":", err)
+
+			if retries < maxRetries {
+				retries++
+				return false, nil
+			}
 			return false, err
 		}
 
