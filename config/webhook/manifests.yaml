@@ -32,7 +32,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /mutate-v1-deployment
-  failurePolicy: Fail
+  failurePolicy: Ignore
   name: deployment.sidecar-injector.jaegertracing.io
   rules:
   - apiGroups:

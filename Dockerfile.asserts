@@ -6,9 +6,11 @@ WORKDIR /workspace
 # Download the dependencies. Doing this, if there are changes in the source
 # code but not in the dependencies to download, the tool to build the image will
 # use the cached dependencies
-COPY go.mod go.mod
-COPY go.sum go.sum
-RUN go mod download
+COPY hack/install/install-dependencies.sh hack/install/
+COPY hack/install/install-utils.sh hack/install/
+COPY go.mod .
+COPY go.sum .
+RUN ./hack/install/install-dependencies.sh
 
 COPY tests tests
 

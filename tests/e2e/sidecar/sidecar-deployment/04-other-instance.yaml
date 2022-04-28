@@ -1,3 +1,4 @@
+# Create another Jaeger instance
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:

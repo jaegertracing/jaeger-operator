@@ -22,7 +22,7 @@ function retry() {
     n=0
     until [ "$n" -ge 5 ]
     do
-        echo "Try $n..."
+        echo "Try $n... $command"
         $command && break
         n=$((n+1))
         sleep 5

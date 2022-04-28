@@ -79,7 +79,7 @@ run-e2e-tests: list-test-suites
 		$(MAKE) run-e2e-tests-$$suite -i; \
 	done
 	# Show a final report
-	junitcli --report reports
+	$(shell go env GOPATH)/bin/junitcli --report reports
 	cd reports && ! grep -nr failed
 
 .PHONY: render-e2e-tests

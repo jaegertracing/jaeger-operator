@@ -681,6 +681,9 @@ type JaegerEsIndexCleanerSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover

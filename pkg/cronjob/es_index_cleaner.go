@@ -45,6 +45,11 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 
 	ca.Update(jaeger, commonSpec)
 
+	priorityClassName := ""
+	if jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName != "" {
+		priorityClassName = jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName
+	}
+
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -88,6 +93,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 							SecurityContext:    commonSpec.SecurityContext,
 							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
 							Volumes:            commonSpec.Volumes,
+							PriorityClassName:  priorityClassName,
 						},
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      commonSpec.Labels,

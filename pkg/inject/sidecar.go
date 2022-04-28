@@ -101,8 +101,6 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 }
 
 // IncreaseRevision increases the revision counter if a inject annoation exists.
-// returns true if counter could be set or increased.
-// returns false if inject annotation doesnt exist.
 func IncreaseRevision(annotations map[string]string) {
 	if annotations == nil {
 		return
