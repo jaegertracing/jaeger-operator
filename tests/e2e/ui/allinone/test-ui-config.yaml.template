@@ -1,0 +1,4 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "ASSERT_PRESENT={{ .Env.ASSERT_PRESENT }} EXPECTED_CONTENT={{ .Env.TRACKING_ID }} QUERY_HOSTNAME={{ .Env.URL }} go run ./uiconfig/main.go"

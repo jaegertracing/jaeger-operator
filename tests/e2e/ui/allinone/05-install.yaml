@@ -1,10 +1,12 @@
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
-  name: my-jaeger
+  name: all-in-one-with-ui-config
 spec:
   strategy: allinone
+  ingress:
+    enabled: true
   allInOne:
     options:
-      log-level:  "debug"
-      memory.max-traces: 10000
+      query:
+        base-path: /jaeger

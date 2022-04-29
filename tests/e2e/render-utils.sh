@@ -651,6 +651,7 @@ export SERVICE_ACCOUNT_NAME="e2e-test"
 # Programs
 PROGRAMS_FOLDER=../../../..
 export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
+export ASSERT_HTTP_CODE_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/assert-http-code.sh
 export QUERY_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/query/main.go
 export REPORTER_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/reporter/main.go
 
@@ -666,7 +667,7 @@ build_dir="_build"
 rm -rf $build_dir
 mkdir $build_dir
 
-find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
+find -maxdepth 1 -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
 
 cd _build
 

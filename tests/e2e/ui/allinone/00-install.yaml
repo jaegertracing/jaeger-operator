@@ -1,0 +1,8 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: all-in-one-with-ui-config
+spec:
+  strategy: allinone
+  ingress:
+    enabled: true
