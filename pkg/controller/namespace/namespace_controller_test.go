@@ -183,7 +183,7 @@ func TestReconcilieDeployment(t *testing.T) {
 			for _, b := range tc.bundle {
 				objs = append(objs, b.dep)
 			}
-			cl := fake.NewFakeClient(objs...)
+			cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 			r := &ReconcileNamespace{
 				client:  &failingClient{Client: cl, err: tc.errReconcile},
 				rClient: cl,
