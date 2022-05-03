@@ -429,6 +429,36 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
 }
 
+func TestAutoDetectCronJobsVersion(t *testing.T) {
+	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
+	for _, apiGroup := range apiGroupVersions {
+		dcl := &fakeDiscoveryClient{}
+		cl := fake.NewFakeClient()
+		b := WithClients(cl, dcl, cl)
+		dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+			return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+				Name:     apiGroup,
+				Versions: []metav1.GroupVersionForDiscovery{{Version: apiGroup}},
+			}}}, nil
+		}
+
+		dcl.ServerResourcesForGroupVersionFunc = func(requestedApiVersion string) (apiGroupList *metav1.APIResourceList, err error) {
+			if requestedApiVersion == apiGroup {
+				apiResourceList := &metav1.APIResourceList{GroupVersion: apiGroup, APIResources: []metav1.APIResource{{Name: "cronjobs"}}}
+				return apiResourceList, nil
+			}
+			return &metav1.APIResourceList{}, nil
+		}
+
+		// test
+		b.autoDetectCapabilities()
+
+		// verify
+		assert.Equal(t, apiGroup, viper.GetString(v1.FlagCronJobsVersion))
+		fmt.Printf("Test finished on [%s]\n", apiGroup)
+	}
+}
+
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
 	// prepare
 	viper.Set("platform", v1.FlagPlatformKubernetes)

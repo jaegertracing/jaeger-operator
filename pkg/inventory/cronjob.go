@@ -3,6 +3,12 @@ package inventory
 import (
 	"fmt"
 
+	"github.com/spf13/viper"
+	batchv1 "k8s.io/api/batch/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -10,57 +16,94 @@ import (
 
 // CronJob represents the inventory of cronjobs based on the current and desired states
 type CronJob struct {
-	Create []batchv1beta1.CronJob
-	Update []batchv1beta1.CronJob
-	Delete []batchv1beta1.CronJob
+	Create []runtime.Object
+	Update []runtime.Object
+	Delete []runtime.Object
 }
 
 // ForCronJobs builds an inventory of cronjobs based on the existing and desired states
-func ForCronJobs(existing []batchv1beta1.CronJob, desired []batchv1beta1.CronJob) CronJob {
-	update := []batchv1beta1.CronJob{}
-	mcreate := jobsMap(desired)
-	mdelete := jobsMap(existing)
+func ForCronJobs(existing []runtime.Object, desired []runtime.Object) CronJob {
+	update := []runtime.Object{}
+	desiredCronjobsMap := jobsMap(desired)
+	existingCronJobsMap := jobsMap(existing)
 
-	for k, v := range mcreate {
-		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
-			util.InitObjectMeta(tp)
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 
-			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
-			tp.Spec = v.Spec
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+	for desiredKey, desiredValue := range desiredCronjobsMap {
+		if existingValue, ok := existingCronJobsMap[desiredKey]; ok {
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+				t1 := existingValue.(*batchv1beta1.CronJob)
+				v1 := desiredValue.(*batchv1beta1.CronJob)
+				tp := t1.DeepCopy()
+				util.InitObjectMeta(tp)
 
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
+				// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+				tp.Spec = v1.Spec
+				tp.ObjectMeta.OwnerReferences = v1.ObjectMeta.OwnerReferences
+
+				for k, v := range v1.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v1.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
+			} else {
+				t1 := existingValue.(*batchv1.CronJob)
+				v1 := desiredValue.(*batchv1.CronJob)
+				tp := t1.DeepCopy()
+				util.InitObjectMeta(tp)
+
+				// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+				tp.Spec = v1.Spec
+				tp.ObjectMeta.OwnerReferences = v1.ObjectMeta.OwnerReferences
+
+				for k, v := range v1.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v1.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
 			}
 
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, *tp)
-			delete(mcreate, k)
-			delete(mdelete, k)
+			delete(desiredCronjobsMap, desiredKey)
+			delete(existingCronJobsMap, desiredKey)
 		}
 	}
 
-	return CronJob{
-		Create: jobsList(mcreate),
+	result := CronJob{
+		Create: jobsList(desiredCronjobsMap),
 		Update: update,
-		Delete: jobsList(mdelete),
+		Delete: jobsList(existingCronJobsMap),
 	}
+	return result
 }
 
-func jobsMap(deps []batchv1beta1.CronJob) map[string]batchv1beta1.CronJob {
-	m := map[string]batchv1beta1.CronJob{}
+func jobsMap(deps []runtime.Object) map[string]runtime.Object {
+	m := map[string]runtime.Object{}
+	var key string
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+
 	for _, d := range deps {
-		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
+		if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+			cj := d.(*batchv1beta1.CronJob)
+			key = fmt.Sprintf("%s.%s", cj.Namespace, cj.Name)
+		} else {
+			cj := d.(*batchv1.CronJob)
+			key = fmt.Sprintf("%s.%s", cj.Namespace, cj.Name)
+		}
+		m[key] = d
 	}
 	return m
 }
 
-func jobsList(m map[string]batchv1beta1.CronJob) []batchv1beta1.CronJob {
-	l := []batchv1beta1.CronJob{}
+func jobsList(m map[string]runtime.Object) []runtime.Object {
+	l := []runtime.Object{}
 	for _, v := range m {
 		l = append(l, v)
 	}
