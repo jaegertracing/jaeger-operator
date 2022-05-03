@@ -2,5 +2,5 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} JAEGER_NAME={{ .Env.JAEGER_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/configure-jaeger-sa.yaml.template -o cluster-role.yaml"
-  - script: "kubectl apply -f cluster-role.yaml -n $NAMESPACE"
+  - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} JAEGER_NAME={{ .Env.JAEGER_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/openshift/configure-jaeger-sa.yaml.template -o jaeger-sa.yaml"
+  - script: "kubectl apply -f jaeger-sa.yaml -n $NAMESPACE"
