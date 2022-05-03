@@ -7,6 +7,7 @@ start_test "allinone"
 export QUERY_BASE_PATH=""
 export GET_URL_COMMAND
 export URL
+export JAEGER_NAME="all-in-one-ui"
 
 # The URL is decided when the tests starts. So, the YAML file for the job is
 # rendered after the test started
@@ -28,17 +29,16 @@ EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./01-curl.yaml
 
 ### Test the tracking.gaID parameter ###
 # Check the tracking.gaID is set properly
-ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f ./test-ui-config.yaml.template -o ./03-test-ui-config.yaml
-
-## Test the allInOne.options.query.base-path parameter ###
-# Check the UI is still accesible
-EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./06-curl.yaml
+ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f ./test-ui-config.yaml.template -o ./04-test-ui-config.yaml
 
 if [ $IS_OPENSHIFT = true ]; then
-    URL="https://\$($GET_URL_COMMAND)/jaeger/search"
+    # Change the allInOne.options.query.base-path parameter is not supported in OpenShift
+    rm ./06-install.yaml
 else
-    URL="http://localhost/jaeger/"
-fi
+    ## Test the allInOne.options.query.base-path parameter ###
+    # Check the UI is no longer accesible
+    EXPECTED_CODE="404" $GOMPLATE -f ./curl.yaml.template -o ./07-curl.yaml
 
-# Check we can access the new location
-EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./07-curl.yaml
+    # Check we can access the new base path
+    EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./08-curl.yaml
+fi

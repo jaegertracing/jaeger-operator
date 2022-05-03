@@ -5,4 +5,4 @@ delete:
 - apiVersion: jaegertracing.io/v1
   kind: Jaeger
   metadata:
-    name: all-in-one-with-ui-config
+    name: all-in-one-ui
