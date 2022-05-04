@@ -4,7 +4,6 @@ source $(dirname "$0")/../render-utils.sh
 
 
 start_test "allinone"
-export QUERY_BASE_PATH=""
 export GET_URL_COMMAND
 export URL
 export JAEGER_NAME="all-in-one-ui"
@@ -19,10 +18,41 @@ else
     URL="http://localhost/search"
 fi
 
-$GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-host.sh
 # Sometimes, the Ingress/OpenShift route is there but not 100% ready so, when
 # kubectl tries to get the hostname, it returns an empty string
+$GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-host.sh
 chmod +x ./ensure-ingress-host.sh
 
 # Check we can access the deployment
 EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./01-curl.yaml
+
+### Test the tracking.gaID parameter ###
+# Check the tracking.gaID is set properly
+ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./04-test-ui-config.yaml
+
+
+start_test "production"
+export JAEGER_NAME="production-ui"
+
+render_install_jaeger $JAEGER_NAME "production" "00"
+
+# Sometimes, the Ingress/OpenShift route is there but not 100% ready so, when
+# kubectl tries to get the hostname, it returns an empty string
+$GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-host.sh
+chmod +x ./ensure-ingress-host.sh
+
+# Check we can access the deployment
+EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-curl.yaml
+
+### Test the tracking.gaID parameter ###
+# Check the tracking.gaID was not there
+ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./03-check-NO-gaID.yaml
+
+# Check the tracking.gaID is set properly after 04-install.yaml
+ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./05-check-gaID.yaml
+
+# Check the tracking.gaID was chagned properly
+ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./07-check-changed-gaID.yaml
+ASSERT_PRESENT="true" TRACKING_ID="aNewTrackingID" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-new-gaIDla.yaml
+
+

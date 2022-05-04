@@ -1,5 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - script: "{{ .Env.GET_TOKEN_PROGRAM }} $NAMESPACE {{ .Env.JAEGER_NAME }} /tmp/jaeger-token"
-  - script: "SECRET_PATH=/tmp/jaeger-token ASSERT_PRESENT={{ .Env.ASSERT_PRESENT }} EXPECTED_CONTENT={{ .Env.TRACKING_ID }} QUERY_HOSTNAME={{ .Env.URL }} go run ./uiconfig/main.go"
