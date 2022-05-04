@@ -5,14 +5,14 @@ if [ "$#" -ne 5 ]; then
     exit 1
 fi
 
-export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
-source $ROOT_DIR/hack/common.sh
-
 export URL=$1
 export EXPECTED_CODE=$2
 export IS_OPENSHIFT=$3
 export NAMESPACE=$4
 export JAEGER_NAME=$5
+
+export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
+source $ROOT_DIR/hack/common.sh
 
 echo "Checking an expected HTTP response"
 n=0

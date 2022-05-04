@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$#" -lt 2 ]; then
+    echo "$0 <namespace> <Jaeger name> <output file (optional)>"
+    exit 1
+fi
+
 export NAMESPACE=$1
 export JAEGER_NAME=$2
 export OUTPUT_FILE=$3
@@ -13,7 +18,10 @@ source $ROOT_DIR/hack/common.sh
 $ROOT_DIR/hack/install/install-gomplate.sh > /dev/null
 $ROOT_DIR/hack/install/install-yq.sh > /dev/null
 
-export SERVICE_ACCOUNT_NAME="curl-check-http"
+
+if [ -z "$SERVICE_ACCOUNT_NAME" ]; then
+    export SERVICE_ACCOUNT_NAME="automation-sa"
+fi
 
 $GOMPLATE -f $TEMPLATES_DIR/openshift/configure-jaeger-sa.yaml.template -o /tmp/jaeger-sa.yaml
 kubectl apply -f /tmp/jaeger-sa.yaml -n $NAMESPACE > /dev/null

@@ -25,4 +25,4 @@ $GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-
 chmod +x ./ensure-ingress-host.sh
 
 # Check we can access the deployment
-EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./01-curl.yaml
+EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./01-curl.yaml
