@@ -2,18 +2,15 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-if [ $IS_OPENSHIFT = true ]; then
-    skip_test "cassandra-spark" "Test not supported in OpenShift"
-else
-    start_test "cassandra-spark"
-    # Create Cassandra instance and assert it
-    render_install_cassandra "00"
-    # Create the Jaeger instance
-    export JAEGER_NAME=test-spark-deps
-    export DEP_SCHEDULE=true
-    export CASSANDRA_MODE=prod
-    $GOMPLATE -f $TEMPLATES_DIR/cassandra-jaeger-install.yaml.template -o ./01-install.yaml
-fi
+start_test "cassandra-spark"
+# Create Cassandra instance and assert it
+render_install_cassandra "00"
+# Create the Jaeger instance
+export JAEGER_NAME=test-spark-deps
+export DEP_SCHEDULE=true
+export CASSANDRA_MODE=prod
+$GOMPLATE -f $TEMPLATES_DIR/cassandra-jaeger-install.yaml.template -o ./01-install.yaml
+
 
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "istio" "Test not supported in OpenShift"
@@ -43,5 +40,3 @@ jaeger_name="my-jaeger"
 render_install_elasticsearch "00"
 render_install_jaeger "$jaeger_name" "production" "01"
 $GOMPLATE -f ./03-check-collector.yaml.template -o 03-check-collector.yaml
-
-
