@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	batchv1 "k8s.io/api/batch/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
@@ -110,13 +113,13 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	if isBoolTrue(jaeger.Spec.Storage.Dependencies.Enabled) {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
-			manifest.cronJobs = append(manifest.cronJobs, *cronjob.CreateSparkDependencies(jaeger))
+			manifest.cronJobs = append(manifest.cronJobs, cronjob.CreateSparkDependencies(jaeger))
 		} else {
 			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
 		}
 	}
 
-	var indexCleaner *batchv1beta1.CronJob
+	var indexCleaner runtime.Object
 	if isBoolTrue(jaeger.Spec.Storage.EsIndexCleaner.Enabled) {
 		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
@@ -125,7 +128,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 	}
 
-	var esRollover []batchv1beta1.CronJob
+	var esRollover []runtime.Object
 	if storage.EnableRollover(jaeger.Spec.Storage) {
 		esRollover = cronjob.CreateRollover(jaeger)
 	}
@@ -148,11 +151,20 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		for i := range manifest.dependencies {
 			jobs = append(jobs, &manifest.dependencies[i].Spec.Template.Spec)
 		}
+		cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 		if indexCleaner != nil {
-			jobs = append(jobs, &indexCleaner.Spec.JobTemplate.Spec.Template.Spec)
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+				jobs = append(jobs, &indexCleaner.(*batchv1beta1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+			} else {
+				jobs = append(jobs, &indexCleaner.(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+			}
 		}
 		for i := range esRollover {
-			jobs = append(jobs, &esRollover[i].Spec.JobTemplate.Spec.Template.Spec)
+			if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+				jobs = append(jobs, &esRollover[i].(*batchv1beta1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+			} else {
+				jobs = append(jobs, &esRollover[i].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+			}
 		}
 		deps := []*appsv1.Deployment{queryDep}
 		if ingesterDep != nil {
@@ -167,7 +179,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 	// the index cleaner ES job, which may have been changed by the ES self-provisioning routine
 	if indexCleaner != nil {
-		manifest.cronJobs = append(manifest.cronJobs, *indexCleaner)
+		manifest.cronJobs = append(manifest.cronJobs, indexCleaner)
 	}
 	if len(esRollover) > 0 {
 		manifest.cronJobs = append(manifest.cronJobs, esRollover...)

@@ -5,8 +5,7 @@ metadata:
     app: vertx-create-span-sidecar
 spec:
   containers:
+    # Ensure the Jaeger agent is not there
     - name: vertx-create-span-sidecar
-    # Assert the Jaeger agent is there
-    - name: jaeger-agent
 status:
   phase: Running
