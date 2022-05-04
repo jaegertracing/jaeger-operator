@@ -26,19 +26,3 @@ chmod +x ./ensure-ingress-host.sh
 
 # Check we can access the deployment
 EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./01-curl.yaml
-
-### Test the tracking.gaID parameter ###
-# Check the tracking.gaID is set properly
-ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f ./test-ui-config.yaml.template -o ./04-test-ui-config.yaml
-
-if [ $IS_OPENSHIFT = true ]; then
-    # Change the allInOne.options.query.base-path parameter is not supported in OpenShift
-    rm ./06-install.yaml
-else
-    ## Test the allInOne.options.query.base-path parameter ###
-    # Check the UI is no longer accesible
-    EXPECTED_CODE="404" $GOMPLATE -f ./curl.yaml.template -o ./07-curl.yaml
-
-    # Check we can access the new base path
-    EXPECTED_CODE="200" $GOMPLATE -f ./curl.yaml.template -o ./08-curl.yaml
-fi
