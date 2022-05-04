@@ -168,7 +168,12 @@ func generateSpansHistory(serviceName, operationName string, days, services int)
 
 // Block the execution until the Jaeger REST API is available (or timeout)
 func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
-	transport := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	transport := &http.Transport{
+		// #nosec
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true
+		}
+	}
 	client := http.Client{Transport: transport}
 
 	maxRetries := 5
