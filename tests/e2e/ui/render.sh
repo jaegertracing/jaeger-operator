@@ -34,7 +34,11 @@ ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/tes
 start_test "production"
 export JAEGER_NAME="production-ui"
 
-render_install_jaeger $JAEGER_NAME "production" "00"
+if [ $SKIP_ES_EXTERNAL = false ]; then
+    render_install_elasticsearch "00"
+fi
+
+render_install_jaeger $JAEGER_NAME "production" "01"
 
 # Sometimes, the Ingress/OpenShift route is there but not 100% ready so, when
 # kubectl tries to get the hostname, it returns an empty string
@@ -42,17 +46,19 @@ $GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-
 chmod +x ./ensure-ingress-host.sh
 
 # Check we can access the deployment
-EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-curl.yaml
+EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-curl.yaml
 
 ### Test the tracking.gaID parameter ###
 # Check the tracking.gaID was not there
-ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./03-check-NO-gaID.yaml
+ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./04-check-NO-gaID.yaml
 
-# Check the tracking.gaID is set properly after 04-install.yaml
-ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./05-check-gaID.yaml
+# Check the tracking.gaID is set properly after 05-install.yaml
+ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./06-check-gaID.yaml
 
-# Check the tracking.gaID was chagned properly
-ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./07-check-changed-gaID.yaml
-ASSERT_PRESENT="true" TRACKING_ID="aNewTrackingID" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-new-gaIDla.yaml
-
-
+# When the tracking.gaID is modified in a Kubernetes cluster, the value is not
+# mofidied in the HTML code. In OpenShift, the change is performed properly
+if [ $IS_OPENSHIFT = true ]; then
+    # Check the tracking.gaID was changed properly after 07-install.yaml
+    ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-changed-gaID.yaml
+    ASSERT_PRESENT="true" TRACKING_ID="aNewTrackingID" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./09-check-new-gaIDla.yaml
+fi
