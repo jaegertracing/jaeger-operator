@@ -33,14 +33,9 @@ func main() {
 
 	logrus.Info("Querying ", hostName, "...")
 
-	found := false
-
 	err := utils.TestGetHTTP(hostName, params, func(_ *http.Response, body []byte) (done bool, err error) {
-		if strings.Contains(string(body), expectedContent) {
-			found = true
-		} else {
-			found = false
-		}
+		found := strings.Contains(string(body), expectedContent)
+
 		if assertPresent && found {
 			logrus.Infoln("Content found and asserted!")
 			return true, nil
