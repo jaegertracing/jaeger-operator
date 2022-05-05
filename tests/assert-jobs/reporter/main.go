@@ -171,8 +171,8 @@ func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
 	transport := &http.Transport{
 		// #nosec
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true
-		}
+			InsecureSkipVerify: true,
+		},
 	}
 	client := http.Client{Transport: transport}
 
