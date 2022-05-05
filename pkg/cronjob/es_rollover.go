@@ -5,6 +5,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,11 +28,11 @@ const (
 )
 
 // CreateRollover returns objects which are necessary to run rolover actions for indices
-func CreateRollover(jaeger *v1.Jaeger) []batchv1beta1.CronJob {
-	return []batchv1beta1.CronJob{rollover(jaeger), lookback(jaeger)}
+func CreateRollover(jaeger *v1.Jaeger) []runtime.Object {
+	return []runtime.Object{rollover(jaeger), lookback(jaeger)}
 }
 
-func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
+func rollover(jaeger *v1.Jaeger) runtime.Object {
 	// CronJob names are restricted to 52 chars
 	name := util.Truncate("%s-es-rollover", 52, jaeger.Name)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
@@ -38,26 +41,49 @@ func rollover(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 	}
 	one := int32(1)
 
-	return batchv1beta1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Namespace:       jaeger.Namespace,
-			Labels:          util.Labels(name, "cronjob-es-rollover", *jaeger),
-			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
-		},
-		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
-			Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
-			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
-			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					Parallelism:  &one,
-					BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
-					Template:     *createTemplate(name, "rollover", jaeger, envs),
+	objectMeta := metav1.ObjectMeta{
+		Name:            name,
+		Namespace:       jaeger.Namespace,
+		Labels:          util.Labels(name, "cronjob-es-rollover", *jaeger),
+		OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
+	}
+	jobSpec := batchv1.JobSpec{
+		Parallelism:  &one,
+		BackoffLimit: jaeger.Spec.Storage.EsRollover.BackoffLimit,
+		Template:     *createTemplate(name, "rollover", jaeger, envs),
+	}
+
+	var o runtime.Object
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+		cj := &batchv1beta1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1beta1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1beta1.JobTemplateSpec{
+					Spec: jobSpec,
 				},
 			},
-		},
+		}
+		o = cj
+	} else {
+		cj := &batchv1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1.JobTemplateSpec{
+					Spec: jobSpec,
+				},
+			},
+		}
+		o = cj
 	}
+
+	return o
 }
 
 func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
@@ -101,7 +127,7 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 	}
 }
 
-func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
+func lookback(jaeger *v1.Jaeger) runtime.Object {
 	// CronJob names are restricted to 52 chars
 	name := util.Truncate("%s-es-lookback", 52, jaeger.Name)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
@@ -119,25 +145,50 @@ func lookback(jaeger *v1.Jaeger) batchv1beta1.CronJob {
 		}
 	}
 
-	return batchv1beta1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Namespace:       jaeger.Namespace,
-			Labels:          util.Labels(name, "cronjob-es-lookback", *jaeger),
-			OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
-		},
-		Spec: batchv1beta1.CronJobSpec{
-			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
-			Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
-			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
-			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
-					Template:                *createTemplate(name, "lookback", jaeger, envs),
+	objectMeta := metav1.ObjectMeta{
+		Name:            name,
+		Namespace:       jaeger.Namespace,
+		Labels:          util.Labels(name, "cronjob-es-lookback", *jaeger),
+		OwnerReferences: []metav1.OwnerReference{util.AsOwner(jaeger)},
+	}
+
+	var o runtime.Object
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+		cj := &batchv1beta1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1beta1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1beta1.JobTemplateSpec{
+					Spec: batchv1.JobSpec{
+						TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
+						Template:                *createTemplate(name, "lookback", jaeger, envs),
+					},
 				},
 			},
-		},
+		}
+		o = cj
+	} else {
+		cj := &batchv1.CronJob{
+			ObjectMeta: objectMeta,
+			Spec: batchv1.CronJobSpec{
+				ConcurrencyPolicy:          batchv1.ForbidConcurrent,
+				Schedule:                   jaeger.Spec.Storage.EsRollover.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1.JobTemplateSpec{
+					Spec: batchv1.JobSpec{
+						TTLSecondsAfterFinished: jaeger.Spec.Storage.EsRollover.TTLSecondsAfterFinished,
+						Template:                *createTemplate(name, "lookback", jaeger, envs),
+					},
+				},
+			},
+		}
+		o = cj
 	}
+
+	return o
 }
 
 // EsScriptEnvVars returns environmental variables for ES cron jobs.

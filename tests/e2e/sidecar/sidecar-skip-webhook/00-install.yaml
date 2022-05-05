@@ -11,9 +11,3 @@ spec:
   ingress:
     enabled: true
     security: "none"
----
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - command: ./annotate-ns.sh
-    namespaced: true

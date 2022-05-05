@@ -171,7 +171,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	)
 
 	cl := &modifiedClient{
-		Client:  fake.NewFakeClient(objs...),
+		Client:  fake.NewClientBuilder().WithRuntimeObjects(objs...).Build(),
 		listErr: errList,
 		getErr:  errGet,
 	}
@@ -246,7 +246,7 @@ func TestDeletedInstance(t *testing.T) {
 	s.AddKnownTypes(v1.GroupVersion, jaeger)
 
 	// no known objects
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 
@@ -280,7 +280,8 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, jaeger)
-	cl := fake.NewFakeClient(jaeger)
+	cl := fake.NewClientBuilder().WithObjects(jaeger).Build()
+
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
 
@@ -308,7 +309,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, jaeger)
-	cl := fake.NewFakeClient(jaeger)
+	cl := fake.NewClientBuilder().WithObjects(jaeger).Build()
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
 
@@ -338,8 +339,8 @@ func TestGetResourceFromNonCachedClient(t *testing.T) {
 	// we trigger the reconciliation and expect it to finish without errors, while we expect to not have an instance afterwards
 	// if the code is using the cached client, we would end up either with an error (trying to update an instance that does not exist)
 	// or we'd end up with an instance
-	cachedClient := fake.NewFakeClient(jaeger)
-	client := fake.NewFakeClient()
+	cachedClient := fake.NewClientBuilder().WithObjects(jaeger).Build()
+	client := fake.NewClientBuilder().Build()
 
 	r := &ReconcileJaeger{client: cachedClient, scheme: s, rClient: client}
 	req := reconcile.Request{NamespacedName: nsn}
@@ -433,7 +434,7 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	// Kafka
 	s.AddKnownTypes(v1beta2.GroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
 
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 	r := New(cl, cl, s)
 	r.certGenerationScript = "../../../scripts/cert_generation.sh"
 	return r, cl

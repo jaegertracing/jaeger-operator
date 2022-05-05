@@ -42,7 +42,7 @@ func TestUpgradeDeprecatedOptionsv1_18_0(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
@@ -85,7 +85,7 @@ func TestUpgradeAgentWithTChannelEnablev1_18_0_(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 

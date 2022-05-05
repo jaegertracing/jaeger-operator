@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vertx-create-span-sidecar
-  annotations:
-    "sidecar.jaegertracing.io/inject": "true"
 spec:
   replicas: 1
   selector:

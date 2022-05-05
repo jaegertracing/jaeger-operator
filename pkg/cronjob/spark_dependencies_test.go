@@ -3,6 +3,8 @@ package cronjob
 import (
 	"testing"
 
+	batchv1 "k8s.io/api/batch/v1"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -11,6 +13,11 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
+
+func init() {
+	// Always test with v1.  It is available at compile time and is exactly the same as v1beta1
+	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+}
 
 func TestStorageEnvs(t *testing.T) {
 	trueVar := true
@@ -96,7 +103,7 @@ func TestSparkDependenciesSecrets(t *testing.T) {
 
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
-	cronJob := CreateSparkDependencies(jaeger)
+	cronJob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
 	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom, 1)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
@@ -106,7 +113,7 @@ func TestSparkDependencies(t *testing.T) {
 	j := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}
 	historyLimits := int32(3)
 	j.Spec.Storage.Dependencies.SuccessfulJobsHistoryLimit = &historyLimits
-	cjob := CreateSparkDependencies(j)
+	cjob := CreateSparkDependencies(j).(*batchv1.CronJob)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
 	assert.Equal(t, historyLimits, *cjob.Spec.SuccessfulJobsHistoryLimit)
 }
@@ -122,7 +129,7 @@ func TestDependenciesAnnotations(t *testing.T) {
 		"prometheus.io/scrape": "false", // Override implicit value
 	}
 
-	cjob := CreateSparkDependencies(jaeger)
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
@@ -137,7 +144,7 @@ func TestSparkDependenciesBackoffLimit(t *testing.T) {
 	BackoffLimit := int32(3)
 	jaeger.Spec.Storage.Dependencies.BackoffLimit = &BackoffLimit
 
-	cronJob := CreateSparkDependencies(jaeger)
+	cronJob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, &BackoffLimit, cronJob.Spec.JobTemplate.Spec.BackoffLimit)
 }
 
@@ -152,7 +159,7 @@ func TestDependenciesLabels(t *testing.T) {
 		"another": "false",
 	}
 
-	cjob := CreateSparkDependencies(jaeger)
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
@@ -221,7 +228,7 @@ func TestSparkDependenciesResources(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		cjob := CreateSparkDependencies(test.jaeger)
+		cjob := CreateSparkDependencies(test.jaeger).(*batchv1.CronJob)
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
@@ -232,7 +239,7 @@ func TestDefaultSparkDependenciesImage(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
 
-	cjob := CreateSparkDependencies(jaeger)
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
 	assert.Equal(t, "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
@@ -243,7 +250,7 @@ func TestCustomSparkDependenciesImage(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultSparkDependenciesImage"})
 
-	cjob := CreateSparkDependencies(jaeger)
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.Dependencies.Image)
 	assert.Equal(t, "org/custom-spark-dependencies-image", cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
@@ -273,7 +280,7 @@ func TestDependenciesVolumes(t *testing.T) {
 	testVolumeMounts := []corev1.VolumeMount{testVolumeMount}
 	jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts = testVolumeMounts
 
-	cjob := CreateSparkDependencies(jaeger)
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, testVolumeMountName, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].Name)
 	assert.False(t, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].ReadOnly)
 	assert.Equal(t, testMountPath, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
