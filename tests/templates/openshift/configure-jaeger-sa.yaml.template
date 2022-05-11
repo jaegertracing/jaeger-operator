@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Env.SERVICE_ACCOUNT_NAME }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Env.SERVICE_ACCOUNT_NAME }}-bind
+subjects:
+- kind: ServiceAccount
+  name: {{ .Env.SERVICE_ACCOUNT_NAME }}
+  namespace: {{ .Env.NAMESPACE }}
+roleRef:
+  kind: ClusterRole
+  name: cluster-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# In order to requests programatically to the Jaeger Query, some extra
+# configuration is required
+# More info: https://www.jaegertracing.io/docs/1.29/operator/#openshift-1
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jaeger-operator-with-auth-delegator
+  namespace: observability
+subjects:
+- kind: ServiceAccount
+  name: jaeger-operator
+  namespace: observability
+roleRef:
+  kind: ClusterRole
+  name: system:auth-delegator
+  apiGroup: rbac.authorization.k8s.io
+---
+# We enable some extra configuration to the Jaeger deployment
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: {{ .Env.JAEGER_NAME }}
+spec:
+  query:
+    options:
+      query.bearer-token-propagation: true
+  ingress:
+    openshift:
+      sar: '{"namespace": "{{ .Env.NAMESPACE }}", "resource": "pods", "verb": "get"}'
+      delegateUrls: '{"/":{"namespace": "{{ .Env.NAMESPACE }}", "resource": "pods", "verb": "get"}}'
+    options:
+      pass-access-token: true
+      pass-user-bearer-token: true
+      scope: "user:info user:check-access"
+      pass-basic-auth: false

@@ -7,6 +7,10 @@ if [[ "$(basename -- "$0")" = "render-utils.sh" ]]; then
     exit 1
 fi
 
+export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
+source $ROOT_DIR/hack/common.sh
+
+
 ###############################################################################
 # Functions ###################################################################
 ###############################################################################
@@ -614,20 +618,12 @@ fi
 
 export IS_OPENSHIFT
 
-
 # Important folders
-export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
-export TEST_DIR=$ROOT_DIR/tests
-export TEMPLATES_DIR=$TEST_DIR/templates
-export EXAMPLES_DIR=$ROOT_DIR/examples
 export SUITE_DIR=$(dirname "$0")
 
 
 # Check the dependencies are there
-export GOMPLATE=$ROOT_DIR/bin/gomplate
 $ROOT_DIR/hack/install/install-gomplate.sh
-
-export YQ=$ROOT_DIR/bin/yq
 $ROOT_DIR/hack/install/install-yq.sh
 
 
@@ -645,12 +641,22 @@ fi
 # Cassandra settings
 export CASSANDRA_SERVER="cassandra"
 
+export SERVICE_ACCOUNT_NAME="e2e-test"
 
-# Programs
+
+# Programs. Note: these paths are related to the suites location
 PROGRAMS_FOLDER=../../../..
+
+# CMD utils
 export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
+export ASSERT_HTTP_CODE_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/assert-jaeger-http-code.sh
+export GET_TOKEN_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/get-token.sh
+export TEST_UI_CONFIG_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/uiconfig/main.go
+
+# Assert jobs
 export QUERY_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/query/main.go
 export REPORTER_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/reporter/main.go
+
 
 # Fail on first error
 set -e
@@ -664,7 +670,7 @@ build_dir="_build"
 rm -rf $build_dir
 mkdir $build_dir
 
-find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
+find -maxdepth 1 -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
 
 cd _build
 

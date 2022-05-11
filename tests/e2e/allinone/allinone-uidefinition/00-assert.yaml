@@ -1,6 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: all-in-one-with-ui-config
-spec:
-  replicas: 1

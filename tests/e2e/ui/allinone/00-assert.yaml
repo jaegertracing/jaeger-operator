@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-jaeger
+  name: all-in-one-ui
 spec:
   replicas: 1

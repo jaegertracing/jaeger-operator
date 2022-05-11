@@ -1,0 +1,8 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+delete:
+  # For allInOne deployments, we cannot update. We need to delete and recreate
+- apiVersion: jaegertracing.io/v1
+  kind: Jaeger
+  metadata:
+    name: all-in-one-ui
