@@ -1,0 +1,11 @@
+# Enable tracking.gaID
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: all-in-one-ui
+spec:
+  strategy: allinone
+  ui:
+    options:
+      tracking:
+        gaID: "MyTrackingId"

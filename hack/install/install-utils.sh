@@ -85,8 +85,6 @@ function download() {
 
     check_tool "$tool_path" "$version" "--version"
 
-    echo "Installing $program"
-
     retry "curl -sLo $tool_path $url"
     chmod +x $tool_path
     export PATH=$PATH:$BIN
