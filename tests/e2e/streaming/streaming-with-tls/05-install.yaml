@@ -15,6 +15,7 @@ spec:
           topic: jaeger-spans
           brokers: my-cluster-kafka-bootstrap:9093
           tls:
+            enabled: true
             ca: /var/run/secrets/cluster-ca/ca.crt
             cert: /var/run/secrets/kafkauser/user.crt
             key: /var/run/secrets/kafkauser/user.key
@@ -26,6 +27,7 @@ spec:
           topic: jaeger-spans
           brokers: my-cluster-kafka-bootstrap:9093
           tls:
+            enabled: true
             ca: /var/run/secrets/cluster-ca/ca.crt
             cert: /var/run/secrets/kafkauser/user.crt
             key: /var/run/secrets/kafkauser/user.key
