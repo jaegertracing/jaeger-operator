@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+1.34.0 (2022-05-18)
+-------------------
+* Fix: jaeger operator fails to parse Jaeger instance version ([#1885](https://github.com/jaegertracing/jaeger-operator/pull/1885), [@rubenvp8510](https://github.com/rubenvp8510))
+* Support Kubernetes 1.24 ([#1882](https://github.com/jaegertracing/jaeger-operator/pull/1882), [@iblancasa](https://github.com/iblancasa))
+* Cronjob migration ([#1856](https://github.com/jaegertracing/jaeger-operator/pull/1856), [@kevinearls](https://github.com/kevinearls))
+* Fix: setting default Istio annotation in Pod instead of Deployment ([#1860](https://github.com/jaegertracing/jaeger-operator/pull/1860), [@cnvergence](https://github.com/cnvergence))
+* Add http- prefix to port names in collector and agent services ([#1862](https://github.com/jaegertracing/jaeger-operator/pull/1862), [@cnvergence](https://github.com/cnvergence))
+
 1.33.0 (2022-04-14)
 -------------------
 * Adding priority-class for esIndexCleaner ([#1732](https://github.com/jaegertracing/jaeger-operator/pull/1732), [@swapnilpotnis](https://github.com/swapnilpotnis))
