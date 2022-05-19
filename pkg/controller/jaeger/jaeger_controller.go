@@ -160,6 +160,8 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 	instance = &updated
+	// Need to copy the version from status because the Update will populate the status field with empty strings.
+	instanceVersion := instance.Status.Version
 
 	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
@@ -170,9 +172,9 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// set the status version to the updated instance version if versions doesn't match
-	if updated.Status.Version != originalInstance.Status.Version || instance.Status.Phase != v1.JaegerPhaseRunning {
+	if instanceVersion != originalInstance.Status.Version || instance.Status.Phase != v1.JaegerPhaseRunning {
 		instance.Status.Phase = v1.JaegerPhaseRunning
-		instance.Status.Version = updated.Status.Version
+		instance.Status.Version = instanceVersion
 		if err := r.client.Status().Update(ctx, instance); err != nil {
 			logFields.WithError(err).Error("failed to store the running status into the current CustomResource")
 			return reconcile.Result{}, tracing.HandleError(err, span)
