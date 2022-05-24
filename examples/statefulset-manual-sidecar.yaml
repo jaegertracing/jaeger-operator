@@ -23,7 +23,7 @@ spec:
             - containerPort: 8080
               protocol: TCP
         - name: jaeger-agent
-          image: jaegertracing/jaeger-agent:1.17.0  # The agent version should match the operator version
+          image: jaegertracing/jaeger-agent:1.17.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5775
