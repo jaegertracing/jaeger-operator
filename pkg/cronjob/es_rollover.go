@@ -200,7 +200,7 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 		{flag: "es.index-prefix", envVar: "INDEX_PREFIX"},
 		{flag: "es.username", envVar: "ES_USERNAME"},
 		{flag: "es.password", envVar: "ES_PASSWORD"},
-		{flag: "es.tls", envVar: "ES_TLS"},
+		{flag: "es.tls.enabled", envVar: "ES_TLS_ENABLED"},
 		{flag: "es.tls.ca", envVar: "ES_TLS_CA"},
 		{flag: "es.tls.cert", envVar: "ES_TLS_CERT"},
 		{flag: "es.tls.key", envVar: "ES_TLS_KEY"},
