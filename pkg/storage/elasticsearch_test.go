@@ -438,7 +438,7 @@ func TestInjectJobs(t *testing.T) {
 					Args: []string{"init", "https://elasticsearch:9200"},
 					Env: []corev1.EnvVar{
 						{
-							Name:  "ES_TLS",
+							Name:  "ES_TLS_ENABLED",
 							Value: "true",
 						},
 						{
@@ -490,7 +490,7 @@ func TestInjectJobs(t *testing.T) {
 					Args: []string{"init", "https://elasticsearch:9200"},
 					Env: []corev1.EnvVar{
 						{
-							Name:  "ES_TLS",
+							Name:  "ES_TLS_ENABLED",
 							Value: "true",
 						},
 						{
