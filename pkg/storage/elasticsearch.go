@@ -135,7 +135,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		// the size of arguments array should be always 2
 		p.Containers[0].Args[1] = fmt.Sprintf("https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
 		p.Containers[0].Env = append(p.Containers[0].Env,
-			corev1.EnvVar{Name: "ES_TLS", Value: "true"},
+			corev1.EnvVar{Name: "ES_TLS_ENABLED", Value: "true"},
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: ed.getCertCaPath()},
 			corev1.EnvVar{Name: "ES_TLS_KEY", Value: ed.getCertKeyPath()},
 			corev1.EnvVar{Name: "ES_TLS_CERT", Value: ed.getCertPath()},
