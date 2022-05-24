@@ -401,7 +401,7 @@ func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
 	for _, e := range p.Containers[0].Env {
 		envs[e.Name] = e
 	}
-	assert.Contains(t, envs, "ES_TLS")
+	assert.Contains(t, envs, "ES_TLS_ENABLED")
 	assert.Contains(t, envs, "ES_TLS_CA")
 	assert.Contains(t, envs, "ES_TLS_KEY")
 	assert.Contains(t, envs, "ES_TLS_CERT")
