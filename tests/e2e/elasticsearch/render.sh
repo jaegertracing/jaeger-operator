@@ -102,3 +102,18 @@ else
     export CRONJOB_NAME="my-jaeger-spark-dependencies"
     $GOMPLATE -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template -o ./02-wait-spark-job.yaml
 fi
+
+
+if [ "$IS_OPENSHIFT" != true ]; then
+    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
+else
+    start_test "es-streaming-autoprovisioned"
+
+    export CLUSTER_NAME="auto-provisioned"
+    export REPLICAS=1
+    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml
+
+    render_smoke_test "auto-provisioned" "allInOne" "03"
+fi
