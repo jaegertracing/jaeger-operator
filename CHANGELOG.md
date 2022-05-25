@@ -1,6 +1,10 @@
 Changes by Version
 ==================
 
+1.34.1 (2022-05-24)
+-------------------
+Fix: storage.es.tls.enabled flag not passed to es-index-cleaner ([#1896](https://github.com/jaegertracing/jaeger-operator/pull/1896), [@indigostar-kr](https://github.com/indigostar-kr))
+
 1.34.0 (2022-05-18)
 -------------------
 * Fix: jaeger operator fails to parse Jaeger instance version ([#1885](https://github.com/jaegertracing/jaeger-operator/pull/1885), [@rubenvp8510](https://github.com/rubenvp8510))
