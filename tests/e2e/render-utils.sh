@@ -370,29 +370,44 @@ function render_install_kafka() {
 
 
 # Render a "find service" job.
-#   render_find_service <jaeger_name> <service_name> <job_number> <test_step>
+#   render_find_service <jaeger_name> <deployment_strategy> <service_name> <job_number> <test_step>
 #
 # Example:
-#   render_find_service "simplest" "my-service" "01" "00"
+#   render_find_service "simplest" "production" "my-service" "01" "00"
 # Generates the `01-find-service.yaml` and `01-assert.yaml` files. It will run a
 # `find-service` job.
+# Accepted values for <deployment_strategy>:
+#   * allInOne: all in one deployment.
+#   * production: production using Elasticsearch.
 function render_find_service() {
-    if [ "$#" -ne 4 ]; then
-        error "Wrong number of parameters used for render_find_service. Usage: render_find_service <jaeger_name> <service_name> <job_number> <test_step>"
+    if [ "$#" -ne 5 ]; then
+        error "Wrong number of parameters used for render_find_service. Usage: render_find_service <jaeger_name> <deployment_strategy> <service_name> <job_number> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    service_name=$2
-    job_number=$3
-    test_step=$4
+    deployment_strategy=$2
+    service_name=$3
+    job_number=$4
+    test_step=$5
 
     export JAEGER_NAME=$jaeger
     export JOB_NUMBER=$job_number
     export SERVICE_NAME=$service_name
-    export JAEGER_QUERY_ENDPOINT="http://$jaeger-query:16686"
+    export JAEGER_QUERY_ENDPOINT
 
-    $GOMPLATE -f $TEMPLATES_DIR/find-service.yaml.template -o ./$test_step-find-service.yaml
+    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+        protocol="https://"
+        query_port=""
+        template="$TEMPLATES_DIR/openshift/find-service.yaml.template"
+        JAEGER_QUERY_ENDPOINT="https://$jaeger-query"
+    else
+        template="$TEMPLATES_DIR/find-service.yaml.template"
+        JAEGER_QUERY_ENDPOINT="http://$jaeger-query:16686"
+    fi
+
+
+    $GOMPLATE -f $template -o ./$test_step-find-service.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-find-service.yaml.template -o ./$test_step-assert.yaml
 
     unset JAEGER_NAME
