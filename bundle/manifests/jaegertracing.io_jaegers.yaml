@@ -3294,6 +3294,8 @@ spec:
                       type: object
                     type: array
                     x-kubernetes-list-type: atomic
+                  kafkaSecretName:
+                    type: string
                   labels:
                     additionalProperties:
                       type: string
@@ -4543,6 +4545,8 @@ spec:
                       type: object
                     type: array
                     x-kubernetes-list-type: atomic
+                  kafkaSecretName:
+                    type: string
                   labels:
                     additionalProperties:
                       type: string
