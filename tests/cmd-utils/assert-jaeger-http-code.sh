@@ -17,17 +17,16 @@ source $ROOT_DIR/hack/common.sh
 echo "Checking an expected HTTP response"
 n=0
 
-args
-
-AUTHORIZATION=""
 if [ $IS_OPENSHIFT = true ]; then
    echo "Running in OpenShift"
 
-   if [ -z "$JAEGER_USERNAME" ]; then
+   if [ "$INSECURE" = "true" ]; then
+      echo "Not using any secret"
+   elif [ ! -z "$JAEGER_USERNAME" ]; then
+      echo "Using Jaeger basic authentication"
+   else
       echo "User not provided. Getting the token..."
       SECRET=$($ROOT_DIR/tests/cmd-utils/get-token.sh $NAMESPACE $JAEGER_NAME)
-   else
-      echo "Using Jaeger basic authentication"
    fi
 fi
 
@@ -41,7 +40,13 @@ until [ "$n" -ge $MAX_RETRIES ]; do
    n=$((n+1))
    echo "Try number $n/$MAX_RETRIES the $URL"
 
-   HTTP_RESPONSE=$(curl ${SECRET:+-H "Authorization: Bearer ${SECRET}"} ${JAEGER_USERNAME:+-u $JAEGER_USERNAME:$JAEGER_PASSWORD} -X GET $URL $INSECURE_FLAG -s -o /dev/null -w %{http_code})
+   HTTP_RESPONSE=$(curl \
+      ${SECRET:+-H "Authorization: Bearer ${SECRET}"} \
+      ${JAEGER_USERNAME:+-u $JAEGER_USERNAME:$JAEGER_PASSWORD} \
+      -X GET $URL \
+      $INSECURE_FLAG -s \
+      -o /dev/null \
+      -w %{http_code})
    CMD_EXIT_CODE=$?
 
    if [ $CMD_EXIT_CODE != 0 ]; then

@@ -104,8 +104,9 @@ if [ $IS_OPENSHIFT = true ]; then
     $GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-host.sh
     chmod +x ./ensure-ingress-host.sh
 
-    JAEGER_USERNAME= JAEGER_PASSWORD= EXPECTED_CODE="403" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-check-unauthorized.yaml
-    EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-check-authorized.yaml
+    INSECURE=true JAEGER_USERNAME= JAEGER_PASSWORD= EXPECTED_CODE="403" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-check-unsecured.yaml
+    JAEGER_USERNAME="wronguser" JAEGER_PASSWORD="wrongpassword" EXPECTED_CODE="403" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-check-unauthorized.yaml
+    EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./04-check-authorized.yaml
 else
     skip_test "examples-openshift-with-htpasswd" "This test is only supported in OpenShift"
 fi
