@@ -356,9 +356,13 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 		os.Exit(1)
 	}
 
-	if err := appsv1controllers.NewNamespaceReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
-		os.Exit(1)
+	if viper.GetBool(v1.ConfigEnableNamespaceController) {
+		if err := appsv1controllers.NewNamespaceReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Namespace")
+			os.Exit(1)
+		}
+	} else {
+		log.Trace("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
 	}
 
 	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
