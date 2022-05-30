@@ -47,6 +47,32 @@ func TestRollover(t *testing.T) {
 	assert.Equal(t, []string{"rollover", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "CONDITIONS", Value: "weheee"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
 	assert.Equal(t, historyLimits, *cjob.Spec.SuccessfulJobsHistoryLimit)
+
+	// Test openshift settings
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Set("platform", v1.FlagPlatformKubernetes)
+	cjob = rollover(j).(*batchv1.CronJob)
+	assert.Equal(t,
+		[]corev1.EnvVar{
+			{Name: "INDEX_PREFIX", Value: "shortone"},
+			{Name: "SKIP_DEPENDENCIES", Value: "true"},
+			{Name: "CONDITIONS", Value: "weheee"},
+		}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env,
+	)
+
+	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"es.server-urls":    "foo,bar",
+		"es.index-prefix":   "shortone",
+		"skip-dependencies": "skip",
+	})
+	cjob = rollover(j).(*batchv1.CronJob)
+	assert.Equal(t,
+		[]corev1.EnvVar{
+			{Name: "INDEX_PREFIX", Value: "shortone"},
+			{Name: "SKIP_DEPENDENCIES", Value: "skip"},
+			{Name: "CONDITIONS", Value: "weheee"},
+		}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env,
+	)
 }
 
 func TestLookback(t *testing.T) {
