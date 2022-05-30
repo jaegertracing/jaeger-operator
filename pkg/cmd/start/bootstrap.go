@@ -362,7 +362,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 			os.Exit(1)
 		}
 	} else {
-		log.Trace("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
+		log.Warn("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
 	}
 
 	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
