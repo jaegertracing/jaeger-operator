@@ -20,12 +20,12 @@ spec:
     spec:
       containers:
       - name: tracegen
-        image: jaegertracing/jaeger-tracegen:1.17
+        image: jaegertracing/jaeger-tracegen:1.34.1
         args:
         - -duration=30m
         - -workers=10
       - name: jaeger-agent
-        image: jaegertracing/jaeger-agent:1.17
+        image: jaegertracing/jaeger-agent:1.34.1
         args:
         - --reporter.grpc.host-port=dns:///simple-prod-collector-headless.default:14250
         env:
