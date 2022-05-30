@@ -92,5 +92,6 @@ bin
 ### Timestamp files to avoid rebuilding Docker images if not needed ###
 build-assert-job
 docker-e2e-upgrade-image
+build-e2e-upgrade-image
 ### Reports for E2E tests
 reports
