@@ -25,7 +25,7 @@ jobs:
       run: ./hack/install/install-kustomize.sh
 
     - uses: docker/setup-qemu-action@v2.0.0
-    - uses: docker/setup-buildx-action@v1.7.0
+    - uses: docker/setup-buildx-action@v2.0.0
 
     - name: "generate release resources"
       run: make release-artifacts USER=jaegertracing

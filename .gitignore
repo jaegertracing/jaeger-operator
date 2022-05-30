@@ -6,6 +6,7 @@ vendor
 bin
 tests/_build
 _build
+logs
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
