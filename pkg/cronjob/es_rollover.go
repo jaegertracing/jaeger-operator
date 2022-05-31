@@ -213,6 +213,13 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 			envs = append(envs, corev1.EnvVar{Name: x.envVar, Value: val})
 		}
 	}
+
+	if val, ok := options["skip-dependencies"]; ok {
+		envs = append(envs, corev1.EnvVar{Name: "SKIP_DEPENDENCIES", Value: val})
+	} else if !ok && viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		envs = append(envs, corev1.EnvVar{Name: "SKIP_DEPENDENCIES", Value: "true"})
+	}
+
 	return envs
 }
 
