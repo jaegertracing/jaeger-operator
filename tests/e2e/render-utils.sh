@@ -664,10 +664,11 @@ export SERVICE_ACCOUNT_NAME="e2e-test"
 PROGRAMS_FOLDER=../../../..
 
 # CMD utils
-export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
 export ASSERT_HTTP_CODE_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/assert-jaeger-http-code.sh
+export CHECK_JAEGER_VERSION_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/check-jaeger-version.sh
 export GET_TOKEN_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/get-token.sh
 export TEST_UI_CONFIG_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/uiconfig/main.go
+export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
 
 # Assert jobs
 export QUERY_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/query/main.go
