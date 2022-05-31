@@ -15,7 +15,6 @@ namespace: observability
 # https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels
 commonLabels:
   name: jaeger-operator
-  app.kubernetes.io/name: jaeger-operator
 
 bases:
 - ../crd
