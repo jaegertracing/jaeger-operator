@@ -1,0 +1,5 @@
+# Check the number of ES instances is the expected
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "./check-es-nodes.sh $NAMESPACE"

@@ -3,7 +3,6 @@ kind: ClusterRole
 metadata:
   creationTimestamp: null
   labels:
-    app.kubernetes.io/name: jaeger-operator
     name: jaeger-operator
   name: jaeger-operator-metrics-reader
 rules:
