@@ -243,7 +243,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: true,
 					Result: &metav1.Status{
-						Reason: "is jeager deployment, we do not touch it",
+						Reason: "is jaeger deployment, we do not touch it",
 						Code:   200,
 					},
 				},

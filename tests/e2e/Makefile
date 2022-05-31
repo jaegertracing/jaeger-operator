@@ -72,12 +72,8 @@ endif
 
 .PHONY: run-e2e-tests
 run-e2e-tests: list-test-suites
-	$(VECHO) for suite in $(TEST_SUITES); do \
-		$(MAKE) run-e2e-tests-$$suite -i; \
-	done
-	# Show a final report
-	$(shell go env GOPATH)/bin/junitcli --report reports
-	cd reports && ! grep -nr failed
+	./hack/run-e2e-tests.sh $(TEST_SUITES)
+
 
 .PHONY: render-e2e-tests
 render-e2e-tests: generate-e2e-files list-test-suites
@@ -99,4 +95,4 @@ e2e-test-suites: list-test-suites
 	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
 
 run-suite-tests: start-kind prepare-e2e-tests load-operator-image cert-manager
-	./hack/run-e2e-tests.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)
+	./hack/run-e2e-test-suite.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)

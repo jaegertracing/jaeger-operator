@@ -27,7 +27,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.34.0
+  name: jaeger-operator.v1.34.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -376,13 +376,11 @@ spec:
           replicas: 1
           selector:
             matchLabels:
-              app.kubernetes.io/name: jaeger-operator
               name: jaeger-operator
           strategy: {}
           template:
             metadata:
               labels:
-                app.kubernetes.io/name: jaeger-operator
                 name: jaeger-operator
             spec:
               containers:
@@ -403,7 +401,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
-                image: quay.io/jaegertracing/jaeger-operator:1.34.0
+                image: quay.io/jaegertracing/jaeger-operator:1.34.1
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -518,11 +516,11 @@ spec:
   maturity: alpha
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.33.0
+  replaces: jaeger-operator.v1.34.0
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.34.0
+  version: 1.34.1
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
@@ -532,7 +530,7 @@ spec:
     generateName: deployment.sidecar-injector.jaegertracing.io
     objectSelector:
       matchExpressions:
-      - key: app.kubernetes.io/name
+      - key: name
         operator: NotIn
         values:
         - jaeger-operator
