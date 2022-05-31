@@ -6,7 +6,7 @@ webhooks:
   - name: deployment.sidecar-injector.jaegertracing.io
     objectSelector: # Skip resources with the name jaeger-operator
       matchExpressions:
-        - key: app.kubernetes.io/name
+        - key: name
           operator: NotIn
           values:
             - "jaeger-operator"
