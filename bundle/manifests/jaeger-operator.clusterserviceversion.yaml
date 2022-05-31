@@ -376,13 +376,11 @@ spec:
           replicas: 1
           selector:
             matchLabels:
-              app.kubernetes.io/name: jaeger-operator
               name: jaeger-operator
           strategy: {}
           template:
             metadata:
               labels:
-                app.kubernetes.io/name: jaeger-operator
                 name: jaeger-operator
             spec:
               containers:
@@ -532,7 +530,7 @@ spec:
     generateName: deployment.sidecar-injector.jaegertracing.io
     objectSelector:
       matchExpressions:
-      - key: app.kubernetes.io/name
+      - key: name
         operator: NotIn
         values:
         - jaeger-operator
