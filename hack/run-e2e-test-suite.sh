@@ -41,8 +41,7 @@ if [ "$olm" = true ]; then
     echo "Skipping Jaeger Operator installation because OLM=true"
 else
 	echo Installing Jaeger Operator...
-	kubectl create namespace observability 2>&1 | grep -v "already exists" || true
-	kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n observability
+	make deploy
 	kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 fi
 
