@@ -12,11 +12,13 @@ else
 
     render_install_jaeger "$JAEGER_NAME" "allInOne" "00"
 
+    # Check the deployment using the correct image
     $GOMPLATE -f ./deployment-assert.yaml.template -o ./01-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/check-jaeger-version.yaml.template -o ./02-check-jaeger-version.yaml
 
+    $GOMPLATE -f ./replace.yaml.template -o ./03-upgrade-operator.yaml
     JAEGER_VERSION=$($ROOT_DIR/.ci/get_test_upgrade_version.sh $JAEGER_VERSION) $GOMPLATE -f ./deployment-assert.yaml.template -o ./03-assert.yaml
-    sed "s~$IMG~$OPERATOR_IMAGE_NEXT~gi" $ROOT_DIR/tests/_build/manifests/01-jaeger-operator.yaml > ./operator-upgrade.yaml
+
 fi
 
 if [ $IS_OPENSHIFT = true ]; then
