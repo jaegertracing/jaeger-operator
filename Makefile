@@ -312,7 +312,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create namespace observability 2>&1 | grep -v "already exists" || true
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
