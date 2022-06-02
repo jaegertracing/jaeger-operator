@@ -1,0 +1,6 @@
+# Deploy a second instance in the second namespace
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "kubectl apply -f ./01-install.yaml -n jaeger-e2e-multiinstance-test"
+  - script: "kubectl kuttl assert ./01-assert.yaml -n jaeger-e2e-multiinstance-test --timeout 1000"

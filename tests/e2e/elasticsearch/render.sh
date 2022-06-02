@@ -59,6 +59,14 @@ unset JAEGER_NAME
 unset CRONJOB_NAME
 
 
+if [ "$IS_OPENSHIFT" = "true" ]; then
+    start_test "es-multiinstance"
+    jaeger_name="instance-1"
+    render_install_jaeger "$jaeger_name" "production" "01"
+else
+    skip_test "es-multiinstance" "This test is only supported in OpenShift"
+fi
+
 
 start_test "es-simple-prod"
 jaeger_name="simple-prod"
