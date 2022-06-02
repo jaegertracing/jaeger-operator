@@ -4,4 +4,4 @@ metadata:
   name: production-ui
 spec:
   ingress:
-    enabled: true
+    security: none
