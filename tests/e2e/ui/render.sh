@@ -31,6 +31,7 @@ EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -
 ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./04-test-ui-config.yaml
 
 
+
 start_test "production"
 export JAEGER_NAME="production-ui"
 
@@ -45,7 +46,13 @@ render_install_jaeger $JAEGER_NAME "production" "01"
 $GOMPLATE -f $TEMPLATES_DIR/ensure-ingress-host.sh.template -o ./ensure-ingress-host.sh
 chmod +x ./ensure-ingress-host.sh
 
-# Check we can access the deployment
+if [ $IS_OPENSHIFT = true ]; then
+    # Check the OAuth proxy is enabled
+    INSECURE="true" EXPECTED_CODE="403" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-check-forbbiden-access.yaml
+fi
+
+# Check we can access the deployment. In OpenShif, a token will be generated
+# to access the query endpoint properly
 EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-curl.yaml
 
 ### Test the tracking.gaID parameter ###
@@ -56,9 +63,12 @@ ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/te
 ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./06-check-gaID.yaml
 
 # When the tracking.gaID is modified in a Kubernetes cluster, the value is not
-# mofidied in the HTML code. In OpenShift, the change is performed properly
+# modified in the HTML code. In OpenShift, the change is performed properly
 if [ $IS_OPENSHIFT = true ]; then
     # Check the tracking.gaID was changed properly after 07-install.yaml
     ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-changed-gaID.yaml
     ASSERT_PRESENT="true" TRACKING_ID="aNewTrackingID" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./09-check-new-gaIDla.yaml
 fi
+
+# After 10-install.yaml, check if the security is disabled properly
+INSECURE="true" EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./11-check-disabled-security.yaml

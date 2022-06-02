@@ -1,0 +1,5 @@
+# Ensure the second namespace is not there before starting the test
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "kubectl delete namespace jaeger-e2e-multiinstance-test --ignore-not-found=true"
