@@ -126,7 +126,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: jaegerESSecretName(*ed.Jaeger),
+				SecretName: curatorSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})
