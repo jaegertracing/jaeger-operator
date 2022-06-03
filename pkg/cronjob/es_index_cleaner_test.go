@@ -249,3 +249,20 @@ func TestPriorityClassName(t *testing.T) {
 
 	assert.Equal(t, priorityClassNameVal, jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName)
 }
+
+func TestEsIndexCleanerImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerImagePullSecrets"})
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	esIndexCleaner := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, pullSecret, esIndexCleaner.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
