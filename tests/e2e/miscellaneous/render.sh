@@ -31,6 +31,8 @@ if [ $IS_OPENSHIFT = true ]; then
     ELASTICSEARCH_NODECOUNT="1"
     render_install_jaeger "$jaeger_name" "production" "00"
 
+    $GOMPLATE -f $TEMPLATES_DIR/assert-tracegen.yaml.template -o ./01-assert.yaml
+
     # Change the resource limits for the autoprovisioned deployment
     $YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 00-install.yaml
     $YQ e -i '.spec.collector.resources.requests.memory="100m"' 00-install.yaml
