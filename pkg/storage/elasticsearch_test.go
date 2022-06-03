@@ -469,7 +469,7 @@ func TestInjectJobs(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-elasticsearch"}}},
+						SecretName: "jtest-curator"}}},
 				}},
 		},
 		{
@@ -521,7 +521,7 @@ func TestInjectJobs(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jaeger-elasticsearch"}}},
+						SecretName: "jtest-curator"}}},
 				}},
 		},
 	}
