@@ -34,14 +34,13 @@ make render-e2e-tests-$test_suite_name
 if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
-	make cert-manager
 fi
 
 if [ "$olm" = true ]; then
     echo "Skipping Jaeger Operator installation because OLM=true"
 else
 	echo Installing Jaeger Operator...
-	make deploy
+	make cert-manager deploy
 	kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 fi
 
