@@ -22,6 +22,9 @@ source $ROOT_DIR/hack/common.sh
 #   render_smoke_test "my-jaeger" "production" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
 # will be run against the Jaeger instance called `my-jaeger`.
+# Accepted values for <deploy_mode>:
+#   * allInOne: all in one deployment.
+#   * production: production using Elasticsearch.
 function render_smoke_test() {
     if [ "$#" -ne 3 ]; then
         error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>"
@@ -152,6 +155,7 @@ function render_check_indices() {
     $GOMPLATE -f $TEMPLATES_DIR/assert-check-indices.yaml.template -o ./$test_step-assert.yaml
 
     unset JOB_NUMBER
+    unset MOUNT_SECRET
 }
 
 
@@ -593,6 +597,22 @@ function skip_test(){
 
     warning "$message"
 }
+
+function version_gt() {
+    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" != "$1";
+}
+
+function version_ge() {
+    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" == "$1";
+}
+
+function version_le(){
+    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" == "$1";
+}
+function version_lt() {
+    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" != "$1";
+}
+
 
 
 ###############################################################################
