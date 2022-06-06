@@ -30,7 +30,7 @@ render_install_elasticsearch "01"
 $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./04-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./05-assert.yaml
-render_smoke_test "$jaeger_name" "allInOne" "06"
+render_smoke_test "$jaeger_name" "allInOne" "07"
 
 
 if [ $IS_OPENSHIFT = "true" ]; then
@@ -59,5 +59,3 @@ if [ $IS_OPENSHIFT = "true" ]; then
 else
     skip_test "streaming-with-autoprovisioning-autoscale" "This test is only supported in OpenShift"
 fi
-
-
