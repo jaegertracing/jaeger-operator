@@ -3,4 +3,4 @@ kind: Deployment
 metadata:
   name: tracegen
 status:
-  readyReplicas: 10
+  readyReplicas: {{ .Env.REPLICAS }}

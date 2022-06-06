@@ -24,31 +24,26 @@ else
 fi
 
 
-if [ $IS_OPENSHIFT = true ]; then
-    start_test "collector-autoscale"
+start_test "collector-autoscale"
+jaeger_name="simple-prod"
 
-    jaeger_name="simple-prod"
-    ELASTICSEARCH_NODECOUNT="1"
-    render_install_jaeger "$jaeger_name" "production" "00"
-
-    $GOMPLATE -f $TEMPLATES_DIR/assert-tracegen.yaml.template -o ./01-assert.yaml
-
-    # Change the resource limits for the autoprovisioned deployment
-    $YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 00-install.yaml
-    $YQ e -i '.spec.collector.resources.requests.memory="100m"' 00-install.yaml
-
-    # Enable autoscale
-    $YQ e -i '.spec.collector.autoscale=true' 00-install.yaml
-    $YQ e -i '.spec.collector.minReplicas=1' 00-install.yaml
-    $YQ e -i '.spec.collector.maxReplicas=5' 00-install.yaml
-
-    # Deploy a Tracegen instance to generate load in the Jaeger collector
-    cp $EXAMPLES_DIR/tracegen.yaml ./01-install.yaml
-
-
-else
-    skip_test "collector-autoscale" "Test only supported in OpenShift"
+if [ $IS_OPENSHIFT!="true" ]; then
+    render_install_elasticsearch "00"
 fi
+
+ELASTICSEARCH_NODECOUNT="1"
+render_install_jaeger "$jaeger_name" "production" "01"
+# Change the resource limits for the Jaeger deployment
+$YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 01-install.yaml
+$YQ e -i '.spec.collector.resources.requests.memory="500m"' 01-install.yaml
+
+# Enable autoscale
+$YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
+$YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
+$YQ e -i '.spec.collector.maxReplicas=5' 01-install.yaml
+
+# Deploy Tracegen instance to generate load in the Jaeger collector
+render_install_tracegen "$jaeger_name" "3" "02"
 
 
 if [ $IS_OPENSHIFT = true ]; then

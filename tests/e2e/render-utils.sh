@@ -406,6 +406,29 @@ function render_find_service() {
 }
 
 
+# Render a tracegen deployment.
+#   render_install_tracegen <jaeger_name> <replicas> <test_step>
+#
+# Example:
+#   render_install_tracegen "prod" "1" "00"
+# Generates the `00-install.yaml` and `00-assert.yaml` files. It will deploy
+# 1 replica of the tracegen deployment
+function render_install_tracegen() {
+    if [ "$#" -ne 3 ]; then
+        error "Wrong number of parameters used for render_install_tracegen. Usage: render_install_tracegen <jaeger_name> <replicas> <test_step>"
+        exit 1
+    fi
+
+    jaeger=$1
+    replicas=$2
+    step=$3
+
+    $GOMPLATE -f $EXAMPLES_DIR/tracegen.yaml -o ./$step-install.yaml
+    $YQ e -i ".spec.replicas=$replicas" ./$step-install.yaml
+    sed -i "s~simple-prod~$jaeger~gi" ./$step-install.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-tracegen.yaml.template -o ./$step-assert.yaml
+}
+
 # Get the Jaeger name from a Jaeger deployment file.
 #   get_jaeger_name <file>
 #
