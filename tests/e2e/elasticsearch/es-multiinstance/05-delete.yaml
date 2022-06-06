@@ -2,8 +2,5 @@
 # the test
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
-delete:
-- apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: jaeger-e2e-multiinstance-test
+commands:
+  - script: "kubectl delete namespace jaeger-e2e-multiinstance-test"
