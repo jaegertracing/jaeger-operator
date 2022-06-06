@@ -35,20 +35,18 @@ ELASTICSEARCH_NODECOUNT="1"
 render_install_jaeger "$jaeger_name" "production" "01"
 # Change the resource limits for the Jaeger deployment
 $YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 01-install.yaml
-$YQ e -i '.spec.collector.resources.requests.memory="500m"' 01-install.yaml
+$YQ e -i '.spec.collector.resources.requests.memory="300m"' 01-install.yaml
 
 # Enable autoscale
 $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
 $YQ e -i '.spec.collector.maxReplicas=5' 01-install.yaml
 
+# Deploy Tracegen instance to generate load in the Jaeger collector
 tracegen_replicas="1"
 if [ $IS_OPENSHIFT!="true" ]; then
     tracegen_replicas="3"
-else
-
 fi
-# Deploy Tracegen instance to generate load in the Jaeger collector
 render_install_tracegen "$jaeger_name" "$tracegen_replicas" "02"
 
 
