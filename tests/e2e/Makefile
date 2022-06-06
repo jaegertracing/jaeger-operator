@@ -6,6 +6,8 @@ export OPERATOR_IMAGE_NEXT ?= ${IMG_PREFIX}/jaeger-operator:next
 export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell date +%s)
 USE_KIND_CLUSTER ?= true
 
+export E2E_TESTS_TIMEOUT ?= 330
+
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: kuttl build generate-e2e-files
 
@@ -94,5 +96,5 @@ e2e-test-suites: list-test-suites
 
 	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
 
-run-suite-tests: start-kind prepare-e2e-tests load-operator-image cert-manager
+run-suite-tests: start-kind prepare-e2e-tests load-operator-image
 	./hack/run-e2e-test-suite.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)
