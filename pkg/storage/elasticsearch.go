@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -123,35 +122,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 
 // InjectSecretsConfiguration changes the given spec to include the options for the index cleaner
 func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec) {
-	// TODO(frzifus): remove curator permissions as soon as writing dependencies
-	// can be disabled. Requieres a Jaeger release including jaegertracing/jaeger@3499c88
-	// probably v1.36.0.
-	secretName := curatorSecret.instanceName(ed.Jaeger)
-
-	// NOTE: If the permissions are more finely granulated, the writing of the
-	// dependency store must be skipped, since these are not currently granted
-	// to the sg_jaeger role.
-	// This implies a Jaeger version higher than 1.35.1.
-	// Since this will not be shipped with the next operator version, this
-	// feature is optional for now. In the future, this exception may be removed.
-	if v, ok := os.LookupEnv("JAEGER_OPERATOR_USE_CURATOR_ROLE"); ok && v == "true" {
-		secretName = jaegerESSecretName(*ed.Jaeger)
-		// TODO(frzifus): Remove the check once sg_jaeger permissions have been
-		// granted and rolled out. JaegerES secret will be the new default.
-		if isESRolloverJob(p.Containers...) {
-			// NOTE: we grant the default es-rollover job based on the pods
-			// name enhanced permissions to be able to delete entries.
-			// SEE: https://github.com/openshift/origin-aggregated-logging/
-			//      blob/b621a482eedea4bde0cdd6d646de2324e837e19f/elasticsearch/sgconfig/roles.yml#L65
-			secretName = curatorSecret.instanceName(ed.Jaeger)
-		}
-	}
-
 	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: secretName,
+				SecretName: curatorSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})
@@ -284,16 +259,4 @@ func jaegerESSecretName(jaeger v1.Jaeger) string {
 		prefix = jaeger.Name + "-"
 	}
 	return fmt.Sprintf("%sjaeger-%s", prefix, jaeger.Spec.Storage.Elasticsearch.Name)
-}
-
-func isESRolloverJob(container ...corev1.Container) bool {
-	if len(container) == 0 {
-		return false
-	}
-	for _, c := range container {
-		if strings.HasSuffix(c.Name, "es-rollover") {
-			return true
-		}
-	}
-	return false
 }

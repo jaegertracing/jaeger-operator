@@ -2,8 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"testing"
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
@@ -418,11 +416,10 @@ func TestInject(t *testing.T) {
 func TestInjectJobs(t *testing.T) {
 	trueVar := true
 	tests := []struct {
-		name            string
-		granulatedSGEnv string
-		pod             *corev1.PodSpec
-		expected        *corev1.PodSpec
-		es              v1.ElasticsearchSpec
+		name     string
+		pod      *corev1.PodSpec
+		expected *corev1.PodSpec
+		es       v1.ElasticsearchSpec
 	}{
 		{
 			name: "jaeger-provisions-certs",
@@ -527,121 +524,10 @@ func TestInjectJobs(t *testing.T) {
 						SecretName: "jtest-curator"}}},
 				}},
 		},
-		{
-			name:            "granulatedSGEnv es-rollover",
-			granulatedSGEnv: "true",
-			es: v1.ElasticsearchSpec{
-				Name:      "elasticsearch",
-				NodeCount: 3,
-			},
-			pod: &corev1.PodSpec{
-				Containers: []corev1.Container{{
-					Name:         "some-build-es-rollover",
-					Args:         []string{"init", "url"},
-					VolumeMounts: []corev1.VolumeMount{{Name: "lol"}},
-				}},
-			},
-			expected: &corev1.PodSpec{
-				Containers: []corev1.Container{{
-					Name: "some-build-es-rollover",
-					Args: []string{"init", "https://elasticsearch:9200"},
-					Env: []corev1.EnvVar{
-						{
-							Name:  "ES_TLS_ENABLED",
-							Value: "true",
-						},
-						{
-							Name:  "ES_TLS_CA",
-							Value: caPath,
-						},
-						{
-							Name:  "ES_TLS_KEY",
-							Value: keyPath,
-						},
-						{
-							Name:  "ES_TLS_CERT",
-							Value: certPath,
-						},
-						{
-							Name:  "SHARDS",
-							Value: "3",
-						},
-						{
-							Name:  "REPLICAS",
-							Value: "1",
-						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{Name: "lol"},
-						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
-					},
-				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-curator"}}},
-				}},
-		},
-		{
-			name:            "granulatedSGEnv other",
-			granulatedSGEnv: "true",
-			es: v1.ElasticsearchSpec{
-				Name:      "elasticsearch",
-				NodeCount: 3,
-			},
-			pod: &corev1.PodSpec{
-				Containers: []corev1.Container{{
-					Name:         "something-else",
-					Args:         []string{"init", "url"},
-					VolumeMounts: []corev1.VolumeMount{{Name: "lol"}},
-				}},
-			},
-			expected: &corev1.PodSpec{
-				Containers: []corev1.Container{{
-					Name: "something-else",
-					Args: []string{"init", "https://elasticsearch:9200"},
-					Env: []corev1.EnvVar{
-						{
-							Name:  "ES_TLS_ENABLED",
-							Value: "true",
-						},
-						{
-							Name:  "ES_TLS_CA",
-							Value: caPath,
-						},
-						{
-							Name:  "ES_TLS_KEY",
-							Value: keyPath,
-						},
-						{
-							Name:  "ES_TLS_CERT",
-							Value: certPath,
-						},
-						{
-							Name:  "SHARDS",
-							Value: "3",
-						},
-						{
-							Name:  "REPLICAS",
-							Value: "1",
-						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{Name: "lol"},
-						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
-					},
-				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-elasticsearch"}}},
-				}},
-		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := os.Setenv("JAEGER_OPERATOR_USE_CURATOR_ROLE", test.granulatedSGEnv); err != nil {
-				t.Fatal(err)
-			}
 			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "jtest"})}
 			es.Jaeger.Spec.Storage.Elasticsearch = test.es
 			es.InjectSecretsConfiguration(test.pod)
@@ -667,34 +553,5 @@ func TestCalculateReplicaShards(t *testing.T) {
 	}
 	for _, test := range tests {
 		assert.Equal(t, test.shards, calculateReplicaShards(test.redType, test.dataNodes))
-	}
-}
-
-func TestIsEsRolloverJob(t *testing.T) {
-	tt := []struct {
-		containers []corev1.Container
-		expect     bool
-	}{
-		{
-			// No container == false
-		},
-		{
-			containers: []corev1.Container{
-				{Name: "nope"},
-			},
-		},
-		{
-			containers: []corev1.Container{
-				{Name: "nope"},
-				{Name: "yes-es-rollover"},
-			},
-			expect: true,
-		},
-	}
-
-	for i, tc := range tt {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			assert.Equal(t, tc.expect, isESRolloverJob(tc.containers...))
-		})
 	}
 }
