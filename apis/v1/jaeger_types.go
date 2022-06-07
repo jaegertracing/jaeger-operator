@@ -434,6 +434,9 @@ type JaegerCollectorSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -461,6 +464,9 @@ type JaegerIngesterSpec struct {
 
 	// +optional
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent

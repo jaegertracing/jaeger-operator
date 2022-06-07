@@ -56,7 +56,7 @@ $YQ e -i '.spec.ingester.autoscale=true' ./02-install.yaml
 $YQ e -i '.spec.ingester.minReplicas=1' ./02-install.yaml
 $YQ e -i '.spec.ingester.maxReplicas=5' ./02-install.yaml
 
-
+# Assert the autoprovisioned Kafka deployment
 $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./02-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./03-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./04-assert.yaml
