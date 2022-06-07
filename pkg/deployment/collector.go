@@ -74,6 +74,15 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// to Kafka, and the storage options will be used in the Ingester instead
 	if c.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
 		storageType = v1.JaegerKafkaStorage
+		if len(c.jaeger.Spec.Collector.KafkaSecretName) > 0 {
+			envFromSource = append(envFromSource, corev1.EnvFromSource{
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: c.jaeger.Spec.Collector.KafkaSecretName,
+					},
+				},
+			})
+		}
 	}
 	options := allArgs(c.jaeger.Spec.Collector.Options,
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
