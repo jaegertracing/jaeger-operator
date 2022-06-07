@@ -25,6 +25,33 @@ fi
 
 
 if [ $IS_OPENSHIFT = true ]; then
+    start_test "collector-autoscale"
+
+    jaeger_name="simple-prod"
+    ELASTICSEARCH_NODECOUNT="1"
+    render_install_jaeger "$jaeger_name" "production" "00"
+
+    $GOMPLATE -f $TEMPLATES_DIR/assert-tracegen.yaml.template -o ./01-assert.yaml
+
+    # Change the resource limits for the autoprovisioned deployment
+    $YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 00-install.yaml
+    $YQ e -i '.spec.collector.resources.requests.memory="100m"' 00-install.yaml
+
+    # Enable autoscale
+    $YQ e -i '.spec.collector.autoscale=true' 00-install.yaml
+    $YQ e -i '.spec.collector.minReplicas=1' 00-install.yaml
+    $YQ e -i '.spec.collector.maxReplicas=5' 00-install.yaml
+
+    # Deploy a Tracegen instance to generate load in the Jaeger collector
+    cp $EXAMPLES_DIR/tracegen.yaml ./01-install.yaml
+
+
+else
+    skip_test "collector-autoscale" "Test only supported in OpenShift"
+fi
+
+
+if [ $IS_OPENSHIFT = true ]; then
     skip_test "istio" "Test not supported in OpenShift"
 else
     start_test "istio"
@@ -45,6 +72,7 @@ else
     $YQ e -i '.spec.template.spec.containers[0].command = ["/bin/sh","-c"]' $patched_file
     $YQ e -i '.spec.template.spec.containers[0].args= ["./query && curl -sf -XPOST http://localhost:15000/quitquitquit"]' $patched_file
 fi
+
 
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "outside-cluster" "Test not supported in OpenShift"

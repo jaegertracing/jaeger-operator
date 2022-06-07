@@ -1,6 +1,7 @@
+# Assert the ingester scaled
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Env.JAEGER_NAME }}
+  name: auto-provisioned-ingester
 status:
   readyReplicas: 1

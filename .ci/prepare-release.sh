@@ -25,7 +25,6 @@ sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_VERSION}~gi" examples/operator-w
 
 # tracegen
 sed -i "s~jaeger-tracegen:.*~jaeger-tracegen:${JAEGER_VERSION}~gi" examples/tracegen.yaml
-sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_VERSION}~gi" examples/tracegen.yaml
 
 
 VERSION=${OPERATOR_VERSION} USER=jaegertracing make bundle
