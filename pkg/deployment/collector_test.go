@@ -156,6 +156,18 @@ func TestCollectorImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestCollectorKafkaSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "kafka-instance"})
+	secret := "mysecret"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming
+	jaeger.Spec.Collector.KafkaSecretName = secret
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestCollectorImagePullPolicy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorImagePullPolicy"})
 	const pullPolicy = corev1.PullPolicy("Always")
