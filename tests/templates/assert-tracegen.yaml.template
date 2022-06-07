@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Env.JAEGER_NAME }}
+  name: tracegen
 status:
-  readyReplicas: 1
+  readyReplicas: 10
