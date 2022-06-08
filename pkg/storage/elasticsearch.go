@@ -174,6 +174,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 		// The value has to match searchguard configuration
 		// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34
 		annotations[fmt.Sprintf("logging.openshift.io/elasticsearch-cert.%s", jaegerESSecretName(*ed.Jaeger))] = "user.jaeger"
+		annotations[fmt.Sprintf("logging.openshift.io/elasticsearch-cert.curator-%s", ed.Jaeger.Spec.Storage.Elasticsearch.Name)] = "system.logging.curator"
 	}
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
