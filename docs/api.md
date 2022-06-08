@@ -1672,6 +1672,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>uuid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecagentvolumemountsindex">volumeMounts</a></b></td>
         <td>[]object</td>
         <td>
@@ -6685,6 +6692,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>uuid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecallinonevolumemountsindex">volumeMounts</a></b></td>
         <td>[]object</td>
         <td>
@@ -11569,6 +11583,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>uuid</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspeccollectorvolumemountsindex">volumeMounts</a></b></td>
         <td>[]object</td>
         <td>
@@ -16434,6 +16455,13 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingestertolerationsindex">tolerations</a></b></td>
         <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uuid</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -26128,6 +26156,13 @@ Resource Types:
       </tr><tr>
         <td><b>tracingEnabled</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>uuid</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>

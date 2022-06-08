@@ -67,6 +67,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 			"prometheus.io/scrape": "true",
 			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
 			"linkerd.io/inject":    "disabled",
+			"restart_by_uuid":      a.jaeger.Spec.Agent.UUID,
 		},
 		Labels: labels,
 	}

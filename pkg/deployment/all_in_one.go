@@ -53,6 +53,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			"prometheus.io/scrape": "true",
 			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
 			"linkerd.io/inject":    "disabled",
+			"restart_by_uuid":      a.jaeger.Spec.AllInOne.UUID,
 		},
 		Labels: a.labels(),
 	}

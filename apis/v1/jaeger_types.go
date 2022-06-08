@@ -276,6 +276,9 @@ type JaegerQuerySpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	UUID string `json:"uuid,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -381,6 +384,9 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	UUID string `json:"uuid,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs
@@ -437,6 +443,9 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	KafkaSecretName string `json:"kafkaSecretName"`
+
+	// +optional
+	UUID string `json:"uuid,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -467,6 +476,9 @@ type JaegerIngesterSpec struct {
 
 	// +optional
 	KafkaSecretName string `json:"kafkaSecretName"`
+
+	// +optional
+	UUID string `json:"uuid,omitempty"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -500,6 +512,9 @@ type JaegerAgentSpec struct {
 
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// +optional
+	UUID string `json:"uuid,omitempty"`
 }
 
 // JaegerStorageSpec defines the common storage options to be used for the query and collector

@@ -957,6 +957,8 @@ spec:
                       type: object
                     type: array
                     x-kubernetes-list-type: atomic
+                  uuid:
+                    type: string
                   volumeMounts:
                     items:
                       properties:
@@ -2188,6 +2190,8 @@ spec:
                     x-kubernetes-list-type: atomic
                   tracingEnabled:
                     type: boolean
+                  uuid:
+                    type: string
                   volumeMounts:
                     items:
                       properties:
@@ -3434,6 +3438,8 @@ spec:
                       type: object
                     type: array
                     x-kubernetes-list-type: atomic
+                  uuid:
+                    type: string
                   volumeMounts:
                     items:
                       properties:
@@ -4681,6 +4687,8 @@ spec:
                       type: object
                     type: array
                     x-kubernetes-list-type: atomic
+                  uuid:
+                    type: string
                   volumeMounts:
                     items:
                       properties:
@@ -7164,6 +7172,8 @@ spec:
                     x-kubernetes-list-type: atomic
                   tracingEnabled:
                     type: boolean
+                  uuid:
+                    type: string
                   volumeMounts:
                     items:
                       properties:

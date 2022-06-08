@@ -48,6 +48,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			"prometheus.io/scrape": "true",
 			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
 			"linkerd.io/inject":    "disabled",
+			"restart_by_uuid":      c.jaeger.Spec.Collector.UUID,
 		},
 		Labels: labels,
 	}

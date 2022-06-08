@@ -54,6 +54,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			"prometheus.io/scrape": "true",
 			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
 			"linkerd.io/inject":    "disabled",
+			"restart_by_uuid":      i.jaeger.Spec.Ingester.UUID,
 		},
 		Labels: labels,
 	}

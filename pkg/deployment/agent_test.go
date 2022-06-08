@@ -76,6 +76,7 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 func TestDaemonSetAgentAnnotations(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.UUID = "108197fe-052b-4d3e-841e-89212117fd5e"
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -93,6 +94,7 @@ func TestDaemonSetAgentAnnotations(t *testing.T) {
 	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 	assert.Equal(t, "disabled", dep.Spec.Template.Annotations["linkerd.io/inject"])
+	assert.Equal(t, "108197fe-052b-4d3e-841e-89212117fd5e", dep.Spec.Template.Annotations["restart_by_uuid"])
 }
 
 func TestDaemonSetAgentLabels(t *testing.T) {
