@@ -122,18 +122,11 @@ func (ed *ElasticsearchDeployment) InjectStorageConfiguration(p *corev1.PodSpec)
 
 // InjectSecretsConfiguration changes the given spec to include the options for the index cleaner
 func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec) {
-
-	curatorSecretName := curatorSecret.instanceName(ed.Jaeger)
-	useCertManager := ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement
-	if useCertManager != nil && *useCertManager == true {
-		curatorSecretName = fmt.Sprintf("curator-%s", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
-	}
-
 	p.Volumes = append(p.Volumes, corev1.Volume{
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: curatorSecretName,
+				SecretName: curatorSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})
