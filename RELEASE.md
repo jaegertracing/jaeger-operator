@@ -14,29 +14,31 @@
 Steps to release a new version of the Jaeger Operator:
 
 
-1. Change the `versions.txt `so that it lists the target version of the Jaeger (if it is required). Don't touch the operator version it will be changed automatically in the next step.
+1. Change the `versions.txt `so that it lists the target version of the Jaeger (if it is required). **Don't touch the operator version**: it will be changed automatically in the next step.
 
-1. Run `OPERATOR_VERSION=1.30.0 make prepare-release`, using the operator version that will be released.
+2. Run `OPERATOR_VERSION=1.30.0 make prepare-release`, using the operator version that will be released.
 
-1. Prepare a changelog since last release.
+3. Run the E2E tests in OpenShift as described in [the CONTRIBUTING.md](CONTRIBUTING.md#an-external-cluster-like-openshift) file. The tests will be executed automatically in Kubernetes by the GitHub Actions CI later.
 
-1. Commit the changes and create a pull request:
+4. Prepare a changelog since last release.
 
-   ```
+5. Commit the changes and create a pull request:
+
+   ```sh
    git commit -sm "Preparing release v1.30.0"
    ```
 
-1. Once the changes above are merged and available in `main` tag it with the desired version, prefixed with `v`, eg. `v1.30.0`
+5. Once the changes above are merged and available in `main` tag it with the desired version, prefixed with `v`, eg. `v1.30.0`
 
-    ```
+    ```sh
     git checkout main
     git tag v1.30.0
     git push git@github.com:jaegertracing/jaeger-operator.git v1.30.0
     ```
 
-1. The GitHub Workflow will take it from here, creating a GitHub release and publishing the images
+6. The GitHub Workflow will take it from here, creating a GitHub release and publishing the images
 
-1. After the release, PRs needs to be created against the Operator Hub Community Operators repositories:
+7. After the release, PRs needs to be created against the Operator Hub Community Operators repositories:
 
     * One for the [upstream-community-operators](https://github.com/k8s-operatorhub/community-operators), used by OLM on Kubernetes.
     * One for the [community-operators](https://github.com/redhat-openshift-ecosystem/community-operators-prod) used by OpenShift.
