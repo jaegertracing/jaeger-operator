@@ -31,6 +31,12 @@ func (s secret) instanceName(jaeger *v1.Jaeger) string {
 	if s.name == esSecret.name {
 		return esSecret.name
 	}
+
+	useCertManager := jaeger.Spec.Storage.Elasticsearch.UseCertManagement
+	if useCertManager != nil && *useCertManager == true {
+		return fmt.Sprintf("curator-%s", jaeger.Spec.Storage.Elasticsearch.Name)
+	}
+
 	return fmt.Sprintf("%s-%s", jaeger.Name, s.name)
 }
 
