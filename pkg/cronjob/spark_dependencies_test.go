@@ -288,3 +288,17 @@ func TestDependenciesVolumes(t *testing.T) {
 	assert.Equal(t, testVolumeName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].Name)
 	assert.Equal(t, testConfigMapName, cjob.Spec.JobTemplate.Spec.Template.Spec.Volumes[0].ConfigMap.Name)
 }
+
+func TestSparkDependenciesImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	cjob := CreateSparkDependencies(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, pullSecret, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
