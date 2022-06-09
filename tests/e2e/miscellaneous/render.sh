@@ -57,7 +57,7 @@ else
     start_test "istio"
     export jaeger_name="simplest"
     cat $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./livelinessprobe.template > ./03-install.yaml
-    render_find_service "$jaeger_name" "order" "00" "04"
+    render_find_service "$jaeger_name" "allInOne" "order" "00" "04"
 
     # One of the first steps of this test is enabling the Istio sidecar injection
     # for the namespace. That means, each pod is started will have an Istio sidecar.
