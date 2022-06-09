@@ -55,20 +55,13 @@ fi
 # to access the query endpoint properly
 EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-curl.yaml
 
+# After 04-install.yaml, check if the security is disabled properly
+INSECURE="true" EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./05-check-disabled-security.yaml
+
+
 ### Test the tracking.gaID parameter ###
 # Check the tracking.gaID was not there
-ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./04-check-NO-gaID.yaml
+ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./06-check-NO-gaID.yaml
 
-# Check the tracking.gaID is set properly after 05-install.yaml
-ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./06-check-gaID.yaml
-
-# When the tracking.gaID is modified in a Kubernetes cluster, the value is not
-# modified in the HTML code. In OpenShift, the change is performed properly
-if [ $IS_OPENSHIFT = true ]; then
-    # Check the tracking.gaID was changed properly after 07-install.yaml
-    ASSERT_PRESENT="false" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-changed-gaID.yaml
-    ASSERT_PRESENT="true" TRACKING_ID="aNewTrackingID" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./09-check-new-gaIDla.yaml
-fi
-
-# After 10-install.yaml, check if the security is disabled properly
-INSECURE="true" EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./11-check-disabled-security.yaml
+# Check the tracking.gaID is set properly after 07-install.yaml
+ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./08-check-gaID.yaml
