@@ -76,10 +76,21 @@ render_install_cassandra "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
-
 ###############################################################################
 # OpenShift examples ##########################################################
 ###############################################################################
+if [ $IS_OPENSHIFT = true ]; then
+    start_test "examples-openshift-agent-as-daemonset"
+    $GOMPLATE -f $EXAMPLES_DIR/openshift/hostport-scc-daemonset.yaml -o 00-install.yaml
+    $GOMPLATE -f $EXAMPLES_DIR/openshift/service_account_jaeger-agent-daemonset.yaml -o 01-install.yaml
+    $GOMPLATE -f $EXAMPLES_DIR/openshift/agent-as-daemonset.yaml -o 03-install.yaml
+    render_install_vertx "04"
+    $YQ e -i '.spec.template.spec.containers[0].env=[{"name": "JAEGER_AGENT_HOST", "valueFrom": {"fieldRef": {"apiVersion": "v1", "fieldPath": "status.hostIP"}}}]' ./04-install.yaml
+    render_find_service "agent-as-daemonset" "production" "order" "00" "05"
+else
+    skip_test "examples-openshift-agent-as-daemonset" "This test is only supported in OpenShift"
+fi
+
 
 if [ $IS_OPENSHIFT = true ]; then
     start_test "examples-openshift-with-htpasswd"
