@@ -9,3 +9,9 @@ runAsUser:
 seLinuxContext:
   type: RunAsAny
 allowHostPorts: true
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowPrivilegedContainer: false
+readOnlyRootFilesystem: false

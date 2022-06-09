@@ -1,0 +1,5 @@
+# Add service account to user
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "oc adm  policy --namespace $NAMESPACE add-scc-to-user daemonset-with-hostport -z jaeger-agent-daemonset"
