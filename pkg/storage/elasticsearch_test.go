@@ -81,8 +81,9 @@ func TestCreateElasticsearchCR(t *testing.T) {
 					Name:      "elasticsearch",
 					Namespace: "myproject",
 					Annotations: map[string]string{
-						"logging.openshift.io/elasticsearch-cert-management":           "true",
-						"logging.openshift.io/elasticsearch-cert.jaeger-elasticsearch": "user.jaeger",
+						"logging.openshift.io/elasticsearch-cert-management":            "true",
+						"logging.openshift.io/elasticsearch-cert.jaeger-elasticsearch":  "user.jaeger",
+						"logging.openshift.io/elasticsearch-cert.curator-elasticsearch": "system.logging.curator",
 					},
 				},
 				Spec: esv1.ElasticsearchSpec{
@@ -469,7 +470,7 @@ func TestInjectJobs(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-elasticsearch"}}},
+						SecretName: "jtest-curator"}}},
 				}},
 		},
 		{
@@ -521,7 +522,7 @@ func TestInjectJobs(t *testing.T) {
 				}},
 				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jaeger-elasticsearch"}}},
+						SecretName: "curator-elasticsearch"}}},
 				}},
 		},
 	}
