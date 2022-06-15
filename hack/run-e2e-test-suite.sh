@@ -34,6 +34,11 @@ make render-e2e-tests-$test_suite_name
 if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
+
+	# Install metrics-server for scalability tests
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
+	kubectl wait --for=condition=available deployment/metrics-server -n kube-system  --timeout=5m
 fi
 
 if [ "$jaeger_olm" = true ]; then
