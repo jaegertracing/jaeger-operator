@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tracegen
+  name: strimzi-cluster-operator
 status:
-  readyReplicas: {{ .Env.REPLICAS }}
+  readyReplicas: 1
