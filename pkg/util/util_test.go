@@ -1,6 +1,7 @@
 package util
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -627,4 +628,123 @@ func TestReplaceArgument(t *testing.T) {
 		assert.Equal(t, test.expected, test.input)
 	}
 
+}
+
+func TestArgs(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestArgs"})
+	jaeger.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"memory.max-traces": 10000})
+	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"collector.http-port": 14268})
+
+	// test
+	args := AllArgs(jaeger.Spec.Storage.Options, jaeger.Spec.AllInOne.Options)
+
+	// verify
+	sort.Strings(args)
+	assert.Equal(t, "--collector.http-port=14268", args[0])
+	assert.Equal(t, "--memory.max-traces=10000", args[1])
+}
+
+func TestFindEnvVars(t *testing.T) {
+
+	myEnvVar := corev1.EnvVar{
+		Name:  "my_env_var",
+		Value: "v1",
+	}
+
+	envVars := []corev1.EnvVar{
+		myEnvVar,
+		{
+			Name:  "other_env",
+			Value: "v2",
+		},
+	}
+
+	tests := []struct {
+		name     string
+		envName  string
+		expected *corev1.EnvVar
+	}{
+		{
+			name:     "env var found",
+			envName:  "my_env_var",
+			expected: &myEnvVar,
+		},
+		{
+			name:     "env var found",
+			envName:  "no_exist_env",
+			expected: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := FindEnvVar(envVars, tc.envName)
+			assert.Equal(t, result, tc.expected)
+		})
+	}
+}
+
+func TestIsOTLPEnable(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		options  v1.Options
+		expected bool
+	}{
+		{
+			name:     "explicit set to true",
+			options:  v1.NewOptions(map[string]interface{}{"collector.otlp.enabled": true}),
+			expected: true,
+		},
+		{
+			name:     "explicit set to false",
+			options:  v1.NewOptions(map[string]interface{}{"collector.otlp.enabled": false}),
+			expected: false,
+		},
+		{
+			name:     "no present in options",
+			options:  v1.NewOptions(map[string]interface{}{}),
+			expected: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			enable := IsOTLPEnable(AllArgs(tc.options))
+			assert.Equal(t, enable, tc.expected)
+		})
+	}
+}
+
+func TestIsOTLPExplcitSet(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		options  v1.Options
+		expected bool
+	}{
+		{
+			name:     "explicit set to true",
+			options:  v1.NewOptions(map[string]interface{}{"collector.otlp.enabled": true}),
+			expected: true,
+		},
+		{
+			name:     "explicit set to false",
+			options:  v1.NewOptions(map[string]interface{}{"collector.otlp.enabled": false}),
+			expected: true,
+		},
+		{
+			name:     "no present in options",
+			options:  v1.NewOptions(map[string]interface{}{}),
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			enable := IsOTLPExplcitSet(AllArgs(tc.options))
+			assert.Equal(t, enable, tc.expected)
+		})
+	}
 }
