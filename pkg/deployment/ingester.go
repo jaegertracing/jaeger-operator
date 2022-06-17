@@ -85,7 +85,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		})
 	}
 
-	options := allArgs(i.jaeger.Spec.Ingester.Options,
+	options := util.AllArgs(i.jaeger.Spec.Ingester.Options,
 		i.jaeger.Spec.Storage.Options.Filter(i.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	ca.Update(i.jaeger, commonSpec)

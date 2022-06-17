@@ -49,6 +49,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Name:  "JAEGER_DISABLED",
 			Value: "false",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
+		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }

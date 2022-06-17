@@ -63,7 +63,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
 	}
 
-	options := allArgs(a.jaeger.Spec.AllInOne.Options,
+	options := util.AllArgs(a.jaeger.Spec.AllInOne.Options,
 		a.jaeger.Spec.Storage.Options.Filter(a.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(a.jaeger, commonSpec, &options)
@@ -113,6 +113,71 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: string(a.jaeger.Spec.Storage.Type),
+		},
+		{
+			Name:  "METRICS_STORAGE_TYPE",
+			Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
+		},
+		{
+			Name:  "JAEGER_DISABLED",
+			Value: strconv.FormatBool(jaegerDisabled),
+		},
+	}
+
+	ports := []corev1.ContainerPort{
+		{
+			ContainerPort: 5775,
+			Name:          "zk-compact-trft", // max 15 chars!
+			Protocol:      corev1.ProtocolUDP,
+		},
+		{
+			ContainerPort: 5778,
+			Name:          "config-rest",
+		},
+		{
+			ContainerPort: 6831,
+			Name:          "jg-compact-trft",
+			Protocol:      corev1.ProtocolUDP,
+		},
+		{
+			ContainerPort: 6832,
+			Name:          "jg-binary-trft",
+			Protocol:      corev1.ProtocolUDP,
+		},
+		{
+			ContainerPort: 9411,
+			Name:          "zipkin",
+		},
+		{
+			ContainerPort: 14267,
+			Name:          "c-tchan-trft", // for collector
+		},
+		{
+			ContainerPort: 14268,
+			Name:          "c-binary-trft",
+		},
+		{
+			ContainerPort: 16686,
+			Name:          "query",
+		},
+		{
+			ContainerPort: adminPort,
+			Name:          "admin-http",
+		},
+		{
+			ContainerPort: 14250,
+			Name:          "grpc",
+		},
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -144,74 +209,13 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
-						Name:  "jaeger",
-						Args:  options,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: string(a.jaeger.Spec.Storage.Type),
-							},
-							{
-								Name:  "METRICS_STORAGE_TYPE",
-								Value: string(a.jaeger.Spec.AllInOne.MetricsStorage.Type),
-							},
-							{
-								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
-								Value: ":9411",
-							},
-							{
-								Name:  "JAEGER_DISABLED",
-								Value: strconv.FormatBool(jaegerDisabled),
-							},
-						},
+						Image:        util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
+						Name:         "jaeger",
+						Args:         options,
+						Env:          append(envVars, getOTLPEnvVars(options)...),
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
-						Ports: []corev1.ContainerPort{
-							{
-								ContainerPort: 5775,
-								Name:          "zk-compact-trft", // max 15 chars!
-								Protocol:      corev1.ProtocolUDP,
-							},
-							{
-								ContainerPort: 5778,
-								Name:          "config-rest",
-							},
-							{
-								ContainerPort: 6831,
-								Name:          "jg-compact-trft",
-								Protocol:      corev1.ProtocolUDP,
-							},
-							{
-								ContainerPort: 6832,
-								Name:          "jg-binary-trft",
-								Protocol:      corev1.ProtocolUDP,
-							},
-							{
-								ContainerPort: 9411,
-								Name:          "zipkin",
-							},
-							{
-								ContainerPort: 14267,
-								Name:          "c-tchan-trft", // for collector
-							},
-							{
-								ContainerPort: 14268,
-								Name:          "c-binary-trft",
-							},
-							{
-								ContainerPort: 16686,
-								Name:          "query",
-							},
-							{
-								ContainerPort: adminPort,
-								Name:          "admin-http",
-							},
-							{
-								ContainerPort: 14250,
-								Name:          "grpc",
-							},
-						},
+						Ports:        append(ports, getOTLPContainePorts(options)...),
 						LivenessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
