@@ -320,3 +320,35 @@ func GenerateProxySecret() (string, error) {
 	return base64Secret, nil
 
 }
+
+// FindEnvVar return the EnvVar with given name or nil if not found
+func FindEnvVar(envs []corev1.EnvVar, name string) *corev1.EnvVar {
+	for _, env := range envs {
+		if env.Name == name {
+			return &env
+		}
+	}
+	return nil
+}
+
+// IsOTLPEnable return true if OTLP is enabled, this means --collector.otlp.enabled=true or abscense of flag, means is enabled by defaultr
+func IsOTLPEnable(options []string) bool {
+	if IsOTLPExplcitSet(options) {
+		return len(FindItem("--collector.otlp.enabled=true", options)) != 0
+	}
+	return true
+}
+
+// IsOTLPExplcitSet return true if a flag for enable the otlp is set on the options
+func IsOTLPExplcitSet(options []string) bool {
+	return len(FindItem("--collector.otlp.enabled=", options)) != 0
+}
+
+// AllArgs return slice of strings with all arguments
+func AllArgs(optionsList ...v1.Options) []string {
+	args := []string{}
+	for _, options := range optionsList {
+		args = append(args, options.ToArgs()...)
+	}
+	return args
+}
