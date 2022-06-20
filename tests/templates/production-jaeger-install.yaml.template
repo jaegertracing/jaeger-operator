@@ -6,17 +6,6 @@ spec:
   strategy: production
   storage:
     type: elasticsearch
-    {{if eq .Env.SKIP_ES_EXTERNAL "false"}}
     options:
       es:
         server-urls: {{ .Env.ELASTICSEARCH_URL }}{{ .Env.ELASTICSEARCH_PORT }}
-    {{ else }}
-    elasticsearch:
-      nodeCount: {{ .Env.ELASTICSEARCH_NODECOUNT }}
-      resources:
-        requests:
-          cpu: 100m
-          memory: 1Gi
-        limits:
-          memory: 1Gi
-    {{ end }}

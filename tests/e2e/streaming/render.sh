@@ -21,11 +21,8 @@ jaeger_name="auto-provisioned"
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
     rm ./00-install.yaml ./00-assert.yaml
-    REPLICAS=1
-else
-    REPLICAS=3
 fi
-export REPLICAS
+export REPLICAS=3
 render_install_elasticsearch "01"
 $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./04-assert.yaml
@@ -38,11 +35,7 @@ start_test "streaming-with-autoprovisioning-autoscale"
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
     rm ./00-install.yaml ./00-assert.yaml
-    REPLICAS=1
-else
-    REPLICAS=3
 fi
-export REPLICAS
 
 render_install_elasticsearch "01"
 
