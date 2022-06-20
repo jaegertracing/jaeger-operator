@@ -248,7 +248,7 @@ function render_install_jaeger() {
             error "production_autoprovisioned Jaeger deploy mode is only supported for OpenShift"
             exit 1
         fi
-        $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
         $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "Used '$deploy_mode' is not a valid value for <deploy_mode>"

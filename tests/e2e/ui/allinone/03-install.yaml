@@ -9,3 +9,6 @@ spec:
     options:
       tracking:
         gaID: "MyTrackingId"
+  ingress:
+    enabled: true
+    security: "none"

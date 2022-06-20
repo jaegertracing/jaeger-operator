@@ -132,7 +132,7 @@ else
     start_test "es-streaming-autoprovisioned"
 
     export CLUSTER_NAME="auto-provisioned"
-    export REPLICAS=3
+    export REPLICAS=1
     $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml
