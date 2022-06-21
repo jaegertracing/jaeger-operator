@@ -1,6 +1,21 @@
 Changes by Version
 ==================
 
+1.35.0 (2022-06-16)
+-------------------
+
+* fix: point to a newer openshift oauth image 4.12 ([#1955](https://github.com/jaegertracing/jaeger-operator/pull/1955), [@frzifus](https://github.com/frzifus))
+* Expose OTLP collector and allInOne ports ([#1948](https://github.com/jaegertracing/jaeger-operator/pull/1948), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for ImagePullSecrets in cronjobs ([#1935](https://github.com/jaegertracing/jaeger-operator/pull/1935), [@alexandrevilain](https://github.com/alexandrevilain))
+* fix: ocp es rollover #1932 ([#1937](https://github.com/jaegertracing/jaeger-operator/pull/1937), [@frzifus](https://github.com/frzifus))
+* add kafkaSecretName for collector and ingester ([#1910](https://github.com/jaegertracing/jaeger-operator/pull/1910), [@luohua13](https://github.com/luohua13))
+* Add autoscalability E2E test for OpenShift ([#1936](https://github.com/jaegertracing/jaeger-operator/pull/1936), [@iblancasa](https://github.com/iblancasa))
+* Fix version in Docker container. ([#1924](https://github.com/jaegertracing/jaeger-operator/pull/1924), [@iblancasa](https://github.com/iblancasa))
+* Verify namespace permissions before adding ns controller ([#1914](https://github.com/jaegertracing/jaeger-operator/pull/1914), [@rubenvp8510](https://github.com/rubenvp8510))
+* fix: skip dependencies on openshift platform ([#1921](https://github.com/jaegertracing/jaeger-operator/pull/1921), [@frzifus](https://github.com/frzifus))
+* fix: remove common name label ([#1920](https://github.com/jaegertracing/jaeger-operator/pull/1920), [@frzifus](https://github.com/frzifus))
+* Ignore not found error on 1.31.0 upgrade routine ([#1913](https://github.com/jaegertracing/jaeger-operator/pull/1913), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.34.1 (2022-05-24)
 -------------------
 Fix: storage.es.tls.enabled flag not passed to es-index-cleaner ([#1896](https://github.com/jaegertracing/jaeger-operator/pull/1896), [@indigostar-kr](https://github.com/indigostar-kr))
