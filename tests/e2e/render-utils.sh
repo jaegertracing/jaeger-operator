@@ -220,6 +220,9 @@ function render_install_elasticsearch() {
 #   * production_cassandra: production using Cassandra.
 #   * production_autoprovisioned: production deployment autoprovisioning ES. Only
 #       available for OpenShift environments using the Elasticsearch OpenShift Operator.
+#   * production_managed_es: production deployment using an external
+#       Elasticsearch instance provisioned with the Elasticsearch OpenShift Operator.
+#
 # Example:
 #   render_install_jaeger "my-jaeger" "production" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. Production Jaeger
@@ -246,6 +249,13 @@ function render_install_jaeger() {
     elif [ $deploy_mode = "production_autoprovisioned" ]; then
         if [ $IS_OPENSHIFT != "true" ]; then
             error "production_autoprovisioned Jaeger deploy mode is only supported for OpenShift"
+            exit 1
+        fi
+        $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ $deploy_mode = "production_managed_es" ]; then
+        if [ $IS_OPENSHIFT != "true" ]; then
+            error "production_managed_es Jaeger deploy mode is only supported for OpenShift"
             exit 1
         fi
         $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
