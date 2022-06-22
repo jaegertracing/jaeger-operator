@@ -132,7 +132,14 @@ else
     start_test "es-streaming-autoprovisioned"
 
     export CLUSTER_NAME="auto-provisioned"
-    export REPLICAS=1
+
+    export REPLICAS
+    if is_kafka_minimal_enabled; then
+        REPLICAS=1
+    else
+        REPLICAS=3
+    fi
+
     $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml

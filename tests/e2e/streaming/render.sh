@@ -19,7 +19,13 @@ start_test "streaming-with-autoprovisioning"
 export CLUSTER_NAME="auto-provisioned"
 jaeger_name="auto-provisioned"
 
-export REPLICAS=1
+export REPLICAS
+if is_kafka_minimal_enabled; then
+    REPLICAS=1
+else
+    REPLICAS=3
+fi
+
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
     rm ./00-install.yaml ./00-assert.yaml
