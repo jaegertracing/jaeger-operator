@@ -383,15 +383,13 @@ function render_install_kafka() {
     test_step=$3
 
     export CLUSTER_NAME=$cluster_name
-    export REPLICAS=$replicas
 
     $GOMPLATE -f $TEMPLATES_DIR/kafka-install.yaml.template -o ./$test_step-install.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./$test_step-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./0$(expr $test_step + 1 )-assert.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./$test_step-assert.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./0$(expr $test_step + 1 )-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./0$(expr $test_step + 2 )-assert.yaml
 
     unset CLUSTER_NAME
-    unset REPLICAS
 }
 
 
@@ -671,6 +669,20 @@ function version_le(){
 }
 function version_lt() {
     test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" != "$1";
+}
+
+
+# Check if the KAFKA-PROVISION-MINIMAL feature is enabled.
+function is_kafka_minimal_enabled() {
+    namespaces=( observability openshift-operators openshift-distributed-tracing )
+    for i in "${namespaces[@]}"
+    do
+        enabled="$(kubectl get pods -n $i -l name=jaeger-operator -o yaml | $YQ e '.items[0].spec.containers[0].env[] | select(.name=="KAFKA-PROVISIONING-MINIMAL").value')"
+        if [ "$enabled" == true ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 
