@@ -12,10 +12,14 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 GOARCH ?= $(go env GOARCH)
 GOOS ?= $(go env GOOS)
 GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
+GOPATH ?= "$(HOME)/go"
+GOROOT ?= "$(shell go env GOROOT)"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= bin
 FMT_LOG=fmt.log
-
+ECHO ?= @echo $(echo_prefix)
+SED ?= "sed"
+# Jaeger Operator build variables
 OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
@@ -25,28 +29,31 @@ BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 export JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
-# Kafka and kafka operator variables
+# Kafka and Kafka Operator variables
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
+# Prometheus Operator variables
+PROMETHEUS_OPERATOR_TAG ?= v0.39.0
+PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 # Istio binary path and version
 ISTIO_VERSION ?= 1.11.2
 ISTIO_PATH = ./tests/_build/
 ISTIOCTL="${ISTIO_PATH}istio/bin/istioctl"
-GOPATH ?= "$(HOME)/go"
-GOROOT ?= "$(shell go env GOROOT)"
-ECHO ?= @echo $(echo_prefix)
-SED ?= "sed"
+# Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
+# Operator SDK version to use
 OPERATOR_SDK_VERSION ?= 1.17.0
-
+# Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
-export OLM ?= false
-SKIP_ES_EXTERNAL ?= false
+ # Is Jaeger Operator installed via OLM?
+JAEGER_OLM ?= false
+# Is Kafka Operator installed via OLM?
+KAFKA_OLM ?= false
+# Is Prometheus Operator installed via OLM?
+PROMETHEUS_OLM ?= false
 
-PROMETHEUS_OPERATOR_TAG ?= v0.39.0
-PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -59,7 +66,7 @@ LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
-# Options for kuttl testing
+# Options for KIND version to use
 export KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
@@ -216,7 +223,7 @@ storage:
 deploy-kafka-operator:
 	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-ifeq ($(OLM),true)
+ifeq ($(KAFKA_OLM),true)
 	$(ECHO) Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
@@ -230,7 +237,7 @@ endif
 
 .PHONY: undeploy-kafka-operator
 undeploy-kafka-operator:
-ifeq ($(OLM),true)
+ifeq ($(KAFKA_OLM),true)
 	$(ECHO) Skiping kafka-operator undeploy
 else
 	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f tests/_build/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
@@ -260,7 +267,7 @@ undeploy-kafka: undeploy-kafka-operator
 
 .PHONY: deploy-prometheus-operator
 deploy-prometheus-operator:
-ifeq ($(OLM),true)
+ifeq ($(PROMETHEUS_OLM),true)
 	$(ECHO) Skipping prometheus-operator deployment, assuming it has been installed via OperatorHub
 else
 	$(VECHO)kubectl apply -f ${PROMETHEUS_BUNDLE}
@@ -268,7 +275,7 @@ endif
 
 .PHONY: undeploy-prometheus-operator
 undeploy-prometheus-operator:
-ifeq ($(OLM),true)
+ifeq ($(PROMETHEUS_OLM),true)
 	$(ECHO) Skipping prometheus-operator undeployment, as it should have been installed via OperatorHub
 else
 	$(VECHO)kubectl delete -f ${PROMETHEUS_BUNDLE} --ignore-not-found=true || true
@@ -401,6 +408,7 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: start-kind
 start-kind: kind
+	echo $(USE_KIND_CLUSTER)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
