@@ -11472,6 +11472,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>kafkaSecretName</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>labels</b></td>
         <td>map[string]string</td>
         <td>
@@ -16344,6 +16351,13 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingesterimagepullsecretsindex">imagePullSecrets</a></b></td>
         <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>kafkaSecretName</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>

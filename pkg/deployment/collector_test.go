@@ -86,6 +86,10 @@ func TestDefaultCollectorImage(t *testing.T) {
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
+		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
 }
@@ -154,6 +158,18 @@ func TestCollectorImagePullSecrets(t *testing.T) {
 	dep := collector.Get()
 
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
+
+func TestCollectorKafkaSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "kafka-instance"})
+	secret := "mysecret"
+	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming
+	jaeger.Spec.Collector.KafkaSecretName = secret
+
+	collector := NewCollector(jaeger)
+	dep := collector.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 }
 
 func TestCollectorImagePullPolicy(t *testing.T) {
@@ -367,6 +383,10 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
+		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
@@ -406,6 +426,10 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
+		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
@@ -440,6 +464,10 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 		{
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
 			Value: ":9411",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)

@@ -39,6 +39,27 @@ func clusteripCollectorService(jaeger *v1.Jaeger, selector map[string]string) *c
 
 func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
+	ports := []corev1.ServicePort{
+		{
+			Name: "http-zipkin",
+			Port: 9411,
+		},
+		{
+			Name: GetPortNameForGRPC(jaeger),
+			Port: 14250,
+		},
+		{
+			Name: "http-c-tchan-trft",
+			Port: 14267,
+		},
+		{
+			Name: "http-c-binary-trft",
+			Port: 14268,
+		},
+	}
+
+	ports = append(ports, getOTLPServicePorts(jaeger)...)
+
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -59,27 +80,9 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 		Spec: corev1.ServiceSpec{
 			Selector:  selector,
 			ClusterIP: "",
-			Ports: []corev1.ServicePort{
-				{
-					Name: "http-zipkin",
-					Port: 9411,
-				},
-				{
-					Name: GetPortNameForGRPC(jaeger),
-					Port: 14250,
-				},
-				{
-					Name: "http-c-tchan-trft",
-					Port: 14267,
-				},
-				{
-					Name: "http-c-binary-trft",
-					Port: 14268,
-				},
-			},
+			Ports:     ports,
 		},
 	}
-
 }
 
 // GetNameForCollectorService returns the service name for the collector in this Jaeger instance
@@ -129,4 +132,24 @@ func getTypeForCollectorService(jaeger *v1.Jaeger) corev1.ServiceType {
 		return jaeger.Spec.Collector.ServiceType
 	}
 	return corev1.ServiceTypeClusterIP
+}
+
+func getOTLPServicePorts(jaeger *v1.Jaeger) []corev1.ServicePort {
+	options := util.AllArgs(jaeger.Spec.AllInOne.Options)
+	if jaeger.Spec.Strategy != v1.DeploymentStrategyAllInOne {
+		options = util.AllArgs(jaeger.Spec.Collector.Options)
+	}
+	if util.IsOTLPEnable(options) {
+		return []corev1.ServicePort{
+			{
+				Name: "otlp-grpc",
+				Port: 4317,
+			},
+			{
+				Name: "otlp-http",
+				Port: 4318,
+			},
+		}
+	}
+	return []corev1.ServicePort{}
 }

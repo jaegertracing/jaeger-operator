@@ -9,13 +9,13 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 if [ "$#" -ne 3 ]; then
-    echo "$0 <test_suite_name> <use_kind_cluster> <olm>"
+    echo "$0 <test_suite_name> <use_kind_cluster> <Jaeger Operator installed using OLM>"
     exit 1
 fi
 
 test_suite_name=$1
 use_kind_cluster=$2
-olm=$3
+jaeger_olm=$3
 
 root_dir=$current_dir/../
 reports_dir=$root_dir/reports
@@ -34,15 +34,18 @@ make render-e2e-tests-$test_suite_name
 if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
-	make cert-manager
+
+	# Install metrics-server for scalability tests
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
+	kubectl wait --for=condition=available deployment/metrics-server -n kube-system  --timeout=5m
 fi
 
-if [ "$olm" = true ]; then
-    echo "Skipping Jaeger Operator installation because OLM=true"
+if [ "$jaeger_olm" = true ]; then
+    echo "Skipping Jaeger Operator installation because JAEGER_OLM=true"
 else
 	echo Installing Jaeger Operator...
-	kubectl create namespace observability 2>&1 | grep -v "already exists" || true
-	kubectl apply -f ./tests/_build/manifests/01-jaeger-operator.yaml -n observability
+	make cert-manager deploy
 	kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 fi
 

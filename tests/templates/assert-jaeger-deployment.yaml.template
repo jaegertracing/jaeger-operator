@@ -3,4 +3,4 @@ kind: Deployment
 metadata:
   name: {{ .Env.JAEGER_NAME }}
 status:
-  readyReplicas:: 1
+  readyReplicas: 1

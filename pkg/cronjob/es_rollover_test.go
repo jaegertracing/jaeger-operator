@@ -391,3 +391,17 @@ func TestCustomEsRolloverImage(t *testing.T) {
 	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
 	assert.Equal(t, "org/custom-es-rollover-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
+
+func TestEsRolloverImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	cjob := lookback(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, pullSecret, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
+}
