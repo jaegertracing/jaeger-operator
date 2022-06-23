@@ -1,8 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestSuite
-crdDir: {{ .Env.CRD_DIR }}
-artifactsDir: ./artifacts/
-testDirs:
-  - .
-timeout: 330
-parallel: 1

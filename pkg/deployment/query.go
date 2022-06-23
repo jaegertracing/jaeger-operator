@@ -67,7 +67,7 @@ func (q *Query) Get() *appsv1.Deployment {
 		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
 	}
 
-	options := allArgs(q.jaeger.Spec.Query.Options,
+	options := util.AllArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(q.jaeger, commonSpec, &options)

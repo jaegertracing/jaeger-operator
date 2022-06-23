@@ -28,7 +28,7 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -56,7 +56,7 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -84,7 +84,7 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -106,7 +106,7 @@ func TestUnknownVersion(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -134,7 +134,7 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
@@ -171,7 +171,7 @@ func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-	cl := fake.NewFakeClient(objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
 	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))

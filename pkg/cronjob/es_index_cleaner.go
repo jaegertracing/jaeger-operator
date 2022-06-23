@@ -4,10 +4,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -18,7 +20,7 @@ import (
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
 
 // CreateEsIndexCleaner returns a new cronjob for the Elasticsearch Index Cleaner operation
-func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
+func CreateEsIndexCleaner(jaeger *v1.Jaeger) runtime.Object {
 	esUrls := util.GetEsHostname(jaeger.Spec.Storage.Options.Map())
 	trueVar := true
 	one := int32(1)
@@ -50,58 +52,81 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) *batchv1beta1.CronJob {
 		priorityClassName = jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName
 	}
 
-	return &batchv1beta1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   jaeger.Namespace,
-			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: jaeger.APIVersion,
-					Kind:       jaeger.Kind,
-					Name:       jaeger.Name,
-					UID:        jaeger.UID,
-					Controller: &trueVar,
-				},
-			},
-		},
-		Spec: batchv1beta1.CronJobSpec{
-			Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
-			SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit,
-			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					Parallelism:             &one,
-					TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished,
-					BackoffLimit:            jaeger.Spec.Storage.EsIndexCleaner.BackoffLimit,
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:         util.Truncate(name, 63),
-									Image:        util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
-									Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-									Env:          util.RemoveEmptyVars(envs),
-									EnvFrom:      envFromSource,
-									Resources:    commonSpec.Resources,
-									VolumeMounts: commonSpec.VolumeMounts,
-								},
-							},
-							RestartPolicy:      corev1.RestartPolicyNever,
-							Affinity:           commonSpec.Affinity,
-							Tolerations:        commonSpec.Tolerations,
-							SecurityContext:    commonSpec.SecurityContext,
-							ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
-							Volumes:            commonSpec.Volumes,
-							PriorityClassName:  priorityClassName,
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Labels:      commonSpec.Labels,
-							Annotations: commonSpec.Annotations,
-						},
-					},
-				},
+	objectmeta := metav1.ObjectMeta{
+		Name:        name,
+		Namespace:   jaeger.Namespace,
+		Labels:      commonSpec.Labels,
+		Annotations: commonSpec.Annotations,
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				APIVersion: jaeger.APIVersion,
+				Kind:       jaeger.Kind,
+				Name:       jaeger.Name,
+				UID:        jaeger.UID,
+				Controller: &trueVar,
 			},
 		},
 	}
+	jobSpec := batchv1.JobSpec{
+		Parallelism:             &one,
+		TTLSecondsAfterFinished: jaeger.Spec.Storage.EsIndexCleaner.TTLSecondsAfterFinished,
+		BackoffLimit:            jaeger.Spec.Storage.EsIndexCleaner.BackoffLimit,
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:         util.Truncate(name, 63),
+						Image:        util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
+						Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+						Env:          util.RemoveEmptyVars(envs),
+						EnvFrom:      envFromSource,
+						Resources:    commonSpec.Resources,
+						VolumeMounts: commonSpec.VolumeMounts,
+					},
+				},
+				ImagePullSecrets:   commonSpec.ImagePullSecrets,
+				RestartPolicy:      corev1.RestartPolicyNever,
+				Affinity:           commonSpec.Affinity,
+				Tolerations:        commonSpec.Tolerations,
+				SecurityContext:    commonSpec.SecurityContext,
+				ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsIndexCleanerComponent),
+				Volumes:            commonSpec.Volumes,
+				PriorityClassName:  priorityClassName,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Labels:      commonSpec.Labels,
+				Annotations: commonSpec.Annotations,
+			},
+		},
+	}
+
+	var o runtime.Object
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+		cj := &batchv1beta1.CronJob{
+			ObjectMeta: objectmeta,
+			Spec: batchv1beta1.CronJobSpec{
+				Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1beta1.JobTemplateSpec{
+					Spec: jobSpec,
+				},
+			},
+		}
+		o = cj
+	} else {
+		cj := &batchv1.CronJob{
+			ObjectMeta: objectmeta,
+			Spec: batchv1.CronJobSpec{
+				Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
+				SuccessfulJobsHistoryLimit: jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit,
+				JobTemplate: batchv1.JobTemplateSpec{
+					Spec: jobSpec,
+				},
+			},
+		}
+		o = cj
+	}
+
+	return o
 }

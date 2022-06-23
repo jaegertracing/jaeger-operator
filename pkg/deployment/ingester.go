@@ -75,7 +75,17 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		})
 	}
 
-	options := allArgs(i.jaeger.Spec.Ingester.Options,
+	if len(i.jaeger.Spec.Ingester.KafkaSecretName) > 0 {
+		envFromSource = append(envFromSource, corev1.EnvFromSource{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: i.jaeger.Spec.Ingester.KafkaSecretName,
+				},
+			},
+		})
+	}
+
+	options := util.AllArgs(i.jaeger.Spec.Ingester.Options,
 		i.jaeger.Spec.Storage.Options.Filter(i.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	ca.Update(i.jaeger, commonSpec)

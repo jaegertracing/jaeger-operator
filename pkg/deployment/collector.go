@@ -74,8 +74,17 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// to Kafka, and the storage options will be used in the Ingester instead
 	if c.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
 		storageType = v1.JaegerKafkaStorage
+		if len(c.jaeger.Spec.Collector.KafkaSecretName) > 0 {
+			envFromSource = append(envFromSource, corev1.EnvFromSource{
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: c.jaeger.Spec.Collector.KafkaSecretName,
+					},
+				},
+			})
+		}
 	}
-	options := allArgs(c.jaeger.Spec.Collector.Options,
+	options := util.AllArgs(c.jaeger.Spec.Collector.Options,
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
@@ -100,6 +109,40 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	if c.jaeger.Spec.Collector.Strategy != nil {
 		strategy = *c.jaeger.Spec.Collector.Strategy
+	}
+
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: string(storageType),
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
+		},
+	}
+
+	ports := []corev1.ContainerPort{
+		{
+			ContainerPort: 9411,
+			Name:          "zipkin",
+		},
+		{
+			ContainerPort: 14267,
+			Name:          "c-tchan-trft", // for collector
+		},
+		{
+			ContainerPort: 14268,
+			Name:          "c-binary-trft",
+		},
+		{
+			ContainerPort: adminPort,
+			Name:          "admin-http",
+		},
+		{
+			ContainerPort: 14250,
+			Name:          "grpc",
+		},
 	}
 
 	return &appsv1.Deployment{
@@ -134,43 +177,13 @@ func (c *Collector) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
-						Name:  "jaeger-collector",
-						Args:  options,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: string(storageType),
-							},
-							{
-								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
-								Value: ":9411",
-							},
-						},
+						Image:        util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
+						Name:         "jaeger-collector",
+						Args:         options,
+						Env:          append(envVars, getOTLPEnvVars(options)...),
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
-						Ports: []corev1.ContainerPort{
-							{
-								ContainerPort: 9411,
-								Name:          "zipkin",
-							},
-							{
-								ContainerPort: 14267,
-								Name:          "c-tchan-trft", // for collector
-							},
-							{
-								ContainerPort: 14268,
-								Name:          "c-binary-trft",
-							},
-							{
-								ContainerPort: adminPort,
-								Name:          "admin-http",
-							},
-							{
-								ContainerPort: 14250,
-								Name:          "grpc",
-							},
-						},
+						Ports:        append(ports, getOTLPContainePorts(options)...),
 						LivenessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{

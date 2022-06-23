@@ -158,6 +158,24 @@ Other targets include `run-e2e-tests-cassandra` and `run-e2e-tests-elasticsearch
 $ make e2e-test-suites
 ```
 
+**Note**: there are some variables you need to take into account in order to
+improve your experience running the E2E tests.
+
+| Variable name     | Description                                         | Example usage                      |
+|-------------------|-----------------------------------------------------|------------------------------------|
+| KUTTL_OPTIONS     | Options to pass directly to the KUTTL call          | KUTTL_OPTIONS="--test es-rollover" |
+| E2E_TESTS_TIMEOUT | Timeout for each step in the E2E tests. In seconds  | E2E_TESTS_TIMEOUT=500              |
+| USE_KIND_CLUSTER  | Start a KIND cluster to run the E2E tests           | USE_KIND_CLUSTER=true              |
+| KIND_KEEP_CLUSTER | Not remove the KIND cluster after running the tests | KIND_KEEP_CLUSTER=true             |
+
+Also, you can enable/disable the installation of the different operators needed
+to run the tests:
+| Variable name  | Description                                 | Example usage       |
+|----------------|---------------------------------------------|---------------------|
+| JAEGER_OLM     | Jaeger Operator was installed using OLM     | JAEGER_OLM=true     |
+| KAFKA_OLM      | Kafka Operator was installed using OLM      | KAFKA_OLM=true      |
+| PROMETHEUS_OLM | Prometheus Operator was installed using OLM | PROMETHEUS_OLM=true |
+
 #### An external cluster (like OpenShift)
 The commands from the previous section are valid when running the E2E tests in an
 external cluster like OpenShift, minikube or other Kubernetes environment. The only

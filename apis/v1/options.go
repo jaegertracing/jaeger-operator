@@ -88,6 +88,7 @@ func (o Options) MarshalJSON() ([]byte, error) {
 }
 
 func (o *Options) parse(entries map[string]interface{}) error {
+	o.json = nil
 	o.opts = make(map[string]interface{})
 	var err error
 	for k, v := range entries {

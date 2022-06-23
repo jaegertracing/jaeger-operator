@@ -89,7 +89,7 @@ func TestReconcileConfigMaps(t *testing.T) {
 			}
 
 			cl := &failingClient{
-				WithWatch: fake.NewFakeClient(tC.existing...),
+				WithWatch: fake.NewClientBuilder().WithRuntimeObjects(tC.existing...).Build(),
 				errors:    tC.errors,
 			}
 
@@ -243,7 +243,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: true,
 					Result: &metav1.Status{
-						Reason: "is jeager deployment, we do not touch it",
+						Reason: "is jaeger deployment, we do not touch it",
 						Code:   200,
 					},
 				},
@@ -367,7 +367,7 @@ func TestReconcilieDeployment(t *testing.T) {
 			}
 
 			cl := &failingClient{
-				WithWatch: fake.NewFakeClient(res...),
+				WithWatch: fake.NewClientBuilder().WithRuntimeObjects(res...).Build(),
 				errors:    tc.errors,
 			}
 

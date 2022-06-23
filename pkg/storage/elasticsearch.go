@@ -126,16 +126,17 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 		Name: volumeName,
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: jaegerESSecretName(*ed.Jaeger),
+				SecretName: curatorSecret.instanceName(ed.Jaeger),
 			},
 		},
 	})
+
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
 		// the size of arguments array should be always 2
 		p.Containers[0].Args[1] = fmt.Sprintf("https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
 		p.Containers[0].Env = append(p.Containers[0].Env,
-			corev1.EnvVar{Name: "ES_TLS", Value: "true"},
+			corev1.EnvVar{Name: "ES_TLS_ENABLED", Value: "true"},
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: ed.getCertCaPath()},
 			corev1.EnvVar{Name: "ES_TLS_KEY", Value: ed.getCertKeyPath()},
 			corev1.EnvVar{Name: "ES_TLS_CERT", Value: ed.getCertPath()},
@@ -173,6 +174,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 		// The value has to match searchguard configuration
 		// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34
 		annotations[fmt.Sprintf("logging.openshift.io/elasticsearch-cert.%s", jaegerESSecretName(*ed.Jaeger))] = "user.jaeger"
+		annotations[fmt.Sprintf("logging.openshift.io/elasticsearch-cert.curator-%s", ed.Jaeger.Spec.Storage.Elasticsearch.Name)] = "system.logging.curator"
 	}
 	return &esv1.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{

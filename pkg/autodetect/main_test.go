@@ -36,7 +36,7 @@ func TestStart(t *testing.T) {
 
 	// prepare
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	done := make(chan bool)
@@ -123,7 +123,7 @@ func TestAutoDetectWithServerGroupsError(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// sanity check
@@ -152,7 +152,7 @@ func TestAutoDetectWithServerResourcesForGroupVersionError(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// sanity check
@@ -187,7 +187,7 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
@@ -224,7 +224,7 @@ func TestAutoDetectKubernetes(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -240,7 +240,7 @@ func TestExplicitPlatform(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -256,7 +256,7 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -272,7 +272,7 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
@@ -320,7 +320,7 @@ func TestAutoDetectKafkaProvisionNoKafkaOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -336,7 +336,7 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
@@ -362,7 +362,7 @@ func TestAutoDetectKafkaExplicitYes(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -378,7 +378,7 @@ func TestAutoDetectKafkaExplicitNo(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -394,7 +394,7 @@ func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 
 	// test
@@ -410,7 +410,7 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
-	cl := fake.NewFakeClient()
+	cl := fake.NewClientBuilder().Build()
 	b := WithClients(cl, dcl, cl)
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
@@ -427,6 +427,36 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 
 	// verify
 	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
+}
+
+func TestAutoDetectCronJobsVersion(t *testing.T) {
+	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
+	for _, apiGroup := range apiGroupVersions {
+		dcl := &fakeDiscoveryClient{}
+		cl := fake.NewFakeClient()
+		b := WithClients(cl, dcl, cl)
+		dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+			return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+				Name:     apiGroup,
+				Versions: []metav1.GroupVersionForDiscovery{{Version: apiGroup}},
+			}}}, nil
+		}
+
+		dcl.ServerResourcesForGroupVersionFunc = func(requestedApiVersion string) (apiGroupList *metav1.APIResourceList, err error) {
+			if requestedApiVersion == apiGroup {
+				apiResourceList := &metav1.APIResourceList{GroupVersion: apiGroup, APIResources: []metav1.APIResource{{Name: "cronjobs"}}}
+				return apiResourceList, nil
+			}
+			return &metav1.APIResourceList{}, nil
+		}
+
+		// test
+		b.autoDetectCapabilities()
+
+		// verify
+		assert.Equal(t, apiGroup, viper.GetString(v1.FlagCronJobsVersion))
+		fmt.Printf("Test finished on [%s]\n", apiGroup)
+	}
 }
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
@@ -589,7 +619,7 @@ func TestCleanDeployments(t *testing.T) {
 			s := scheme.Scheme
 			s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 			s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
-			cl := fake.NewFakeClient(objs...)
+			cl := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 			b := WithClients(cl, &fakeDiscoveryClient{}, cl)
 
 			// test
@@ -621,7 +651,7 @@ type fakeClient struct {
 }
 
 func customFakeClient() *fakeClient {
-	c := fake.NewFakeClient()
+	c := fake.NewClientBuilder().Build()
 	return &fakeClient{Client: c, CreateFunc: c.Create}
 }
 

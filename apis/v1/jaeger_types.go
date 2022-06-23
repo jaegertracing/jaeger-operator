@@ -17,6 +17,15 @@ type JaegerPhase string
 type JaegerStorageType string
 
 const (
+	// FlagCronJobsVersion represents the version of the Kubernetes CronJob API
+	FlagCronJobsVersion = "cronjobs-version"
+
+	// FlagCronJobsVersionBatchV1 represents the batch/v1 version of the kubernetes CronJob API, available as of 1.21
+	FlagCronJobsVersionBatchV1 = "batch/v1"
+
+	// FlagCronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the kubernetes CronJob API, no longer available as of 1.25
+	FlagCronJobsVersionBatchV1Beta1 = "batch/v1beta1"
+
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
 
@@ -425,6 +434,9 @@ type JaegerCollectorSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -452,6 +464,9 @@ type JaegerIngesterSpec struct {
 
 	// +optional
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent

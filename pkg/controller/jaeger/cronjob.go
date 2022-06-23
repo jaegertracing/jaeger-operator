@@ -3,6 +3,10 @@ package jaeger
 import (
 	"context"
 
+	"github.com/spf13/viper"
+	batchv1 "k8s.io/api/batch/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -13,7 +17,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []batchv1beta1.CronJob) error {
+func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, desired []runtime.Object) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "applyCronJobs")
 	defer span.End()
@@ -25,39 +29,77 @@ func (r *ReconcileJaeger) applyCronJobs(ctx context.Context, jaeger v1.Jaeger, d
 			"app.kubernetes.io/managed-by": "jaeger-operator",
 		}),
 	}
-	list := &batchv1beta1.CronJobList{}
-	if err := r.rClient.List(ctx, list, opts...); err != nil {
-		return tracing.HandleError(err, span)
-	}
 
-	inv := inventory.ForCronJobs(list.Items, desired)
-	for _, d := range inv.Create {
-		jaeger.Logger().WithFields(log.Fields{
-			"cronjob":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating cronjob")
-		if err := r.client.Create(ctx, &d); err != nil {
+	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
+	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
+		list := &batchv1beta1.CronJobList{}
+		if err := r.rClient.List(ctx, list, opts...); err != nil {
 			return tracing.HandleError(err, span)
 		}
-	}
 
-	for _, d := range inv.Update {
-		jaeger.Logger().WithFields(log.Fields{
-			"cronjob":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating cronjob")
-		if err := r.client.Update(ctx, &d); err != nil {
+		var existing []runtime.Object
+		for _, i := range list.Items {
+			existing = append(existing, i.DeepCopyObject())
+		}
+
+		inv := inventory.ForCronJobs(existing, desired)
+		for _, d1 := range inv.Create {
+			d := d1.(*batchv1beta1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("creating cronjob")
+			if err := r.client.Create(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
+		}
+
+		for _, d1 := range inv.Update {
+			d := d1.(*batchv1beta1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("updating cronjob")
+			if err := r.client.Update(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
+		}
+
+		for _, d1 := range inv.Delete {
+			d := d1.(*batchv1beta1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("deleting cronjob")
+			if err := r.client.Delete(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
+		}
+	} else {
+		list := &batchv1.CronJobList{}
+		if err := r.rClient.List(ctx, list, opts...); err != nil {
 			return tracing.HandleError(err, span)
 		}
-	}
+		var existing []runtime.Object
+		for _, i := range list.Items {
+			var z runtime.Object = i.DeepCopyObject()
+			existing = append(existing, z)
+		}
 
-	for _, d := range inv.Delete {
-		jaeger.Logger().WithFields(log.Fields{
-			"cronjob":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting cronjob")
-		if err := r.client.Delete(ctx, &d); err != nil {
-			return tracing.HandleError(err, span)
+		inv := inventory.ForCronJobs(existing, desired)
+		for _, d1 := range inv.Create {
+			d := d1.(*batchv1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("creating cronjob")
+			if err := r.client.Create(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
+		}
+
+		for _, d1 := range inv.Update {
+			d := d1.(*batchv1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("updating cronjob")
+			if err := r.client.Update(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
+		}
+
+		for _, d1 := range inv.Delete {
+			d := d1.(*batchv1.CronJob)
+			jaeger.Logger().WithFields(log.Fields{"cronjob": d.Name, "namespace": d.Namespace}).Debug("deleting cronjob")
+			if err := r.client.Delete(ctx, d); err != nil {
+				return tracing.HandleError(err, span)
+			}
 		}
 	}
 
