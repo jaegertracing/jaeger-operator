@@ -1,0 +1,7 @@
+# Assert the ingester scaled
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-provisioned-ingester
+status:
+  readyReplicas: 1

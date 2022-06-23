@@ -3,12 +3,13 @@ package strategy
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -43,7 +44,8 @@ func TestWithConfigMaps(t *testing.T) {
 }
 
 func TestWithCronJobs(t *testing.T) {
-	c := New().WithCronJobs([]batchv1beta1.CronJob{{}})
+	var cronjob runtime.Object
+	c := New().WithCronJobs([]runtime.Object{cronjob})
 	assert.Len(t, c.CronJobs(), 1)
 	assert.Len(t, c.All(), 1)
 }

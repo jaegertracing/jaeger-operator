@@ -19,3 +19,4 @@ This test works in the following way:
 * Create a second Jaeger instance
 * Remove the first Jaeger instance (now, the deployment will use the second Jaeger instance)
 * Check there were no errors
+* Check the sidecar is removed when the annotation is removed

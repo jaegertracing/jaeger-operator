@@ -2,6 +2,30 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+if [ "$IS_OPENSHIFT" != true ]; then
+    skip_test "es-increasing-replicas" "Test supported only in OpenShift"
+else
+    jaeger_name="simple-prod"
+    start_test "es-increasing-replicas"
+
+    # Install a Jaeger instance with autoprovisioned ES
+    render_install_jaeger "$jaeger_name" "production" "00"
+
+    # Increase the number of replicas for the collector, query and ES
+    cp ./00-install.yaml ./01-install.yaml
+    $YQ e -i '.spec.collector.replicas=2' ./01-install.yaml
+    $YQ e -i '.spec.query.replicas=2' ./01-install.yaml
+    $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./01-install.yaml
+
+    # Check everything was scaled as expected
+    cp ./00-assert.yaml ./01-assert.yaml
+    $YQ e -i '.spec.replicas=2' ./01-assert.yaml
+    $YQ e -i '.status.readyReplicas=2' ./01-assert.yaml
+
+    render_smoke_test "$jaeger_name" "production" "03"
+fi
+
+
 
 start_test "es-index-cleaner"
 export JAEGER_NAME="test-es-index-cleaner-with-prefix"
@@ -35,19 +59,26 @@ unset JAEGER_NAME
 unset CRONJOB_NAME
 
 
-if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "es-simple-prod" "skipping es-simple-prod test tests because SKIP_ES_EXTERNAL is true. Covered by the self_provisioned_elasticsearch_test"
+if [ "$IS_OPENSHIFT" = "true" ]; then
+    start_test "es-multiinstance"
+    jaeger_name="instance-1"
+    render_install_jaeger "$jaeger_name" "production" "01"
 else
-    start_test "es-simple-prod"
-    jaeger_name="simple-prod"
+    skip_test "es-multiinstance" "This test is only supported in OpenShift"
+fi
 
+
+start_test "es-simple-prod"
+jaeger_name="simple-prod"
+if [ "$SKIP_ES_EXTERNAL" = false ]; then
     # Deploy Elasticsearch
     render_install_elasticsearch "00"
-    # Deploy Jaeger in production mode
-    render_install_jaeger "$jaeger_name" "production" "01"
-    # Run smoke test
-    render_smoke_test "$jaeger_name" "production" "02"
 fi
+# Deploy Jaeger in production mode
+render_install_jaeger "$jaeger_name" "production" "01"
+# Run smoke test
+render_smoke_test "$jaeger_name" "production" "02"
+
 
 
 start_test "es-rollover"
@@ -102,4 +133,19 @@ else
 
     export CRONJOB_NAME="my-jaeger-spark-dependencies"
     $GOMPLATE -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template -o ./02-wait-spark-job.yaml
+fi
+
+
+if [ "$IS_OPENSHIFT" != true ]; then
+    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
+else
+    start_test "es-streaming-autoprovisioned"
+
+    export CLUSTER_NAME="auto-provisioned"
+    export REPLICAS=1
+    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml
+
+    render_smoke_test "auto-provisioned" "allInOne" "03"
 fi

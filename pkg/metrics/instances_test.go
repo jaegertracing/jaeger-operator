@@ -120,7 +120,7 @@ func TestValueObservedMetrics(t *testing.T) {
 		newExpectedMetric(agentStrategiesMetric, attribute.String("type", "daemonset"), 1),
 	}
 
-	cl := fake.NewFakeClientWithScheme(s, objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	meter, provider := oteltest.NewMeterProvider()
 	global.SetMeterProvider(provider)
@@ -201,7 +201,7 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 		&autoprovisioningInstance,
 	}
 
-	cl := fake.NewFakeClientWithScheme(s, objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 	meter, provider := oteltest.NewMeterProvider()
 	global.SetMeterProvider(provider)
 
@@ -271,7 +271,7 @@ func TestManagerByMetric(t *testing.T) {
 		&nonManaged,
 	}
 
-	cl := fake.NewFakeClientWithScheme(s, objs...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 	meter, provider := oteltest.NewMeterProvider()
 	global.SetMeterProvider(provider)
 

@@ -7,6 +7,10 @@ if [[ "$(basename -- "$0")" = "render-utils.sh" ]]; then
     exit 1
 fi
 
+export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
+source $ROOT_DIR/hack/common.sh
+
+
 ###############################################################################
 # Functions ###################################################################
 ###############################################################################
@@ -18,6 +22,9 @@ fi
 #   render_smoke_test "my-jaeger" "production" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
 # will be run against the Jaeger instance called `my-jaeger`.
+# Accepted values for <deploy_mode>:
+#   * allInOne: all in one deployment.
+#   * production: production using Elasticsearch.
 function render_smoke_test() {
     if [ "$#" -ne 3 ]; then
         error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>"
@@ -148,6 +155,7 @@ function render_check_indices() {
     $GOMPLATE -f $TEMPLATES_DIR/assert-check-indices.yaml.template -o ./$test_step-assert.yaml
 
     unset JOB_NUMBER
+    unset MOUNT_SECRET
 }
 
 
@@ -366,29 +374,44 @@ function render_install_kafka() {
 
 
 # Render a "find service" job.
-#   render_find_service <jaeger_name> <service_name> <job_number> <test_step>
+#   render_find_service <jaeger_name> <deployment_strategy> <service_name> <job_number> <test_step>
 #
 # Example:
-#   render_find_service "simplest" "my-service" "01" "00"
+#   render_find_service "simplest" "production" "my-service" "01" "00"
 # Generates the `01-find-service.yaml` and `01-assert.yaml` files. It will run a
 # `find-service` job.
+# Accepted values for <deployment_strategy>:
+#   * allInOne: all in one deployment.
+#   * production: production using Elasticsearch.
 function render_find_service() {
-    if [ "$#" -ne 4 ]; then
-        error "Wrong number of parameters used for render_find_service. Usage: render_find_service <jaeger_name> <service_name> <job_number> <test_step>"
+    if [ "$#" -ne 5 ]; then
+        error "Wrong number of parameters used for render_find_service. Usage: render_find_service <jaeger_name> <deployment_strategy> <service_name> <job_number> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    service_name=$2
-    job_number=$3
-    test_step=$4
+    deployment_strategy=$2
+    service_name=$3
+    job_number=$4
+    test_step=$5
 
     export JAEGER_NAME=$jaeger
     export JOB_NUMBER=$job_number
     export SERVICE_NAME=$service_name
-    export JAEGER_QUERY_ENDPOINT="http://$jaeger-query:16686"
+    export JAEGER_QUERY_ENDPOINT
 
-    $GOMPLATE -f $TEMPLATES_DIR/find-service.yaml.template -o ./$test_step-find-service.yaml
+    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+        protocol="https://"
+        query_port=""
+        template="$TEMPLATES_DIR/openshift/find-service.yaml.template"
+        JAEGER_QUERY_ENDPOINT="https://$jaeger-query"
+    else
+        template="$TEMPLATES_DIR/find-service.yaml.template"
+        JAEGER_QUERY_ENDPOINT="http://$jaeger-query:16686"
+    fi
+
+
+    $GOMPLATE -f $template -o ./$test_step-find-service.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-find-service.yaml.template -o ./$test_step-assert.yaml
 
     unset JAEGER_NAME
@@ -397,6 +420,29 @@ function render_find_service() {
     unset JAEGER_COLLECTOR_ENDPOINT
 }
 
+
+# Render a tracegen deployment.
+#   render_install_tracegen <jaeger_name> <replicas> <test_step>
+#
+# Example:
+#   render_install_tracegen "prod" "1" "00"
+# Generates the `00-install.yaml` and `00-assert.yaml` files. It will deploy
+# 1 replica of the tracegen deployment
+function render_install_tracegen() {
+    if [ "$#" -ne 3 ]; then
+        error "Wrong number of parameters used for render_install_tracegen. Usage: render_install_tracegen <jaeger_name> <replicas> <test_step>"
+        exit 1
+    fi
+
+    jaeger=$1
+    replicas=$2
+    step=$3
+
+    $GOMPLATE -f $EXAMPLES_DIR/tracegen.yaml -o ./$step-install.yaml
+    $YQ e -i ".spec.replicas=$replicas" ./$step-install.yaml
+    sed -i "s~simple-prod~$jaeger~gi" ./$step-install.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-tracegen.yaml.template -o ./$step-assert.yaml
+}
 
 # Get the Jaeger name from a Jaeger deployment file.
 #   get_jaeger_name <file>
@@ -590,6 +636,22 @@ function skip_test(){
     warning "$message"
 }
 
+function version_gt() {
+    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" != "$1";
+}
+
+function version_ge() {
+    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" == "$1";
+}
+
+function version_le(){
+    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" == "$1";
+}
+function version_lt() {
+    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" != "$1";
+}
+
+
 
 ###############################################################################
 # Init configuration ##########################################################
@@ -614,20 +676,12 @@ fi
 
 export IS_OPENSHIFT
 
-
 # Important folders
-export ROOT_DIR=$(realpath $(dirname ${BASH_SOURCE[0]})/../../)
-export TEST_DIR=$ROOT_DIR/tests
-export TEMPLATES_DIR=$TEST_DIR/templates
-export EXAMPLES_DIR=$ROOT_DIR/examples
 export SUITE_DIR=$(dirname "$0")
 
 
 # Check the dependencies are there
-export GOMPLATE=$ROOT_DIR/bin/gomplate
 $ROOT_DIR/hack/install/install-gomplate.sh
-
-export YQ=$ROOT_DIR/bin/yq
 $ROOT_DIR/hack/install/install-yq.sh
 
 
@@ -645,12 +699,22 @@ fi
 # Cassandra settings
 export CASSANDRA_SERVER="cassandra"
 
+export SERVICE_ACCOUNT_NAME="e2e-test"
 
-# Programs
+
+# Programs. Note: these paths are related to the suites location
 PROGRAMS_FOLDER=../../../..
+
+# CMD utils
 export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
+export ASSERT_HTTP_CODE_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/assert-jaeger-http-code.sh
+export GET_TOKEN_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/get-token.sh
+export TEST_UI_CONFIG_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/uiconfig/main.go
+
+# Assert jobs
 export QUERY_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/query/main.go
 export REPORTER_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/reporter/main.go
+
 
 # Fail on first error
 set -e
@@ -664,7 +728,7 @@ build_dir="_build"
 rm -rf $build_dir
 mkdir $build_dir
 
-find -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
+find -maxdepth 1 -type d ! -wholename "." ! -wholename "./$build_dir" | xargs -I {} cp -r {}  $build_dir
 
 cd _build
 
@@ -677,5 +741,5 @@ else
 fi
 export CRD_DIR
 
-$GOMPLATE -f ../../../templates/kuttl-test.yaml -o ./kuttl-test.yaml
+$GOMPLATE -f ../../../templates/kuttl-test.yaml.template -o ./kuttl-test.yaml
 mkdir -p artifacts

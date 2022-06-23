@@ -4,7 +4,13 @@ export VERTX_IMG ?= jaegertracing/vertx-create-span:operator-e2e-tests
 export ELASTIC_IMG ?= docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 export OPERATOR_IMAGE_NEXT ?= ${IMG_PREFIX}/jaeger-operator:next
 export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell date +%s)
+
+# Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
+# Skip E2E tests where ES external instance is used
+SKIP_ES_EXTERNAL ?= false
+export E2E_TESTS_TIMEOUT ?= 330
+
 
 .PHONY: prepare-e2e-tests
 prepare-e2e-tests: kuttl build generate-e2e-files
@@ -14,10 +20,7 @@ set-assert-e2e-img-name:
 	$(eval ASSERT_IMG=$(shell ASSERT_IMG=$(ASSERT_IMG) ./tests/build-utils/get-assert-e2e-img.sh))
 
 .PHONY: generate-e2e-files
-generate-e2e-files: set-image-controller build-assert-job
-	$(VECHO)mkdir -p tests/_build/crds tests/_build/manifests
-	$(VECHO)$(KUSTOMIZE) build config/default -o tests/_build/manifests/01-jaeger-operator.yaml
-	$(VECHO)$(KUSTOMIZE) build config/crd -o tests/_build/crds/
+generate-e2e-files: generate bundle set-image-controller build-assert-job
 
 
 # Build/pull container images used for the testing ###########################
@@ -75,12 +78,8 @@ endif
 
 .PHONY: run-e2e-tests
 run-e2e-tests: list-test-suites
-	$(VECHO) for suite in $(TEST_SUITES); do \
-		$(MAKE) run-e2e-tests-$$suite -i; \
-	done
-	# Show a final report
-	junitcli --report reports
-	cd reports && ! grep -nr failed
+	./hack/run-e2e-tests.sh $(TEST_SUITES)
+
 
 .PHONY: render-e2e-tests
 render-e2e-tests: generate-e2e-files list-test-suites
@@ -99,7 +98,7 @@ e2e-test-suites: list-test-suites
 		echo -e "\t $$test_suite" ; \
 	done
 
-	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-smoke"
+	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-elasticsearch"
 
 run-suite-tests: start-kind prepare-e2e-tests load-operator-image
-	./hack/run-e2e-tests.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(OLM)
+	KAFKA_OLM=$(KAFKA_OLM) ./hack/run-e2e-test-suite.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(JAEGER_OLM)

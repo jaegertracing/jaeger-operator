@@ -42,10 +42,9 @@ func (q *Query) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: labels,
 	}
@@ -63,8 +62,12 @@ func (q *Query) Get() *appsv1.Deployment {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{q.jaeger.Spec.Query.JaegerCommonSpec, q.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
+	if !ok {
+		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
+	}
 
-	options := allArgs(q.jaeger.Spec.Query.Options,
+	options := util.AllArgs(q.jaeger.Spec.Query.Options,
 		q.jaeger.Spec.Storage.Options.Filter(q.jaeger.Spec.Storage.Type.OptionsPrefix()))
 
 	configmap.Update(q.jaeger, commonSpec, &options)
@@ -105,7 +108,7 @@ func (q *Query) Get() *appsv1.Deployment {
 			Name:        fmt.Sprintf("%s-query", q.jaeger.Name),
 			Namespace:   q.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: q.jaeger.APIVersion,
 				Kind:       q.jaeger.Kind,

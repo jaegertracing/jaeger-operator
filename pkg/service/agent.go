@@ -42,7 +42,7 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 					Protocol: corev1.ProtocolUDP,
 				},
 				{
-					Name: "config-rest",
+					Name: "http-config-rest",
 					Port: 5778,
 				},
 				{

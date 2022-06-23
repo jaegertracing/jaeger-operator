@@ -17,7 +17,7 @@ COPY tests tests
 ENV CGO_ENABLED=0
 
 # Build
-RUN go build -o ./uiconfig -a ./tests/assert-jobs/uiconfig/main.go
+
 RUN go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
 RUN go build -o ./query -a ./tests/assert-jobs/query/main.go
 RUN go build -o ./index -a ./tests/assert-jobs/index/main.go
@@ -26,7 +26,6 @@ RUN go build -o ./index -a ./tests/assert-jobs/index/main.go
 # minimal container image
 FROM curlimages/curl:7.81.0
 WORKDIR /
-COPY --from=builder /workspace/uiconfig .
 COPY --from=builder /workspace/reporter .
 COPY --from=builder /workspace/query .
 COPY --from=builder /workspace/index .

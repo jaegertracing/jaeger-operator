@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: "./ensure-ingress-host.sh"
+  - script: "{{if getenv "INSECURE"}}INSECURE=true{{end}} {{if getenv "JAEGER_USERNAME"}}JAEGER_USERNAME={{ .Env.JAEGER_USERNAME }} JAEGER_PASSWORD={{ .Env.JAEGER_PASSWORD }} {{end}} {{ .Env.ASSERT_HTTP_CODE_PROGRAM }} {{ .Env.URL }} {{ .Env.EXPECTED_CODE }} {{ .Env.IS_OPENSHIFT }} $NAMESPACE {{ .Env.JAEGER_NAME }}"

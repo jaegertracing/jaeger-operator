@@ -100,10 +100,31 @@ func (b *Background) autoDetectCapabilities() {
 
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
+		b.detectCronjobsVersion(ctx)
 	}
 
 	b.detectClusterRoles(ctx)
 	b.cleanDeployments(ctx)
+}
+
+func (b *Background) detectCronjobsVersion(ctx context.Context) {
+	apiGroupVersions := []string{"batch/v1", "batch/v1beta1"}
+	for _, apiGroupVersion := range apiGroupVersions {
+		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
+		if err != nil {
+			log.Errorf("Error getting %s api list: %v", apiGroupVersion, err)
+			continue
+		}
+		for _, api := range groupAPIList.APIResources {
+			if api.Name == "cronjobs" {
+				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
+				log.Tracef("Found the cronjobs api in %s", apiGroupVersion)
+				return
+			}
+		}
+	}
+
+	log.Errorf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or "))
 }
 
 // AvailableAPIs returns available list of CRDs from the cluster.

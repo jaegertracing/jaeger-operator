@@ -7,12 +7,19 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
+
+func init() {
+	// Always test with v1.  It is available at compile time and is exactly the same as v1beta1
+	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+}
 
 func TestCreateEsIndexCleaner(t *testing.T) {
 	jaeger := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(
@@ -21,7 +28,8 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 	historyLimits := int32(1)
 	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
-	cronJob := CreateEsIndexCleaner(jaeger)
+	cronJob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
+
 	assert.Equal(t, 2, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args))
 	// default number of days (7) is applied in normalize in controller
 	assert.Equal(t, []string{"0", "http://nowhere:666"}, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
@@ -40,7 +48,8 @@ func TestEsIndexCleanerSecrets(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 	historyLimits := int32(0)
 	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
-	cronJob := CreateEsIndexCleaner(jaeger)
+
+	cronJob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, secret, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
 	assert.Equal(t, historyLimits, *cronJob.Spec.SuccessfulJobsHistoryLimit)
 }
@@ -72,7 +81,7 @@ func TestEsIndexCleanerEnvVars(t *testing.T) {
 		days := 0
 		jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 		jaeger.Spec.Storage.Options = v1.NewOptions(test.opts)
-		cronJob := CreateEsIndexCleaner(jaeger)
+		cronJob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 		assert.Equal(t, test.envs, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
 	}
 }
@@ -91,8 +100,7 @@ func TestEsIndexCleanerAnnotations(t *testing.T) {
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-	cjob := CreateEsIndexCleaner(jaeger)
-
+	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
@@ -109,7 +117,7 @@ func TestEsIndexCleanerBackoffLimit(t *testing.T) {
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-	cjob := CreateEsIndexCleaner(jaeger)
+	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
 }
 
@@ -127,7 +135,7 @@ func TestEsIndexCleanerLabels(t *testing.T) {
 	days := 0
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-	cjob := CreateEsIndexCleaner(jaeger)
+	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
@@ -200,7 +208,7 @@ func TestEsIndexCleanerResources(t *testing.T) {
 	for _, test := range tests {
 		test.jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-		cjob := CreateEsIndexCleaner(test.jaeger)
+		cjob := CreateEsIndexCleaner(test.jaeger).(*batchv1.CronJob)
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
@@ -214,7 +222,7 @@ func TestDefaultEsIndexCleanerImage(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsIndexCleanerImage"})
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-	cjob := CreateEsIndexCleaner(jaeger)
+	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
 	assert.Equal(t, "jaegertracing/jaeger-es-index-cleaner:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
@@ -228,7 +236,7 @@ func TestCustomEsIndexCleanerImage(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsIndexCleanerImage"})
 	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
 
-	cjob := CreateEsIndexCleaner(jaeger)
+	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.EsIndexCleaner.Image)
 	assert.Equal(t, "org/custom-es-index-cleaner-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
@@ -240,4 +248,21 @@ func TestPriorityClassName(t *testing.T) {
 	priorityClassNameVal := ""
 
 	assert.Equal(t, priorityClassNameVal, jaeger.Spec.Storage.EsIndexCleaner.PriorityClassName)
+}
+
+func TestEsIndexCleanerImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerImagePullSecrets"})
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	esIndexCleaner := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, pullSecret, esIndexCleaner.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
