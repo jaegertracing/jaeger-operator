@@ -49,6 +49,10 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Name:  "JAEGER_DISABLED",
 			Value: "false",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_ENABLED",
+			Value: "true",
+		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }
@@ -488,7 +492,7 @@ func TestAllInOneEmptyStrategyType(t *testing.T) {
 
 func TestAllInOneLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14269)),
@@ -510,7 +514,7 @@ func TestAllInOneEmptyEmptyLivenessProbe(t *testing.T) {
 	a := NewAllInOne(jaeger)
 	dep := a.Get()
 	assert.Equal(t, &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14269)),

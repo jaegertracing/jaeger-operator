@@ -1,6 +1,55 @@
 Changes by Version
 ==================
 
+1.35.0 (2022-06-16)
+-------------------
+
+* fix: point to a newer openshift oauth image 4.12 ([#1955](https://github.com/jaegertracing/jaeger-operator/pull/1955), [@frzifus](https://github.com/frzifus))
+* Expose OTLP collector and allInOne ports ([#1948](https://github.com/jaegertracing/jaeger-operator/pull/1948), [@rubenvp8510](https://github.com/rubenvp8510))
+* Add support for ImagePullSecrets in cronjobs ([#1935](https://github.com/jaegertracing/jaeger-operator/pull/1935), [@alexandrevilain](https://github.com/alexandrevilain))
+* fix: ocp es rollover #1932 ([#1937](https://github.com/jaegertracing/jaeger-operator/pull/1937), [@frzifus](https://github.com/frzifus))
+* add kafkaSecretName for collector and ingester ([#1910](https://github.com/jaegertracing/jaeger-operator/pull/1910), [@luohua13](https://github.com/luohua13))
+* Add autoscalability E2E test for OpenShift ([#1936](https://github.com/jaegertracing/jaeger-operator/pull/1936), [@iblancasa](https://github.com/iblancasa))
+* Fix version in Docker container. ([#1924](https://github.com/jaegertracing/jaeger-operator/pull/1924), [@iblancasa](https://github.com/iblancasa))
+* Verify namespace permissions before adding ns controller ([#1914](https://github.com/jaegertracing/jaeger-operator/pull/1914), [@rubenvp8510](https://github.com/rubenvp8510))
+* fix: skip dependencies on openshift platform ([#1921](https://github.com/jaegertracing/jaeger-operator/pull/1921), [@frzifus](https://github.com/frzifus))
+* fix: remove common name label ([#1920](https://github.com/jaegertracing/jaeger-operator/pull/1920), [@frzifus](https://github.com/frzifus))
+* Ignore not found error on 1.31.0 upgrade routine ([#1913](https://github.com/jaegertracing/jaeger-operator/pull/1913), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.34.1 (2022-05-24)
+-------------------
+Fix: storage.es.tls.enabled flag not passed to es-index-cleaner ([#1896](https://github.com/jaegertracing/jaeger-operator/pull/1896), [@indigostar-kr](https://github.com/indigostar-kr))
+
+1.34.0 (2022-05-18)
+-------------------
+* Fix: jaeger operator fails to parse Jaeger instance version ([#1885](https://github.com/jaegertracing/jaeger-operator/pull/1885), [@rubenvp8510](https://github.com/rubenvp8510))
+* Support Kubernetes 1.24 ([#1882](https://github.com/jaegertracing/jaeger-operator/pull/1882), [@iblancasa](https://github.com/iblancasa))
+* Cronjob migration ([#1856](https://github.com/jaegertracing/jaeger-operator/pull/1856), [@kevinearls](https://github.com/kevinearls))
+* Fix: setting default Istio annotation in Pod instead of Deployment ([#1860](https://github.com/jaegertracing/jaeger-operator/pull/1860), [@cnvergence](https://github.com/cnvergence))
+* Add http- prefix to port names in collector and agent services ([#1862](https://github.com/jaegertracing/jaeger-operator/pull/1862), [@cnvergence](https://github.com/cnvergence))
+
+1.33.0 (2022-04-14)
+-------------------
+* Adding priority-class for esIndexCleaner ([#1732](https://github.com/jaegertracing/jaeger-operator/pull/1732), [@swapnilpotnis](https://github.com/swapnilpotnis))
+* Fix: webhook deadlock  ([#1850](https://github.com/jaegertracing/jaeger-operator/pull/1850), [@frzifus](https://github.com/frzifus))
+* Fix: take namespace modifications into account ([#1839](https://github.com/jaegertracing/jaeger-operator/pull/1839), [@frzifus](https://github.com/frzifus))
+* Replace deployment reconciler with webhook ([#1828](https://github.com/jaegertracing/jaeger-operator/pull/1828), [@frzifus](https://github.com/frzifus))
+* Add managed by metric ([#1831](https://github.com/jaegertracing/jaeger-operator/pull/1831), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix admissionReviews version for operator-sdk upgrade ([#1827](https://github.com/jaegertracing/jaeger-operator/pull/1827), [@kevinearls](https://github.com/kevinearls))
+* Make RHOL Elasticsearch cert-management feature optional ([#1824](https://github.com/jaegertracing/jaeger-operator/pull/1824), [@pavolloffay](https://github.com/pavolloffay))
+* Update the operator-sdk to v1.17.0 ([#1825](https://github.com/jaegertracing/jaeger-operator/pull/1825), [@kevinearls](https://github.com/kevinearls))
+* Fix metrics selectors ([#1742](https://github.com/jaegertracing/jaeger-operator/pull/1742), [@rubenvp8510](https://github.com/rubenvp8510))
+
+1.32.0 (2022-03-09)
+-------------------
+
+* Custom Image Pull Policy ([#1798](https://github.com/jaegertracing/jaeger-operator/pull/1798), [@edenkoveshi](https://github.com/edenkoveshi))
+* add METRICS_STORAGE_TYPE for metrics query ([#1755](https://github.com/jaegertracing/jaeger-operator/pull/1755), [@JaredTan95](https://github.com/JaredTan95))
+* Make operator more resiliant to etcd defrag activity ([#1795](https://github.com/jaegertracing/jaeger-operator/pull/1795), [@pavolloffay](https://github.com/pavolloffay))
+* Automatically set num shards and replicas from referenced OCP ES ([#1737](https://github.com/jaegertracing/jaeger-operator/pull/1737), [@pavolloffay](https://github.com/pavolloffay))
+* support image pull secrets ([#1740](https://github.com/jaegertracing/jaeger-operator/pull/1740), [@frzifus](https://github.com/frzifus))
+* Fix webhook secret cert name ([#1772](https://github.com/jaegertracing/jaeger-operator/pull/1772), [@rubenvp8510](https://github.com/rubenvp8510))
+
 1.31.0 (2022-02-09)
 -------------------
 * Fix panic caused by an invalid type assertion ([#1738](https://github.com/jaegertracing/jaeger-operator/pull/1738), [@frzifus](https://github.com/frzifus))

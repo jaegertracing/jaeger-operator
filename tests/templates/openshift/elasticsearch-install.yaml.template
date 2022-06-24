@@ -1,0 +1,13 @@
+# Install Elasticsearch instance in OpenShift
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Create a Service Account to add to the privileged scc because the ES
+  # deployment needs the SYS_CHROOT capability
+  - script: "oc create sa deploy-elasticsearch -n $NAMESPACE 2>&1 | grep -v \"already exists\" || true"
+  - script: "oc adm policy add-scc-to-user privileged -z deploy-elasticsearch -n $NAMESPACE 2>&1 | grep -v \"already exists\" || true"
+  # This sleep helps to ensure the policy was added when the ES instance is started
+  - script: "sleep 6"
+  - script: "kubectl apply -f elasticsearch_0.yml -n $NAMESPACE"
+  - script: "sleep 3"
+  - script: "kubectl apply -f elasticsearch_1.yml -n $NAMESPACE"

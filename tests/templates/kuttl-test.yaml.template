@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+artifactsDir: ./artifacts/
+testDirs:
+  - .
+timeout: {{ .Env.E2E_TESTS_TIMEOUT }}
+parallel: 1

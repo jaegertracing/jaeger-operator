@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,9 +33,16 @@ func (j *Jaeger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-jaegertracing-io-v1-jaeger,mutating=true,failurePolicy=fail,sideEffects=None,groups=jaegertracing.io,resources=jaegers,verbs=create;update,versions=v1,name=mjaeger.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/mutate-jaegertracing-io-v1-jaeger,mutating=true,failurePolicy=fail,sideEffects=None,groups=jaegertracing.io,resources=jaegers,verbs=create;update,versions=v1,name=mjaeger.kb.io,admissionReviewVersions={v1}
 
 var _ webhook.Defaulter = &Jaeger{}
+
+func (j *Jaeger) objsWithOptions() []*Options {
+	return []*Options{
+		&j.Spec.AllInOne.Options, &j.Spec.Query.Options, &j.Spec.Collector.Options,
+		&j.Spec.Ingester.Options, &j.Spec.Agent.Options, &j.Spec.Storage.Options,
+	}
+}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (j *Jaeger) Default() {
@@ -56,10 +64,24 @@ func (j *Jaeger) Default() {
 		}
 		j.Spec.Storage.Elasticsearch.NodeCount = OpenShiftElasticsearchNodeCount(es.Spec)
 	}
+
+	for _, opt := range j.objsWithOptions() {
+		optCopy := opt.DeepCopy()
+		if f := getAdditionalTLSFlags(optCopy.ToArgs()); f != nil {
+			newOpts := optCopy.GenericMap()
+			for k, v := range f {
+				newOpts[k] = v
+			}
+
+			if err := opt.parse(newOpts); err != nil {
+				jaegerlog.Error(err, "name", j.Name, "method", "Option.Parse")
+			}
+		}
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-jaegertracing-io-v1-jaeger,mutating=false,failurePolicy=fail,sideEffects=None,groups=jaegertracing.io,resources=jaegers,verbs=create;update,versions=v1,name=vjaeger.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-jaegertracing-io-v1-jaeger,mutating=false,failurePolicy=fail,sideEffects=None,groups=jaegertracing.io,resources=jaegers,verbs=create;update,versions=v1,name=vjaeger.kb.io,admissionReviewVersions={v1}
 
 var _ webhook.Validator = &Jaeger{}
 
@@ -84,6 +106,14 @@ func (j *Jaeger) ValidateUpdate(_ runtime.Object) error {
 			return fmt.Errorf("elasticsearch instance not found: %v", err)
 		}
 	}
+
+	for _, opt := range j.objsWithOptions() {
+		got := opt.DeepCopy().ToArgs()
+		if f := getAdditionalTLSFlags(got); f != nil {
+			return fmt.Errorf("tls flags incomplete, got: %v", got)
+		}
+	}
+
 	return nil
 }
 
@@ -109,4 +139,29 @@ func ShouldInjectOpenShiftElasticsearchConfiguration(s JaegerStorageSpec) bool {
 	}
 	_, ok := s.Options.Map()["es.server-urls"]
 	return !ok
+}
+
+var (
+	tlsFlag          = regexp.MustCompile("--.*tls.*=")
+	tlsFlagIdx       = regexp.MustCompile("--.*tls")
+	tlsEnabledExists = regexp.MustCompile("--.*tls.enabled")
+)
+
+// getAdditionalTLSFlags returns additional tls arguments based on the argument
+// list. If no additional argument is needed, nil is returned.
+func getAdditionalTLSFlags(args []string) map[string]interface{} {
+	var res map[string]interface{}
+	for _, arg := range args {
+		a := []byte(arg)
+		if tlsEnabledExists.Match(a) {
+			// NOTE: if flag exists, we are done.
+			return nil
+		}
+		if tlsFlag.Match(a) && res == nil {
+			idx := tlsFlagIdx.FindIndex(a)
+			res = make(map[string]interface{})
+			res[arg[idx[0]+2:idx[1]]+".enabled"] = "true"
+		}
+	}
+	return res
 }

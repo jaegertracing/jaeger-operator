@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	batchv1 "k8s.io/api/batch/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	"github.com/spf13/viper"
@@ -385,9 +387,9 @@ func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), jaeger)
 	// there should be index-cleaner, rollover, lookback
 	assert.Equal(t, 3, len(c.cronJobs))
-	assertEsInjectSecretsStreaming(t, c.cronJobs[0].Spec.JobTemplate.Spec.Template.Spec)
-	assertEsInjectSecretsStreaming(t, c.cronJobs[1].Spec.JobTemplate.Spec.Template.Spec)
-	assertEsInjectSecretsStreaming(t, c.cronJobs[2].Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecretsStreaming(t, c.cronJobs[0].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecretsStreaming(t, c.cronJobs[1].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
+	assertEsInjectSecretsStreaming(t, c.cronJobs[2].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 }
 
 func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
@@ -399,7 +401,7 @@ func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
 	for _, e := range p.Containers[0].Env {
 		envs[e.Name] = e
 	}
-	assert.Contains(t, envs, "ES_TLS")
+	assert.Contains(t, envs, "ES_TLS_ENABLED")
 	assert.Contains(t, envs, "ES_TLS_CA")
 	assert.Contains(t, envs, "ES_TLS_KEY")
 	assert.Contains(t, envs, "ES_TLS_CERT")

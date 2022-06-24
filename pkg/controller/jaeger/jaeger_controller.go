@@ -14,13 +14,17 @@ import (
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
@@ -29,19 +33,21 @@ import (
 type ReconcileJaeger struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client          client.Client
-	rClient         client.Reader
-	scheme          *runtime.Scheme
-	strategyChooser func(context.Context, *v1.Jaeger) strategy.S
+	client               client.Client
+	rClient              client.Reader
+	scheme               *runtime.Scheme
+	strategyChooser      func(context.Context, *v1.Jaeger) strategy.S
+	certGenerationScript string
 }
 
 // New creates new jaeger controller
 func New(client client.Client, clientReader client.Reader, scheme *runtime.Scheme) *ReconcileJaeger {
 	return &ReconcileJaeger{
-		client:          client,
-		rClient:         clientReader,
-		scheme:          scheme,
-		strategyChooser: defaultStrategyChooser,
+		client:               client,
+		rClient:              clientReader,
+		scheme:               scheme,
+		strategyChooser:      defaultStrategyChooser,
+		certGenerationScript: "./scripts/cert_generation.sh",
 	}
 }
 
@@ -82,6 +88,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return reconcile.Result{}, tracing.HandleError(err, span)
+	}
+
+	if err := syncOnJaegerChanges(r.rClient, r.client, instance.Name); err != nil {
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
@@ -150,6 +160,8 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 	instance = &updated
+	// Need to copy the version from status because the Update will populate the status field with empty strings.
+	instanceVersion := instance.Status.Version
 
 	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
@@ -160,9 +172,9 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// set the status version to the updated instance version if versions doesn't match
-	if updated.Status.Version != originalInstance.Status.Version || instance.Status.Phase != v1.JaegerPhaseRunning {
+	if instanceVersion != originalInstance.Status.Version || instance.Status.Phase != v1.JaegerPhaseRunning {
 		instance.Status.Phase = v1.JaegerPhaseRunning
-		instance.Status.Version = updated.Status.Version
+		instance.Status.Version = instanceVersion
 		if err := r.client.Status().Update(ctx, instance); err != nil {
 			logFields.WithError(err).Error("failed to store the running status into the current CustomResource")
 			return reconcile.Result{}, tracing.HandleError(err, span)
@@ -210,7 +222,37 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	// TODO this can be removed after previously released version is using cert management from EO e.g. in 1.32.0
+	// ES cert handling requires secrets from environment
+	// therefore running this here and not in the strategy
+	if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) &&
+		// generate the certs only if cert management is disabled
+		(jaeger.Spec.Storage.Elasticsearch.UseCertManagement == nil ||
+			*jaeger.Spec.Storage.Elasticsearch.UseCertManagement == false) {
+
+		opts := client.MatchingLabels(map[string]string{
+			"app.kubernetes.io/instance":   jaeger.Name,
+			"app.kubernetes.io/managed-by": "jaeger-operator",
+		})
+		secrets := &corev1.SecretList{}
+		if err := r.rClient.List(ctx, secrets, opts); err != nil {
+			jaeger.Status.Phase = v1.JaegerPhaseFailed
+			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
+				// we let it return the real error later
+				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
+			}
+			return jaeger, tracing.HandleError(err, span)
+		}
+		secretsForNamespace := r.getSecretsForNamespace(secrets.Items, jaeger.Namespace)
+
+		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: r.certGenerationScript, Secrets: secretsForNamespace}
+		err = es.CreateCerts()
+		if err != nil {
+			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+			return jaeger, err
+		}
+		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
+	}
+
 	if err := r.applySecrets(ctx, jaeger, str.Secrets()); err != nil {
 		return jaeger, tracing.HandleError(err, span)
 	}
@@ -318,4 +360,62 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 		}
 	}
 	return secretsForNamespace
+}
+
+// syncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
+func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName string) error {
+	deps := []appsv1.Deployment{}
+	nssupdate := []corev1.Namespace{}
+	nss := map[string]corev1.Namespace{} // namespace cache
+
+	deployments := appsv1.DeploymentList{}
+	err := rClient.List(context.Background(), &deployments)
+	if err != nil {
+		return err
+	}
+
+	for _, dep := range deployments.Items {
+		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
+		// we don't need to trigger a reconciliation for it
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaegerName {
+			continue
+		}
+
+		// if the deployment has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
+			continue
+		}
+
+		// if we don't have the namespace in the cache yet, retrieve it
+		ns, ok := nss[dep.Namespace]
+		if !ok {
+			err := rClient.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+			if err != nil {
+				continue
+			}
+			nss[ns.Name] = ns
+		}
+
+		// if the namespace has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
+			continue
+		}
+	}
+	for _, dep := range deps {
+		if err := client.Update(context.Background(), &dep); err != nil {
+			log.WithField("component", "jaeger-cr-sync").Error(err)
+			return err
+		}
+	}
+	for _, ns := range nssupdate {
+		if err := client.Update(context.Background(), &ns); err != nil {
+			log.WithField("component", "jaeger-cr-sync").Error(err)
+			return err
+		}
+	}
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -19,6 +20,8 @@ import (
 )
 
 var (
+	// AnnotationRev is the annotation name to look for when deciding whether or not to inject
+	AnnotationRev = "sidecar.jaegertracing.io/revision"
 	// Annotation is the annotation name to look for when deciding whether or not to inject
 	Annotation = "sidecar.jaegertracing.io/inject"
 	// Label is the label name the operator put on injected deployments.
@@ -94,6 +97,19 @@ func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
 	}
 
 	return false
+}
+
+// IncreaseRevision increases the revision counter if a inject annoation exists.
+func IncreaseRevision(annotations map[string]string) {
+	if annotations == nil {
+		return
+	}
+	revStr := "0"
+	v := annotations[AnnotationRev]
+	if rev, err := strconv.Atoi(v); err == nil {
+		revStr = strconv.Itoa(rev + 1)
+	}
+	annotations[AnnotationRev] = revStr
 }
 
 // Needed determines whether a pod needs to get a sidecar injected or not

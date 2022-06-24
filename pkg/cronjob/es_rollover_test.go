@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
+
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
 	"github.com/spf13/viper"
@@ -16,6 +18,11 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
+
+func init() {
+	// Always test with v1.  It is available at compile time and is exactly the same as v1beta1
+	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+}
 
 func TestCreateRollover(t *testing.T) {
 	cj := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
@@ -31,7 +38,7 @@ func TestRollover(t *testing.T) {
 	historyLimits := int32(2)
 	j.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit = &historyLimits
 
-	cjob := rollover(j)
+	cjob := rollover(j).(*batchv1.CronJob)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, cjob.OwnerReferences)
 	assert.Equal(t, util.Labels("eevee-es-rollover", "cronjob-es-rollover", *j), cjob.Labels)
@@ -40,6 +47,32 @@ func TestRollover(t *testing.T) {
 	assert.Equal(t, []string{"rollover", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "CONDITIONS", Value: "weheee"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
 	assert.Equal(t, historyLimits, *cjob.Spec.SuccessfulJobsHistoryLimit)
+
+	// Test openshift settings
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Set("platform", v1.FlagPlatformKubernetes)
+	cjob = rollover(j).(*batchv1.CronJob)
+	assert.Equal(t,
+		[]corev1.EnvVar{
+			{Name: "INDEX_PREFIX", Value: "shortone"},
+			{Name: "SKIP_DEPENDENCIES", Value: "true"},
+			{Name: "CONDITIONS", Value: "weheee"},
+		}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env,
+	)
+
+	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{
+		"es.server-urls":    "foo,bar",
+		"es.index-prefix":   "shortone",
+		"skip-dependencies": "skip",
+	})
+	cjob = rollover(j).(*batchv1.CronJob)
+	assert.Equal(t,
+		[]corev1.EnvVar{
+			{Name: "INDEX_PREFIX", Value: "shortone"},
+			{Name: "SKIP_DEPENDENCIES", Value: "skip"},
+			{Name: "CONDITIONS", Value: "weheee"},
+		}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env,
+	)
 }
 
 func TestLookback(t *testing.T) {
@@ -51,7 +84,7 @@ func TestLookback(t *testing.T) {
 	historyLimits := int32(3)
 	j.Spec.Storage.EsRollover.SuccessfulJobsHistoryLimit = &historyLimits
 
-	cjob := lookback(j)
+	cjob := lookback(j).(*batchv1.CronJob)
 	assert.Equal(t, j.Namespace, cjob.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, cjob.OwnerReferences)
 	assert.Equal(t, util.Labels("squirtle-es-lookback", "cronjob-es-lookback", *j), cjob.Labels)
@@ -77,7 +110,7 @@ func TestEnvVars(t *testing.T) {
 				"es.index-prefix":         "foo",
 				"es.password":             "nopass",
 				"es.username":             "fredy",
-				"es.tls":                  "true",
+				"es.tls.enabled":          "true",
 				"es.tls.ca":               "/etc/ca",
 				"es.tls.key":              "/etc/key",
 				"es.tls.cert":             "/etc/cert",
@@ -87,7 +120,7 @@ func TestEnvVars(t *testing.T) {
 				{Name: "INDEX_PREFIX", Value: "foo"},
 				{Name: "ES_USERNAME", Value: "fredy"},
 				{Name: "ES_PASSWORD", Value: "nopass"},
-				{Name: "ES_TLS", Value: "true"},
+				{Name: "ES_TLS_ENABLED", Value: "true"},
 				{Name: "ES_TLS_CA", Value: "/etc/ca"},
 				{Name: "ES_TLS_CERT", Value: "/etc/cert"},
 				{Name: "ES_TLS_KEY", Value: "/etc/key"},
@@ -133,7 +166,7 @@ func TestEsRolloverAnnotations(t *testing.T) {
 		"prometheus.io/scrape": "false", // Override implicit value
 	}
 
-	cjob := rollover(jaeger)
+	cjob := rollover(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
@@ -148,7 +181,7 @@ func TestEsRolloverBackoffLimit(t *testing.T) {
 	BackoffLimit := int32(3)
 	jaeger.Spec.Storage.EsRollover.BackoffLimit = &BackoffLimit
 
-	cjob := rollover(jaeger)
+	cjob := rollover(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, &BackoffLimit, cjob.Spec.JobTemplate.Spec.BackoffLimit)
 }
 
@@ -163,7 +196,7 @@ func TestEsRolloverLabels(t *testing.T) {
 		"another": "false",
 	}
 
-	cjob := rollover(jaeger)
+	cjob := rollover(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
@@ -229,7 +262,7 @@ func TestEsRolloverResources(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		cjob := rollover(test.jaeger)
+		cjob := rollover(test.jaeger).(*batchv1.CronJob)
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
@@ -246,7 +279,7 @@ func TestEsRolloverLookbackAnnotations(t *testing.T) {
 		"prometheus.io/scrape": "false", // Override implicit value
 	}
 
-	cjob := lookback(jaeger)
+	cjob := lookback(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
@@ -266,7 +299,7 @@ func TestEsRolloverLookbackLabels(t *testing.T) {
 		"another": "false",
 	}
 
-	cjob := lookback(jaeger)
+	cjob := lookback(jaeger).(*batchv1.CronJob)
 
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Labels["hello"])
@@ -332,7 +365,7 @@ func TestEsRolloverLookbackResources(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		cjob := lookback(test.jaeger)
+		cjob := lookback(test.jaeger).(*batchv1.CronJob)
 		assert.Equal(t, test.expected, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources)
 
 	}
@@ -343,7 +376,7 @@ func TestDefaultEsRolloverImage(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsRolloverImage"})
 
-	cjob := lookback(jaeger)
+	cjob := lookback(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
 	assert.Equal(t, "jaegertracing/jaeger-es-rollover:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 }
@@ -354,7 +387,21 @@ func TestCustomEsRolloverImage(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestDefaultEsRolloverImage"})
 
-	cjob := lookback(jaeger)
+	cjob := lookback(jaeger).(*batchv1.CronJob)
 	assert.Empty(t, jaeger.Spec.Storage.EsRollover.Image)
 	assert.Equal(t, "org/custom-es-rollover-image:"+version.Get().Jaeger, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
+}
+
+func TestEsRolloverImagePullSecrets(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverImagePullSecrets"})
+	const pullSecret = "mysecret"
+	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: pullSecret,
+		},
+	}
+
+	cjob := lookback(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, pullSecret, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }

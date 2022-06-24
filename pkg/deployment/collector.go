@@ -45,15 +45,18 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "true",
-			"prometheus.io/port":      strconv.Itoa(int(adminPort)),
-			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(int(adminPort)),
+			"linkerd.io/inject":    "disabled",
 		},
 		Labels: labels,
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{c.jaeger.Spec.Collector.JaegerCommonSpec, c.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
+	if !ok {
+		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
+	}
 
 	var envFromSource []corev1.EnvFromSource
 	if len(c.jaeger.Spec.Storage.SecretName) > 0 {
@@ -71,8 +74,17 @@ func (c *Collector) Get() *appsv1.Deployment {
 	// to Kafka, and the storage options will be used in the Ingester instead
 	if c.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
 		storageType = v1.JaegerKafkaStorage
+		if len(c.jaeger.Spec.Collector.KafkaSecretName) > 0 {
+			envFromSource = append(envFromSource, corev1.EnvFromSource{
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: c.jaeger.Spec.Collector.KafkaSecretName,
+					},
+				},
+			})
+		}
 	}
-	options := allArgs(c.jaeger.Spec.Collector.Options,
+	options := util.AllArgs(c.jaeger.Spec.Collector.Options,
 		c.jaeger.Spec.Storage.Options.Filter(storageType.OptionsPrefix()))
 
 	sampling.Update(c.jaeger, commonSpec, &options)
@@ -100,7 +112,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	}
 
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(adminPort)),
@@ -115,6 +127,40 @@ func (c *Collector) Get() *appsv1.Deployment {
 		livenessProbe = c.jaeger.Spec.Collector.LivenessProbe
 	}
 
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: string(storageType),
+		},
+		{
+			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
+			Value: ":9411",
+		},
+	}
+
+	ports := []corev1.ContainerPort{
+		{
+			ContainerPort: 9411,
+			Name:          "zipkin",
+		},
+		{
+			ContainerPort: 14267,
+			Name:          "c-tchan-trft", // for collector
+		},
+		{
+			ContainerPort: 14268,
+			Name:          "c-binary-trft",
+		},
+		{
+			ContainerPort: adminPort,
+			Name:          "admin-http",
+		},
+		{
+			ContainerPort: 14250,
+			Name:          "grpc",
+		},
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -124,7 +170,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Name:        c.name(),
 			Namespace:   c.jaeger.Namespace,
 			Labels:      commonSpec.Labels,
-			Annotations: commonSpec.Annotations,
+			Annotations: baseCommonSpec.Annotations,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: c.jaeger.APIVersion,
 				Kind:       c.jaeger.Kind,
@@ -147,46 +193,16 @@ func (c *Collector) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
-						Name:  "jaeger-collector",
-						Args:  options,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: string(storageType),
-							},
-							{
-								Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
-								Value: ":9411",
-							},
-						},
-						VolumeMounts: commonSpec.VolumeMounts,
-						EnvFrom:      envFromSource,
-						Ports: []corev1.ContainerPort{
-							{
-								ContainerPort: 9411,
-								Name:          "zipkin",
-							},
-							{
-								ContainerPort: 14267,
-								Name:          "c-tchan-trft", // for collector
-							},
-							{
-								ContainerPort: 14268,
-								Name:          "c-binary-trft",
-							},
-							{
-								ContainerPort: adminPort,
-								Name:          "admin-http",
-							},
-							{
-								ContainerPort: 14250,
-								Name:          "grpc",
-							},
-						},
+						Image:         util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
+						Name:          "jaeger-collector",
+						Args:          options,
+						Env:           append(envVars, getOTLPEnvVars(options)...),
+						VolumeMounts:  commonSpec.VolumeMounts,
+						EnvFrom:       envFromSource,
+						Ports:         append(ports, getOTLPContainePorts(options)...),
 						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path: "/",
 									Port: intstr.FromInt(int(adminPort)),

@@ -153,6 +153,17 @@ func TestIngeterImagePullSecrets(t *testing.T) {
 	assert.Equal(t, pullSecret, dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
 
+func TestIngesterKafkaSecrets(t *testing.T) {
+	jaeger := newIngesterJaeger("TestIngesterKafkaSecrets")
+	secret := "mysecret"
+	jaeger.Spec.Storage.SecretName = secret
+
+	ingester := NewIngester(jaeger)
+	dep := ingester.Get()
+
+	assert.Equal(t, "mysecret", dep.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.LocalObjectReference.Name)
+}
+
 func TestIngesterImagePullPolicy(t *testing.T) {
 	jaeger := newIngesterJaeger("TestIngesterImagePullPolicy")
 	const pullPolicy = corev1.PullPolicy("Always")
@@ -501,7 +512,7 @@ func TestIngesterEmptyStrategyType(t *testing.T) {
 
 func TestIngesterLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14270)),
@@ -523,7 +534,7 @@ func TestIngesterEmptyEmptyLivenessProbe(t *testing.T) {
 	i := NewIngester(jaeger)
 	dep := i.Get()
 	assert.Equal(t, &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14270)),

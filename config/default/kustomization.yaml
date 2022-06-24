@@ -12,6 +12,7 @@ namespace: observability
 #namePrefix: jaeger-operator-
 
 # Labels to add to all resources and selectors.
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels
 commonLabels:
   name: jaeger-operator
 

@@ -12,10 +12,14 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 GOARCH ?= $(go env GOARCH)
 GOOS ?= $(go env GOOS)
 GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
+GOPATH ?= "$(HOME)/go"
+GOROOT ?= "$(shell go env GOROOT)"
 WATCH_NAMESPACE ?= ""
 BIN_DIR ?= bin
 FMT_LOG=fmt.log
-
+ECHO ?= @echo $(echo_prefix)
+SED ?= "sed"
+# Jaeger Operator build variables
 OPERATOR_NAME ?= jaeger-operator
 IMG_PREFIX ?= quay.io/${USER}
 OPERATOR_VERSION ?= "$(shell grep -v '\#' versions.txt | grep operator | awk -F= '{print $$2}')"
@@ -24,29 +28,32 @@ IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}:${VERSION}
 BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
-JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
-# Kafka and kafka operator variables
+export JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
+# Kafka and Kafka Operator variables
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
 KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
 KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
+# Prometheus Operator variables
+PROMETHEUS_OPERATOR_TAG ?= v0.39.0
+PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 # Istio binary path and version
 ISTIO_VERSION ?= 1.11.2
 ISTIO_PATH = ./tests/_build/
 ISTIOCTL="${ISTIO_PATH}istio/bin/istioctl"
-GOPATH ?= "$(HOME)/go"
-GOROOT ?= "$(shell go env GOROOT)"
-ECHO ?= @echo $(echo_prefix)
-SED ?= "sed"
+# Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
-OPERATOR_SDK_VERSION ?= 1.13.1
-
+# Operator SDK version to use
+OPERATOR_SDK_VERSION ?= 1.17.0
+# Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
-export OLM ?= false
-SKIP_ES_EXTERNAL ?= false
+ # Is Jaeger Operator installed via OLM?
+JAEGER_OLM ?= false
+# Is Kafka Operator installed via OLM?
+KAFKA_OLM ?= false
+# Is Prometheus Operator installed via OLM?
+PROMETHEUS_OLM ?= false
 
-PROMETHEUS_OPERATOR_TAG ?= v0.39.0
-PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -59,8 +66,8 @@ LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
-# Options for kuttl testing
-KUBE_VERSION ?= 1.20
+# Options for KIND version to use
+export KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
 SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v$(OPERATOR_SDK_VERSION)
@@ -77,7 +84,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false,maxDescLen=0,generateEmbeddedObjectMeta=true"
+CRD_OPTIONS ?= "crd:maxDescLen=0,generateEmbeddedObjectMeta=true"
 
 # If we are running in CI, run go test in verbose mode
 ifeq (,$(CI))
@@ -95,12 +102,12 @@ check:
 	$(VECHO)[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 ensure-generate-is-noop: VERSION=$(OPERATOR_VERSION)
-ensure-generate-is-noop: USER=jaegertracing
 ensure-generate-is-noop: set-image-controller generate bundle
 	$(VECHO)# on make bundle config/manager/kustomization.yaml includes changes, which should be ignored for the below check
 	$(VECHO)git restore config/manager/kustomization.yaml
 	$(VECHO)git diff -s --exit-code api/v1/zz_generated.*.go || (echo "Build failed: a model has been changed but the generated resources aren't up to date. Run 'make generate' and update your PR." && exit 1)
 	$(VECHO)git diff -s --exit-code bundle config || (echo "Build failed: the bundle, config files has been changed but the generated bundle, config files aren't up to date. Run 'make bundle' and update your PR." && git diff && exit 1)
+	$(VECHO)git diff -s --exit-code docs/api.md || (echo "Build failed: the api.md file has been changed but the generated api.md file isn't up to date. Run 'make api-docs' and update your PR." && git diff && exit 1)
 
 
 .PHONY: format
@@ -129,7 +136,7 @@ build: format
 
 .PHONY: docker
 docker:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" . ${DOCKER_BUILD_OPTIONS}
+	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" . ${DOCKER_BUILD_OPTIONS}
 
 .PHONY: dockerx
 dockerx:
@@ -165,6 +172,9 @@ cert-manager: cmctl
 	# Consider using cmctl to install the cert-manager once install command is not experimental
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 	cmctl check api --wait=5m
+
+undeploy-cert-manager:
+	kubectl delete --ignore-not-found=true -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 
 cmctl:
 ifeq (, $(shell which cmctl))
@@ -213,7 +223,7 @@ storage:
 deploy-kafka-operator:
 	$(ECHO) Creating namespace $(KAFKA_NAMESPACE)
 	$(VECHO)kubectl create namespace $(KAFKA_NAMESPACE) 2>&1 | grep -v "already exists" || true
-ifeq ($(OLM),true)
+ifeq ($(KAFKA_OLM),true)
 	$(ECHO) Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
 	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
@@ -227,7 +237,7 @@ endif
 
 .PHONY: undeploy-kafka-operator
 undeploy-kafka-operator:
-ifeq ($(OLM),true)
+ifeq ($(KAFKA_OLM),true)
 	$(ECHO) Skiping kafka-operator undeploy
 else
 	$(VECHO)kubectl delete --namespace $(KAFKA_NAMESPACE) -f tests/_build/kafka-operator.yaml --ignore-not-found=true 2>&1 || true
@@ -257,7 +267,7 @@ undeploy-kafka: undeploy-kafka-operator
 
 .PHONY: deploy-prometheus-operator
 deploy-prometheus-operator:
-ifeq ($(OLM),true)
+ifeq ($(PROMETHEUS_OLM),true)
 	$(ECHO) Skipping prometheus-operator deployment, assuming it has been installed via OperatorHub
 else
 	$(VECHO)kubectl apply -f ${PROMETHEUS_BUNDLE}
@@ -265,14 +275,14 @@ endif
 
 .PHONY: undeploy-prometheus-operator
 undeploy-prometheus-operator:
-ifeq ($(OLM),true)
+ifeq ($(PROMETHEUS_OLM),true)
 	$(ECHO) Skipping prometheus-operator undeployment, as it should have been installed via OperatorHub
 else
 	$(VECHO)kubectl delete -f ${PROMETHEUS_BUNDLE} --ignore-not-found=true || true
 endif
 
 .PHONY: clean
-clean: undeploy-kafka undeploy-es-operator undeploy-prometheus-operator undeploy-istio
+clean: undeploy-kafka undeploy-prometheus-operator undeploy-istio undeploy-cert-manager
 	$(VECHO)kubectl delete namespace $(KAFKA_NAMESPACE) --ignore-not-found=true 2>&1 || true
 	$(VECHO)if [ -d tests/_build ]; then rm -rf tests/_build ; fi
 	$(VECHO)kubectl delete -f ./tests/cassandra.yml --ignore-not-found=true -n $(STORAGE_NAMESPACE) || true
@@ -283,7 +293,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen api-docs ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: test
@@ -295,22 +305,27 @@ all: check format lint security build test
 .PHONY: ci
 ci: ensure-generate-is-noop check format lint security build unit-tests
 
+##@ Deployment
+
+ignore-not-found ?= false
+
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	kubectl create namespace observability 2>&1 | grep -v "already exists" || true
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
+undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: operatorhub
 operatorhub: check-operatorhub-pr-template
@@ -324,34 +339,16 @@ check-operatorhub-pr-template:
 .PHONY: changelog
 changelog:
 	$(ECHO) "Set env variable OAUTH_TOKEN before invoking, https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token"
-	$(VECHO)docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --owner jaegertracing --repo jaeger-operator
+	$(VECHO)docker run --rm  -v "${PWD}:/app" pavolloffay/gch:latest --oauth-token ${OAUTH_TOKEN} --branch main --owner jaegertracing --repo jaeger-operator
 
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
-
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(VECHO)./hack/install/install-controller-gen.sh
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
-	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
-
-# go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell git rev-parse --show-toplevel)
-define go-get-tool
-@[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
+	$(VECHO) GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
@@ -366,7 +363,7 @@ bundle-build: ## Build the bundle image.
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
-	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	docker push $(BUNDLE_IMG)
 
 .PHONY: opm
 OPM = ./bin/opm
@@ -411,6 +408,7 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: start-kind
 start-kind: kind
+	echo $(USE_KIND_CLUSTER)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
@@ -441,43 +439,11 @@ release-artifacts: set-image-controller
 	mkdir -p dist
 	$(KUSTOMIZE) build config/default -o dist/jaeger-operator.yaml
 
-
-kuttl:
-ifeq (, $(shell which kubectl-kuttl))
-	echo ${PATH}
-	ls -l /usr/local/bin
-	which kubectl-kuttl
-
-	@{ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: kuttl not found." ;\
-	echo "Please check https://kuttl.dev/docs/cli.html for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KUTTL=$(shell which kubectl-kuttl)
-endif
-
 # Set the controller image parameters
 set-image-controller: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 
-kind:
-ifeq (, $(shell which kind))
-	@{ \
-	set -e ;\
-	echo "" ;\
-	echo "ERROR: KIND not found." ;\
-	echo "Please check https://kind.sigs.k8s.io/docs/user/quick-start/#installation for installation instructions and try again." ;\
-	echo "" ;\
-	exit 1 ;\
-	}
-else
-KIND=$(shell which kind)
-endif
-
+.PHONY: tools
 tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
@@ -486,7 +452,21 @@ install-tools: operator-sdk
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports \
 		github.com/securego/gosec/cmd/gosec@v0.0.0-20191008095658-28c1128b7336
-	$(VECHO)./.ci/install-gomplate.sh
+
+.PHONY: kustomize
+kustomize:
+	./hack/install/install-kustomize.sh
+	$(eval KUSTOMIZE=$(shell echo ${PWD}/bin/kustomize))
+
+.PHONY: kuttl
+kuttl:
+	./hack/install/install-kuttl.sh
+	$(eval KUTTL=$(shell echo ${PWD}/bin/kubectl-kuttl))
+
+.PHONY: kind
+kind:
+	./hack/install/install-kind.sh
+	$(eval KIND=$(shell echo ${PWD}/bin/kind))
 
 .PHONY: prepare-release
 prepare-release:
@@ -512,3 +492,20 @@ operator-sdk:
 	curl -L -o $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`;\
 	chmod +x $(OPERATOR_SDK) ;\
 	}
+
+BIN_LOCAL = $(shell pwd)/bin
+CRDOC = $(BIN_LOCAL)/crdoc
+api-docs: crdoc kustomize
+	@{ \
+	set -e ;\
+	TMP_DIR=$$(mktemp -d) ; \
+	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
+	$(CRDOC) --resources $$TMP_DIR/crd-output.yaml --output docs/api.md ;\
+	}
+
+
+# Find or download crdoc
+crdoc:
+ifeq (, $(shell which $(CRDOC)))
+	@GOBIN=$(BIN_LOCAL) go install fybrik.io/crdoc@v0.5.2
+endif

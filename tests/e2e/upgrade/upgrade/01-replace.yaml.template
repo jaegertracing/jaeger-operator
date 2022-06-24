@@ -1,0 +1,8 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
+  # observability namespace. To run this test, we modify that
+  # deployment modifying the container image to use (that is the same executable
+  # but compiled using a different version number).
+  - script: "cd {{ .Env.ROOT_DIR }} && make deploy IMG={{ .Env.OPERATOR_IMAGE_NEXT }}"

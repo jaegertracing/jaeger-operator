@@ -393,7 +393,7 @@ func TestQueryEmptyStrategyType(t *testing.T) {
 
 func TestQueryLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(16687)),
@@ -415,7 +415,7 @@ func TestQueryEmptyEmptyLivenessProbe(t *testing.T) {
 	q := NewQuery(jaeger)
 	dep := q.Get()
 	assert.Equal(t, &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(16687)),

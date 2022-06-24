@@ -352,7 +352,7 @@ func TestAgentPriorityClassName(t *testing.T) {
 
 func TestAgentLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14271)),
@@ -376,7 +376,7 @@ func TestAgentEmptyEmptyLivenessProbe(t *testing.T) {
 	a := NewAgent(jaeger)
 	dep := a.Get()
 	assert.Equal(t, &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(int(14271)),

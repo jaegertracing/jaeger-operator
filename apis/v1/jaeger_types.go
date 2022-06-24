@@ -17,6 +17,15 @@ type JaegerPhase string
 type JaegerStorageType string
 
 const (
+	// FlagCronJobsVersion represents the version of the Kubernetes CronJob API
+	FlagCronJobsVersion = "cronjobs-version"
+
+	// FlagCronJobsVersionBatchV1 represents the batch/v1 version of the kubernetes CronJob API, available as of 1.21
+	FlagCronJobsVersionBatchV1 = "batch/v1"
+
+	// FlagCronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the kubernetes CronJob API, no longer available as of 1.25
+	FlagCronJobsVersionBatchV1Beta1 = "batch/v1beta1"
+
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
 
@@ -428,6 +437,9 @@ type JaegerCollectorSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester
@@ -455,6 +467,9 @@ type JaegerIngesterSpec struct {
 
 	// +optional
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	KafkaSecretName string `json:"kafkaSecretName"`
 }
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
@@ -536,6 +551,12 @@ type ElasticsearchSpec struct {
 	// Whether Elasticsearch should be provisioned or not.
 	// +optional
 	DoNotProvision bool `json:"doNotProvision,omitempty"`
+
+	// Whether Elasticsearch cert management feature should be used.
+	// This is a preferred setting for new Jaeger deployments on OCP versions newer than 4.6.
+	// The cert management feature was added to Red Hat Openshift logging 5.2 in OCP 4.7.
+	// +optional
+	UseCertManagement *bool `json:"useCertManagement,omitempty"`
 
 	// +optional
 	Image string `json:"image,omitempty"`
@@ -678,6 +699,9 @@ type JaegerEsIndexCleanerSpec struct {
 
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // JaegerEsRolloverSpec holds the options related to es-rollover
