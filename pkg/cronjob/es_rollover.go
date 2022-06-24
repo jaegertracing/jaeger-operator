@@ -199,6 +199,7 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 		envVar string
 	}{
 		{flag: "es.index-prefix", envVar: "INDEX_PREFIX"},
+		{flag: "es.index-date-separator", envVar: "INDEX_DATE_SEPARATOR"},
 		{flag: "es.username", envVar: "ES_USERNAME"},
 		{flag: "es.password", envVar: "ES_PASSWORD"},
 		{flag: "es.tls.enabled", envVar: "ES_TLS_ENABLED"},

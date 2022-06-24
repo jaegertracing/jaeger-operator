@@ -74,6 +74,10 @@ func TestEsIndexCleanerEnvVars(t *testing.T) {
 			opts: map[string]interface{}{"es.index-prefix": "foo", "es.username": "joe", "es.password": "pass", "es.use-aliases": "true"},
 			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}, {Name: "ROLLOVER", Value: "true"}},
 		},
+		{
+			opts: map[string]interface{}{"es.index-prefix": "foo", "es.index-date-separator": ".", "es.username": "joe", "es.password": "pass"},
+			envs: []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "foo"}, {Name: "INDEX_DATE_SEPARATOR", Value: "."}, {Name: "ES_USERNAME", Value: "joe"}, {Name: "ES_PASSWORD", Value: "pass"}},
+		},
 	}
 
 	for _, test := range tests {
