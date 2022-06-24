@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
+	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -66,31 +68,49 @@ func initCmd() error {
 	return err
 }
 
+// Get the endopoint where the collector is listening
+func getCollector() string {
+	reportingProtocol := viper.GetString(flagReportingProtocol)
+	jaegerEndpoint := viper.GetString(otlpExporterEndpoint)
+
+	logrus.Debugln("Using", reportingProtocol, "to report the traces")
+
+	var endpoint string
+	switch reportingProtocol {
+	case "grpc":
+		endpoint = fmt.Sprintf("%s:4317", jaegerEndpoint)
+	case "http":
+		endpoint = fmt.Sprintf("%s:4318", jaegerEndpoint)
+	default:
+		logrus.Fatalln("Reporting protocol", reportingProtocol, "not recognized")
+	}
+	return endpoint
+}
+
 // Initializes an OTLP exporter and configure the traces provider
-func initProvider(jaegerEndpoint string, serviceName string) func() {
+func initProvider(serviceName string) func() {
 	logrus.Debugln("Initializing the OTLP exporter")
 	ctx := context.Background()
+
+	collector := getCollector()
 
 	reportingProtocol := viper.GetString(flagReportingProtocol)
 
 	logrus.Debugln("Using", reportingProtocol, "to report the traces")
 
 	var driver otlp.ProtocolDriver
-	var endpoint string
+
 	switch reportingProtocol {
-	case "grcp":
-		endpoint = fmt.Sprintf("%s:4317", jaegerEndpoint)
-		logrus.Debugln(endpoint)
+	case "grpc":
 		driver = otlpgrpc.NewDriver(
 			otlpgrpc.WithInsecure(),
-			otlpgrpc.WithEndpoint(endpoint),
+			otlpgrpc.WithEndpoint(collector),
 			otlpgrpc.WithDialOption(grpc.WithBlock()),
 		)
 	case "http":
-		endpoint = fmt.Sprintf("%s:4318", jaegerEndpoint)
 		driver = otlphttp.NewDriver(
 			otlphttp.WithInsecure(),
-			otlphttp.WithEndpoint(endpoint),
+			otlphttp.WithEndpoint(collector),
 		)
 	default:
 		logrus.Fatalln("Reporting protocol", reportingProtocol, "not recognized")
@@ -172,7 +192,7 @@ func generateSubSpans(ctx context.Context, depth int) {
 // traces: number of traces to generate
 func generateTraces(jaegerEndpoint string, serviceName string, operationName string, traces int) {
 	logrus.Debugln("Trying to generate traces")
-	shutdown := initProvider(jaegerEndpoint, serviceName)
+	shutdown := initProvider(serviceName)
 	defer shutdown()
 
 	tracer := otel.Tracer(tracerName)
@@ -194,6 +214,23 @@ func main() {
 	}
 	if viper.GetBool(flagVerbose) == true {
 		logrus.SetLevel(logrus.DebugLevel)
+	}
+
+	// Sometimes, Kubernetes reports the Jaeger service is there but there is
+	// an interval where the service is up but the REST API is not operative yet
+	reportingProtocol := viper.GetString(flagReportingProtocol)
+
+	switch reportingProtocol {
+	case "grpc":
+		// To avoid creating all the files for gRPC, we just wait some time
+		time.Sleep(time.Second * 5)
+	case "http":
+		err = utils.WaitUntilRestAPIAvailable(fmt.Sprintf("http://%s", getCollector()))
+		if err != nil {
+			logrus.Fatalln(err)
+		}
+	default:
+		logrus.Fatalln("Protocol not recognized:", reportingProtocol)
 	}
 
 	generateTraces(

@@ -92,7 +92,7 @@ function generate_otlp_e2e_tests() {
 }
 
 generate_otlp_e2e_tests "http"
-generate_otlp_e2e_tests "grcp"
+generate_otlp_e2e_tests "grpc"
 
 
 
