@@ -6,4 +6,4 @@ kind: TestStep
 commands:
   - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GET_TOKEN_PROGRAM }} $NAMESPACE {{ .Env.JAEGER_NAME }} /dev/null"
   - script: "ASSERT_IMG={{ .Env.ASSERT_IMG }} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa {{ .Env.SERVICE_ACCOUNT_NAME }} -o yaml -n $NAMESPACE | {{ .Env.YQ }} eval '.secrets[] | select( .name == \"{{ .Env.SERVICE_ACCOUNT_NAME }}-token-*\")'.name) {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/smoke-test.yaml.template -o smoke-test-job.yaml"
-  - script: "kubectl create -f smoke-test-job.yaml -n $NAMESPACE"
+  - script: "kubectl apply -f smoke-test-job.yaml -n $NAMESPACE"

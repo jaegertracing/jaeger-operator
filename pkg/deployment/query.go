@@ -99,6 +99,22 @@ func (q *Query) Get() *appsv1.Deployment {
 		strategy = *q.jaeger.Spec.Query.Strategy
 	}
 
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(adminPort)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}
+
+	if q.jaeger.Spec.Collector.LivenessProbe != nil {
+		livenessProbe = q.jaeger.Spec.Collector.LivenessProbe
+	}
+
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -160,17 +176,7 @@ func (q *Query) Get() *appsv1.Deployment {
 								Name:          "admin-http",
 							},
 						},
-						LivenessProbe: &corev1.Probe{
-							ProbeHandler: corev1.ProbeHandler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
+						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{
