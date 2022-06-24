@@ -68,12 +68,10 @@ func initCmd() error {
 	return err
 }
 
-// Get the endopoint where the collector is listening
+// Get the endpoint where the collector is listening
 func getCollector() string {
 	reportingProtocol := viper.GetString(flagReportingProtocol)
 	jaegerEndpoint := viper.GetString(otlpExporterEndpoint)
-
-	logrus.Debugln("Using", reportingProtocol, "to report the traces")
 
 	var endpoint string
 	switch reportingProtocol {
@@ -199,11 +197,14 @@ func generateTraces(jaegerEndpoint string, serviceName string, operationName str
 
 	logrus.Debugln("Generating traces!")
 
-	for i := 0; i < traces; i++ {
+	i := 0
+	//for i := 0; i < traces; i++ {
+	for {
 		logrus.Debugf("Generating trace %d/%d", i, traces)
 		ctx, iSpan := tracer.Start(context.Background(), operationName)
 		generateSubSpans(ctx, 5)
 		iSpan.End()
+		i++
 	}
 }
 
