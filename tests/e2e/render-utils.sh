@@ -57,6 +57,53 @@ function render_smoke_test() {
     unset JAEGER_COLLECTOR_ENDPOINT
 }
 
+# Render a smoke test using an OTLP client.
+#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>
+#
+# Example:
+#   render_otlp_smoke_test "my-jaeger" "http" "production" "01"
+# Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
+# will be run against the Jaeger instance called `my-jaeger`. It will use HTTP to
+# report the traces.
+# Accepted values for <protocol>:
+#   * http: use HTTP to report the traces
+#   * grpc: use GRPC to report the traces
+# Accepted values for <deploy_mode>:
+#   * allInOne: all in one deployment.
+#   * production: production using Elasticsearch.
+function render_otlp_smoke_test() {
+    if [ "$#" -ne 4 ]; then
+        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>"
+        exit 1
+    fi
+
+    jaeger=$1
+    reporting_protocol=$2
+    deployment_strategy=$3
+    test_step=$4
+
+    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+        protocol="https://"
+        query_port=""
+        template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
+    else
+        protocol="http://"
+        query_port=":16686"
+        template="$TEMPLATES_DIR/otlp-smoke-test.yaml.template"
+    fi
+
+    export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
+    export OTEL_EXPORTER_OTLP_ENDPOINT="$jaeger-collector-headless"
+    export JAEGER_NAME=$jaeger
+
+    REPORTING_PROTOCOL=$reporting_protocol $GOMPLATE -f $template -o ./$test_step-smoke-test.yaml
+    $GOMPLATE -f $TEMPLATES_DIR/smoke-test-assert.yaml.template -o ./$test_step-assert.yaml
+
+    unset JAEGER_NAME
+    unset JAEGER_QUERY_ENDPOINT
+    unset OTEL_EXPORTER_OTLP_ENDPOINT
+}
+
 # Render a reporting spans.
 #   render_report_spans <jaeger_instance_name> <deployment_strategy> <spans> <job_number> <ensure_reported_spans> <test_step>
 #

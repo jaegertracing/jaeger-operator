@@ -76,6 +76,25 @@ else
     skip_test "collector-autoscale" "Test only supported in OpenShift"
 fi
 
+# Helper function to generate the same tests multiple times but with different
+# reporting protocols
+function generate_otlp_e2e_tests() {
+    test_protocol=$1
+
+    start_test "collector-otlp-allinone-$test_protocol"
+    render_install_jaeger "my-jaeger" "allInOne" "00"
+    render_otlp_smoke_test "my-jaeger" "$test_protocol" "allInOne" "01"
+
+    start_test "collector-otlp-production-$test_protocol"
+    render_install_elasticsearch "00"
+    render_install_jaeger "my-jaeger" "production" "01"
+    render_otlp_smoke_test "my-jaeger" "$test_protocol" "production" "02"
+}
+
+generate_otlp_e2e_tests "http"
+generate_otlp_e2e_tests "grcp"
+
+
 
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "istio" "Test not supported in OpenShift"
