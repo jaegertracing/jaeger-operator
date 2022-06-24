@@ -35,10 +35,7 @@ ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/tes
 start_test "production"
 export JAEGER_NAME="production-ui"
 
-if [ $SKIP_ES_EXTERNAL = false ]; then
-    render_install_elasticsearch "00"
-fi
-
+render_install_elasticsearch "00"
 render_install_jaeger $JAEGER_NAME "production" "01"
 
 # Sometimes, the Ingress/OpenShift route is there but not 100% ready so, when
