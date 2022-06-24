@@ -223,6 +223,9 @@ type JaegerCommonSpec struct {
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
 	// +optional
+	LivenessProbe *v1.Probe `json:"livenessProbe,omitempty"`
+
+	// +optional
 	// +listType=atomic
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
