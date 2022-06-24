@@ -24,6 +24,7 @@ else
 fi
 
 
+
 start_test "collector-autoscale"
 jaeger_name="simple-prod"
 
