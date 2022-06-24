@@ -83,6 +83,7 @@ func TestStorageEnvs(t *testing.T) {
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
+				{Name: "ES_INDEX_DATE_SEPARATOR", Value: ""},
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_TIME_RANGE", Value: "30m"},
