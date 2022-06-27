@@ -110,3 +110,49 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 
 	})
 }
+
+// WaitUntilRestAPIAvailable blocks the execution until the Jaeger REST API is
+// available (or timeout)
+func WaitUntilRestAPIAvailable(jaegerEndpoint string) error {
+	logrus.Debugln("Checking the", jaegerEndpoint, "is available")
+	transport := &http.Transport{
+		// #nosec
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := http.Client{Transport: transport}
+
+	maxRetries := 5
+	retries := 0
+
+	err := wait.Poll(time.Second*5, time.Minute*5, func() (done bool, err error) {
+		req, err := http.NewRequest(http.MethodGet, jaegerEndpoint, nil)
+		if err != nil {
+			return false, err
+		}
+
+		resp, err := client.Do(req)
+
+		// The GET HTTP verb is not supported by the Jaeger Collector REST API
+		// enpoint. An error 404 or 405 means the REST API is there
+		if resp != nil && (resp.StatusCode == 404 || resp.StatusCode == 405) {
+			logrus.Debugln("Endpoint available!")
+			return true, nil
+		}
+
+		if err != nil {
+			logrus.Warningln("Something failed while reaching", jaegerEndpoint, ":", err)
+
+			if retries < maxRetries {
+				retries++
+				return false, nil
+			}
+			return false, err
+		}
+
+		logrus.Warningln(jaegerEndpoint, "is not available")
+		return false, nil
+	})
+	return err
+}
