@@ -12,7 +12,14 @@ render_smoke_test_example "$example_name" "02"
 
 start_test "examples-business-application-injected-sidecar"
 example_name="simplest"
-cat $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./livenessProbe.yaml > ./00-install.yaml
+cp $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.httpGet.path="/"' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.httpGet.port=8080' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.initialDelaySeconds=1' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.failureThreshold=3' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.periodSeconds=10' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.successThreshold=1' ./00-install.yaml
+$YQ e -i '.spec.template.spec.containers[0].livenessProbe.timeoutSeconds=1' ./00-install.yaml
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
@@ -23,26 +30,18 @@ render_install_example "$example_name" "00"
 render_smoke_test_example "$example_name" "01"
 
 
-if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "examples-simple-prod" "This test requires an external Elasticsearch instance"
-else
-    start_test "examples-simple-prod"
-    example_name="simple-prod"
-    render_install_elasticsearch "00"
-    render_install_example "$example_name" "01"
-    render_smoke_test_example "$example_name" "02"
-fi
+start_test "examples-simple-prod"
+example_name="simple-prod"
+render_install_elasticsearch "00"
+render_install_example "$example_name" "01"
+render_smoke_test_example "$example_name" "02"
 
 
-if [ "$SKIP_ES_EXTERNAL" = true ]; then
-    skip_test "examples-simple-prod-with-volumes" "This test requires an external Elasticsearch instance"
-else
-    start_test "examples-simple-prod-with-volumes"
-    example_name="simple-prod-with-volumes"
-    render_install_elasticsearch "00"
-    render_install_example "$example_name" "01"
-    render_smoke_test_example "$example_name" "02"
-fi
+start_test "examples-simple-prod-with-volumes"
+example_name="simple-prod-with-volumes"
+render_install_elasticsearch "00"
+render_install_example "$example_name" "01"
+render_smoke_test_example "$example_name" "02"
 
 
 start_test "examples-simplest"

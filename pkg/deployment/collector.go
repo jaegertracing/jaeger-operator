@@ -111,6 +111,22 @@ func (c *Collector) Get() *appsv1.Deployment {
 		strategy = *c.jaeger.Spec.Collector.Strategy
 	}
 
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(adminPort)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}
+
+	if c.jaeger.Spec.Collector.LivenessProbe != nil {
+		livenessProbe = c.jaeger.Spec.Collector.LivenessProbe
+	}
+
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
@@ -177,24 +193,14 @@ func (c *Collector) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: c.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image:        util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
-						Name:         "jaeger-collector",
-						Args:         options,
-						Env:          append(envVars, getOTLPEnvVars(options)...),
-						VolumeMounts: commonSpec.VolumeMounts,
-						EnvFrom:      envFromSource,
-						Ports:        append(ports, getOTLPContainePorts(options)...),
-						LivenessProbe: &corev1.Probe{
-							ProbeHandler: corev1.ProbeHandler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
+						Image:         util.ImageName(c.jaeger.Spec.Collector.Image, "jaeger-collector-image"),
+						Name:          "jaeger-collector",
+						Args:          options,
+						Env:           append(envVars, getOTLPEnvVars(options)...),
+						VolumeMounts:  commonSpec.VolumeMounts,
+						EnvFrom:       envFromSource,
+						Ports:         append(ports, getOTLPContainePorts(options)...),
+						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{

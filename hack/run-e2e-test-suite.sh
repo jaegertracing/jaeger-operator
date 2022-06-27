@@ -9,13 +9,13 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 if [ "$#" -ne 3 ]; then
-    echo "$0 <test_suite_name> <use_kind_cluster> <olm>"
+    echo "$0 <test_suite_name> <use_kind_cluster> <Jaeger Operator installed using OLM>"
     exit 1
 fi
 
 test_suite_name=$1
 use_kind_cluster=$2
-olm=$3
+jaeger_olm=$3
 
 root_dir=$current_dir/../
 reports_dir=$root_dir/reports
@@ -41,8 +41,8 @@ if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --for=condition=available deployment/metrics-server -n kube-system  --timeout=5m
 fi
 
-if [ "$olm" = true ]; then
-    echo "Skipping Jaeger Operator installation because OLM=true"
+if [ "$jaeger_olm" = true ]; then
+    echo "Skipping Jaeger Operator installation because JAEGER_OLM=true"
 else
 	echo Installing Jaeger Operator...
 	make cert-manager deploy

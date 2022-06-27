@@ -109,3 +109,20 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
 }
+
+func TestQueryServiceSpecAnnotations(t *testing.T) {
+	name := "TestQueryServiceSpecAnnotations"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
+
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	jaeger.Spec.Query.Annotations = map[string]string{"component": "jaeger"}
+	svc := NewQueryService(jaeger, selector)
+
+	assert.Equal(t, "testqueryservicespecannotations-query", svc.ObjectMeta.Name)
+	assert.Len(t, svc.Spec.Ports, 2)
+	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
+	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
+	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
+	assert.Equal(t, map[string]string{"component": "jaeger"}, svc.Annotations)
+}

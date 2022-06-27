@@ -168,6 +168,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 		vars := []corev1.EnvVar{
 			{Name: "ES_NODES", Value: sFlagsMap["es.server-urls"]},
 			{Name: "ES_INDEX_PREFIX", Value: sFlagsMap["es.index-prefix"]},
+			{Name: "ES_INDEX_DATE_SEPARATOR", Value: sFlagsMap["es.index-date-separator"]},
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
 			{Name: "ES_TIME_RANGE", Value: s.Dependencies.ElasticsearchTimeRange},
