@@ -16,13 +16,13 @@ SLEEP_TIME=5
 check_version() {
     POD=""
     while [ -z "$POD" ]; do
-        POD=$(kubectl get pods -n $namespace -l app.kubernetes.io/name=jaeger-operator -o yaml | yq e ".items[0].metadata.name")
+        POD=$(kubectl get pods -n $namespace -l name=jaeger-operator -o yaml | $YQ e ".items[0].metadata.name")
         if [ -z "$POD" ]; then
             echo "No pods found for the Jaeger Operator. Trying again in $SLEEP_TIME seconds..."
             time $SLEEP_TIME
         fi
     done
-    export VERSION=$(kubectl exec $POD -n $namespace -c jaeger-operator -- ./jaeger-operator version version | yq -P ".jaeger-operator"| grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
+    export VERSION=$(kubectl exec $POD -n $namespace -c jaeger-operator -- ./jaeger-operator version | $YQ -P ".jaeger-operator"| grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
 }
 
 
