@@ -198,7 +198,6 @@ func generateTraces(jaegerEndpoint string, serviceName string, operationName str
 	logrus.Debugln("Generating traces!")
 
 	i := 0
-	//for i := 0; i < traces; i++ {
 	for {
 		logrus.Debugf("Generating trace %d/%d", i, traces)
 		ctx, iSpan := tracer.Start(context.Background(), operationName)
