@@ -510,6 +510,42 @@ func TestIngesterEmptyStrategyType(t *testing.T) {
 	assert.Equal(t, appsv1.RecreateDeploymentStrategyType, dep.Spec.Strategy.Type)
 }
 
+func TestIngesterLivenessProbe(t *testing.T) {
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14270)),
+			},
+		},
+		InitialDelaySeconds: 60,
+		PeriodSeconds:       60,
+		FailureThreshold:    60,
+	}
+	jaeger := newIngesterJaeger("my-instance")
+	jaeger.Spec.Collector.LivenessProbe = livenessProbe
+	i := NewIngester(jaeger)
+	dep := i.Get()
+	assert.Equal(t, livenessProbe, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
+}
+
+func TestIngesterEmptyEmptyLivenessProbe(t *testing.T) {
+	jaeger := newIngesterJaeger("my-instance")
+	i := NewIngester(jaeger)
+	dep := i.Get()
+	assert.Equal(t, &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(14270)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
+}
+
 func TestIngesterGRPCPlugin(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestIngesterGRPCPlugin"})
 	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming

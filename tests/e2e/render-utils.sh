@@ -119,43 +119,46 @@ function render_report_spans() {
 
 
 # Render a check indices job.
-#   render_check_indices <job_number> <test_step> <cmd_parameters>
+#   render_check_indices <secured>  <cmd_parameters> <job_number> <test_step>
+#
 #
 # Example:
-#   render_check_indices "01" "02" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}'"
+#   render_check_indices "false" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}'" "01" "02"
 # Renders the 02-check-indices.yaml and 02-assert.yaml files. The `01-check-indices` job
-# will be started using the CMD parameters.
+# will be started using the CMD parameters. The connection to the ES instance will be done
+# without using certificates
 function render_check_indices() {
-    if [ "$#" -ne 3 ]; then
-        error "Wrong number of parameters used for render_check_indices. Usage: render_check_indices <job_number> <test_step> <cmd parameters>"
+    if [ "$#" -ne 4 ]; then
+        error "Wrong number of parameters used for render_check_indices. Usage: render_check_indices <secured>  <cmd_parameters> <job_number> <test_step>"
         exit 1
     fi
 
-    job_number=$1
-    test_step=$2
-    cmd_parameters=$3
+    secured=$1
+    cmd_parameters=$2
+    job_number=$3
+    test_step=$4
+
 
     escape_command "$cmd_parameters"
-    export CMD_PARAMETERS="$cmd_parameters"
+    mount_secret=""
 
-    if [ $IS_OPENSHIFT = true ]; then
-        protocol="https://"
+    if [ $IS_OPENSHIFT = true ] && [ $secured = true ] ; then
         # The certificates to connect to the database are needed. The asserts
         # container uses the same secret created to be used by the index cleaner
-        export MOUNT_SECRET="$JAEGER_NAME-curator"
-    else
-        protocol="http://"
+        mount_secret="$JAEGER_NAME-curator"
     fi
 
-    export JOB_NUMBER=$job_number
+    JOB_NUMBER=$job_number \
+    CMD_PARAMETERS="$cmd_parameters" \
+    MOUNT_SECRET="$mount_secret" \
+        $GOMPLATE \
+            -f $TEMPLATES_DIR/check-indices.yaml.template \
+            -o ./$test_step-check-indices.yaml
 
-    template=$TEMPLATES_DIR/check-indices.yaml.template
-
-    $GOMPLATE -f $template $params -o ./$test_step-check-indices.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-check-indices.yaml.template -o ./$test_step-assert.yaml
-
-    unset JOB_NUMBER
-    unset MOUNT_SECRET
+    JOB_NUMBER=$job_number \
+    $GOMPLATE \
+        -f $TEMPLATES_DIR/assert-check-indices.yaml.template \
+        -o ./$test_step-assert.yaml
 }
 
 
@@ -215,6 +218,8 @@ function render_install_elasticsearch() {
 #   * allInOne: all in one deployment.
 #   * production: production using Elasticsearch.
 #   * production_cassandra: production using Cassandra.
+#   * production_autoprovisioned: production deployment autoprovisioning ES. Only
+#       available for OpenShift environments using the Elasticsearch OpenShift Operator.
 # Example:
 #   render_install_jaeger "my-jaeger" "production" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. Production Jaeger
@@ -238,6 +243,13 @@ function render_install_jaeger() {
     elif [ $deploy_mode = "production_cassandra" ]; then
         $GOMPLATE -f $TEMPLATES_DIR/cassandra-jaeger-install.yaml.template -o ./$test_step-install.yaml
         $GOMPLATE -f $TEMPLATES_DIR/assert-jaeger-deployment.yaml.template -o ./$test_step-assert.yaml
+    elif [ $deploy_mode = "production_autoprovisioned" ]; then
+        if [ $IS_OPENSHIFT != "true" ]; then
+            error "production_autoprovisioned Jaeger deploy mode is only supported for OpenShift"
+            exit 1
+        fi
+        $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "Used '$deploy_mode' is not a valid value for <deploy_mode>"
     fi
@@ -361,15 +373,13 @@ function render_install_kafka() {
     test_step=$3
 
     export CLUSTER_NAME=$cluster_name
-    export REPLICAS=$replicas
 
     $GOMPLATE -f $TEMPLATES_DIR/kafka-install.yaml.template -o ./$test_step-install.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./$test_step-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./0$(expr $test_step + 1 )-assert.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./$test_step-assert.yaml
+    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./0$(expr $test_step + 1 )-assert.yaml
     $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./0$(expr $test_step + 2 )-assert.yaml
 
     unset CLUSTER_NAME
-    unset REPLICAS
 }
 
 
@@ -652,6 +662,20 @@ function version_lt() {
 }
 
 
+# Check if the KAFKA-PROVISION-MINIMAL feature is enabled.
+function is_kafka_minimal_enabled() {
+    namespaces=( observability openshift-operators openshift-distributed-tracing )
+    for i in "${namespaces[@]}"
+    do
+        enabled="$(kubectl get pods -n $i -l name=jaeger-operator -o yaml | $YQ e '.items[0].spec.containers[0].env[] | select(.name=="KAFKA-PROVISIONING-MINIMAL").value')"
+        if [ "$enabled" == true ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+
 
 ###############################################################################
 # Init configuration ##########################################################
@@ -669,9 +693,6 @@ IS_OPENSHIFT=false
 if [ ! -z "$output" ]; then
     warning "Generating templates for an OpenShift cluster"
     IS_OPENSHIFT=true
-
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1686298
-    export SKIP_ES_EXTERNAL=true
 fi
 
 export IS_OPENSHIFT
@@ -687,14 +708,9 @@ $ROOT_DIR/hack/install/install-yq.sh
 
 # Elasticsearch settings
 export ELASTICSEARCH_NODECOUNT="1"
+export ELASTICSEARCH_URL="http://elasticsearch"
+export ELASTICSEARCH_PORT=":9200"
 
-if [ $IS_OPENSHIFT = true ]; then
-    export ELASTICSEARCH_URL="https://elasticsearch"
-    export ELASTICSEARCH_PORT=""
-else
-    export ELASTICSEARCH_URL="http://elasticsearch"
-    export ELASTICSEARCH_PORT=":9200"
-fi
 
 # Cassandra settings
 export CASSANDRA_SERVER="cassandra"
