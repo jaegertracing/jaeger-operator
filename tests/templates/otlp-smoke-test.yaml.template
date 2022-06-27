@@ -13,7 +13,6 @@ spec:
             "./reporter-otlp",
             "--verbose",
             "--operation-name", "smoke-test-operation",
-            "--traces", "20",
             "--jaeger-service-name", "smoke-test-service",
             "--reporting-protocol", "{{ .Env.REPORTING_PROTOCOL }}",
           ]

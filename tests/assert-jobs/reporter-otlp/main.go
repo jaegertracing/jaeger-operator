@@ -32,7 +32,6 @@ const (
 	tracerName              = "E2E-TRACER"
 	flagJaegerServiceName   = "jaeger-service-name"
 	flagJaegerOperationName = "operation-name"
-	flagNumberTraces        = "traces"
 	flagVerbose             = "verbose"
 	flagReportingProtocol   = "reporting-protocol"
 	otlpExporterEndpoint    = "OTEL_EXPORTER_OTLP_ENDPOINT"
@@ -51,9 +50,6 @@ func initCmd() error {
 
 	viper.SetDefault(flagReportingProtocol, "http")
 	flag.String(flagReportingProtocol, "", "Protocol to report traces (http|grpc)")
-
-	viper.SetDefault(flagNumberTraces, 10)
-	flag.Int(flagNumberTraces, 10, "Number of traces to generate")
 
 	viper.SetDefault(flagVerbose, false)
 	flag.Bool(flagVerbose, false, "Enable verbosity")
@@ -187,8 +183,7 @@ func generateSubSpans(ctx context.Context, depth int) {
 // jaegerEnpoint: where Jaeger endpoint is located
 // serviceName: service to use for the span
 // operationName: operation described in the span
-// traces: number of traces to generate
-func generateTraces(jaegerEndpoint string, serviceName string, operationName string, traces int) {
+func generateTraces(jaegerEndpoint string, serviceName string, operationName string) {
 	logrus.Debugln("Trying to generate traces")
 	shutdown := initProvider(serviceName)
 	defer shutdown()
@@ -199,11 +194,12 @@ func generateTraces(jaegerEndpoint string, serviceName string, operationName str
 
 	i := 0
 	for {
-		logrus.Debugf("Generating trace %d/%d", i, traces)
+		logrus.Debugf("Generating trace %d", i)
 		ctx, iSpan := tracer.Start(context.Background(), operationName)
 		generateSubSpans(ctx, 5)
 		iSpan.End()
 		i++
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
@@ -237,6 +233,5 @@ func main() {
 		viper.GetString(otlpExporterEndpoint),
 		viper.GetString(flagJaegerServiceName),
 		viper.GetString(flagJaegerOperationName),
-		viper.GetInt(flagNumberTraces),
 	)
 }
