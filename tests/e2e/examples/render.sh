@@ -32,14 +32,14 @@ render_smoke_test_example "$example_name" "01"
 
 start_test "examples-simple-prod"
 example_name="simple-prod"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
 start_test "examples-simple-prod-with-volumes"
 example_name="simple-prod-with-volumes"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 

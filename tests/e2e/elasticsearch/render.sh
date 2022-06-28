@@ -42,8 +42,11 @@ function es_index_cleaner(){
 
     if [ "$jaeger_deployment_strategy" = "production" ]; then
         # Install Elasticsearch instance
-        render_install_elasticsearch "00"
+        render_install_elasticsearch "upstream" "00"
         ELASTICSEARCH_URL="http://elasticsearch"
+    elif [ "$jaeger_deployment_strategy" = "production_managed_es" ]; then
+        render_install_elasticsearch "openshift_operator" "00"
+        secured_es_connection="true"
     else
         ELASTICSEARCH_URL="https://elasticsearch"
         secured_es_connection="true"
@@ -84,6 +87,13 @@ else
     skip_test "es-index-cleaner-autoprov" "Test only supported in OpenShift"
 fi
 
+if [ "$IS_OPENSHIFT" ]; then
+    es_index_cleaner "-managed" "production_managed_es"
+else
+    skip_test "es-index-cleaner-managed" "Test only supported in OpenShift"
+fi
+
+
 
 if [ "$IS_OPENSHIFT" = "true" ]; then
     start_test "es-multiinstance"
@@ -114,8 +124,11 @@ function es_rollover(){
 
     if [ "$jaeger_deployment_strategy" = "production" ]; then
         # Install Elasticsearch instance
-        render_install_elasticsearch "00"
+        render_install_elasticsearch "upstream" "00"
         ELASTICSEARCH_URL="http://elasticsearch"
+    elif [ "$jaeger_deployment_strategy" = "production_managed_es" ]; then
+        render_install_elasticsearch "openshift_operator" "00"
+        secured_es_connection="true"
     else
         ELASTICSEARCH_URL="https://elasticsearch"
         secured_es_connection="true"
@@ -163,6 +176,12 @@ if [ "$IS_OPENSHIFT" ]; then
 else
     skip_test "es-rollover-autoprov" "Test only supported in OpenShift"
 fi
+if [ "$IS_OPENSHIFT" ]; then
+    es_rollover "-managed" "production_managed_es"
+else
+    skip_test "es-rollover-managed" "Test only supported in OpenShift"
+fi
+
 
 
 
@@ -170,7 +189,7 @@ if [ "$IS_OPENSHIFT" = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
     start_test "es-spark-dependencies"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
 
     # The step 1 creates the Jaeger instance
 

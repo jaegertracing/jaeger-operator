@@ -234,27 +234,40 @@ function render_install_cassandra() {
 #   render_install_elasticsearch <test_step>
 #
 # Example:
-#   render_install_elasticsearch "00"
+#   render_install_elasticsearch "upstream" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. An Elasticsearch
 # instance will be installed.
 function render_install_elasticsearch() {
-    if [ "$#" -ne 1 ]; then
+    if [ "$#" -ne 2 ]; then
         error "Wrong number of parameters used for render_install_elasticsearch. Usage: render_install_elasticsearch <test_step>"
         exit 1
     fi
 
-    test_step=$1
+    deploy_mode=$1
+    test_step=$2
 
-    if [ "$IS_OPENSHIFT" = true ]; then
-        template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
-        $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
-        $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
+    if [ "$deploy_mode" = "upstream" ]; then
+        if [ "$IS_OPENSHIFT" = true ]; then
+            template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
+            $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
+            $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
+        else
+            template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
+        fi
+
+        $GOMPLATE -f $template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ "$deploy_mode" = "openshift_operator" ]; then
+        if [ "$IS_OPENSHIFT" = true ]; then
+            $GOMPLATE -f $TEMPLATES_DIR/openshift/elasticsearch-managed-install.yaml.template -o ./$test_step-install.yaml
+            $GOMPLATE -f $TEMPLATES_DIR/openshift/elasticsearch-managed-assert.yaml.template -o ./$test_step-assert.yaml
+        else
+            error "openshift_operator deploy mode cannot be used if not using an OpenShift cluster"
+            exit 1
+        fi
     else
-        template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
+        error "$deploy_mode not recognized as deploy_mode for render_install_elasticsearch"
     fi
-
-    $GOMPLATE -f $template -o ./$test_step-install.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
 }
 
 

@@ -29,7 +29,7 @@ start_test "collector-autoscale"
 jaeger_name="simple-prod"
 
 if [ $IS_OPENSHIFT!="true" ]; then
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
 fi
 
 ELASTICSEARCH_NODECOUNT="1"
@@ -62,7 +62,7 @@ function generate_otlp_e2e_tests() {
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "allInOne" "01"
 
     start_test "collector-otlp-production-$test_protocol"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
     render_install_jaeger "my-jaeger" "production" "01"
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "production" "02"
 }
@@ -100,7 +100,7 @@ if [ $IS_OPENSHIFT = true ]; then
 else
     start_test "outside-cluster"
     jaeger_name="my-jaeger"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
     render_install_jaeger "$jaeger_name" "production" "01"
     $GOMPLATE -f ./03-check-collector.yaml.template -o 03-check-collector.yaml
 fi

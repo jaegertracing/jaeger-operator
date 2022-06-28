@@ -1,0 +1,8 @@
+apiVersion: logging.openshift.io/v1
+kind: Elasticsearch
+metadata:
+  name: shared-es
+status:
+  cluster:
+    numNodes: 1
+    status: green

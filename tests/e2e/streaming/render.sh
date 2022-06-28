@@ -4,14 +4,14 @@ source $(dirname "$0")/../render-utils.sh
 
 start_test "streaming-simple"
 render_install_kafka "my-cluster" "1" "00"
-render_install_elasticsearch "01"
+render_install_elasticsearch "upstream" "01"
 JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
 render_smoke_test "simple-streaming" "allInOne" "05"
 
 
 start_test "streaming-with-tls"
 render_install_kafka "my-cluster" "1" "00"
-render_install_elasticsearch "03"
+ "03"
 render_smoke_test "tls-streaming" "allInOne" "05"
 
 
@@ -31,7 +31,7 @@ if [ $IS_OPENSHIFT = true ]; then
     rm ./00-install.yaml ./00-assert.yaml
 fi
 
-render_install_elasticsearch "01"
+render_install_elasticsearch "upstream" "01"
 $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./04-assert.yaml
 $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./05-assert.yaml
@@ -45,7 +45,7 @@ if [ $IS_OPENSHIFT = true ]; then
     rm ./00-install.yaml ./00-assert.yaml
 fi
 
-render_install_elasticsearch "01"
+render_install_elasticsearch "upstream" "01"
 
 jaeger_name="auto-provisioned"
 # Change the resource limits for the autoprovisioned deployment
