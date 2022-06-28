@@ -66,6 +66,7 @@ if [ "$IS_OPENSHIFT" = "true" ]; then
     start_test "es-multiinstance"
     jaeger_name="instance-1"
     render_install_jaeger "$jaeger_name" "production_autoprovisioned" "01"
+    $GOMPLATE -f ./03-create-second-instance.yaml.template -o 03-create-second-instance.yaml
 else
     skip_test "es-multiinstance" "This test is only supported in OpenShift"
 fi
