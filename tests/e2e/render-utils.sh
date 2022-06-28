@@ -231,15 +231,19 @@ function render_install_cassandra() {
 
 
 # Render the files to install Elasticsearch database.
-#   render_install_elasticsearch <test_step>
+#   render_install_elasticsearch <deploy_mode> <test_step>
 #
+# Supported values for <deploy_mode>:
+# * upstream: deploy an ES instance using the upstream image.
+# * openshift_operator: deploy an external ES instance using the Elasticsearch
+#   OpenShift Operator.
 # Example:
 #   render_install_elasticsearch "upstream" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. An Elasticsearch
-# instance will be installed.
+# instance will be installed. It will use the upstream ES image.
 function render_install_elasticsearch() {
     if [ "$#" -ne 2 ]; then
-        error "Wrong number of parameters used for render_install_elasticsearch. Usage: render_install_elasticsearch <test_step>"
+        error "Wrong number of parameters used for render_install_elasticsearch. Usage: render_install_elasticsearch <deploy_mode> <test_step>"
         exit 1
     fi
 
