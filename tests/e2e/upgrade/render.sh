@@ -22,9 +22,9 @@ else
 fi
 
 if [ $IS_OPENSHIFT = true ]; then
-    skip_test "upgrade-from-latest" "Test not supported in OpenShift"
+    skip_test "upgrade-from-latest-release" "Test not supported in OpenShift"
 else
-    start_test "upgrade-from-latest"
+    start_test "upgrade-from-latest-release"
     $GOMPLATE -f ./remove-jaeger-operator.yaml.template -o ./00-remove-operator.yaml
 
     # Download the latest Jaeger Operator released manifest and install it
