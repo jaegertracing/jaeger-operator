@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/jaegertracing/jaeger-operator/tests/assert-jobs/utils"
 )
@@ -166,49 +164,6 @@ func generateSpansHistory(serviceName, operationName string, days, services int)
 	}
 }
 
-// Block the execution until the Jaeger REST API is available (or timeout)
-func waitUntilRestAPIAvailable(jaegerEndpoint string) error {
-	transport := &http.Transport{
-		// #nosec
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-	client := http.Client{Transport: transport}
-
-	maxRetries := 5
-	retries := 0
-
-	err := wait.Poll(time.Second*5, time.Minute*5, func() (done bool, err error) {
-		req, err := http.NewRequest(http.MethodGet, jaegerEndpoint, nil)
-		if err != nil {
-			return false, err
-		}
-
-		resp, err := client.Do(req)
-
-		// The GET HTTP verb is not supported by the Jaeger Collector REST API enpoint. An error 405
-		// means the REST API is there
-		if resp != nil && resp.StatusCode == 405 {
-			return true, nil
-		}
-
-		if err != nil {
-			logrus.Warningln("Something failed while reaching", jaegerEndpoint, ":", err)
-
-			if retries < maxRetries {
-				retries++
-				return false, nil
-			}
-			return false, err
-		}
-
-		logrus.Warningln(jaegerEndpoint, "is not available. Is", envVarJaegerEndpoint, "environment variable properly set?")
-		return false, nil
-	})
-	return err
-}
-
 // Init the CMD and return error if something didn't go properly
 func initCmd() error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -251,9 +206,9 @@ func main() {
 		logrus.Fatal("Please, specify a Jaeger Collector endpoint")
 	}
 
-	// Sometimes, Kubernetes reports the Jaeger service is there but there is an interval where the service is up but the
-	// REST API is not operative yet
-	err = waitUntilRestAPIAvailable(jaegerEndpoint)
+	// Sometimes, Kubernetes reports the Jaeger service is there but there is
+	// an interval where the service is up but the REST API is not operative yet
+	err = utils.WaitUntilRestAPIAvailable(jaegerEndpoint)
 	if err != nil {
 		logrus.Fatalln(err)
 	}
