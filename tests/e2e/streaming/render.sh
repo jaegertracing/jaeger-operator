@@ -11,7 +11,7 @@ render_smoke_test "simple-streaming" "allInOne" "05"
 
 start_test "streaming-with-tls"
 render_install_kafka "my-cluster" "1" "00"
- "03"
+render_install_elasticsearch "upstream" "03"
 render_smoke_test "tls-streaming" "allInOne" "05"
 
 
