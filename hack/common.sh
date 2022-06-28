@@ -8,3 +8,4 @@ export EXAMPLES_DIR=$ROOT_DIR/examples
 # Tools
 export GOMPLATE=$ROOT_DIR/bin/gomplate
 export YQ=$ROOT_DIR/bin/yq
+export KUTTL=$ROOT_DIR/bin/kubectl-kuttl

@@ -113,6 +113,22 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(int(adminPort)),
+			},
+		},
+		InitialDelaySeconds: 5,
+		PeriodSeconds:       15,
+		FailureThreshold:    5,
+	}
+
+	if a.jaeger.Spec.AllInOne.LivenessProbe != nil {
+		livenessProbe = a.jaeger.Spec.AllInOne.LivenessProbe
+	}
+
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
@@ -209,24 +225,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: commonSpec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image:        util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
-						Name:         "jaeger",
-						Args:         options,
-						Env:          append(envVars, getOTLPEnvVars(options)...),
-						VolumeMounts: commonSpec.VolumeMounts,
-						EnvFrom:      envFromSource,
-						Ports:        append(ports, getOTLPContainePorts(options)...),
-						LivenessProbe: &corev1.Probe{
-							ProbeHandler: corev1.ProbeHandler{
-								HTTPGet: &corev1.HTTPGetAction{
-									Path: "/",
-									Port: intstr.FromInt(int(adminPort)),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       15,
-							FailureThreshold:    5,
-						},
+						Image:         util.ImageName(a.jaeger.Spec.AllInOne.Image, "jaeger-all-in-one-image"),
+						Name:          "jaeger",
+						Args:          options,
+						Env:           append(envVars, getOTLPEnvVars(options)...),
+						VolumeMounts:  commonSpec.VolumeMounts,
+						EnvFrom:       envFromSource,
+						Ports:         append(ports, getOTLPContainePorts(options)...),
+						LivenessProbe: livenessProbe,
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								HTTPGet: &corev1.HTTPGetAction{

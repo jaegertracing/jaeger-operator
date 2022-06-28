@@ -2,5 +2,5 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy-kafka KAFKA_NAMESPACE=$NAMESPACE OLM={{ .Env.OLM }}"
-  - script: "cd {{ .Env.ROOT_DIR }} && make kafka KAFKA_NAMESPACE=$NAMESPACE OLM={{ .Env.OLM }}"
+  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy-kafka KAFKA_NAMESPACE=$NAMESPACE KAFKA_OLM={{ .Env.KAFKA_OLM }}"
+  - script: "cd {{ .Env.ROOT_DIR }} && make kafka KAFKA_NAMESPACE=$NAMESPACE KAFKA_OLM={{ .Env.KAFKA_OLM }}"
