@@ -81,13 +81,13 @@ function es_index_cleaner(){
 
 es_index_cleaner "" "production"
 
-if [ "$IS_OPENSHIFT" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     es_index_cleaner "-autoprov" "production_autoprovisioned"
 else
     skip_test "es-index-cleaner-autoprov" "Test only supported in OpenShift"
 fi
 
-if [ "$IS_OPENSHIFT" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     es_index_cleaner "-managed" "production_managed_es"
 else
     skip_test "es-index-cleaner-managed" "Test only supported in OpenShift"
@@ -95,7 +95,7 @@ fi
 
 
 
-if [ "$IS_OPENSHIFT" = "true" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     start_test "es-multiinstance"
     jaeger_name="instance-1"
     render_install_jaeger "$jaeger_name" "production_autoprovisioned" "01"
@@ -171,12 +171,12 @@ function es_rollover(){
 
 es_rollover "" "production"
 
-if [ "$IS_OPENSHIFT" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     es_rollover "-autoprov" "production_autoprovisioned"
 else
     skip_test "es-rollover-autoprov" "Test only supported in OpenShift"
 fi
-if [ "$IS_OPENSHIFT" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     es_rollover "-managed" "production_managed_es"
 else
     skip_test "es-rollover-managed" "Test only supported in OpenShift"
