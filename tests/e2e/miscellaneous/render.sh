@@ -44,11 +44,7 @@ $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
 $YQ e -i '.spec.collector.maxReplicas=5' 01-install.yaml
 
 # Deploy Tracegen instance to generate load in the Jaeger collector
-tracegen_replicas="1"
-if [ $IS_OPENSHIFT!="true" ]; then
-    tracegen_replicas="3"
-fi
-render_install_tracegen "$jaeger_name" "$tracegen_replicas" "02"
+render_install_tracegen "$jaeger_name" "3" "02"
 
 
 if [ $IS_OPENSHIFT = true ]; then
