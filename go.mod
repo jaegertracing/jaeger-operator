@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/google/gnostic v0.5.7-v3refs
 	github.com/google/go-cmp v0.5.8
-	github.com/googleapis/gnostic v0.5.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20210713130143-be21c6cb1bea
 	github.com/openshift/elasticsearch-operator v0.0.0-20210921091239-caf25067d56d
@@ -54,7 +54,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
