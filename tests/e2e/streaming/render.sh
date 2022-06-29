@@ -3,28 +3,21 @@
 source $(dirname "$0")/../render-utils.sh
 
 start_test "streaming-simple"
-render_install_kafka "my-cluster" "1" "00"
+render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "upstream" "01"
 JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
 render_smoke_test "simple-streaming" "allInOne" "05"
 
 
 start_test "streaming-with-tls"
-render_install_kafka "my-cluster" "1" "00"
+render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "upstream" "03"
 render_smoke_test "tls-streaming" "allInOne" "05"
 
 
-start_test "streaming-with-autoprovisioning"
-export CLUSTER_NAME="auto-provisioned"
-jaeger_name="auto-provisioned"
 
-export REPLICAS
-if is_kafka_minimal_enabled; then
-    REPLICAS=1
-else
-    REPLICAS=3
-fi
+start_test "streaming-with-autoprovisioning"
+jaeger_name="auto-provisioned"
 
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
@@ -32,9 +25,7 @@ if [ $IS_OPENSHIFT = true ]; then
 fi
 
 render_install_elasticsearch "upstream" "01"
-$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./03-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./04-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./05-assert.yaml
+render_assert_kafka "true" "$jaeger_name" "03"
 render_smoke_test "$jaeger_name" "allInOne" "07"
 
 
@@ -58,14 +49,8 @@ $YQ e -i '.spec.ingester.minReplicas=1' ./02-install.yaml
 $YQ e -i '.spec.ingester.maxReplicas=5' ./02-install.yaml
 
 # Assert the autoprovisioned Kafka deployment
-$GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./02-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./03-assert.yaml
-$GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./04-assert.yaml
+render_assert_kafka "true" "$jaeger_name" "03"
 
 # Create the tracegen deployment
 # Deploy Tracegen instance to generate load in the Jaeger collector
-tracegen_replicas="1"
-if [ $IS_OPENSHIFT!="true" ]; then
-    tracegen_replicas="3"
-fi
-render_install_tracegen "$jaeger_name" "$tracegen_replicas" "06"
+render_install_tracegen "$jaeger_name" "3" "06"
