@@ -140,7 +140,7 @@ docker:
 
 .PHONY: dockerx
 dockerx:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=GOPROXY=${GOPROXY} --build-arg VERSION_DATE=${VERSION_DATE} --build-arg VERSION_PKG=${VERSION_PKG} --platform=$(PLATFORMS) $(IMAGE_TAGS) .
+	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=GOPROXY=${GOPROXY} --build-arg VERSION_DATE=${VERSION_DATE} --build-arg VERSION_PKG=${VERSION_PKG} --platform=$(PLATFORMS) $(IMAGE_TAGS) .
 
 .PHONY: push
 push:

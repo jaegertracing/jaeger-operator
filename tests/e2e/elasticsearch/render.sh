@@ -66,6 +66,7 @@ if [ "$IS_OPENSHIFT" = "true" ]; then
     start_test "es-multiinstance"
     jaeger_name="instance-1"
     render_install_jaeger "$jaeger_name" "production_autoprovisioned" "01"
+    $GOMPLATE -f ./03-create-second-instance.yaml.template -o 03-create-second-instance.yaml
 else
     skip_test "es-multiinstance" "This test is only supported in OpenShift"
 fi
@@ -126,23 +127,12 @@ else
 fi
 
 
-if [ "$IS_OPENSHIFT" != true ]; then
-    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
-else
+if [ "$IS_OPENSHIFT" = true ]; then
     start_test "es-streaming-autoprovisioned"
+    jaeger_name="auto-provisioned"
 
-    export CLUSTER_NAME="auto-provisioned"
-
-    export REPLICAS
-    if is_kafka_minimal_enabled; then
-        REPLICAS=1
-    else
-        REPLICAS=3
-    fi
-
-    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml
-
-    render_smoke_test "auto-provisioned" "allInOne" "03"
+    render_assert_kafka "true" "$jaeger_name" "00"
+    render_smoke_test "$jaeger_name" "allInOne" "03"
+else
+    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi
