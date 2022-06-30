@@ -2,6 +2,16 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+start_test "es-from-aio-to-production"
+jaeger_name="my-jaeger"
+render_install_jaeger "$jaeger_name" "allInOne" "00"
+render_smoke_test "$jaeger_name" "allInOne" "01"
+render_install_elasticsearch "02"
+render_install_jaeger "$jaeger_name" "production" "03"
+render_smoke_test "$jaeger_name" "production" "04"
+
+
+
 if [ "$IS_OPENSHIFT" != true ]; then
     skip_test "es-increasing-replicas" "Test supported only in OpenShift"
 else
