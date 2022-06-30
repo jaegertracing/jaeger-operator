@@ -132,7 +132,7 @@ if [ "$IS_OPENSHIFT" = true ]; then
     jaeger_name="auto-provisioned"
 
     render_assert_kafka "true" "$jaeger_name" "00"
-    render_smoke_test "$jaeger_name" "allInOne" "03"
+    render_smoke_test "$jaeger_name" "production" "03"
 else
     skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi

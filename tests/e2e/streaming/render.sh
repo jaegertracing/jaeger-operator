@@ -6,13 +6,13 @@ start_test "streaming-simple"
 render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "01"
 JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
-render_smoke_test "simple-streaming" "allInOne" "05"
+render_smoke_test "simple-streaming" "production" "05"
 
 
 start_test "streaming-with-tls"
 render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "03"
-render_smoke_test "tls-streaming" "allInOne" "05"
+render_smoke_test "tls-streaming" "production" "05"
 
 
 
@@ -26,7 +26,7 @@ fi
 
 render_install_elasticsearch "01"
 render_assert_kafka "true" "$jaeger_name" "03"
-render_smoke_test "$jaeger_name" "allInOne" "07"
+render_smoke_test "$jaeger_name" "production" "07"
 
 
 
