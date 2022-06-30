@@ -2,27 +2,36 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-if [ "$IS_OPENSHIFT" != true ]; then
-    skip_test "es-increasing-replicas" "Test supported only in OpenShift"
+start_test "es-increasing-replicas"
+jaeger_name="simple-prod"
+
+if [ "$IS_OPENSHIFT" = true ]; then
+    # For OpenShift, we want to test changes in the Elasticsearch instances
+    # autoprovisioned by the Elasticsearch OpenShift Operator
+    jaeger_deployment_mode="production_autoprovisioned"
 else
-    jaeger_name="simple-prod"
-    start_test "es-increasing-replicas"
+    jaeger_deployment_mode="production"
+    render_install_elasticsearch "00"
+fi
+render_install_jaeger "$jaeger_name" "$jaeger_deployment_mode" "01"
 
-    # Install a Jaeger instance with autoprovisioned ES
-    render_install_jaeger "$jaeger_name" "production_autoprovisioned" "00"
+# Increase the number of replicas for the collector and query
+cp ./01-install.yaml ./02-install.yaml
+$YQ e -i '.spec.collector.replicas=2' ./02-install.yaml
+$YQ e -i '.spec.query.replicas=2' ./02-install.yaml
 
-    # Increase the number of replicas for the collector, query and ES
-    cp ./00-install.yaml ./01-install.yaml
-    $YQ e -i '.spec.collector.replicas=2' ./01-install.yaml
-    $YQ e -i '.spec.query.replicas=2' ./01-install.yaml
-    $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./01-install.yaml
+# Check everything was scaled as expected
+cp ./01-assert.yaml ./02-assert.yaml
+$YQ e -i '.spec.replicas=2' ./02-assert.yaml
+$YQ e -i '.status.readyReplicas=2' ./02-assert.yaml
 
-    # Check everything was scaled as expected
-    cp ./00-assert.yaml ./01-assert.yaml
-    $YQ e -i '.spec.replicas=2' ./01-assert.yaml
-    $YQ e -i '.status.readyReplicas=2' ./01-assert.yaml
+render_smoke_test "$jaeger_name" "production" "03"
 
-    render_smoke_test "$jaeger_name" "production" "03"
+if [ "$IS_OPENSHIFT" = true ]; then
+    # Increase the number of nodes for autoprovisioned ES
+    cp ./02-install.yaml ./04-install.yaml
+    $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./04-install.yaml
+    $GOMPLATE -f ./openshift-check-es-nodes.yaml.template -o ./05-check-es-nodes.yaml
 fi
 
 
