@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/google/gnostic v0.5.7-v3refs
+	github.com/google/gnostic v0.6.9
 	github.com/google/go-cmp v0.5.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/openshift/api v0.0.0-20210713130143-be21c6cb1bea
