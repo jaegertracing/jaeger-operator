@@ -2,4 +2,4 @@
 ## What is this test case testing?
 
 This test checks there are not issues when a Jaeger instance deployed using
-`allInOne` strategy is upgrade to use `production` deployment strategy.
+`allInOne` strategy is upgraded to use `production` deployment strategy.
