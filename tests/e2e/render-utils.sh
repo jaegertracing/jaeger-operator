@@ -58,31 +58,28 @@ function render_smoke_test() {
 }
 
 # Render a smoke test using an OTLP client.
-#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>
+#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>
 #
 # Example:
-#   render_otlp_smoke_test "my-jaeger" "http" "production" "01"
+#   render_otlp_smoke_test "my-jaeger" "http" "true" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
 # will be run against the Jaeger instance called `my-jaeger`. It will use HTTP to
 # report the traces.
 # Accepted values for <protocol>:
 #   * http: use HTTP to report the traces
 #   * grpc: use GRPC to report the traces
-# Accepted values for <deploy_mode>:
-#   * allInOne: all in one deployment.
-#   * production: production using Elasticsearch.
 function render_otlp_smoke_test() {
     if [ "$#" -ne 4 ]; then
-        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>"
+        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>"
         exit 1
     fi
 
     jaeger=$1
     reporting_protocol=$2
-    deployment_strategy=$3
+    is_secured=$3
     test_step=$4
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ "$is_secured"="true" ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
