@@ -40,10 +40,10 @@ else
     # Deploy Jaeger in production mode
     jaeger_name="jaeger-test"
     render_install_elasticsearch "03"
-    render_install_jaeger "$jaeger_name" "production" "04"
+    render_install_jaeger "$jaeger_name" "false" "04"
 
     # Run smoke test
-    render_smoke_test "$jaeger_name" "production" "05"
+    render_smoke_test "$jaeger_name" "false" "05"
 
     # Install the current Jaeger Operator
     $GOMPLATE -f ./install-current-operator.yaml.template -o ./06-install-current-operator.yaml
@@ -54,5 +54,5 @@ else
     JAEGER_NAME=$jaeger_name $GOMPLATE -f $TEMPLATES_DIR/check-jaeger-version.yaml.template -o ./08-check-jaeger-version.yaml
 
     # Run smoke test
-    render_smoke_test "$jaeger_name" "production" "08"
+    render_smoke_test "$jaeger_name" "false" "08"
 fi

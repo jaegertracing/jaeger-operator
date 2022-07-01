@@ -2,13 +2,19 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+if [ "$IS_OPENSHIFT"="true" ]; then
+    is_secured="true"
+else
+    is_secured="false"
+fi
+
 start_test "es-from-aio-to-production"
 jaeger_name="my-jaeger"
 render_install_jaeger "$jaeger_name" "allInOne" "00"
-render_smoke_test "$jaeger_name" "allInOne" "01"
+render_smoke_test "$jaeger_name" "$is_secured" "01"
 render_install_elasticsearch "02"
 render_install_jaeger "$jaeger_name" "production" "03"
-render_smoke_test "$jaeger_name" "production" "04"
+render_smoke_test "$jaeger_name" "$is_secured" "04"
 
 
 
@@ -32,7 +38,7 @@ else
     $YQ e -i '.spec.replicas=2' ./01-assert.yaml
     $YQ e -i '.status.readyReplicas=2' ./01-assert.yaml
 
-    render_smoke_test "$jaeger_name" "production" "03"
+    render_smoke_test "$jaeger_name" "$is_secured" "03"
 fi
 
 
@@ -142,7 +148,7 @@ if [ "$IS_OPENSHIFT" = true ]; then
     jaeger_name="auto-provisioned"
 
     render_assert_kafka "true" "$jaeger_name" "00"
-    render_smoke_test "$jaeger_name" "production" "03"
+    render_smoke_test "$jaeger_name" "true" "03"
 else
     skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi
