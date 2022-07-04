@@ -4,4 +4,4 @@ kind: Deployment
 metadata:
   name: simple-prod-collector
 status:
-  readyReplicas: 5
+  readyReplicas: 3
