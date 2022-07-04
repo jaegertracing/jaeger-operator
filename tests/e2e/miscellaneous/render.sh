@@ -53,14 +53,20 @@ render_install_tracegen "$jaeger_name" "02"
 function generate_otlp_e2e_tests() {
     test_protocol=$1
 
+    if [ "$IS_OPENSHIFT" = "true" ]; then
+        is_secured="true"
+    else
+        is_secured="false"
+    fi
+
     start_test "collector-otlp-allinone-$test_protocol"
     render_install_jaeger "my-jaeger" "allInOne" "00"
-    render_otlp_smoke_test "my-jaeger" "$test_protocol" "allInOne" "01"
+    render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "01"
 
     start_test "collector-otlp-production-$test_protocol"
     render_install_elasticsearch "00"
     render_install_jaeger "my-jaeger" "production" "01"
-    render_otlp_smoke_test "my-jaeger" "$test_protocol" "production" "02"
+    render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "02"
 }
 
 generate_otlp_e2e_tests "http"

@@ -4,9 +4,6 @@ metadata:
   name: simple-streaming
 spec:
   strategy: streaming
-  ingress:
-    enabled: true
-    security: "none"
   collector:
     options:
       kafka:

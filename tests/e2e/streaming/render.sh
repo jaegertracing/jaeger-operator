@@ -2,17 +2,24 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+if [ $IS_OPENSHIFT= true ]; then
+    is_secured="true"
+else
+    is_secured="false"
+fi
+
+
 start_test "streaming-simple"
 render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "01"
 JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
-render_smoke_test "simple-streaming" "allInOne" "05"
+render_smoke_test "simple-streaming" "$is_secured" "05"
 
 
 start_test "streaming-with-tls"
 render_install_kafka "my-cluster" "00"
 render_install_elasticsearch "03"
-render_smoke_test "tls-streaming" "allInOne" "05"
+render_smoke_test "tls-streaming" "$is_secured" "05"
 
 
 
@@ -26,7 +33,7 @@ fi
 
 render_install_elasticsearch "01"
 render_assert_kafka "true" "$jaeger_name" "03"
-render_smoke_test "$jaeger_name" "allInOne" "07"
+render_smoke_test "$jaeger_name" "$is_secured" "07"
 
 
 
@@ -53,4 +60,4 @@ render_assert_kafka "true" "$jaeger_name" "03"
 
 # Create the tracegen deployment
 # Deploy Tracegen instance to generate load in the Jaeger collector
-render_install_tracegen "$jaeger_name" "06"
+render_install_tracegen "$jaeger_name" "4" "06"

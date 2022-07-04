@@ -2,20 +2,27 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+if [ $IS_OPENSHIFT= true ]; then
+    is_secured="true"
+else
+    is_secured="false"
+fi
+
+
 start_test "es-from-aio-to-production"
 jaeger_name="my-jaeger"
 render_install_jaeger "$jaeger_name" "allInOne" "00"
-render_smoke_test "$jaeger_name" "allInOne" "01"
+render_smoke_test "$jaeger_name" "$is_secured" "01"
 render_install_elasticsearch "02"
 render_install_jaeger "$jaeger_name" "production" "03"
-render_smoke_test "$jaeger_name" "production" "04"
+render_smoke_test "$jaeger_name" "$is_secured" "04"
 
 
 
 start_test "es-increasing-replicas"
 jaeger_name="simple-prod"
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     # For OpenShift, we want to test changes in the Elasticsearch instances
     # autoprovisioned by the Elasticsearch OpenShift Operator
     jaeger_deployment_mode="production_autoprovisioned"
@@ -35,15 +42,14 @@ cp ./01-assert.yaml ./02-assert.yaml
 $YQ e -i '.spec.replicas=2' ./02-assert.yaml
 $YQ e -i '.status.readyReplicas=2' ./02-assert.yaml
 
-render_smoke_test "$jaeger_name" "production" "03"
+render_smoke_test "$jaeger_name" "$is_secured" "03"
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     # Increase the number of nodes for autoprovisioned ES
     cp ./02-install.yaml ./04-install.yaml
     $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./04-install.yaml
     $GOMPLATE -f ./openshift-check-es-nodes.yaml.template -o ./05-check-es-nodes.yaml
 fi
-
 
 
 start_test "es-index-cleaner"
@@ -131,7 +137,7 @@ render_check_indices "false" "'--name', 'jaeger-span-000002'," "05" "11"
 render_check_indices "false" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
 
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
     start_test "es-spark-dependencies"
@@ -146,12 +152,12 @@ else
 fi
 
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     start_test "es-streaming-autoprovisioned"
     jaeger_name="auto-provisioned"
 
     render_assert_kafka "true" "$jaeger_name" "00"
-    render_smoke_test "$jaeger_name" "allInOne" "03"
+    render_smoke_test "$jaeger_name" "true" "03"
 else
     skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi
