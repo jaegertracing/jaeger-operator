@@ -40,7 +40,7 @@ else
     # Deploy Jaeger in production mode
     jaeger_name="jaeger-test"
     render_install_elasticsearch "03"
-    render_install_jaeger "$jaeger_name" "false" "04"
+    render_install_jaeger "$jaeger_name" "production" "04"
 
     # Run smoke test
     render_smoke_test "$jaeger_name" "false" "05"
