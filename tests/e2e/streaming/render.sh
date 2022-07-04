@@ -60,4 +60,4 @@ render_assert_kafka "true" "$jaeger_name" "03"
 
 # Create the tracegen deployment
 # Deploy Tracegen instance to generate load in the Jaeger collector
-render_install_tracegen "$jaeger_name" "4" "06"
+render_install_tracegen "$jaeger_name" "06"
