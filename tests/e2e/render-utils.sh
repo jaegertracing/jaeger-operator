@@ -16,33 +16,33 @@ source $ROOT_DIR/hack/common.sh
 ###############################################################################
 
 # Render a smoke test.
-#   render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>
+#   render_smoke_test <jaeger_instance_name> <is_secured> <test_step>
 #
 # Example:
-#   render_smoke_test "my-jaeger" "production" "01"
+#   render_smoke_test "my-jaeger" "true" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
-# will be run against the Jaeger instance called `my-jaeger`.
-# Accepted values for <deploy_mode>:
-#   * allInOne: all in one deployment.
-#   * production: production using Elasticsearch.
+# will be run against the Jaeger instance called `my-jaeger`. The query service
+# is using security.
 function render_smoke_test() {
     if [ "$#" -ne 3 ]; then
-        error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>"
+        error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <is_secured> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    deployment_strategy=$2
+    is_secured=$2
     test_step=$3
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/smoke-test.yaml.template"
-    else
+    elif [ $is_secured = false ]; then
         protocol="http://"
         query_port=":16686"
         template="$TEMPLATES_DIR/smoke-test.yaml.template"
+    else
+        error "$is_secured value is invalid for render_smoke_test. Only true|false accepted"
     fi
 
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
@@ -58,31 +58,28 @@ function render_smoke_test() {
 }
 
 # Render a smoke test using an OTLP client.
-#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>
+#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>
 #
 # Example:
-#   render_otlp_smoke_test "my-jaeger" "http" "production" "01"
+#   render_otlp_smoke_test "my-jaeger" "http" "true" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
 # will be run against the Jaeger instance called `my-jaeger`. It will use HTTP to
 # report the traces.
 # Accepted values for <protocol>:
 #   * http: use HTTP to report the traces
 #   * grpc: use GRPC to report the traces
-# Accepted values for <deploy_mode>:
-#   * allInOne: all in one deployment.
-#   * production: production using Elasticsearch.
 function render_otlp_smoke_test() {
     if [ "$#" -ne 4 ]; then
-        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>"
+        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>"
         exit 1
     fi
 
     jaeger=$1
     reporting_protocol=$2
-    deployment_strategy=$3
+    is_secured=$3
     test_step=$4
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
@@ -245,7 +242,7 @@ function render_install_elasticsearch() {
 
     test_step=$1
 
-    if [ "$IS_OPENSHIFT" = true ]; then
+    if [ $IS_OPENSHIFT = true ]; then
         template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
         $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
         $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
@@ -390,10 +387,14 @@ function render_smoke_test_example() {
 
     export jaeger_name
     jaeger_name=$(get_jaeger_name $deployment_file)
-    local jaeger_strategy
-    jaeger_strategy=$(get_jaeger_strategy $deployment_file)
 
-    render_smoke_test $jaeger_name $jaeger_strategy $test_step
+    if [ "$IS_OPENSHIFT" = true  ]; then
+        is_secured="true"
+    else
+        is_secured="false"
+    fi
+
+    render_smoke_test "$jaeger_name" "$is_secured" "$test_step"
 }
 
 
@@ -460,13 +461,13 @@ function render_assert_kafka(){
     CLUSTER_NAME=$cluster_name \
         REPLICAS=$replicas \
         $GOMPLATE \
-        -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template \
+        -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template \
         -o ./$test_step-assert.yaml
     CLUSTER_NAME=$cluster_name \
         REPLICAS=$replicas \
         $GOMPLATE \
-        -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template \
-        -o ./0$(expr $test_step + 1 )-assert.yaml
+        -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template \
+        -o ./$(expr $test_step + 1 )-assert.yaml
     CLUSTER_NAME=$cluster_name \
         $GOMPLATE \
         -f $TEMPLATES_DIR/assert-entity-operator.yaml.template \

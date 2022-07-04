@@ -9,6 +9,3 @@ spec:
     options:
       es:
         server-urls: http://elasticsearch:9200
-  ingress:
-    enabled: true
-    security: "none"
