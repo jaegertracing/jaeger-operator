@@ -33,11 +33,11 @@ function render_smoke_test() {
     is_secured=$2
     test_step=$3
 
-    if [ "$is_secured"="true" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/smoke-test.yaml.template"
-    elif [ "$is_secured"="false" ]; then
+    elif [ $is_secured = false ]; then
         protocol="http://"
         query_port=":16686"
         template="$TEMPLATES_DIR/smoke-test.yaml.template"
@@ -79,7 +79,7 @@ function render_otlp_smoke_test() {
     is_secured=$3
     test_step=$4
 
-    if [ "$is_secured"="true" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
@@ -242,7 +242,7 @@ function render_install_elasticsearch() {
 
     test_step=$1
 
-    if [ "$IS_OPENSHIFT" = true ]; then
+    if [ $IS_OPENSHIFT = true ]; then
         template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
         $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
         $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
@@ -388,7 +388,7 @@ function render_smoke_test_example() {
     export jaeger_name
     jaeger_name=$(get_jaeger_name $deployment_file)
 
-    if [ "$IS_OPENSHIFT"="true" ]; then
+    if [ "$IS_OPENSHIFT" = true  ]; then
         is_secured="true"
     else
         is_secured="false"

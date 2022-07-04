@@ -2,11 +2,12 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-if [ "$IS_OPENSHIFT"="true" ]; then
+if [ $IS_OPENSHIFT= true ]; then
     is_secured="true"
 else
     is_secured="false"
 fi
+
 
 start_test "es-from-aio-to-production"
 jaeger_name="my-jaeger"
@@ -21,7 +22,7 @@ render_smoke_test "$jaeger_name" "$is_secured" "04"
 start_test "es-increasing-replicas"
 jaeger_name="simple-prod"
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     # For OpenShift, we want to test changes in the Elasticsearch instances
     # autoprovisioned by the Elasticsearch OpenShift Operator
     jaeger_deployment_mode="production_autoprovisioned"
@@ -43,7 +44,7 @@ $YQ e -i '.status.readyReplicas=2' ./02-assert.yaml
 
 render_smoke_test "$jaeger_name" "$is_secured" "03"
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     # Increase the number of nodes for autoprovisioned ES
     cp ./02-install.yaml ./04-install.yaml
     $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./04-install.yaml
@@ -136,7 +137,7 @@ render_check_indices "false" "'--name', 'jaeger-span-000002'," "05" "11"
 render_check_indices "false" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
 
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
     start_test "es-spark-dependencies"
@@ -151,7 +152,7 @@ else
 fi
 
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     start_test "es-streaming-autoprovisioned"
     jaeger_name="auto-provisioned"
 

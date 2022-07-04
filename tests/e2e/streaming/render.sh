@@ -2,11 +2,12 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-if [ "$IS_OPENSHIFT"="true" ]; then
+if [ $IS_OPENSHIFT= true ]; then
     is_secured="true"
 else
     is_secured="false"
 fi
+
 
 start_test "streaming-simple"
 render_install_kafka "my-cluster" "00"
