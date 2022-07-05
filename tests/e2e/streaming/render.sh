@@ -53,7 +53,7 @@ $YQ e -i '.spec.ingester.resources.requests.memory="500m"' ./02-install.yaml
 # Enable autoscale
 $YQ e -i '.spec.ingester.autoscale=true' ./02-install.yaml
 $YQ e -i '.spec.ingester.minReplicas=1' ./02-install.yaml
-$YQ e -i '.spec.ingester.maxReplicas=3' ./02-install.yaml
+$YQ e -i '.spec.ingester.maxReplicas=2' ./02-install.yaml
 
 # Assert the autoprovisioned Kafka deployment
 render_assert_kafka "true" "$jaeger_name" "03"
