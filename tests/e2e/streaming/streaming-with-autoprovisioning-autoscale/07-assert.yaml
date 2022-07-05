@@ -4,4 +4,4 @@ kind: Deployment
 metadata:
   name: auto-provisioned-ingester
 status:
-  readyReplicas: 1
+  readyReplicas: 3
