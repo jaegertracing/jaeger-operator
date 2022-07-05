@@ -29,6 +29,8 @@ load-operator-image: docker kind
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Loading Jager Operator image in KIND cluster
 	$(VECHO)$(KIND) load docker-image $(IMG)
+else ifeq ($(JAEGER_OLM),false)
+	$(MAKE) push
 endif
 
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
