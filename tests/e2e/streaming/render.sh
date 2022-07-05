@@ -53,11 +53,11 @@ $YQ e -i '.spec.ingester.resources.requests.memory="500m"' ./02-install.yaml
 # Enable autoscale
 $YQ e -i '.spec.ingester.autoscale=true' ./02-install.yaml
 $YQ e -i '.spec.ingester.minReplicas=1' ./02-install.yaml
-$YQ e -i '.spec.ingester.maxReplicas=5' ./02-install.yaml
+$YQ e -i '.spec.ingester.maxReplicas=3' ./02-install.yaml
 
 # Assert the autoprovisioned Kafka deployment
 render_assert_kafka "true" "$jaeger_name" "03"
 
 # Create the tracegen deployment
 # Deploy Tracegen instance to generate load in the Jaeger collector
-render_install_tracegen "$jaeger_name" "4" "06"
+render_install_tracegen "$jaeger_name" "06"
