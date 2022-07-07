@@ -31,6 +31,12 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
+start_test "examples-collector-with-priority-class"
+example_name="collector-with-priority-class"
+render_install_example "$example_name" "00"
+render_smoke_test_example "$example_name" "01"
+
+
 start_test "examples-service-types"
 example_name="service-types"
 render_install_example "$example_name" "00"
