@@ -10,6 +10,13 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
+start_test "examples-agent-with-priority-class"
+example_name="agent-with-priority-class"
+prepare_daemonset "00"
+render_install_example "$example_name" "01"
+render_smoke_test_example "$example_name" "02"
+
+
 start_test "examples-business-application-injected-sidecar"
 example_name="simplest"
 cp $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./00-install.yaml
