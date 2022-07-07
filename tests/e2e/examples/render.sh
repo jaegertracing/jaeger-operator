@@ -42,6 +42,7 @@ example_name="simple-prod-with-volumes"
 render_install_elasticsearch "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
+$GOMPLATE -f ./03-check-volume.yaml.template -o 03-check-volume.yaml
 
 
 start_test "examples-simplest"

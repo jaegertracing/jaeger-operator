@@ -381,17 +381,15 @@ function render_smoke_test_example() {
     fi
 
     example_name=$1
-    test_step=$1
+    test_step=$2
 
     deployment_file=$EXAMPLES_DIR/$example_name.yaml
 
-    export jaeger_name
     jaeger_name=$(get_jaeger_name $deployment_file)
+    is_secured="false"
 
     if [ "$IS_OPENSHIFT" = true  ]; then
         is_secured="true"
-    else
-        is_secured="false"
     fi
 
     render_smoke_test "$jaeger_name" "$is_secured" "$test_step"
