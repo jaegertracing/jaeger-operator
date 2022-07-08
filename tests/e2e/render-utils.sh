@@ -361,6 +361,8 @@ function render_install_example() {
         $GOMPLATE -f $TEMPLATES_DIR/allinone-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     elif [ $jaeger_strategy = "production" ]; then
         $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ $jaeger_strategy = "streaming" ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "render_install_example: No strategy declared in the example $example_name. Impossible to determine the assert file to use"
         return 1
@@ -393,6 +395,30 @@ function render_smoke_test_example() {
     fi
 
     render_smoke_test "$jaeger_name" "$is_secured" "$test_step"
+}
+
+
+
+# Render a the Kafka Operator installation
+#   render_install_kafka_operator <test_step>
+#
+# Example:
+#   render_install_kafka_opreator "01"
+# Generates the `01-install.yaml` and `01-assert.yaml` files to install the Kafka
+# operator and ensure it is deployed properly.
+# Note: the Kafka Operator will not be installed if KAFKA_OLM is `true`.
+function render_install_kafka_operator(){
+    if [ "$#" -ne 1 ]; then
+        error "Wrong number of parameters used for render_install_kafka_operator. Usage: render_install_kafka_operator <test_step>"
+        exit 1
+    fi
+
+    test_step=$1
+
+    if [ $KAFKA_OLM != true ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-assert.yaml.template -o ./$test_step-assert.yaml
+    fi
 }
 
 
@@ -560,7 +586,7 @@ function get_jaeger_name() {
 
     deployment_file=$1
 
-    jaeger_name=$($YQ e '.metadata.name' $deployment_file)
+    jaeger_name=$($YQ e '. | select(.kind == "Jaeger").metadata.name' $deployment_file)
 
     if [ -z "$jaeger_name" ]; then
         error "No name for Jaeger deployment in file $deployment_file"
@@ -587,14 +613,14 @@ function get_jaeger_strategy() {
 
     deployment_file=$1
 
-    strategy=$($YQ e '.spec.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.strategy' $deployment_file)
 
-    if [ "$strategy" != "null" ]; then
+    if [ "$strategy" = "production" ] || [ "$strategy" = "streaming" ]; then
         echo $strategy
         return 0
     fi
 
-    strategy=$($YQ e '.spec.agent.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.agent.strategy' $deployment_file)
     if [ "$strategy" = "null" ]; then
         echo "allInOne"
         return 0
