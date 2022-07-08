@@ -41,7 +41,7 @@ $YQ e -i '.spec.collector.resources.requests.memory="300m"' 01-install.yaml
 # Enable autoscale
 $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
-$YQ e -i '.spec.collector.maxReplicas=3' 01-install.yaml
+$YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
 # Deploy Tracegen instance to generate load in the Jaeger collector
 render_install_tracegen "$jaeger_name" "02"
