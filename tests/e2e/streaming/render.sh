@@ -22,20 +22,6 @@ render_install_elasticsearch "upstream" "03"
 render_smoke_test "tls-streaming" "$is_secured" "05"
 
 
-start_test "streaming-with-autoprovisioning"
-jaeger_name="auto-provisioned"
-
-if [ $IS_OPENSHIFT = true ]; then
-    # Remove the installation of the operator
-    rm ./00-install.yaml ./00-assert.yaml
-fi
-
-render_install_elasticsearch "upstream" "01"
-render_assert_kafka "true" "$jaeger_name" "03"
-render_smoke_test "$jaeger_name" "$is_secured" "07"
-
-
-
 start_test "streaming-with-autoprovisioning-autoscale"
 if [ $IS_OPENSHIFT = true ]; then
     # Remove the installation of the operator
