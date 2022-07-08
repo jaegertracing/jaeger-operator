@@ -10,6 +10,12 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
+start_test "examples-all-in-one-with-options"
+example_name="all-in-one-with-options"
+render_install_example "$example_name" "00"
+render_smoke_test_example "$example_name" "01"
+
+
 start_test "examples-auto-provision-kafka"
 example_name="auto-provision-kafka"
 render_install_elasticsearch "00"
