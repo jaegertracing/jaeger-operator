@@ -18,7 +18,7 @@ render_smoke_test_example "$example_name" "01"
 
 start_test "examples-auto-provision-kafka"
 example_name="auto-provision-kafka"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_kafka_operator "01"
 render_install_example "$example_name" "02"
 # The Kafka cluster will be started before the Jaeger components. So, we do the
