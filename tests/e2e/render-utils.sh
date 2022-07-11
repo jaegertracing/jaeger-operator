@@ -16,33 +16,33 @@ source $ROOT_DIR/hack/common.sh
 ###############################################################################
 
 # Render a smoke test.
-#   render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>
+#   render_smoke_test <jaeger_instance_name> <is_secured> <test_step>
 #
 # Example:
-#   render_smoke_test "my-jaeger" "production" "01"
+#   render_smoke_test "my-jaeger" "true" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
-# will be run against the Jaeger instance called `my-jaeger`.
-# Accepted values for <deploy_mode>:
-#   * allInOne: all in one deployment.
-#   * production: production using Elasticsearch.
+# will be run against the Jaeger instance called `my-jaeger`. The query service
+# is using security.
 function render_smoke_test() {
     if [ "$#" -ne 3 ]; then
-        error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <deployment_strategy> <test_step>"
+        error "Wrong number of parameters used for render_smoke_test. Usage: render_smoke_test <jaeger_instance_name> <is_secured> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    deployment_strategy=$2
+    is_secured=$2
     test_step=$3
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/smoke-test.yaml.template"
-    else
+    elif [ $is_secured = false ]; then
         protocol="http://"
         query_port=":16686"
         template="$TEMPLATES_DIR/smoke-test.yaml.template"
+    else
+        error "$is_secured value is invalid for render_smoke_test. Only true|false accepted"
     fi
 
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
@@ -58,31 +58,28 @@ function render_smoke_test() {
 }
 
 # Render a smoke test using an OTLP client.
-#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>
+#   render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>
 #
 # Example:
-#   render_otlp_smoke_test "my-jaeger" "http" "production" "01"
+#   render_otlp_smoke_test "my-jaeger" "http" "true" "01"
 # Generates the `01-smoke-test.yaml` and `01-assert.yaml` files. A smoke test
 # will be run against the Jaeger instance called `my-jaeger`. It will use HTTP to
 # report the traces.
 # Accepted values for <protocol>:
 #   * http: use HTTP to report the traces
 #   * grpc: use GRPC to report the traces
-# Accepted values for <deploy_mode>:
-#   * allInOne: all in one deployment.
-#   * production: production using Elasticsearch.
 function render_otlp_smoke_test() {
     if [ "$#" -ne 4 ]; then
-        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <deployment_strategy> <test_step>"
+        error "Wrong number of parameters used for render_otlp_smoke_test. Usage: render_otlp_smoke_test <jaeger_instance_name> <protocol> <is_secured> <test_step>"
         exit 1
     fi
 
     jaeger=$1
     reporting_protocol=$2
-    deployment_strategy=$3
+    is_secured=$3
     test_step=$4
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ $is_secured = true ]; then
         protocol="https://"
         query_port=""
         template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
@@ -245,7 +242,7 @@ function render_install_elasticsearch() {
 
     test_step=$1
 
-    if [ "$IS_OPENSHIFT" = true ]; then
+    if [ $IS_OPENSHIFT = true ]; then
         template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
         $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
         $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
@@ -364,6 +361,8 @@ function render_install_example() {
         $GOMPLATE -f $TEMPLATES_DIR/allinone-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     elif [ $jaeger_strategy = "production" ]; then
         $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ $jaeger_strategy = "streaming" ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "render_install_example: No strategy declared in the example $example_name. Impossible to determine the assert file to use"
         return 1
@@ -390,15 +389,43 @@ function render_smoke_test_example() {
 
     export jaeger_name
     jaeger_name=$(get_jaeger_name $deployment_file)
-    local jaeger_strategy
-    jaeger_strategy=$(get_jaeger_strategy $deployment_file)
 
-    render_smoke_test $jaeger_name $jaeger_strategy $test_step
+    if [ "$IS_OPENSHIFT" = true  ]; then
+        is_secured="true"
+    else
+        is_secured="false"
+    fi
+
+    render_smoke_test "$jaeger_name" "$is_secured" "$test_step"
+}
+
+
+
+# Render a the Kafka Operator installation
+#   render_install_kafka_operator <test_step>
+#
+# Example:
+#   render_install_kafka_opreator "01"
+# Generates the `01-install.yaml` and `01-assert.yaml` files to install the Kafka
+# operator and ensure it is deployed properly.
+# Note: the Kafka Operator will not be installed if KAFKA_OLM is `true`.
+function render_install_kafka_operator(){
+    if [ "$#" -ne 1 ]; then
+        error "Wrong number of parameters used for render_install_kafka_operator. Usage: render_install_kafka_operator <test_step>"
+        exit 1
+    fi
+
+    test_step=$1
+
+    if [ $KAFKA_OLM != true ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-assert.yaml.template -o ./$test_step-assert.yaml
+    fi
 }
 
 
 # Render a Kafka installation and the files associated to assert all the components.
-#   render_install_kafka <cluster_name> <replicas> <test_step>
+#   render_install_kafka <cluster_name> <test_step>
 #
 # Note: 3 assert files are generated, whose names will be $test-step, $test-step+1
 # and $test-step+2. If only one file is generated for the 3 deployments to assert,
@@ -406,27 +433,71 @@ function render_smoke_test_example() {
 # different file, we have 3 * timeout.
 #
 # Example:
-#   render_install_kafka "my-cluster" "1" "01"
+#   render_install_kafka "my-cluster" "01"
 # Generates the `01-install.yaml`, `01-assert.yaml`, `02-assert.yaml` and
 # `03-assert.yaml` files, installing Kafka and asserting each one of its components.
 function render_install_kafka() {
-    if [ "$#" -ne 3 ]; then
-        error "Wrong number of parameters used for render_install_kafka. Usage: render_install_kafka <cluster_name> <replicas> <test_step>"
+    if [ "$#" -ne 2 ]; then
+        error "Wrong number of parameters used for render_install_kafka. Usage: render_install_kafka <cluster_name> <test_step>"
         exit 1
     fi
 
     cluster_name=$1
-    replicas=$2
+    test_step=$2
+
+    CLUSTER_NAME=$cluster_name $GOMPLATE -f $TEMPLATES_DIR/kafka-install.yaml.template -o ./$test_step-install.yaml
+
+    render_assert_kafka "false" "$cluster_name" "$test_step"
+}
+
+# Render the Kafka cluster assertion files
+#   render_install_kafka <autoprovisioned> <cluster_name> <test_step>
+#
+# Note: 3 assert files are generated, whose names will be $test-step, $test-step+1
+# and $test-step+2. If only one file is generated for the 3 deployments to assert,
+# the timeout specified in `kuttl-test.yaml` will be used. If each assert is a
+# different file, we have 3 * timeout.
+#
+# Example:
+#   render_install_kafka "false" "my-cluster" "01"
+# Generates the `01-install.yaml`, `01-assert.yaml`, `02-assert.yaml` and
+# `03-assert.yaml` files, installing Kafka and asserting each one of its components.
+# The Kafka instance is not autogenerated.
+function render_assert_kafka(){
+    if [ "$#" -ne 3 ]; then
+        error "Wrong number of parameters used for render_assert_kafka. Usage: render_assert_kafka <autoprovisioned> <cluster_name> <test_step>"
+        exit 1
+    fi
+
+    autoprovisioned=$1
+    cluster_name=$2
     test_step=$3
 
-    export CLUSTER_NAME=$cluster_name
+    # This configuration should only be enabled for testing. When it is enabled,
+    # the Jaeger Operator will ask the Kafka Operator to deploy only 1 replica
+    # of the Kafka cluster and Zookeeper
+    if [ "$autoprovisioned" = "true" ] && is_kafka_minimal_enabled; then
+        replicas=1
+    elif [ "$autoprovisioned" = "true" ]; then
+        replicas=3
+    elif [ "$autoprovisioned" = "false" ]; then
+        replicas=1
+    fi
 
-    $GOMPLATE -f $TEMPLATES_DIR/kafka-install.yaml.template -o ./$test_step-install.yaml
-    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./$test_step-assert.yaml
-    REPLICAS=$replicas $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./0$(expr $test_step + 1 )-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./0$(expr $test_step + 2 )-assert.yaml
-
-    unset CLUSTER_NAME
+    CLUSTER_NAME=$cluster_name \
+        REPLICAS=$replicas \
+        $GOMPLATE \
+        -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template \
+        -o ./$test_step-assert.yaml
+    CLUSTER_NAME=$cluster_name \
+        REPLICAS=$replicas \
+        $GOMPLATE \
+        -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template \
+        -o ./$(expr $test_step + 1 )-assert.yaml
+    CLUSTER_NAME=$cluster_name \
+        $GOMPLATE \
+        -f $TEMPLATES_DIR/assert-entity-operator.yaml.template \
+        -o ./0$(expr $test_step + 2 )-assert.yaml
 }
 
 
@@ -479,21 +550,23 @@ function render_find_service() {
 
 
 # Render a tracegen deployment.
-#   render_install_tracegen <jaeger_name> <replicas> <test_step>
+#   render_install_tracegen <jaeger_name> <test_step>
 #
 # Example:
-#   render_install_tracegen "prod" "1" "00"
+#   render_install_tracegen "prod" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. It will deploy
-# 1 replica of the tracegen deployment
+# 1 replica of the tracegen deployment.
 function render_install_tracegen() {
-    if [ "$#" -ne 3 ]; then
-        error "Wrong number of parameters used for render_install_tracegen. Usage: render_install_tracegen <jaeger_name> <replicas> <test_step>"
+    if [ "$#" -ne 2 ]; then
+        error "Wrong number of parameters used for render_install_tracegen. Usage: render_install_tracegen <jaeger_name> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    replicas=$2
-    step=$3
+    step=$2
+
+    # We detected this value is good enough to make the operator scale
+    replicas=4
 
     $GOMPLATE -f $EXAMPLES_DIR/tracegen.yaml -o ./$step-install.yaml
     $YQ e -i ".spec.replicas=$replicas" ./$step-install.yaml
@@ -515,7 +588,7 @@ function get_jaeger_name() {
 
     deployment_file=$1
 
-    jaeger_name=$($YQ e '.metadata.name' $deployment_file)
+    jaeger_name=$($YQ e '. | select(.kind == "Jaeger").metadata.name' $deployment_file)
 
     if [ -z "$jaeger_name" ]; then
         error "No name for Jaeger deployment in file $deployment_file"
@@ -542,14 +615,14 @@ function get_jaeger_strategy() {
 
     deployment_file=$1
 
-    strategy=$($YQ e '.spec.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.strategy' $deployment_file)
 
-    if [ "$strategy" != "null" ]; then
+    if [ "$strategy" = "production" ] || [ "$strategy" = "streaming" ]; then
         echo $strategy
         return 0
     fi
 
-    strategy=$($YQ e '.spec.agent.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.agent.strategy' $deployment_file)
     if [ "$strategy" = "null" ]; then
         echo "allInOne"
         return 0
@@ -694,18 +767,18 @@ function skip_test(){
 }
 
 function version_gt() {
-    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" != "$1";
+    test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1";
 }
 
 function version_ge() {
-    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" == "$1";
+    test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1";
 }
 
 function version_le(){
-    test "$(echo "$@" | tr " " "n" | sort -V | head -n 1)" == "$1";
+    test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1";
 }
 function version_lt() {
-    test "$(echo "$@" | tr " " "n" | sort -rV | head -n 1)" != "$1";
+    test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1";
 }
 
 
@@ -769,10 +842,12 @@ export SERVICE_ACCOUNT_NAME="e2e-test"
 PROGRAMS_FOLDER=../../../..
 
 # CMD utils
-export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
 export ASSERT_HTTP_CODE_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/assert-jaeger-http-code.sh
+export CHECK_JAEGER_VERSION_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/check-jaeger-version.sh
+export CHECK_JAEGER_OPERATOR_VERSION_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/check-jaeger-operator-version.sh
 export GET_TOKEN_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/get-token.sh
 export TEST_UI_CONFIG_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/uiconfig/main.go
+export WAIT_CRONJOB_PROGRAM=$PROGRAMS_FOLDER/cmd-utils/wait-cronjob/main.go
 
 # Assert jobs
 export QUERY_PROGRAM=$PROGRAMS_FOLDER/assert-jobs/query/main.go

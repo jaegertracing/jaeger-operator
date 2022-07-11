@@ -10,6 +10,24 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
+start_test "examples-all-in-one-with-options"
+example_name="all-in-one-with-options"
+render_install_example "$example_name" "00"
+render_smoke_test_example "$example_name" "01"
+
+
+start_test "examples-auto-provision-kafka"
+example_name="auto-provision-kafka"
+render_install_elasticsearch "00"
+render_install_kafka_operator "01"
+render_install_example "$example_name" "02"
+# The Kafka cluster will be started before the Jaeger components. So, we do the
+# Jaeger assertion later and the Kafka cluster assertion now
+mv ./02-assert.yaml ./05-assert.yaml
+render_assert_kafka "true" "$example_name" "02"
+render_smoke_test_example "$example_name" "06"
+
+
 start_test "examples-business-application-injected-sidecar"
 example_name="simplest"
 cp $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./00-install.yaml

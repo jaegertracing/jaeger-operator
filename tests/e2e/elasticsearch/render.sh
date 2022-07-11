@@ -2,29 +2,54 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-if [ "$IS_OPENSHIFT" != true ]; then
-    skip_test "es-increasing-replicas" "Test supported only in OpenShift"
+if [ $IS_OPENSHIFT= true ]; then
+    is_secured="true"
 else
-    jaeger_name="simple-prod"
-    start_test "es-increasing-replicas"
-
-    # Install a Jaeger instance with autoprovisioned ES
-    render_install_jaeger "$jaeger_name" "production_autoprovisioned" "00"
-
-    # Increase the number of replicas for the collector, query and ES
-    cp ./00-install.yaml ./01-install.yaml
-    $YQ e -i '.spec.collector.replicas=2' ./01-install.yaml
-    $YQ e -i '.spec.query.replicas=2' ./01-install.yaml
-    $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./01-install.yaml
-
-    # Check everything was scaled as expected
-    cp ./00-assert.yaml ./01-assert.yaml
-    $YQ e -i '.spec.replicas=2' ./01-assert.yaml
-    $YQ e -i '.status.readyReplicas=2' ./01-assert.yaml
-
-    render_smoke_test "$jaeger_name" "production" "03"
+    is_secured="false"
 fi
 
+
+start_test "es-from-aio-to-production"
+jaeger_name="my-jaeger"
+render_install_jaeger "$jaeger_name" "allInOne" "00"
+render_smoke_test "$jaeger_name" "$is_secured" "01"
+render_install_elasticsearch "02"
+render_install_jaeger "$jaeger_name" "production" "03"
+render_smoke_test "$jaeger_name" "$is_secured" "04"
+
+
+
+start_test "es-increasing-replicas"
+jaeger_name="simple-prod"
+
+if [ $IS_OPENSHIFT = true ]; then
+    # For OpenShift, we want to test changes in the Elasticsearch instances
+    # autoprovisioned by the Elasticsearch OpenShift Operator
+    jaeger_deployment_mode="production_autoprovisioned"
+else
+    jaeger_deployment_mode="production"
+    render_install_elasticsearch "00"
+fi
+render_install_jaeger "$jaeger_name" "$jaeger_deployment_mode" "01"
+
+# Increase the number of replicas for the collector and query
+cp ./01-install.yaml ./02-install.yaml
+$YQ e -i '.spec.collector.replicas=2' ./02-install.yaml
+$YQ e -i '.spec.query.replicas=2' ./02-install.yaml
+
+# Check everything was scaled as expected
+cp ./01-assert.yaml ./02-assert.yaml
+$YQ e -i '.spec.replicas=2' ./02-assert.yaml
+$YQ e -i '.status.readyReplicas=2' ./02-assert.yaml
+
+render_smoke_test "$jaeger_name" "$is_secured" "03"
+
+if [ $IS_OPENSHIFT = true ]; then
+    # Increase the number of nodes for autoprovisioned ES
+    cp ./02-install.yaml ./04-install.yaml
+    $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./04-install.yaml
+    $GOMPLATE -f ./openshift-check-es-nodes.yaml.template -o ./05-check-es-nodes.yaml
+fi
 
 
 start_test "es-index-cleaner"
@@ -112,7 +137,7 @@ render_check_indices "false" "'--name', 'jaeger-span-000002'," "05" "11"
 render_check_indices "false" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
 
 
-if [ "$IS_OPENSHIFT" = true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
     start_test "es-spark-dependencies"
@@ -127,23 +152,12 @@ else
 fi
 
 
-if [ "$IS_OPENSHIFT" != true ]; then
-    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
-else
+if [ $IS_OPENSHIFT = true ]; then
     start_test "es-streaming-autoprovisioned"
+    jaeger_name="auto-provisioned"
 
-    export CLUSTER_NAME="auto-provisioned"
-
-    export REPLICAS
-    if is_kafka_minimal_enabled; then
-        REPLICAS=1
-    else
-        REPLICAS=3
-    fi
-
-    $GOMPLATE -f $TEMPLATES_DIR/assert-zookeeper-cluster.yaml.template -o ./00-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template -o ./01-assert.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/assert-entity-operator.yaml.template -o ./02-assert.yaml
-
-    render_smoke_test "auto-provisioned" "allInOne" "03"
+    render_assert_kafka "true" "$jaeger_name" "00"
+    render_smoke_test "$jaeger_name" "true" "03"
+else
+    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi

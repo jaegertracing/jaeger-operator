@@ -1,0 +1,4 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "{{ .Env.CHECK_JAEGER_OPERATOR_VERSION_PROGRAM }} observability {{ .Env.EXPECTED_VERSION }}"
