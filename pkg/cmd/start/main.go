@@ -36,6 +36,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
 	cmd.Flags().String("secure-listen-address", "", "")
 	cmd.Flags().String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	cmd.Flags().Int("webhook-bind-port", 9443, "The address webhooks expose.")
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 
