@@ -274,6 +274,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	metricsAddr := fmt.Sprintf("%s:%d", metricsHost, metricsPort)
 	enableLeaderElection := viper.GetBool("leader-elect")
 	probeAddr := viper.GetString("health-probe-bind-address")
+	webhookPort := viper.GetInt("webhook-bind-port")
 
 	opts := zap.Options{
 		Development: true,
@@ -292,7 +293,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	options := ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Port:                   webhookPort,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
