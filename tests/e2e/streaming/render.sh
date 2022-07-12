@@ -10,14 +10,14 @@ fi
 
 start_test "streaming-simple"
 render_install_kafka "my-cluster" "00"
-render_install_elasticsearch "01"
+render_install_elasticsearch "upstream" "01"
 JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
 render_smoke_test "simple-streaming" "$is_secured" "05"
 
 
 start_test "streaming-with-tls"
 render_install_kafka "my-cluster" "00"
-render_install_elasticsearch "03"
+render_install_elasticsearch "upstream" "03"
 render_smoke_test "tls-streaming" "$is_secured" "05"
 
 
@@ -27,7 +27,7 @@ if [ $IS_OPENSHIFT = true ]; then
     rm ./00-install.yaml ./00-assert.yaml
 fi
 
-render_install_elasticsearch "01"
+render_install_elasticsearch "upstream" "01"
 
 jaeger_name="auto-provisioned"
 # Change the resource limits for the autoprovisioned deployment
