@@ -53,10 +53,9 @@ render_install_tracegen "$jaeger_name" "02"
 function generate_otlp_e2e_tests() {
     test_protocol=$1
 
-    if [ "$IS_OPENSHIFT" = "true" ]; then
+    is_secured="false"
+    if [ "$IS_OPENSHIFT" = true ]; then
         is_secured="true"
-    else
-        is_secured="false"
     fi
 
     start_test "collector-otlp-allinone-$test_protocol"
