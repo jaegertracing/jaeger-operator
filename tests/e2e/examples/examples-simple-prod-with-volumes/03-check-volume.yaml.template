@@ -1,0 +1,5 @@
+# Ensure it is possible to access the volume
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "kubectl exec $(kubectl get pods -n $NAMESPACE -l app=jaeger -l app.kubernetes.io/component=collector -o yaml | {{ .Env.YQ }} e '.items[0].metadata.name') -n $NAMESPACE -- ls /usr/share/elasticsearch/data"
