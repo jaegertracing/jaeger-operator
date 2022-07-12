@@ -102,25 +102,25 @@ function render_otlp_smoke_test() {
 }
 
 # Render a reporting spans.
-#   render_report_spans <jaeger_instance_name> <deployment_strategy> <spans> <job_number> <ensure_reported_spans> <test_step>
+#   render_report_spans <jaeger_instance_name> <is_secured> <spans> <job_number> <ensure_reported_spans> <test_step>
 #
 # Example:
-#   render_report_spans "my-jaeger" "production" "10" "01" "true" "02"
+#   render_report_spans "my-jaeger" "true" "10" "01" "true" "02"
 # Generates the `02-report-spans.yaml` and `02-assert.yaml` files, that will
 # start the report-spans-01 job. Report spans to the Jaeger instance. If
 # `ensure_reported_spans` is `true`, the job will check the spans were generated
-# properly.
+# properly. It will use a secure connection.
 # Note: If OpenShift and <ensure_reported_spans> is `true`, other files will be
 # generated during the test execution to get the needed OAuth tokens to query
 # the Jaeger REST API.
 function render_report_spans() {
     if [ "$#" -ne 6 ]; then
-        error "Wrong number of parameters used for render_report_spans. Usage: render_report_spans <jaeger_instance_name> <deployment_strategy>  <spans> <services> <job_number> <ensure_reported_spans> <test_step>"
+        error "Wrong number of parameters used for render_report_spans. Usage: render_report_spans <jaeger_instance_name> <is_secured>  <spans> <services> <job_number> <ensure_reported_spans> <test_step>"
         exit 1
     fi
 
     jaeger=$1
-    deployment_strategy=$2
+    is_secured=$2
     number_of_spans=$3
     job_number=$4
     ensure_reported_spans=$5
@@ -131,7 +131,7 @@ function render_report_spans() {
     export JOB_NUMBER=$job_number
     export DAYS=$number_of_spans
 
-    if [ $IS_OPENSHIFT = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ "$is_secured" = true ]; then
         protocol="https://"
         query_port=""
         template=$TEMPLATES_DIR/openshift/report-spans.yaml.template

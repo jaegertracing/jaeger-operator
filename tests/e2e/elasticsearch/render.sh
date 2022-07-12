@@ -3,7 +3,7 @@
 source $(dirname "$0")/../render-utils.sh
 
 is_secured="false"
-if [ $IS_OPENSHIFT= true ]; then
+if [ $IS_OPENSHIFT = true ]; then
     is_secured="true"
 fi
 
@@ -49,6 +49,7 @@ if [ $IS_OPENSHIFT = true ]; then
     $YQ e -i '.spec.storage.elasticsearch.nodeCount=2' ./04-install.yaml
     $GOMPLATE -f ./openshift-check-es-nodes.yaml.template -o ./05-check-es-nodes.yaml
 fi
+
 
 # Helper function to render the ES index cleaner E2E test using different
 # deployment modes
@@ -230,7 +231,7 @@ if [ $IS_OPENSHIFT = true ]; then
     jaeger_name="auto-provisioned"
 
     render_assert_kafka "true" "$jaeger_name" "00"
-    render_smoke_test "$jaeger_name" "true" "03"
+    render_smoke_test "$jaeger_name" "true" "04"
 else
     skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
 fi
