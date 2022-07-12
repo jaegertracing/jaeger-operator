@@ -21,6 +21,9 @@ start_test "examples-all-in-one-with-options"
 example_name="all-in-one-with-options"
 render_install_example "$example_name" "00"
 render_smoke_test_example "$example_name" "01"
+sed -i "s~16686~16686/jaeger~gi" ./01-smoke-test.yaml
+sed -i "s~https://my-jaeger-query~https://my-jaeger-query/jaeger~gi" ./01-smoke-test.yaml
+
 
 
 start_test "examples-auto-provision-kafka"
@@ -67,6 +70,7 @@ example_name="simple-prod-with-volumes"
 render_install_elasticsearch "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
+$GOMPLATE -f ./03-check-volume.yaml.template -o 03-check-volume.yaml
 
 
 start_test "examples-simplest"
