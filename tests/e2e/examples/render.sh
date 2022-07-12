@@ -28,7 +28,7 @@ sed -i "s~https://my-jaeger-query~https://my-jaeger-query/jaeger~gi" ./01-smoke-
 
 start_test "examples-auto-provision-kafka"
 example_name="auto-provision-kafka"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_kafka_operator "01"
 render_install_example "$example_name" "02"
 # The Kafka cluster will be started before the Jaeger components. So, we do the
@@ -60,14 +60,14 @@ render_smoke_test_example "$example_name" "01"
 
 start_test "examples-simple-prod"
 example_name="simple-prod"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
 start_test "examples-simple-prod-with-volumes"
 example_name="simple-prod-with-volumes"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 $GOMPLATE -f ./03-check-volume.yaml.template -o 03-check-volume.yaml
