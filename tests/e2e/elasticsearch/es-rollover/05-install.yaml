@@ -9,7 +9,6 @@ spec:
       es:
         use-aliases: true
     esRollover:
-      enabled: true
       conditions: "{\"max_docs\": \"20\"}"
       readTTL: 72h
       schedule: "* * * * *"
