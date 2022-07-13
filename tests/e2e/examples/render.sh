@@ -17,13 +17,14 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
-start_test "examples-all-in-one-with-options"
-example_name="all-in-one-with-options"
-render_install_example "$example_name" "00"
-render_smoke_test_example "$example_name" "01"
-sed -i "s~16686~16686/jaeger~gi" ./01-smoke-test.yaml
-sed -i "s~https://my-jaeger-query~https://my-jaeger-query/jaeger~gi" ./01-smoke-test.yaml
-
+if [ $IS_OPENSHIFT != true ]; then
+    start_test "examples-all-in-one-with-options"
+    example_name="all-in-one-with-options"
+    render_install_example "$example_name" "00"
+    render_smoke_test_example "$example_name" "01"
+    sed -i "s~16686~16686/jaeger~gi" ./01-smoke-test.yaml
+    sed -i "s~https://my-jaeger-query~https://my-jaeger-query/jaeger~gi" ./01-smoke-test.yaml
+fi
 
 
 start_test "examples-auto-provision-kafka"
