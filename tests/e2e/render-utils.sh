@@ -43,6 +43,7 @@ function render_smoke_test() {
         template="$TEMPLATES_DIR/smoke-test.yaml.template"
     else
         error "$is_secured value is invalid for render_smoke_test. Only true|false accepted"
+        exit 1
     fi
 
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
@@ -268,6 +269,7 @@ function render_install_elasticsearch() {
         fi
     else
         error "$deploy_mode not recognized as deploy_mode for render_install_elasticsearch"
+        exit 1
     fi
 }
 
@@ -323,6 +325,7 @@ function render_install_jaeger() {
         $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "Used '$deploy_mode' is not a valid value for <deploy_mode>"
+        exit 1
     fi
 }
 
@@ -392,7 +395,7 @@ function render_install_example() {
         $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "render_install_example: No strategy declared in the example $example_name. Impossible to determine the assert file to use"
-        return 1
+        exit 1
     fi
 }
 
