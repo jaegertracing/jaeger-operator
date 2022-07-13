@@ -211,12 +211,16 @@ func writeToFile(dir, file string, value []byte) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+
 	_, err = f.Write(value)
 	if err != nil {
 		// remove the file on failure - it can be correctly created in the next iteration
 		os.RemoveAll(path)
 		return err
 	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+
 	return nil
 }

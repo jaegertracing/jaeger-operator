@@ -46,11 +46,14 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
 	if err := decoder.Decode(&spec); err != nil && err != io.EOF {
+		return nil, err
+	}
+
+	if err := f.Close(); err != nil {
 		return nil, err
 	}
 
@@ -86,8 +89,6 @@ func generate(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	defer out.Close()
-
 	encoder := k8s_json.NewYAMLSerializer(k8s_json.DefaultMetaFactory, nil, nil)
 	for _, obj := range s.All() {
 		// OwnerReferences normally references the CR, but it is not a
@@ -104,6 +105,10 @@ func generate(_ *cobra.Command, _ []string) error {
 		if err := encoder.Encode(obj, out); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	if err := out.Close(); err != nil {
+		return err
 	}
 
 	return nil
