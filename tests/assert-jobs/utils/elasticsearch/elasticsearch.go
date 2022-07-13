@@ -217,6 +217,7 @@ func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]b
 	} else {
 		logrus.Debugln("The request uses secure certificates")
 		tlsConfig := &tls.Config{
+			MinVersion:   tls.VersionTLS12,
 			Certificates: []tls.Certificate{es.Certificate},
 			RootCAs:      es.RootCAs,
 		}
