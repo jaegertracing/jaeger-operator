@@ -34,7 +34,8 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 	}
 
 	inv := inventory.ForConfigMaps(list.Items, desired)
-	for _, d := range inv.Create {
+	for i := range inv.Create {
+		d := inv.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"configMap": d.Name,
 			"namespace": d.Namespace,
@@ -44,7 +45,8 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 		}
 	}
 
-	for _, d := range inv.Update {
+	for i := range inv.Update {
+		d := inv.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"configMap": d.Name,
 			"namespace": d.Namespace,
@@ -54,7 +56,8 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 		}
 	}
 
-	for _, d := range inv.Delete {
+	for i := range inv.Delete {
+		d := inv.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"configMap": d.Name,
 			"namespace": d.Namespace,
@@ -85,7 +88,8 @@ func (r *ReconcileJaeger) cleanConfigMaps(ctx context.Context, instanceName stri
 		return err
 	}
 
-	for _, cfgMap := range configmaps.Items {
+	for i := range configmaps.Items {
+		cfgMap := configmaps.Items[i]
 		if err := r.client.Delete(ctx, &cfgMap); err != nil {
 			log.WithFields(log.Fields{
 				"configMapName":      cfgMap.Name,

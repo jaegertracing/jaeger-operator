@@ -34,7 +34,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 	}
 
 	inv := inventory.ForClusterRoleBindings(list.Items, desired)
-	for _, d := range inv.Create {
+	for i := range inv.Create {
+		d := inv.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,
@@ -44,7 +45,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 		}
 	}
 
-	for _, d := range inv.Update {
+	for i := range inv.Update {
+		d := inv.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,
@@ -54,7 +56,8 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 		}
 	}
 
-	for _, d := range inv.Delete {
+	for i := range inv.Delete {
+		d := inv.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"clusteRoleBinding": d.Name,
 			"namespace":         d.Namespace,

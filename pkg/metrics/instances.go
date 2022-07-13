@@ -180,7 +180,8 @@ func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObser
 	instances := &v1.JaegerList{}
 	if err := i.client.List(ctx, instances); err == nil {
 		i.reset()
-		for _, jaeger := range instances.Items {
+		for k := range instances.Items {
+			jaeger := instances.Items[k]
 			// Is this instance is already normalized by the reconciliation process
 			// count it on the metrics, otherwise not.
 			if isInstanceNormalized(jaeger) {

@@ -257,8 +257,8 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 			if err := b.clReader.List(ctx, instances, client.InNamespace(ns)); err != nil {
 				log.WithField("namespace", ns).WithError(err).Error("error getting a list of existing jaeger instances in namespace")
 			}
-			for _, jaeger := range instances.Items {
-				instancesMap[jaeger.Name] = &jaeger
+			for i := range instances.Items {
+				instancesMap[instances.Items[i].Name] = &instances.Items[i]
 			}
 		}
 	} else {
@@ -270,13 +270,14 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 		if err := b.clReader.List(ctx, instances); err != nil {
 			log.WithError(err).Error("error getting a list of existing jaeger instances")
 		}
-		for _, jaeger := range instances.Items {
-			instancesMap[jaeger.Name] = &jaeger
+		for i := range instances.Items {
+			instancesMap[instances.Items[i].Name] = &instances.Items[i]
 		}
 	}
 
 	// check deployments to see which one needs to be cleaned.
-	for _, dep := range deployments.Items {
+	for i := range deployments.Items {
+		dep := deployments.Items[i]
 		if instanceName, ok := dep.Labels[inject.Label]; ok {
 			_, instanceExists := instancesMap[instanceName]
 			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
