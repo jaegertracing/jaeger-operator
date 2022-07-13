@@ -1,0 +1,27 @@
+apiVersion: logging.openshift.io/v1
+kind: Elasticsearch
+metadata:
+  annotations:
+    logging.openshift.io/elasticsearch-cert-management: "true"
+    logging.openshift.io/elasticsearch-cert.jaeger-shared-es: user.jaeger
+    logging.openshift.io/elasticsearch-cert.curator-shared-es: system.logging.curator
+  name: shared-es
+spec:
+  managementState: Managed
+  nodeSpec:
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 1Gi
+  nodes:
+    - nodeCount: 1
+      proxyResources: {}
+      resources: {}
+      roles:
+        - master
+        - client
+        - data
+      storage: {}
+  redundancyPolicy: ZeroRedundancy

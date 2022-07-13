@@ -2,10 +2,9 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+is_secured="false"
 if [ $IS_OPENSHIFT= true ]; then
     is_secured="true"
-else
-    is_secured="false"
 fi
 
 
@@ -13,7 +12,7 @@ start_test "es-from-aio-to-production"
 jaeger_name="my-jaeger"
 render_install_jaeger "$jaeger_name" "allInOne" "00"
 render_smoke_test "$jaeger_name" "$is_secured" "01"
-render_install_elasticsearch "02"
+render_install_elasticsearch "upstream" "02"
 render_install_jaeger "$jaeger_name" "production" "03"
 render_smoke_test "$jaeger_name" "$is_secured" "04"
 
@@ -28,7 +27,7 @@ if [ $IS_OPENSHIFT = true ]; then
     jaeger_deployment_mode="production_autoprovisioned"
 else
     jaeger_deployment_mode="production"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
 fi
 render_install_jaeger "$jaeger_name" "$jaeger_deployment_mode" "01"
 
@@ -51,43 +50,77 @@ if [ $IS_OPENSHIFT = true ]; then
     $GOMPLATE -f ./openshift-check-es-nodes.yaml.template -o ./05-check-es-nodes.yaml
 fi
 
+# Helper function to render the ES index cleaner E2E test using different
+# deployment modes
+function es_index_cleaner(){
+    if [ "$#" -ne 2 ]; then
+        error "Wrong number of parameters used for es_index_cleaner. Usage: es_index_cleaner <test postfix name> <Jaeger deployment mode>"
+        exit 1
+    fi
+    postfix=$1
+    jaeger_deployment_strategy=$2
 
-start_test "es-index-cleaner"
-jaeger_name="test-es-index-cleaner-with-prefix"
-cronjob_name="test-es-index-cleaner-with-prefix-es-index-cleaner"
+    start_test "es-index-cleaner$postfix"
+    jaeger_name="test-es-index-cleaner-with-prefix"
+    cronjob_name="test-es-index-cleaner-with-prefix-es-index-cleaner"
+    secured_es_connection="false"
 
-# Install Elasticsearch instance
-render_install_elasticsearch "00"
+    if [ "$jaeger_deployment_strategy" = "production" ]; then
+        # Install Elasticsearch instance
+        render_install_elasticsearch "upstream" "00"
+        ELASTICSEARCH_URL="http://elasticsearch"
+    elif [ "$jaeger_deployment_strategy" = "production_managed_es" ]; then
+        render_install_elasticsearch "openshift_operator" "00"
+        secured_es_connection="true"
+    else
+        ELASTICSEARCH_URL="https://elasticsearch"
+        secured_es_connection="true"
+    fi
 
-# Create and assert the Jaeger instance with index cleaner "*/1 * * * *"
-render_install_jaeger "$jaeger_name" "production" "01"
-$YQ e -i '.spec.storage.options.es.index-prefix=""' ./01-install.yaml
-$YQ e -i '.spec.storage.esIndexCleaner.enabled=false' ./01-install.yaml
-$YQ e -i '.spec.storage.esIndexCleaner.numberOfDays=0' ./01-install.yaml
-$YQ e -i '.spec.storage.esIndexCleaner.schedule="*/1 * * * *"' ./01-install.yaml
+    # Create and assert the Jaeger instance with index cleaner "*/1 * * * *"
+    render_install_jaeger "$jaeger_name" "$jaeger_deployment_strategy" "01"
+    $YQ e -i '.spec.storage.options.es.index-prefix=""' ./01-install.yaml
+    $YQ e -i '.spec.storage.esIndexCleaner.enabled=false' ./01-install.yaml
+    $YQ e -i '.spec.storage.esIndexCleaner.numberOfDays=0' ./01-install.yaml
+    $YQ e -i '.spec.storage.esIndexCleaner.schedule="*/1 * * * *"' ./01-install.yaml
 
-# Report some spans
-render_report_spans "$JAEGER_NAME" "production" 5 "00" true 02
+    # Report some spans
+    render_report_spans "$JAEGER_NAME" "production" "5" "00" "true" "02"
 
-# Enable Elasticsearch index cleaner
-sed "s~enabled: false~enabled: true~gi" ./01-install.yaml > ./03-install.yaml
+    # Enable Elasticsearch index cleaner
+    sed "s~enabled: false~enabled: true~gi" ./01-install.yaml > ./03-install.yaml
 
-# Wait for the execution of the cronjob
-CRONJOB_NAME=$cronjob_name \
-    $GOMPLATE -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template \
-    -o ./04-wait-es-index-cleaner.yaml
+    # Wait for the execution of the cronjob
+    CRONJOB_NAME=$cronjob_name \
+        $GOMPLATE -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template \
+        -o ./04-wait-es-index-cleaner.yaml
 
-# Disable Elasticsearch index cleaner to ensure it is not run again while the test does some checks
-$GOMPLATE -f ./01-install.yaml -o ./05-install.yaml
+    # Disable Elasticsearch index cleaner to ensure it is not run again while the test does some checks
+    $GOMPLATE -f ./01-install.yaml -o ./05-install.yaml
 
-# Check if the indexes were cleaned or not
-render_check_indices "false" \
-    "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-count-indices', '0'," \
-    "00" "06"
+    # Check if the indexes were cleaned or not
+    render_check_indices "$secured_es_connection" \
+        "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-count-indices', '0'," \
+        "00" "06"
+}
+
+es_index_cleaner "" "production"
+
+if [ "$IS_OPENSHIFT" = true ]; then
+    es_index_cleaner "-autoprov" "production_autoprovisioned"
+else
+    skip_test "es-index-cleaner-autoprov" "Test only supported in OpenShift"
+fi
+
+if [ "$IS_OPENSHIFT" = true ]; then
+    es_index_cleaner "-managed" "production_managed_es"
+else
+    skip_test "es-index-cleaner-managed" "Test only supported in OpenShift"
+fi
 
 
 
-if [ "$IS_OPENSHIFT" = "true" ]; then
+if [ "$IS_OPENSHIFT" = true ]; then
     start_test "es-multiinstance"
     jaeger_name="instance-1"
     render_install_jaeger "$jaeger_name" "production_autoprovisioned" "01"
@@ -97,51 +130,91 @@ else
 fi
 
 
-start_test "es-rollover"
-export jaeger_name="my-jaeger"
+# Helper function to render the ES Rollover E2E test using different
+# deployment modes
+function es_rollover(){
+    if [ "$#" -ne 2 ]; then
+        error "Wrong number of parameters used for es_rollover. Usage: es_rollover <test postfix name> <Jaeger deployment mode>"
+        exit 1
+    fi
+    postfix=$1
+    jaeger_deployment_strategy=$2
 
-# Install Elasticsearch instance
-render_install_elasticsearch "00"
+    start_test "es-rollover$postfix"
 
-# Install Jaeger
-render_install_jaeger "$jaeger_name" "production" "01"
+    cp ../../es-rollover/* .
 
-# Report some spans
-render_report_spans "$jaeger_name" "production" 2 "00" "true" "02"
+    jaeger_name="my-jaeger"
+    secured_es_connection="false"
 
-# Check the effects in the database
-render_check_indices "false" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-exist'," "00" "03"
-render_check_indices "false" "'--pattern', 'jaeger-span-\d{6}', '--assert-count-indices', '0'," "01" "04"
+    if [ "$jaeger_deployment_strategy" = "production" ]; then
+        # Install Elasticsearch instance
+        render_install_elasticsearch "upstream" "00"
+        ELASTICSEARCH_URL="http://elasticsearch"
+    elif [ "$jaeger_deployment_strategy" = "production_managed_es" ]; then
+        render_install_elasticsearch "openshift_operator" "00"
+        secured_es_connection="true"
+    else
+        ELASTICSEARCH_URL="https://elasticsearch"
+        secured_es_connection="true"
+    fi
 
-# Step 5 enables rollover. No autogenerated
 
-# Report more spans
-render_report_spans "$jaeger_name" "production" "2" "02" "true" "06"
+    # Install Jaeger
+    render_install_jaeger "$jaeger_name" "$jaeger_deployment_strategy" "01"
 
-# Check the effects in the database
-render_check_indices "false" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-exist'," "02" "07"
-render_check_indices "false" "'--pattern', 'jaeger-span-\d{6}', '--assert-exist'," "03" "08"
-render_check_indices "false" "'--name', 'jaeger-span-read', '--assert-exist'," "04" "09"
+    # Report some spans
+    render_report_spans "$jaeger_name" "production" 2 "00" "true" "02"
 
-# Report more spans
-render_report_spans "$jaeger_name" "production" "2" "03" "true" "10"
+    # Check the effects in the database
+    render_check_indices "$secured_es_connection" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-exist'," "00" "03"
+    render_check_indices "$secured_es_connection" "'--pattern', 'jaeger-span-\d{6}', '--assert-count-indices', '0'," "01" "04"
 
-# Wait for the execution of the cronjob
-CRONJOB_NAME="my-jaeger-es-rollover" \
-    $GOMPLATE \
-    -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template \
-    -o ./11-wait-rollover.yaml
+    # Step 5 enables rollover. No autogenerated
 
-# Check the effects in the database
-render_check_indices "false" "'--name', 'jaeger-span-000002'," "05" "11"
-render_check_indices "false" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
+    # Report more spans
+    render_report_spans "$jaeger_name" "production" "2" "02" "true" "06"
+
+    # Check the effects in the database
+    render_check_indices "$secured_es_connection" "'--pattern', 'jaeger-span-\d{4}-\d{2}-\d{2}', '--assert-exist'," "02" "07"
+    render_check_indices "$secured_es_connection" "'--pattern', 'jaeger-span-\d{6}', '--assert-exist'," "03" "08"
+    render_check_indices "$secured_es_connection" "'--name', 'jaeger-span-read', '--assert-exist'," "04" "09"
+
+    # Report more spans
+    render_report_spans "$jaeger_name" "production" "2" "03" "true" "10"
+
+    # Wait for the execution of the cronjob
+    CRONJOB_NAME="my-jaeger-es-rollover" \
+        $GOMPLATE \
+        -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template \
+        -o ./11-wait-rollover.yaml
+
+    # Check the effects in the database
+    render_check_indices "$secured_es_connection" "'--name', 'jaeger-span-000002'," "05" "11"
+    render_check_indices "$secured_es_connection" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
+}
+
+es_rollover "" "production"
+
+if [ "$IS_OPENSHIFT" = true ]; then
+    es_rollover "-autoprov" "production_autoprovisioned"
+else
+    skip_test "es-rollover-autoprov" "Test only supported in OpenShift"
+fi
+if [ "$IS_OPENSHIFT" = true ]; then
+    es_rollover "-managed" "production_managed_es"
+else
+    skip_test "es-rollover-managed" "Test only supported in OpenShift"
+fi
+
+
 
 
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
     start_test "es-spark-dependencies"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
 
     # The step 1 creates the Jaeger instance
 

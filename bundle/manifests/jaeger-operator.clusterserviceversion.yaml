@@ -23,7 +23,7 @@ metadata:
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.22.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
@@ -371,7 +371,9 @@ spec:
           - watch
         serviceAccountName: jaeger-operator
       deployments:
-      - name: jaeger-operator
+      - label:
+          name: jaeger-operator
+        name: jaeger-operator
         spec:
           replicas: 1
           selector:

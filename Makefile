@@ -42,7 +42,7 @@ ISTIOCTL="bin/istioctl"
 # Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
 # Operator SDK version to use
-OPERATOR_SDK_VERSION ?= 1.17.0
+OPERATOR_SDK_VERSION ?= 1.22.0
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
  # Is Jaeger Operator installed via OLM?
@@ -63,7 +63,7 @@ endif
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.22
+ENVTEST_K8S_VERSION = 1.24
 # Options for KIND version to use
 export KUBE_VERSION ?= 1.20
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
