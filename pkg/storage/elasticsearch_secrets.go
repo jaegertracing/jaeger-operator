@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// #nosec   G101 (CWE-798): Potential hardcoded credentials
 	tmpWorkingDir = "/tmp/_certs"
 )
 
