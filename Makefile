@@ -127,7 +127,7 @@ vet: ## Run go vet against code.
 .PHONY: security
 security:
 	$(ECHO) Security...
-	$(VECHO)${GOPATH}/bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
+	$(VECHO)./bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
 
 .PHONY: build
 build: format
@@ -450,8 +450,8 @@ tools: kustomize controller-gen operator-sdk
 install-tools: operator-sdk
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
-		golang.org/x/tools/cmd/goimports \
-		github.com/securego/gosec/cmd/gosec@v2.9.6
+		golang.org/x/tools/cmd/goimports
+	$(VECHO)./hack/install/install-gosec.sh
 
 .PHONY: kustomize
 kustomize:
