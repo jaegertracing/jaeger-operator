@@ -228,30 +228,47 @@ function render_install_cassandra() {
 
 
 # Render the files to install Elasticsearch database.
-#   render_install_elasticsearch <test_step>
+#   render_install_elasticsearch <deploy_mode> <test_step>
 #
+# Supported values for <deploy_mode>:
+# * upstream: deploy an ES instance using the upstream image.
+# * openshift_operator: deploy an external ES instance using the Elasticsearch
+#   OpenShift Operator.
 # Example:
-#   render_install_elasticsearch "00"
+#   render_install_elasticsearch "upstream" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. An Elasticsearch
-# instance will be installed.
+# instance will be installed. It will use the upstream ES image.
 function render_install_elasticsearch() {
-    if [ "$#" -ne 1 ]; then
-        error "Wrong number of parameters used for render_install_elasticsearch. Usage: render_install_elasticsearch <test_step>"
+    if [ "$#" -ne 2 ]; then
+        error "Wrong number of parameters used for render_install_elasticsearch. Usage: render_install_elasticsearch <deploy_mode> <test_step>"
         exit 1
     fi
 
-    test_step=$1
+    deploy_mode=$1
+    test_step=$2
 
-    if [ $IS_OPENSHIFT = true ]; then
-        template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
-        $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
-        $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
+    if [ "$deploy_mode" = "upstream" ]; then
+        if [ "$IS_OPENSHIFT" = true ]; then
+            template=$TEMPLATES_DIR/openshift/elasticsearch-install.yaml.template
+            $YQ eval -s '"elasticsearch_" + $index' $TEST_DIR/elasticsearch.yml
+            $YQ eval -i '.spec.template.spec.serviceAccountName="deploy-elasticsearch"' ./elasticsearch_0.yml
+        else
+            template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
+        fi
+
+        $GOMPLATE -f $template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ "$deploy_mode" = "openshift_operator" ]; then
+        if [ "$IS_OPENSHIFT" = true ]; then
+            $GOMPLATE -f $TEMPLATES_DIR/openshift/elasticsearch-managed-install.yaml.template -o ./$test_step-install.yaml
+            $GOMPLATE -f $TEMPLATES_DIR/openshift/elasticsearch-managed-assert.yaml.template -o ./$test_step-assert.yaml
+        else
+            error "openshift_operator deploy mode cannot be used if not using an OpenShift cluster"
+            exit 1
+        fi
     else
-        template=$TEMPLATES_DIR/elasticsearch-install.yaml.template
+        error "$deploy_mode not recognized as deploy_mode for render_install_elasticsearch"
     fi
-
-    $GOMPLATE -f $template -o ./$test_step-install.yaml
-    $GOMPLATE -f $TEMPLATES_DIR/elasticsearch-assert.yaml.template -o ./$test_step-assert.yaml
 }
 
 
@@ -264,6 +281,9 @@ function render_install_elasticsearch() {
 #   * production_cassandra: production using Cassandra.
 #   * production_autoprovisioned: production deployment autoprovisioning ES. Only
 #       available for OpenShift environments using the Elasticsearch OpenShift Operator.
+#   * production_managed_es: production deployment using an external
+#       Elasticsearch instance provisioned with the Elasticsearch OpenShift Operator.
+#
 # Example:
 #   render_install_jaeger "my-jaeger" "production" "00"
 # Generates the `00-install.yaml` and `00-assert.yaml` files. Production Jaeger
@@ -290,6 +310,13 @@ function render_install_jaeger() {
     elif [ $deploy_mode = "production_autoprovisioned" ]; then
         if [ $IS_OPENSHIFT != "true" ]; then
             error "production_autoprovisioned Jaeger deploy mode is only supported for OpenShift"
+            exit 1
+        fi
+        $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ $deploy_mode = "production_managed_es" ]; then
+        if [ $IS_OPENSHIFT != "true" ]; then
+            error "production_managed_es Jaeger deploy mode is only supported for OpenShift"
             exit 1
         fi
         $GOMPLATE -f $TEMPLATES_DIR/openshift/production-jaeger-autoprovisioned-install.yaml.template -o ./$test_step-install.yaml
@@ -361,6 +388,8 @@ function render_install_example() {
         $GOMPLATE -f $TEMPLATES_DIR/allinone-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     elif [ $jaeger_strategy = "production" ]; then
         $GOMPLATE -f $TEMPLATES_DIR/production-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
+    elif [ $jaeger_strategy = "streaming" ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./$test_step-assert.yaml
     else
         error "render_install_example: No strategy declared in the example $example_name. Impossible to determine the assert file to use"
         return 1
@@ -381,20 +410,42 @@ function render_smoke_test_example() {
     fi
 
     example_name=$1
-    test_step=$1
+    test_step=$2
 
     deployment_file=$EXAMPLES_DIR/$example_name.yaml
 
-    export jaeger_name
     jaeger_name=$(get_jaeger_name $deployment_file)
+    is_secured="false"
 
     if [ "$IS_OPENSHIFT" = true  ]; then
         is_secured="true"
-    else
-        is_secured="false"
     fi
 
     render_smoke_test "$jaeger_name" "$is_secured" "$test_step"
+}
+
+
+
+# Render a the Kafka Operator installation
+#   render_install_kafka_operator <test_step>
+#
+# Example:
+#   render_install_kafka_opreator "01"
+# Generates the `01-install.yaml` and `01-assert.yaml` files to install the Kafka
+# operator and ensure it is deployed properly.
+# Note: the Kafka Operator will not be installed if KAFKA_OLM is `true`.
+function render_install_kafka_operator(){
+    if [ "$#" -ne 1 ]; then
+        error "Wrong number of parameters used for render_install_kafka_operator. Usage: render_install_kafka_operator <test_step>"
+        exit 1
+    fi
+
+    test_step=$1
+
+    if [ $KAFKA_OLM != true ]; then
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-install.yaml.template -o ./$test_step-install.yaml
+        $GOMPLATE -f $TEMPLATES_DIR/kafka-operator-assert.yaml.template -o ./$test_step-assert.yaml
+    fi
 }
 
 
@@ -540,7 +591,7 @@ function render_install_tracegen() {
     step=$2
 
     # We detected this value is good enough to make the operator scale
-    replicas=3
+    replicas=4
 
     $GOMPLATE -f $EXAMPLES_DIR/tracegen.yaml -o ./$step-install.yaml
     $YQ e -i ".spec.replicas=$replicas" ./$step-install.yaml
@@ -562,7 +613,7 @@ function get_jaeger_name() {
 
     deployment_file=$1
 
-    jaeger_name=$($YQ e '.metadata.name' $deployment_file)
+    jaeger_name=$($YQ e '. | select(.kind == "Jaeger").metadata.name' $deployment_file)
 
     if [ -z "$jaeger_name" ]; then
         error "No name for Jaeger deployment in file $deployment_file"
@@ -589,14 +640,14 @@ function get_jaeger_strategy() {
 
     deployment_file=$1
 
-    strategy=$($YQ e '.spec.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.strategy' $deployment_file)
 
-    if [ "$strategy" != "null" ]; then
+    if [ "$strategy" = "production" ] || [ "$strategy" = "streaming" ]; then
         echo $strategy
         return 0
     fi
 
-    strategy=$($YQ e '.spec.agent.strategy' $deployment_file)
+    strategy=$($YQ e '. | select(.kind == "Jaeger").spec.agent.strategy' $deployment_file)
     if [ "$strategy" = "null" ]; then
         echo "allInOne"
         return 0

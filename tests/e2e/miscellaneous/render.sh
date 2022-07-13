@@ -29,7 +29,7 @@ start_test "collector-autoscale"
 jaeger_name="simple-prod"
 
 if [ $IS_OPENSHIFT!="true" ]; then
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
 fi
 
 ELASTICSEARCH_NODECOUNT="1"
@@ -41,7 +41,7 @@ $YQ e -i '.spec.collector.resources.requests.memory="300m"' 01-install.yaml
 # Enable autoscale
 $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
-$YQ e -i '.spec.collector.maxReplicas=3' 01-install.yaml
+$YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
 # Deploy Tracegen instance to generate load in the Jaeger collector
 render_install_tracegen "$jaeger_name" "02"
@@ -53,10 +53,9 @@ render_install_tracegen "$jaeger_name" "02"
 function generate_otlp_e2e_tests() {
     test_protocol=$1
 
-    if [ "$IS_OPENSHIFT" = "true" ]; then
+    is_secured="false"
+    if [ "$IS_OPENSHIFT" = true ]; then
         is_secured="true"
-    else
-        is_secured="false"
     fi
 
     start_test "collector-otlp-allinone-$test_protocol"
@@ -64,7 +63,7 @@ function generate_otlp_e2e_tests() {
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "01"
 
     start_test "collector-otlp-production-$test_protocol"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
     render_install_jaeger "my-jaeger" "production" "01"
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "02"
 }
@@ -102,7 +101,7 @@ if [ $IS_OPENSHIFT = true ]; then
 else
     start_test "outside-cluster"
     jaeger_name="my-jaeger"
-    render_install_elasticsearch "00"
+    render_install_elasticsearch "upstream" "00"
     render_install_jaeger "$jaeger_name" "production" "01"
     $GOMPLATE -f ./03-check-collector.yaml.template -o 03-check-collector.yaml
 fi

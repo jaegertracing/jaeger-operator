@@ -10,6 +10,34 @@ render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
+start_test "examples-agent-with-priority-class"
+example_name="agent-with-priority-class"
+prepare_daemonset "00"
+render_install_example "$example_name" "01"
+render_smoke_test_example "$example_name" "02"
+
+
+start_test "examples-all-in-one-with-options"
+example_name="all-in-one-with-options"
+render_install_example "$example_name" "00"
+render_smoke_test_example "$example_name" "01"
+sed -i "s~16686~16686/jaeger~gi" ./01-smoke-test.yaml
+sed -i "s~https://my-jaeger-query~https://my-jaeger-query/jaeger~gi" ./01-smoke-test.yaml
+
+
+
+start_test "examples-auto-provision-kafka"
+example_name="auto-provision-kafka"
+render_install_elasticsearch "upstream" "00"
+render_install_kafka_operator "01"
+render_install_example "$example_name" "02"
+# The Kafka cluster will be started before the Jaeger components. So, we do the
+# Jaeger assertion later and the Kafka cluster assertion now
+mv ./02-assert.yaml ./05-assert.yaml
+render_assert_kafka "true" "$example_name" "02"
+render_smoke_test_example "$example_name" "06"
+
+
 start_test "examples-business-application-injected-sidecar"
 example_name="simplest"
 cp $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./00-install.yaml
@@ -32,16 +60,17 @@ render_smoke_test_example "$example_name" "01"
 
 start_test "examples-simple-prod"
 example_name="simple-prod"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
 
 start_test "examples-simple-prod-with-volumes"
 example_name="simple-prod-with-volumes"
-render_install_elasticsearch "00"
+render_install_elasticsearch "upstream" "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
+$GOMPLATE -f ./03-check-volume.yaml.template -o 03-check-volume.yaml
 
 
 start_test "examples-simplest"
