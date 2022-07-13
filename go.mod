@@ -7,8 +7,8 @@ require (
 	github.com/google/gnostic v0.6.9
 	github.com/google/go-cmp v0.5.8
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/openshift/api v0.0.0-20210713130143-be21c6cb1bea
-	github.com/openshift/elasticsearch-operator v0.0.0-20210921091239-caf25067d56d
+	github.com/openshift/api v0.0.0-20220124143425-d74727069f6f
+	github.com/openshift/elasticsearch-operator v0.0.0-20220708171007-a87102296ded
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/operator-framework/operator-lib v0.10.0
 	github.com/pkg/errors v0.9.1
@@ -33,7 +33,7 @@ require (
 	google.golang.org/grpc v1.48.0
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.2
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v0.24.2
 	sigs.k8s.io/controller-runtime v0.12.3
 )
 
@@ -43,10 +43,10 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-logr/logr v1.2.0 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/zapr v1.2.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
@@ -100,11 +100,9 @@ require (
 	k8s.io/apiextensions-apiserver v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
+	k8s.io/kube-openapi v0.0.0-20220627174259-011e075b9cb8 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-replace k8s.io/client-go => k8s.io/client-go v0.24.0 // Required by prometheus-operator
