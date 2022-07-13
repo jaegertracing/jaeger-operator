@@ -791,7 +791,7 @@ function skip_test(){
     # Remove the folder of the test because some files could be copied
     rm -rf $test_name
 
-    warning "$message"
+    warning "$test_name: $message"
 }
 
 function version_gt() {
