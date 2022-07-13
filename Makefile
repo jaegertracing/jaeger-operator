@@ -38,9 +38,7 @@ KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/downlo
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
 # Istio binary path and version
-ISTIO_VERSION ?= 1.11.2
-ISTIO_PATH = ./tests/_build/
-ISTIOCTL="${ISTIO_PATH}istio/bin/istioctl"
+ISTIOCTL="bin/istioctl"
 # Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
 # Operator SDK version to use
@@ -200,15 +198,13 @@ endif
 .PHONY: istio
 istio:
 	$(ECHO) Install istio with minimal profile
-	$(VECHO)mkdir -p ${ISTIO_PATH}
-	[ -f "${ISTIOCTL}" ] || (curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIO_VERSION} TARGET_ARCH=x86_64 sh - && mv ./istio-${ISTIO_VERSION} ${ISTIO_PATH}/istio/)
+	$(VECHO)./hack/install/install-istio.sh
 	$(VECHO)${ISTIOCTL} install --set profile=minimal -y
 
 .PHONY: undeploy-istio
 undeploy-istio:
-	$(VECHO)[ -f "${ISTIOCTL}" ] && (${ISTIOCTL} manifest generate --set profile=demo | kubectl delete --ignore-not-found=true -f -) || true
+	$(VECHO)${ISTIOCTL} manifest generate --set profile=demo | kubectl delete --ignore-not-found=true -f - || true
 	$(VECHO)kubectl delete namespace istio-system --ignore-not-found=true || true
-	$(VECHO)rm -rf ${ISTIO_PATH}
 
 .PHONY: cassandra
 cassandra: storage
