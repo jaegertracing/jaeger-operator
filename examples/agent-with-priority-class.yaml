@@ -13,4 +13,4 @@ metadata:
 spec:
   agent:
     strategy: DaemonSet
-    PriorityClassName: high-priority # priorityClassName here
+    priorityClassName: high-priority # priorityClassName here
