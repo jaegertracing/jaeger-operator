@@ -2,6 +2,7 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+is_secured="false"
 if [ $IS_OPENSHIFT = true ]; then
     is_secured="true"
 fi
