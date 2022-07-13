@@ -200,7 +200,8 @@ func getFileContents(path string) []byte {
 
 func writeToFile(dir, file string, value []byte) error {
 	// first check if file exists - we prefer what is on FS to revert users editing secrets
-	path := getFilePath(dir, file)
+	rawPath := getFilePath(dir, file)
+	path := filepath.Clean(rawPath)
 	if _, err := os.Stat(path); err == nil {
 		return nil
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -84,7 +85,8 @@ func generate(_ *cobra.Command, _ []string) error {
 	s := strategy.For(context.Background(), spec)
 
 	outputName := viper.GetString("output")
-	out, err := os.OpenFile(outputName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	pathToFile := filepath.Clean(outputName)
+	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
