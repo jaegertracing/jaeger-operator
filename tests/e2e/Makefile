@@ -26,11 +26,14 @@ generate-e2e-files: generate bundle set-image-controller build-assert-job
 # Build/pull container images used for the testing ###########################
 .PHONY: load-operator-image
 load-operator-image: docker kind
+ifneq ($(JAEGER_OLM),true)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Loading Jager Operator image in KIND cluster
 	$(VECHO)$(KIND) load docker-image $(IMG)
-else ifeq ($(JAEGER_OLM),false)
+else
 	$(MAKE) push
+endif
+	@echo "JAEGER_OLM is true. Not needed to push or load the image anywhere"
 endif
 
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
