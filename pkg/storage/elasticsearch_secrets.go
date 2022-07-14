@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -213,14 +214,12 @@ func writeToFile(dir, file string, value []byte) error {
 	if err != nil {
 		return err
 	}
+	defer util.CloseFile(f, logrus.StandardLogger())
 
 	_, err = f.Write(value)
 	if err != nil {
 		// remove the file on failure - it can be correctly created in the next iteration
 		os.RemoveAll(path)
-		return err
-	}
-	if err := f.Close(); err != nil {
 		return err
 	}
 

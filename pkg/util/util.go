@@ -4,12 +4,15 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -351,4 +354,11 @@ func AllArgs(optionsList ...v1.Options) []string {
 		args = append(args, options.ToArgs()...)
 	}
 	return args
+}
+
+// CloseFile closes a file and logs if there was an error
+func CloseFile(f *os.File, log *logrus.Logger) {
+	if err := f.Close(); err != nil {
+		log.Errorf("it was not possible to close the file %s: %s", f.Name(), err)
+	}
 }

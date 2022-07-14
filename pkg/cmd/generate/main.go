@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,6 +19,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/start"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // NewGenerateCommand starts the Jaeger Operator
@@ -47,14 +49,11 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer util.CloseFile(f, logrus.StandardLogger())
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
 	if err := decoder.Decode(&spec); err != nil && err != io.EOF {
-		return nil, err
-	}
-
-	if err := f.Close(); err != nil {
 		return nil, err
 	}
 
@@ -91,6 +90,8 @@ func generate(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	defer util.CloseFile(out, logrus.StandardLogger())
+
 	encoder := k8s_json.NewYAMLSerializer(k8s_json.DefaultMetaFactory, nil, nil)
 	for _, obj := range s.All() {
 		// OwnerReferences normally references the CR, but it is not a
@@ -107,10 +108,6 @@ func generate(_ *cobra.Command, _ []string) error {
 		if err := encoder.Encode(obj, out); err != nil {
 			log.Fatal(err)
 		}
-	}
-
-	if err := out.Close(); err != nil {
-		return err
 	}
 
 	return nil
