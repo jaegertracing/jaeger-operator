@@ -31,8 +31,8 @@ require (
 	go.opentelemetry.io/otel/trace v0.20.0
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	google.golang.org/grpc v1.48.0
-	k8s.io/api v0.24.2
-	k8s.io/apimachinery v0.24.2
+	k8s.io/api v0.24.3
+	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.2
 	sigs.k8s.io/controller-runtime v0.12.3
 )
