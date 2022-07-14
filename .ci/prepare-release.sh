@@ -16,6 +16,9 @@ sed "s~operator=${PREVIOUS_VERSION}~operator=${OPERATOR_VERSION}~gi" -i versions
 sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${PREVIOUS_VERSION}~i" -i config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
 
 # Update the examples according to the release
+
+sed -i "s~all-in-one:.*~all-in-one:${JAEGER_VERSION}~gi" examples/all-in-one-with-options.yaml
+
 # statefulset-manual-sidecar
 sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_VERSION}~gi" examples/statefulset-manual-sidecar.yaml
 
