@@ -8,11 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/sirupsen/logrus"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
