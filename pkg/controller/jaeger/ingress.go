@@ -30,7 +30,8 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 	}
 
 	inv := inventory.ForIngresses(list.Items, desired)
-	for _, d := range inv.Create {
+	for i := range inv.Create {
+		d := inv.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"ingress":   d.Name,
 			"namespace": d.Namespace,
@@ -40,7 +41,8 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 		}
 	}
 
-	for _, d := range inv.Update {
+	for i := range inv.Update {
+		d := inv.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"ingress":   d.Name,
 			"namespace": d.Namespace,
@@ -50,7 +52,8 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 		}
 	}
 
-	for _, d := range inv.Delete {
+	for i := range inv.Delete {
+		d := inv.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"ingress":   d.Name,
 			"namespace": d.Namespace,

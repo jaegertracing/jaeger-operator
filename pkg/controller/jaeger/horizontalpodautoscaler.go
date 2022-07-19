@@ -31,7 +31,8 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 	}
 
 	hpaInventory := inventory.ForHorizontalPodAutoscalers(hpaList.Items, desired)
-	for _, d := range hpaInventory.Create {
+	for i := range hpaInventory.Create {
+		d := hpaInventory.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"hpa":       d.Name,
 			"namespace": d.Namespace,
@@ -41,7 +42,8 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 		}
 	}
 
-	for _, d := range hpaInventory.Update {
+	for i := range hpaInventory.Update {
+		d := hpaInventory.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"hpa":       d.Name,
 			"namespace": d.Namespace,
@@ -51,7 +53,8 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 		}
 	}
 
-	for _, d := range hpaInventory.Delete {
+	for i := range hpaInventory.Delete {
+		d := hpaInventory.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"hpa":       d.Name,
 			"namespace": d.Namespace,

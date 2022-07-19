@@ -46,7 +46,8 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 	// 2) deployments that are only on `desired` (create)
 	// 3) deployments that are only on `existing` (delete)
 	depInventory := inventory.ForDeployments(depList.Items, desired)
-	for _, d := range depInventory.Create {
+	for i := range depInventory.Create {
+		d := depInventory.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"deployment": d.Name,
 			"namespace":  d.Namespace,
@@ -56,7 +57,8 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 		}
 	}
 
-	for _, d := range depInventory.Update {
+	for i := range depInventory.Update {
+		d := depInventory.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"deployment": d.Name,
 			"namespace":  d.Namespace,
@@ -79,7 +81,8 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 		}
 	}
 
-	for _, d := range depInventory.Delete {
+	for i := range depInventory.Delete {
+		d := depInventory.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"deployment": d.Name,
 			"namespace":  d.Namespace,

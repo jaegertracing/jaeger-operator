@@ -405,14 +405,14 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 			continue
 		}
 	}
-	for _, dep := range deps {
-		if err := client.Update(context.Background(), &dep); err != nil {
+	for i := range deps {
+		if err := client.Update(context.Background(), &deps[i]); err != nil {
 			log.WithField("component", "jaeger-cr-sync").Error(err)
 			return err
 		}
 	}
-	for _, ns := range nssupdate {
-		if err := client.Update(context.Background(), &ns); err != nil {
+	for i := range nssupdate {
+		if err := client.Update(context.Background(), &nssupdate[i]); err != nil {
 			log.WithField("component", "jaeger-cr-sync").Error(err)
 			return err
 		}

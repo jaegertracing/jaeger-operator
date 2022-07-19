@@ -31,7 +31,8 @@ func (r *ReconcileJaeger) applyAccounts(ctx context.Context, jaeger v1.Jaeger, d
 	}
 
 	inv := inventory.ForAccounts(list.Items, desired)
-	for _, d := range inv.Create {
+	for i := range inv.Create {
+		d := inv.Create[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"account":   d.Name,
 			"namespace": d.Namespace,
@@ -41,7 +42,8 @@ func (r *ReconcileJaeger) applyAccounts(ctx context.Context, jaeger v1.Jaeger, d
 		}
 	}
 
-	for _, d := range inv.Update {
+	for i := range inv.Update {
+		d := inv.Update[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"account":   d.Name,
 			"namespace": d.Namespace,
@@ -51,7 +53,8 @@ func (r *ReconcileJaeger) applyAccounts(ctx context.Context, jaeger v1.Jaeger, d
 		}
 	}
 
-	for _, d := range inv.Delete {
+	for i := range inv.Delete {
+		d := inv.Delete[i]
 		jaeger.Logger().WithFields(log.Fields{
 			"account":   d.Name,
 			"namespace": d.Namespace,

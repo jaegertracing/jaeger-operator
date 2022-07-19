@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,6 +19,7 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/cmd/start"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // NewGenerateCommand starts the Jaeger Operator
@@ -46,7 +49,7 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer util.CloseFile(f, logrus.StandardLogger())
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
@@ -81,12 +84,13 @@ func generate(_ *cobra.Command, _ []string) error {
 	s := strategy.For(context.Background(), spec)
 
 	outputName := viper.GetString("output")
-	out, err := os.OpenFile(outputName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	pathToFile := filepath.Clean(outputName)
+	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 
-	defer out.Close()
+	defer util.CloseFile(out, logrus.StandardLogger())
 
 	encoder := k8s_json.NewYAMLSerializer(k8s_json.DefaultMetaFactory, nil, nil)
 	for _, obj := range s.All() {
