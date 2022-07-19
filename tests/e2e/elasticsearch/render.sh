@@ -115,9 +115,9 @@ else
     skip_test "es-index-cleaner-autoprov" "Test only supported in OpenShift"
 fi
 
-get_elasticsearch_openshift_operator_version
 
 if [ "$IS_OPENSHIFT" = true ]; then
+    get_elasticsearch_openshift_operator_version
     if [ -n "$(version_ge "$ESO_OPERATOR_VERSION" "5.4")" ]; then
         es_index_cleaner "-managed" "production_managed_es"
     else
@@ -212,6 +212,7 @@ else
 fi
 
 if [ "$IS_OPENSHIFT" = true ]; then
+    get_elasticsearch_openshift_operator_version
     if [ -n "$(version_ge "$ESO_OPERATOR_VERSION" "5.4")" ]; then
         es_rollover "-managed" "production_managed_es"
     else
