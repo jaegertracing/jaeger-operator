@@ -17,20 +17,7 @@ test_suite_name=$1
 use_kind_cluster=$2
 jaeger_olm=$3
 
-root_dir=$current_dir/../
-reports_dir=$root_dir/reports
-
-rm -f $reports_dir/$test_suite_name.xml
-
-# Ensure KUTTL is installed
-$current_dir/install/install-kuttl.sh
-export KUTTL=$root_dir/bin/kubectl-kuttl
-
-mkdir -p $reports_dir
-
-cd $root_dir
-make render-e2e-tests-$test_suite_name
-
+# Prepare the cluster
 if [ "$use_kind_cluster" == true ]; then
 	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
 	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
@@ -45,9 +32,27 @@ if [ "$jaeger_olm" = true ]; then
     echo "Skipping Jaeger Operator installation because JAEGER_OLM=true"
 else
 	echo Installing Jaeger Operator...
-	make cert-manager deploy
+	# JAEGER_OPERATOR_VERBOSITY enables verbosity in the Jaeger Operator
+	# JAEGER_OPERATOR_KAFKA_MINIMAL enables minimal deployment of Kafka clusters
+	make cert-manager deploy JAEGER_OPERATOR_VERBOSITY=DEBUG JAEGER_OPERATOR_KAFKA_MINIMAL=true
 	kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
 fi
+
+
+root_dir=$current_dir/../
+reports_dir=$root_dir/reports
+
+rm -f $reports_dir/$test_suite_name.xml
+
+# Ensure KUTTL is installed
+$current_dir/install/install-kuttl.sh
+export KUTTL=$root_dir/bin/kubectl-kuttl
+
+mkdir -p $reports_dir
+
+cd $root_dir
+make render-e2e-tests-$test_suite_name
+
 
 echo Running $test_suite_name E2E tests
 cd tests/e2e/$test_suite_name/_build
