@@ -32,7 +32,7 @@ do
     if [ -z "$VERSION" ]; then
         echo "Version was not found! Check if your Jaeger Operator image was built properly"
     else
-        echo "Version missmatch: found $VERSION expected $expected_version"
+        echo "Version mismatch: found $VERSION expected $expected_version"
     fi
     sleep $SLEEP_TIME
     check_version

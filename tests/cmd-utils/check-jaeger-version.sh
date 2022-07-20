@@ -17,7 +17,7 @@ expected_version=$3
 check_version
 while [ "$VERSION" != "$expected_version" ]
 do
-    echo "Version missmatch: found $VERSION expected $expected_version"
+    echo "Version mismatch: found $VERSION expected $expected_version"
     sleep 5
     check_version
 done
