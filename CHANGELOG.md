@@ -1,6 +1,15 @@
 Changes by Version
 ==================
 
+1.36.0 (2022-07-18)
+-------------------
+
+* added flag to change webhook port ([#1991](https://github.com/jaegertracing/jaeger-operator/pull/1991), [@klubi](https://github.com/klubi))
+* Upgrade operator-sdk to 1.22.0 ([#1951](https://github.com/jaegertracing/jaeger-operator/pull/1951), [@iblancasa](https://github.com/iblancasa))
+* Add elasticsearch storage date format config. ([#1325](https://github.com/jaegertracing/jaeger-operator/pull/1325), [@sniperking1234](https://github.com/sniperking1234))
+* Add support for custom liveness probe ([#1605](https://github.com/jaegertracing/jaeger-operator/pull/1605), [@ricoberger](https://github.com/ricoberger))
+* Add service annotations ([#1526](https://github.com/jaegertracing/jaeger-operator/pull/1526), [@herbguo](https://github.com/herbguo))
+
 1.35.0 (2022-06-16)
 -------------------
 
