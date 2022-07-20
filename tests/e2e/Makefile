@@ -38,7 +38,7 @@ endif
 
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 	$(ECHO) Building E2E asserts image
-	$(VECHO) DOCKER_BUILD_OPTIONS=$(DOCKER_BUILD_OPTIONS) \
+	$(VECHO) DOCKER_BUILD_OPTIONS="$(DOCKER_BUILD_OPTIONS)" \
 		./tests/build-utils/build-assert-e2e-img.sh $(ASSERT_IMG) $@
 
 
