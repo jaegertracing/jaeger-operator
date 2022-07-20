@@ -130,6 +130,7 @@ security:
 .PHONY: build
 build: format
 	$(ECHO) Building...
+	$(VECHO)./hack/install/install-dependencies.sh
 	$(VECHO)${GO_FLAGS} go build -ldflags $(LD_FLAGS) -o $(OUTPUT_BINARY) main.go
 
 .PHONY: docker
