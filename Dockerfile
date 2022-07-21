@@ -3,11 +3,13 @@ FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.17 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
-RUN go mod download
+COPY hack/install/install-dependencies.sh hack/install/
+COPY hack/install/install-utils.sh hack/install/
+COPY go.mod .
+COPY go.sum .
+RUN ./hack/install/install-dependencies.sh
 
 # Copy the go source
 COPY main.go main.go
