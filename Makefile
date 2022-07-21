@@ -176,7 +176,7 @@ undeploy-cert-manager:
 	kubectl delete --ignore-not-found=true -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 
 cmctl:
-	./hack/install/install-kubebuilder.sh $(CERTMANAGER_VERSION)
+	./hack/install/install-cmctl.sh $(CERTMANAGER_VERSION)
 
 .PHONY: es
 es: storage
