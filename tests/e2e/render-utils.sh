@@ -148,7 +148,7 @@ function render_report_spans() {
     fi
 
     params=""
-    if [ $IS_OPENSHIFT = true ] && [ $ensure_reported_spans = true ] && [ $deployment_strategy != "allInOne" ]; then
+    if [ $IS_OPENSHIFT = true ] && [ $ensure_reported_spans = true ] && [ "$deployment_strategy" != "allInOne" ]; then
         params="-t $TEMPLATES_DIR/openshift/configure-api-query-oauth.yaml.template"
     fi
 
@@ -792,6 +792,29 @@ function skip_test(){
     rm -rf $test_name
 
     warning "$test_name: $message"
+}
+
+# Get the installed version of Elasticsearch OpenShift Operator in the cluster.
+#   get_elasticsearch_openshift_operator_version
+#
+# Notes:
+#   - It throws an error if it is used in a non OpenShift cluster.
+#   - It throws an error if the Elasticsearch OpenShift Operator is not installed.
+#   - The result is returned in the ESO_OPERATOR_VERSION shell variable.
+#
+function get_elasticsearch_openshift_operator_version(){
+    export ESO_OPERATOR_VERSION
+    if [ "$IS_OPENSHIFT" = true ]; then
+        properties=$(kubectl get pods -l name=elasticsearch-operator -n openshift-operators-redhat -o=jsonpath='{.items[0].metadata.annotations.operatorframework\.io/properties}')
+        if [ -z "$properties" ]; then
+            error "Elasticsearch OpenShift Operator not found"
+            exit 1
+        fi
+        ESO_OPERATOR_VERSION=$(echo "$properties" | $YQ e -P ".properties[2].value.version")
+    else
+        error "Not an OpenShift cluster. Impossible to get the Elasticsearch OpenShift Operator version"
+        exit 1
+    fi
 }
 
 function version_gt() {
