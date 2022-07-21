@@ -5,7 +5,6 @@ source $(dirname "$0")/../render-utils.sh
 is_secured="false"
 if [ $IS_OPENSHIFT = true ]; then
     is_secured="true"
-    echo "--------------------------------------------------------------------"
 fi
 
 
@@ -116,8 +115,14 @@ else
     skip_test "es-index-cleaner-autoprov" "Test only supported in OpenShift"
 fi
 
+
 if [ "$IS_OPENSHIFT" = true ]; then
-    es_index_cleaner "-managed" "production_managed_es"
+    get_elasticsearch_openshift_operator_version
+    if [ -n "$(version_ge "$ESO_OPERATOR_VERSION" "5.4")" ]; then
+        es_index_cleaner "-managed" "production_managed_es"
+    else
+        skip_test "es-index-cleaner-managed" "Test only supported with Elasticsearch OpenShift Operator >= 5.4"
+    fi
 else
     skip_test "es-index-cleaner-managed" "Test only supported in OpenShift"
 fi
@@ -205,8 +210,14 @@ if [ "$IS_OPENSHIFT" = true ]; then
 else
     skip_test "es-rollover-autoprov" "Test only supported in OpenShift"
 fi
+
 if [ "$IS_OPENSHIFT" = true ]; then
-    es_rollover "-managed" "production_managed_es"
+    get_elasticsearch_openshift_operator_version
+    if [ -n "$(version_ge "$ESO_OPERATOR_VERSION" "5.4")" ]; then
+        es_rollover "-managed" "production_managed_es"
+    else
+        skip_test "es-rollover-managed" "Test only supported with Elasticsearch OpenShift Operator >= 5.4"
+    fi
 else
     skip_test "es-rollover-managed" "Test only supported in OpenShift"
 fi
