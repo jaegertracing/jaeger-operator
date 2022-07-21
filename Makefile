@@ -41,6 +41,7 @@ PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prome
 ISTIOCTL="bin/istioctl"
 # Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
+CMCTL=$(shell pwd)/bin/cmctl
 # Operator SDK version to use
 OPERATOR_SDK_VERSION ?= 1.22.0
 # Use a KIND cluster for the E2E tests
@@ -170,23 +171,13 @@ set-node-os-linux:
 cert-manager: cmctl
 	# Consider using cmctl to install the cert-manager once install command is not experimental
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
-	cmctl check api --wait=5m
+	$(CMCTL) check api --wait=5m
 
 undeploy-cert-manager:
 	kubectl delete --ignore-not-found=true -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 
 cmctl:
-ifeq (, $(shell which cmctl))
-	@{ \
-	curl -L -o /tmp/cmctl.tar.gz https://github.com/jetstack/cert-manager/releases/download/v$(CERTMANAGER_VERSION)/cmctl-`go env GOOS`-`go env GOARCH`.tar.gz ;\
-	cd /tmp ;\
-	tar xzf cmctl.tar.gz ;\
-	mv cmctl $(GOBIN) ;\
-	}
-CTL=$(GOBIN)/cmctl
-else
-CTL=$(shell which cmctl)
-endif
+	./hack/install/install-cmctl.sh $(CERTMANAGER_VERSION)
 
 .PHONY: es
 es: storage
