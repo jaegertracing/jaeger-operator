@@ -45,6 +45,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Labels:      commonSpec.Labels,
 				},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets:   commonSpec.ImagePullSecrets,
 					RestartPolicy:      corev1.RestartPolicyOnFailure,
 					Affinity:           commonSpec.Affinity,
 					Tolerations:        commonSpec.Tolerations,
