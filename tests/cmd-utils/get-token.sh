@@ -43,7 +43,7 @@ fi
 
 deployment_mode=$(kubectl get jaeger "$JAEGER_NAME" -n "$NAMESPACE" -o yaml | $YQ e '.spec.strategy')
 if [ "$deployment_mode" = "production" ] || [ "$deployment_mode" = "streaming" ]; then
-    kubectl wait --timeout=$timeout --for=condition=available deployment "$JAEGER_NAME"-query -n "$NAMESPACE"  /dev/null
+    kubectl wait --timeout=$timeout --for=condition=available deployment "$JAEGER_NAME-query" -n "$NAMESPACE" > /dev/null
 else
     kubectl wait --timeout=$timeout --for=condition=available deployment "$JAEGER_NAME" -n "$NAMESPACE" > /dev/null
 fi
