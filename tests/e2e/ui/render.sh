@@ -48,7 +48,7 @@ if [ $IS_OPENSHIFT = true ]; then
     INSECURE="true" EXPECTED_CODE="403" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./02-check-forbbiden-access.yaml
 fi
 
-# Check we can access the deployment. In OpenShif, a token will be generated
+# Check we can access the deployment. In OpenShift, a token will be generated
 # to access the query endpoint properly
 EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -o ./03-curl.yaml
 
