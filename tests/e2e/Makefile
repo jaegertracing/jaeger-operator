@@ -44,12 +44,7 @@ build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 
 .PHONY: load-assert-job
 load-assert-job: build-assert-job set-assert-e2e-img-name
-ifeq ($(USE_KIND_CLUSTER),true)
-	$(VECHO)./hack/load-kind-image.sh $(ASSERT_IMG)
-else
-	$(ECHO)Pushing the E2E Test asserts Docker image to the remote repository
-	$(VECHO)if [ "$(shell docker manifest inspect $(ASSERT_IMG) 2>/dev/null)" != "" ]; then echo "The image is in the registry. Not pushing"; else docker push $(shell cat build-assert-job); fi;
-endif
+	$(VECHO)./tests/build-utils/push-assert-e2e-img.sh
 
 
 build-e2e-upgrade-image: Dockerfile $(shell find apis bundle cmd config controllers pkg  -type f)
