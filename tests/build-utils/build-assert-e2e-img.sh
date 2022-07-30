@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Get the name to use for the E2E assert job
+# Build the image for the E2E assert job
 #
 set -xe
 
