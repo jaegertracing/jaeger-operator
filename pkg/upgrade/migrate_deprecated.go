@@ -1,8 +1,6 @@
 package upgrade
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
@@ -31,10 +29,11 @@ func migrateDeprecatedOptions(jaeger *v1.Jaeger, opts v1.Options, flagMap []depr
 	in := opts.GenericMap()
 	for _, d := range flagMap {
 		if val, exists := in[d.from]; exists {
-			jaeger.Logger().WithFields(log.Fields{
-				"from": d.from,
-				"to":   d.to,
-			}).Debug("flag migrated")
+			jaeger.Logger().WithValues(
+				"flag migrated",
+				"from", d.from,
+				"to", d.to,
+			)
 
 			// if the new flag is "", there's no replacement, just skip and delete the old value
 			if len(d.to) > 0 {

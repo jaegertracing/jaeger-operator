@@ -44,10 +44,11 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 	inv := inventory.ForElasticsearches(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"elasticsearch": d.Name,
-			"namespace":     d.Namespace,
-		}).Debug("creating elasticsearch")
+		jaeger.Logger().V(-1).Info(
+			"creating elasticsearch",
+			"elasticsearch", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -59,10 +60,11 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"elasticsearch": d.Name,
-			"namespace":     d.Namespace,
-		}).Debug("updating elasticsearch")
+		jaeger.Logger().WithValues(
+			"updating elasticsearch",
+			"elasticsearch", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -70,10 +72,11 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"elasticsearch": d.Name,
-			"namespace":     d.Namespace,
-		}).Debug("deleting elasticsearch")
+		jaeger.Logger().V(-1).Info(
+			"deleting elasticsearch",
+			"elasticsearch", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

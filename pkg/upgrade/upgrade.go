@@ -104,34 +104,39 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	currentSemVersion, err := semver.NewVersion(jaeger.Status.Version)
 
 	if err != nil {
-		jaeger.Logger().WithFields(log.Fields{
-			"instance":  jaeger.Name,
-			"namespace": jaeger.Namespace,
-			"current":   jaeger.Status.Version,
-		}).WithError(err).Warn("Failed to parse current Jaeger instance version. Unable to perform upgrade")
+		jaeger.Logger().Error(
+			err,
+			"failed to parse current Jaeger instance version. Unable to perform upgrade",
+			"instance", jaeger.Name,
+			"namespace", jaeger.Namespace,
+			"current", jaeger.Status.Version,
+		)
 		return jaeger, err
 	}
 	latestSemVersion := semver.MustParse(latestVersion)
 
 	if currentSemVersion.LessThan(startUpdatesVersion) {
 		// We don't know how to do an upgrade from versions lower than 1.11.0
-		jaeger.Logger().WithFields(log.Fields{
-			"instance":  jaeger.Name,
-			"namespace": jaeger.Namespace,
-			"version":   latestVersion,
-			"current":   jaeger.Status.Version,
-		}).Warn("Cannot automatically upgrade from versions lower than 1.11.0")
+		jaeger.Logger().Error(
+			err,
+			"Cannot automatically upgrade from versions lower than 1.11.0",
+			"instance", jaeger.Name,
+			"namespace", jaeger.Namespace,
+			"version", latestVersion,
+			"current", jaeger.Status.Version,
+		)
 		return jaeger, nil
 	}
 
 	if currentSemVersion.GreaterThan(latestSemVersion) {
 		// This jaeger instance has a version greater than the latest version of the operator
-		jaeger.Logger().WithFields(log.Fields{
-			"instance":  jaeger.Name,
-			"namespace": jaeger.Namespace,
-			"current":   jaeger.Status.Version,
-			"latest":    latestVersion,
-		}).Warn("Jaeger instance has a version greater that the latest version")
+		jaeger.Logger().V(1).Info(
+			"Jaeger instance has a version greater that the latest version",
+			"instance", jaeger.Name,
+			"namespace", jaeger.Namespace,
+			"current", jaeger.Status.Version,
+			"latest", latestVersion,
+		)
 		return jaeger, nil
 	}
 

@@ -31,7 +31,7 @@ func NewQuery(jaeger *v1.Jaeger) *Query {
 
 // Get returns a deployment specification for the current instance
 func (q *Query) Get() *appsv1.Deployment {
-	q.jaeger.Logger().Debug("Assembling a query deployment")
+	q.jaeger.Logger().V(-1).Info("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
 	falseVar := false

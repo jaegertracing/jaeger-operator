@@ -4,7 +4,6 @@ import (
 	"context"
 
 	osv1 "github.com/openshift/api/route/v1"
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -33,10 +32,11 @@ func (r *ReconcileJaeger) applyRoutes(ctx context.Context, jaeger v1.Jaeger, des
 	inv := inventory.ForRoutes(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"route":     d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating route")
+		jaeger.Logger().V(-1).Info(
+			"creating route",
+			"route", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -44,10 +44,11 @@ func (r *ReconcileJaeger) applyRoutes(ctx context.Context, jaeger v1.Jaeger, des
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"route":     d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating route")
+		jaeger.Logger().V(-1).Info(
+			"updating route",
+			"route", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -55,10 +56,11 @@ func (r *ReconcileJaeger) applyRoutes(ctx context.Context, jaeger v1.Jaeger, des
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"route":     d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting route")
+		jaeger.Logger().V(-1).Info(
+			"deleting route",
+			"route", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

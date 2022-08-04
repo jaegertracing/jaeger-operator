@@ -139,10 +139,11 @@ func lookback(jaeger *v1.Jaeger) runtime.Object {
 			envs = append(envs, corev1.EnvVar{Name: "UNIT", Value: string(d.units)})
 			envs = append(envs, corev1.EnvVar{Name: "UNIT_COUNT", Value: strconv.Itoa(d.count)})
 		} else {
-			jaeger.Logger().
-				WithError(err).
-				WithField("readTTL", jaeger.Spec.Storage.EsRollover.ReadTTL).
-				Error("Failed to parse esRollover.readTTL to time.duration")
+			jaeger.Logger().Error(
+				err,
+				"Failed to parse esRollover.readTTL to time.duration",
+				"readTTL", jaeger.Spec.Storage.EsRollover.ReadTTL,
+			)
 		}
 	}
 

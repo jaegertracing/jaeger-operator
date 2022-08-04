@@ -46,20 +46,20 @@ const (
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
 func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := jaeger.Logger().WithField("deployment", dep.Name)
+	logFields := jaeger.Logger().WithValues("deployment", dep.Name)
 
 	if jaeger == nil {
-		logFields.Trace("no Jaeger instance found, skipping sidecar injection")
+		logFields.V(-2).Info("no Jaeger instance found, skipping sidecar injection")
 		return dep
 	}
 
 	if val, ok := dep.Labels[Label]; ok && val != jaeger.Name {
-		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
+		logFields.V(-2).Info("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
 		return dep
 	}
 	decorate(dep)
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
-	logFields.Debug("injecting sidecar")
+	logFields.V(-1).Info("injecting sidecar")
 	if hasAgent { // This is an update
 		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
 	} else {

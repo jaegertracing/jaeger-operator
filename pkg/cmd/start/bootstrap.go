@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -81,14 +82,14 @@ func bootstrap(ctx context.Context) manager.Manager {
 	buildIdentity(ctx, namespace)
 	tracing.SetInstanceID(ctx, namespace)
 
-	log.WithFields(log.Fields{
-		"os":              runtime.GOOS,
-		"arch":            runtime.GOARCH,
-		"version":         runtime.Version(),
-		"jaeger-operator": version.Get().Operator,
-		"identity":        viper.GetString(v1.ConfigIdentity),
-		"jaeger":          version.Get().Jaeger,
-	}).Info("Versions")
+	ctrl.Log.Info("Versions",
+		"os", runtime.GOOS,
+		"arch", runtime.GOARCH,
+		"version", runtime.Version(),
+		"jaeger-operator", version.Get().Operator,
+		"identity", viper.GetString(v1.ConfigIdentity),
+		"jaeger", version.Get().Jaeger,
+	)
 
 	cfg, err := ctrl.GetConfig()
 	if err != nil {
@@ -240,6 +241,33 @@ func setLogLevel(ctx context.Context) {
 	} else {
 		log.SetLevel(level)
 	}
+
+	var loggingLevel zapcore.Level
+	switch strings.ToLower(viper.GetString("log-level")) {
+	case "panic":
+		loggingLevel = zapcore.PanicLevel
+	case "fatal":
+		loggingLevel = zapcore.FatalLevel
+	case "error":
+		loggingLevel = zapcore.ErrorLevel
+	case "warn", "warning":
+		loggingLevel = zapcore.WarnLevel
+	case "info":
+		loggingLevel = zapcore.InfoLevel
+	case "debug":
+		loggingLevel = zapcore.DebugLevel
+	}
+
+	opts := zap.Options{
+		Development: true,
+		Level:       loggingLevel,
+	}
+
+	opts.BindFlags(flag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
 }
 
 func buildIdentity(ctx context.Context, podNamespace string) {
@@ -275,14 +303,6 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	enableLeaderElection := viper.GetBool("leader-elect")
 	probeAddr := viper.GetString("health-probe-bind-address")
 	webhookPort := viper.GetInt("webhook-bind-port")
-
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 

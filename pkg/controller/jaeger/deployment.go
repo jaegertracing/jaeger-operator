@@ -48,10 +48,11 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 	depInventory := inventory.ForDeployments(depList.Items, desired)
 	for i := range depInventory.Create {
 		d := depInventory.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"deployment": d.Name,
-			"namespace":  d.Namespace,
-		}).Debug("creating deployment")
+		jaeger.Logger().V(-1).WithValues(
+			"creating deployment",
+			"deployment", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -59,10 +60,11 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 
 	for i := range depInventory.Update {
 		d := depInventory.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"deployment": d.Name,
-			"namespace":  d.Namespace,
-		}).Debug("updating deployment")
+		jaeger.Logger().V(-1).Info(
+			"updating deployment",
+			"deployment", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -83,10 +85,11 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 
 	for i := range depInventory.Delete {
 		d := depInventory.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"deployment": d.Name,
-			"namespace":  d.Namespace,
-		}).Debug("deleting deployment")
+		jaeger.Logger().V(-1).WithValues(
+			"deleting deployment",
+			"deployment", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

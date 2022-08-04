@@ -36,10 +36,11 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 	inv := inventory.ForConfigMaps(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"configMap": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating config maps")
+		jaeger.Logger().V(-1).Info(
+			"creating config maps",
+			"configMap", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -47,10 +48,11 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"configMap": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating config maps")
+		jaeger.Logger().V(-1).Info(
+			"updating config maps",
+			"configMap", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -58,10 +60,11 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"configMap": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting config maps")
+		jaeger.Logger().WithValues(
+			"deleting config maps",
+			"configMap", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

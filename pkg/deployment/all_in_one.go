@@ -35,7 +35,7 @@ func NewAllInOne(jaeger *v1.Jaeger) *AllInOne {
 
 // Get returns a pod for the current all-in-one configuration
 func (a *AllInOne) Get() *appsv1.Deployment {
-	a.jaeger.Logger().Debug("Assembling an all-in-one deployment")
+	a.jaeger.Logger().V(-1).Info("Assembling an all-in-one deployment")
 	trueVar := true
 	falseVar := false
 

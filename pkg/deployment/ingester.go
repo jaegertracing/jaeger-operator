@@ -39,7 +39,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		return nil
 	}
 
-	i.jaeger.Logger().Debug("Assembling an ingester deployment")
+	i.jaeger.Logger().V(-1).Info("Assembling an ingester deployment")
 
 	labels := i.labels()
 	trueVar := true

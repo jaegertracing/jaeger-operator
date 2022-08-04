@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,10 +32,11 @@ func (r *ReconcileJaeger) applyDaemonSets(ctx context.Context, jaeger v1.Jaeger,
 	inv := inventory.ForDaemonSets(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"daemonset": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating daemonset")
+		jaeger.Logger().V(-1).Info(
+			"creating daemonset",
+			"daemonset", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -44,10 +44,11 @@ func (r *ReconcileJaeger) applyDaemonSets(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"daemonset": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating daemonset")
+		jaeger.Logger().V(-1).Info(
+			"updating daemonset",
+			"daemonset", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -55,10 +56,11 @@ func (r *ReconcileJaeger) applyDaemonSets(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"daemonset": d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting daemonset")
+		jaeger.Logger().V(-1).Info(
+			"deleting daemonset",
+			"daemonset", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

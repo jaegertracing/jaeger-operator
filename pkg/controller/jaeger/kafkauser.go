@@ -45,10 +45,11 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 	inv := inventory.ForKafkaUsers(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("creating kafka users")
+		jaeger.Logger().V(-1).Info(
+			"creating kafka users",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -56,10 +57,11 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("updating kafka user")
+		jaeger.Logger().V(-1).Info(
+			"updating kafka user",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -79,10 +81,11 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("deleting kafka user")
+		jaeger.Logger().V(-1).Info(
+			"deleting kafka user",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

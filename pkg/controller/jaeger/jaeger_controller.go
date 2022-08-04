@@ -95,10 +95,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
-	logFields := instance.Logger().WithField("execution", execution)
+	logFields := instance.Logger().WithValues("execution", execution)
 
 	if err := validate(instance); err != nil {
-		instance.Logger().WithError(err).Error("failed to validate")
+		instance.Logger().Error(err, "failed to validate")
 		span.SetStatus(codes.Error, err.Error())
 		return reconcile.Result{}, err
 	}
@@ -126,16 +126,24 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			instance.Status.Phase = v1.JaegerPhaseFailed
 			if err := r.client.Status().Update(ctx, instance); err != nil {
 				// we let it return the real error later
-				logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after setting the identity")
+				logFields.Error(
+					err,
+					"failed to store the failed status into the current CustomResource after setting the identity",
+				)
 			}
 
-			logFields.WithField(
+			logFields.Error(
+				err,
+				"failed to set this operator as the manager of the instance",
 				"operator-identity", identity,
-			).WithError(err).Error("failed to set this operator as the manager of the instance")
+			)
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 
-		logFields.WithField("operator-identity", identity).Debug("configured this operator as the owner of the CR")
+		logFields.V(-1).Info(
+			"configured this operator as the owner of the CR",
+			"operator-identity", identity,
+		)
 		return reconcile.Result{}, nil
 	}
 
@@ -153,10 +161,16 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		instance.Status.Phase = v1.JaegerPhaseFailed
 		if err := r.client.Status().Update(ctx, instance); err != nil {
 			// we let it return the real error later
-			logFields.WithError(err).Error("failed to store the failed status into the current CustomResource after the reconciliation")
+			logFields.Error(
+				err,
+				"failed to store the failed status into the current CustomResource after the reconciliation",
+			)
 		}
 
-		logFields.WithError(err).Error("failed to apply the changes")
+		logFields.Error(
+			err,
+			"failed to apply the changes",
+		)
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 	instance = &updated
@@ -166,7 +180,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	if !reflect.DeepEqual(originalInstance, *instance) {
 		// we store back the changed CR, so that what is stored reflects what is being used
 		if err := r.client.Update(ctx, instance); err != nil {
-			logFields.WithError(err).Error("failed to store back the current CustomResource")
+			logFields.Error(
+				err,
+				"failed to store back the current CustomResource",
+			)
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 	}
@@ -176,7 +193,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		instance.Status.Phase = v1.JaegerPhaseRunning
 		instance.Status.Version = instanceVersion
 		if err := r.client.Status().Update(ctx, instance); err != nil {
-			logFields.WithError(err).Error("failed to store the running status into the current CustomResource")
+			logFields.Error(
+				err,
+				"failed to store the running status into the current CustomResource",
+			)
 			return reconcile.Result{}, tracing.HandleError(err, span)
 		}
 	}
@@ -238,7 +258,10 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			jaeger.Status.Phase = v1.JaegerPhaseFailed
 			if err := r.client.Status().Update(ctx, &jaeger); err != nil {
 				// we let it return the real error later
-				jaeger.Logger().WithError(err).Error("failed to store the failed status into the current CustomResource after preconditions")
+				jaeger.Logger().Error(
+					err,
+					"failed to store the failed status into the current CustomResource after preconditions",
+				)
 			}
 			return jaeger, tracing.HandleError(err, span)
 		}
@@ -247,7 +270,10 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		es := &storage.ElasticsearchDeployment{Jaeger: &jaeger, CertScript: r.certGenerationScript, Secrets: secretsForNamespace}
 		err = es.CreateCerts()
 		if err != nil {
-			es.Jaeger.Logger().WithError(err).Error("failed to create Elasticsearch certificates, Elasticsearch won't be deployed")
+			es.Jaeger.Logger().Error(
+				err,
+				"failed to create Elasticsearch certificates, Elasticsearch won't be deployed",
+			)
 			return jaeger, err
 		}
 		str = str.WithSecrets(append(str.Secrets(), es.ExtractSecrets()...))
@@ -326,10 +352,16 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		err = r.rClient.List(ctx, &routes, client.InNamespace(jaeger.Namespace))
 		if err == nil {
 			if err := r.applyConsoleLinks(ctx, jaeger, str.ConsoleLinks(routes.Items)); err != nil {
-				jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile console links")
+				jaeger.Logger().Error(
+					tracing.HandleError(err, span),
+					"failed to reconcile console links",
+				)
 			}
 		} else {
-			jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to obtain a list of routes to reconcile consolelinks")
+			jaeger.Logger().Error(
+				tracing.HandleError(err, span),
+				"failed to obtain a list of routes to reconcile consolelinks",
+			)
 		}
 	} else {
 		if err := r.applyIngresses(ctx, jaeger, str.Ingresses()); err != nil {
@@ -339,7 +371,10 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 
 	if err := r.applyHorizontalPodAutoscalers(ctx, jaeger, str.HorizontalPodAutoscalers()); err != nil {
 		// we don't want to fail the whole reconciliation when this fails
-		jaeger.Logger().WithError(tracing.HandleError(err, span)).Warn("failed to reconcile pod autoscalers")
+		jaeger.Logger().Error(
+			tracing.HandleError(err, span),
+			"failed to reconcile pod autoscalers",
+		)
 		return jaeger, nil
 	}
 

@@ -115,7 +115,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			manifest.cronJobs = append(manifest.cronJobs, cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"skipping spark dependencies job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 
@@ -124,7 +127,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"skipping Elasticsearch index cleaner job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 
