@@ -25,11 +25,11 @@ func getOTLPContainePorts(options []string) []corev1.ContainerPort {
 		return []corev1.ContainerPort{
 			{
 				ContainerPort: 4317,
-				Name:          "otlp-grpc",
+				Name:          "grpc-otlp",
 			},
 			{
 				ContainerPort: 4318,
-				Name:          "otlp-http",
+				Name:          "http-otlp",
 			},
 		}
 	}

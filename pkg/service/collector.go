@@ -143,11 +143,11 @@ func getOTLPServicePorts(jaeger *v1.Jaeger) []corev1.ServicePort {
 	if util.IsOTLPEnable(options) {
 		return []corev1.ServicePort{
 			{
-				Name: "otlp-grpc",
+				Name: "grpc-otlp",
 				Port: 4317,
 			},
 			{
-				Name: "otlp-http",
+				Name: "http-otlp",
 				Port: 4318,
 			},
 		}
