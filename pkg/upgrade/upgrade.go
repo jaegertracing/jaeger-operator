@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
@@ -50,21 +50,26 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 		// that we indeed own the item
 		owner := j.Labels[v1.LabelOperatedBy]
 		if owner != identity {
-			log.WithFields(log.Fields{
-				"our-identity":   identity,
-				"owner-identity": owner,
-			}).Debug("skipping CR upgrade as we are not owners")
+			log.Log.V(-1).Info(
+				"skipping CR upgrade as we are not owners",
+				"our-identity", identity,
+				"owner-identity", owner,
+			)
+
 			continue
 		}
 		patch := client.MergeFrom(j.DeepCopy())
 		jaeger, err := ManagedInstance(ctx, c, j, latestVersion)
 		if err != nil {
 			// nothing to do at this level, just go to the next instance
-			log.WithFields(log.Fields{
-				"jaeger":                jaeger.Name,
-				"namespace":             jaeger.Namespace,
-				"latest-jaeger-version": latestVersion,
-			}).Error("Failed to upgrade", err)
+			log.Log.Error(
+				err,
+				"Failed to upgrade",
+				"jaeger", jaeger.Name,
+				"namespace", jaeger.Namespace,
+				"latest-jaeger-version", latestVersion,
+			)
+
 			continue
 		}
 		if !reflect.DeepEqual(jaeger, j) {
@@ -75,18 +80,22 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 				patch := client.MergeFrom(jaeger.DeepCopy())
 				jaeger.Status.Version = version
 				if err := c.Status().Patch(ctx, &jaeger, patch); err != nil {
-					log.WithFields(log.Fields{
-						"instance":  jaeger.Name,
-						"namespace": jaeger.Namespace,
-						"version":   version,
-					}).WithError(err).Error("failed to update status the upgraded instance")
+					log.Log.Error(
+						err,
+						"failed to update status the upgraded instance",
+						"instance", jaeger.Name,
+						"namespace", jaeger.Namespace,
+						"version", version,
+					)
 					tracing.HandleError(err, span)
 				}
 			} else {
-				log.WithFields(log.Fields{
-					"instance":  jaeger.Name,
-					"namespace": jaeger.Namespace,
-				}).WithError(err).Error("failed to store the upgraded instance")
+				log.Log.Error(
+					err,
+					"failed to store the upgraded instance",
+					"instance", jaeger.Name,
+					"namespace", jaeger.Namespace,
+				)
 				tracing.HandleError(err, span)
 			}
 		}
@@ -145,11 +154,13 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 		if v.GreaterThan(currentSemVersion) && (v.LessThan(latestSemVersion) || v.Equal(latestSemVersion)) {
 			upgraded, err := upgrades[v.String()](ctx, client, jaeger)
 			if err != nil {
-				log.WithFields(log.Fields{
-					"instance":  jaeger.Name,
-					"namespace": jaeger.Namespace,
-					"to":        v.String(),
-				}).WithError(err).Warn("failed to upgrade managed instance")
+				log.Log.Error(
+					err,
+					"failed to upgrade managed instance",
+					"instance", jaeger.Name,
+					"namespace", jaeger.Namespace,
+					"to", v.String(),
+				)
 				return jaeger, tracing.HandleError(err, span)
 			}
 

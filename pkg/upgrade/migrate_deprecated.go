@@ -29,7 +29,7 @@ func migrateDeprecatedOptions(jaeger *v1.Jaeger, opts v1.Options, flagMap []depr
 	in := opts.GenericMap()
 	for _, d := range flagMap {
 		if val, exists := in[d.from]; exists {
-			jaeger.Logger().WithValues(
+			jaeger.Logger().V(-1).Info(
 				"flag migrated",
 				"from", d.from,
 				"to", d.to,

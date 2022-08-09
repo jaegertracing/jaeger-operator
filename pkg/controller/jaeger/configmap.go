@@ -3,12 +3,12 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
@@ -60,7 +60,7 @@ func (r *ReconcileJaeger) applyConfigMaps(ctx context.Context, jaeger v1.Jaeger,
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithValues(
+		jaeger.Logger().V(-1).Info(
 			"deleting config maps",
 			"configMap", d.Name,
 			"namespace", d.Namespace,
@@ -94,10 +94,12 @@ func (r *ReconcileJaeger) cleanConfigMaps(ctx context.Context, instanceName stri
 	for i := range configmaps.Items {
 		cfgMap := configmaps.Items[i]
 		if err := r.client.Delete(ctx, &cfgMap); err != nil {
-			log.WithFields(log.Fields{
-				"configMapName":      cfgMap.Name,
-				"configMapNamespace": cfgMap.Namespace,
-			}).WithError(err).Error("error cleaning configmap deployment")
+			log.Log.Error(
+				err,
+				"error cleaning configmap deployment",
+				"configMapName", cfgMap.Name,
+				"configMapNamespace", cfgMap.Namespace,
+			)
 		}
 	}
 	return nil

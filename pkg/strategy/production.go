@@ -114,7 +114,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
-			jaeger.Logger().V(1).WithValues(
+			jaeger.Logger().V(1).Info(
 				"skipping Elasticsearch index cleaner job due to unsupported storage.",
 				"type", jaeger.Spec.Storage.Type,
 			)

@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
@@ -108,18 +108,20 @@ func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUs
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
 					// we don't have anything else to do here, break the poll
-					log.WithFields(log.Fields{
-						"namespace": kafkaUser.GetNamespace(),
-						"name":      kafkaUser.GetName(),
-					}).Warn("kafka user secret has been removed.")
+					log.Log.V(1).Info(
+						"kafka user secret has been removed.",
+						"namespace", kafkaUser.GetNamespace(),
+						"name", kafkaUser.GetName(),
+					)
 					return true, ErrKafkaUserRemoved
 				}
 
 				// the object might have not been created yet
-				log.WithFields(log.Fields{
-					"namespace": kafkaUser.GetNamespace(),
-					"name":      kafkaUser.GetName(),
-				}).Debug("kafka user secret doesn't exist yet.")
+				log.Log.V(-1).Info(
+					"kafka user secret doesn't exist yet.",
+					"namespace", kafkaUser.GetNamespace(),
+					"name", kafkaUser.GetName(),
+				)
 				return false, nil
 			}
 			return false, tracing.HandleError(err, span)
@@ -129,22 +131,24 @@ func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUs
 		readyCondition := getReadyCondition(k.Status.Conditions)
 		if !strings.EqualFold(readyCondition.Status, "true") {
 			once.Do(func() {
-				log.WithFields(log.Fields{
-					"namespace":       k.GetNamespace(),
-					"name":            k.GetName(),
-					"conditionStatus": readyCondition.Status,
-					"conditionType":   readyCondition.Type,
-				}).Debug("Waiting for kafka user to stabilize")
+				log.Log.V(-1).Info(
+					"Waiting for kafka user to stabilize",
+					"namespace", k.GetNamespace(),
+					"name", k.GetName(),
+					"conditionStatus", readyCondition.Status,
+					"conditionType", readyCondition.Type,
+				)
 			})
 			return false, nil
 		}
 
-		log.WithFields(log.Fields{
-			"namespace":       k.GetNamespace(),
-			"name":            k.GetName(),
-			"conditionStatus": readyCondition.Status,
-			"conditionType":   readyCondition.Type,
-		}).Debug("kafka user has stabilized")
+		log.Log.V(-1).Info(
+			"kafka user has stabilized",
+			"namespace", k.GetNamespace(),
+			"name", k.GetName(),
+			"conditionStatus", readyCondition.Status,
+			"conditionType", readyCondition.Type,
+		)
 		return true, nil
 	})
 }

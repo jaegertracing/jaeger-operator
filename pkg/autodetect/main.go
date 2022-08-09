@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
@@ -16,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -67,7 +67,7 @@ func (b *Background) Start() {
 	// periodically attempts to auto detect all the capabilities for this operator
 	b.ticker = time.NewTicker(5 * time.Second)
 	b.autoDetectCapabilities()
-	log.Trace("finished the first auto-detection")
+	log.Log.V(-1).Info("finished the first auto-detection")
 
 	go func() {
 		for {
@@ -89,9 +89,11 @@ func (b *Background) autoDetectCapabilities() {
 
 	apiList, err := AvailableAPIs(b.dcl, listenedGroupsMap)
 	if err != nil {
-		log.WithError(err).Info("failed to determine the platform capabilities, auto-detected properties will remain the same until next cycle.")
+		log.Log.Error(
+			err,
+			"failed to determine the platform capabilities, auto-detected properties will remain the same until next cycle.",
+		)
 	} else {
-
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
@@ -112,19 +114,25 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
-			log.Errorf("Error getting %s api list: %v", apiGroupVersion, err)
+			log.Log.Error(
+				err,
+				fmt.Sprintf("Error getting %s api list", apiGroupVersion),
+			)
 			continue
 		}
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "cronjobs" {
 				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
-				log.Tracef("Found the cronjobs api in %s", apiGroupVersion)
+				log.Log.V(-1).Info(fmt.Sprintf("Found the cronjobs api in %s", apiGroupVersion))
 				return
 			}
 		}
 	}
 
-	log.Errorf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or "))
+	log.Log.V(2).Info(
+		fmt.Sprintf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+	)
+
 }
 
 // AvailableAPIs returns available list of CRDs from the cluster.
@@ -152,23 +160,31 @@ func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]boo
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
 	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
-		log.Trace("Attempting to auto-detect the platform")
+		log.Log.V(-1).Info("Attempting to auto-detect the platform")
 		if isOpenShift(apiList) {
 			viper.Set("platform", v1.FlagPlatformOpenShift)
 		} else {
 			viper.Set("platform", v1.FlagPlatformKubernetes)
 		}
 
-		log.WithField("platform", viper.GetString("platform")).Info("Auto-detected the platform")
+		log.Log.Info(
+			"Auto-detected the platform",
+			"platform", viper.GetString("platform"),
+		)
 	} else {
-		log.WithField("platform", viper.GetString("platform")).Debug("The 'platform' option is explicitly set")
+		log.Log.V(-1).Info(
+			"The 'platform' option is explicitly set",
+			"platform", viper.GetString("platform"),
+		)
 	}
 }
 
 func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect whether the Elasticsearch operator is available
 	if b.retryDetectEs {
-		log.Trace("Determining whether we should enable the Elasticsearch Operator integration")
+		log.Log.V(-1).Info(
+			"Determining whether we should enable the Elasticsearch Operator integration",
+		)
 		previous := viper.GetString("es-provision")
 		if IsElasticsearchOperatorAvailable(apiList) {
 			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
@@ -177,10 +193,16 @@ func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.
 		}
 
 		if previous != viper.GetString("es-provision") {
-			log.WithField("es-provision", viper.GetString("es-provision")).Info("Automatically adjusted the 'es-provision' flag")
+			log.Log.Info(
+				"Automatically adjusted the 'es-provision' flag",
+				"es-provision", viper.GetString("es-provision"),
+			)
 		}
 	} else {
-		log.WithField("es-provision", viper.GetString("es-provision")).Trace("The 'es-provision' option is explicitly set")
+		log.Log.V(-1).Info(
+			"The 'es-provision' option is explicitly set",
+			"es-provision", viper.GetString("es-provision"),
+		)
 	}
 }
 
@@ -189,7 +211,7 @@ func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourc
 	// viper has a "IsSet" method that we could use, except that it returns "true" even
 	// when nothing is set but it finds a 'Default' value...
 	if b.retryDetectKafka {
-		log.Trace("Determining whether we should enable the Kafka Operator integration")
+		log.Log.V(-1).Info("Determining whether we should enable the Kafka Operator integration")
 
 		previous := viper.GetString("kafka-provision")
 		if isKafkaOperatorAvailable(apiList) {
@@ -199,10 +221,16 @@ func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourc
 		}
 
 		if previous != viper.GetString("kafka-provision") {
-			log.WithField("kafka-provision", viper.GetString("kafka-provision")).Info("Automatically adjusted the 'kafka-provision' flag")
+			log.Log.Info(
+				"Automatically adjusted the 'kafka-provision' flag",
+				"kafka-provision", viper.GetString("kafka-provision"),
+			)
 		}
 	} else {
-		log.WithField("kafka-provision", viper.GetString("kafka-provision")).Trace("The 'kafka-provision' option is explicitly set")
+		log.Log.V(-1).Info(
+			"The 'kafka-provision' option is explicitly set",
+			"kafka-provision", viper.GetString("kafka-provision"),
+		)
 	}
 }
 
@@ -219,7 +247,9 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 	if err := b.cl.Create(ctx, tr); err != nil {
 		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && viper.GetBool("auth-delegator-available")) {
 			// for the first run, we log this info, or when the previous value was true
-			log.Info("The service account running this operator does not have the role 'system:auth-delegator', consider granting it for additional capabilities")
+			log.Log.Info(
+				"The service account running this operator does not have the role 'system:auth-delegator', consider granting it for additional capabilities",
+			)
 		}
 		viper.Set("auth-delegator-available", false)
 	} else {
@@ -229,14 +259,16 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 		// and deal with the edge case if it ever manifests in the real world
 		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && !viper.GetBool("auth-delegator-available")) {
 			// for the first run, we log this info, or when the previous value was 'false'
-			log.Info("The service account running this operator has the role 'system:auth-delegator', enabling OAuth Proxy's 'delegate-urls' option")
+			log.Log.Info(
+				"The service account running this operator has the role 'system:auth-delegator', enabling OAuth Proxy's 'delegate-urls' option",
+			)
 		}
 		viper.Set("auth-delegator-available", true)
 	}
 }
 
 func (b *Background) cleanDeployments(ctx context.Context) {
-	log.Trace("detecting orphaned deployments.")
+	log.Log.V(-1).Info("detecting orphaned deployments.")
 
 	instancesMap := make(map[string]*v1.Jaeger)
 	deployments := &appsv1.DeploymentList{}
@@ -249,13 +281,21 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 		for _, ns := range strings.Split(namespaces, ",") {
 			nsDeps := &appsv1.DeploymentList{}
 			if err := b.clReader.List(ctx, nsDeps, append(deployOpts, client.InNamespace(ns))...); err != nil {
-				log.WithField("namespace", ns).WithError(err).Error("error getting a list of deployments to analyze in namespace")
+				log.Log.Error(
+					err,
+					"error getting a list of deployments to analyze in namespace",
+					"namespace", ns,
+				)
 			}
 			deployments.Items = append(deployments.Items, nsDeps.Items...)
 
 			instances := &v1.JaegerList{}
 			if err := b.clReader.List(ctx, instances, client.InNamespace(ns)); err != nil {
-				log.WithField("namespace", ns).WithError(err).Error("error getting a list of existing jaeger instances in namespace")
+				log.Log.Error(
+					err,
+					"error getting a list of existing jaeger instances in namespace",
+					"namespace", ns,
+				)
 			}
 			for i := range instances.Items {
 				instancesMap[instances.Items[i].Name] = &instances.Items[i]
@@ -263,12 +303,18 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 		}
 	} else {
 		if err := b.clReader.List(ctx, deployments, deployOpts...); err != nil {
-			log.WithError(err).Error("error getting a list of deployments to analyze")
+			log.Log.Error(
+				err,
+				"error getting a list of deployments to analyze",
+			)
 		}
 
 		instances := &v1.JaegerList{}
 		if err := b.clReader.List(ctx, instances); err != nil {
-			log.WithError(err).Error("error getting a list of existing jaeger instances")
+			log.Log.Error(
+				err,
+				"error getting a list of existing jaeger instances",
+			)
 		}
 		for i := range instances.Items {
 			instancesMap[instances.Items[i].Name] = &instances.Items[i]
@@ -283,10 +329,12 @@ func (b *Background) cleanDeployments(ctx context.Context) {
 			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
 				inject.CleanSidecar(instanceName, &dep)
 				if err := b.cl.Update(ctx, &dep); err != nil {
-					log.WithFields(log.Fields{
-						"deploymentName":      dep.Name,
-						"deploymentNamespace": dep.Namespace,
-					}).WithError(err).Error("error cleaning orphaned deployment")
+					log.Log.Error(
+						err,
+						"error cleaning orphaned deployment",
+						"deploymentName", dep.Name,
+						"deploymentNamespace", dep.Namespace,
+					)
 				}
 			}
 		}
@@ -332,7 +380,7 @@ func (m matchingLabelKeys) ApplyToList(opts *client.ListOptions) {
 	for k := range map[string]string(m) {
 		req, err := labels.NewRequirement(k, selection.Exists, []string{})
 		if err != nil {
-			log.Warnf("failed to build label selector: %v", err)
+			log.Log.Error(err, "failed to build label selector")
 			return
 		}
 		sel.Add(*req)

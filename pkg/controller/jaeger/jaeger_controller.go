@@ -9,7 +9,6 @@ import (
 
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -68,11 +68,12 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	span.SetAttributes(
 		otelattribute.String("name", request.Name),
 		otelattribute.String("namespace", request.Namespace))
-	log.WithFields(log.Fields{
-		"namespace": request.Namespace,
-		"instance":  request.Name,
-		"execution": execution,
-	}).Debug("Reconciling Jaeger")
+	log.Log.V(-1).Info(
+		"Reconciling Jaeger",
+		"namespace", request.Namespace,
+		"instance", request.Name,
+		"execution", execution,
+	)
 
 	// Fetch the Jaeger instance
 	instance := &v1.Jaeger{}
@@ -109,10 +110,11 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	if val, found := instance.Labels[v1.LabelOperatedBy]; found {
 		if val != identity {
 			// if we are not the ones managing this instance, skip the reconciliation
-			log.WithFields(log.Fields{
-				"our-identity":   identity,
-				"owner-identity": val,
-			}).Trace("skipping CR as we are not owners")
+			log.Log.V(-1).Info(
+				"skipping CR as we are not owners",
+				"our-identity", identity,
+				"owner-identity", val,
+			)
 			return reconcile.Result{}, nil
 		}
 	} else {
@@ -201,11 +203,12 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"namespace": request.Namespace,
-		"instance":  request.Name,
-		"execution": execution,
-	}).Debug("Reconciling Jaeger completed")
+	log.Log.V(-1).Info(
+		"Reconciling Jaeger completed",
+		"namespace", request.Namespace,
+		"instance", request.Name,
+		"execution", execution,
+	)
 
 	return reconcile.Result{}, nil
 }
@@ -289,10 +292,11 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(elasticsearches) > 0 {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-		}).Warn("An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+		log.Log.V(1).Info(
+			"An Elasticsearch cluster should be provisioned, but provisioning is disabled for this Jaeger Operator",
+			"namespace", jaeger.Namespace,
+			"instance", jaeger.Name,
+		)
 	}
 
 	kafkas := str.Kafkas()
@@ -306,10 +310,11 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 			return jaeger, tracing.HandleError(err, span)
 		}
 	} else if len(kafkas) > 0 || len(kafkaUsers) > 0 {
-		log.WithFields(log.Fields{
-			"namespace": jaeger.Namespace,
-			"instance":  jaeger.Name,
-		}).Warn("A Kafka cluster should be provisioned, but provisioning is disabled for this Jaeger Operator")
+		log.Log.V(1).Info(
+			"A Kafka cluster should be provisioned, but provisioning is disabled for this Jaeger Operator",
+			"namespace", jaeger.Namespace,
+			"instance", jaeger.Name,
+		)
 	}
 
 	if err := r.applyAccounts(ctx, jaeger, str.Accounts()); err != nil {
@@ -442,13 +447,21 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 	}
 	for i := range deps {
 		if err := client.Update(context.Background(), &deps[i]); err != nil {
-			log.WithField("component", "jaeger-cr-sync").Error(err)
+			log.Log.Error(
+				err,
+				"error while updating the dependency",
+				"component", "jaeger-cr-sync",
+			)
 			return err
 		}
 	}
 	for i := range nssupdate {
 		if err := client.Update(context.Background(), &nssupdate[i]); err != nil {
-			log.WithField("component", "jaeger-cr-sync").Error(err)
+			log.Log.Error(
+				err,
+				"error while upgrading the namespace",
+				"component", "jaeger-cr-sync",
+			)
 			return err
 		}
 	}

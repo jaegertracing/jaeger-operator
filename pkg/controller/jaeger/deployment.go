@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
@@ -48,7 +48,7 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 	depInventory := inventory.ForDeployments(depList.Items, desired)
 	for i := range depInventory.Create {
 		d := depInventory.Create[i]
-		jaeger.Logger().V(-1).WithValues(
+		jaeger.Logger().V(-1).Info(
 			"creating deployment",
 			"deployment", d.Name,
 			"namespace", d.Namespace,
@@ -85,7 +85,7 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 
 	for i := range depInventory.Delete {
 		d := depInventory.Delete[i]
-		jaeger.Logger().V(-1).WithValues(
+		jaeger.Logger().V(-1).V(-1).Info(
 			"deleting deployment",
 			"deployment", d.Name,
 			"namespace", d.Namespace,
@@ -115,18 +115,20 @@ func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deplo
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
 					// we don't have anything else to do here, break the poll
-					log.WithFields(log.Fields{
-						"namespace": dep.Namespace,
-						"name":      dep.Name,
-					}).Warn("Deployment has been removed.")
+					log.Log.V(1).Info(
+						"Deployment has been removed.",
+						"namespace", dep.Namespace,
+						"name", dep.Name,
+					)
 					return true, ErrDeploymentRemoved
 				}
 
 				// the object might have not been created yet
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-				}).Debug("Deployment doesn't exist yet.")
+				log.Log.V(-1).Info(
+					"Deployment doesn't exist yet.",
+					"namespace", dep.Namespace,
+					"name", dep.Name,
+				)
 				return false, nil
 			}
 			return false, tracing.HandleError(err, span)
@@ -135,22 +137,24 @@ func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deplo
 		seen = true
 		if d.Status.ReadyReplicas != d.Status.Replicas {
 			once.Do(func() {
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-					"ready":     d.Status.ReadyReplicas,
-					"desired":   d.Status.Replicas,
-				}).Debug("Waiting for deployment to stabilize")
+				log.Log.V(-1).Info(
+					"Waiting for deployment to stabilize",
+					"namespace", dep.Namespace,
+					"name", dep.Name,
+					"ready", d.Status.ReadyReplicas,
+					"desired", d.Status.Replicas,
+				)
 			})
 			return false, nil
 		}
 
-		log.WithFields(log.Fields{
-			"namespace": dep.Namespace,
-			"name":      dep.Name,
-			"ready":     d.Status.ReadyReplicas,
-			"desired":   d.Status.Replicas,
-		}).Debug("Deployment has stabilized")
+		log.Log.V(-1).Info(
+			"Deployment has stabilized",
+			"namespace", dep.Namespace,
+			"name", dep.Name,
+			"ready", d.Status.ReadyReplicas,
+			"desired", d.Status.Replicas,
+		)
 		return true, nil
 	})
 }

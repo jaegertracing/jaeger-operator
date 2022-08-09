@@ -64,7 +64,7 @@ func transformCollectorPorts(logger logr.Logger, opts v1.Options, collectorNewFl
 	// Transform port number to format :XXX
 	in := opts.GenericMap()
 	for _, d := range collectorNewFlagsMap {
-		logger.V(-1).WithValues(
+		logger.V(-1).Info(
 			"flag value migrated",
 			"from", d.from,
 			"to", d.to,
