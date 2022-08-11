@@ -76,7 +76,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// we provision a Kafka when no brokers have been set, or, when we are not in the first run,
 	// when we know we've been the ones placing the broker information in the configuration
 	if (!pfound && !cfound) || provisioned {
-		jaeger.Logger().Info("Provisioning Kafka, this might take a while...")
+		jaeger.Logger().Debug("The Jaeger deployment uses autoprovisioned kafka. Kafka cluster will be deployed if not there before")
 		manifest = autoProvisionKafka(ctx, jaeger, manifest)
 	}
 
