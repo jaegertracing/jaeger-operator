@@ -5,7 +5,6 @@ Changes by Version
 -------------------
 
 * Upgrade operator-sdk to 1.22.2 ([#2021](https://github.com/jaegertracing/jaeger-operator/pull/2021), [@iblancasa](https://github.com/iblancasa))
-* Bump github.com/prometheus/client_golang from 1.12.2 to 1.13.0 ([#2019](https://github.com/jaegertracing/jaeger-operator/pull/2019), [@dependabot[bot]](https://github.com/apps/dependabot))
 * es-dependencies: support image pull secret ([#2012](https://github.com/jaegertracing/jaeger-operator/pull/2012), [@frzifus](https://github.com/frzifus))
 
 1.36.0 (2022-07-18)
