@@ -12,6 +12,7 @@ if [[ $OPERATOR_VERSION == v* ]]; then
 fi
 
 BUILD_IMAGE=${BUILD_IMAGE:-"${BASE_BUILD_IMAGE}:${OPERATOR_VERSION}"}
+DOCKER_USERNAME=${DOCKER_USERNAME:-"jaegertracingbot"}
 
 if [ "${DOCKER_PASSWORD}x" != "x" -a "${DOCKER_USERNAME}x" != "x" ]; then
     echo "Performing a 'docker login'"
