@@ -5,5 +5,5 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
   - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GET_TOKEN_PROGRAM }} $NAMESPACE {{ .Env.JAEGER_NAME }} /dev/null"
-  - script: "SERVICE_NAME={{ .Env.SERVICE_NAME }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET=$(kubectl get sa {{ .Env.SERVICE_ACCOUNT_NAME }} -n $NAMESPACE -o json | jq -r '.secrets[] |  select( .name | test(\"{{ .Env.SERVICE_ACCOUNT_NAME }}-token-\")).name') {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/find-service.yaml.template -o find-service{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}-job.yaml"
+  - script: "SERVICE_NAME={{ .Env.SERVICE_NAME }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/find-service.yaml.template -o find-service{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}-job.yaml"
   - script: "kubectl create -f find-service{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}-job.yaml -n $NAMESPACE"
