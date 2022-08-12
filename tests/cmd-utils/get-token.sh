@@ -31,7 +31,9 @@ kubectl apply -f /tmp/jaeger-sa.yaml -n "$NAMESPACE" > /dev/null
 # This takes some time
 sleep 5
 
-SECRET_NAME=$(kubectl get sa $SERVICE_ACCOUNT_NAME -o yaml -n "$NAMESPACE" | $YQ eval '.secrets[] | select( .name == "*-token-*")'.name)
+SECRET_NAME=$SERVICE_ACCOUNT_NAME
+$GOMPLATE -f "$TEMPLATES_DIR/openshift/sa-secret.yaml.template" -o /tmp/sa-secret.yaml
+kubectl create -f /tmp/sa-secret.yaml -n "$NAMESPACE" > /dev/null
 SECRET=$(kubectl get secret "$SECRET_NAME" -n "$NAMESPACE" -o jsonpath='{.data.token}' |  base64 -d)
 
 if [ -n "$OUTPUT_FILE" ]; then
