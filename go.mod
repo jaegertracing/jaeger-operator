@@ -10,7 +10,7 @@ require (
 	github.com/openshift/api v0.0.0-20220124143425-d74727069f6f
 	github.com/openshift/elasticsearch-operator v0.0.0-20220708171007-a87102296ded
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/operator-framework/operator-lib v0.10.0
+	github.com/operator-framework/operator-lib v0.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sirupsen/logrus v1.9.0
