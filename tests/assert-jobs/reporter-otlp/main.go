@@ -151,7 +151,7 @@ func initProvider(serviceName string) func() {
 	// This function should be called when the tracing features will not be
 	// used anymore
 	return func() {
-		err1 := cont.Stop(context.Background())
+		err1 := cont.Stop(context.Background()) // nolint:contextcheck
 		err2 := tracerProvider.Shutdown(ctx)
 
 		// The errors are checked later to try to run all the "closing" tasks
@@ -164,7 +164,7 @@ func initProvider(serviceName string) func() {
 	}
 }
 
-// Generate substans inside a span
+// Generate subspans inside a span
 // ctx: context for the program
 // depth: how many spans should be created as child spans of this one
 func generateSubSpans(ctx context.Context, depth int) {
@@ -172,7 +172,7 @@ func generateSubSpans(ctx context.Context, depth int) {
 		return
 	}
 	tracer := otel.Tracer(tracerName)
-	ctx, span := tracer.Start(ctx, fmt.Sprintf("subspan-%d", depth))
+	_, span := tracer.Start(ctx, fmt.Sprintf("subspan-%d", depth))
 	defer span.End()
 	logrus.Debugln("\tGenerating subspan", depth)
 	time.Sleep(time.Millisecond * 30)
@@ -208,7 +208,7 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	if viper.GetBool(flagVerbose) == true {
+	if viper.GetBool(flagVerbose) {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

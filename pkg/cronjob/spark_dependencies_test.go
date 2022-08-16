@@ -27,9 +27,14 @@ func TestStorageEnvs(t *testing.T) {
 		expected []corev1.EnvVar
 	}{
 		{storage: v1.JaegerStorageSpec{Type: "foo"}},
-		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
-			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
-				"cassandra.username": "jdoe", "cassandra.password": "none"})},
+		{
+			storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerCassandraStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
+					"cassandra.username": "jdoe", "cassandra.password": "none",
+				}),
+			},
 			expected: []corev1.EnvVar{
 				{Name: "CASSANDRA_CONTACT_POINTS", Value: "lol:hol"},
 				{Name: "CASSANDRA_KEYSPACE", Value: "haha"},
@@ -38,10 +43,16 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_USE_SSL", Value: ""},
 				{Name: "CASSANDRA_LOCAL_DC", Value: ""},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
-			}},
-		{storage: v1.JaegerStorageSpec{Type: v1.JaegerCassandraStorage,
-			Options: v1.NewOptions(map[string]interface{}{"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
-				"cassandra.username": "jdoe", "cassandra.password": "none", "cassandra.tls": "ofcourse!", "cassandra.local-dc": "no-remote"})},
+			},
+		},
+		{
+			storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerCassandraStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"cassandra.servers": "lol:hol", "cassandra.keyspace": "haha",
+					"cassandra.username": "jdoe", "cassandra.password": "none", "cassandra.tls": "ofcourse!", "cassandra.local-dc": "no-remote",
+				}),
+			},
 			expected: []corev1.EnvVar{
 				{Name: "CASSANDRA_CONTACT_POINTS", Value: "lol:hol"},
 				{Name: "CASSANDRA_KEYSPACE", Value: "haha"},
@@ -50,10 +61,16 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "CASSANDRA_USE_SSL", Value: "ofcourse!"},
 				{Name: "CASSANDRA_LOCAL_DC", Value: "no-remote"},
 				{Name: "CASSANDRA_CLIENT_AUTH_ENABLED", Value: "false"},
-			}},
-		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
-			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
-				"es.index-date-separator": ".", "es.username": "jdoe", "es.password": "none"})},
+			},
+		},
+		{
+			storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+					"es.index-date-separator": ".", "es.username": "jdoe", "es.password": "none",
+				}),
+			},
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
@@ -61,11 +78,17 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_TIME_RANGE", Value: ""},
-			}},
-		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
-			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
-				"es.index-date-separator": ".", "es.username": "jdoe", "es.password": "none"}),
-			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchClientNodeOnly: &trueVar, ElasticsearchNodesWanOnly: &falseVar}},
+			},
+		},
+		{
+			storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+					"es.index-date-separator": ".", "es.username": "jdoe", "es.password": "none",
+				}),
+				Dependencies: v1.JaegerDependenciesSpec{ElasticsearchClientNodeOnly: &trueVar, ElasticsearchNodesWanOnly: &falseVar},
+			},
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
@@ -75,11 +98,17 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_TIME_RANGE", Value: ""},
 				{Name: "ES_NODES_WAN_ONLY", Value: "false"},
 				{Name: "ES_CLIENT_NODE_ONLY", Value: "true"},
-			}},
-		{storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage,
-			Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "lol:hol", "es.index-prefix": "haha",
-				"es.username": "jdoe", "es.password": "none"}),
-			Dependencies: v1.JaegerDependenciesSpec{ElasticsearchTimeRange: "30m"}},
+			},
+		},
+		{
+			storage: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage,
+				Options: v1.NewOptions(map[string]interface{}{
+					"es.server-urls": "lol:hol", "es.index-prefix": "haha",
+					"es.username": "jdoe", "es.password": "none",
+				}),
+				Dependencies: v1.JaegerDependenciesSpec{ElasticsearchTimeRange: "30m"},
+			},
 			expected: []corev1.EnvVar{
 				{Name: "ES_NODES", Value: "lol:hol"},
 				{Name: "ES_INDEX_PREFIX", Value: "haha"},
@@ -87,7 +116,8 @@ func TestStorageEnvs(t *testing.T) {
 				{Name: "ES_USERNAME", Value: "jdoe"},
 				{Name: "ES_PASSWORD", Value: "none"},
 				{Name: "ES_TIME_RANGE", Value: "30m"},
-			}},
+			},
+		},
 	}
 	for _, test := range tests {
 		envVars := getStorageEnvs(test.storage)
@@ -173,7 +203,6 @@ func TestDependenciesLabels(t *testing.T) {
 }
 
 func TestSparkDependenciesResources(t *testing.T) {
-
 	parentResources := corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),

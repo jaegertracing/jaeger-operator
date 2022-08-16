@@ -160,7 +160,6 @@ func TestErrorForInvalidSemVer(t *testing.T) {
 }
 
 func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
-
 	// prepare
 	nsn := types.NamespacedName{Name: "my-instance"}
 

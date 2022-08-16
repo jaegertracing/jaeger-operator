@@ -1,0 +1,45 @@
+run:
+  go: '1.17'
+  timeout: 10m
+  skip-dirs:
+    - mocks
+    - thrift-0.9.2
+    - .*-gen
+  skip-files:
+    - ".*.pb.go$"
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/jaegertracing/jaeger
+  gosec:
+    # To specify a set of rules to explicitly exclude.
+    # Available rules: https://github.com/securego/gosec#available-rules
+    excludes:
+      - G104
+      - G107
+      - G404
+      - G601
+  gosimple:
+    go: "1.18"
+
+linters:
+  enable:
+    - contextcheck
+    - depguard
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosec
+    - govet
+    - misspell
+    - bidichk
+  disable:
+    - errcheck
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gosec

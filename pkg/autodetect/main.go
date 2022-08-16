@@ -71,10 +71,8 @@ func (b *Background) Start() {
 
 	go func() {
 		for {
-			select {
-			case <-b.ticker.C:
-				b.autoDetectCapabilities()
-			}
+			<-b.ticker.C
+			b.autoDetectCapabilities()
 		}
 	}()
 }
@@ -97,7 +95,6 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
-
 		})
 
 		b.detectElasticsearch(ctx, apiList)
@@ -132,7 +129,6 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 	log.Log.V(2).Info(
 		fmt.Sprintf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
 	)
-
 }
 
 // AvailableAPIs returns available list of CRDs from the cluster.

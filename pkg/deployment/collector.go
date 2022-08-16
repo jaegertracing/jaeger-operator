@@ -39,7 +39,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	trueVar := true
 	falseVar := false
 
-	args := append(c.jaeger.Spec.Collector.Options.ToArgs())
+	args := c.jaeger.Spec.Collector.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 14269)
 

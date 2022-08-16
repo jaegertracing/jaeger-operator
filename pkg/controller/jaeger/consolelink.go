@@ -15,7 +15,7 @@ import (
 
 func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaeger, desired []osconsolev1.ConsoleLink) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyConsoleLinks")
+	_, span := tracer.Start(ctx, "applyConsoleLinks")
 	defer span.End()
 
 	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {

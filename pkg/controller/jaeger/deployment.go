@@ -19,14 +19,12 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrDeploymentRemoved is returned when a deployment existed but has been removed
-	ErrDeploymentRemoved = errors.New("deployment has been removed")
-)
+// ErrDeploymentRemoved is returned when a deployment existed but has been removed
+var ErrDeploymentRemoved = errors.New("deployment has been removed")
 
 func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyDeployments")
+	_, span := tracer.Start(ctx, "applyDeployments")
 	defer span.End()
 
 	opts := []client.ListOption{
@@ -100,7 +98,7 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 
 func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "waitForStability")
+	_, span := tracer.Start(ctx, "waitForStability")
 	defer span.End()
 
 	// TODO: decide what's a good timeout... the first cold run might take a while to download

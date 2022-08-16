@@ -26,7 +26,7 @@ const meterName = "jaegertracing.io/jaeger"
 // Bootstrap configures the OpenTelemetry meter provider with the Prometheus exporter.
 func Bootstrap(ctx context.Context, namespace string, client client.Client) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "bootstrap")
+	_, span := tracer.Start(ctx, "bootstrap")
 	defer span.End()
 	tracing.SetInstanceID(ctx, namespace)
 

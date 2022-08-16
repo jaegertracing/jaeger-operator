@@ -113,7 +113,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	}
 }
 
-//PropagateOAuthCookieSecret preserve the generated oauth cookie across multiple reconciliations
+// PropagateOAuthCookieSecret preserve the generated oauth cookie across multiple reconciliations
 func PropagateOAuthCookieSecret(specSrc, specDst appsv1.DeploymentSpec) appsv1.DeploymentSpec {
 	spec := specDst.DeepCopy()
 	secretArg := ""

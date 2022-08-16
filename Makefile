@@ -118,6 +118,7 @@ PHONY: lint
 lint:
 	$(ECHO) Linting...
 	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
+	golangci-lint -v run
 
 .PHONY: vet
 vet: ## Run go vet against code.

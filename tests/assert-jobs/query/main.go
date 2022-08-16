@@ -51,7 +51,7 @@ func main() {
 	host := viper.GetString(flagIngressHost)
 	serviceName := viper.GetString(flagServiceName)
 
-	if viper.GetBool(flagVerbose) == true {
+	if viper.GetBool(flagVerbose) {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

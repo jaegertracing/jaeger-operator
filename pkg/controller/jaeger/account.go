@@ -14,7 +14,7 @@ import (
 
 func (r *ReconcileJaeger) applyAccounts(ctx context.Context, jaeger v1.Jaeger, desired []corev1.ServiceAccount) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyAccounts")
+	_, span := tracer.Start(ctx, "applyAccounts")
 	defer span.End()
 
 	opts := []client.ListOption{

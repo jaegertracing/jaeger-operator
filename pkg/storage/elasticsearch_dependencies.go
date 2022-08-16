@@ -71,7 +71,7 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 }
 
 func envVars(opts v1.Options) []corev1.EnvVar {
-	var envs = cronjob.EsScriptEnvVars(opts)
+	envs := cronjob.EsScriptEnvVars(opts)
 	scriptEnvVars := []struct {
 		flag   string
 		envVar string

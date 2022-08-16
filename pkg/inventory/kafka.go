@@ -36,7 +36,6 @@ func ForKafkas(existing []v1beta2.Kafka, desired []v1beta2.Kafka) Kafka {
 			"kafka", k.GetName(),
 			"namespace", k.GetNamespace(),
 		)
-
 	}
 
 	for k, v := range mcreate {

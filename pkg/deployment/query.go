@@ -36,7 +36,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	trueVar := true
 	falseVar := false
 
-	args := append(q.jaeger.Spec.Query.Options.ToArgs())
+	args := q.jaeger.Spec.Query.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 16687)
 
@@ -50,7 +50,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	}
 
 	jaegerDisabled := false
-	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+	if q.jaeger.Spec.Query.TracingEnabled != nil && !*q.jaeger.Spec.Query.TracingEnabled {
 		jaegerDisabled = true
 	} else {
 		// note that we are explicitly using a string here, not the value from `inject.Annotation`

@@ -13,7 +13,7 @@ import (
 
 func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (v1.Jaeger, error) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyUpgrades")
+	_, span := tracer.Start(ctx, "applyUpgrades")
 	defer span.End()
 
 	currentVersions := version.Get()

@@ -13,7 +13,7 @@ import (
 // RouteAnnotation used to annotate the link with the route name
 var RouteAnnotation = "consolelink.jaegertracing.io/route"
 
-//Name derived a console link resource name from jaeger instance
+// Name derived a console link resource name from jaeger instance
 func Name(jaeger *v1.Jaeger) string {
 	return "jaeger-" + jaeger.Namespace + "-" + jaeger.Name
 }
@@ -21,7 +21,7 @@ func Name(jaeger *v1.Jaeger) string {
 // Get returns a ConsoleLink specification for the current instance
 func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 	// If ingress is not enable there is no reason for create a console link
-	if jaeger.Spec.Ingress.Enabled != nil && *jaeger.Spec.Ingress.Enabled == false {
+	if jaeger.Spec.Ingress.Enabled != nil && !*jaeger.Spec.Ingress.Enabled {
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func UpdateHref(routes []routev1.Route, links []consolev1.ConsoleLink) []console
 			cl.Spec.Href = fmt.Sprintf("https://%s", host)
 			updated = append(updated, cl)
 		}
-		//TODO: log if not found the route associated with the link
+		// TODO: log if not found the route associated with the link
 	}
 	return updated
 }

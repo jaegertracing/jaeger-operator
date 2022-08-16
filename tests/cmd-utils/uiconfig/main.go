@@ -46,7 +46,6 @@ func main() {
 		logrus.Warningln("Found: ", found, ". Assert: ", assertPresent)
 		return false, nil
 	})
-
 	if err != nil {
 		log.Fatalln(err)
 	}

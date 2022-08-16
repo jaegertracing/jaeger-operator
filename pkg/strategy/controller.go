@@ -24,7 +24,7 @@ var (
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "strategy.For")
+	_, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {
@@ -55,7 +55,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 // needed and incompatible options are cleaned
 func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "normalize")
+	_, span := tracer.Start(ctx, "normalize")
 	defer span.End()
 
 	// we need a name!
@@ -237,7 +237,7 @@ func enableArchiveButton(uiOpts map[string]interface{}, sOpts map[string]string)
 
 func disableDependenciesTab(uiOpts map[string]interface{}, storage v1.JaegerStorageType, depsEnabled *bool) {
 	// dependency tab is by default enabled and memory storage support it
-	if (storage == v1.JaegerMemoryStorage) || (depsEnabled != nil && *depsEnabled == true) {
+	if (storage == v1.JaegerMemoryStorage) || (depsEnabled != nil && *depsEnabled) {
 		return
 	}
 	deps := map[string]interface{}{}
@@ -317,12 +317,12 @@ func enableDocumentationLink(uiOpts map[string]interface{}, spec *v1.JaegerSpec)
 }
 
 func enableLogOut(uiOpts map[string]interface{}, spec *v1.JaegerSpec) {
-	if (spec.Ingress.Enabled != nil && *spec.Ingress.Enabled == false) ||
+	if (spec.Ingress.Enabled != nil && !*spec.Ingress.Enabled) ||
 		spec.Ingress.Security != v1.IngressSecurityOAuthProxy {
 		return
 	}
 
-	if spec.Ingress.Openshift.SkipLogout != nil && *spec.Ingress.Openshift.SkipLogout == true {
+	if spec.Ingress.Openshift.SkipLogout != nil && *spec.Ingress.Openshift.SkipLogout {
 		return
 	}
 

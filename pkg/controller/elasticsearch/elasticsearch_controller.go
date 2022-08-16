@@ -48,7 +48,7 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 	logger.V(-1).Info("Reconciling Elasticsearch")
 
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "reconcileElasticsearch")
+	_, span := tracer.Start(ctx, "reconcileElasticsearch")
 	defer span.End()
 
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))

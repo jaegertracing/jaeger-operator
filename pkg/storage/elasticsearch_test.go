@@ -264,10 +264,14 @@ func TestInject(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-elasticsearch"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jtest-jaeger-elasticsearch",
+						},
+					}},
+				},
+			},
 		},
 		{
 			es: v1.ElasticsearchSpec{
@@ -298,10 +302,14 @@ func TestInject(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jaeger-elasticsearch"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jaeger-elasticsearch",
+						},
+					}},
+				},
+			},
 		},
 		{
 			es: v1.ElasticsearchSpec{Name: "elasticsearch"},
@@ -326,10 +334,14 @@ func TestInject(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-elasticsearch"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jtest-jaeger-elasticsearch",
+						},
+					}},
+				},
+			},
 		},
 		{
 			pod: &corev1.PodSpec{Containers: []corev1.Container{{}}},
@@ -354,10 +366,14 @@ func TestInject(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-my-es"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jtest-jaeger-my-es",
+						},
+					}},
+				},
+			},
 		},
 		{
 			es: v1.ElasticsearchSpec{
@@ -397,10 +413,14 @@ func TestInject(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-jaeger-es-tenant2"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jtest-jaeger-es-tenant2",
+						},
+					}},
+				},
+			},
 		},
 	}
 
@@ -468,10 +488,14 @@ func TestInjectJobs(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "jtest-curator"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "jtest-curator",
+						},
+					}},
+				},
+			},
 		},
 		{
 			name: "es-cert-management",
@@ -520,10 +544,14 @@ func TestInjectJobs(t *testing.T) {
 						{Name: volumeName, ReadOnly: true, MountPath: volumeMountPath},
 					},
 				}},
-				Volumes: []corev1.Volume{{Name: "certs", VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "curator-elasticsearch"}}},
-				}},
+				Volumes: []corev1.Volume{
+					{Name: "certs", VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "curator-elasticsearch",
+						},
+					}},
+				},
+			},
 		},
 	}
 

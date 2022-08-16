@@ -8,7 +8,7 @@ import (
 )
 
 func TestDnsName(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		in  string
 		out string
 	}{
@@ -23,11 +23,11 @@ func TestDnsName(t *testing.T) {
 		{"-foo", "afoo"},
 	}
 
+	re := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 	for _, tt := range tests {
 		assert.Equal(t, tt.out, DNSName(tt.in))
 
-		matched, err := regexp.MatchString(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`, tt.out)
-		assert.NoError(t, err)
+		matched := re.MatchString(tt.out)
 		assert.True(t, matched, "%v is not a valid name", tt.out)
 	}
 }

@@ -120,9 +120,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			serviceAccount = commonSpec.ServiceAccount
 		}
 
-		for _, ips := range commonSpec.ImagePullSecrets {
-			imagePullSecrets = append(imagePullSecrets, ips)
-		}
+		imagePullSecrets = append(imagePullSecrets, commonSpec.ImagePullSecrets...)
 
 		if imagePullPolicy == corev1.PullPolicy("") {
 			imagePullPolicy = commonSpec.ImagePullPolicy
@@ -147,7 +145,6 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 
 // MergeResources returns a merged version of two resource requirements
 func MergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceRequirements) {
-
 	for k, v := range res.Limits {
 		if _, ok := resources.Limits[k]; !ok {
 			if resources.Limits == nil {
@@ -326,7 +323,6 @@ func GenerateProxySecret() (string, error) {
 	}
 	base64Secret := base64.StdEncoding.EncodeToString(randString)
 	return base64Secret, nil
-
 }
 
 // FindEnvVar return the EnvVar with given name or nil if not found

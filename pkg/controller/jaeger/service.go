@@ -14,7 +14,7 @@ import (
 
 func (r *ReconcileJaeger) applyServices(ctx context.Context, jaeger v1.Jaeger, desired []corev1.Service) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyServices")
+	_, span := tracer.Start(ctx, "applyServices")
 	defer span.End()
 
 	opts := []client.ListOption{

@@ -32,7 +32,7 @@ import (
 
 func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
+	_, span := tracer.Start(ctx, "newStreamingStrategy")
 	defer span.End()
 
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
@@ -144,7 +144,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled == true {
+	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled {
 		queryDep = inject.Sidecar(jaeger, queryDep)
 	}
 	var ingesterDep *appsv1.Deployment
@@ -198,7 +198,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "autoProvisionKafka")
+	_, span := tracer.Start(ctx, "autoProvisionKafka")
 	defer span.End()
 
 	if jaeger.Annotations == nil {

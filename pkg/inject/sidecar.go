@@ -36,7 +36,6 @@ var (
 )
 
 const (
-	envVarTags        = "JAEGER_TAGS"
 	envVarServiceName = "JAEGER_SERVICE_NAME"
 	envVarPropagation = "JAEGER_PROPAGATION"
 	envVarPodName     = "POD_NAME"
@@ -196,7 +195,7 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 }
 
 func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
-	args := append(jaeger.Spec.Agent.Options.ToArgs())
+	args := jaeger.Spec.Agent.Options.ToArgs()
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
@@ -349,7 +348,6 @@ func decorate(dep *appsv1.Deployment) {
 			dep.Annotations[key] = value
 		}
 	}
-
 }
 
 func hasEnv(name string, vars []corev1.EnvVar) bool {

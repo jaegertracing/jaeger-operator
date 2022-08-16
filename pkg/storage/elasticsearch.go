@@ -169,7 +169,7 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 	}
 
 	annotations := map[string]string{}
-	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement == true {
+	if ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement != nil && *ed.Jaeger.Spec.Storage.Elasticsearch.UseCertManagement {
 		annotations["logging.openshift.io/elasticsearch-cert-management"] = "true"
 		// The value has to match searchguard configuration
 		// https://github.com/openshift/origin-aggregated-logging/blob/50126fb8e0c602e9c623d6a8599857aaf98f80f8/elasticsearch/sgconfig/roles_mapping.yml#L34

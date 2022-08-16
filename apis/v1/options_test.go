@@ -186,5 +186,4 @@ func TestRepetitiveArguments(t *testing.T) {
 
 	assert.Len(t, args, 3)
 	assert.Equal(t, expected, args)
-
 }

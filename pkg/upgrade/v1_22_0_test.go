@@ -69,7 +69,6 @@ func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 
 	assert.Equal(t, storageOpts.Map(), persisted.Spec.Storage.Options.Map())
 	assert.Equal(t, ingressOpts.Map(), persisted.Spec.Ingress.Options.Map())
-
 }
 
 func TestDeleteQueryRemovedFlags(t *testing.T) {
@@ -101,7 +100,6 @@ func TestDeleteQueryRemovedFlags(t *testing.T) {
 }
 
 func TestCassandraVerifyHostFlags(t *testing.T) {
-
 	oldFlag := "cassandra.tls.verify-host"
 	newFlag := "cassandra.tls.skip-host-verify"
 
@@ -154,13 +152,11 @@ func TestCassandraVerifyHostFlags(t *testing.T) {
 				assert.Len(t, persisted.Spec.Collector.Options.Map(), 0)
 				assert.NotContains(t, persisted.Spec.Collector.Options.Map(), oldFlag)
 			}
-
 		})
 	}
 }
 
 func TestMigrateQueryHostPortFlagsv1_22_0(t *testing.T) {
-
 	tests := []struct {
 		testName    string
 		opts        v1.Options
@@ -255,5 +251,4 @@ func TestMigrateQueryHostPortFlagsv1_22_0(t *testing.T) {
 		assert.Equal(t, tt.expectedOps, persisted.Spec.Query.Options.StringMap())
 
 	}
-
 }

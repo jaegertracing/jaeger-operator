@@ -20,8 +20,10 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
-const AgentSideCar = "Sidecar"
-const AgentDaemonSet = "Daemonset"
+const (
+	AgentSideCar   = "Sidecar"
+	AgentDaemonSet = "Daemonset"
+)
 
 type expectedMetric struct {
 	name   string
@@ -31,7 +33,7 @@ type expectedMetric struct {
 
 func assertLabelAndValues(t *testing.T, name string, batches []oteltest.Batch, expectedLabels []attribute.KeyValue, expectedValue int64) {
 	var measurement oteltest.Measurement
-	var found = false
+	found := false
 	for _, b := range batches {
 		for _, m := range b.Measurements {
 			if m.Instrument.Descriptor().Name() == name && reflect.DeepEqual(expectedLabels, b.Labels) {
@@ -45,11 +47,11 @@ func assertLabelAndValues(t *testing.T, name string, batches []oteltest.Batch, e
 	v := oteltest.ResolveNumberByKind(t, number.Int64Kind, float64(expectedValue))
 	assert.Equal(t, 0, measurement.Number.CompareNumber(number.Int64Kind, v),
 		"Metric %s doesn't have expected value %d", name, expectedValue)
-
 }
 
 func newJaegerInstance(nsn types.NamespacedName, strategy v1.DeploymentStrategy,
-	storage v1.JaegerStorageType, agentMode string) v1.Jaeger {
+	storage v1.JaegerStorageType, agentMode string,
+) v1.Jaeger {
 	return v1.Jaeger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsn.Name,
@@ -225,12 +227,11 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
 
 	// Create no autoprovisioned instance
-	err = cl.Delete(context.Background(), &noAutoProvisioningInstance)
+	_ = cl.Delete(context.Background(), &noAutoProvisioningInstance)
 	meter.MeasurementBatches = []oteltest.Batch{}
 	meter.RunAsyncInstruments()
 	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
 	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
-
 }
 
 func TestManagerByMetric(t *testing.T) {

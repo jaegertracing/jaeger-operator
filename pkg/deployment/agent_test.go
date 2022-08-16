@@ -278,7 +278,6 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 			assert.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
 		})
 	}
-
 }
 
 func TestAgentImagePullSecrets(t *testing.T) {

@@ -26,7 +26,7 @@ func OAuthProxy(jaeger *v1.Jaeger) *corev1.ServiceAccount {
 				"serviceaccounts.openshift.io/oauth-redirectreference.primary": getOAuthRedirectReference(jaeger),
 			},
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,

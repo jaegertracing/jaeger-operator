@@ -62,5 +62,4 @@ func TestRemoveDeprecatedFlagWithNoReplacementv1_15_0(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, updated.Spec.Collector.Options.Map(), 0)
 	assert.NotContains(t, updated.Spec.Collector.Options.Map(), "cassandra.enable-dependencies-v2")
-
 }

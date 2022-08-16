@@ -150,7 +150,6 @@ func TestEsIndexCleanerLabels(t *testing.T) {
 }
 
 func TestEsIndexCleanerResources(t *testing.T) {
-
 	parentResources := corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),

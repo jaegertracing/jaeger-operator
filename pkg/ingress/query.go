@@ -23,7 +23,7 @@ func NewQueryIngress(jaeger *v1.Jaeger) *QueryIngress {
 
 // Get returns an ingress specification for the current instance
 func (i *QueryIngress) Get() *networkingv1.Ingress {
-	if i.jaeger.Spec.Ingress.Enabled != nil && *i.jaeger.Spec.Ingress.Enabled == false {
+	if i.jaeger.Spec.Ingress.Enabled != nil && !*i.jaeger.Spec.Ingress.Enabled {
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 			Namespace: i.jaeger.Namespace,
 			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: i.jaeger.APIVersion,
 					Kind:       i.jaeger.Kind,
 					Name:       i.jaeger.Name,
@@ -136,7 +136,7 @@ func getRule(host string, path string, backend *networkingv1.IngressBackend) net
 	rule.Host = host
 	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
 		Paths: []networkingv1.HTTPIngressPath{
-			networkingv1.HTTPIngressPath{
+			{
 				PathType: &pathType,
 				Path:     path,
 				Backend:  *backend,

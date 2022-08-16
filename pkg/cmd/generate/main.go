@@ -63,7 +63,6 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 }
 
 func generate(_ *cobra.Command, _ []string) error {
-
 	var loggingLevel zapcore.Level
 	switch strings.ToLower(viper.GetString("log-level")) {
 	case "panic":
@@ -104,7 +103,7 @@ func generate(_ *cobra.Command, _ []string) error {
 
 	outputName := viper.GetString("output")
 	pathToFile := filepath.Clean(outputName)
-	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}

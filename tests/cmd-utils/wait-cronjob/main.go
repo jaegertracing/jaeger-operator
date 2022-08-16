@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
-
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -187,7 +186,7 @@ func main() {
 		logrus.Fatalln(err)
 	}
 
-	if viper.GetBool(flagVerbose) == true {
+	if viper.GetBool(flagVerbose) {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

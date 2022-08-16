@@ -84,7 +84,8 @@ func TestEnvVars(t *testing.T) {
 				"es.num-shards":           "5",
 				"es.num-replicas":         "3",
 				"es.password":             "nopass",
-				"es.username":             "fredy"}),
+				"es.username":             "fredy",
+			}),
 			expected: []corev1.EnvVar{
 				{Name: "INDEX_PREFIX", Value: "foo"},
 				{Name: "INDEX_DATE_SEPARATOR", Value: "."},

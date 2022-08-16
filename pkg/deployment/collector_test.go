@@ -637,7 +637,6 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestCollectorServiceLinks(t *testing.T) {
@@ -785,31 +784,4 @@ func TestCollectorContainerSecurityContextOverride(t *testing.T) {
 	dep := c.Get()
 
 	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
-}
-
-func hasVolume(name string, volumes []corev1.Volume) bool {
-	for _, v := range volumes {
-		if v.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
-	for _, v := range volumeMounts {
-		if v.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func hasArgument(arg string, args []string) bool {
-	for _, v := range args {
-		if v == arg {
-			return true
-		}
-	}
-	return false
 }

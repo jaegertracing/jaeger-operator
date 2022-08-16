@@ -58,7 +58,8 @@ func TestUpgradeDeprecatedOptionsv1_18_0(t *testing.T) {
 		"collector.http-server.host-port",
 		"collector.grpc-server.host-port",
 		"collector.zipkin.host-port",
-		"admin.http.host-port"} {
+		"admin.http.host-port",
+	} {
 		assert.Contains(t, opts, newFlag)
 		expectedValue := fmt.Sprintf(":%s", oldOptionsMap[flagsMap[newFlag]])
 		assert.Equal(t, expectedValue, opts[newFlag])

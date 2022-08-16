@@ -51,7 +51,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	ctx := context.Background()
 
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "reconcileNamespace")
+	_, span := tracer.Start(ctx, "reconcileNamespace")
 	defer span.End()
 
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))

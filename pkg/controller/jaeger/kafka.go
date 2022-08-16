@@ -20,14 +20,12 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrKafkaRemoved is returned when a kafka existed but has been removed
-	ErrKafkaRemoved = errors.New("kafka has been removed")
-)
+// ErrKafkaRemoved is returned when a kafka existed but has been removed
+var ErrKafkaRemoved = errors.New("kafka has been removed")
 
 func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta2.Kafka) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "applyKafkas")
+	_, span := tracer.Start(ctx, "applyKafkas")
 	defer span.End()
 
 	opts := []client.ListOption{
@@ -100,7 +98,7 @@ func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, des
 
 func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafkav1beta2.Kafka) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "waitForKafkaStability")
+	_, span := tracer.Start(ctx, "waitForKafkaStability")
 	defer span.End()
 
 	seen := false
