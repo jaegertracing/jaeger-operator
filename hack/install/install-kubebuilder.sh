@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="2.3.1"
+VERSION="3.6.0"
 
 echo "Installing kubebuilder"
 
@@ -12,12 +12,13 @@ create_bin
 
 check_tool "$BIN/$PROGRAM" $VERSION "version"
 
-url="https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$VERSION/kubebuilder_${VERSION}_$(go env GOOS)_amd64.tar.gz"
+url="https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$VERSION/kubebuilder_$(go env GOOS)_$(go env GOARCH)"
 
-tar_file="/tmp/kubebuilder.tar.gz"
-retry "curl -sLo $tar_file $url"
-tar -xzf $tar_file -C /tmp/
 
-cp /tmp/kubebuilder_${VERSION}_$(go env GOOS)_amd64/bin/* $BIN/
+retry "curl -sLo $BIN/kubebuilder $url"
+
+chmod +x $BIN/kubebuilder
 
 export PATH=$PATH:$BIN
+
+$current_dir/install-etcd.sh
