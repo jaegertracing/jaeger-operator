@@ -151,7 +151,7 @@ func initProvider(serviceName string) func() {
 	// This function should be called when the tracing features will not be
 	// used anymore
 	return func() {
-		err1 := cont.Stop(context.Background()) // nolint:contextcheck
+		err1 := cont.Stop(context.Background())
 		err2 := tracerProvider.Shutdown(ctx)
 
 		// The errors are checked later to try to run all the "closing" tasks
