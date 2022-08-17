@@ -76,7 +76,9 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// we provision a Kafka when no brokers have been set, or, when we are not in the first run,
 	// when we know we've been the ones placing the broker information in the configuration
 	if (!pfound && !cfound) || provisioned {
-		jaeger.Logger().Debug("Kafka auto provisioning is enabled. A Kafka cluster will be deployed if it does not exist.")
+		jaeger.Logger().V(-1).Info(
+			"Kafka auto provisioning is enabled. A Kafka cluster will be deployed if it does not exist.",
+		)
 		manifest = autoProvisionKafka(ctx, jaeger, manifest)
 	}
 
