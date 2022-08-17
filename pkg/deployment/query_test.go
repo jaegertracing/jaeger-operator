@@ -453,3 +453,44 @@ func TestQueryGRPCPlugin(t *testing.T) {
 	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
+
+func TestQueryContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar,
+		RunAsUser:    &idVar,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Query.ContainerSecurityContext = &securityContextVar
+
+	q := NewQuery(jaeger)
+	dep := q.Get()
+
+	assert.Equal(t, securityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestQueryContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar1,
+		RunAsUser:    &idVar1,
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar2,
+		RunAsUser:    &idVar2,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Query.ContainerSecurityContext = &overrideSecurityContextVar
+
+	q := NewQuery(jaeger)
+	dep := q.Get()
+
+	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}

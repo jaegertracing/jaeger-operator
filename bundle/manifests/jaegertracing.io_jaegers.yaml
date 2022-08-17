@@ -768,6 +768,67 @@ spec:
                   config:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
+                    type: object
                   dnsPolicy:
                     type: string
                   hostNetwork:
@@ -2121,6 +2182,67 @@ spec:
                   config:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
+                    type: object
                   image:
                     type: string
                   imagePullPolicy:
@@ -3437,6 +3559,67 @@ spec:
                   config:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
+                    type: object
                   image:
                     type: string
                   imagePullPolicy:
@@ -4390,6 +4573,67 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              containerSecurityContext:
+                properties:
+                  allowPrivilegeEscalation:
+                    type: boolean
+                  capabilities:
+                    properties:
+                      add:
+                        items:
+                          type: string
+                        type: array
+                      drop:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  privileged:
+                    type: boolean
+                  procMount:
+                    type: string
+                  readOnlyRootFilesystem:
+                    type: boolean
+                  runAsGroup:
+                    format: int64
+                    type: integer
+                  runAsNonRoot:
+                    type: boolean
+                  runAsUser:
+                    format: int64
+                    type: integer
+                  seLinuxOptions:
+                    properties:
+                      level:
+                        type: string
+                      role:
+                        type: string
+                      type:
+                        type: string
+                      user:
+                        type: string
+                    type: object
+                  seccompProfile:
+                    properties:
+                      localhostProfile:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - type
+                    type: object
+                  windowsOptions:
+                    properties:
+                      gmsaCredentialSpec:
+                        type: string
+                      gmsaCredentialSpecName:
+                        type: string
+                      hostProcess:
+                        type: boolean
+                      runAsUserName:
+                        type: string
+                    type: object
+                type: object
               imagePullPolicy:
                 type: string
               imagePullSecrets:
@@ -4766,6 +5010,67 @@ spec:
                   config:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
+                    type: object
                   image:
                     type: string
                   imagePullPolicy:
@@ -6075,6 +6380,67 @@ spec:
                     additionalProperties:
                       type: string
                     nullable: true
+                    type: object
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
                     type: object
                   enabled:
                     type: boolean
@@ -7473,6 +7839,67 @@ spec:
                     additionalProperties:
                       type: string
                     nullable: true
+                    type: object
+                  containerSecurityContext:
+                    properties:
+                      allowPrivilegeEscalation:
+                        type: boolean
+                      capabilities:
+                        properties:
+                          add:
+                            items:
+                              type: string
+                            type: array
+                          drop:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      privileged:
+                        type: boolean
+                      procMount:
+                        type: string
+                      readOnlyRootFilesystem:
+                        type: boolean
+                      runAsGroup:
+                        format: int64
+                        type: integer
+                      runAsNonRoot:
+                        type: boolean
+                      runAsUser:
+                        format: int64
+                        type: integer
+                      seLinuxOptions:
+                        properties:
+                          level:
+                            type: string
+                          role:
+                            type: string
+                          type:
+                            type: string
+                          user:
+                            type: string
+                        type: object
+                      seccompProfile:
+                        properties:
+                          localhostProfile:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      windowsOptions:
+                        properties:
+                          gmsaCredentialSpec:
+                            type: string
+                          gmsaCredentialSpecName:
+                            type: string
+                          hostProcess:
+                            type: boolean
+                          runAsUserName:
+                            type: string
+                        type: object
                     type: object
                   grpcNodePort:
                     format: int32
@@ -9264,6 +9691,67 @@ spec:
                         type: integer
                       cassandraClientAuthEnabled:
                         type: boolean
+                      containerSecurityContext:
+                        properties:
+                          allowPrivilegeEscalation:
+                            type: boolean
+                          capabilities:
+                            properties:
+                              add:
+                                items:
+                                  type: string
+                                type: array
+                              drop:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          privileged:
+                            type: boolean
+                          procMount:
+                            type: string
+                          readOnlyRootFilesystem:
+                            type: boolean
+                          runAsGroup:
+                            format: int64
+                            type: integer
+                          runAsNonRoot:
+                            type: boolean
+                          runAsUser:
+                            format: int64
+                            type: integer
+                          seLinuxOptions:
+                            properties:
+                              level:
+                                type: string
+                              role:
+                                type: string
+                              type:
+                                type: string
+                              user:
+                                type: string
+                            type: object
+                          seccompProfile:
+                            properties:
+                              localhostProfile:
+                                type: string
+                              type:
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          windowsOptions:
+                            properties:
+                              gmsaCredentialSpec:
+                                type: string
+                              gmsaCredentialSpecName:
+                                type: string
+                              hostProcess:
+                                type: boolean
+                              runAsUserName:
+                                type: string
+                            type: object
+                        type: object
                       elasticsearchClientNodeOnly:
                         type: boolean
                       elasticsearchNodesWanOnly:
@@ -10637,6 +11125,67 @@ spec:
                       backoffLimit:
                         format: int32
                         type: integer
+                      containerSecurityContext:
+                        properties:
+                          allowPrivilegeEscalation:
+                            type: boolean
+                          capabilities:
+                            properties:
+                              add:
+                                items:
+                                  type: string
+                                type: array
+                              drop:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          privileged:
+                            type: boolean
+                          procMount:
+                            type: string
+                          readOnlyRootFilesystem:
+                            type: boolean
+                          runAsGroup:
+                            format: int64
+                            type: integer
+                          runAsNonRoot:
+                            type: boolean
+                          runAsUser:
+                            format: int64
+                            type: integer
+                          seLinuxOptions:
+                            properties:
+                              level:
+                                type: string
+                              role:
+                                type: string
+                              type:
+                                type: string
+                              user:
+                                type: string
+                            type: object
+                          seccompProfile:
+                            properties:
+                              localhostProfile:
+                                type: string
+                              type:
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          windowsOptions:
+                            properties:
+                              gmsaCredentialSpec:
+                                type: string
+                              gmsaCredentialSpecName:
+                                type: string
+                              hostProcess:
+                                type: boolean
+                              runAsUserName:
+                                type: string
+                            type: object
+                        type: object
                       enabled:
                         type: boolean
                       image:
@@ -11934,6 +12483,67 @@ spec:
                         type: integer
                       conditions:
                         type: string
+                      containerSecurityContext:
+                        properties:
+                          allowPrivilegeEscalation:
+                            type: boolean
+                          capabilities:
+                            properties:
+                              add:
+                                items:
+                                  type: string
+                                type: array
+                              drop:
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          privileged:
+                            type: boolean
+                          procMount:
+                            type: string
+                          readOnlyRootFilesystem:
+                            type: boolean
+                          runAsGroup:
+                            format: int64
+                            type: integer
+                          runAsNonRoot:
+                            type: boolean
+                          runAsUser:
+                            format: int64
+                            type: integer
+                          seLinuxOptions:
+                            properties:
+                              level:
+                                type: string
+                              role:
+                                type: string
+                              type:
+                                type: string
+                              user:
+                                type: string
+                            type: object
+                          seccompProfile:
+                            properties:
+                              localhostProfile:
+                                type: string
+                              type:
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          windowsOptions:
+                            properties:
+                              gmsaCredentialSpec:
+                                type: string
+                              gmsaCredentialSpecName:
+                                type: string
+                              hostProcess:
+                                type: boolean
+                              runAsUserName:
+                                type: string
+                            type: object
+                        type: object
                       image:
                         type: string
                       imagePullPolicy:

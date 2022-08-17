@@ -312,6 +312,11 @@ func (in *JaegerCommonSpec) DeepCopyInto(out *JaegerCommonSpec) {
 		*out = new(corev1.PodSecurityContext)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ContainerSecurityContext != nil {
+		in, out := &in.ContainerSecurityContext, &out.ContainerSecurityContext
+		*out = new(corev1.SecurityContext)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.LivenessProbe != nil {
 		in, out := &in.LivenessProbe, &out.LivenessProbe
 		*out = new(corev1.Probe)
