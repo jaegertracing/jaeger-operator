@@ -244,6 +244,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),

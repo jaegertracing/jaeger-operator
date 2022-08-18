@@ -75,6 +75,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var affinity *corev1.Affinity
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
+	var containerSecurityContext *corev1.SecurityContext
 	var serviceAccount string
 	var imagePullSecrets []corev1.LocalObjectReference
 	var imagePullPolicy corev1.PullPolicy
@@ -111,6 +112,10 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			securityContext = commonSpec.SecurityContext
 		}
 
+		if containerSecurityContext == nil {
+			containerSecurityContext = commonSpec.ContainerSecurityContext
+		}
+
 		if serviceAccount == "" {
 			serviceAccount = commonSpec.ServiceAccount
 		}
@@ -125,17 +130,18 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:      annotations,
-		Labels:           labels,
-		VolumeMounts:     RemoveDuplicatedVolumeMounts(volumeMounts),
-		Volumes:          RemoveDuplicatedVolumes(volumes),
-		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
-		ImagePullPolicy:  imagePullPolicy,
-		Resources:        *resources,
-		Affinity:         affinity,
-		Tolerations:      tolerations,
-		SecurityContext:  securityContext,
-		ServiceAccount:   serviceAccount,
+		Annotations:              annotations,
+		Labels:                   labels,
+		VolumeMounts:             RemoveDuplicatedVolumeMounts(volumeMounts),
+		Volumes:                  RemoveDuplicatedVolumes(volumes),
+		ImagePullSecrets:         RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:          imagePullPolicy,
+		Resources:                *resources,
+		Affinity:                 affinity,
+		Tolerations:              tolerations,
+		SecurityContext:          securityContext,
+		ContainerSecurityContext: containerSecurityContext,
+		ServiceAccount:           serviceAccount,
 	}
 }
 

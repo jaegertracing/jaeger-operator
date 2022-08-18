@@ -191,6 +191,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Resources:       commonSpec.Resources,
 						VolumeMounts:    commonSpec.VolumeMounts,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					DNSPolicy:          dnsPolicy,
 					HostNetwork:        hostNetwork,

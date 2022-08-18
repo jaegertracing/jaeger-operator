@@ -212,6 +212,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
