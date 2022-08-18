@@ -86,7 +86,7 @@ func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn 
 
 func (i *instancesMetric) Setup(ctx context.Context) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "setup-jaeger-instances-metrics")
+	ctx, span := tracer.Start(ctx, "setup-jaeger-instances-metrics") // nolint:ineffassign,staticcheck
 	defer span.End()
 	meter := global.Meter(meterName)
 	batch := meter.NewBatchObserver(i.callback)

@@ -60,7 +60,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 	ctx := context.Background()
 
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "reconcile")
+	ctx, span := tracer.Start(ctx, "reconcile")
 	defer span.End()
 
 	execution := time.Now().UTC()
@@ -237,7 +237,7 @@ func defaultStrategyChooser(ctx context.Context, instance *v1.Jaeger) strategy.S
 
 func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strategy.S) (v1.Jaeger, error) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "apply")
+	ctx, span := tracer.Start(ctx, "apply")
 	defer span.End()
 
 	jaeger, err := r.applyUpgrades(ctx, jaeger)

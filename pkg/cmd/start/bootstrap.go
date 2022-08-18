@@ -73,7 +73,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 	tracing.Bootstrap(ctx, namespace)
 
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "bootstrap")
+	ctx, span := tracer.Start(ctx, "bootstrap")
 	defer span.End()
 
 	setLogLevel(ctx)
@@ -131,7 +131,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 
 func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
+	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
 
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
@@ -206,7 +206,7 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 
 func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "detectNamespacePermissions")
+	ctx, span := tracer.Start(ctx, "detectNamespacePermissions")
 	defer span.End()
 
 	namespaces := &corev1.NamespaceList{}
@@ -229,7 +229,7 @@ func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
 
 func setOperatorScope(ctx context.Context, namespace string) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "setOperatorScope")
+	ctx, span := tracer.Start(ctx, "setOperatorScope") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	// set what's the namespace to watch
@@ -248,7 +248,7 @@ func setOperatorScope(ctx context.Context, namespace string) {
 
 func setLogLevel(ctx context.Context) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "setLogLevel")
+	ctx, span := tracer.Start(ctx, "setLogLevel") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	var loggingLevel zapcore.Level
@@ -280,7 +280,7 @@ func setLogLevel(ctx context.Context) {
 
 func buildIdentity(ctx context.Context, podNamespace string) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "buildIdentity")
+	ctx, span := tracer.Start(ctx, "buildIdentity") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	operatorName, found := os.LookupEnv("OPERATOR_NAME")
@@ -304,7 +304,7 @@ func buildIdentity(ctx context.Context, podNamespace string) {
 
 func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "createManager")
+	ctx, span := tracer.Start(ctx, "createManager") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	metricsHost := viper.GetString("metrics-host")
@@ -365,7 +365,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 
 func performUpgrades(ctx context.Context, mgr manager.Manager) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "performUpgrades")
+	ctx, span := tracer.Start(ctx, "performUpgrades")
 	defer span.End()
 
 	// upgrades all the instances managed by this operator
@@ -376,7 +376,7 @@ func performUpgrades(ctx context.Context, mgr manager.Manager) {
 
 func setupControllers(ctx context.Context, mgr manager.Manager) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "setupControllers")
+	ctx, span := tracer.Start(ctx, "setupControllers") // nolint:ineffassign,staticcheck
 	clientReader := mgr.GetAPIReader()
 	client := mgr.GetClient()
 	schema := mgr.GetScheme()
@@ -417,7 +417,7 @@ func setupWebhooks(_ context.Context, mgr manager.Manager) {
 
 func getNamespace(ctx context.Context) string {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "getNamespace")
+	ctx, span := tracer.Start(ctx, "getNamespace") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	podNamespace, found := os.LookupEnv("POD_NAMESPACE")

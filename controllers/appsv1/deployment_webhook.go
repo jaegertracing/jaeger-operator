@@ -53,7 +53,7 @@ type deploymentInterceptor struct {
 // Handle adds a label to a generated pod if deployment or namespace provide annotaion
 func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Request) admission.Response {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "reconcileDeployment")
+	ctx, span := tracer.Start(ctx, "reconcileDeployment")
 	span.SetAttributes(
 		attribute.String("kind", req.Kind.String()),
 		attribute.String("name", req.Name),
@@ -163,7 +163,7 @@ func (d *deploymentInterceptor) InjectDecoder(decoder *admission.Decoder) error 
 
 func reconcileConfigMaps(ctx context.Context, cl client.Client, jaeger *v1.Jaeger, dep *appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "reconcileConfigMaps")
+	ctx, span := tracer.Start(ctx, "reconcileConfigMaps")
 	defer span.End()
 
 	cms := []*corev1.ConfigMap{}
@@ -185,7 +185,7 @@ func reconcileConfigMaps(ctx context.Context, cl client.Client, jaeger *v1.Jaege
 
 func reconcileConfigMap(ctx context.Context, cl client.Client, cm *corev1.ConfigMap, dep *appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "reconcileConfigMap")
+	ctx, span := tracer.Start(ctx, "reconcileConfigMap")
 	defer span.End()
 
 	// Update the namespace to be the same as the Deployment being injected

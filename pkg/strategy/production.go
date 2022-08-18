@@ -30,7 +30,7 @@ import (
 
 func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "newProductionStrategy")
+	ctx, span := tracer.Start(ctx, "newProductionStrategy") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	c := S{typ: v1.DeploymentStrategyProduction}

@@ -172,7 +172,7 @@ func generateSubSpans(ctx context.Context, depth int) {
 		return
 	}
 	tracer := otel.Tracer(tracerName)
-	_, span := tracer.Start(ctx, fmt.Sprintf("subspan-%d", depth))
+	ctx, span := tracer.Start(ctx, fmt.Sprintf("subspan-%d", depth))
 	defer span.End()
 	logrus.Debugln("\tGenerating subspan", depth)
 	time.Sleep(time.Millisecond * 30)

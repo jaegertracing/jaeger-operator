@@ -26,7 +26,7 @@ var ErrDependencyRemoved = errors.New("dependency has been removed")
 
 func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "handleDependencies")
+	ctx, span := tracer.Start(ctx, "handleDependencies")
 	defer span.End()
 
 	for _, dep := range str.Dependencies() {
@@ -41,7 +41,7 @@ func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S
 
 func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, dep batchv1.Job) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "handleDependency")
+	ctx, span := tracer.Start(ctx, "handleDependency")
 	defer span.End()
 
 	span.SetAttributes(

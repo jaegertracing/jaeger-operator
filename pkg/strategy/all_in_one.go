@@ -24,7 +24,7 @@ import (
 
 func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "newAllInOneStrategy")
+	ctx, span := tracer.Start(ctx, "newAllInOneStrategy") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	c := S{typ: v1.DeploymentStrategyAllInOne}

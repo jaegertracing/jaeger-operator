@@ -24,7 +24,7 @@ var ErrElasticsearchRemoved = errors.New("Elasticsearch cluster has been removed
 
 func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyElasticsearches")
+	ctx, span := tracer.Start(ctx, "applyElasticsearches")
 	defer span.End()
 
 	opts := []client.ListOption{
@@ -85,7 +85,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 
 func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elasticsearch) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "waitForAvailableElastic")
+	ctx, span := tracer.Start(ctx, "waitForAvailableElastic")
 	defer span.End()
 
 	var expectedSize int32

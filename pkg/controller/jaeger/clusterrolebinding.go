@@ -15,7 +15,7 @@ import (
 
 func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, jaeger v1.Jaeger, desired []rbac.ClusterRoleBinding) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyClusterRoleBindingBindings")
+	ctx, span := tracer.Start(ctx, "applyClusterRoleBindingBindings")
 	defer span.End()
 
 	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {

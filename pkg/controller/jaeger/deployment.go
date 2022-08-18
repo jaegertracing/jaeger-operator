@@ -24,7 +24,7 @@ var ErrDeploymentRemoved = errors.New("deployment has been removed")
 
 func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyDeployments")
+	ctx, span := tracer.Start(ctx, "applyDeployments")
 	defer span.End()
 
 	opts := []client.ListOption{
@@ -98,7 +98,7 @@ func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger
 
 func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "waitForStability")
+	ctx, span := tracer.Start(ctx, "waitForStability")
 	defer span.End()
 
 	// TODO: decide what's a good timeout... the first cold run might take a while to download

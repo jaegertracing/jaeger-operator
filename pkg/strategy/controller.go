@@ -24,7 +24,7 @@ var (
 // For returns the appropriate Strategy for the given Jaeger instance
 func For(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "strategy.For")
+	ctx, span := tracer.Start(ctx, "strategy.For")
 	defer span.End()
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {
@@ -55,7 +55,7 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 // needed and incompatible options are cleaned
 func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "normalize")
+	ctx, span := tracer.Start(ctx, "normalize") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	// we need a name!

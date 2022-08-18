@@ -14,7 +14,7 @@ import (
 
 func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jaeger v1.Jaeger, desired []autoscalingv2beta2.HorizontalPodAutoscaler) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyHorizontalPodAutoscalers")
+	ctx, span := tracer.Start(ctx, "applyHorizontalPodAutoscalers")
 	defer span.End()
 
 	opts := []client.ListOption{

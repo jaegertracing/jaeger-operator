@@ -32,7 +32,7 @@ import (
 
 func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "newStreamingStrategy")
+	ctx, span := tracer.Start(ctx, "newStreamingStrategy")
 	defer span.End()
 
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
@@ -198,7 +198,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "autoProvisionKafka")
+	ctx, span := tracer.Start(ctx, "autoProvisionKafka") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	if jaeger.Annotations == nil {

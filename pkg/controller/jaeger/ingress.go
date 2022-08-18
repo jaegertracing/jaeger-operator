@@ -14,7 +14,7 @@ import (
 
 func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, desired []networkingv1.Ingress) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyIngresses")
+	ctx, span := tracer.Start(ctx, "applyIngresses")
 	defer span.End()
 	opts := []client.ListOption{
 		client.InNamespace(jaeger.Namespace),

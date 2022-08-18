@@ -25,7 +25,7 @@ var ErrKafkaUserRemoved = errors.New("kafka user has been removed")
 
 func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta2.KafkaUser) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyKafkaUsers")
+	ctx, span := tracer.Start(ctx, "applyKafkaUsers")
 	defer span.End()
 
 	opts := []client.ListOption{
@@ -94,7 +94,7 @@ func (r *ReconcileJaeger) applyKafkaUsers(ctx context.Context, jaeger v1.Jaeger,
 
 func (r *ReconcileJaeger) waitForKafkaUserStability(ctx context.Context, kafkaUser kafkav1beta2.KafkaUser) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "waitForKafkaUserStability")
+	ctx, span := tracer.Start(ctx, "waitForKafkaUserStability")
 	defer span.End()
 
 	seen := false

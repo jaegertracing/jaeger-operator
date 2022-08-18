@@ -65,7 +65,7 @@ func buildSpanProcessor() error {
 
 func buildJaegerExporter(ctx context.Context, namespace string, instanceID string) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	_, span := tracer.Start(ctx, "buildJaegerExporter")
+	ctx, span := tracer.Start(ctx, "buildJaegerExporter") // nolint:ineffassign,staticcheck
 	defer span.End()
 	attr := []attribute.KeyValue{
 		semconv.ServiceNameKey.String("jaeger-operator"),

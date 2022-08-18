@@ -18,7 +18,7 @@ import (
 // ManagedInstances finds all the Jaeger instances for the current operator and upgrades them, if necessary
 func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader, latestVersion string) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "ManagedInstances")
+	ctx, span := tracer.Start(ctx, "ManagedInstances")
 	defer span.End()
 
 	list := &v1.JaegerList{}
@@ -107,7 +107,7 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 // ManagedInstance performs the necessary changes to bring the given Jaeger instance to the current version
 func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger, latestVersion string) (v1.Jaeger, error) {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "ManagedInstance")
+	ctx, span := tracer.Start(ctx, "ManagedInstance")
 	defer span.End()
 
 	currentSemVersion, err := semver.NewVersion(jaeger.Status.Version)

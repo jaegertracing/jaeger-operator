@@ -14,7 +14,7 @@ import (
 
 func (r *ReconcileJaeger) applyDaemonSets(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.DaemonSet) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	_, span := tracer.Start(ctx, "applyDaemonSets")
+	ctx, span := tracer.Start(ctx, "applyDaemonSets")
 	defer span.End()
 
 	opts := []client.ListOption{
