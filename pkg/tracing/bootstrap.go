@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -12,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/semconv"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
@@ -26,7 +26,7 @@ func Bootstrap(ctx context.Context, namespace string) {
 	if viper.GetBool("tracing-enabled") {
 		err := buildSpanProcessor()
 		if err != nil {
-			log.WithError(err).Warn("could not configure a Jaeger tracer for the operator")
+			log.Log.Error(err, "could not configure a Jaeger tracer for the operator")
 		} else {
 			buildJaegerExporter(ctx, namespace, "")
 		}

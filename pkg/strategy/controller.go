@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
@@ -29,13 +28,18 @@ func For(ctx context.Context, jaeger *v1.Jaeger) S {
 	defer span.End()
 
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyDeprecatedAllInOne {
-		jaeger.Logger().Warn("Strategy 'all-in-one' is no longer supported, please use 'allInOne'")
+		jaeger.Logger().V(1).Info(
+			"Strategy 'all-in-one' is no longer supported, please use 'allInOne'",
+		)
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
 	normalize(ctx, jaeger)
 
-	jaeger.Logger().WithField("strategy", jaeger.Spec.Strategy).Debug("Strategy chosen")
+	jaeger.Logger().V(-1).Info(
+		"Strategy chosen",
+		"strategy", jaeger.Spec.Strategy,
+	)
 	if jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
 		return newAllInOneStrategy(ctx, jaeger)
 	}
@@ -67,10 +71,11 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	}
 
 	if unknownStorage(jaeger.Spec.Storage.Type) {
-		jaeger.Logger().WithFields(log.Fields{
-			"storage":       jaeger.Spec.Storage.Type,
-			"known-options": v1.ValidStorageTypes(),
-		}).Info("The provided storage type is unknown. Falling back to 'memory'")
+		jaeger.Logger().Info(
+			"The provided storage type is unknown. Falling back to 'memory'",
+			"storage", jaeger.Spec.Storage.Type,
+			"known-options", v1.ValidStorageTypes(),
+		)
 		jaeger.Spec.Storage.Type = v1.JaegerMemoryStorage
 	}
 
@@ -98,7 +103,10 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	// check for incompatible options
 	// if the storage is `memory`, then the only possible strategy is `all-in-one`
 	if !distributedStorage(jaeger.Spec.Storage.Type) && jaeger.Spec.Strategy != v1.DeploymentStrategyAllInOne {
-		jaeger.Logger().WithField("storage", jaeger.Spec.Storage.Type).Warn("No suitable storage provided. Falling back to allInOne")
+		jaeger.Logger().V(1).Info(
+			"No suitable storage provided. Falling back to allInOne",
+			"storage", jaeger.Spec.Storage.Type,
+		)
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 

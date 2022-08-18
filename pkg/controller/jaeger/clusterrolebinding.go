@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	rbac "k8s.io/api/rbac/v1"
@@ -20,7 +19,7 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 	defer span.End()
 
 	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {
-		jaeger.Logger().Trace("cluster role binding skipped, operator isn't cluster-wide")
+		jaeger.Logger().V(-2).Info("cluster role binding skipped, operator isn't cluster-wide")
 		return nil
 	}
 
@@ -36,10 +35,11 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 	inv := inventory.ForClusterRoleBindings(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"clusteRoleBinding": d.Name,
-			"namespace":         d.Namespace,
-		}).Debug("creating cluster role binding")
+		jaeger.Logger().V(-1).Info(
+			"creating cluster role binding",
+			"clusteRoleBinding", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -47,10 +47,11 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"clusteRoleBinding": d.Name,
-			"namespace":         d.Namespace,
-		}).Debug("updating cluster role binding")
+		jaeger.Logger().V(-1).Info(
+			"updating cluster role binding",
+			"clusteRoleBinding", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -58,10 +59,11 @@ func (r *ReconcileJaeger) applyClusterRoleBindingBindings(ctx context.Context, j
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"clusteRoleBinding": d.Name,
-			"namespace":         d.Namespace,
-		}).Debug("deleting cluster role binding")
+		jaeger.Logger().V(-1).Info(
+			"deleting cluster role binding",
+			"clusteRoleBinding", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

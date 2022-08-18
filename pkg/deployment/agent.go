@@ -32,7 +32,10 @@ func NewAgent(jaeger *v1.Jaeger) *Agent {
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
 	if !strings.EqualFold(a.jaeger.Spec.Agent.Strategy, "daemonset") {
-		a.jaeger.Logger().WithField("strategy", a.jaeger.Spec.Agent.Strategy).Debug("skipping agent daemonset")
+		a.jaeger.Logger().V(-1).Info(
+			"skipping agent daemonset",
+			"strategy", a.jaeger.Spec.Agent.Strategy,
+		)
 		return nil
 	}
 

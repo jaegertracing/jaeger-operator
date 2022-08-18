@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,10 +31,11 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 	inv := inventory.ForIngresses(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"ingress":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating ingress")
+		jaeger.Logger().V(-1).Info(
+			"creating ingress",
+			"ingress", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -43,10 +43,11 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"ingress":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating ingress")
+		jaeger.Logger().V(-1).Info(
+			"updating ingress",
+			"ingress", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -54,10 +55,11 @@ func (r *ReconcileJaeger) applyIngresses(ctx context.Context, jaeger v1.Jaeger, 
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"ingress":   d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting ingress")
+		jaeger.Logger().V(-1).Info(
+			"deleting ingress",
+			"ingress", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

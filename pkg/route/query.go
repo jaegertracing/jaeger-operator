@@ -39,7 +39,10 @@ func (r *QueryRoute) Get() *corev1.Route {
 	if len(r.jaeger.Namespace) >= 63 {
 		// the route is doomed already, nothing we can do...
 		name = r.jaeger.Name
-		r.jaeger.Logger().WithField("name", name).Warn("the route's hostname will have more than 63 chars and will not be valid")
+		r.jaeger.Logger().V(1).Info(
+			"the route's hostname will have more than 63 chars and will not be valid",
+			"name", name,
+		)
 	} else {
 		// -namespace is added to the host by OpenShift
 		name = util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace))

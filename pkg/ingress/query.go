@@ -104,13 +104,17 @@ func (i *QueryIngress) addTLSSpec(spec *networkingv1.IngressSpec) {
 			})
 		}
 		if i.jaeger.Spec.Ingress.SecretName != "" {
-			i.jaeger.Logger().Warn("Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.")
+			i.jaeger.Logger().V(1).Info(
+				"Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.",
+			)
 		}
 	} else if i.jaeger.Spec.Ingress.SecretName != "" {
 		spec.TLS = append(spec.TLS, networkingv1.IngressTLS{
 			SecretName: i.jaeger.Spec.Ingress.SecretName,
 		})
-		i.jaeger.Logger().Warn("'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.")
+		i.jaeger.Logger().V(1).Info(
+			"'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.",
+		)
 	}
 }
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -70,7 +70,7 @@ func start(cmd *cobra.Command, args []string) error {
 
 	// Start the Cmd
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		log.Fatal(err, "Manager exited non-zero")
+		log.Log.Error(err, "Manager exited non-zero")
 		return err
 	}
 

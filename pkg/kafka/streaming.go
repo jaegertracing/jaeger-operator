@@ -16,7 +16,7 @@ import (
 func Persistent(jaeger *v1.Jaeger) v1beta2.Kafka {
 	var replicas, replFactor, minIst, storage uint
 	if viper.GetBool("kafka-provisioning-minimal") {
-		jaeger.Logger().Warn("usage of kafka-provisioning-minimal is not supported")
+		jaeger.Logger().V(1).Info("usage of kafka-provisioning-minimal is not supported")
 		replicas = 1
 		replFactor = 1
 		minIst = 1

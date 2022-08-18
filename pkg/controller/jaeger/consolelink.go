@@ -4,7 +4,6 @@ import (
 	"context"
 
 	osconsolev1 "github.com/openshift/api/console/v1"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,7 +19,7 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 	defer span.End()
 
 	if viper.GetString(v1.ConfigOperatorScope) != v1.OperatorScopeCluster {
-		jaeger.Logger().Trace("console link skipped, operator isn't cluster-wide")
+		jaeger.Logger().V(-2).Info("console link skipped, operator isn't cluster-wide")
 		return nil
 	}
 
@@ -39,10 +38,11 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 	inv := inventory.ForConsoleLinks(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"consoleLink": d.Name,
-			"namespace":   d.Namespace,
-		}).Debug("creating console link")
+		jaeger.Logger().V(-1).Info(
+			"creating console link",
+			"consoleLink", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -50,10 +50,11 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"consoleLink": d.Name,
-			"namespace":   d.Namespace,
-		}).Debug("updating console link")
+		jaeger.Logger().V(-1).Info(
+			"updating console link",
+			"consoleLink", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -61,10 +62,11 @@ func (r *ReconcileJaeger) applyConsoleLinks(ctx context.Context, jaeger v1.Jaege
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"consoleLink": d.Name,
-			"namespace":   d.Namespace,
-		}).Debug("deleting console link")
+		jaeger.Logger().V(-1).Info(
+			"deleting console link",
+			"consoleLink", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
