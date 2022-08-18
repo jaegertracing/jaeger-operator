@@ -3,7 +3,7 @@ package inventory
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -23,17 +23,20 @@ func ForKafkas(existing []v1beta2.Kafka, desired []v1beta2.Kafka) Kafka {
 	mdelete := kafkaMap(existing)
 
 	for _, k := range existing {
-		log.WithFields(log.Fields{
-			"kafka":     k.GetName(),
-			"namespace": k.GetNamespace(),
-		}).Debug("existing")
+		log.Log.V(-1).Info(
+			"existing",
+			"kafka", k.GetName(),
+			"namespace", k.GetNamespace(),
+		)
 	}
 
 	for _, k := range desired {
-		log.WithFields(log.Fields{
-			"kafka":     k.GetName(),
-			"namespace": k.GetNamespace(),
-		}).Debug("desired")
+		log.Log.V(-1).Info(
+			"desired",
+			"kafka", k.GetName(),
+			"namespace", k.GetNamespace(),
+		)
+
 	}
 
 	for k, v := range mcreate {

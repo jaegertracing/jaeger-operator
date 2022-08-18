@@ -32,7 +32,7 @@ func (u *UIConfig) Get() *corev1.ConfigMap {
 		return nil
 	}
 
-	u.jaeger.Logger().Debug("Assembling the UI configmap")
+	u.jaeger.Logger().V(-1).Info("Assembling the UI configmap")
 	trueVar := true
 	data := map[string]string{
 		"ui": string(json),

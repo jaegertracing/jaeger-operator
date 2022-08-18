@@ -41,7 +41,10 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 func proxyInitArguments(jaeger *v1.Jaeger) []string {
 	secret, err := util.GenerateProxySecret()
 	if err != nil {
-		jaeger.Logger().WithError(err).Warnf("Error generating secret: %s, fallback to fixed secret", secret)
+		jaeger.Logger().Error(
+			err,
+			fmt.Sprintf("Error generating secret: %s, fallback to fixed secret", secret),
+		)
 		secret = defaultProxySecret
 	}
 	args := []string{
@@ -70,7 +73,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	trustedCAVolumeName := ca.TrustedCAName(jaeger)
 	for _, v := range commonSpec.VolumeMounts {
 		if v.Name == trustedCAVolumeName {
-			jaeger.Logger().Debug("found a volume mount with the trusted-ca")
+			jaeger.Logger().V(-1).Info("found a volume mount with the trusted-ca")
 			volumeMounts = append(volumeMounts, v)
 		}
 	}

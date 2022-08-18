@@ -44,7 +44,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 		return nil
 	}
 
-	u.jaeger.Logger().Debug("Assembling the Sampling configmap")
+	u.jaeger.Logger().V(-1).Info("Assembling the Sampling configmap")
 	trueVar := true
 
 	data := map[string]string{
@@ -87,7 +87,7 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
 	}
 
 	if _, exists := options.Map()["sampling.strategies-file"]; exists {
-		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+		jaeger.Logger().V(1).Info("sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
 		return true
 	}
 

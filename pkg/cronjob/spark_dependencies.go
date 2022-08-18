@@ -188,9 +188,13 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 func logTLSNotSupported(j *v1.Jaeger) {
 	sFlagsMap := j.Spec.Storage.Options.StringMap()
 	if strings.EqualFold(sFlagsMap["es.tls.enabled"], "true") || strings.EqualFold(sFlagsMap["es.tls"], "true") {
-		j.Logger().Warn("Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies")
+		j.Logger().V(1).Info(
+			"Spark dependencies does not support TLS with Elasticsearch, consider disabling dependencies",
+		)
 	}
 	if strings.EqualFold(sFlagsMap["es.tls.skip-host-verify"], "true") || sFlagsMap["es.tls.ca"] != "" {
-		j.Logger().Warn("Spark dependencies does not support insecure TLS nor specifying only CA cert, consider disabling dependencies")
+		j.Logger().V(1).Info(
+			"Spark dependencies does not support insecure TLS nor specifying only CA cert, consider disabling dependencies",
+		)
 	}
 }

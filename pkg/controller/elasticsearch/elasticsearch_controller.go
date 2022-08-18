@@ -4,12 +4,12 @@ import (
 	"context"
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -41,11 +41,11 @@ func New(client client.Client, clientReader client.Reader) *ReconcileElasticsear
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
-	logger := log.WithFields(log.Fields{
-		"namespace": request.Namespace,
-		"name":      request.Name,
-	})
-	logger.Trace("Reconciling Elasticsearch")
+	logger := log.Log.WithValues(
+		"namespace", request.Namespace,
+		"name", request.Name,
+	)
+	logger.V(-1).Info("Reconciling Elasticsearch")
 
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
 	ctx, span := tracer.Start(ctx, "reconcileElasticsearch")
@@ -82,10 +82,15 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 		jaeger := &jaegers.Items[i]
 		if v1.ShouldInjectOpenShiftElasticsearchConfiguration(jaeger.Spec.Storage) {
 			if jaeger.Spec.Storage.Elasticsearch.Name == es.Name && jaeger.Spec.Storage.Elasticsearch.NodeCount != esNodeCount {
-				logger.WithField("jaeger", jaeger.Name).WithField("old-es-node-count", jaeger.Spec.Storage.Elasticsearch.NodeCount).WithField("new-es-node-count", esNodeCount).Info("Updating Jaeger CR because OpenShift ES number of nodes changed")
+				logger.Info(
+					"Updating Jaeger CR because OpenShift ES number of nodes changed",
+					"jaeger", jaeger.Name,
+					"old-es-node-count", jaeger.Spec.Storage.Elasticsearch.NodeCount,
+					"new-es-node-count", esNodeCount,
+				)
 				jaeger.Spec.Storage.Elasticsearch.NodeCount = esNodeCount
 				if err := r.client.Update(ctx, jaeger); err != nil {
-					log.WithError(err).Error("failed to update Jaeger instance")
+					logger.Error(err, "failed to update Jaeger instance")
 					return reconcile.Result{}, tracing.HandleError(err, span)
 				}
 			}

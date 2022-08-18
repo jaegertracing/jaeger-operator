@@ -117,10 +117,11 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	if jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL != "" {
 		dur, err := time.ParseDuration(jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL)
 		if err != nil {
-			jaeger.Logger().
-				WithError(err).
-				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL).
-				Error("Failed to parse cassandraCreateSchema.traceTTL to time.duration. Using the default.")
+			jaeger.Logger().Error(
+				err,
+				"Failed to parse cassandraCreateSchema.traceTTL to time.duration. Using the default.",
+				"timeout", jaeger.Spec.Storage.CassandraCreateSchema.TraceTTL,
+			)
 		} else {
 			traceTTLSeconds = fmt.Sprintf("%.0f", dur.Seconds())
 		}
@@ -136,13 +137,16 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 			seconds := int64(dur.Seconds())
 			jobTimeout = &seconds
 		} else {
-			jaeger.Logger().
-				WithError(err).
-				WithField("timeout", jaeger.Spec.Storage.CassandraCreateSchema.Timeout).
-				Error("Failed to parse cassandraCreateSchema.timeout to time.duration. Using the default.")
+			jaeger.Logger().Error(
+				err,
+				"Failed to parse cassandraCreateSchema.timeout to time.duration. Using the default.",
+				"timeout", jaeger.Spec.Storage.CassandraCreateSchema.Timeout,
+			)
 		}
 	} else {
-		jaeger.Logger().Debug("Timeout for cassandra-create-schema job not specified. Using default of 1 day.")
+		jaeger.Logger().V(-1).Info(
+			"Timeout for cassandra-create-schema job not specified. Using default of 1 day.",
+		)
 	}
 
 	truncatedName := util.Truncate("%s-cassandra-schema-job", 63, jaeger.Name)

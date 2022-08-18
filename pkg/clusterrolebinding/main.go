@@ -19,7 +19,7 @@ func Get(jaeger *v1.Jaeger) []rbac.ClusterRoleBinding {
 			return []rbac.ClusterRoleBinding{oauthProxyAuthDelegator(jaeger)}
 		}
 
-		jaeger.Logger().Warn("the requested instance specifies the delegate-urls option for the OAuth Proxy, but this operator cannot assign the proper cluster role to it (system:auth-delegator). Create a cluster role binding between the operator's service account and the cluster role 'system:auth-delegator' in order to allow instances to use 'delegate-urls'")
+		jaeger.Logger().V(1).Info("the requested instance specifies the delegate-urls option for the OAuth Proxy, but this operator cannot assign the proper cluster role to it (system:auth-delegator). Create a cluster role binding between the operator's service account and the cluster role 'system:auth-delegator' in order to allow instances to use 'delegate-urls'")
 
 	}
 	return []rbac.ClusterRoleBinding{}

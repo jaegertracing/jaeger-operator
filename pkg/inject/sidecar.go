@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
@@ -46,20 +46,20 @@ const (
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
 func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
-	logFields := jaeger.Logger().WithField("deployment", dep.Name)
+	logFields := jaeger.Logger().WithValues("deployment", dep.Name)
 
 	if jaeger == nil {
-		logFields.Trace("no Jaeger instance found, skipping sidecar injection")
+		logFields.V(-2).Info("no Jaeger instance found, skipping sidecar injection")
 		return dep
 	}
 
 	if val, ok := dep.Labels[Label]; ok && val != jaeger.Name {
-		logFields.Trace("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
+		logFields.V(-2).Info("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
 		return dep
 	}
 	decorate(dep)
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
-	logFields.Debug("injecting sidecar")
+	logFields.V(-1).Info("injecting sidecar")
 	if hasAgent { // This is an update
 		dep.Spec.Template.Spec.Containers[agentContainerIndex] = container(jaeger, dep, agentContainerIndex)
 	} else {
@@ -79,20 +79,20 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 
 // Desired determines whether a sidecar is desired, based on the annotation from both the deployment and the namespace
 func desired(dep *appsv1.Deployment, ns *corev1.Namespace) bool {
-	logger := log.WithFields(log.Fields{
-		"namespace":  dep.Namespace,
-		"deployment": dep.Name,
-	})
+	logger := log.Log.WithValues(
+		"namespace", dep.Namespace,
+		"deployment", dep.Name,
+	)
 	depAnnotationValue, depExist := dep.Annotations[Annotation]
 	nsAnnotationValue, nsExist := ns.Annotations[Annotation]
 
 	if depExist && !strings.EqualFold(depAnnotationValue, "false") {
-		logger.Debug("annotation present on deployment")
+		logger.V(-1).Info("annotation present on deployment")
 		return true
 	}
 
 	if nsExist && !strings.EqualFold(nsAnnotationValue, "false") {
-		logger.Debug("annotation present on namespace")
+		logger.V(-1).Info("annotation present on namespace")
 		return true
 	}
 

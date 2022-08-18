@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -15,6 +14,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
@@ -72,19 +72,21 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
 					// we don't have anything else to do here, break the poll
-					log.WithFields(log.Fields{
-						"namespace": dep.Namespace,
-						"name":      dep.Name,
-					}).Warn("Dependency has been removed.")
+					log.Log.V(1).Info(
+						"Dependency has been removed.",
+						"namespace", dep.Namespace,
+						"name", dep.Name,
+					)
 					span.SetStatus(codes.Error, ErrDependencyRemoved.Error())
 					return true, ErrDependencyRemoved
 				}
 
 				// the object might have not been created yet
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-				}).Debug("Dependency doesn't exist yet.")
+				log.Log.V(-1).Info(
+					"Dependency doesn't exist yet.",
+					"namespace", dep.Namespace,
+					"name", dep.Name,
+				)
 				return false, nil
 			}
 			return false, tracing.HandleError(err, span)
@@ -94,10 +96,11 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 		// for now, we just assume each batch job has one pod
 		if batch.Status.Succeeded != 1 {
 			once.Do(func() {
-				log.WithFields(log.Fields{
-					"namespace": dep.Namespace,
-					"name":      dep.Name,
-				}).Debug("Waiting for dependency to complete")
+				log.Log.V(-1).Info(
+					"Waiting for dependency to complete",
+					"namespace", dep.Namespace,
+					"name", dep.Name,
+				)
 			})
 			return false, nil
 		}

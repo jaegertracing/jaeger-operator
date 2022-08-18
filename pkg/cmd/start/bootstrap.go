@@ -10,18 +10,19 @@ import (
 	"time"
 
 	osimagev1 "github.com/openshift/api/image/v1"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -81,19 +82,19 @@ func bootstrap(ctx context.Context) manager.Manager {
 	buildIdentity(ctx, namespace)
 	tracing.SetInstanceID(ctx, namespace)
 
-	log.WithFields(log.Fields{
-		"os":              runtime.GOOS,
-		"arch":            runtime.GOARCH,
-		"version":         runtime.Version(),
-		"jaeger-operator": version.Get().Operator,
-		"identity":        viper.GetString(v1.ConfigIdentity),
-		"jaeger":          version.Get().Jaeger,
-	}).Info("Versions")
+	ctrl.Log.Info("Versions",
+		"os", runtime.GOOS,
+		"arch", runtime.GOARCH,
+		"version", runtime.Version(),
+		"jaeger-operator", version.Get().Operator,
+		"identity", viper.GetString(v1.ConfigIdentity),
+		"jaeger", version.Get().Jaeger,
+	)
 
 	cfg, err := ctrl.GetConfig()
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		log.Fatal(err)
+		log.Log.V(6).Info("%s", err)
 	}
 
 	span.SetAttributes(otelattribute.String("Platform", viper.GetString("platform")))
@@ -109,7 +110,10 @@ func bootstrap(ctx context.Context) manager.Manager {
 	mgr := createManager(ctx, cfg)
 
 	if d, err := autodetect.New(mgr); err != nil {
-		log.WithError(err).Warn("failed to start the background process to auto-detect the operator capabilities")
+		log.Log.Error(
+			err,
+			"failed to start the background process to auto-detect the operator capabilities",
+		)
 	} else {
 		d.Start()
 	}
@@ -121,7 +125,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 	detectOAuthProxyImageStream(ctx, mgr)
 	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
 	if err != nil {
-		log.WithError(err).Error("failed to initialize metrics")
+		log.Log.Error(err, "failed to initialize metrics")
 	}
 	return mgr
 }
@@ -132,17 +136,20 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 	defer span.End()
 
 	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
-		log.Debug("Not running on OpenShift, so won't configure OAuthProxy imagestream.")
+		log.Log.V(-1).Info(
+			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
+		)
 		return
 	}
 
 	imageStreamNamespace := viper.GetString("openshift-oauth-proxy-imagestream-ns")
 	imageStreamName := viper.GetString("openshift-oauth-proxy-imagestream-name")
 	if imageStreamNamespace == "" || imageStreamName == "" {
-		log.WithFields(log.Fields{
-			"namespace": imageStreamNamespace,
-			"name":      imageStreamName,
-		}).Info("OAuthProxy ImageStream namespace and/or name not defined")
+		log.Log.Info(
+			"OAuthProxy ImageStream namespace and/or name not defined",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
 		return
 	}
 
@@ -152,44 +159,50 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 		Namespace: imageStreamNamespace,
 	}
 	if err := mgr.GetAPIReader().Get(ctx, namespacedName, imageStream); err != nil {
-		log.WithFields(log.Fields{
-			"namespace": imageStreamNamespace,
-			"name":      imageStreamName,
-		}).WithError(err).Error("Failed to obtain OAuthProxy ImageStream")
+		log.Log.Error(
+			err,
+			"Failed to obtain OAuthProxy ImageStream",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
 		tracing.HandleError(err, span)
 		return
 	}
 
 	if len(imageStream.Status.Tags) == 0 {
-		log.WithFields(log.Fields{
-			"namespace": imageStreamNamespace,
-			"name":      imageStreamName,
-		}).Error("OAuthProxy ImageStream has no tags")
+		log.Log.V(6).Info(
+			"OAuthProxy ImageStream has no tags",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
 		return
 	}
 
 	if len(imageStream.Status.Tags[0].Items) == 0 {
-		log.WithFields(log.Fields{
-			"namespace": imageStreamNamespace,
-			"name":      imageStreamName,
-		}).Error("OAuthProxy ImageStream tag has no items")
+		log.Log.V(6).Info(
+			"OAuthProxy ImageStream tag has no items",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
 		return
 	}
 
 	if len(imageStream.Status.Tags[0].Items[0].DockerImageReference) == 0 {
-		log.WithFields(log.Fields{
-			"namespace": imageStreamNamespace,
-			"name":      imageStreamName,
-		}).Error("OAuthProxy ImageStream tag has no DockerImageReference")
+		log.Log.V(5).Info(
+			"OAuthProxy ImageStream tag has no DockerImageReference",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
 		return
 	}
 
 	image := imageStream.Status.Tags[0].Items[0].DockerImageReference
 
 	viper.Set("openshift-oauth-proxy-image", image)
-	log.WithFields(log.Fields{
-		"image": image,
-	}).Info("Updated OAuth Proxy image flag")
+	log.Log.Info(
+		"Updated OAuth Proxy image flag",
+		"image", image,
+	)
 }
 
 func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
@@ -200,7 +213,12 @@ func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
 	namespaces := &corev1.NamespaceList{}
 	opts := []client.ListOption{}
 	if err := mgr.GetAPIReader().List(ctx, namespaces, opts...); err != nil {
-		log.WithError(err).Trace("could not get a list of namespaces, disabling namespace controller")
+		log.Log.V(-1).Info(
+			fmt.Sprintf(
+				"could not get a list of namespaces, disabling namespace controller. reason: %s",
+				err,
+			),
+		)
 		tracing.HandleError(err, span)
 		span.SetAttributes(otelattribute.Bool(v1.ConfigEnableNamespaceController, false))
 		viper.Set(v1.ConfigEnableNamespaceController, false)
@@ -223,7 +241,7 @@ func setOperatorScope(ctx context.Context, namespace string) {
 		span.SetAttributes(otelattribute.String(v1.ConfigOperatorScope, v1.OperatorScopeCluster))
 		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	} else {
-		log.Info("Consider running the operator in a cluster-wide scope for extra features")
+		log.Log.Info("Consider running the operator in a cluster-wide scope for extra features")
 		span.SetAttributes(otelattribute.String(v1.ConfigOperatorScope, v1.OperatorScopeNamespace))
 		viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeNamespace)
 	}
@@ -234,12 +252,32 @@ func setLogLevel(ctx context.Context) {
 	ctx, span := tracer.Start(ctx, "setLogLevel")
 	defer span.End()
 
-	level, err := log.ParseLevel(viper.GetString("log-level"))
-	if err != nil {
-		log.SetLevel(log.InfoLevel)
-	} else {
-		log.SetLevel(level)
+	var loggingLevel zapcore.Level
+	switch strings.ToLower(viper.GetString("log-level")) {
+	case "panic":
+		loggingLevel = zapcore.PanicLevel
+	case "fatal":
+		loggingLevel = zapcore.FatalLevel
+	case "error":
+		loggingLevel = zapcore.ErrorLevel
+	case "warn", "warning":
+		loggingLevel = zapcore.WarnLevel
+	case "info":
+		loggingLevel = zapcore.InfoLevel
+	case "debug":
+		loggingLevel = zapcore.DebugLevel
 	}
+
+	opts := zap.Options{
+		Development: true,
+		Level:       loggingLevel,
+	}
+
+	opts.BindFlags(flag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
 }
 
 func buildIdentity(ctx context.Context, podNamespace string) {
@@ -249,7 +287,9 @@ func buildIdentity(ctx context.Context, podNamespace string) {
 
 	operatorName, found := os.LookupEnv("OPERATOR_NAME")
 	if !found {
-		log.Warn("the OPERATOR_NAME env var isn't set, this operator's identity might clash with another operator's instance")
+		log.Log.V(1).Info(
+			"the OPERATOR_NAME env var isn't set, this operator's identity might clash with another operator's instance",
+		)
 		operatorName = "jaeger-operator"
 	}
 
@@ -275,14 +315,6 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	enableLeaderElection := viper.GetBool("leader-elect")
 	probeAddr := viper.GetString("health-probe-bind-address")
 	webhookPort := viper.GetInt("webhook-bind-port")
-
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 
@@ -316,7 +348,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	mgr, err := ctrl.NewManager(cfg, options)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		log.Fatal(err)
+		log.Log.V(6).Info(fmt.Sprintf("%s", err))
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -340,7 +372,7 @@ func performUpgrades(ctx context.Context, mgr manager.Manager) {
 
 	// upgrades all the instances managed by this operator
 	if err := upgrade.ManagedInstances(ctx, mgr.GetClient(), mgr.GetAPIReader(), version.Get().Jaeger); err != nil {
-		log.WithError(err).Warn("failed to upgrade managed instances")
+		log.Log.Error(err, "failed to upgrade managed instances")
 	}
 }
 
@@ -363,7 +395,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 			os.Exit(1)
 		}
 	} else {
-		log.Warn("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
+		log.Log.V(1).Info("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
 	}
 
 	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
@@ -392,11 +424,13 @@ func getNamespace(ctx context.Context) string {
 
 	podNamespace, found := os.LookupEnv("POD_NAMESPACE")
 	if !found {
-		log.Warn("the POD_NAMESPACE env var isn't set, trying to determine it from the service account info")
+		log.Log.V(1).Info(
+			"the POD_NAMESPACE env var isn't set, trying to determine it from the service account info",
+		)
 		var err error
 		if podNamespace, err = util.GetOperatorNamespace(); err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			log.WithError(err).Warn("could not read the namespace from the service account")
+			log.Log.Error(err, "could not read the namespace from the service account")
 		}
 	}
 
