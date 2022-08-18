@@ -24,7 +24,7 @@ func TestDirectNextMinor(t *testing.T) {
 	j := *v1.NewJaeger(nsn)
 	j.Status.Version = "1.12.0"
 
-	//test
+	// test
 	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify
@@ -40,7 +40,7 @@ func TestSetVersionOnNewInstance(t *testing.T) {
 	r := &ReconcileJaeger{}
 	j := *v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 
-	//test
+	// test
 	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify

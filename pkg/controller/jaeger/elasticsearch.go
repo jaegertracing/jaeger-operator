@@ -19,10 +19,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrElasticsearchRemoved is returned when an ES cluster existed but has been removed
-	ErrElasticsearchRemoved = errors.New("Elasticsearch cluster has been removed")
-)
+// ErrElasticsearchRemoved is returned when an ES cluster existed but has been removed
+var ErrElasticsearchRemoved = errors.New("Elasticsearch cluster has been removed")
 
 func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Jaeger, desired []esv1.Elasticsearch) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)

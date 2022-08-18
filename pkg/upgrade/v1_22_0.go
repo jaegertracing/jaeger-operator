@@ -36,7 +36,7 @@ func upgrade1_22_0(ctx context.Context, client client.Client, jaeger v1.Jaeger) 
 	j.Spec.Agent.Options = migrateDeprecatedOptions(j, j.Spec.Agent.Options, flagMapAgent)
 	j.Spec.Query.Options = migrateDeprecatedOptions(j, j.Spec.Query.Options, flagMapQuery)
 
-	//Migrate query host/port flags
+	// Migrate query host/port flags
 	j.Spec.Query.Options = migrateQueryHostPortFlagsv1_22_0(j.Spec.Query.Options)
 
 	return migrateCassandraVerifyFlagv1_22_0(jaeger), nil

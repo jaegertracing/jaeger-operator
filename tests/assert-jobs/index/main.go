@@ -47,7 +47,6 @@ func filterIndices(indices *[]elasticsearch.EsIndex, pattern string) ([]elastics
 	logrus.Debugf("%d indices matches the pattern '%s'", len(matchingIndices), pattern)
 
 	return matchingIndices, nil
-
 }
 
 // Init the CMD and return error if something didn't go properly
@@ -115,7 +114,7 @@ func main() {
 		logrus.Fatalln(err)
 	}
 
-	if viper.GetBool(flagVerbose) == true {
+	if viper.GetBool(flagVerbose) {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
@@ -186,5 +185,4 @@ func main() {
 			logrus.Fatalln(foundDocs, "docs found.", viper.GetInt(flagAssertCountDocs), "expected")
 		}
 	}
-
 }

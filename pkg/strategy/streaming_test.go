@@ -178,19 +178,6 @@ func TestAutoscaleForStreaming(t *testing.T) {
 
 func assertDeploymentsAndServicesForStreaming(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	name := instance.Name
-	expectedNumObjs := 7
-
-	if hasDaemonSet {
-		expectedNumObjs++
-	}
-
-	if hasOAuthProxy {
-		expectedNumObjs++
-	}
-
-	if hasConfigMap {
-		expectedNumObjs++
-	}
 
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,

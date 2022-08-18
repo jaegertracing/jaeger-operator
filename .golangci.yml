@@ -1,0 +1,30 @@
+run:
+  go: '1.18'
+  timeout: 10m
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/jaegertracing/jaeger-operator
+  gosimple:
+    go: "1.18"
+
+linters:
+  enable:
+    - depguard
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosec
+    - govet
+    - misspell
+    - bidichk
+  disable:
+    - errcheck
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gosec

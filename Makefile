@@ -118,6 +118,7 @@ PHONY: lint
 lint:
 	$(ECHO) Linting...
 	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
+	golangci-lint -v run
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -437,6 +438,7 @@ tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
 install-tools: operator-sdk
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports

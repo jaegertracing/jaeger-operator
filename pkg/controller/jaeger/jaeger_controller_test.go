@@ -180,7 +180,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	assert.Equal(t, errList, err)
 	cl.listErr = nil
 
-	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
+	_ = syncOnJaegerChanges(cl, cl, jaeger.Name)
 	assert.Equal(t, 3, cl.counter)
 	cl.counter = 0
 	cl.getErr = nil
@@ -194,7 +194,6 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
 	assert.Equal(t, 1, cl.counter)
 	assert.Equal(t, errUpdate, err)
-
 }
 
 func TestNewJaegerInstance(t *testing.T) {
@@ -265,7 +264,7 @@ func TestDeletedInstance(t *testing.T) {
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &v1.Jaeger{}
-	err = cl.Get(context.Background(), req.NamespacedName, persisted)
+	_ = cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotEmpty(t, jaeger.Name)
 	assert.Empty(t, persisted.Name) // this means that the object wasn't found
 }

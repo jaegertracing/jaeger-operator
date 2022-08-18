@@ -74,7 +74,6 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 	if dep.Labels["app"] == "jaeger" && dep.Labels["app.kubernetes.io/component"] != "query" {
 		// Don't touch jaeger deployments
 		return admission.Allowed("is jaeger deployment, we do not touch it")
-
 	}
 
 	ns := &corev1.Namespace{}
@@ -149,7 +148,6 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 
 			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeploy)
 		}
-
 	}
 	return admission.Allowed("no action needed")
 }

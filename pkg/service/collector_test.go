@@ -143,6 +143,7 @@ func TestCollectorServiceLoadBalancer(t *testing.T) {
 	// Only the non-headless service will receive the type
 	assert.Equal(t, svc[1].Spec.Type, corev1.ServiceTypeLoadBalancer)
 }
+
 func TestCollectorServiceAnnotations(t *testing.T) {
 	name := "TestCollectorServiceLoadBalancer"
 	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "collector"}

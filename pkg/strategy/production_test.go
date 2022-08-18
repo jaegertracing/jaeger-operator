@@ -128,19 +128,6 @@ func TestAutoscaleForProduction(t *testing.T) {
 
 func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
 	name := instance.Name
-	expectedNumObjs := 7
-
-	if hasDaemonSet {
-		expectedNumObjs++
-	}
-
-	if hasOAuthProxy {
-		expectedNumObjs++
-	}
-
-	if hasConfigMap {
-		expectedNumObjs++
-	}
 
 	deployments := map[string]bool{
 		fmt.Sprintf("%s-collector", name): false,
@@ -166,7 +153,7 @@ func assertDeploymentsAndServicesForProduction(t *testing.T, instance *v1.Jaeger
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
 
-	serviceAccounts := map[string]bool{fmt.Sprintf("%s", name): false}
+	serviceAccounts := map[string]bool{name: false}
 	if hasOAuthProxy {
 		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false
 	}

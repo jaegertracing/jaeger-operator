@@ -164,7 +164,7 @@ func initProvider(serviceName string) func() {
 	}
 }
 
-// Generate substans inside a span
+// Generate subspans inside a span
 // ctx: context for the program
 // depth: how many spans should be created as child spans of this one
 func generateSubSpans(ctx context.Context, depth int) {
@@ -208,7 +208,7 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	if viper.GetBool(flagVerbose) == true {
+	if viper.GetBool(flagVerbose) {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

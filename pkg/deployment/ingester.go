@@ -45,7 +45,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	trueVar := true
 	falseVar := false
 
-	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
+	args := i.jaeger.Spec.Ingester.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 14270)
 

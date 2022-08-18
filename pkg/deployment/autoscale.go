@@ -28,7 +28,6 @@ type component interface {
 
 // Autoscalers returns a list of HPAs based on specs
 func autoscalers(component component) []autoscalingv2beta2.HorizontalPodAutoscaler {
-
 	// fixed number of replicas is explicitly set, do not auto scale
 	if component.replicas() != nil {
 		return []autoscalingv2beta2.HorizontalPodAutoscaler{}
@@ -37,7 +36,7 @@ func autoscalers(component component) []autoscalingv2beta2.HorizontalPodAutoscal
 	autoScaleSpec := component.autoscalingSpec()
 
 	// explicitly disabled, do not auto scale
-	if autoScaleSpec.Autoscale != nil && *autoScaleSpec.Autoscale == false {
+	if autoScaleSpec.Autoscale != nil && !*autoScaleSpec.Autoscale {
 		return []autoscalingv2beta2.HorizontalPodAutoscaler{}
 	}
 

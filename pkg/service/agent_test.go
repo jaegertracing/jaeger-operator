@@ -39,5 +39,4 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 	for k, v := range ports {
 		assert.Equal(t, true, v, "Expected port %v to be specified, but wasn't", k)
 	}
-
 }

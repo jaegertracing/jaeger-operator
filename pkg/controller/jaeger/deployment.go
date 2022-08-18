@@ -19,10 +19,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrDeploymentRemoved is returned when a deployment existed but has been removed
-	ErrDeploymentRemoved = errors.New("deployment has been removed")
-)
+// ErrDeploymentRemoved is returned when a deployment existed but has been removed
+var ErrDeploymentRemoved = errors.New("deployment has been removed")
 
 func (r *ReconcileJaeger) applyDeployments(ctx context.Context, jaeger v1.Jaeger, desired []appsv1.Deployment) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)

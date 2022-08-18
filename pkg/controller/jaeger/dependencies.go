@@ -21,10 +21,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrDependencyRemoved is returned when a dependency existed but has been removed
-	ErrDependencyRemoved = errors.New("dependency has been removed")
-)
+// ErrDependencyRemoved is returned when a dependency existed but has been removed
+var ErrDependencyRemoved = errors.New("dependency has been removed")
 
 func (r *ReconcileJaeger) handleDependencies(ctx context.Context, str strategy.S) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)

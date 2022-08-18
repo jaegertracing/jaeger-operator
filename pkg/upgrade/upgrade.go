@@ -111,7 +111,6 @@ func ManagedInstance(ctx context.Context, client client.Client, jaeger v1.Jaeger
 	defer span.End()
 
 	currentSemVersion, err := semver.NewVersion(jaeger.Status.Version)
-
 	if err != nil {
 		jaeger.Logger().Error(
 			err,

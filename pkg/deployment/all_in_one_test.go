@@ -450,7 +450,6 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 			}
 		}
 	}
-
 }
 
 func TestAllInOneServiceLinks(t *testing.T) {

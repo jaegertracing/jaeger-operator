@@ -39,7 +39,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 		return nil
 	}
 
-	args := append(a.jaeger.Spec.Agent.Options.ToArgs())
+	args := a.jaeger.Spec.Agent.Options.ToArgs()
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {

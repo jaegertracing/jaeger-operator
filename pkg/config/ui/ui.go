@@ -48,7 +48,7 @@ func (u *UIConfig) Get() *corev1.ConfigMap {
 			Namespace: u.jaeger.Namespace,
 			Labels:    util.Labels(fmt.Sprintf("%s-ui-configuration", u.jaeger.Name), "ui-configuration", *u.jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: u.jaeger.APIVersion,
 					Kind:       u.jaeger.Kind,
 					Name:       u.jaeger.Name,
@@ -77,7 +77,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 					Name: fmt.Sprintf("%s-ui-configuration", jaeger.Name),
 				},
 				Items: []corev1.KeyToPath{
-					corev1.KeyToPath{
+					{
 						Key:  "ui",
 						Path: "ui.json",
 					},

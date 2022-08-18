@@ -200,10 +200,14 @@ func TestNormalizeIndexCleaner(t *testing.T) {
 		underTest v1.JaegerEsIndexCleanerSpec
 		expected  v1.JaegerEsIndexCleanerSpec
 	}{
-		{underTest: v1.JaegerEsIndexCleanerSpec{},
-			expected: v1.JaegerEsIndexCleanerSpec{Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar}},
-		{underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
-			expected: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar}},
+		{
+			underTest: v1.JaegerEsIndexCleanerSpec{},
+			expected:  v1.JaegerEsIndexCleanerSpec{Schedule: "55 23 * * *", NumberOfDays: &days7, Enabled: &trueVar},
+		},
+		{
+			underTest: v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
+			expected:  v1.JaegerEsIndexCleanerSpec{Image: "bla", Schedule: "lol", NumberOfDays: &days55, Enabled: &falseVar},
+		},
 	}
 	for _, test := range tests {
 		normalizeIndexCleaner(&test.underTest, v1.JaegerESStorage)
@@ -216,10 +220,14 @@ func TestNormalizeRollover(t *testing.T) {
 		underTest v1.JaegerEsRolloverSpec
 		expected  v1.JaegerEsRolloverSpec
 	}{
-		{underTest: v1.JaegerEsRolloverSpec{},
-			expected: v1.JaegerEsRolloverSpec{Schedule: "0 0 * * *"}},
-		{underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
-			expected: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"}},
+		{
+			underTest: v1.JaegerEsRolloverSpec{},
+			expected:  v1.JaegerEsRolloverSpec{Schedule: "0 0 * * *"},
+		},
+		{
+			underTest: v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
+			expected:  v1.JaegerEsRolloverSpec{Image: "bla", Schedule: "lol"},
+		},
 	}
 	for _, test := range tests {
 		normalizeRollover(&test.underTest)
@@ -236,31 +244,42 @@ func TestNormalizeSparkDependencies(t *testing.T) {
 	}{
 		{
 			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"})},
-			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
-				Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar}},
+			expected: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "foo"}),
+				Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar},
+			},
 		},
 		{
 			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage},
 			expected:  v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *"}},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
-				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true})},
-			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
+			underTest: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true}),
+			},
+			expected: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.tls": true}),
 			},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
-				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false})},
-			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar},
+			underTest: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false}),
+			},
+			expected: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: &trueVar},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false}),
 			},
 		},
 		{
-			underTest: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
-				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"})},
-			expected: v1.JaegerStorageSpec{Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
+			underTest: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{},
+				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"}),
+			},
+			expected: v1.JaegerStorageSpec{
+				Type: v1.JaegerESStorage, Dependencies: v1.JaegerDependenciesSpec{Schedule: "55 23 * * *", Enabled: nil},
 				Options: v1.NewOptions(map[string]interface{}{"es.server-urls": "local", "es.skip-host-verify": false, "es.tls.ca": "rr"}),
 			},
 		},
@@ -284,15 +303,22 @@ func TestNormalizeElasticsearch(t *testing.T) {
 		underTest v1.ElasticsearchSpec
 		expected  v1.ElasticsearchSpec
 	}{
-		{underTest: v1.ElasticsearchSpec{},
-			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "SingleRedundancy", Resources: defResources},
+		{
+			underTest: v1.ElasticsearchSpec{},
+			expected:  v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "SingleRedundancy", Resources: defResources},
 		},
-		{underTest: v1.ElasticsearchSpec{NodeCount: 1},
-			expected: v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy", Resources: defResources}},
-		{underTest: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"},
-			expected: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy", Resources: defResources}},
-		{underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}},
-			expected: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}}},
+		{
+			underTest: v1.ElasticsearchSpec{NodeCount: 1},
+			expected:  v1.ElasticsearchSpec{NodeCount: 1, RedundancyPolicy: "ZeroRedundancy", Resources: defResources},
+		},
+		{
+			underTest: v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy"},
+			expected:  v1.ElasticsearchSpec{NodeCount: 3, RedundancyPolicy: "FullRedundancy", Resources: defResources},
+		},
+		{
+			underTest: v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}},
+			expected:  v1.ElasticsearchSpec{Image: "bla", NodeCount: 150, RedundancyPolicy: "ZeroRedundancy", Resources: &corev1.ResourceRequirements{}},
+		},
 	}
 	for _, test := range tests {
 		normalizeElasticsearch(&test.underTest)
@@ -315,8 +341,10 @@ func TestNormalizeUI(t *testing.T) {
 		},
 		{
 			j: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})}},
-			expected: &v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
-				UI: v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true, "dependencies": map[string]interface{}{"menuEnabled": false}})}},
+			expected: &v1.JaegerSpec{
+				Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(map[string]interface{}{"es-archive.enabled": "true"})},
+				UI:      v1.JaegerUISpec{Options: v1.NewFreeForm(map[string]interface{}{"archiveEnabled": true, "dependencies": map[string]interface{}{"menuEnabled": false}})},
+			},
 		},
 	}
 	for _, test := range tests {
@@ -494,7 +522,6 @@ func TestUpdateMenuDocURL(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expected, uiOpts["menu"])
-
 }
 
 func TestNoDocWithCustomMenu(t *testing.T) {
@@ -517,7 +544,6 @@ func TestNoDocWithCustomMenu(t *testing.T) {
 	spec := &v1.JaegerSpec{Ingress: v1.JaegerIngressSpec{Security: v1.IngressSecurityOAuthProxy}}
 	enableDocumentationLink(uiOpts, spec)
 	assert.Equal(t, uiOpts, uiOpts)
-
 }
 
 func TestMenuNoLogOutIngressSecurityNone(t *testing.T) {

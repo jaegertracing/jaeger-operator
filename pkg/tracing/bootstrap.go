@@ -17,9 +17,7 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
 
-var (
-	processor tracesdk.SpanProcessor
-)
+var processor tracesdk.SpanProcessor
 
 // Bootstrap prepares a new tracer to be used by the operator
 func Bootstrap(ctx context.Context, namespace string) {
@@ -33,7 +31,7 @@ func Bootstrap(ctx context.Context, namespace string) {
 	}
 }
 
-//SetInstanceID set the computed instance id on the tracing provider
+// SetInstanceID set the computed instance id on the tracing provider
 func SetInstanceID(ctx context.Context, namespace string) {
 	if viper.GetBool("tracing-enabled") {
 		// Rebuild the provider with the same exporter
@@ -58,7 +56,6 @@ func buildSpanProcessor() error {
 	}
 
 	jexporter, err := jaeger.NewRawExporter(endpoint)
-
 	if err != nil {
 		return err
 	}
@@ -68,7 +65,7 @@ func buildSpanProcessor() error {
 
 func buildJaegerExporter(ctx context.Context, namespace string, instanceID string) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "buildJaegerExporter")
+	ctx, span := tracer.Start(ctx, "buildJaegerExporter") // nolint:ineffassign,staticcheck
 	defer span.End()
 	attr := []attribute.KeyValue{
 		semconv.ServiceNameKey.String("jaeger-operator"),

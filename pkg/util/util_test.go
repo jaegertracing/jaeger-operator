@@ -543,8 +543,10 @@ func TestRemoveEmptyVars(t *testing.T) {
 		expected  []corev1.EnvVar
 	}{
 		{},
-		{underTest: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo3"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}},
-			expected: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}}},
+		{
+			underTest: []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo3"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}},
+			expected:  []corev1.EnvVar{{Name: "foo", Value: "bar"}, {Name: "foo2", ValueFrom: &corev1.EnvVarSource{}}},
+		},
 		{underTest: []corev1.EnvVar{{Name: "foo"}}},
 	}
 	for _, test := range tests {
@@ -572,7 +574,6 @@ func TestCreateFromSecret(t *testing.T) {
 }
 
 func TestReplaceArgument(t *testing.T) {
-
 	newValue := "SECRET2"
 	prefix := "--cookie-secret="
 
@@ -627,7 +628,6 @@ func TestReplaceArgument(t *testing.T) {
 		assert.Equal(t, test.count, counter)
 		assert.Equal(t, test.expected, test.input)
 	}
-
 }
 
 func TestArgs(t *testing.T) {
@@ -646,7 +646,6 @@ func TestArgs(t *testing.T) {
 }
 
 func TestFindEnvVars(t *testing.T) {
-
 	myEnvVar := corev1.EnvVar{
 		Name:  "my_env_var",
 		Value: "v1",
@@ -686,7 +685,6 @@ func TestFindEnvVars(t *testing.T) {
 }
 
 func TestIsOTLPEnable(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		options  v1.Options
@@ -718,7 +716,6 @@ func TestIsOTLPEnable(t *testing.T) {
 }
 
 func TestIsOTLPExplcitSet(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		options  v1.Options

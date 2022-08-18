@@ -273,7 +273,7 @@ type JaegerQuerySpec struct {
 	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
-	// The default, if ommited, is true
+	// The default, if omitted, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 
 	// +optional
@@ -381,7 +381,7 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// TracingEnabled if set to false adds the JAEGER_DISABLED environment flag and removes the injected
 	// agent container from the query component to disable tracing requests to the query service.
-	// The default, if ommited, is true
+	// The default, if omitted, is true
 	TracingEnabled *bool `json:"tracingEnabled,omitempty"`
 
 	// +optional
@@ -405,7 +405,6 @@ type AutoScaleSpec struct {
 
 // JaegerCollectorSpec defines the options to be used when deploying the collector
 type JaegerCollectorSpec struct {
-
 	// +optional
 	AutoScaleSpec `json:",inline,omitempty"`
 
