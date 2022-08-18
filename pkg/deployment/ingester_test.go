@@ -573,3 +573,44 @@ func TestIngesterGRPCPlugin(t *testing.T) {
 	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
+
+func TestIngesterContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar,
+		RunAsUser:    &idVar,
+	}
+	jaeger := newIngesterJaeger("my-instance")
+	jaeger.Spec.Ingester.ContainerSecurityContext = &securityContextVar
+
+	i := NewIngester(jaeger)
+	dep := i.Get()
+
+	assert.Equal(t, securityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestIngesterContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar1,
+		RunAsUser:    &idVar1,
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar2,
+		RunAsUser:    &idVar2,
+	}
+	jaeger := newIngesterJaeger("my-instance")
+	jaeger.Spec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Ingester.ContainerSecurityContext = &overrideSecurityContextVar
+
+	i := NewIngester(jaeger)
+	dep := i.Get()
+
+	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}

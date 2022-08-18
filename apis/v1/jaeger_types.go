@@ -220,6 +220,9 @@ type JaegerCommonSpec struct {
 	SecurityContext *v1.PodSecurityContext `json:"securityContext,omitempty"`
 
 	// +optional
+	ContainerSecurityContext *v1.SecurityContext `json:"containerSecurityContext,omitempty"`
+
+	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
 	// +optional

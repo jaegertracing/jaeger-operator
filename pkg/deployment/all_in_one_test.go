@@ -558,6 +558,47 @@ func TestAllInOneGRPCPlugin(t *testing.T) {
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 
+func TestAllInOneContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar,
+		RunAsUser:    &idVar,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.ContainerSecurityContext = &securityContextVar
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, securityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestAllInOneContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar1,
+		RunAsUser:    &idVar1,
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar2,
+		RunAsUser:    &idVar2,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.AllInOne.ContainerSecurityContext = &overrideSecurityContextVar
+
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {
 	envVar := corev1.EnvVar{}
 	for _, v := range vars {

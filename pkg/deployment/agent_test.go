@@ -387,3 +387,46 @@ func TestAgentEmptyEmptyLivenessProbe(t *testing.T) {
 		FailureThreshold:    5,
 	}, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
 }
+
+func TestAgentContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar,
+		RunAsUser:    &idVar,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.Agent.ContainerSecurityContext = &securityContextVar
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, securityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestAgentContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar1,
+		RunAsUser:    &idVar1,
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar2,
+		RunAsUser:    &idVar2,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
+	jaeger.Spec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Agent.ContainerSecurityContext = &overrideSecurityContextVar
+
+	a := NewAgent(jaeger)
+	dep := a.Get()
+
+	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
+}
