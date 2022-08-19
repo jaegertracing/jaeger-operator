@@ -407,17 +407,28 @@ ifeq ($(USE_KIND_CLUSTER),true)
 #	* Some KUTTL versions are not able to start properly a Kind cluster
 #	* The cluster will be removed after running KUTTL (this can be disabled). Sometimes,
 #		the cluster teardown is not done properly and KUTTL can not be run with the --start-kind flag
-# When the Kind cluster is not created by Kuttl, the
-# kindContainers parameter from kuttl-tests.yaml has not effect so, it is needed to load the
-# container images here.
+# When the Kind cluster is not created by Kuttl, the kindContainers parameter
+# from kuttl-tests.yaml has not effect so, it is needed to load the container
+# images here.
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
+# Install metrics-server for HPA
+	$(ECHO)"Installing the metrics-server in the kind cluster"
+	$(VECHO)kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
+	$(VECHO)kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
+# Install the ingress-controller
+	$(ECHO)"Installing the Ingress controller in the kind cluster"
 	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
+# Check the deployments were done properly
+	$(ECHO)"Checking the metrics-server was deployed properly"
+	$(VECHO)kubectl wait --for=condition=available deployment/metrics-server -n kube-system --timeout=5m
+	$(ECHO)"Checking the Ingress controller deployment was done successfully"
+	$(VECHO)kubectl wait --for=condition=available deployment ingress-nginx-controller -n ingress-nginx --timeout=5m
 else
-	$(ECHO)KIND cluster creation disabled. Skipping...
+	$(ECHO)"KIND cluster creation disabled. Skipping..."
 endif
 
 stop-kind:
-	$(ECHO)Stopping the kind cluster
+	$(ECHO)"Stopping the kind cluster"
 	$(VECHO)kind delete cluster
 
 .PHONY: install-git-hooks
