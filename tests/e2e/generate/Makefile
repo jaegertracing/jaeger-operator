@@ -1,4 +1,4 @@
-render-e2e-tests-generate: load-assert-job
+render-e2e-tests-generate: build load-assert-job
 	$(VECHO)JAEGER_VERSION=${JAEGER_VERSION} ./tests/e2e/generate/render.sh
 
 run-e2e-tests-generate:
