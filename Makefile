@@ -37,6 +37,12 @@ KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/downlo
 # Prometheus Operator variables
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml
+# Metrics server variables
+METRICS_SERVER_TAG ?= v0.6.1
+METRICS_SERVER_YAML ?= https://github.com/kubernetes-sigs/metrics-server/releases/download/${METRICS_SERVER_TAG}/components.yaml
+# Ingress controller variables
+INGRESS_CONTROLLER_TAG ?= v1.0.1
+INGRESS_CONTROLLER_YAML ?= https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-${INGRESS_CONTROLLER_TAG}/deploy/static/provider/kind/deploy.yaml
 # Istio binary path and version
 ISTIOCTL="bin/istioctl"
 # Cert manager version to use
@@ -413,11 +419,11 @@ ifeq ($(USE_KIND_CLUSTER),true)
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
 # Install metrics-server for HPA
 	$(ECHO)"Installing the metrics-server in the kind cluster"
-	$(VECHO)kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
+	$(VECHO)kubectl apply -f $(METRICS_SERVER_YAML)
 	$(VECHO)kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
 # Install the ingress-controller
 	$(ECHO)"Installing the Ingress controller in the kind cluster"
-	$(VECHO)kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.1/deploy/static/provider/kind/deploy.yaml
+	$(VECHO)kubectl apply -f $(INGRESS_CONTROLLER_YAML)
 # Check the deployments were done properly
 	$(ECHO)"Checking the metrics-server was deployed properly"
 	$(VECHO)kubectl wait --for=condition=available deployment/metrics-server -n kube-system --timeout=5m
