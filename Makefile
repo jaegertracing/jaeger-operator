@@ -118,16 +118,11 @@ PHONY: lint
 lint:
 	$(ECHO) Linting...
 	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
-	golangci-lint -v run
+	$(VECHO)golangci-lint -v run
 
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
-
-.PHONY: security
-security:
-	$(ECHO) Security...
-	$(VECHO)./bin/gosec -quiet -exclude=G104 ./... 2>/dev/null
 
 .PHONY: build
 build: format
@@ -289,10 +284,10 @@ generate: controller-gen api-docs ## Generate code containing DeepCopy, DeepCopy
 test: unit-tests run-e2e-tests
 
 .PHONY: all
-all: check format lint security build test
+all: check format lint build test
 
 .PHONY: ci
-ci: ensure-generate-is-noop check format lint security build unit-tests
+ci: ensure-generate-is-noop check format lint build unit-tests
 
 ##@ Deployment
 
@@ -438,7 +433,7 @@ tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
 install-tools: operator-sdk
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
+	$(VECHO)go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48.0
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports
