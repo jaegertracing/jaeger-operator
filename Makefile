@@ -437,7 +437,6 @@ install-tools: operator-sdk
 	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
 		golang.org/x/lint/golint \
 		golang.org/x/tools/cmd/goimports
-	$(VECHO)./hack/install/install-gosec.sh
 
 .PHONY: kustomize
 kustomize:
