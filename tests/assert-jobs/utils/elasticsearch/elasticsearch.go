@@ -221,7 +221,7 @@ func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]b
 			Certificates: []tls.Certificate{es.Certificate},
 			RootCAs:      es.RootCAs,
 		}
-		tlsConfig.BuildNameToCertificate()
+
 		transport = &http.Transport{TLSClientConfig: tlsConfig}
 	}
 	client := http.Client{Transport: transport}
