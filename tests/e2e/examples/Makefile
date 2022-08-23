@@ -1,5 +1,5 @@
 render-e2e-tests-examples: load-assert-job load-elasticsarch-image load-elasticsarch-image
-	./tests/e2e/examples/render.sh
+	$(VECHO)./tests/e2e/examples/render.sh
 
-run-e2e-tests-examples: TEST_SUITE_NAME=examples
-run-e2e-tests-examples: run-suite-tests
+run-e2e-tests-examples:
+	$(VECHO)KAFKA_OLM=$(KAFKA_OLM) ./hack/run-e2e-test-suite.sh examples $(USE_KIND_CLUSTER) $(JAEGER_OLM)
