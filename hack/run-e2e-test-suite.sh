@@ -40,6 +40,7 @@ mkdir -p $reports_dir
 rm -f $reports_dir/$test_suite_name.xml
 
 cd $root_dir
+$root_dir/hack/install/install-kuttl.sh
 make render-e2e-tests-$test_suite_name
 
 
