@@ -112,9 +112,9 @@ endif
 all: manager
 
 .PHONY: check
-check:
+check: install-tools
 	$(ECHO) Checking...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh > $(FMT_LOG)
+	$(VECHO)./.ci/format.sh > $(FMT_LOG)
 	$(VECHO)[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 ensure-generate-is-noop: VERSION=$(OPERATOR_VERSION)
@@ -129,12 +129,11 @@ ensure-generate-is-noop: set-image-controller generate bundle
 .PHONY: format
 format:
 	$(ECHO) Formatting code...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh
+	$(VECHO)./.ci/format.sh
 
 PHONY: lint
-lint:
+lint: install-tools
 	$(ECHO) Linting...
-	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
 	$(VECHO)golangci-lint -v run
 
 .PHONY: vet
@@ -169,13 +168,6 @@ unit-tests: envtest
 	@echo Running unit tests...
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
-.PHONY: set-max-map-count
-set-max-map-count:
-	# This is not required in OCP 4.1. The node tuning operator configures the property automatically
-	# when label tuned.openshift.io/elasticsearch=true label is present on the ES pod. The label
-	# is configured by ES operator.
-	$(VECHO)minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
-
 .PHONY: set-node-os-linux
 set-node-os-linux:
 	# Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
@@ -189,7 +181,8 @@ cert-manager: cmctl
 undeploy-cert-manager:
 	kubectl delete --ignore-not-found=true -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 
-cmctl:
+cmctl: $(CMCTL)
+$(CMCTL): $(LOCALBIN)
 	./hack/install/install-cmctl.sh $(CERTMANAGER_VERSION)
 
 .PHONY: es
