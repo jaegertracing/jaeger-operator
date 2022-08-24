@@ -134,7 +134,7 @@ format:
 PHONY: lint
 lint: install-tools
 	$(ECHO) Linting...
-	$(VECHO)golangci-lint -v run
+	$(VECHO)$(LOCALBIN)/golangci-lint -v run
 
 .PHONY: vet
 vet: ## Run go vet against code.
