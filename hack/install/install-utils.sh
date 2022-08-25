@@ -59,7 +59,7 @@ function check_tool() {
     # If the program is there and uses the correct version, do nothing
     if [[ -f "$tool" ]]; then
         if [[ "$($tool $parameter)" =~ .*"$version".* ]]; then
-            echo "$(basename -- $tool) $version is already installed"
+            echo "$(basename -- $tool) $version is installed already"
             exit 0
         fi
     fi
@@ -87,5 +87,4 @@ function download() {
 
     retry "curl -sLo $tool_path $url"
     chmod +x $tool_path
-    export PATH=$PATH:$BIN
 }

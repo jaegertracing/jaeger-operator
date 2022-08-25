@@ -13,7 +13,7 @@ export E2E_TESTS_TIMEOUT ?= 330
 
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: kuttl start-kind load-operator-image set-image-controller build-assert-job
+prepare-e2e-tests: start-kind load-operator-image set-image-controller build-assert-job
 
 .PHONY: set-assert-e2e-img-name
 set-assert-e2e-img-name:

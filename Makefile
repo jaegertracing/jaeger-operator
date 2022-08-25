@@ -43,12 +43,13 @@ METRICS_SERVER_YAML ?= https://github.com/kubernetes-sigs/metrics-server/release
 # Ingress controller variables
 INGRESS_CONTROLLER_TAG ?= v1.0.1
 INGRESS_CONTROLLER_YAML ?= https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-${INGRESS_CONTROLLER_TAG}/deploy/static/provider/kind/deploy.yaml
-# Istio binary path and version
-ISTIOCTL="bin/istioctl"
+## Location to install tool dependencies
+LOCALBIN ?= $(shell pwd)/bin
 # Cert manager version to use
 CERTMANAGER_VERSION ?= 1.6.1
-CMCTL=$(shell pwd)/bin/cmctl
-# Operator SDK version to use
+CMCTL ?= $(LOCALBIN)/cmctl
+# Operator SDK
+OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 OPERATOR_SDK_VERSION ?= 1.23.0
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
@@ -58,7 +59,16 @@ JAEGER_OLM ?= false
 KAFKA_OLM ?= false
 # Is Prometheus Operator installed via OLM?
 PROMETHEUS_OLM ?= false
+# Istio binary path and version
+ISTIOCTL ?= $(LOCALBIN)/istioctl
+# Tools
+CRDOC ?= $(LOCALBIN)/crdoc
+KIND ?= $(LOCALBIN)/kind
+KUSTOMIZE ?= $(LOCALBIN)/kustomize
 
+
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -70,6 +80,7 @@ endif
 LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
+ENVTEST ?= $(LOCALBIN)/setup-envtest
 ENVTEST_K8S_VERSION = 1.24
 # Options for KIND version to use
 export KUBE_VERSION ?= 1.20
@@ -101,9 +112,9 @@ endif
 all: manager
 
 .PHONY: check
-check:
+check: install-tools
 	$(ECHO) Checking...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh > $(FMT_LOG)
+	$(VECHO)./.ci/format.sh > $(FMT_LOG)
 	$(VECHO)[ ! -s "$(FMT_LOG)" ] || (echo "Go fmt, license check, or import ordering failures, run 'make format'" | cat - $(FMT_LOG) && false)
 
 ensure-generate-is-noop: VERSION=$(OPERATOR_VERSION)
@@ -118,13 +129,12 @@ ensure-generate-is-noop: set-image-controller generate bundle
 .PHONY: format
 format:
 	$(ECHO) Formatting code...
-	$(VECHO)GOPATH=${GOPATH} .ci/format.sh
+	$(VECHO)./.ci/format.sh
 
 PHONY: lint
-lint:
+lint: install-tools
 	$(ECHO) Linting...
-	$(VECHO)GOPATH=${GOPATH} ./.ci/lint.sh
-	$(VECHO)golangci-lint -v run
+	$(VECHO)$(LOCALBIN)/golangci-lint -v run
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -158,13 +168,6 @@ unit-tests: envtest
 	@echo Running unit tests...
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
-.PHONY: set-max-map-count
-set-max-map-count:
-	# This is not required in OCP 4.1. The node tuning operator configures the property automatically
-	# when label tuned.openshift.io/elasticsearch=true label is present on the ES pod. The label
-	# is configured by ES operator.
-	$(VECHO)minishift ssh -- 'sudo sysctl -w vm.max_map_count=262144' > /dev/null 2>&1 || true
-
 .PHONY: set-node-os-linux
 set-node-os-linux:
 	# Elasticsearch requires labeled nodes. These labels are by default present in OCP 4.2
@@ -178,7 +181,8 @@ cert-manager: cmctl
 undeploy-cert-manager:
 	kubectl delete --ignore-not-found=true -f https://github.com/jetstack/cert-manager/releases/download/v${CERTMANAGER_VERSION}/cert-manager.yaml
 
-cmctl:
+cmctl: $(CMCTL)
+$(CMCTL): $(LOCALBIN)
 	./hack/install/install-cmctl.sh $(CERTMANAGER_VERSION)
 
 .PHONY: es
@@ -293,7 +297,7 @@ test: unit-tests run-e2e-tests
 all: check format lint build test
 
 .PHONY: ci
-ci: ensure-generate-is-noop check format lint build unit-tests
+ci: install-tools ensure-generate-is-noop check format lint build unit-tests
 
 ##@ Deployment
 
@@ -337,9 +341,10 @@ CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(VECHO)./hack/install/install-controller-gen.sh
 
-ENVTEST = $(shell pwd)/bin/setup-envtest
-envtest: ## Download envtest-setup locally if necessary.
-	$(VECHO) GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+.PHONY: envtest
+envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
+$(ENVTEST): $(LOCALBIN)
+	test -s $(ENVTEST) || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
@@ -399,7 +404,6 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: start-kind
 start-kind: kind
-	echo $(USE_KIND_CLUSTER)
 ifeq ($(USE_KIND_CLUSTER),true)
 	$(ECHO) Starting KIND cluster...
 # Instead of letting KUTTL create the Kind cluster (using the CLI or in the kuttl-tests.yaml
@@ -450,33 +454,26 @@ tools: kustomize controller-gen operator-sdk
 
 .PHONY: install-tools
 install-tools: operator-sdk
-	$(VECHO)go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48.0
-	$(VECHO)${GO_FLAGS} ./.ci/vgot.sh \
-		golang.org/x/lint/golint \
-		golang.org/x/tools/cmd/goimports
+	$(VECHO)./hack/install/install-golangci-lint.sh
+	$(VECHO)./hack/install/install-goimports.sh
 
 .PHONY: kustomize
-kustomize:
+kustomize: $(KUSTOMIZE)
+$(KUSTOMIZE): $(LOCALBIN)
 	./hack/install/install-kustomize.sh
-	$(eval KUSTOMIZE=$(shell echo ${PWD}/bin/kustomize))
-
-.PHONY: kuttl
-kuttl:
-	./hack/install/install-kuttl.sh
-	$(eval KUTTL=$(shell echo ${PWD}/bin/kubectl-kuttl))
 
 .PHONY: kind
-kind:
+kind: $(KIND)
+$(KIND): $(LOCALBIN)
 	./hack/install/install-kind.sh
-	$(eval KIND=$(shell echo ${PWD}/bin/kind))
 
 .PHONY: prepare-release
 prepare-release:
 	$(VECHO)./.ci/prepare-release.sh
 
 scorecard-tests: operator-sdk
-	echo "Operator sdk is " $(OPERATOR_SDK)
-	$(OPERATOR_SDK) scorecard bundle -w 600s || (echo "scorecard test failed" && exit 1)
+	echo "Operator sdk is $(OPERATOR_SDK)"
+	$(OPERATOR_SDK) scorecard bundle -w 10m || (echo "scorecard test failed" && exit 1)
 
 scorecard-tests-local: kind
 	$(VECHO)$(KIND) create cluster --config $(KIND_CONFIG) 2>&1 | grep -v "already exists" || true
@@ -485,18 +482,12 @@ scorecard-tests-local: kind
 	$(VECHO)kubectl wait --timeout=5m --for=condition=available deployment/coredns -n kube-system
 	$(VECHO)$(MAKE) scorecard-tests
 
-OPERATOR_SDK = $(shell pwd)/bin/operator-sdk
 .PHONY: operator-sdk
-operator-sdk:
-	@{ \
-	set -e ;\
-	[ -d bin ] || mkdir bin ;\
-	curl -L -o $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`;\
-	chmod +x $(OPERATOR_SDK) ;\
-	}
+operator-sdk: $(OPERATOR_SDK)
+$(OPERATOR_SDK): $(LOCALBIN)
+	test -s $(OPERATOR_SDK) || curl -sLo $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk_`go env GOOS`_`go env GOARCH`
+	@chmod +x $(OPERATOR_SDK)
 
-BIN_LOCAL = $(shell pwd)/bin
-CRDOC = $(BIN_LOCAL)/crdoc
 api-docs: crdoc kustomize
 	@{ \
 	set -e ;\
@@ -505,9 +496,8 @@ api-docs: crdoc kustomize
 	$(CRDOC) --resources $$TMP_DIR/crd-output.yaml --output docs/api.md ;\
 	}
 
-
-# Find or download crdoc
-crdoc:
-ifeq (, $(shell which $(CRDOC)))
-	@GOBIN=$(BIN_LOCAL) go install fybrik.io/crdoc@v0.5.2
-endif
+.PHONY: crdoc
+crdoc: $(CRDOC)
+$(CRDOC): $(LOCALBIN)
+	test -s $(CRDOC) || GOBIN=$(LOCALBIN) go install fybrik.io/crdoc@v0.5.2
+	@chmod +x $(CRDOC)
