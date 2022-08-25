@@ -472,7 +472,7 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 
 		dcl.ServerResourcesForGroupVersionFunc = func(requestedApiVersion string) (apiGroupList *metav1.APIResourceList, err error) {
 			if requestedApiVersion == apiGroup {
-				apiResourceList := &metav1.APIResourceList{GroupVersion: apiGroup, APIResources: []metav1.APIResource{{Name: "autoscaling"}}}
+				apiResourceList := &metav1.APIResourceList{GroupVersion: apiGroup, APIResources: []metav1.APIResource{{Name: "horizontalpodautoscalers"}}}
 				return apiResourceList, nil
 			}
 			return &metav1.APIResourceList{}, nil

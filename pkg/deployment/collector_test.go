@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -503,16 +504,17 @@ func TestCollectorAutoscalersOnByDefault(t *testing.T) {
 
 	// test
 	a := c.Autoscalers()
+	hpa := a[0].(*autoscalingv2.HorizontalPodAutoscaler)
 
 	// verify
 	assert.Len(t, a, 1)
-	assert.Len(t, a[0].Spec.Metrics, 2)
+	assert.Len(t, hpa.Spec.Metrics, 2)
 
-	assert.Contains(t, []corev1.ResourceName{a[0].Spec.Metrics[0].Resource.Name, a[0].Spec.Metrics[1].Resource.Name}, corev1.ResourceCPU)
-	assert.Contains(t, []corev1.ResourceName{a[0].Spec.Metrics[0].Resource.Name, a[0].Spec.Metrics[1].Resource.Name}, corev1.ResourceMemory)
+	assert.Contains(t, []corev1.ResourceName{hpa.Spec.Metrics[0].Resource.Name, hpa.Spec.Metrics[1].Resource.Name}, corev1.ResourceCPU)
+	assert.Contains(t, []corev1.ResourceName{hpa.Spec.Metrics[0].Resource.Name, hpa.Spec.Metrics[1].Resource.Name}, corev1.ResourceMemory)
 
-	assert.Equal(t, int32(90), *a[0].Spec.Metrics[0].Resource.Target.AverageUtilization)
-	assert.Equal(t, int32(90), *a[0].Spec.Metrics[1].Resource.Target.AverageUtilization)
+	assert.Equal(t, int32(90), *hpa.Spec.Metrics[0].Resource.Target.AverageUtilization)
+	assert.Equal(t, int32(90), *hpa.Spec.Metrics[1].Resource.Target.AverageUtilization)
 }
 
 func TestCollectorAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
@@ -555,10 +557,11 @@ func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 
 	// test
 	a := c.Autoscalers()
+	hpa := a[0].(*autoscalingv2.HorizontalPodAutoscaler)
 
 	// verify
 	assert.Len(t, a, 1)
-	assert.Equal(t, maxReplicas, a[0].Spec.MaxReplicas)
+	assert.Equal(t, maxReplicas, hpa.Spec.MaxReplicas)
 }
 
 func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {

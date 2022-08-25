@@ -22,7 +22,6 @@ type HorizontalPodAutoscaler struct {
 
 // ForHorizontalPodAutoscalers builds a new HorizontalPodAutoscaler inventory based on the existing and desired states
 func ForHorizontalPodAutoscalers(existing []runtime.Object, desired []runtime.Object) HorizontalPodAutoscaler {
-
 	update := []runtime.Object{}
 	mcreate := hpaMap(desired)
 	mdelete := hpaMap(existing)
@@ -99,7 +98,6 @@ func hpaMap(hpas []runtime.Object) map[string]runtime.Object {
 			hpa := d.(*autoscalingv2.HorizontalPodAutoscaler)
 			m[fmt.Sprintf("%s.%s", hpa.Namespace, hpa.Name)] = hpa
 		}
-
 	}
 	return m
 }

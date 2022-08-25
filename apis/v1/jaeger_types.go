@@ -30,10 +30,10 @@ const (
 	FlagAutoscalingVersion = "autoscaling-version"
 
 	// FlagAutoscalingVersionV2 represents the v2 version of the Kubernetes Autoscaling API, available as of 1.23
-	FlagAutoscalingVersionV2 = "v2"
+	FlagAutoscalingVersionV2 = "autoscaling/v2"
 
 	// FlagAutoscalingVersionV2Beta2 represents the v2beta2 version of the Kubernetes Autoscaling API, no longer available as of 1.26
-	FlagAutoscalingVersionV2Beta2 = "v2beta2"
+	FlagAutoscalingVersionV2Beta2 = "autoscaling/v2beta2"
 
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"
