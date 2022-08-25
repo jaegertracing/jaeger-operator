@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
-	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -29,7 +29,7 @@ func NewIngester(jaeger *v1.Jaeger) *Ingester {
 }
 
 // Autoscalers returns a list of HPAs based on this ingester
-func (i *Ingester) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+func (i *Ingester) Autoscalers() []runtime.Object {
 	return autoscalers(i)
 }
 

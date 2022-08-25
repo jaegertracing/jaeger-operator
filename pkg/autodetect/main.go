@@ -100,6 +100,7 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
 		b.detectCronjobsVersion(ctx)
+		b.detectAutoscalingVersion(ctx)
 	}
 
 	b.detectClusterRoles(ctx)
@@ -128,6 +129,31 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 
 	log.Log.V(2).Info(
 		fmt.Sprintf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+	)
+}
+
+func (b *Background) detectAutoscalingVersion(ctx context.Context) {
+	apiGroupVersions := []string{"v2", "v2beta2"}
+	for _, apiGroupVersion := range apiGroupVersions {
+		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
+		if err != nil {
+			log.Log.Error(
+				err,
+				fmt.Sprintf("Error getting %s api list", apiGroupVersion),
+			)
+			continue
+		}
+		for _, api := range groupAPIList.APIResources {
+			if api.Name == "autoscaling" {
+				viper.Set(v1.FlagAutoscalingVersion, apiGroupVersion)
+				log.Log.V(-1).Info(fmt.Sprintf("Found the autoscaling api in %s", apiGroupVersion))
+				return
+			}
+		}
+	}
+
+	log.Log.V(2).Info(
+		fmt.Sprintf("Did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
 	)
 }
 

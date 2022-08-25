@@ -20,11 +20,20 @@ const (
 	// FlagCronJobsVersion represents the version of the Kubernetes CronJob API
 	FlagCronJobsVersion = "cronjobs-version"
 
-	// FlagCronJobsVersionBatchV1 represents the batch/v1 version of the kubernetes CronJob API, available as of 1.21
+	// FlagCronJobsVersionBatchV1 represents the batch/v1 version of the Kubernetes CronJob API, available as of 1.21
 	FlagCronJobsVersionBatchV1 = "batch/v1"
 
-	// FlagCronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the kubernetes CronJob API, no longer available as of 1.25
+	// FlagCronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the Kubernetes CronJob API, no longer available as of 1.25
 	FlagCronJobsVersionBatchV1Beta1 = "batch/v1beta1"
+
+	// FlagAutoscalingVersion represents the version of the Kubernetes Autoscaling API
+	FlagAutoscalingVersion = "autoscaling-version"
+
+	// FlagAutoscalingVersionV2 represents the v2 version of the Kubernetes Autoscaling API, available as of 1.23
+	FlagAutoscalingVersionV2 = "v2"
+
+	// FlagAutoscalingVersionV2Beta2 represents the v2beta2 version of the Kubernetes Autoscaling API, no longer available as of 1.26
+	FlagAutoscalingVersionV2Beta2 = "v2beta2"
 
 	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
 	FlagPlatformKubernetes = "kubernetes"

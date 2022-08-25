@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
-	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -234,7 +234,7 @@ func (c *Collector) Services() []*corev1.Service {
 }
 
 // Autoscalers returns a list of HPAs based on this collector
-func (c *Collector) Autoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+func (c *Collector) Autoscalers() []runtime.Object {
 	return autoscalers(c)
 }
 
