@@ -17,5 +17,3 @@ url="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F
 tar_file="/tmp/kustomize.tar.gz"
 retry "curl -sLo $tar_file $url"
 tar -xzf $tar_file -C $BIN
-
-export PATH=$PATH:$BIN

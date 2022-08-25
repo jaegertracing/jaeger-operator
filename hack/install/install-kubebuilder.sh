@@ -19,6 +19,4 @@ retry "curl -sLo $BIN/kubebuilder $url"
 
 chmod +x $BIN/kubebuilder
 
-export PATH=$PATH:$BIN
-
 $current_dir/install-etcd.sh

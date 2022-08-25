@@ -19,5 +19,3 @@ tar -xzf $tar_file -C /tmp/
 
 cp /tmp/$PROGRAM $BIN/
 chmod +x $BIN/$PROGRAM
-
-export PATH=$PATH:$BIN

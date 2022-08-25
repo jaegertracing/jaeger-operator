@@ -22,7 +22,3 @@ rm -f /tmp/etcd-v${VERSION}-linux-amd64.tar.gz
 
 mv /tmp/etcd-download-test/etcd $BIN
 mv /tmp/etcd-download-test/etcdctl $BIN
-
-
-
-# export PATH=$PATH:$BIN
