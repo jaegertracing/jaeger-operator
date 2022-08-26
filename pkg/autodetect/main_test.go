@@ -485,6 +485,25 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 		assert.Equal(t, apiGroup, viper.GetString(v1.FlagAutoscalingVersion))
 		fmt.Printf("Test finished on [%s]\n", apiGroup)
 	}
+
+	// Check what happens when there ServerResourcesForGroupVersion returns error
+	dcl := &fakeDiscoveryClient{}
+	cl := fake.NewFakeClient() // nolint:staticcheck
+	b := WithClients(cl, dcl, cl)
+	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
+		return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
+			Name:     v1.FlagAutoscalingVersionV2,
+			Versions: []metav1.GroupVersionForDiscovery{{Version: v1.FlagAutoscalingVersionV2}},
+		}}}, nil
+	}
+
+	dcl.ServerResourcesForGroupVersionFunc = func(requestedApiVersion string) (apiGroupList *metav1.APIResourceList, err error) {
+		return &metav1.APIResourceList{}, fmt.Errorf("Fake error")
+	}
+
+	// test
+	b.autoDetectCapabilities()
+
 }
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
