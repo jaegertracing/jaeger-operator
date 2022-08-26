@@ -503,7 +503,6 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 
 	// test
 	b.autoDetectCapabilities()
-
 }
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
