@@ -205,7 +205,7 @@ func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
-//TODO: Remove this test when ingress.secretName is removed from the spec
+// TODO: Remove this test when ingress.secretName is removed from the spec
 func TestQueryIngressDeprecatedSecretName(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressDeprecatedSecretName"})
 
@@ -217,14 +217,14 @@ func TestQueryIngressDeprecatedSecretName(t *testing.T) {
 	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
 }
 
-//TODO: Remove this test when ingress.secretName is removed from the spec
+// TODO: Remove this test when ingress.secretName is removed from the spec
 func TestQueryIngressTLSOverridesDeprecatedSecretName(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSOverridesDeprecatedSecretName"})
 
 	jaeger.Spec.Ingress.SecretName = "test-secret-secret-name"
 
 	jaeger.Spec.Ingress.TLS = []v1.JaegerIngressTLSSpec{
-		v1.JaegerIngressTLSSpec{
+		{
 			SecretName: "test-secret-tls",
 		},
 	}
@@ -240,7 +240,7 @@ func TestQueryIngressTLSSecret(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSSecret"})
 
 	jaeger.Spec.Ingress.TLS = []v1.JaegerIngressTLSSpec{
-		v1.JaegerIngressTLSSpec{
+		{
 			SecretName: "test-secret",
 		},
 	}
@@ -266,17 +266,16 @@ func TestQueryIngressClass(t *testing.T) {
 	assert.NotNil(t, dep.Spec.IngressClassName)
 	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
 	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
-
 }
 
 func TestQueryIngressTLSHosts(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSHosts"})
 
 	jaeger.Spec.Ingress.TLS = []v1.JaegerIngressTLSSpec{
-		v1.JaegerIngressTLSSpec{
+		{
 			Hosts: []string{"test-host-1"},
 		},
-		v1.JaegerIngressTLSSpec{
+		{
 			Hosts: []string{"test-host-2", "test-host-3"},
 		},
 	}

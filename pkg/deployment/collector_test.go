@@ -637,7 +637,6 @@ func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestCollectorServiceLinks(t *testing.T) {
@@ -746,29 +745,43 @@ func TestCollectorGRPCPlugin(t *testing.T) {
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 
-func hasVolume(name string, volumes []corev1.Volume) bool {
-	for _, v := range volumes {
-		if v.Name == name {
-			return true
-		}
+func TestCollectorContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar,
+		RunAsUser:    &idVar,
 	}
-	return false
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Collector.ContainerSecurityContext = &securityContextVar
+
+	c := NewCollector(jaeger)
+	dep := c.Get()
+
+	assert.Equal(t, securityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
 }
 
-func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
-	for _, v := range volumeMounts {
-		if v.Name == name {
-			return true
-		}
+func TestCollectorContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar1,
+		RunAsUser:    &idVar1,
 	}
-	return false
-}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot: &trueVar,
+		RunAsGroup:   &idVar2,
+		RunAsUser:    &idVar2,
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Collector.ContainerSecurityContext = &overrideSecurityContextVar
 
-func hasArgument(arg string, args []string) bool {
-	for _, v := range args {
-		if v == arg {
-			return true
-		}
-	}
-	return false
+	c := NewCollector(jaeger)
+	dep := c.Get()
+
+	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
 }

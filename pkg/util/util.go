@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,6 +75,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var affinity *corev1.Affinity
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
+	var containerSecurityContext *corev1.SecurityContext
 	var serviceAccount string
 	var imagePullSecrets []corev1.LocalObjectReference
 	var imagePullPolicy corev1.PullPolicy
@@ -111,13 +112,15 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			securityContext = commonSpec.SecurityContext
 		}
 
+		if containerSecurityContext == nil {
+			containerSecurityContext = commonSpec.ContainerSecurityContext
+		}
+
 		if serviceAccount == "" {
 			serviceAccount = commonSpec.ServiceAccount
 		}
 
-		for _, ips := range commonSpec.ImagePullSecrets {
-			imagePullSecrets = append(imagePullSecrets, ips)
-		}
+		imagePullSecrets = append(imagePullSecrets, commonSpec.ImagePullSecrets...)
 
 		if imagePullPolicy == corev1.PullPolicy("") {
 			imagePullPolicy = commonSpec.ImagePullPolicy
@@ -125,23 +128,23 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:      annotations,
-		Labels:           labels,
-		VolumeMounts:     RemoveDuplicatedVolumeMounts(volumeMounts),
-		Volumes:          RemoveDuplicatedVolumes(volumes),
-		ImagePullSecrets: RemoveDuplicatedImagePullSecrets(imagePullSecrets),
-		ImagePullPolicy:  imagePullPolicy,
-		Resources:        *resources,
-		Affinity:         affinity,
-		Tolerations:      tolerations,
-		SecurityContext:  securityContext,
-		ServiceAccount:   serviceAccount,
+		Annotations:              annotations,
+		Labels:                   labels,
+		VolumeMounts:             RemoveDuplicatedVolumeMounts(volumeMounts),
+		Volumes:                  RemoveDuplicatedVolumes(volumes),
+		ImagePullSecrets:         RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:          imagePullPolicy,
+		Resources:                *resources,
+		Affinity:                 affinity,
+		Tolerations:              tolerations,
+		SecurityContext:          securityContext,
+		ContainerSecurityContext: containerSecurityContext,
+		ServiceAccount:           serviceAccount,
 	}
 }
 
 // MergeResources returns a merged version of two resource requirements
 func MergeResources(resources *corev1.ResourceRequirements, res corev1.ResourceRequirements) {
-
 	for k, v := range res.Limits {
 		if _, ok := resources.Limits[k]; !ok {
 			if resources.Limits == nil {
@@ -320,7 +323,6 @@ func GenerateProxySecret() (string, error) {
 	}
 	base64Secret := base64.StdEncoding.EncodeToString(randString)
 	return base64Secret, nil
-
 }
 
 // FindEnvVar return the EnvVar with given name or nil if not found
@@ -356,8 +358,11 @@ func AllArgs(optionsList ...v1.Options) []string {
 }
 
 // CloseFile closes a file and logs if there was an error
-func CloseFile(f *os.File, log *logrus.Logger) {
+func CloseFile(f *os.File, log *logr.Logger) {
 	if err := f.Close(); err != nil {
-		log.Errorf("it was not possible to close the file %s: %s", f.Name(), err)
+		log.Error(
+			err,
+			"it was not possible to close the file %s", f.Name(),
+		)
 	}
 }

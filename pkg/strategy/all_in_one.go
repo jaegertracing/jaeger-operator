@@ -24,11 +24,11 @@ import (
 
 func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "newAllInOneStrategy")
+	ctx, span := tracer.Start(ctx, "newAllInOneStrategy") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	c := S{typ: v1.DeploymentStrategyAllInOne}
-	jaeger.Logger().Debug("Creating all-in-one deployment")
+	jaeger.Logger().V(-1).Info("Creating all-in-one deployment")
 
 	dep := deployment.NewAllInOne(jaeger)
 
@@ -91,7 +91,10 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			c.cronJobs = append(c.cronJobs, cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"Skipping spark dependencies job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 
@@ -99,7 +102,10 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			c.cronJobs = append(c.cronJobs, cronjob.CreateEsIndexCleaner(jaeger))
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"Skipping Elasticsearch index cleaner job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 

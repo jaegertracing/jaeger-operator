@@ -50,7 +50,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			Labels:      util.Labels(GetNameForQueryService(jaeger), "service-query", *jaeger),
 			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,

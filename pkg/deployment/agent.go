@@ -32,11 +32,14 @@ func NewAgent(jaeger *v1.Jaeger) *Agent {
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
 	if !strings.EqualFold(a.jaeger.Spec.Agent.Strategy, "daemonset") {
-		a.jaeger.Logger().WithField("strategy", a.jaeger.Spec.Agent.Strategy).Debug("skipping agent daemonset")
+		a.jaeger.Logger().V(-1).Info(
+			"skipping agent daemonset",
+			"strategy", a.jaeger.Spec.Agent.Strategy,
+		)
 		return nil
 	}
 
-	args := append(a.jaeger.Spec.Agent.Options.ToArgs())
+	args := a.jaeger.Spec.Agent.Options.ToArgs()
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
@@ -188,6 +191,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Resources:       commonSpec.Resources,
 						VolumeMounts:    commonSpec.VolumeMounts,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					DNSPolicy:          dnsPolicy,
 					HostNetwork:        hostNetwork,

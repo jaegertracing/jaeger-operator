@@ -14,12 +14,12 @@ type Values map[string]interface{}
 func (v *Values) DeepCopy() *Values {
 	out := make(Values, len(*v))
 	for key, val := range *v {
-		switch val.(type) {
+		switch val := val.(type) {
 		case string:
 			out[key] = val
 
 		case []string:
-			out[key] = append([]string(nil), val.([]string)...)
+			out[key] = append([]string(nil), val...)
 		}
 	}
 	return &out
@@ -132,11 +132,11 @@ func (o *Options) ToArgs() []string {
 	if len(o.opts) > 0 {
 		args := make([]string, 0, len(o.opts))
 		for k, v := range o.opts {
-			switch v.(type) {
+			switch v := v.(type) {
 			case string:
 				args = append(args, fmt.Sprintf("--%s=%v", k, v))
 			case []string:
-				for _, vv := range v.([]string) {
+				for _, vv := range v {
 					args = append(args, fmt.Sprintf("--%s=%v", k, vv))
 				}
 			}
@@ -157,9 +157,9 @@ func (o *Options) Map() map[string]interface{} {
 func (o *Options) StringMap() map[string]string {
 	smap := make(map[string]string)
 	for k, v := range o.opts {
-		switch v.(type) {
+		switch v := v.(type) {
 		case string:
-			smap[k] = v.(string)
+			smap[k] = v
 		}
 	}
 	return smap

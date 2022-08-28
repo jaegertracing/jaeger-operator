@@ -250,9 +250,7 @@ func (s S) All() []runtime.Object {
 		ret = append(ret, o.DeepCopy())
 	}
 
-	for _, o := range s.cronJobs {
-		ret = append(ret, o)
-	}
+	ret = append(ret, s.cronJobs...)
 
 	for _, o := range s.elasticsearches {
 		ret = append(ret, o.DeepCopy())

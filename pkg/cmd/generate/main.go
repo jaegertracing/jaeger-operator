@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_json "k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -49,7 +51,7 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer util.CloseFile(f, logrus.StandardLogger())
+	defer util.CloseFile(f, &log.Log)
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
@@ -61,19 +63,35 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 }
 
 func generate(_ *cobra.Command, _ []string) error {
-	level, err := log.ParseLevel(viper.GetString("log-level"))
-	if err != nil {
-		log.SetLevel(log.InfoLevel)
-	} else {
-		log.SetLevel(level)
+	var loggingLevel zapcore.Level
+	switch strings.ToLower(viper.GetString("log-level")) {
+	case "panic":
+		loggingLevel = zapcore.PanicLevel
+	case "fatal":
+		loggingLevel = zapcore.FatalLevel
+	case "error":
+		loggingLevel = zapcore.ErrorLevel
+	case "warn", "warning":
+		loggingLevel = zapcore.WarnLevel
+	case "info":
+		loggingLevel = zapcore.InfoLevel
+	case "debug":
+		loggingLevel = zapcore.DebugLevel
 	}
+
+	opts := zap.Options{
+		Development: true,
+		Level:       loggingLevel,
+	}
+
+	log.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	input := viper.GetString("cr")
 	if input == "/dev/stdin" {
 		// Reading from stdin by default is neat when running as a
 		// container instead of a binary, but is confusing when no
 		// input is sent and the program just hangs
-		log.Info("Reading Jaeger CRD from standard input (use --cr <filename> to override)")
+		log.Log.Info("Reading Jaeger CRD from standard input (use --cr <filename> to override)")
 	}
 
 	spec, err := createSpecFromYAML(input)
@@ -85,12 +103,12 @@ func generate(_ *cobra.Command, _ []string) error {
 
 	outputName := viper.GetString("output")
 	pathToFile := filepath.Clean(outputName)
-	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	out, err := os.OpenFile(pathToFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
 
-	defer util.CloseFile(out, logrus.StandardLogger())
+	defer util.CloseFile(out, &log.Log)
 
 	encoder := k8s_json.NewYAMLSerializer(k8s_json.DefaultMetaFactory, nil, nil)
 	for _, obj := range s.All() {
@@ -106,7 +124,7 @@ func generate(_ *cobra.Command, _ []string) error {
 
 		fmt.Fprintln(out, "---")
 		if err := encoder.Encode(obj, out); err != nil {
-			log.Fatal(err)
+			log.Log.V(3).Info(fmt.Sprintf("Fatal error %s", err))
 		}
 	}
 

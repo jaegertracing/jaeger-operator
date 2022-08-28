@@ -35,16 +35,16 @@ func NewAllInOne(jaeger *v1.Jaeger) *AllInOne {
 
 // Get returns a pod for the current all-in-one configuration
 func (a *AllInOne) Get() *appsv1.Deployment {
-	a.jaeger.Logger().Debug("Assembling an all-in-one deployment")
+	a.jaeger.Logger().V(-1).Info("Assembling an all-in-one deployment")
 	trueVar := true
 	falseVar := false
 
-	args := append(a.jaeger.Spec.AllInOne.Options.ToArgs())
+	args := a.jaeger.Spec.AllInOne.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 14269)
 
 	jaegerDisabled := false
-	if a.jaeger.Spec.AllInOne.TracingEnabled != nil && *a.jaeger.Spec.AllInOne.TracingEnabled == false {
+	if a.jaeger.Spec.AllInOne.TracingEnabled != nil && !*a.jaeger.Spec.AllInOne.TracingEnabled {
 		jaegerDisabled = true
 	}
 
@@ -244,6 +244,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),
@@ -261,7 +262,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 // Services returns a list of services to be deployed along with the all-in-one deployment
 func (a *AllInOne) Services() []*corev1.Service {
 	// merge defined labels with default labels
-	spec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, v1.JaegerCommonSpec{Labels: a.labels()}})
+	spec := util.Merge([]v1.JaegerCommonSpec{a.jaeger.Spec.AllInOne.JaegerCommonSpec, a.jaeger.Spec.JaegerCommonSpec, {Labels: a.labels()}})
 	labels := spec.Labels
 
 	return append(service.NewCollectorServices(a.jaeger, labels),

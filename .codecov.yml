@@ -1,3 +1,10 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        # this allows a 0.1% drop from the previous base commit coverage
+        threshold: 0.1%
 ignore:
   - "apis/v1/zz_generated.deepcopy.go"
   - "apis/v1/zz_generated.defaults.go"

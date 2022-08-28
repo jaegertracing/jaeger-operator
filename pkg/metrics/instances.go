@@ -14,13 +14,15 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
-const metricPrefix = "jaeger_operator_instances"
-const agentStrategiesMetric = "agent_strategies"
-const storageMetric = "storage_types"
-const strategiesMetric = "strategies"
-const autoprovisioningMetric = "autoprovisioning"
-const managedMetric = "managed"
-const managedByLabel = "app.kubernetes.io/managed-by"
+const (
+	metricPrefix           = "jaeger_operator_instances"
+	agentStrategiesMetric  = "agent_strategies"
+	storageMetric          = "storage_types"
+	strategiesMetric       = "strategies"
+	autoprovisioningMetric = "autoprovisioning"
+	managedMetric          = "managed"
+	managedByLabel         = "app.kubernetes.io/managed-by"
+)
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
@@ -84,7 +86,7 @@ func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn 
 
 func (i *instancesMetric) Setup(ctx context.Context) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "setup-jaeger-instances-metrics")
+	ctx, span := tracer.Start(ctx, "setup-jaeger-instances-metrics") // nolint:ineffassign,staticcheck
 	defer span.End()
 	meter := global.Meter(meterName)
 	batch := meter.NewBatchObserver(i.callback)
@@ -95,7 +97,6 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 		func(jaeger v1.Jaeger) string {
 			return strings.ToLower(string(jaeger.Spec.Agent.Strategy))
 		})
-
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -61,20 +61,19 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 	)
 	defer span.End()
 
-	logger := log.WithField("namespace", req.Namespace)
-	logger.Debug("verify deployment")
+	logger := log.Log.WithValues("namespace", req.Namespace)
+	logger.V(-1).Info("verify deployment")
 
 	dep := &appsv1.Deployment{}
 	err := d.decoder.Decode(req, dep)
 	if err != nil {
-		logger.WithError(err).Error("failed to decode deployment")
+		logger.Error(err, "failed to decode deployment")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
 	if dep.Labels["app"] == "jaeger" && dep.Labels["app.kubernetes.io/component"] != "query" {
 		// Don't touch jaeger deployments
 		return admission.Allowed("is jaeger deployment, we do not touch it")
-
 	}
 
 	ns := &corev1.Namespace{}
@@ -82,7 +81,7 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 	// we shouldn't fail if the namespace object can't be obtained
 	if err != nil {
 		msg := "failed to get the namespace for the deployment, skipping injection based on namespace annotation"
-		logger.WithError(err).Debug(msg)
+		logger.Error(err, msg)
 		span.AddEvent(msg, trace.WithAttributes(attribute.String("error", err.Error())))
 	}
 
@@ -94,21 +93,21 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 	}
 
 	if err := d.client.List(ctx, jaegers, opts...); err != nil {
-		logger.WithError(err).Error("failed to get the available Jaeger pods")
+		logger.Error(err, "failed to get the available Jaeger pods")
 		return admission.Errored(http.StatusInternalServerError, tracing.HandleError(err, span))
 	}
 
 	if inject.Needed(dep, ns) {
 		jaeger := inject.Select(dep, ns, jaegers)
 		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-			logger := logger.WithFields(log.Fields{
-				"jaeger":           jaeger.Name,
-				"jaeger-namespace": jaeger.Namespace,
-			})
+			logger := logger.WithValues(
+				"jaeger", jaeger.Name,
+				"jaeger-namespace", jaeger.Namespace,
+			)
 			if jaeger.Namespace != dep.Namespace {
 				if err := reconcileConfigMaps(ctx, d.client, jaeger, dep); err != nil {
 					const msg = "failed to reconcile config maps for the namespace"
-					logger.WithError(err).Error(msg)
+					logger.Error(err, msg)
 					span.AddEvent(msg)
 				}
 			}
@@ -132,7 +131,7 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 
 		const msg = "no suitable Jaeger instances found to inject a sidecar"
 		span.AddEvent(msg)
-		logger.Debug(msg)
+		logger.V(-1).Info(msg)
 		return admission.Allowed(msg)
 	}
 
@@ -149,7 +148,6 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 
 			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeploy)
 		}
-
 	}
 	return admission.Allowed("no action needed")
 }

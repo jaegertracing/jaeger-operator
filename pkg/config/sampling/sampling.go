@@ -44,7 +44,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 		return nil
 	}
 
-	u.jaeger.Logger().Debug("Assembling the Sampling configmap")
+	u.jaeger.Logger().V(-1).Info("Assembling the Sampling configmap")
 	trueVar := true
 
 	data := map[string]string{
@@ -61,7 +61,7 @@ func (u *Config) Get() *corev1.ConfigMap {
 			Namespace: u.jaeger.Namespace,
 			Labels:    util.Labels(fmt.Sprintf("%s-sampling-configuration", u.jaeger.Name), "sampling-configuration", *u.jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: u.jaeger.APIVersion,
 					Kind:       u.jaeger.Kind,
 					Name:       u.jaeger.Name,
@@ -87,7 +87,7 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
 	}
 
 	if _, exists := options.Map()["sampling.strategies-file"]; exists {
-		jaeger.Logger().Warn("Sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
+		jaeger.Logger().V(1).Info("sampling strategy file is already passed as an option to collector. Will not be using default sampling strategy")
 		return true
 	}
 
@@ -97,7 +97,6 @@ func CheckForSamplingConfigFile(jaeger *v1.Jaeger) bool {
 // Update will modify the supplied common spec and options to include
 // support for the Sampling configmap.
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]string) {
-
 	if CheckForSamplingConfigFile(jaeger) {
 		return
 	}
@@ -110,7 +109,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec, options *[]strin
 					Name: fmt.Sprintf("%s-sampling-configuration", jaeger.Name),
 				},
 				Items: []corev1.KeyToPath{
-					corev1.KeyToPath{
+					{
 						Key:  "sampling",
 						Path: "sampling.json",
 					},

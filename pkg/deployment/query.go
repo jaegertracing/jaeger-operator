@@ -31,12 +31,12 @@ func NewQuery(jaeger *v1.Jaeger) *Query {
 
 // Get returns a deployment specification for the current instance
 func (q *Query) Get() *appsv1.Deployment {
-	q.jaeger.Logger().Debug("Assembling a query deployment")
+	q.jaeger.Logger().V(-1).Info("Assembling a query deployment")
 	labels := q.labels()
 	trueVar := true
 	falseVar := false
 
-	args := append(q.jaeger.Spec.Query.Options.ToArgs())
+	args := q.jaeger.Spec.Query.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 16687)
 
@@ -50,7 +50,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	}
 
 	jaegerDisabled := false
-	if q.jaeger.Spec.Query.TracingEnabled != nil && *q.jaeger.Spec.Query.TracingEnabled == false {
+	if q.jaeger.Spec.Query.TracingEnabled != nil && !*q.jaeger.Spec.Query.TracingEnabled {
 		jaegerDisabled = true
 	} else {
 		// note that we are explicitly using a string here, not the value from `inject.Annotation`
@@ -188,6 +188,7 @@ func (q *Query) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,

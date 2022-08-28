@@ -22,7 +22,7 @@ func NewQueryRoute(jaeger *v1.Jaeger) *QueryRoute {
 
 // Get returns an ingress specification for the current instance
 func (r *QueryRoute) Get() *corev1.Route {
-	if r.jaeger.Spec.Ingress.Enabled != nil && *r.jaeger.Spec.Ingress.Enabled == false {
+	if r.jaeger.Spec.Ingress.Enabled != nil && !*r.jaeger.Spec.Ingress.Enabled {
 		return nil
 	}
 
@@ -39,7 +39,10 @@ func (r *QueryRoute) Get() *corev1.Route {
 	if len(r.jaeger.Namespace) >= 63 {
 		// the route is doomed already, nothing we can do...
 		name = r.jaeger.Name
-		r.jaeger.Logger().WithField("name", name).Warn("the route's hostname will have more than 63 chars and will not be valid")
+		r.jaeger.Logger().V(1).Info(
+			"the route's hostname will have more than 63 chars and will not be valid",
+			"name", name,
+		)
 	} else {
 		// -namespace is added to the host by OpenShift
 		name = util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace))
@@ -55,7 +58,7 @@ func (r *QueryRoute) Get() *corev1.Route {
 			Namespace: r.jaeger.Namespace,
 			Labels:    util.Labels(r.jaeger.Name, "query-route", *r.jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: r.jaeger.APIVersion,
 					Kind:       r.jaeger.Kind,
 					Name:       r.jaeger.Name,

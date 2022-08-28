@@ -39,13 +39,13 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		return nil
 	}
 
-	i.jaeger.Logger().Debug("Assembling an ingester deployment")
+	i.jaeger.Logger().V(-1).Info("Assembling an ingester deployment")
 
 	labels := i.labels()
 	trueVar := true
 	falseVar := false
 
-	args := append(i.jaeger.Spec.Ingester.Options.ToArgs())
+	args := i.jaeger.Spec.Ingester.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 14270)
 
@@ -177,6 +177,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(i.jaeger, account.IngesterComponent),

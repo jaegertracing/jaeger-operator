@@ -33,13 +33,13 @@ func NewCollector(jaeger *v1.Jaeger) *Collector {
 
 // Get returns a collector pod
 func (c *Collector) Get() *appsv1.Deployment {
-	c.jaeger.Logger().Debug("assembling a collector deployment")
+	c.jaeger.Logger().V(-1).Info("assembling a collector deployment")
 
 	labels := c.labels()
 	trueVar := true
 	falseVar := false
 
-	args := append(c.jaeger.Spec.Collector.Options.ToArgs())
+	args := c.jaeger.Spec.Collector.Options.ToArgs()
 
 	adminPort := util.GetAdminPort(args, 14269)
 
@@ -212,6 +212,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 						},
 						Resources:       commonSpec.Resources,
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
 					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,

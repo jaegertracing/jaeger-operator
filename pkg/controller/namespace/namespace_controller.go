@@ -2,8 +2,8 @@ package namespace
 
 import (
 	"context"
+	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -54,11 +55,11 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 	defer span.End()
 
 	span.SetAttributes(otelattribute.String("name", request.Name), otelattribute.String("namespace", request.Namespace))
-	logger := log.WithFields(log.Fields{
-		"namespace": request.Namespace,
-		"name":      request.Name,
-	})
-	logger.Debug("Reconciling Namespace")
+	logger := log.Log.WithValues(
+		"namespace", request.Namespace,
+		"name", request.Name,
+	)
+	logger.V(-1).Info("Reconciling Namespace")
 
 	ns := &corev1.Namespace{}
 	err := r.rClient.Get(ctx, request.NamespacedName, ns)
@@ -109,7 +110,7 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 		if inject.Needed(dep, ns) || verificationNeeded {
 			inject.IncreaseRevision(dep.Annotations)
 			if err := r.client.Update(context.Background(), dep); err != nil {
-				logger.Error(err)
+				logger.V(5).Info(fmt.Sprintf("%s", err))
 				return reconcile.Result{}, tracing.HandleError(err, span)
 			}
 		}

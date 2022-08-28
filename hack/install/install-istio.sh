@@ -23,5 +23,3 @@ cd $BIN
 retry "$BIN/downloadIstio"
 
 mv $BIN/istio-${VERSION}/bin/istioctl $BIN/
-
-export PATH=$PATH:$BIN

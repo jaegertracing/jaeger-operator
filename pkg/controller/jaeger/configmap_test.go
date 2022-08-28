@@ -256,5 +256,4 @@ func TestConfigMapsClean(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, configMaps.Items, 1)
 	assert.Equal(t, fmt.Sprintf("%s-service-ca", nsnExisting.Name), configMaps.Items[0].Name)
-
 }

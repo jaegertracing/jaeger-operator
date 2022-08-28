@@ -9,10 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -35,7 +34,7 @@ func (s secret) instanceName(jaeger *v1.Jaeger) string {
 	}
 
 	useCertManager := jaeger.Spec.Storage.Elasticsearch.UseCertManagement
-	if useCertManager != nil && *useCertManager == true {
+	if useCertManager != nil && *useCertManager {
 		return fmt.Sprintf("curator-%s", jaeger.Spec.Storage.Elasticsearch.Name)
 	}
 
@@ -132,7 +131,6 @@ func extractSecretToFile(workingDir string, data map[string][]byte, secret secre
 	for k, v := range secret.keyFileNameMap {
 		if err := writeToFile(workingDir, v, data[k]); err != nil {
 			return err
-
 		}
 	}
 	return nil
@@ -151,10 +149,12 @@ func createESCerts(script string, jaeger *v1.Jaeger) error {
 		"WORKING_DIR="+getWorkingDir(jaeger),
 	)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		log.WithFields(log.Fields{
-			"script": script,
-			"out":    string(out)}).
-			Error("Failed to create certificates")
+		log.Log.Error(
+			err,
+			fmt.Sprintf("error running script %s", script),
+			"script", script,
+			"out", string(out),
+		)
 		return fmt.Errorf("error running script %s: %v", script, err)
 	}
 	return nil
@@ -210,11 +210,11 @@ func writeToFile(dir, file string, value []byte) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
 	}
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		return err
 	}
-	defer util.CloseFile(f, logrus.StandardLogger())
+	defer util.CloseFile(f, &log.Log)
 
 	_, err = f.Write(value)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 // GetToken reads the token from the given path and returns it
 func GetToken(path string) string {
 	content, err := ioutil.ReadFile(filepath.Clean(path))
-
 	if err != nil {
 		logrus.Errorln("Something failed during reading the token:", err)
 		return ""

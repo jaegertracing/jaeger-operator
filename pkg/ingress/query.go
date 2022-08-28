@@ -23,7 +23,7 @@ func NewQueryIngress(jaeger *v1.Jaeger) *QueryIngress {
 
 // Get returns an ingress specification for the current instance
 func (i *QueryIngress) Get() *networkingv1.Ingress {
-	if i.jaeger.Spec.Ingress.Enabled != nil && *i.jaeger.Spec.Ingress.Enabled == false {
+	if i.jaeger.Spec.Ingress.Enabled != nil && !*i.jaeger.Spec.Ingress.Enabled {
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 			Namespace: i.jaeger.Namespace,
 			Labels:    commonSpec.Labels,
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: i.jaeger.APIVersion,
 					Kind:       i.jaeger.Kind,
 					Name:       i.jaeger.Name,
@@ -104,13 +104,17 @@ func (i *QueryIngress) addTLSSpec(spec *networkingv1.IngressSpec) {
 			})
 		}
 		if i.jaeger.Spec.Ingress.SecretName != "" {
-			i.jaeger.Logger().Warn("Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.")
+			i.jaeger.Logger().V(1).Info(
+				"Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.",
+			)
 		}
 	} else if i.jaeger.Spec.Ingress.SecretName != "" {
 		spec.TLS = append(spec.TLS, networkingv1.IngressTLS{
 			SecretName: i.jaeger.Spec.Ingress.SecretName,
 		})
-		i.jaeger.Logger().Warn("'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.")
+		i.jaeger.Logger().V(1).Info(
+			"'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.",
+		)
 	}
 }
 
@@ -132,7 +136,7 @@ func getRule(host string, path string, backend *networkingv1.IngressBackend) net
 	rule.Host = host
 	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
 		Paths: []networkingv1.HTTPIngressPath{
-			networkingv1.HTTPIngressPath{
+			{
 				PathType: &pathType,
 				Path:     path,
 				Backend:  *backend,

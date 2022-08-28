@@ -105,3 +105,11 @@ else
     render_install_jaeger "$jaeger_name" "production" "01"
     $GOMPLATE -f ./03-check-collector.yaml.template -o 03-check-collector.yaml
 fi
+
+
+start_test "set-custom-img"
+jaeger_name="my-jaeger"
+render_install_elasticsearch "upstream" "00"
+render_install_jaeger "$jaeger_name" "production" "01"
+cp ./01-install.yaml ./02-install.yaml
+$YQ e -i '.spec.collector.image="test"' ./02-install.yaml

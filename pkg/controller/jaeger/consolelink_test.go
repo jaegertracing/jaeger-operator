@@ -281,7 +281,6 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 	// Existing should have Href=host1, reconciliation should not touch existing instances.
 	assert.Equal(t, "https://host1", persistedExisting.Spec.Href)
-
 }
 
 func TestConsoleLinksSkipped(t *testing.T) {

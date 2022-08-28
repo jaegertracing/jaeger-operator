@@ -13,14 +13,11 @@ export E2E_TESTS_TIMEOUT ?= 330
 
 
 .PHONY: prepare-e2e-tests
-prepare-e2e-tests: kuttl build generate-e2e-files
+prepare-e2e-tests: start-kind load-operator-image set-image-controller build-assert-job
 
 .PHONY: set-assert-e2e-img-name
 set-assert-e2e-img-name:
 	$(eval ASSERT_IMG=$(shell ASSERT_IMG=$(ASSERT_IMG) ./tests/build-utils/get-assert-e2e-img.sh))
-
-.PHONY: generate-e2e-files
-generate-e2e-files: generate bundle set-image-controller build-assert-job
 
 
 # Build/pull container images used for the testing ###########################
@@ -76,16 +73,18 @@ else
 endif
 # End build/pull container images used for the testing #######################
 
-.PHONY: run-e2e-tests
-run-e2e-tests: list-test-suites
-	./hack/run-e2e-tests.sh $(TEST_SUITES)
-
-
 .PHONY: render-e2e-tests
-render-e2e-tests: generate-e2e-files list-test-suites
+render-e2e-tests: list-test-suites
 	$(VECHO) for suite in $(TEST_SUITES); do \
 		$(MAKE) render-e2e-tests-$$suite ; \
 	done
+
+.PHONY: run-e2e-tests
+run-e2e-tests: list-test-suites
+	$(VECHO) for suite in $(TEST_SUITES); do \
+		$(MAKE) run-e2e-tests-$$suite ; \
+	done
+
 
 .PHONY: list-test-suites
 list-test-suites:
@@ -100,5 +99,3 @@ e2e-test-suites: list-test-suites
 
 	@echo "You can run a test suite with make run-e2e-tests-<suite name>. E.g: make run-e2e-tests-elasticsearch"
 
-run-suite-tests: start-kind prepare-e2e-tests load-operator-image
-	KAFKA_OLM=$(KAFKA_OLM) ./hack/run-e2e-test-suite.sh $(TEST_SUITE_NAME) $(USE_KIND_CLUSTER) $(JAEGER_OLM)

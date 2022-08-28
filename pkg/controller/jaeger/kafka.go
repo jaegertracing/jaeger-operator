@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inventory"
@@ -20,10 +20,8 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	// ErrKafkaRemoved is returned when a kafka existed but has been removed
-	ErrKafkaRemoved = errors.New("kafka has been removed")
-)
+// ErrKafkaRemoved is returned when a kafka existed but has been removed
+var ErrKafkaRemoved = errors.New("kafka has been removed")
 
 func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, desired []kafkav1beta2.Kafka) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
@@ -45,10 +43,11 @@ func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, des
 	inv := inventory.ForKafkas(list.Items, desired)
 	for i := range inv.Create {
 		d := inv.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("creating kafkas")
+		jaeger.Logger().V(-1).Info(
+			"creating kafkas",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -56,10 +55,11 @@ func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, des
 
 	for i := range inv.Update {
 		d := inv.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("updating kafka")
+		jaeger.Logger().V(-1).Info(
+			"updating kafkas",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -83,10 +83,11 @@ func (r *ReconcileJaeger) applyKafkas(ctx context.Context, jaeger v1.Jaeger, des
 
 	for i := range inv.Delete {
 		d := inv.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"kafka":     d.GetName(),
-			"namespace": d.GetNamespace(),
-		}).Debug("deleting kafka")
+		jaeger.Logger().V(-1).Info(
+			"deleting kafka",
+			"kafka", d.GetName(),
+			"namespace", d.GetNamespace(),
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -109,18 +110,20 @@ func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafka
 				if seen {
 					// we have seen this object before, but it doesn't exist anymore!
 					// we don't have anything else to do here, break the poll
-					log.WithFields(log.Fields{
-						"namespace": kafka.GetNamespace(),
-						"name":      kafka.GetName(),
-					}).Warn("kafka has been removed.")
+					log.Log.V(1).Info(
+						"kafka has been removed.",
+						"namespace", kafka.GetNamespace(),
+						"name", kafka.GetName(),
+					)
 					return true, ErrKafkaRemoved
 				}
 
 				// the object might have not been created yet
-				log.WithFields(log.Fields{
-					"namespace": kafka.GetNamespace(),
-					"name":      kafka.GetName(),
-				}).Debug("kafka doesn't exist yet.")
+				log.Log.V(-1).Info(
+					"kafka doesn't exist yet.",
+					"namespace", kafka.GetNamespace(),
+					"name", kafka.GetName(),
+				)
 				return false, nil
 			}
 			return false, tracing.HandleError(err, span)
@@ -130,22 +133,24 @@ func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafka
 		readyCondition := getReadyCondition(k.Status.Conditions)
 		if !strings.EqualFold(readyCondition.Status, "true") {
 			once.Do(func() {
-				log.WithFields(log.Fields{
-					"namespace":       k.GetNamespace(),
-					"name":            k.GetName(),
-					"conditionStatus": readyCondition.Status,
-					"conditionType":   readyCondition.Type,
-				}).Debug("Waiting for kafka to stabilize")
+				log.Log.V(-1).Info(
+					"Waiting for kafka to stabilize",
+					"namespace", k.GetNamespace(),
+					"name", k.GetName(),
+					"conditionStatus", readyCondition.Status,
+					"conditionType", readyCondition.Type,
+				)
 			})
 			return false, nil
 		}
 
-		log.WithFields(log.Fields{
-			"namespace":       k.GetNamespace(),
-			"name":            k.GetName(),
-			"conditionStatus": readyCondition.Status,
-			"conditionType":   readyCondition.Type,
-		}).Debug("kafka has stabilized")
+		log.Log.V(-1).Info(
+			"kafka has stabilized",
+			"namespace", k.GetNamespace(),
+			"name", k.GetName(),
+			"conditionStatus", readyCondition.Status,
+			"conditionType", readyCondition.Type,
+		)
 		return true, nil
 	})
 }

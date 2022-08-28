@@ -116,8 +116,8 @@ func TestStartContinuesInBackground(t *testing.T) {
 	case <-time.After(6 * time.Second): // this one might take up to 5 seconds to run again + processing time
 		assert.Fail(t, "timed out waiting for the start process to detect the new capabilities")
 	}
-
 }
+
 func TestAutoDetectWithServerGroupsError(t *testing.T) {
 	// prepare
 	defer viper.Reset()
@@ -282,7 +282,6 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	}
 
 	t.Run("kind Elasticsearch", func(t *testing.T) {
-
 		dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
 			return &metav1.APIResourceList{
 				GroupVersion: "logging.openshift.io/v1",
@@ -300,7 +299,6 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	t.Run("no kind Elasticsearch", func(t *testing.T) {
 		dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
 			return &metav1.APIResourceList{
-
 				GroupVersion: "logging.openshift.io/v1",
 				APIResources: []metav1.APIResource{
 					{
@@ -433,7 +431,7 @@ func TestAutoDetectCronJobsVersion(t *testing.T) {
 	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
 	for _, apiGroup := range apiGroupVersions {
 		dcl := &fakeDiscoveryClient{}
-		cl := fake.NewFakeClient()
+		cl := fake.NewFakeClient() // nolint:staticcheck
 		b := WithClients(cl, dcl, cl)
 		dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 			return &metav1.APIGroupList{Groups: []metav1.APIGroup{{
@@ -594,7 +592,7 @@ func TestCleanDeployments(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{},
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
-								corev1.Container{
+								{
 									Name:  "C1",
 									Image: "image1",
 								},

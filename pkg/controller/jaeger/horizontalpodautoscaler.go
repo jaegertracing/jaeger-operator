@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,10 +32,11 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 	hpaInventory := inventory.ForHorizontalPodAutoscalers(hpaList.Items, desired)
 	for i := range hpaInventory.Create {
 		d := hpaInventory.Create[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"hpa":       d.Name,
-			"namespace": d.Namespace,
-		}).Debug("creating hpa")
+		jaeger.Logger().V(-1).Info(
+			"creating hpa",
+			"hpa", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Create(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -44,10 +44,11 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 
 	for i := range hpaInventory.Update {
 		d := hpaInventory.Update[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"hpa":       d.Name,
-			"namespace": d.Namespace,
-		}).Debug("updating hpa")
+		jaeger.Logger().V(-1).Info(
+			"updating hpa",
+			"hpa", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Update(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}
@@ -55,10 +56,11 @@ func (r *ReconcileJaeger) applyHorizontalPodAutoscalers(ctx context.Context, jae
 
 	for i := range hpaInventory.Delete {
 		d := hpaInventory.Delete[i]
-		jaeger.Logger().WithFields(log.Fields{
-			"hpa":       d.Name,
-			"namespace": d.Namespace,
-		}).Debug("deleting hpa")
+		jaeger.Logger().V(-1).Info(
+			"deleting hpa",
+			"hpa", d.Name,
+			"namespace", d.Namespace,
+		)
 		if err := r.client.Delete(ctx, &d); err != nil {
 			return tracing.HandleError(err, span)
 		}

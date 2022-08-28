@@ -15,9 +15,11 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
-var k8sClient client.Client
-var testEnv *envtest.Environment
-var testScheme *runtime.Scheme = scheme.Scheme
+var (
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	testScheme *runtime.Scheme = scheme.Scheme
+)
 
 func TestMain(m *testing.M) {
 	testEnv = &envtest.Environment{

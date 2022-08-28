@@ -23,7 +23,7 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			Namespace: jaeger.Namespace,
 			Labels:    util.Labels(name, "service-agent", *jaeger),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion: jaeger.APIVersion,
 					Kind:       jaeger.Kind,
 					Name:       jaeger.Name,

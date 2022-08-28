@@ -204,7 +204,6 @@ func TestEsRolloverLabels(t *testing.T) {
 }
 
 func TestEsRolloverResources(t *testing.T) {
-
 	parentResources := corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
@@ -307,7 +306,6 @@ func TestEsRolloverLookbackLabels(t *testing.T) {
 }
 
 func TestEsRolloverLookbackResources(t *testing.T) {
-
 	parentResources := corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),

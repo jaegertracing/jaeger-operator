@@ -1,6 +1,8 @@
 #!/bin/bash
 
 current_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export ROOT_DIR=$current_dir/../
+source $current_dir/common.sh
 set -e
 
 # Enable verbosity
@@ -13,48 +15,36 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
-test_suite_name=$1
-use_kind_cluster=$2
-jaeger_olm=$3
+test_suite_name="$1"
+use_kind_cluster="$2"
+jaeger_olm="$3"
 
-# Prepare the cluster
-if [ "$use_kind_cluster" == true ]; then
-	kubectl wait --timeout=5m --for=condition=available deployment ingress-nginx-controller -n ingress-nginx
-	kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=5m
+timeout="5m"
 
-	# Install metrics-server for scalability tests
-	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-	kubectl patch deployment -n kube-system metrics-server --type "json" -p '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": --kubelet-insecure-tls}]'
-	kubectl wait --for=condition=available deployment/metrics-server -n kube-system  --timeout=5m
-fi
+make prepare-e2e-tests USE_KIND_CLUSTER=$use_kind_cluster JAEGER_OLM=$jaeger_olm
 
 if [ "$jaeger_olm" = true ]; then
     echo "Skipping Jaeger Operator installation because JAEGER_OLM=true"
 else
-	echo Installing Jaeger Operator...
+	echo "Installing Jaeger Operator..."
 	# JAEGER_OPERATOR_VERBOSITY enables verbosity in the Jaeger Operator
 	# JAEGER_OPERATOR_KAFKA_MINIMAL enables minimal deployment of Kafka clusters
 	make cert-manager deploy JAEGER_OPERATOR_VERBOSITY=DEBUG JAEGER_OPERATOR_KAFKA_MINIMAL=true
-	kubectl wait --timeout=5m --for=condition=available deployment jaeger-operator -n observability
+	kubectl wait --for=condition=available deployment jaeger-operator -n observability --timeout=$timeout
 fi
 
-
+# Prepare reports folder
 root_dir=$current_dir/../
 reports_dir=$root_dir/reports
-
+mkdir -p $reports_dir
 rm -f $reports_dir/$test_suite_name.xml
 
-# Ensure KUTTL is installed
-$current_dir/install/install-kuttl.sh
-export KUTTL=$root_dir/bin/kubectl-kuttl
-
-mkdir -p $reports_dir
-
 cd $root_dir
+$root_dir/hack/install/install-kuttl.sh
 make render-e2e-tests-$test_suite_name
 
 
-echo Running $test_suite_name E2E tests
+echo "Running $test_suite_name E2E tests"
 cd tests/e2e/$test_suite_name/_build
 
 # Don't stop if something fails because we want to process the

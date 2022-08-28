@@ -76,7 +76,9 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// we provision a Kafka when no brokers have been set, or, when we are not in the first run,
 	// when we know we've been the ones placing the broker information in the configuration
 	if (!pfound && !cfound) || provisioned {
-		jaeger.Logger().Info("Provisioning Kafka, this might take a while...")
+		jaeger.Logger().V(-1).Info(
+			"Kafka auto provisioning is enabled. A Kafka cluster will be deployed if it does not exist.",
+		)
 		manifest = autoProvisionKafka(ctx, jaeger, manifest)
 	}
 
@@ -115,7 +117,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			manifest.cronJobs = append(manifest.cronJobs, cronjob.CreateSparkDependencies(jaeger))
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping spark dependencies job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"skipping spark dependencies job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 
@@ -124,7 +129,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		if jaeger.Spec.Storage.Type == v1.JaegerESStorage {
 			indexCleaner = cronjob.CreateEsIndexCleaner(jaeger)
 		} else {
-			jaeger.Logger().WithField("type", jaeger.Spec.Storage.Type).Warn("Skipping Elasticsearch index cleaner job due to unsupported storage.")
+			jaeger.Logger().V(1).Info(
+				"skipping Elasticsearch index cleaner job due to unsupported storage.",
+				"type", jaeger.Spec.Storage.Type,
+			)
 		}
 	}
 
@@ -136,7 +144,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled == true {
+	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled {
 		queryDep = inject.Sidecar(jaeger, queryDep)
 	}
 	var ingesterDep *appsv1.Deployment
@@ -190,7 +198,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 
 func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
-	ctx, span := tracer.Start(ctx, "autoProvisionKafka")
+	ctx, span := tracer.Start(ctx, "autoProvisionKafka") // nolint:ineffassign,staticcheck
 	defer span.End()
 
 	if jaeger.Annotations == nil {

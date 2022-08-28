@@ -244,7 +244,6 @@ func TestInjectSidecarWithVolumeMounts(t *testing.T) {
 }
 
 func TestSidecarImagePullSecrets(t *testing.T) {
-
 	deploymentImagePullSecrets := []corev1.LocalObjectReference{{
 		Name: "deploymentImagePullSecret",
 	}}
@@ -299,7 +298,6 @@ func TestSkipInjectSidecar(t *testing.T) {
 }
 
 func TestSidecarNeeded(t *testing.T) {
-
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "some-jaeger-instance"})
 
 	depWithAgent := dep(map[string]string{
@@ -780,7 +778,6 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 }
 
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
-
 	viper.Set("platform", v1.FlagPlatformOpenShift)
 	defer viper.Reset()
 
@@ -888,33 +885,6 @@ func TestEqualSidecar(t *testing.T) {
 	// When no agent is present on the deploy
 	dep3 := dep(map[string]string{Annotation: jaeger.Name}, map[string]string{})
 	assert.False(t, EqualSidecar(dep1, dep3))
-}
-
-func hasVolume(name string, volumes []corev1.Volume) bool {
-	for _, v := range volumes {
-		if v.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func hasVolumeMount(name string, volumeMounts []corev1.VolumeMount) bool {
-	for _, v := range volumeMounts {
-		if v.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func hasArgument(arg string, args []string) bool {
-	for _, v := range args {
-		if v == arg {
-			return true
-		}
-	}
-	return false
 }
 
 func TestInjectSidecarOnOpenShift(t *testing.T) {

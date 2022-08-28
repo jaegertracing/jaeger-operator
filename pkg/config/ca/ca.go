@@ -29,11 +29,11 @@ func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	}
 
 	if !deployTrustedCA(jaeger) {
-		jaeger.Logger().Debug("CA: Skip deploying the Jaeger instance's trustedCABundle configmap")
+		jaeger.Logger().V(-1).Info("CA: Skip deploying the Jaeger instance's trustedCABundle configmap")
 		return nil
 	}
 
-	jaeger.Logger().Debug("CA: Creating the trustedCABundle configmap")
+	jaeger.Logger().V(-1).Info("CA: Creating the trustedCABundle configmap")
 
 	name := TrustedCAName(jaeger)
 	labels := util.Labels(name, "ca-configmap", *jaeger)
@@ -64,11 +64,11 @@ func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	}
 
 	if !deployServiceCA(jaeger) {
-		jaeger.Logger().Debug("CA: Skip deploying the Jaeger instance's service CA configmap")
+		jaeger.Logger().V(-1).Info("CA: Skip deploying the Jaeger instance's service CA configmap")
 		return nil
 	}
 
-	jaeger.Logger().Debug("CA: Creating the service CA configmap")
+	jaeger.Logger().V(-1).Info("CA: Creating the service CA configmap")
 
 	name := ServiceCAName(jaeger)
 	annotations := map[string]string{
@@ -98,7 +98,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 	}
 
 	if !deployTrustedCA(jaeger) {
-		jaeger.Logger().Debug("CA: Skip adding the Jaeger instance's trustedCABundle volume")
+		jaeger.Logger().V(-1).Info("CA: Skip adding the Jaeger instance's trustedCABundle volume")
 		return
 	}
 
@@ -135,7 +135,7 @@ func AddServiceCA(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 	}
 
 	if !deployServiceCA(jaeger) {
-		jaeger.Logger().Debug("CA: Skip adding the Jaeger instance's service CA volume")
+		jaeger.Logger().V(-1).Info("CA: Skip adding the Jaeger instance's service CA volume")
 		return
 	}
 

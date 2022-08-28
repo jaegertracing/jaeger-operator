@@ -41,7 +41,8 @@ func TestCreateESSecrets(t *testing.T) {
 		masterSecret.instanceName(j),
 		esSecret.instanceName(j),
 		jaegerSecret.instanceName(j),
-		curatorSecret.instanceName(j)},
+		curatorSecret.instanceName(j),
+	},
 		[]string{sec[0].Name, sec[1].Name, sec[2].Name, sec[3].Name})
 	for _, s := range sec {
 		if s.Name == jaegerSecret.instanceName(j) {
@@ -73,7 +74,7 @@ func TestGetWorkingFileDirContent(t *testing.T) {
 	defer os.RemoveAll(dir)
 	err := os.MkdirAll(dir, os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(dir+"/foobar", []byte("foo"), 0644)
+	err = ioutil.WriteFile(dir+"/foobar", []byte("foo"), 0o644)
 	assert.NoError(t, err)
 	b := getDirFileContents(dir, "foobar")
 	assert.Equal(t, "foo", string(b))
