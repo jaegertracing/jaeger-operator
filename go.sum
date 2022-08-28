@@ -820,6 +820,8 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v1.9
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v1.9.0/go.mod h1:2AboqHi0CiIZU0qwhtUfCYD1GeUzvvIXWNkhDt7ZMG4=
 go.opentelemetry.io/otel v1.9.0 h1:8WZNQFIB2a71LnANS9JeyidJKKGOOremcUtb/OtHISw=
 go.opentelemetry.io/otel v1.9.0/go.mod h1:np4EoPGzoPs3O67xUVNoPPcmSvsfOxNlNA4F4AC+0Eo=
+go.opentelemetry.io/otel/exporters/jaeger v1.9.0 h1:gAEgEVGDWwFjcis9jJTOJqZNxDzoZfR12WNIxr7g9Ww=
+go.opentelemetry.io/otel/exporters/jaeger v1.9.0/go.mod h1:hquezOLVAybNW6vanIxkdLXTXvzlj2Vn3wevSP15RYs=
 go.opentelemetry.io/otel/exporters/metric/prometheus v1.9.0 h1:mJ577SMWSG1jLplCakscznQK7hK03YayX1fQkDPKoVw=
 go.opentelemetry.io/otel/exporters/metric/prometheus v1.9.0/go.mod h1:XG78/f5fT5o2W4Fto/hrYzn3mbuzGQIFnb0P2AKe+s0=
 go.opentelemetry.io/otel/exporters/otlp v1.9.0 h1:PTNgq9MRmQqqJY0REVbZFvwkYOA85vbdQU/nVfxDyqg=
