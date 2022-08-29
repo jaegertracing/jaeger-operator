@@ -113,7 +113,7 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
 			log.Log.V(-1).Info(
-				fmt.Sprintf("Error getting %s api list: %s", apiGroupVersion, err),
+				fmt.Sprintf("error getting %s api list: %s", apiGroupVersion, err),
 			)
 			continue
 		}
@@ -127,7 +127,7 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 	}
 
 	log.Log.V(2).Info(
-		fmt.Sprintf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+		fmt.Sprintf("did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
 	)
 }
 
@@ -137,7 +137,7 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
 			log.Log.V(-1).Info(
-				fmt.Sprintf("Error getting %s api list: %s", apiGroupVersion, err),
+				fmt.Sprintf("error getting %s api list: %s", apiGroupVersion, err),
 			)
 			continue
 		}
@@ -151,7 +151,7 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 	}
 
 	log.Log.V(2).Info(
-		fmt.Sprintf("Did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
+		fmt.Sprintf("did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
 	)
 }
 
