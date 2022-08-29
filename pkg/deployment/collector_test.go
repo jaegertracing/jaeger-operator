@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -497,8 +498,9 @@ func TestCollectorOrderOfArguments(t *testing.T) {
 	assert.True(t, strings.HasPrefix(dep.Spec.Template.Spec.Containers[0].Args[3], "--sampling.strategies-file"))
 }
 
-func TestCollectorAutoscalersOnByDefault(t *testing.T) {
+func TestCollectorAutoscalersOnByDefaultV2(t *testing.T) {
 	// prepare
+	viper.Set(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2)
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := NewCollector(jaeger)
 
@@ -517,8 +519,30 @@ func TestCollectorAutoscalersOnByDefault(t *testing.T) {
 	assert.Equal(t, int32(90), *hpa.Spec.Metrics[1].Resource.Target.AverageUtilization)
 }
 
+func TestCollectorAutoscalersOnByDefaultV2Beta2(t *testing.T) {
+	// prepare
+	viper.Set(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2Beta2)
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	c := NewCollector(jaeger)
+
+	// test
+	a := c.Autoscalers()
+	hpa := a[0].(*autoscalingv2beta2.HorizontalPodAutoscaler)
+
+	// verify
+	assert.Len(t, a, 1)
+	assert.Len(t, hpa.Spec.Metrics, 2)
+
+	assert.Contains(t, []corev1.ResourceName{hpa.Spec.Metrics[0].Resource.Name, hpa.Spec.Metrics[1].Resource.Name}, corev1.ResourceCPU)
+	assert.Contains(t, []corev1.ResourceName{hpa.Spec.Metrics[0].Resource.Name, hpa.Spec.Metrics[1].Resource.Name}, corev1.ResourceMemory)
+
+	assert.Equal(t, int32(90), *hpa.Spec.Metrics[0].Resource.Target.AverageUtilization)
+	assert.Equal(t, int32(90), *hpa.Spec.Metrics[1].Resource.Target.AverageUtilization)
+}
+
 func TestCollectorAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
 	// prepare
+	viper.Set(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2)
 	tests := []int32{int32(0), int32(1)}
 
 	for _, test := range tests {
@@ -536,6 +560,7 @@ func TestCollectorAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
 
 func TestCollectorAutoscalersDisabledByExplicitOption(t *testing.T) {
 	// prepare
+	viper.Set(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2)
 	disabled := false
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Collector.Autoscale = &disabled
@@ -550,6 +575,7 @@ func TestCollectorAutoscalersDisabledByExplicitOption(t *testing.T) {
 
 func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 	// prepare
+	viper.Set(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2)
 	maxReplicas := int32(2)
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Collector.MaxReplicas = &maxReplicas
