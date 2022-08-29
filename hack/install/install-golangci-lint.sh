@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.48.0"
+VERSION="1.49.0"
 
 echo "Installing golangci-lint"
 
