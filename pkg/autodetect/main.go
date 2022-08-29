@@ -108,7 +108,7 @@ func (b *Background) autoDetectCapabilities() {
 }
 
 func (b *Background) detectCronjobsVersion(ctx context.Context) {
-	apiGroupVersions := []string{"batch/v1", "batch/v1beta1"}
+	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
@@ -120,7 +120,7 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "cronjobs" {
 				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
-				log.Log.V(-1).Info(fmt.Sprintf("Found the cronjobs api in %s", apiGroupVersion))
+				log.Log.V(-1).Info(fmt.Sprintf("found the cronjobs api in %s", apiGroupVersion))
 				return
 			}
 		}
@@ -132,7 +132,7 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 }
 
 func (b *Background) detectAutoscalingVersion(ctx context.Context) {
-	apiGroupVersions := []string{"autoscaling/v2", "autoscaling/v2beta2"}
+	apiGroupVersions := []string{v1.FlagAutoscalingVersionV2, v1.FlagAutoscalingVersionV2Beta2}
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
@@ -144,7 +144,7 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "horizontalpodautoscalers" {
 				viper.Set(v1.FlagAutoscalingVersion, apiGroupVersion)
-				log.Log.V(-1).Info(fmt.Sprintf("Found the horizontalpodautoscalers api in %s", apiGroupVersion))
+				log.Log.V(-1).Info(fmt.Sprintf("found the horizontalpodautoscalers api in %s", apiGroupVersion))
 				return
 			}
 		}
