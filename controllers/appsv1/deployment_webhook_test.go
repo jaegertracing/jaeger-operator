@@ -130,11 +130,11 @@ func (u *failingClient) List(ctx context.Context, list client.ObjectList, opts .
 	return u.WithWatch.List(ctx, list, opts...)
 }
 
-func (u *failingClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (u *failingClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if u.errors.getErr != nil {
 		return u.errors.getErr
 	}
-	return u.WithWatch.Get(ctx, key, obj)
+	return u.WithWatch.Get(ctx, key, obj, opts...)
 }
 
 func (u *failingClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {

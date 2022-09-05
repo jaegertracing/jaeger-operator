@@ -52,11 +52,11 @@ func (u *modifiedClient) List(ctx context.Context, list client.ObjectList, opts 
 	return u.Client.List(ctx, list, opts...)
 }
 
-func (u *modifiedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (u *modifiedClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if u.getErr != nil {
 		return u.getErr
 	}
-	return u.Client.Get(ctx, key, obj)
+	return u.Client.Get(ctx, key, obj, opts...)
 }
 
 func TestReconcileSyncOnJaegerChanges(t *testing.T) {
