@@ -100,6 +100,7 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
 		b.detectCronjobsVersion(ctx)
+		b.detectAutoscalingVersion(ctx)
 	}
 
 	b.detectClusterRoles(ctx)
@@ -107,27 +108,50 @@ func (b *Background) autoDetectCapabilities() {
 }
 
 func (b *Background) detectCronjobsVersion(ctx context.Context) {
-	apiGroupVersions := []string{"batch/v1", "batch/v1beta1"}
+	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
-			log.Log.Error(
-				err,
-				fmt.Sprintf("Error getting %s api list", apiGroupVersion),
+			log.Log.V(-1).Info(
+				fmt.Sprintf("error getting %s api list: %s", apiGroupVersion, err),
 			)
 			continue
 		}
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "cronjobs" {
 				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
-				log.Log.V(-1).Info(fmt.Sprintf("Found the cronjobs api in %s", apiGroupVersion))
+				log.Log.V(-1).Info(fmt.Sprintf("found the cronjobs api in %s", apiGroupVersion))
 				return
 			}
 		}
 	}
 
 	log.Log.V(2).Info(
-		fmt.Sprintf("Did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+		fmt.Sprintf("did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+	)
+}
+
+func (b *Background) detectAutoscalingVersion(ctx context.Context) {
+	apiGroupVersions := []string{v1.FlagAutoscalingVersionV2, v1.FlagAutoscalingVersionV2Beta2}
+	for _, apiGroupVersion := range apiGroupVersions {
+		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
+		if err != nil {
+			log.Log.V(-1).Info(
+				fmt.Sprintf("error getting %s api list: %s", apiGroupVersion, err),
+			)
+			continue
+		}
+		for _, api := range groupAPIList.APIResources {
+			if api.Name == "horizontalpodautoscalers" {
+				viper.Set(v1.FlagAutoscalingVersion, apiGroupVersion)
+				log.Log.V(-1).Info(fmt.Sprintf("found the horizontalpodautoscalers api in %s", apiGroupVersion))
+				return
+			}
+		}
+	}
+
+	log.Log.V(2).Info(
+		fmt.Sprintf("did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
 	)
 }
 

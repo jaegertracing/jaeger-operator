@@ -3,44 +3,79 @@ package inventory
 import (
 	"fmt"
 
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/spf13/viper"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // HorizontalPodAutoscaler represents the HorizontalPodAutoscaler inventory based on the current and desired states
 type HorizontalPodAutoscaler struct {
-	Create []autoscalingv2beta2.HorizontalPodAutoscaler
-	Update []autoscalingv2beta2.HorizontalPodAutoscaler
-	Delete []autoscalingv2beta2.HorizontalPodAutoscaler
+	Create []runtime.Object
+	Update []runtime.Object
+	Delete []runtime.Object
 }
 
 // ForHorizontalPodAutoscalers builds a new HorizontalPodAutoscaler inventory based on the existing and desired states
-func ForHorizontalPodAutoscalers(existing []autoscalingv2beta2.HorizontalPodAutoscaler, desired []autoscalingv2beta2.HorizontalPodAutoscaler) HorizontalPodAutoscaler {
-	update := []autoscalingv2beta2.HorizontalPodAutoscaler{}
+func ForHorizontalPodAutoscalers(existing []runtime.Object, desired []runtime.Object) HorizontalPodAutoscaler {
+	update := []runtime.Object{}
 	mcreate := hpaMap(desired)
 	mdelete := hpaMap(existing)
 
+	autoscalingVersion := viper.GetString(v1.FlagAutoscalingVersion)
+
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
-			util.InitObjectMeta(tp)
+			if autoscalingVersion == v1.FlagAutoscalingVersionV2Beta2 {
+				t1 := t.(*autoscalingv2beta2.HorizontalPodAutoscaler)
+				v1 := v.(*autoscalingv2beta2.HorizontalPodAutoscaler)
 
-			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
-			tp.Spec = v.Spec
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+				tp := t1.DeepCopy()
+				util.InitObjectMeta(tp)
 
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
+				// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+				tp.Spec = v1.Spec
+				tp.ObjectMeta.OwnerReferences = v1.ObjectMeta.OwnerReferences
+
+				for k, v := range v1.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v1.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
+				delete(mcreate, k)
+				delete(mdelete, k)
+
+			} else {
+				t1 := t.(*autoscalingv2.HorizontalPodAutoscaler)
+				v1 := v.(*autoscalingv2.HorizontalPodAutoscaler)
+
+				tp := t1.DeepCopy()
+				util.InitObjectMeta(tp)
+
+				// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
+				tp.Spec = v1.Spec
+				tp.ObjectMeta.OwnerReferences = v1.ObjectMeta.OwnerReferences
+
+				for k, v := range v1.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v1.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
+				delete(mcreate, k)
+				delete(mdelete, k)
 			}
-
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, *tp)
-			delete(mcreate, k)
-			delete(mdelete, k)
 		}
 	}
 
@@ -51,16 +86,24 @@ func ForHorizontalPodAutoscalers(existing []autoscalingv2beta2.HorizontalPodAuto
 	}
 }
 
-func hpaMap(hpas []autoscalingv2beta2.HorizontalPodAutoscaler) map[string]autoscalingv2beta2.HorizontalPodAutoscaler {
-	m := map[string]autoscalingv2beta2.HorizontalPodAutoscaler{}
+func hpaMap(hpas []runtime.Object) map[string]runtime.Object {
+	m := map[string]runtime.Object{}
+
+	autoscalingVersion := viper.GetString(v1.FlagAutoscalingVersion)
 	for _, d := range hpas {
-		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
+		if autoscalingVersion == v1.FlagAutoscalingVersionV2Beta2 {
+			hpa := d.(*autoscalingv2beta2.HorizontalPodAutoscaler)
+			m[fmt.Sprintf("%s.%s", hpa.Namespace, hpa.Name)] = hpa
+		} else {
+			hpa := d.(*autoscalingv2.HorizontalPodAutoscaler)
+			m[fmt.Sprintf("%s.%s", hpa.Namespace, hpa.Name)] = hpa
+		}
 	}
 	return m
 }
 
-func hpaList(m map[string]autoscalingv2beta2.HorizontalPodAutoscaler) []autoscalingv2beta2.HorizontalPodAutoscaler {
-	l := []autoscalingv2beta2.HorizontalPodAutoscaler{}
+func hpaList(m map[string]runtime.Object) []runtime.Object {
+	l := []runtime.Object{}
 	for _, v := range m {
 		l = append(l, v)
 	}

@@ -166,7 +166,7 @@ endif
 .PHONY: unit-tests
 unit-tests: envtest
 	@echo Running unit tests...
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -p 1 ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: set-node-os-linux
 set-node-os-linux:

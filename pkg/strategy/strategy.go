@@ -4,7 +4,6 @@ import (
 	osconsolev1 "github.com/openshift/api/console/v1"
 	osv1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
-	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -32,7 +31,7 @@ type S struct {
 	dependencies             []batchv1.Job
 	deployments              []appsv1.Deployment
 	elasticsearches          []esv1.Elasticsearch
-	horizontalPodAutoscalers []autoscalingv2beta2.HorizontalPodAutoscaler
+	horizontalPodAutoscalers []runtime.Object
 	ingresses                []networkingv1.Ingress
 	kafkas                   []kafkav1beta2.Kafka
 	kafkaUsers               []kafkav1beta2.KafkaUser
@@ -112,7 +111,7 @@ func (s S) WithIngresses(i []networkingv1.Ingress) S {
 }
 
 // WithHorizontalPodAutoscaler returns the strategy with the given list of HPAs
-func (s S) WithHorizontalPodAutoscaler(i []autoscalingv2beta2.HorizontalPodAutoscaler) S {
+func (s S) WithHorizontalPodAutoscaler(i []runtime.Object) S {
 	s.horizontalPodAutoscalers = i
 	return s
 }
@@ -193,7 +192,7 @@ func (s S) Ingresses() []networkingv1.Ingress {
 }
 
 // HorizontalPodAutoscalers returns the list of HPAs objects for this strategy.
-func (s S) HorizontalPodAutoscalers() []autoscalingv2beta2.HorizontalPodAutoscaler {
+func (s S) HorizontalPodAutoscalers() []runtime.Object {
 	return s.horizontalPodAutoscalers
 }
 
@@ -260,9 +259,7 @@ func (s S) All() []runtime.Object {
 		ret = append(ret, o.DeepCopy())
 	}
 
-	for _, o := range s.horizontalPodAutoscalers {
-		ret = append(ret, o.DeepCopy())
-	}
+	ret = append(ret, s.horizontalPodAutoscalers...)
 
 	for _, o := range s.kafkas {
 		ret = append(ret, o.DeepCopy())
