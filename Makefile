@@ -32,8 +32,9 @@ export JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$
 # Kafka and Kafka Operator variables
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
-KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.23.0/examples/kafka/kafka-persistent-single.yaml"
-KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.23.0/strimzi-cluster-operator-0.23.0.yaml"
+KAFKA_VERSION ?= 0.30.0
+KAFKA_EXAMPLE ?= "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/${KAFKA_VERSION}/examples/kafka/kafka-persistent-single.yaml"
+KAFKA_YAML ?= "https://github.com/strimzi/strimzi-kafka-operator/releases/download/${KAFKA_VERSION}/strimzi-cluster-operator-${KAFKA_VERSION}.yaml"
 # Prometheus Operator variables
 PROMETHEUS_OPERATOR_TAG ?= v0.39.0
 PROMETHEUS_BUNDLE ?= https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROMETHEUS_OPERATOR_TAG}/bundle.yaml

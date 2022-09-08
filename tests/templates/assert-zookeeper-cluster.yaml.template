@@ -1,7 +1,7 @@
-# Assert the Zookeeper stateful set is up and running
-apiVersion: apps/v1
-kind: StatefulSet
+# Assert the Zookeeper StrimziPodSet is up and running
+apiVersion: core.strimzi.io/v1beta2
+kind: StrimziPodSet
 metadata:
   name: {{ .Env.CLUSTER_NAME }}-zookeeper
 status:
-  readyReplicas: {{ .Env.REPLICAS }}
+  readyPods: {{ .Env.REPLICAS }}
