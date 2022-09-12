@@ -172,6 +172,7 @@ func getStorageEnvs(s v1.JaegerStorageSpec) []corev1.EnvVar {
 			{Name: "ES_USERNAME", Value: sFlagsMap["es.username"]},
 			{Name: "ES_PASSWORD", Value: sFlagsMap["es.password"]},
 			{Name: "ES_TIME_RANGE", Value: s.Dependencies.ElasticsearchTimeRange},
+			{Name: "ES_USE_ALIASES", Value: sFlagsMap["es.use-aliases"]},
 		}
 		if s.Dependencies.ElasticsearchNodesWanOnly != nil {
 			vars = append(vars, corev1.EnvVar{Name: "ES_NODES_WAN_ONLY", Value: strconv.FormatBool(*s.Dependencies.ElasticsearchNodesWanOnly)})
