@@ -43,12 +43,11 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		beta1v1JobsFound := false
-
+		beta1v1JobsFound := true
 		cronjobsV1beta1, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
-		if err == nil {
-			beta1v1JobsFound = true
-		} else {
+
+		if err != nil {
+			beta1v1JobsFound = false
 			if apierrors.IsNotFound(err) {
 				logrus.Debug("No BatchV1beta1/Cronjobs were found")
 			}
@@ -155,7 +154,7 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 	return err
 }
 
-/// Get the Kubernetes client from the environment configuration
+// / Get the Kubernetes client from the environment configuration
 func getKubernetesClient() *kubernetes.Clientset {
 	// Use the current context
 	config, err := clientcmd.BuildConfigFromFlags("", viper.GetString(flagKubeconfig))
