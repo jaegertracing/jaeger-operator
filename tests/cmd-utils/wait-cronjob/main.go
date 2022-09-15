@@ -45,7 +45,6 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 
 		beta1v1JobsFound := true
 		cronjobsV1beta1, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
-
 		if err != nil {
 			beta1v1JobsFound = false
 			if apierrors.IsNotFound(err) {
@@ -143,7 +142,6 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 				}
 
 				return true, nil
-
 			}
 		}
 

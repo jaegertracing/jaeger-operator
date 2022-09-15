@@ -1,6 +1,6 @@
 // Package v1beta2 contains API Schema definitions for the kafka v1beta2 API group
-//+kubebuilder:skip
-//+kubebuilder:object:generate=true
+// +kubebuilder:skip
+// +kubebuilder:object:generate=true
 package v1beta2
 
 import (
