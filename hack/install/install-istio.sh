@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.11.2"
+VERSION="1.15.0"
 
 echo "Installing istioctl"
 

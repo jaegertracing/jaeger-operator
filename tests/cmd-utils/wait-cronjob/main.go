@@ -43,25 +43,55 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		cronjobs, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
+		beta1v1JobsFound := true
+		cronjobsV1beta1, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
 		if err != nil {
+			beta1v1JobsFound = false
 			if apierrors.IsNotFound(err) {
-				logrus.Debug("No cronjobs were found")
+				logrus.Debug("No BatchV1beta1/Cronjobs were found")
 			}
-			return false, nil
 		}
 
-		for _, cronjob := range cronjobs.Items {
+		if beta1v1JobsFound {
+			for _, cronjob := range cronjobsV1beta1.Items {
+				if cronjob.Name == cronjobName {
+					return true, nil
+				}
+			}
+
+			logrus.Warningln("The BatchV1beta1/Cronjob", cronjobName, "was not found")
+
+			if cronjobsV1beta1.Size() > 0 {
+				logrus.Debugln("Found BatchV1beta1/Cronjobs:")
+				for _, cronjob := range cronjobsV1beta1.Items {
+					logrus.Debugln("\t", cronjob.Name)
+				}
+			}
+		}
+
+		cronjobsV1, err := clientset.BatchV1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logrus.Debug("No BatchV1/Cronjobs were found")
+				return false, err
+			}
+		}
+
+		for _, cronjob := range cronjobsV1.Items {
 			if cronjob.Name == cronjobName {
 				return true, nil
 			}
 		}
 
-		logrus.Warningln("The Cronjob", cronjobName, "was not found")
-		logrus.Debugln("Found cronjobs:")
-		for _, cronjob := range cronjobs.Items {
-			logrus.Debugln("\t", cronjob.Name)
+		logrus.Warningln("The BatchV1/Cronjob", cronjobName, "was not found")
+
+		if cronjobsV1.Size() > 0 {
+			logrus.Debugln("Found BatchV/Cronjobs:")
+			for _, cronjob := range cronjobsV1.Items {
+				logrus.Debugln("\t", cronjob.Name)
+			}
 		}
+
 		return false, nil
 	})
 
@@ -112,7 +142,6 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 				}
 
 				return true, nil
-
 			}
 		}
 
@@ -123,7 +152,7 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 	return err
 }
 
-/// Get the Kubernetes client from the environment configuration
+// / Get the Kubernetes client from the environment configuration
 func getKubernetesClient() *kubernetes.Clientset {
 	// Use the current context
 	config, err := clientcmd.BuildConfigFromFlags("", viper.GetString(flagKubeconfig))

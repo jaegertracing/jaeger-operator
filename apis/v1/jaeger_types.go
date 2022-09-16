@@ -174,8 +174,8 @@ type JaegerStatus struct {
 }
 
 // Jaeger is the Schema for the jaegers API
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Jaeger"
 // +operator-sdk:csv:customresourcedefinitions:resources={{CronJob,v1beta1},{Pod,v1},{Deployment,apps/v1}, {Ingress,networking/v1},{DaemonSets,apps/v1},{StatefulSets,apps/v1},{ConfigMaps,v1},{Service,v1}}
 // +kubebuilder:subresource:status

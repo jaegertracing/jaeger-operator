@@ -1,7 +1,7 @@
 package secrets
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -9,7 +9,7 @@ import (
 
 // GetToken reads the token from the given path and returns it
 func GetToken(path string) string {
-	content, err := ioutil.ReadFile(filepath.Clean(path))
+	content, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		logrus.Errorln("Something failed during reading the token:", err)
 		return ""

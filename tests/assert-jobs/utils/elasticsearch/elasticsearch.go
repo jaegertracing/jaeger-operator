@@ -6,8 +6,9 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -48,7 +49,7 @@ func (connection *EsConnection) LoadCertificate(secretPath string) error {
 		return fmt.Errorf("something failed while loading the x509 key pair: %s", err)
 	}
 
-	caCert, err := ioutil.ReadFile(filepath.Clean(caFile))
+	caCert, err := os.ReadFile(filepath.Clean(caFile))
 	if err != nil {
 		return fmt.Errorf("something failed while reading the CA file: %s", err)
 	}
@@ -241,5 +242,5 @@ func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]b
 
 	defer resp.Body.Close()
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }

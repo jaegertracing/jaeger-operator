@@ -1,6 +1,6 @@
 // Package v1 contains API Schema definitions for the jaegertracing.io v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=jaegertracing.io
+// +kubebuilder:object:generate=true
+// +groupName=jaegertracing.io
 package v1
 
 import (

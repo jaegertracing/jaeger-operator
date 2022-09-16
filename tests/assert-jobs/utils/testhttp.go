@@ -3,7 +3,7 @@ package utils
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -69,7 +69,7 @@ func TestGetHTTP(url string, params *TestParams, testFn func(response *http.Resp
 			return false, nil
 		}
 
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if len(body) == 0 {
 			failed = true
 			err = fmt.Errorf("empty body response")
