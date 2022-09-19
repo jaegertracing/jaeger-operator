@@ -4,6 +4,7 @@ import (
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -321,6 +322,9 @@ type JaegerIngressSpec struct {
 	// +optional
 	// +listType=atomic
 	Hosts []string `json:"hosts,omitempty"`
+
+	// +optional
+	PathType networkingv1.PathType `json:"pathType,omitempty"`
 
 	// +optional
 	// +listType=atomic
