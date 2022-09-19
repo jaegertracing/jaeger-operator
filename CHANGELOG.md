@@ -3,10 +3,11 @@ Changes by Version
 
 1.38.0 (2022-09-19)
 -------------------
-* Set alias enable variable for spark cronjob ([#2061](https://github.com/jaegertracing/jaeger-operator/pull/2061), [@miyunari](https://github.com/miyunari))
-* Migrate autoscaling v2beta2 to v2 for Kubernetes 1.26 ([#2055](https://github.com/jaegertracing/jaeger-operator/pull/2055), [@iblancasa](https://github.com/iblancasa))
-* Add container security context support ([#2033](https://github.com/jaegertracing/jaeger-operator/pull/2033), [@mjnagel](https://github.com/mjnagel))
-* Change verbosity level and message of the log for autoprovisioned kafka ([#2026](https://github.com/jaegertracing/jaeger-operator/pull/2026), [@iblancasa](https://github.com/iblancasa))
+* added pathType to ingress ([#2066](https://github.com/jaegertracing/jaeger-operator/pull/2066), [@giautm](https://github.com/giautm))
+* set alias enable variable for spark cronjob ([#2061](https://github.com/jaegertracing/jaeger-operator/pull/2061), [@miyunari](https://github.com/miyunari))
+* migrate autoscaling v2beta2 to v2 for Kubernetes 1.26 ([#2055](https://github.com/jaegertracing/jaeger-operator/pull/2055), [@iblancasa](https://github.com/iblancasa))
+* add container security context support ([#2033](https://github.com/jaegertracing/jaeger-operator/pull/2033), [@mjnagel](https://github.com/mjnagel))
+* change verbosity level and message of the log for autoprovisioned kafka ([#2026](https://github.com/jaegertracing/jaeger-operator/pull/2026), [@iblancasa](https://github.com/iblancasa))
 
 1.37.0 (2022-08-11)
 -------------------
