@@ -87,8 +87,12 @@ func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *net
 		path = queryBasePath
 	}
 
+	pathType := networkingv1.PathTypeImplementationSpecific
+	if pt := i.jaeger.Spec.Ingress.PathType; pt != "" {
+		pathType = networkingv1.PathType(pt)
+	}
 	if len(i.jaeger.Spec.Ingress.Hosts) > 0 || path != "" {
-		spec.Rules = append(spec.Rules, getRules(path, i.jaeger.Spec.Ingress.Hosts, backend)...)
+		spec.Rules = append(spec.Rules, getRules(path, &pathType, i.jaeger.Spec.Ingress.Hosts, backend)...)
 	} else {
 		// no hosts and no custom path -> fall back to a single service Ingress
 		spec.DefaultBackend = backend
@@ -118,26 +122,25 @@ func (i *QueryIngress) addTLSSpec(spec *networkingv1.IngressSpec) {
 	}
 }
 
-func getRules(path string, hosts []string, backend *networkingv1.IngressBackend) []networkingv1.IngressRule {
+func getRules(path string, pathType *networkingv1.PathType, hosts []string, backend *networkingv1.IngressBackend) []networkingv1.IngressRule {
 	if len(hosts) > 0 {
 		rules := make([]networkingv1.IngressRule, len(hosts))
 		for i, host := range hosts {
-			rule := getRule(host, path, backend)
+			rule := getRule(host, path, pathType, backend)
 			rules[i] = rule
 		}
 		return rules
 	}
-	return []networkingv1.IngressRule{getRule("", path, backend)}
+	return []networkingv1.IngressRule{getRule("", path, pathType, backend)}
 }
 
-func getRule(host string, path string, backend *networkingv1.IngressBackend) networkingv1.IngressRule {
-	pathType := networkingv1.PathTypeImplementationSpecific
+func getRule(host string, path string, pathType *networkingv1.PathType, backend *networkingv1.IngressBackend) networkingv1.IngressRule {
 	rule := networkingv1.IngressRule{}
 	rule.Host = host
 	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
 		Paths: []networkingv1.HTTPIngressPath{
 			{
-				PathType: &pathType,
+				PathType: pathType,
 				Path:     path,
 				Backend:  *backend,
 			},

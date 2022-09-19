@@ -6699,6 +6699,8 @@ spec:
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  pathType:
+                    type: string
                   resources:
                     nullable: true
                     properties:

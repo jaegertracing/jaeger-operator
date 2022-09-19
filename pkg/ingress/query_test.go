@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
+	networkingv1 "k8s.io/api/networking/v1"
+
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
@@ -140,6 +142,29 @@ func TestQueryIngressWithHosts(t *testing.T) {
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
 	assert.Empty(t, dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Equal(t, networkingv1.PathType("ImplementationSpecific"), *dep.Spec.Rules[0].HTTP.Paths[0].PathType)
+	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
+	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+}
+
+func TestQueryIngressWithPathType(t *testing.T) {
+	enabled := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithHosts"})
+	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Ingress.PathType = networkingv1.PathType("Prefix")
+	jaeger.Spec.Ingress.Hosts = []string{"test-host-1"}
+
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
+	assert.Nil(t, dep.Spec.DefaultBackend)
+	assert.Len(t, dep.Spec.Rules, 1)
+
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
+	assert.Empty(t, dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Equal(t, networkingv1.PathType("Prefix"), *dep.Spec.Rules[0].HTTP.Paths[0].PathType)
 	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
