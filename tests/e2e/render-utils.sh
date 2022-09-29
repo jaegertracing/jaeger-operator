@@ -866,6 +866,17 @@ if [ ! -z "$output" ]; then
     IS_OPENSHIFT=true
 fi
 
+export KAFKA_USE_CUSTOM_PODSET
+if [ -z "$KAFKA_VERSION" ]; then
+    KAFKA_USE_CUSTOM_PODSET=false
+else
+    if version_gt $KAFKA_VERSION "0.25.0"; then
+        KAFKA_USE_CUSTOM_PODSET=true
+    else
+        KAFKA_USE_CUSTOM_PODSET=false
+    fi
+fi
+
 export IS_OPENSHIFT
 
 # Important folders

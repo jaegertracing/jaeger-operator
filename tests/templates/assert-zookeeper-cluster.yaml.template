@@ -1,7 +1,16 @@
 # Assert the Zookeeper StrimziPodSet is up and running
+{{if eq .Env.KAFKA_USE_CUSTOM_PODSET "true" }}
 apiVersion: core.strimzi.io/v1beta2
 kind: StrimziPodSet
+{{else}}
+apiVersion: apps/v1
+kind: StatefulSet
+{{end}}
 metadata:
   name: {{ .Env.CLUSTER_NAME }}-zookeeper
 status:
+{{if eq .Env.KAFKA_USE_CUSTOM_PODSET "true" }}
   readyPods: {{ .Env.REPLICAS }}
+{{else}}
+  availableReplicas: 1
+{{end}}
