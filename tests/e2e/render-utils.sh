@@ -867,14 +867,10 @@ if [ ! -z "$output" ]; then
 fi
 
 export KAFKA_USE_CUSTOM_PODSET
-if [ -z "$KAFKA_VERSION" ]; then
+if [ -z "$KAFKA_VERSION" ] || version_le $KAFKA_VERSION "0.25.0" ; then
     KAFKA_USE_CUSTOM_PODSET=false
 else
-    if version_gt $KAFKA_VERSION "0.25.0"; then
-        KAFKA_USE_CUSTOM_PODSET=true
-    else
-        KAFKA_USE_CUSTOM_PODSET=false
-    fi
+    KAFKA_USE_CUSTOM_PODSET=true
 fi
 
 export IS_OPENSHIFT
