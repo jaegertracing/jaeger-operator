@@ -207,8 +207,10 @@ func (ed *ElasticsearchDeployment) Elasticsearch() *esv1.Elasticsearch {
 }
 
 func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
+	var nodes []esv1.ElasticsearchNode
+
 	if es.NodeCount <= 3 {
-		return []esv1.ElasticsearchNode{
+		nodes = []esv1.ElasticsearchNode{
 			{
 				NodeCount:    es.NodeCount,
 				Storage:      es.Storage,
@@ -217,24 +219,33 @@ func getNodes(uuid string, es v1.ElasticsearchSpec) []esv1.ElasticsearchNode {
 				GenUUID:      &uuid,
 			},
 		}
+	} else {
+		genuuidmaster := uuid + "master"
+		nodes = []esv1.ElasticsearchNode{
+			{
+				NodeCount:    3,
+				Storage:      es.Storage,
+				NodeSelector: es.NodeSelector,
+				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+				GenUUID:      &genuuidmaster,
+			},
+			{
+				NodeCount:    es.NodeCount - 3,
+				Storage:      es.Storage,
+				NodeSelector: es.NodeSelector,
+				Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+				GenUUID:      &uuid,
+			},
+		}
 	}
-	genuuidmaster := uuid + "master"
-	return []esv1.ElasticsearchNode{
-		{
-			NodeCount:    3,
-			Storage:      es.Storage,
-			NodeSelector: es.NodeSelector,
-			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
-			GenUUID:      &genuuidmaster,
-		},
-		{
-			NodeCount:    es.NodeCount - 3,
-			Storage:      es.Storage,
-			NodeSelector: es.NodeSelector,
-			Roles:        []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
-			GenUUID:      &uuid,
-		},
+
+	if es.ProxyResources != nil {
+		for index := range nodes {
+			nodes[index].ProxyResources = *es.ProxyResources
+		}
 	}
+
+	return nodes
 }
 
 // taken from https://github.com/openshift/cluster-logging-operator/blob/1ead6701c7c7af9c0578aa66597261079b2781d5/vendor/github.com/openshift/elasticsearch-operator/pkg/k8shandler/defaults.go#L33
