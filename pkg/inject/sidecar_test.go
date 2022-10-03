@@ -284,6 +284,23 @@ func TestSidecarDefaultPorts(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Ports, corev1.ContainerPort{ContainerPort: 14271, Name: "admin-http"})
 }
 
+func TestSidecarProbes(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	dep := dep(map[string]string{}, map[string]string{"app": "testapp"})
+
+	// test
+	dep = Sidecar(jaeger, dep)
+
+	// verify
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
+
+	assert.Len(t, dep.Spec.Template.Spec.Containers[1].Ports, 5)
+	assert.NotNil(t, dep.Spec.Template.Spec.Containers[1].LivenessProbe)
+	assert.NotNil(t, dep.Spec.Template.Spec.Containers[1].ReadinessProbe)
+}
+
 func TestSkipInjectSidecar(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
