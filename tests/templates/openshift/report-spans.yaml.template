@@ -5,5 +5,5 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
   - script: "SERVICE_ACCOUNT_NAME={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GET_TOKEN_PROGRAM }} $NAMESPACE {{ .Env.JAEGER_NAME }} /dev/null"
-  - script: "DAYS={{ .Env.DAYS }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} {{if getenv "JAEGER_QUERY_ENDPOINT"}}JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }} MOUNT_SECRET={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/report-spans.yaml.template -o report-span-{{ .Env.JOB_NUMBER }}-job.yaml"
+  - script: "DAYS={{ .Env.DAYS }} ASSERT_IMG={{ .Env.ASSERT_IMG }} {{if getenv "JOB_NUMBER"}}JOB_NUMBER={{ .Env.JOB_NUMBER }}{{end}} JAEGER_COLLECTOR_ENDPOINT={{ .Env.JAEGER_COLLECTOR_ENDPOINT }} {{if getenv "JAEGER_QUERY_ENDPOINT"}}JAEGER_QUERY_ENDPOINT={{ .Env.JAEGER_QUERY_ENDPOINT }}{{end}} MOUNT_SECRET={{ .Env.SERVICE_ACCOUNT_NAME }} {{ .Env.GOMPLATE }} -f {{ .Env.TEMPLATES_DIR }}/report-spans.yaml.template -o report-span-{{ .Env.JOB_NUMBER }}-job.yaml"
   - script: "kubectl apply -f report-span{{if getenv "JOB_NUMBER"}}-{{ .Env.JOB_NUMBER }}{{end}}-job.yaml -n $NAMESPACE"
