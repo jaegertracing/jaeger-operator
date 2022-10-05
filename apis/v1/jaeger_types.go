@@ -594,6 +594,9 @@ type ElasticsearchSpec struct {
 	// +optional
 	// +listType=atomic
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
+	// +optional
+	ProxyResources *v1.ResourceRequirements `json:"proxyResources,omitempty"`
 }
 
 // JaegerCassandraCreateSchemaSpec holds the options related to the create-schema batch job

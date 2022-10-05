@@ -7,6 +7,7 @@ import (
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -21,6 +22,7 @@ func TestCreateElasticsearchCR(t *testing.T) {
 	genuuid2 := "myprojectfoobar"
 	genuuidmaster2 := "myprojectfoobarmaster"
 	genuuid3 := "mytolerableprojecttolerations"
+	genuuid4 := "proxyresourcesproxyresources"
 
 	toleration := corev1.Toleration{
 		Key:      "special",
@@ -205,6 +207,49 @@ func TestCreateElasticsearchCR(t *testing.T) {
 							Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
 							Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
 							GenUUID:   &genuuid3,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "proxy resources",
+			namespace: "proxyresources",
+			jEsSpec: v1.ElasticsearchSpec{
+				Name:             "elasticsearch",
+				NodeCount:        2,
+				RedundancyPolicy: esv1.FullRedundancy,
+				ProxyResources: &corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("4000"),
+						corev1.ResourceMemory: resource.MustParse("10Gi"),
+					},
+				},
+				Storage: esv1.ElasticsearchStorageSpec{
+					StorageClassName: &storageClassName,
+				},
+			},
+			es: esv1.Elasticsearch{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "elasticsearch",
+					Namespace:   "proxyresources",
+					Annotations: map[string]string{},
+				},
+				Spec: esv1.ElasticsearchSpec{
+					ManagementState:  esv1.ManagementStateManaged,
+					RedundancyPolicy: esv1.FullRedundancy,
+					Nodes: []esv1.ElasticsearchNode{
+						{
+							NodeCount: 2,
+							Storage:   esv1.ElasticsearchStorageSpec{StorageClassName: &storageClassName},
+							Roles:     []esv1.ElasticsearchNodeRole{esv1.ElasticsearchRoleMaster, esv1.ElasticsearchRoleClient, esv1.ElasticsearchRoleData},
+							GenUUID:   &genuuid4,
+							ProxyResources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("4000"),
+									corev1.ResourceMemory: resource.MustParse("10Gi"),
+								},
+							},
 						},
 					},
 				},
