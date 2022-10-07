@@ -32,7 +32,7 @@ require (
 	go.opentelemetry.io/otel/trace v0.20.0
 	go.uber.org/zap v1.23.0
 	gomodules.xyz/jsonpatch/v2 v2.2.0
-	google.golang.org/grpc v1.49.0
+	google.golang.org/grpc v1.50.0
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
 	k8s.io/client-go v0.25.2
