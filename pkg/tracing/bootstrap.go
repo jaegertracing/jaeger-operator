@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -55,7 +55,7 @@ func buildSpanProcessor() error {
 		)
 	}
 
-	jexporter, err := jaeger.NewRawExporter(endpoint)
+	jexporter, err := jaeger.New(endpoint)
 	if err != nil {
 		return err
 	}
@@ -65,21 +65,21 @@ func buildSpanProcessor() error {
 
 func buildJaegerExporter(ctx context.Context, namespace string, instanceID string) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "buildJaegerExporter") // nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx, "buildJaegerExporter") // nolint:ineffassign,staticcheck
 	defer span.End()
+
 	attr := []attribute.KeyValue{
 		semconv.ServiceNameKey.String("jaeger-operator"),
 		semconv.ServiceVersionKey.String(version.Get().Operator),
 		semconv.ServiceNamespaceKey.String(namespace),
 	}
-
 	if instanceID != "" {
 		attr = append(attr, semconv.ServiceInstanceIDKey.String(instanceID))
 	}
 	if processor != nil {
 		traceProvider := tracesdk.NewTracerProvider(
 			tracesdk.WithSpanProcessor(processor),
-			tracesdk.WithResource(resource.NewWithAttributes(attr...)),
+			tracesdk.WithResource(resource.NewWithAttributes(semconv.SchemaURL, attr...)),
 		)
 		otel.SetTracerProvider(traceProvider)
 	}

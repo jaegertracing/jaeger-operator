@@ -3,17 +3,10 @@ package metrics
 import (
 	"context"
 
-	prometheusclient "github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
-	export "go.opentelemetry.io/otel/sdk/export/metric"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
-	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
@@ -30,28 +23,17 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 	defer span.End()
 	tracing.SetInstanceID(ctx, namespace)
 
-	config := prometheus.Config{
-		Registry: metrics.Registry.(*prometheusclient.Registry),
-	}
-	c := controller.New(
-		processor.New(
-			selector.NewWithHistogramDistribution(
-				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
-			),
-			export.CumulativeExportKindSelector(),
-			processor.WithMemory(true),
-		),
-		controller.WithResource(resource.NewWithAttributes([]attribute.KeyValue{}...)),
-	)
-	exporter, err := prometheus.NewExporter(config, c)
-	if err != nil {
+	exporter := prometheus.New()
+	if err := metrics.Registry.Register(exporter.Collector); err != nil {
 		return tracing.HandleError(err, span)
 	}
 
-	global.SetMeterProvider(exporter.MeterProvider())
+	provider := metric.NewMeterProvider(metric.WithReader(exporter))
+
+	global.SetMeterProvider(provider)
 
 	// Create metrics
 	instancesObservedValue := newInstancesMetric(client)
-	err = instancesObservedValue.Setup(ctx)
+	err := instancesObservedValue.Setup(ctx)
 	return tracing.HandleError(err, span)
 }

@@ -16,16 +16,13 @@ import (
 	"github.com/spf13/viper"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
-	"go.opentelemetry.io/otel/exporters/otlp/otlphttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
 
 const (
@@ -92,74 +89,42 @@ func initProvider(serviceName string) func() {
 
 	logrus.Debugln("Using", reportingProtocol, "to report the traces")
 
-	var driver otlp.ProtocolDriver
-
+	var exp *otlptrace.Exporter
+	var err error
 	switch reportingProtocol {
 	case "grpc":
-		driver = otlpgrpc.NewDriver(
-			otlpgrpc.WithInsecure(),
-			otlpgrpc.WithEndpoint(collector),
-			otlpgrpc.WithDialOption(grpc.WithBlock()),
+		exp, err = otlptracegrpc.New(ctx,
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(collector),
+			otlptracegrpc.WithDialOption(grpc.WithBlock()),
 		)
 	case "http":
-		driver = otlphttp.NewDriver(
-			otlphttp.WithInsecure(),
-			otlphttp.WithEndpoint(collector),
+		exp, err = otlptracehttp.New(ctx,
+			otlptracehttp.WithInsecure(),
+			otlptracehttp.WithEndpoint(collector),
 		)
 	default:
 		logrus.Fatalln("Reporting protocol", reportingProtocol, "not recognized")
 	}
 
-	exp, err := otlp.NewExporter(ctx, driver)
 	if err != nil {
-		logrus.Fatalln("error creating the exporter", err)
+		logrus.Fatalln("error creating", reportingProtocol, "exporter", err)
 	}
 
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String(serviceName),
-		),
-	)
-	if err != nil {
-		logrus.Fatalln("error creating the resource", err)
-	}
-
-	bsp := sdktrace.NewBatchSpanProcessor(exp)
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(bsp),
-	)
-
-	cont := controller.New(
-		processor.New(
-			simple.NewWithExactDistribution(),
-			exp,
-		),
-		controller.WithExporter(exp),
-		controller.WithCollectPeriod(2*time.Second),
+		sdktrace.WithResource(resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceNameKey.String(serviceName))),
+		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exp)),
 	)
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	otel.SetTracerProvider(tracerProvider)
 
-	err = cont.Start(context.Background())
-	if err != nil {
-		logrus.Fatalln("error while starting the controller", err)
-	}
-
 	// This function should be called when the tracing features will not be
 	// used anymore
 	return func() {
-		err1 := cont.Stop(context.Background())
-		err2 := tracerProvider.Shutdown(ctx)
-
-		// The errors are checked later to try to run all the "closing" tasks
-		if err1 != nil {
-			logrus.Fatalln("failed while stopping the controller", err1)
-		}
-		if err2 != nil {
-			logrus.Fatalln("failed to shutting down the tracer provider", err2)
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			logrus.Fatalln("failed to shutting down the tracer provider", err)
 		}
 	}
 }
