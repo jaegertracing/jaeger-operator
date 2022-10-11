@@ -12,5 +12,5 @@ status:
 {{if eq .Env.KAFKA_USE_CUSTOM_PODSET "true" }}
   readyPods: {{ .Env.REPLICAS }}
 {{else}}
-  availableReplicas: 1
+  availableReplicas: {{ .Env.REPLICAS }}
 {{end}}
