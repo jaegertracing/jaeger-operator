@@ -2,8 +2,8 @@ package storage
 
 import (
 	"fmt"
-	"time"
 	"strings"
+	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +46,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	}}
 
 	servers := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
-	host    := strings.Split(servers,",")[0]  //  <- choose first server address 
+	host := strings.Split(servers, ",")[0] //  <- choose first server address
 	if host == "" {
 		jaeger.Logger().Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
