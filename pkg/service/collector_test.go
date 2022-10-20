@@ -66,13 +66,13 @@ func TestCollectorGRPCPortName(t *testing.T) {
 		{
 			"nil",
 			nil,
-			"grpc-http",
+			"grpc-jaeger",
 			false, // in openshift?
 		},
 		{
 			"no-tls",
 			&v1.Jaeger{},
-			"grpc-http",
+			"grpc-jaeger",
 			false, // in openshift?
 		},
 		{
@@ -84,7 +84,7 @@ func TestCollectorGRPCPortName(t *testing.T) {
 					},
 				},
 			},
-			"grpc-http",
+			"grpc-jaeger",
 			false, // in openshift?
 		},
 		{
@@ -96,7 +96,7 @@ func TestCollectorGRPCPortName(t *testing.T) {
 					},
 				},
 			},
-			"grpc-http",
+			"grpc-jaeger",
 			false, // in openshift?
 		},
 		{
@@ -108,13 +108,13 @@ func TestCollectorGRPCPortName(t *testing.T) {
 					},
 				},
 			},
-			"grpc-https",
+			"tls-grpc-jaeger",
 			false, // in openshift?
 		},
 		{
 			"in-openshift",
 			&v1.Jaeger{},
-			"grpc-https",
+			"tls-grpc-jaeger",
 			true, // in openshift?
 		},
 	} {
