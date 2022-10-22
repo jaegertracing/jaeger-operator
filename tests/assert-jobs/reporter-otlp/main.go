@@ -61,29 +61,10 @@ func initCmd() error {
 	return err
 }
 
-// Get the endpoint where the collector is listening
-func getCollector() string {
-	reportingProtocol := viper.GetString(flagReportingProtocol)
-	jaegerEndpoint := viper.GetString(otlpExporterEndpoint)
-
-	var endpoint string
-	switch reportingProtocol {
-	case "grpc":
-		endpoint = fmt.Sprintf("%s:4317", jaegerEndpoint)
-	case "http":
-		endpoint = fmt.Sprintf("%s:4318", jaegerEndpoint)
-	default:
-		logrus.Fatalln("Reporting protocol", reportingProtocol, "not recognized")
-	}
-	return endpoint
-}
-
 // Initializes an OTLP exporter and configure the traces provider
 func initProvider(serviceName string) func() {
 	logrus.Debugln("Initializing the OTLP exporter")
 	ctx := context.Background()
-
-	collector := getCollector()
 
 	reportingProtocol := viper.GetString(flagReportingProtocol)
 
@@ -93,16 +74,9 @@ func initProvider(serviceName string) func() {
 	var err error
 	switch reportingProtocol {
 	case "grpc":
-		exp, err = otlptracegrpc.New(ctx,
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(collector),
-			otlptracegrpc.WithDialOption(grpc.WithBlock()),
-		)
+		exp, err = otlptracegrpc.New(ctx, otlptracegrpc.WithDialOption(grpc.WithBlock()))
 	case "http":
-		exp, err = otlptracehttp.New(ctx,
-			otlptracehttp.WithInsecure(),
-			otlptracehttp.WithEndpoint(collector),
-		)
+		exp, err = otlptracehttp.New(ctx)
 	default:
 		logrus.Fatalln("Reporting protocol", reportingProtocol, "not recognized")
 	}
@@ -145,10 +119,9 @@ func generateSubSpans(ctx context.Context, depth int) {
 }
 
 // Generate some traces
-// jaegerEnpoint: where Jaeger endpoint is located
 // serviceName: service to use for the span
 // operationName: operation described in the span
-func generateTraces(jaegerEndpoint string, serviceName string, operationName string) {
+func generateTraces(serviceName string, operationName string) {
 	logrus.Debugln("Trying to generate traces")
 	shutdown := initProvider(serviceName)
 	defer shutdown()
@@ -186,8 +159,8 @@ func main() {
 		// To avoid creating all the files for gRPC, we just wait some time
 		time.Sleep(time.Second * 5)
 	case "http":
-		err = utils.WaitUntilRestAPIAvailable(fmt.Sprintf("http://%s", getCollector()))
-		if err != nil {
+		jaegerEndpoint := viper.GetString(otlpExporterEndpoint)
+		if err := utils.WaitUntilRestAPIAvailable(jaegerEndpoint); err != nil {
 			logrus.Fatalln(err)
 		}
 	default:
@@ -195,7 +168,6 @@ func main() {
 	}
 
 	generateTraces(
-		viper.GetString(otlpExporterEndpoint),
 		viper.GetString(flagJaegerServiceName),
 		viper.GetString(flagJaegerOperationName),
 	)

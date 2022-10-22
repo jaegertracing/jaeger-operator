@@ -90,8 +90,14 @@ function render_otlp_smoke_test() {
         template="$TEMPLATES_DIR/otlp-smoke-test.yaml.template"
     fi
 
+    if [ "$reporting_protocol" = "grpc" ]; then
+        reporting_port=":4317"
+    else
+        reporting_port=":4318"
+    fi
+
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
-    export OTEL_EXPORTER_OTLP_ENDPOINT="$jaeger-collector-headless"
+    export OTEL_EXPORTER_OTLP_ENDPOINT="$protocol$jaeger-collector-headless$reporting_port"
     export JAEGER_NAME=$jaeger
 
     REPORTING_PROTOCOL=$reporting_protocol $GOMPLATE -f $template -o ./$test_step-smoke-test.yaml
