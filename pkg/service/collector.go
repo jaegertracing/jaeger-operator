@@ -96,17 +96,22 @@ func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
 }
 
-// GetPortNameForGRPC returns the port name for 'grpc'. It may either be http-grpc or https-grpc, based on whether
+// GetPortNameForGRPC returns the port name for 'grpc'. It may either be
+// tls-grpc-jaeger (secure) or grpc-jaeger (insecure), based on whether
 // TLS is enabled for the agent-collector gRPC communication
 func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
+	const (
+		protoSecure   = "tls-grpc-jaeger"
+		protoInsecure = "grpc-jaeger"
+	)
 	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
 		// we always have TLS certs when running on OpenShift, so, TLS is always enabled
-		return "grpc-https"
+		return protoSecure
 	}
 
 	// if we don't have a jaeger provided, it's certainly not TLS...
 	if nil == jaeger {
-		return "grpc-http"
+		return protoInsecure
 	}
 
 	// perhaps the user has provisioned the certs and configured the CR manually?
@@ -114,18 +119,18 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 	if val, ok := jaeger.Spec.Collector.Options.StringMap()["collector.grpc.tls.enabled"]; ok {
 		enabled, err := strconv.ParseBool(val)
 		if err != nil {
-			return "grpc-http" // not "true", defaults to false
+			return protoInsecure // not "true", defaults to false
 		}
 
 		if enabled {
-			return "grpc-https" // explicit true
+			return protoSecure // explicit true
 		}
 
-		return "grpc-http" // explicit false
+		return protoInsecure // explicit false
 	}
 
 	// doesn't look like we have TLS enabled
-	return "grpc-http"
+	return protoInsecure
 }
 
 func getTypeForCollectorService(jaeger *v1.Jaeger) corev1.ServiceType {
