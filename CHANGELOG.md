@@ -2,6 +2,10 @@ Changes by Version
 ==================
 
 
+1.39.0 (2022-11-03)
+-------------------
+* Fix: svc port doesnt match istio convention ([#2101](https://github.com/jaegertracing/jaeger-operator/pull/2101), [@frzifus](https://github.com/frzifus))
+
 1.38.1 (2022-10-11)
 -------------------
 * Add ability to specify es proxy resources ([#2079](https://github.com/jaegertracing/jaeger-operator/pull/2079), [@rubenvp8510](https://github.com/rubenvp8510))
