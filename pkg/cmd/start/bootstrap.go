@@ -2,6 +2,7 @@ package start
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -51,6 +52,10 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
+
+// We should avoid that users unknowingly use a vulnerable TLS version.
+// The defaults should be a safe configuration.
+const defaultMinTLSVersion = tls.VersionTLS12
 
 var (
 	scheme   = k8sruntime.NewScheme()
@@ -320,10 +325,16 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	leaseDuration := time.Second * 137
 	renewDeadline := time.Second * 107
 	retryPeriod := time.Second * 26
+
+	optionsTlSOptsFuncs := []func(*tls.Config){
+		func(config *tls.Config) { minTlsDefault(config) },
+	}
+
 	options := ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   webhookPort,
+		TLSOpts:                optionsTlSOptsFuncs,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
@@ -433,4 +444,8 @@ func getNamespace(ctx context.Context) string {
 	}
 
 	return podNamespace
+}
+
+func minTlsDefault(cfg *tls.Config) {
+	cfg.MinVersion = defaultMinTLSVersion
 }
