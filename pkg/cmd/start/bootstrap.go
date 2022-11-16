@@ -27,6 +27,7 @@ import (
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	k8sapiflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,10 +53,6 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 )
-
-// We should avoid that users unknowingly use a vulnerable TLS version.
-// The defaults should be a safe configuration.
-const defaultMinTLSVersion = tls.VersionTLS12
 
 var (
 	scheme   = k8sruntime.NewScheme()
@@ -327,7 +324,7 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	retryPeriod := time.Second * 26
 
 	optionsTlSOptsFuncs := []func(*tls.Config){
-		func(config *tls.Config) { minTlsDefault(config) },
+		func(config *tls.Config) { TlsSetting(config) },
 	}
 
 	options := ctrl.Options{
@@ -446,6 +443,10 @@ func getNamespace(ctx context.Context) string {
 	return podNamespace
 }
 
-func minTlsDefault(cfg *tls.Config) {
-	cfg.MinVersion = defaultMinTLSVersion
+func TlsSetting(cfg *tls.Config) {
+	version, err := k8sapiflag.TLSVersion(viper.GetString("tls-min-version"))
+	if err != nil {
+		setupLog.Error(err, "TLS version invalid")
+	}
+	cfg.MinVersion = version
 }
