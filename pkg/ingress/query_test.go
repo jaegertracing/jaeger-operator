@@ -46,34 +46,52 @@ func TestQueryIngressEnabled(t *testing.T) {
 	assert.NotNil(t, dep.Spec.DefaultBackend)
 }
 
-func TestQueryIngressAllInOneBasePath(t *testing.T) {
-	enabled := true
-	name := "TestQueryIngressAllInOneBasePath"
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &enabled
-	jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
-	jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
-	ingress := NewQueryIngress(jaeger)
+func TestIngressWithPath(t *testing.T) {
+	type test struct {
+		name     string
+		strategy v1.DeploymentStrategy
+		basePath string
+	}
+	allInOne := test{name: "TestQueryIngressAllInOneBasePath", strategy: v1.DeploymentStrategyAllInOne, basePath: "/jaeger"}
+	production := test{name: "TestQueryIngressProduction", strategy: v1.DeploymentStrategyProduction, basePath: "/jaeger-production"}
+	streaming := test{name: "TestQueryIngressStreaming", strategy: v1.DeploymentStrategyStreaming, basePath: "/jaeger-streaming"}
 
-	dep := ingress.Get()
+	tests := []test{allInOne, production, streaming}
 
-	assert.NotNil(t, dep)
-	assert.Nil(t, dep.Spec.DefaultBackend)
-	assert.Len(t, dep.Spec.Rules, 1)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			enabled := true
+			jaeger := v1.NewJaeger(types.NamespacedName{Name: test.name})
+			jaeger.Spec.Ingress.Enabled = &enabled
+			jaeger.Spec.Strategy = test.strategy
+			if test.strategy == v1.DeploymentStrategyAllInOne {
+				jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"query.base-path": test.basePath})
+			} else {
+				jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": test.basePath})
+			}
 
-	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
-	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
-	assert.Empty(t, dep.Spec.Rules[0].Host)
-	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+			ingress := NewQueryIngress(jaeger)
+			dep := ingress.Get()
+
+			assert.NotNil(t, dep)
+			assert.Nil(t, dep.Spec.DefaultBackend)
+			assert.Len(t, dep.Spec.Rules, 1)
+
+			assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
+			assert.Equal(t, test.basePath, dep.Spec.Rules[0].HTTP.Paths[0].Path)
+			assert.Empty(t, dep.Spec.Rules[0].Host)
+			assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+		})
+	}
 }
 
-func TestQueryIngressQueryBasePath(t *testing.T) {
+func TestQueryIngressQueryBasePathWithStreaming(t *testing.T) {
 	enabled := true
 	name := "TestQueryIngressQueryBasePath"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
 	jaeger.Spec.Ingress.Enabled = &enabled
-	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
-	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
+	jaeger.Spec.Strategy = v1.DeploymentStrategyStreaming
+	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger-streaming"})
 	ingress := NewQueryIngress(jaeger)
 
 	dep := ingress.Get()
@@ -83,7 +101,7 @@ func TestQueryIngressQueryBasePath(t *testing.T) {
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
-	assert.Equal(t, "/jaeger", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Equal(t, "/jaeger-streaming", dep.Spec.Rules[0].HTTP.Paths[0].Path)
 	assert.Empty(t, dep.Spec.Rules[0].Host)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
