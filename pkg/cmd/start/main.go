@@ -38,6 +38,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	cmd.Flags().Int("webhook-bind-port", 9443, "The address webhooks expose.")
 	cmd.Flags().String("tls-min-version", "VersionTLS12", "Minimum TLS version supported. Value must match version names from https://golang.org/pkg/crypto/tls/#pkg-constants.")
+	cmd.Flags().StringSlice("tls-cipher-suites", nil, "Comma-separated list of cipher suites for the server. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants). If omitted, the default Go cipher suites will be used")
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 

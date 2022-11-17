@@ -59,6 +59,11 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+type tlsConfig struct {
+	minVersion   string
+	cipherSuites []string
+}
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(jaegertracingv1.AddToScheme(scheme))
@@ -318,13 +323,17 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 
+	var tlsOpt tlsConfig
+	tlsOpt.minVersion = viper.GetString("tls-min-version")
+	tlsOpt.cipherSuites = viper.GetStringSlice("tls-cipher-suites")
+
 	// see https://github.com/openshift/library-go/blob/4362aa519714a4b62b00ab8318197ba2bba51cb7/pkg/config/leaderelection/leaderelection.go#L104
 	leaseDuration := time.Second * 137
 	renewDeadline := time.Second * 107
 	retryPeriod := time.Second * 26
 
 	optionsTlSOptsFuncs := []func(*tls.Config){
-		func(config *tls.Config) { TlsSetting(config) },
+		func(config *tls.Config) { tlsConfigSetting(config, tlsOpt) },
 	}
 
 	options := ctrl.Options{
@@ -443,10 +452,16 @@ func getNamespace(ctx context.Context) string {
 	return podNamespace
 }
 
-func TlsSetting(cfg *tls.Config) {
-	version, err := k8sapiflag.TLSVersion(viper.GetString("tls-min-version"))
+func tlsConfigSetting(cfg *tls.Config, tlsOpt tlsConfig) {
+	version, err := k8sapiflag.TLSVersion(tlsOpt.minVersion)
 	if err != nil {
 		setupLog.Error(err, "TLS version invalid")
 	}
 	cfg.MinVersion = version
+
+	cipherSuiteIDs, err := k8sapiflag.TLSCipherSuites(tlsOpt.cipherSuites)
+	if err != nil {
+		setupLog.Error(err, "Failed to convert TLS cipher suite name to ID")
+	}
+	cfg.CipherSuites = cipherSuiteIDs
 }
