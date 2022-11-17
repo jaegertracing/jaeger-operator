@@ -81,10 +81,12 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *networkingv1.IngressBackend) {
 	path := ""
 
-	if i.jaeger.Spec.Strategy == v1.DeploymentStrategyAllInOne {
-		path = i.jaeger.Spec.AllInOne.Options.StringMap()["query.base-path"]
-	} else if i.jaeger.Spec.Strategy == v1.DeploymentStrategyProduction || i.jaeger.Spec.Strategy == v1.DeploymentStrategyStreaming {
-		path = i.jaeger.Spec.Query.Options.StringMap()["query.base-path"]
+	jaegerSpec := i.jaeger.Spec
+	strategy := jaegerSpec.Strategy
+	if allInOneQueryBasePath, ok := jaegerSpec.AllInOne.Options.StringMap()["query.base-path"]; ok && strategy == v1.DeploymentStrategyAllInOne {
+		path = allInOneQueryBasePath
+	} else if queryBasePath, ok := jaegerSpec.Query.Options.StringMap()["query.base-path"]; ok && strategy == v1.DeploymentStrategyProduction || strategy == v1.DeploymentStrategyStreaming {
+		path = queryBasePath
 	}
 
 	pathType := networkingv1.PathTypeImplementationSpecific
