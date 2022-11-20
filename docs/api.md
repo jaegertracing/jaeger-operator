@@ -42031,6 +42031,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstorageelasticsearchproxyresources">proxyResources</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>redundancyPolicy</b></td>
         <td>enum</td>
         <td>
@@ -42063,6 +42070,40 @@ Resource Types:
       </tr><tr>
         <td><b>useCertManagement</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.elasticsearch.proxyResources
+<sup><sup>[↩ Parent](#jaegerspecstorageelasticsearch)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>limits</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>requests</b></td>
+        <td>map[string]int or string</td>
         <td>
           <br/>
         </td>
