@@ -10,7 +10,7 @@ spec:
       nodeCount: {{ .Env.ELASTICSEARCH_NODECOUNT }}
       resources:
         requests:
-          cpu: 100m
+          cpu: 200m
           memory: 1Gi
         limits:
           memory: 1Gi
