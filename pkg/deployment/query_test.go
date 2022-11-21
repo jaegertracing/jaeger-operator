@@ -404,7 +404,7 @@ func TestQueryLivenessProbe(t *testing.T) {
 		FailureThreshold:    60,
 	}
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Collector.LivenessProbe = livenessProbe
+	jaeger.Spec.Query.LivenessProbe = livenessProbe
 	q := NewQuery(jaeger)
 	dep := q.Get()
 	assert.Equal(t, livenessProbe, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
