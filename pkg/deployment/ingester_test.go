@@ -527,7 +527,7 @@ func TestIngesterLivenessProbe(t *testing.T) {
 		FailureThreshold:    60,
 	}
 	jaeger := newIngesterJaeger("my-instance")
-	jaeger.Spec.Collector.LivenessProbe = livenessProbe
+	jaeger.Spec.Ingester.LivenessProbe = livenessProbe
 	i := NewIngester(jaeger)
 	dep := i.Get()
 	assert.Equal(t, livenessProbe, dep.Spec.Template.Spec.Containers[0].LivenessProbe)
