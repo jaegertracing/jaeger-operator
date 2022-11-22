@@ -2,6 +2,7 @@ package start
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,7 @@ import (
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	k8sapiflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,6 +58,11 @@ var (
 	scheme   = k8sruntime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+type tlsConfig struct {
+	minVersion   string
+	cipherSuites []string
+}
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -316,14 +323,24 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 
 	namespace := viper.GetString(v1.ConfigWatchNamespace)
 
+	var tlsOpt tlsConfig
+	tlsOpt.minVersion = viper.GetString("tls-min-version")
+	tlsOpt.cipherSuites = viper.GetStringSlice("tls-cipher-suites")
+
 	// see https://github.com/openshift/library-go/blob/4362aa519714a4b62b00ab8318197ba2bba51cb7/pkg/config/leaderelection/leaderelection.go#L104
 	leaseDuration := time.Second * 137
 	renewDeadline := time.Second * 107
 	retryPeriod := time.Second * 26
+
+	optionsTlSOptsFuncs := []func(*tls.Config){
+		func(config *tls.Config) { tlsConfigSetting(config, tlsOpt) },
+	}
+
 	options := ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   webhookPort,
+		TLSOpts:                optionsTlSOptsFuncs,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
@@ -433,4 +450,18 @@ func getNamespace(ctx context.Context) string {
 	}
 
 	return podNamespace
+}
+
+func tlsConfigSetting(cfg *tls.Config, tlsOpt tlsConfig) {
+	version, err := k8sapiflag.TLSVersion(tlsOpt.minVersion)
+	if err != nil {
+		setupLog.Error(err, "TLS version invalid")
+	}
+	cfg.MinVersion = version
+
+	cipherSuiteIDs, err := k8sapiflag.TLSCipherSuites(tlsOpt.cipherSuites)
+	if err != nil {
+		setupLog.Error(err, "Failed to convert TLS cipher suite name to ID")
+	}
+	cfg.CipherSuites = cipherSuiteIDs
 }
