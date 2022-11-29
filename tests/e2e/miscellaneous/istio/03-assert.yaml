@@ -7,3 +7,65 @@ spec:
     - name: myapp
     - name: jaeger-agent
     - name: istio-proxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simplest-collector-headless
+spec:
+  ports:
+  - name: http-zipkin
+    port: 9411
+    protocol: TCP
+    targetPort: 9411
+  - name: grpc-jaeger
+    port: 14250
+    protocol: TCP
+    targetPort: 14250
+  - name: http-c-tchan-trft
+    port: 14267
+    protocol: TCP
+    targetPort: 14267
+  - name: http-c-binary-trft
+    port: 14268
+    protocol: TCP
+    targetPort: 14268
+  - name: grpc-otlp
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
+  - name: http-otlp
+    port: 4318
+    protocol: TCP
+    targetPort: 4318
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simplest-collector
+spec:
+  ports:
+  - name: http-zipkin
+    port: 9411
+    protocol: TCP
+    targetPort: 9411
+  - name: grpc-jaeger
+    port: 14250
+    protocol: TCP
+    targetPort: 14250
+  - name: http-c-tchan-trft
+    port: 14267
+    protocol: TCP
+    targetPort: 14267
+  - name: http-c-binary-trft
+    port: 14268
+    protocol: TCP
+    targetPort: 14268
+  - name: grpc-otlp
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
+  - name: http-otlp
+    port: 4318
+    protocol: TCP
+    targetPort: 4318

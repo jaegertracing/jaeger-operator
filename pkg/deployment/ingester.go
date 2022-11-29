@@ -115,8 +115,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		FailureThreshold:    5,
 	}
 
-	if i.jaeger.Spec.Collector.LivenessProbe != nil {
-		livenessProbe = i.jaeger.Spec.Collector.LivenessProbe
+	if i.jaeger.Spec.Ingester.LivenessProbe != nil {
+		livenessProbe = i.jaeger.Spec.Ingester.LivenessProbe
 	}
 
 	return &appsv1.Deployment{

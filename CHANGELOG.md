@@ -1,6 +1,18 @@
 Changes by Version
 ==================
 
+
+1.39.0 (2022-11-03)
+-------------------
+* Fix: svc port doesnt match istio convention ([#2101](https://github.com/jaegertracing/jaeger-operator/pull/2101), [@frzifus](https://github.com/frzifus))
+
+1.38.1 (2022-10-11)
+-------------------
+* Add ability to specify es proxy resources ([#2079](https://github.com/jaegertracing/jaeger-operator/pull/2079), [@rubenvp8510](https://github.com/rubenvp8510))
+* Fix: CVE-2022-27664 ([#2081](https://github.com/jaegertracing/jaeger-operator/pull/2081), [@albertlockett](https://github.com/albertlockett))
+* Add liveness and readiness probes to injected sidecar ([#2077](https://github.com/jaegertracing/jaeger-operator/pull/2077), [@MacroPower](https://github.com/MacroPower))
+* Add http- port prefix to follow istio naming conventions ([#2075](https://github.com/jaegertracing/jaeger-operator/pull/2075), [@cnvergence](https://github.com/cnvergence))
+
 1.38.0 (2022-09-19)
 -------------------
 * added pathType to ingress ([#2066](https://github.com/jaegertracing/jaeger-operator/pull/2066), [@giautm](https://github.com/giautm))

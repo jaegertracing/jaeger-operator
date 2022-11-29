@@ -111,8 +111,8 @@ func (q *Query) Get() *appsv1.Deployment {
 		FailureThreshold:    5,
 	}
 
-	if q.jaeger.Spec.Collector.LivenessProbe != nil {
-		livenessProbe = q.jaeger.Spec.Collector.LivenessProbe
+	if q.jaeger.Spec.Query.LivenessProbe != nil {
+		livenessProbe = q.jaeger.Spec.Query.LivenessProbe
 	}
 
 	return &appsv1.Deployment{
