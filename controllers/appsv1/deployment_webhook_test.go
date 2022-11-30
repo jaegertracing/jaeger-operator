@@ -166,6 +166,7 @@ func TestReconcilieDeployment(t *testing.T) {
 		resp         admission.Response
 		errors       errorGroup
 		emptyRequest bool
+		watch_ns     string
 	}{
 		{
 			desc: "no content to decode",
@@ -351,10 +352,36 @@ func TestReconcilieDeployment(t *testing.T) {
 			},
 			jaeger: &v1.Jaeger{},
 		},
+		{
+			desc: "should not touch deployment on other namespaces != watch_namespaces",
+			dep: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        namespacedName.Name,
+					Namespace:   namespacedName.Namespace,
+					Annotations: map[string]string{},
+					Labels: map[string]string{
+						"app": "not jaeger",
+					},
+				},
+				Spec: appsv1.DeploymentSpec{},
+			},
+			resp: admission.Response{
+				AdmissionResponse: admissionv1.AdmissionResponse{
+					Allowed: true,
+					Result: &metav1.Status{
+						Reason: "not watching in namespace, we do not touch the deployment",
+						Code:   200,
+					},
+				},
+			},
+			watch_ns: "my-other-ns",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			viper.Set(v1.ConfigWatchNamespace, tc.watch_ns)
+			defer viper.Reset()
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: namespacedName.Namespace,
