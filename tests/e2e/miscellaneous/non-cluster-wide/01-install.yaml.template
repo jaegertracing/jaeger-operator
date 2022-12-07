@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
+  # observability namespace. To run this test, we modify that
+  # deployment to watch only in certain namespaces
+  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy && cd config/default && kustomize edit set namespace $NAMESPACE && cd ../.. && kustomize build config/namespaced | kubectl apply -f - -n $NAMESPACE"

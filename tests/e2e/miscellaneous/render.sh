@@ -113,3 +113,9 @@ render_install_elasticsearch "upstream" "00"
 render_install_jaeger "$jaeger_name" "production" "01"
 cp ./01-install.yaml ./02-install.yaml
 $YQ e -i '.spec.collector.image="test"' ./02-install.yaml
+
+start_test "non-cluster-wide"
+$GOMPLATE -f ./01-install.yaml.template -o 01-install.yaml
+jaeger_name="my-jaeger"
+render_install_jaeger "$jaeger_name" "allInOne" "02"
+$GOMPLATE -f ./03-install.yaml.template -o 03-install.yaml
