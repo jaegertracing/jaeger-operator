@@ -374,7 +374,7 @@ func TestReconcilieDeployment(t *testing.T) {
 					},
 				},
 			},
-			watch_ns: "my-other-ns",
+			watch_ns: "my-other-ns, other-ns-2",
 		},
 	}
 
