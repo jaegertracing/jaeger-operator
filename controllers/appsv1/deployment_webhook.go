@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
@@ -50,6 +51,18 @@ type deploymentInterceptor struct {
 	decoder *admission.Decoder
 }
 
+func (d *deploymentInterceptor) shouldHandleDeployment(req admission.Request) bool {
+	if namespaces := viper.GetString(v1.ConfigWatchNamespace); namespaces != v1.WatchAllNamespaces {
+		for _, ns := range strings.Split(namespaces, ",") {
+			if strings.EqualFold(ns, req.Namespace) {
+				return true
+			}
+		}
+		return false
+	}
+	return true
+}
+
 // Handle adds a label to a generated pod if deployment or namespace provide annotaion
 func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Request) admission.Response {
 	tracer := otel.GetTracerProvider().Tracer(v1.ReconciliationTracer)
@@ -59,6 +72,11 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 		attribute.String("name", req.Name),
 		attribute.String("namespace", req.Namespace),
 	)
+
+	if !d.shouldHandleDeployment(req) {
+		return admission.Allowed("not watching in namespace, we do not touch the deployment")
+	}
+
 	defer span.End()
 
 	logger := log.Log.WithValues("namespace", req.Namespace)

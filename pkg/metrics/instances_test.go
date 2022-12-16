@@ -2,15 +2,14 @@ package metrics
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/number"
-	"go.opentelemetry.io/otel/oteltest"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,22 +30,40 @@ type expectedMetric struct {
 	value  int64
 }
 
-func assertLabelAndValues(t *testing.T, name string, batches []oteltest.Batch, expectedLabels []attribute.KeyValue, expectedValue int64) {
-	var measurement oteltest.Measurement
+func assertLabelAndValues(t *testing.T, name string, metrics metricdata.ResourceMetrics, expectedAttrs []attribute.KeyValue, expectedValue int64) {
+	var matchingMetric metricdata.Metrics
 	found := false
-	for _, b := range batches {
-		for _, m := range b.Measurements {
-			if m.Instrument.Descriptor().Name() == name && reflect.DeepEqual(expectedLabels, b.Labels) {
-				measurement = m
+	for _, sm := range metrics.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name == name {
+				matchingMetric = m
 				found = true
 				break
 			}
 		}
 	}
-	assert.True(t, found, "Metric %s with labels %v not found", name, expectedLabels)
-	v := oteltest.ResolveNumberByKind(t, number.Int64Kind, float64(expectedValue))
-	assert.Equal(t, 0, measurement.Number.CompareNumber(number.Int64Kind, v),
-		"Metric %s doesn't have expected value %d", name, expectedValue)
+
+	assert.True(t, found, "Metric %s not found", name)
+
+	gauge, ok := matchingMetric.Data.(metricdata.Gauge[int64])
+	assert.True(t, ok,
+		"Metric %s doesn't have expected type %T, got %T", metricdata.Gauge[int64]{}, matchingMetric.Data,
+	)
+
+	expectedAttrSet := attribute.NewSet(expectedAttrs...)
+	var matchingDP metricdata.DataPoint[int64]
+	found = false
+	for _, dp := range gauge.DataPoints {
+		if expectedAttrSet.Equals(&dp.Attributes) {
+			matchingDP = dp
+			found = true
+			break
+		}
+	}
+
+	assert.True(t, found, "Metric %s doesn't have expected attributes %v", expectedAttrs)
+	assert.Equal(t, expectedValue, matchingDP.Value,
+		"Metric %s doesn't have expected value %d, got %d", name, expectedValue, matchingDP.Value)
 }
 
 func newJaegerInstance(nsn types.NamespacedName, strategy v1.DeploymentStrategy,
@@ -124,16 +141,19 @@ func TestValueObservedMetrics(t *testing.T) {
 
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
-	meter, provider := oteltest.NewMeterProvider()
+	reader := metric.NewManualReader()
+	provider := metric.NewMeterProvider(metric.WithReader(reader))
 	global.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
-	meter.RunAsyncInstruments()
+
+	metrics, err := reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	for _, e := range expected {
-		assertLabelAndValues(t, e.name, meter.MeasurementBatches, e.labels, e.value)
+		assertLabelAndValues(t, e.name, metrics, e.labels, e.value)
 	}
 
 	// Test deleting allinone
@@ -141,8 +161,9 @@ func TestValueObservedMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	meter.MeasurementBatches = []oteltest.Batch{}
-	meter.RunAsyncInstruments()
+	reader.ForceFlush(context.Background())
+	metrics, err = reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	// Set new numbers
 	expected = []expectedMetric{
@@ -155,7 +176,7 @@ func TestValueObservedMetrics(t *testing.T) {
 		newExpectedMetric(agentStrategiesMetric, attribute.String("type", "daemonset"), 1),
 	}
 	for _, e := range expected {
-		assertLabelAndValues(t, e.name, meter.MeasurementBatches, e.labels, e.value)
+		assertLabelAndValues(t, e.name, metrics, e.labels, e.value)
 	}
 }
 
@@ -204,34 +225,42 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	}
 
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-	meter, provider := oteltest.NewMeterProvider()
+
+	reader := metric.NewManualReader()
+	provider := metric.NewMeterProvider(metric.WithReader(reader))
 	global.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
-	meter.RunAsyncInstruments()
+
+	metrics, err := reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	expectedMetric := newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 1)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 
 	// Test deleting autoprovisioning
 	err = cl.Delete(context.Background(), &autoprovisioningInstance)
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	meter.MeasurementBatches = []oteltest.Batch{}
-	meter.RunAsyncInstruments()
+	reader.ForceFlush(context.Background())
+	metrics, err = reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 
 	// Create no autoprovisioned instance
 	_ = cl.Delete(context.Background(), &noAutoProvisioningInstance)
-	meter.MeasurementBatches = []oteltest.Batch{}
-	meter.RunAsyncInstruments()
+
+	reader.ForceFlush(context.Background())
+	metrics, err = reader.Collect(context.Background())
+	require.NoError(t, err)
+
 	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 }
 
 func TestManagerByMetric(t *testing.T) {
@@ -273,28 +302,33 @@ func TestManagerByMetric(t *testing.T) {
 	}
 
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-	meter, provider := oteltest.NewMeterProvider()
+
+	reader := metric.NewManualReader()
+	provider := metric.NewMeterProvider(metric.WithReader(reader))
 	global.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
-	meter.RunAsyncInstruments()
+
+	metrics, err := reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	expectedMetric := newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 1)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 
 	expectedMetric = newExpectedMetric(managedMetric, attribute.String("tool", "none"), 1)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 
 	// Test deleting managed
 	err = cl.Delete(context.Background(), &managed)
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	meter.MeasurementBatches = []oteltest.Batch{}
-	meter.RunAsyncInstruments()
+	reader.ForceFlush(context.Background())
+	metrics, err = reader.Collect(context.Background())
+	require.NoError(t, err)
 
 	expectedMetric = newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 0)
-	assertLabelAndValues(t, expectedMetric.name, meter.MeasurementBatches, expectedMetric.labels, expectedMetric.value)
+	assertLabelAndValues(t, expectedMetric.name, metrics, expectedMetric.labels, expectedMetric.value)
 }

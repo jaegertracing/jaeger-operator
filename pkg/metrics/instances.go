@@ -9,6 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/asyncint64"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -26,11 +28,11 @@ const (
 
 // This structure contains the labels associated with the instances and a counter of the number of instances
 type instancesView struct {
-	Name     string
-	Label    string
-	Count    map[string]int
-	Observer *metric.Int64ValueObserver
-	KeyFn    func(jaeger v1.Jaeger) string
+	Name  string
+	Label string
+	Count map[string]int
+	Gauge asyncint64.Gauge
+	KeyFn func(jaeger v1.Jaeger) string
 }
 
 func (i *instancesView) reset() {
@@ -46,11 +48,12 @@ func (i *instancesView) Record(jaeger v1.Jaeger) {
 	}
 }
 
-func (i *instancesView) Report(result metric.BatchObserverResult) {
+func (i *instancesView) Report(ctx context.Context) {
 	for key, count := range i.Count {
-		result.Observe([]attribute.KeyValue{
+		attrs := []attribute.KeyValue{
 			attribute.String(i.Label, key),
-		}, i.Observer.Observation(int64(count)))
+		}
+		i.Gauge.Observe(ctx, int64(count), attrs...)
 	}
 }
 
@@ -69,28 +72,30 @@ func newInstancesMetric(client client.Client) *instancesMetric {
 	}
 }
 
-func newObservation(batch metric.BatchObserver, name, desc, label string, keyFn func(jaeger v1.Jaeger) string) (instancesView, error) {
+func newObservation(meter metric.Meter, name, desc, label string, keyFn func(jaeger v1.Jaeger) string) (instancesView, error) {
 	observation := instancesView{
 		Name:  name,
 		Count: make(map[string]int),
 		KeyFn: keyFn,
 		Label: label,
 	}
-	obs, err := batch.NewInt64ValueObserver(instanceMetricName(name), metric.WithDescription(desc))
+
+	g, err := meter.AsyncInt64().Gauge(instanceMetricName(name), instrument.WithDescription(desc))
 	if err != nil {
 		return instancesView{}, err
 	}
-	observation.Observer = &obs
+
+	observation.Gauge = g
 	return observation, nil
 }
 
 func (i *instancesMetric) Setup(ctx context.Context) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "setup-jaeger-instances-metrics") // nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx, "setup-jaeger-instances-metrics") // nolint:ineffassign,staticcheck
 	defer span.End()
 	meter := global.Meter(meterName)
-	batch := meter.NewBatchObserver(i.callback)
-	obs, err := newObservation(batch,
+
+	obs, err := newObservation(meter,
 		agentStrategiesMetric,
 		"Number of instances per agent strategy",
 		"type",
@@ -101,7 +106,9 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 		return err
 	}
 	i.observations = append(i.observations, obs)
-	obs, err = newObservation(batch, storageMetric,
+
+	obs, err = newObservation(meter,
+		storageMetric,
 		"Number of instances per storage type",
 		"type",
 		func(jaeger v1.Jaeger) string {
@@ -112,7 +119,8 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	obs, err = newObservation(batch, strategiesMetric,
+	obs, err = newObservation(meter,
+		strategiesMetric,
 		"Number of instances per strategy type",
 		"type",
 		func(jaeger v1.Jaeger) string {
@@ -123,7 +131,8 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	obs, err = newObservation(batch, autoprovisioningMetric,
+	obs, err = newObservation(meter,
+		autoprovisioningMetric,
 		"Number of instances using autoprovisioning",
 		"type",
 		func(jaeger v1.Jaeger) string {
@@ -137,7 +146,8 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	obs, err = newObservation(batch, managedMetric,
+	obs, err = newObservation(meter,
+		managedMetric,
 		"Instances managed by other tool",
 		"tool",
 		func(jaeger v1.Jaeger) string {
@@ -152,7 +162,12 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	return nil
+	instruments := make([]instrument.Asynchronous, 0, len(i.observations))
+	for _, o := range i.observations {
+		instruments = append(instruments, o.Gauge)
+	}
+
+	return meter.RegisterCallback(instruments, i.callback)
 }
 
 func isInstanceNormalized(jaeger v1.Jaeger) bool {
@@ -171,13 +186,13 @@ func (i *instancesMetric) reset() {
 	}
 }
 
-func (i *instancesMetric) report(result metric.BatchObserverResult) {
+func (i *instancesMetric) report(ctx context.Context) {
 	for _, o := range i.observations {
-		o.Report(result)
+		o.Report(ctx)
 	}
 }
 
-func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObserverResult) {
+func (i *instancesMetric) callback(ctx context.Context) {
 	instances := &v1.JaegerList{}
 	if err := i.client.List(ctx, instances); err == nil {
 		i.reset()
@@ -193,6 +208,6 @@ func (i *instancesMetric) callback(ctx context.Context, result metric.BatchObser
 				}
 			}
 		}
-		i.report(result)
+		i.report(ctx)
 	}
 }

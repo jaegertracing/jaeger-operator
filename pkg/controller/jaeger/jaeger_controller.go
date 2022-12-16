@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -403,15 +404,26 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 }
 
 // syncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
-func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName string) error {
+func syncOnJaegerChanges(rClient client.Reader, kclient client.Client, jaegerName string) error {
 	deps := []appsv1.Deployment{}
 	nssupdate := []corev1.Namespace{}
 	nss := map[string]corev1.Namespace{} // namespace cache
 
 	deployments := appsv1.DeploymentList{}
-	err := rClient.List(context.Background(), &deployments)
-	if err != nil {
-		return err
+
+	if namespaces := viper.GetString(v1.ConfigWatchNamespace); namespaces != v1.WatchAllNamespaces {
+		for _, ns := range strings.Split(namespaces, ",") {
+			nsDeps := &appsv1.DeploymentList{}
+			if err := rClient.List(context.Background(), nsDeps, client.InNamespace(ns)); err != nil {
+				return err
+			}
+			deployments.Items = append(deployments.Items, nsDeps.Items...)
+		}
+	} else {
+		err := rClient.List(context.Background(), &deployments)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, dep := range deployments.Items {
@@ -446,7 +458,7 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 		}
 	}
 	for i := range deps {
-		if err := client.Update(context.Background(), &deps[i]); err != nil {
+		if err := kclient.Update(context.Background(), &deps[i]); err != nil {
 			log.Log.Error(
 				err,
 				"error while updating the dependency",
@@ -456,7 +468,7 @@ func syncOnJaegerChanges(rClient client.Reader, client client.Client, jaegerName
 		}
 	}
 	for i := range nssupdate {
-		if err := client.Update(context.Background(), &nssupdate[i]); err != nil {
+		if err := kclient.Update(context.Background(), &nssupdate[i]); err != nil {
 			log.Log.Error(
 				err,
 				"error while upgrading the namespace",
