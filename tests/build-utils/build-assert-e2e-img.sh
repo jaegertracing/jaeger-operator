@@ -11,7 +11,7 @@ timestamp_file=$2
 manifest=$(docker manifest inspect "$image_name" 2>/dev/null || true)
 if [ -z "$manifest" ]; then
     echo "the e2e test asserts container image is not available in the remote registry. locally building and pushing into remote registry"
-    docker buildx build --load \
+    docker buildx build --push \
         --progress=plain \
         --platform ${PLATFORMS} \
         --file Dockerfile.asserts \
