@@ -3,7 +3,8 @@ include $(shell find tests/e2e -name "Makefile" ! -wholename "tests/e2e/Makefile
 export VERTX_IMG ?= jaegertracing/vertx-create-span:operator-e2e-tests
 export ELASTIC_IMG ?= docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 export OPERATOR_IMAGE_NEXT ?= ${IMG_PREFIX}/jaeger-operator:next
-export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell date +%s)
+# get "tests/assert-jobs" directry commit id and use that as build tag to avoid frequent build and push container image into a remote registry
+export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell git log -n 1 --pretty=format:%h ./tests/assert-jobs/)
 
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
@@ -36,6 +37,7 @@ endif
 build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 	$(ECHO) Building E2E asserts image
 	$(VECHO) DOCKER_BUILD_OPTIONS="$(DOCKER_BUILD_OPTIONS)" \
+		PLATFORMS="$(PLATFORMS)" \
 		./tests/build-utils/build-assert-e2e-img.sh $(ASSERT_IMG) $@
 
 
