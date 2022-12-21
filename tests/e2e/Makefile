@@ -3,7 +3,7 @@ include $(shell find tests/e2e -name "Makefile" ! -wholename "tests/e2e/Makefile
 export VERTX_IMG ?= jaegertracing/vertx-create-span:operator-e2e-tests
 export ELASTIC_IMG ?= docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 export OPERATOR_IMAGE_NEXT ?= ${IMG_PREFIX}/jaeger-operator:next
-# get "tests/assert-jobs" directry commit id and use that as build tag to avoid frequent build and push container image into a remote registry
+# get "tests/assert-jobs" directory commit id and use that as build tag to avoid frequent build and push container image into a remote registry
 export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell git log -n 1 --pretty=format:%h ./tests/assert-jobs/)
 export MULTI_ARCH_ASSERT_IMG ?= false
 

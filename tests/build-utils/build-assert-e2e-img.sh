@@ -10,7 +10,7 @@ timestamp_file=$2
 if [ "$MULTI_ARCH_ASSERT_IMG" = false ]; then
     docker build -t "$image_name" -f Dockerfile.asserts . $DOCKER_BUILD_OPTIONS
 else
-    # check if the image is in the container registry
+    # check if the image is in the remote container registry
     manifest=$(docker manifest inspect "$image_name" 2>/dev/null || true)
     if [ -z "$manifest" ]; then
         echo "the e2e test asserts container image is not available in the remote registry. locally building and pushing into remote registry"
@@ -19,9 +19,6 @@ else
             --platform ${PLATFORMS} \
             --file Dockerfile.asserts \
             --tag ${image_name} .
-    else
-        echo "the e2e test asserts container image is available in the remote registry. pulling into local environment"
-        docker pull "$image_name"
     fi
 fi   
 
