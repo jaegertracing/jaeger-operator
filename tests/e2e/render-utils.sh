@@ -811,12 +811,12 @@ function skip_test(){
 function get_elasticsearch_openshift_operator_version(){
     export ESO_OPERATOR_VERSION
     if [ "$IS_OPENSHIFT" = true ]; then
-        properties=$(kubectl get pods -l name=elasticsearch-operator -n openshift-operators-redhat -o=jsonpath='{.items[0].metadata.annotations.operatorframework\.io/properties}')
+        properties=$(kubectl get pods -l name=elasticsearch-operator --all-namespaces -o=jsonpath='{.items[0].metadata.annotations.operatorframework\.io/properties}')
         if [ -z "$properties" ]; then
             error "Elasticsearch OpenShift Operator not found"
             exit 1
         fi
-        ESO_OPERATOR_VERSION=$(echo "$properties" | $YQ e -P ".properties[2].value.version")
+        ESO_OPERATOR_VERSION=$(echo "$properties" | $YQ e -P '.properties.[] | select(.value.packageName == "elasticsearch-operator") | .value.version')
     else
         error "Not an OpenShift cluster. Impossible to get the Elasticsearch OpenShift Operator version"
         exit 1
