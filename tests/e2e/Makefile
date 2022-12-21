@@ -5,6 +5,7 @@ export ELASTIC_IMG ?= docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.6
 export OPERATOR_IMAGE_NEXT ?= ${IMG_PREFIX}/jaeger-operator:next
 # get "tests/assert-jobs" directry commit id and use that as build tag to avoid frequent build and push container image into a remote registry
 export ASSERT_IMG ?= ${IMG_PREFIX}/asserts-e2e:$(shell git log -n 1 --pretty=format:%h ./tests/assert-jobs/)
+export MULTI_ARCH_ASSERT_IMG ?= false
 
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
@@ -38,12 +39,15 @@ build-assert-job: Dockerfile.asserts $(shell find tests/assert-jobs -type f)
 	$(ECHO) Building E2E asserts image
 	$(VECHO) DOCKER_BUILD_OPTIONS="$(DOCKER_BUILD_OPTIONS)" \
 		PLATFORMS="$(PLATFORMS)" \
+		MULTI_ARCH_ASSERT_IMG=$(MULTI_ARCH_ASSERT_IMG) \
 		./tests/build-utils/build-assert-e2e-img.sh $(ASSERT_IMG) $@
 
 
 .PHONY: load-assert-job
 load-assert-job: build-assert-job set-assert-e2e-img-name
-	$(VECHO)USE_KIND_CLUSTER=$(USE_KIND_CLUSTER) ./tests/build-utils/push-assert-e2e-img.sh
+	$(VECHO) USE_KIND_CLUSTER=$(USE_KIND_CLUSTER) \
+		MULTI_ARCH_ASSERT_IMG=$(MULTI_ARCH_ASSERT_IMG) \
+		./tests/build-utils/push-assert-e2e-img.sh
 
 
 build-e2e-upgrade-image: Dockerfile $(shell find apis bundle cmd config controllers pkg  -type f)
