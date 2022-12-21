@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.18 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.18 as builder
 
 WORKDIR /workspace
 
@@ -17,11 +17,13 @@ COPY tests tests
 ENV CGO_ENABLED=0
 
 # Build
+ARG TARGETOS
+ARG TARGETARCH
 
-RUN go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
-RUN go build -o ./reporter-otlp -a ./tests/assert-jobs/reporter-otlp/main.go
-RUN go build -o ./query -a ./tests/assert-jobs/query/main.go
-RUN go build -o ./index -a ./tests/assert-jobs/index/main.go
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./reporter -a ./tests/assert-jobs/reporter/main.go
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./reporter-otlp -a ./tests/assert-jobs/reporter-otlp/main.go
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./query -a ./tests/assert-jobs/query/main.go
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./index -a ./tests/assert-jobs/index/main.go
 
 # Use the curl container image to ensure we have curl installed. Also, it is a
 # minimal container image
