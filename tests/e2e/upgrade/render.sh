@@ -28,7 +28,7 @@ else
     $GOMPLATE -f ./remove-jaeger-operator.yaml.template -o ./00-remove-operator.yaml
 
     # Download the latest Jaeger Operator released manifest and install it
-    LATEST_VERSION=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/jaegertracing/jaeger-operator/releases/latest | $YQ -P ".tag_name"| grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
+    LATEST_VERSION=$(curl --max-time 5 --retry 5 -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/jaegertracing/jaeger-operator/releases/latest | $YQ -P ".tag_name" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
     wget -q https://github.com/jaegertracing/jaeger-operator/releases/download/v$LATEST_VERSION/jaeger-operator.yaml
 
     if version_gt $LATEST_VERSION "1.35.0"; then
