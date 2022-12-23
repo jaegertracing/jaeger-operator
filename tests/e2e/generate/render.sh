@@ -16,4 +16,4 @@ jaeger_name="my-jaeger"
 
 $GOMPLATE -f ./jaeger-template.yaml.template -o ./jaeger-deployment.yaml
 
-render_smoke_test "$jaeger_name" is_secured "01"
+render_smoke_test "$jaeger_name" "$is_secured" "01"
