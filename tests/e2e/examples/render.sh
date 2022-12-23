@@ -160,11 +160,6 @@ start_test "examples-with-cassandra"
 example_name="with-cassandra"
 render_install_cassandra "00"
 render_install_example "$example_name" "01"
-# jaeger-cassandra-schema multi arch image is not available
-# created a PR: https://github.com/jaegertracing/jaeger/pull/4122 and https://github.com/jaegertracing/jaeger/pull/4123
-# until we get new release image, this is a workaround image
-# $YQ e -i '.spec.storage.cassandraCreateSchema.image = "quay.io/redhat-distributed-tracing-qe/jaeger-cassandra-schema:1.40.0"' ./01-install.yaml
-
 render_smoke_test_example "$example_name" "02"
 
 
