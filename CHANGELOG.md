@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+1.40.0 (2022-12-23)
+-------------------
+* Support e2e tests on multi architecture environment ([#2139](https://github.com/jaegertracing/jaeger-operator/pull/2139), [@jkandasa](https://github.com/jkandasa))
+* limit the get of deployments to WATCH_NAMESPACE on sync ([#2126](https://github.com/jaegertracing/jaeger-operator/pull/2126), [@rubenvp8510](https://github.com/rubenvp8510))
+* choose first server address ([#2087](https://github.com/jaegertracing/jaeger-operator/pull/2087), [@Efrat19](https://github.com/Efrat19))
+* Fix query ingress when using streaming strategy ([#2120](https://github.com/jaegertracing/jaeger-operator/pull/2120), [@kevinearls](https://github.com/kevinearls))
+* Fix Liveness Probe for Ingester and Query ([#2122](https://github.com/jaegertracing/jaeger-operator/pull/2122), [@ricoberger](https://github.com/ricoberger))
+* Fix for min tls version to v1.2 ([#2119](https://github.com/jaegertracing/jaeger-operator/pull/2119), [@kangsheng89](https://github.com/kangsheng89))
 
 1.39.0 (2022-11-03)
 -------------------
