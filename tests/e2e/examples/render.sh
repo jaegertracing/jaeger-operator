@@ -32,7 +32,11 @@ render_install_example "$example_name" "00"
 $YQ e -i '.metadata.name="my-jaeger"' ./00-install.yaml
 $YQ e -i 'del(.spec.allInOne.image)' ./00-install.yaml
 render_smoke_test_example "$example_name" "01"
-sed -i "s~my-jaeger-query~my-jaeger-query/jaeger~gi" ./01-smoke-test.yaml
+if [ $IS_OPENSHIFT = true ]; then
+    sed -i "s~my-jaeger-query:443~my-jaeger-query:443/jaeger~gi" ./01-smoke-test.yaml
+else
+    sed -i "s~my-jaeger-query:16686~my-jaeger-query:16686/jaeger~gi" ./01-smoke-test.yaml
+fi
 
 
 ###############################################################################

@@ -35,7 +35,7 @@ function render_smoke_test() {
 
     if [ $is_secured = true ]; then
         protocol="https://"
-        query_port=""
+        query_port=":443"
         template="$TEMPLATES_DIR/openshift/smoke-test.yaml.template"
     elif [ $is_secured = false ]; then
         protocol="http://"
