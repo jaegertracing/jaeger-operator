@@ -14,18 +14,18 @@ spec:
     spec:
       containers:
         - name: vertx-create-span-sidecar
-          image: "jaegertracing/vertx-create-span:operator-e2e-tests"
+          image: "{{ .Env.VERTX_IMG }}"
           ports:
             - containerPort: 8080
           readinessProbe:
             httpGet:
               path: "/"
               port: 8080
-            initialDelaySeconds: 1
+            initialDelaySeconds: 7
             periodSeconds: 1
           livenessProbe:
             httpGet:
               path: "/"
               port: 8080
-            initialDelaySeconds: 1
+            initialDelaySeconds: 7
             periodSeconds: 1
