@@ -8,16 +8,38 @@ if [ $IS_OPENSHIFT = true ]; then
 fi
 
 
+###############################################################################
+# TEST NAME: es-from-aio-to-production
+# DESCRIPTION: allInOne to production
+###############################################################################
 start_test "es-from-aio-to-production"
 jaeger_name="my-jaeger"
 render_install_jaeger "$jaeger_name" "allInOne" "00"
 render_smoke_test "$jaeger_name" "$is_secured" "01"
-render_install_elasticsearch "upstream" "02"
-render_install_jaeger "$jaeger_name" "production" "03"
+
+jaeger_deploy_mode="production"
+if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+    jaeger_deploy_mode="production_autoprovisioned"
+else
+    render_install_elasticsearch "upstream" "02"
+fi
+render_install_jaeger "$jaeger_name" "$jaeger_deploy_mode" "03"
+if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+    # when we deploy the jaeger CR, irrespective of deployment strategy "normalizeElasticsearch" func called.
+    # It adds the default parameters. as a result in the generated CR: redundancyPolicy is SingleRedundancy and node count is 3
+    # normalizeElasticsearch: https://github.com/jaegertracing/jaeger-operator/blob/2ccf2d4a4ab799ba07a4c408bde8a2caad3d16f8/pkg/strategy/controller.go#L132
+    # later we are switching from allInOne to production, we include node count as 1, but not touched redundancyPolicy.
+    # Hence creates Elasticsearch CR with SingleRedundancy and node count 1. Which is invalid and failed to deploy the elasticsearch node.
+    # no idea, is this issue with product or kuttl test?
+    # as a workaround updating redundancyPolicy explicitly.
+    $YQ e -i '.spec.storage.elasticsearch.redundancyPolicy="ZeroRedundancy"' ./03-install.yaml
+fi
 render_smoke_test "$jaeger_name" "$is_secured" "04"
 
 
-
+###############################################################################
+# TEST NAME: es-increasing-replicas
+###############################################################################
 start_test "es-increasing-replicas"
 jaeger_name="simple-prod"
 
@@ -51,6 +73,9 @@ if [ $IS_OPENSHIFT = true ]; then
 fi
 
 
+###############################################################################
+# TEST NAME: es-index-cleaner-*
+###############################################################################
 # Helper function to render the ES index cleaner E2E test using different
 # deployment modes
 function es_index_cleaner(){
@@ -107,7 +132,11 @@ function es_index_cleaner(){
         "00" "06"
 }
 
-es_index_cleaner "-upstream" "production"
+if [ "$SKIP_ES_EXTERNAL" = true ]; then
+    skip_test "es-index-cleaner-upstream" "SKIP_ES_EXTERNAL is true"
+else
+    es_index_cleaner "-upstream" "production"
+fi
 
 if [ "$IS_OPENSHIFT" = true ]; then
     es_index_cleaner "-autoprov" "production_autoprovisioned"
@@ -128,7 +157,9 @@ else
 fi
 
 
-
+###############################################################################
+# TEST NAME: es-multiinstance
+###############################################################################
 if [ "$IS_OPENSHIFT" = true ]; then
     start_test "es-multiinstance"
     jaeger_name="instance-1"
@@ -139,6 +170,9 @@ else
 fi
 
 
+###############################################################################
+# TEST NAME: es-rollover-*
+###############################################################################
 # Helper function to render the ES Rollover E2E test using different
 # deployment modes
 function es_rollover(){
@@ -203,7 +237,11 @@ function es_rollover(){
     render_check_indices "$secured_es_connection" "'--name', 'jaeger-span-read', '--assert-count-docs', '4', '--jaeger-service', 'smoke-test-service'," "06" "12"
 }
 
-es_rollover "-upstream" "production"
+if [ "$SKIP_ES_EXTERNAL" = true ]; then
+    skip_test "es-rollover-upstream" "SKIP_ES_EXTERNAL is true"
+else
+    es_rollover "-upstream" "production"
+fi
 
 if [ "$IS_OPENSHIFT" = true ]; then
     es_rollover "-autoprov" "production_autoprovisioned"
@@ -223,8 +261,9 @@ else
 fi
 
 
-
-
+###############################################################################
+# TEST NAME: es-spark-dependencies
+###############################################################################
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "es-spark-dependencies" "This test is not supported in OpenShift"
 else
@@ -240,12 +279,15 @@ else
 fi
 
 
-if [ $IS_OPENSHIFT = true ]; then
+###############################################################################
+# TEST NAME: es-streaming-autoprovisioned
+###############################################################################
+if [[ $IS_OPENSHIFT = true && $SKIP_KAFKA = false ]]; then
     start_test "es-streaming-autoprovisioned"
     jaeger_name="auto-provisioned"
 
     render_assert_kafka "true" "$jaeger_name" "00"
     render_smoke_test "$jaeger_name" "true" "04"
 else
-    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift"
+    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift with SKIP_KAFKA is false"
 fi

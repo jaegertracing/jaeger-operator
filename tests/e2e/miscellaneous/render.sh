@@ -2,6 +2,9 @@
 
 source $(dirname "$0")/../render-utils.sh
 
+###############################################################################
+# TEST NAME: cassandra-spark
+###############################################################################
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "cassandra-spark" "Test not supported in OpenShift"
 else
@@ -24,16 +27,21 @@ else
 fi
 
 
-
+###############################################################################
+# TEST NAME: collector-autoscale
+###############################################################################
 start_test "collector-autoscale"
 jaeger_name="simple-prod"
+jaeger_deploy_mode="production"
 
-if [ $IS_OPENSHIFT!="true" ]; then
+if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+    jaeger_deploy_mode="production_autoprovisioned"
+else
     render_install_elasticsearch "upstream" "00"
 fi
 
 ELASTICSEARCH_NODECOUNT="1"
-render_install_jaeger "$jaeger_name" "production" "01"
+render_install_jaeger "$jaeger_name" "$jaeger_deploy_mode" "01"
 # Change the resource limits for the Jaeger deployment
 $YQ e -i '.spec.collector.resources.requests.memory="20Mi"' 01-install.yaml
 $YQ e -i '.spec.collector.resources.requests.memory="300m"' 01-install.yaml
@@ -47,7 +55,9 @@ $YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 render_install_tracegen "$jaeger_name" "02"
 
 
-
+###############################################################################
+# TEST NAME: collector-otlp-*
+###############################################################################
 # Helper function to generate the same tests multiple times but with different
 # reporting protocols
 function generate_otlp_e2e_tests() {
@@ -58,13 +68,20 @@ function generate_otlp_e2e_tests() {
         is_secured="true"
     fi
 
+    # TEST NAME: collector-otlp-allinone-*
     start_test "collector-otlp-allinone-$test_protocol"
     render_install_jaeger "my-jaeger" "allInOne" "00"
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "01"
 
+    # TEST NAME: collector-otlp-production-*
     start_test "collector-otlp-production-$test_protocol"
-    render_install_elasticsearch "upstream" "00"
-    render_install_jaeger "my-jaeger" "production" "01"
+    jaeger_deploy_mode="production"
+    if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+        jaeger_deploy_mode="production_autoprovisioned"
+    else
+        render_install_elasticsearch "upstream" "00"
+    fi
+    render_install_jaeger "my-jaeger" "$jaeger_deploy_mode" "01"
     render_otlp_smoke_test "my-jaeger" "$test_protocol" "$is_secured" "02"
 }
 
@@ -72,7 +89,9 @@ generate_otlp_e2e_tests "http"
 generate_otlp_e2e_tests "grpc"
 
 
-
+###############################################################################
+# TEST NAME: istio
+###############################################################################
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "istio" "Test not supported in OpenShift"
 else
@@ -96,6 +115,9 @@ else
 fi
 
 
+###############################################################################
+# TEST NAME: outside-cluster
+###############################################################################
 if [ $IS_OPENSHIFT = true ]; then
     skip_test "outside-cluster" "Test not supported in OpenShift"
 else
@@ -107,15 +129,31 @@ else
 fi
 
 
+###############################################################################
+# TEST NAME: set-custom-img
+###############################################################################
 start_test "set-custom-img"
 jaeger_name="my-jaeger"
-render_install_elasticsearch "upstream" "00"
-render_install_jaeger "$jaeger_name" "production" "01"
+jaeger_deploy_mode="production"
+if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+    jaeger_deploy_mode="production_autoprovisioned"
+else
+    render_install_elasticsearch "upstream" "00"
+fi
+render_install_jaeger "$jaeger_name" "$jaeger_deploy_mode" "01"
 cp ./01-install.yaml ./02-install.yaml
 $YQ e -i '.spec.collector.image="test"' ./02-install.yaml
 
-start_test "non-cluster-wide"
-$GOMPLATE -f ./01-install.yaml.template -o 01-install.yaml
-jaeger_name="my-jaeger"
-render_install_jaeger "$jaeger_name" "allInOne" "02"
-$GOMPLATE -f ./03-install.yaml.template -o 03-install.yaml
+
+###############################################################################
+# TEST NAME: non-cluster-wide
+###############################################################################
+if [ $IS_OPENSHIFT = true ]; then
+    skip_test "non-cluster-wide" "Test not supported in OpenShift"
+else
+    start_test "non-cluster-wide"
+    $GOMPLATE -f ./01-install.yaml.template -o 01-install.yaml
+    jaeger_name="my-jaeger"
+    render_install_jaeger "$jaeger_name" "allInOne" "02"
+    $GOMPLATE -f ./03-install.yaml.template -o 03-install.yaml
+fi

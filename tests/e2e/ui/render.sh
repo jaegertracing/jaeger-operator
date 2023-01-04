@@ -2,7 +2,9 @@
 
 source $(dirname "$0")/../render-utils.sh
 
-
+###############################################################################
+# TEST NAME: allinone
+###############################################################################
 start_test "allinone"
 export GET_URL_COMMAND
 export URL
@@ -31,12 +33,19 @@ EXPECTED_CODE="200" $GOMPLATE -f $TEMPLATES_DIR/assert-http-code.yaml.template -
 ASSERT_PRESENT="true" TRACKING_ID="MyTrackingId" $GOMPLATE -f $TEMPLATES_DIR/test-ui-config.yaml.template -o ./04-test-ui-config.yaml
 
 
-
+###############################################################################
+# TEST NAME: production
+###############################################################################
 start_test "production"
 export JAEGER_NAME="production-ui"
 
-render_install_elasticsearch "upstream" "00"
-render_install_jaeger $JAEGER_NAME "production" "01"
+if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
+    render_install_jaeger $JAEGER_NAME "production_autoprovisioned" "01"
+else
+    render_install_elasticsearch "upstream" "00"
+    render_install_jaeger $JAEGER_NAME "production" "01"
+fi
+
 
 # Sometimes, the Ingress/OpenShift route is there but not 100% ready so, when
 # kubectl tries to get the hostname, it returns an empty string

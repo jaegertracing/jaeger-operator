@@ -35,7 +35,7 @@ function render_smoke_test() {
 
     if [ $is_secured = true ]; then
         protocol="https://"
-        query_port=""
+        query_port=":443"
         template="$TEMPLATES_DIR/openshift/smoke-test.yaml.template"
     elif [ $is_secured = false ]; then
         protocol="http://"
@@ -82,7 +82,7 @@ function render_otlp_smoke_test() {
 
     if [ $is_secured = true ]; then
         protocol="https://"
-        query_port=""
+        query_port=":443"
         template="$TEMPLATES_DIR/openshift/otlp-smoke-test.yaml.template"
     else
         protocol="http://"
@@ -97,7 +97,7 @@ function render_otlp_smoke_test() {
     fi
 
     export JAEGER_QUERY_ENDPOINT="$protocol$jaeger-query$query_port"
-    export OTEL_EXPORTER_OTLP_ENDPOINT="$protocol$jaeger-collector-headless$reporting_port"
+    export OTEL_EXPORTER_OTLP_ENDPOINT="http://$jaeger-collector-headless$reporting_port"
     export JAEGER_NAME=$jaeger
 
     REPORTING_PROTOCOL=$reporting_protocol $GOMPLATE -f $template -o ./$test_step-smoke-test.yaml

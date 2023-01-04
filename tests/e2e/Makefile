@@ -11,6 +11,8 @@ export MULTI_ARCH_ASSERT_IMG ?= false
 USE_KIND_CLUSTER ?= true
 # Skip E2E tests where ES external instance is used
 SKIP_ES_EXTERNAL ?= false
+# Skip E2E tests where kafka/streaming deployment strategy is used
+export SKIP_KAFKA ?= false
 export E2E_TESTS_TIMEOUT ?= 330
 
 
