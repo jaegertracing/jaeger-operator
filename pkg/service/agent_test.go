@@ -28,10 +28,7 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 	for _, port := range svc.Spec.Ports {
 		ports[port.Port] = true
 		switch port.Port {
-		case
-			5775,
-			6831,
-			6832:
+		case 5775, 6831, 6832:
 			assert.Equal(t, corev1.ProtocolUDP, port.Protocol, "Expected port %v to be UDP, but wasn't", port)
 		}
 	}

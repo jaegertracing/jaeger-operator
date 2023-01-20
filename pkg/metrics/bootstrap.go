@@ -23,8 +23,8 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 	defer span.End()
 	tracing.SetInstanceID(ctx, namespace)
 
-	exporter := prometheus.New()
-	if err := metrics.Registry.Register(exporter.Collector); err != nil {
+	exporter, err := prometheus.New(prometheus.WithRegisterer(metrics.Registry))
+	if err != nil {
 		return tracing.HandleError(err, span)
 	}
 
@@ -34,6 +34,6 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 
 	// Create metrics
 	instancesObservedValue := newInstancesMetric(client)
-	err := instancesObservedValue.Setup(ctx)
+	err = instancesObservedValue.Setup(ctx)
 	return tracing.HandleError(err, span)
 }
