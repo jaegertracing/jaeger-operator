@@ -58,7 +58,7 @@ set -e
 
 # The output XML needs some work because it adds "artifacts" as a test case.
 # Also, the suites doesn't have a name so, we need to add one.
-go install github.com/iblancasa/junitcli/cmd/junitcli@v1.0.1
+go install github.com/iblancasa/junitcli/cmd/junitcli@v1.0.2
 junitcli --suite-name $test_suite_name --report --output $reports_dir/$test_suite_name.xml ./artifacts/kuttl-test.xml
 
 if [ "$KIND_KEEP_CLUSTER" != true ] && [ "$use_kind_cluster" == true ]; then
