@@ -1,6 +1,10 @@
 Changes by Version
 ==================
 
+1.41.1 (2023-01-23)
+-------------------
+* Fix the Jaeger version for the Jaeger Operator 1.41.x  ([#2157](https://github.com/jaegertracing/jaeger-operator/pull/2157), [@iblancasa](https://github.com/iblancasa))
+
 1.40.0 (2022-12-23)
 -------------------
 * Support e2e tests on multi architecture environment ([#2139](https://github.com/jaegertracing/jaeger-operator/pull/2139), [@jkandasa](https://github.com/jkandasa))
