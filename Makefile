@@ -221,13 +221,13 @@ deploy-kafka-operator:
 ifeq ($(KAFKA_OLM),true)
 	$(ECHO) Skipping kafka-operator deployment, assuming it has been installed via OperatorHub
 else
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-namespaced --clusterrole=strimzi-cluster-operator-namespaced --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-entity-operator-delegation --clusterrole=strimzi-entity-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)kubectl create clusterrolebinding strimzi-cluster-operator-topic-operator-delegation --clusterrole=strimzi-topic-operator --serviceaccount ${KAFKA_NAMESPACE}:strimzi-cluster-operator 2>&1 | grep -v "already exists" || true
-	$(VECHO)curl --fail --location $(KAFKA_YAML) --output tests/_build/kafka-operator.yaml --create-dirs
-	$(VECHO)${SED} -i 's/namespace: .*/namespace: $(KAFKA_NAMESPACE)/' tests/_build/kafka-operator.yaml
-	$(VECHO) kubectl -n $(KAFKA_NAMESPACE) apply -f tests/_build/kafka-operator.yaml | grep -v "already exists" || true
-	$(VECHO)kubectl set env deployment strimzi-cluster-operator -n ${KAFKA_NAMESPACE} STRIMZI_NAMESPACE="*"
+	$(VECHO)curl --fail --location https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.32.0/strimzi-0.32.0.tar.gz --output tests/_build/kafka-operator.tar.gz --create-dirs
+	$(VECHO)tar xf tests/_build/kafka-operator.tar.gz
+	$(VECHO)${SED} -i 's/namespace: .*/namespace: ${KAFKA_NAMESPACE}/' strimzi-${KAFKA_VERSION}/install/cluster-operator/*RoleBinding*.yaml
+	$(VECHO)kubectl create -f strimzi-${KAFKA_VERSION}/install/cluster-operator/020-RoleBinding-strimzi-cluster-operator.yaml -n ${KAFKA_NAMESPACE}
+	$(VECHO)kubectl create -f strimzi-${KAFKA_VERSION}/install/cluster-operator/023-RoleBinding-strimzi-cluster-operator.yaml -n ${KAFKA_NAMESPACE}
+	$(VECHO)kubectl create -f strimzi-${KAFKA_VERSION}/install/cluster-operator/031-RoleBinding-strimzi-cluster-operator-entity-operator-delegation.yaml -n ${KAFKA_NAMESPACE}
+	$(VECHO)kubectl apply -f strimzi-${KAFKA_VERSION}/install/cluster-operator/ -n ${KAFKA_NAMESPACE}
 endif
 
 .PHONY: undeploy-kafka-operator
