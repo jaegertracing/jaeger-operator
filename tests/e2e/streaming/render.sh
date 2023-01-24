@@ -16,7 +16,7 @@ if [ $SKIP_KAFKA = true ]; then
 else
     start_test "streaming-simple"
     render_install_kafka "my-cluster" "00"
-    render_install_elasticsearch "upstream" "01"
+    render_install_elasticsearch "upstream" "03"
     JAEGER_NAME="simple-streaming" $GOMPLATE -f $TEMPLATES_DIR/streaming-jaeger-assert.yaml.template -o ./04-assert.yaml
     render_smoke_test "simple-streaming" "$is_secured" "05"
 fi
@@ -42,7 +42,7 @@ if [ $SKIP_KAFKA = true ]; then
     skip_test "streaming-with-autoprovisioning-autoscale" "SKIP_KAFKA is true"
 else
     start_test "streaming-with-autoprovisioning-autoscale"
-    if [ $IS_OPENSHIFT = true ]; then
+    if [ $KAFKA_OLM = true ]; then
         # Remove the installation of the operator
         rm ./00-install.yaml ./00-assert.yaml
     fi
