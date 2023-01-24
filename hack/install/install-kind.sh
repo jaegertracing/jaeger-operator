@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.15.0"
+VERSION="0.17.0"
 
 echo "Installing kind"
 

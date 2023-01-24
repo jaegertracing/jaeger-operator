@@ -82,9 +82,9 @@ LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-ENVTEST_K8S_VERSION = 1.24
+ENVTEST_K8S_VERSION = 1.26
 # Options for KIND version to use
-export KUBE_VERSION ?= 1.20
+export KUBE_VERSION ?= 1.26
 KIND_CONFIG ?= kind-$(KUBE_VERSION).yaml
 
 SCORECARD_TEST_IMG ?= quay.io/operator-framework/scorecard-test:v$(OPERATOR_SDK_VERSION)
