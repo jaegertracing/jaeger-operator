@@ -439,7 +439,7 @@ function render_smoke_test_example() {
 #   render_install_kafka_operator <test_step>
 #
 # Example:
-#   render_install_kafka_opreator "01"
+#   render_install_kafka_operator "01"
 # Generates the `01-install.yaml` and `01-assert.yaml` files to install the Kafka
 # operator and ensure it is deployed properly.
 # Note: the Kafka Operator will not be installed if KAFKA_OLM is `true`.
