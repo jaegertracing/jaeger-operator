@@ -51,7 +51,7 @@ CERTMANAGER_VERSION ?= 1.6.1
 CMCTL ?= $(LOCALBIN)/cmctl
 # Operator SDK
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
-OPERATOR_SDK_VERSION ?= 1.24.0
+OPERATOR_SDK_VERSION ?= 1.25.0
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
  # Is Jaeger Operator installed via OLM?
@@ -167,7 +167,7 @@ endif
 .PHONY: unit-tests
 unit-tests: envtest
 	@echo Running unit tests...
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -p 1 ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -p 1 ${GOTEST_OPTS} ./... -cover -coverprofile=cover.out -ldflags $(LD_FLAGS)
 
 .PHONY: set-node-os-linux
 set-node-os-linux:

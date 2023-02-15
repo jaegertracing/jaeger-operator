@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.18 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.19 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
