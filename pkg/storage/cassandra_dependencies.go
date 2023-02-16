@@ -91,11 +91,17 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		})
 	}
 
-	annotations := map[string]string{
-		"prometheus.io/scrape":    "false",
-		"sidecar.istio.io/inject": "false",
-		"linkerd.io/inject":       "disabled",
+	truncatedName := util.Truncate("%s-cassandra-schema-job", 63, jaeger.Name)
+
+	commonSpec := &v1.JaegerCommonSpec{
+		Annotations: map[string]string{
+			"prometheus.io/scrape":    "false",
+			"sidecar.istio.io/inject": "false",
+			"linkerd.io/inject":       "disabled",
+		},
+		Labels: util.Labels(truncatedName, "cronjob-cassandra-schema", *jaeger),
 	}
+	commonSpec = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Collector.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, *commonSpec})
 
 	// Set job deadline to 1 day by default. If the job does not succeed within
 	// that duration it transitions into a permanent error state.
@@ -151,7 +157,6 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		)
 	}
 
-	truncatedName := util.Truncate("%s-cassandra-schema-job", 63, jaeger.Name)
 	return []batchv1.Job{
 		{
 			TypeMeta: metav1.TypeMeta{
@@ -163,7 +168,7 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				// so, this value has to be restricted to 63 chars
 				Name:      truncatedName,
 				Namespace: jaeger.Namespace,
-				Labels:    util.Labels(truncatedName, "cronjob-cassandra-schema", *jaeger),
+				Labels:    commonSpec.Labels,
 				OwnerReferences: []metav1.OwnerReference{
 					{
 						APIVersion: jaeger.APIVersion,
@@ -178,17 +183,22 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 				ActiveDeadlineSeconds: jobTimeout,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Annotations: annotations,
+						Annotations: commonSpec.Annotations,
 					},
 					Spec: corev1.PodSpec{
+						ImagePullSecrets:      commonSpec.ImagePullSecrets,
 						ActiveDeadlineSeconds: podTimeout,
 						Affinity:              jaeger.Spec.Storage.CassandraCreateSchema.Affinity,
-						SecurityContext:       jaeger.Spec.SecurityContext,
+						Tolerations:           commonSpec.Tolerations,
+						SecurityContext:       commonSpec.SecurityContext,
+						Volumes:               commonSpec.Volumes,
 						Containers: []corev1.Container{{
-							Image:   util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
-							Name:    truncatedName,
-							Env:     envVars,
-							EnvFrom: envFromSource,
+							Image:        util.ImageName(jaeger.Spec.Storage.CassandraCreateSchema.Image, "jaeger-cassandra-schema-image"),
+							Name:         truncatedName,
+							Env:          envVars,
+							EnvFrom:      envFromSource,
+							Resources:    commonSpec.Resources,
+							VolumeMounts: commonSpec.VolumeMounts,
 						}},
 						RestartPolicy: corev1.RestartPolicyOnFailure,
 					},
