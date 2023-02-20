@@ -7,11 +7,6 @@ commands:
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
-  # observability namespace. To run this test, we modify that
-  # deployment to watch only in certain namespaces
-  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy"
+  # To run this test, we modify the operator to only run and look in this namespace
   - script: "cd {{ .Env.ROOT_DIR }}/config/default && {{ .Env.KUSTOMIZE }} edit set namespace $NAMESPACE"
-  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }} build config/namespaced > {{ .Env.ROOT_DIR }}/new_config.yaml"
-  - script: "cat {{ .Env.ROOT_DIR }}/new_config.yaml"
-  - script: "kubectl apply -f {{ .Env.ROOT_DIR }}/new_config.yaml"
+  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }} build config/namespaced | kubectl apply -f - -n $NAMESPACE"
