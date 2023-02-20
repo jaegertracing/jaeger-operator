@@ -11,7 +11,7 @@ commands:
   # observability namespace. To run this test, we modify that
   # deployment to watch only in certain namespaces
   - script: "cd {{ .Env.ROOT_DIR }} && make undeploy"
-  - script: "cd {{ .Env.ROOT_DIR }}/config/default && kustomize edit set namespace $NAMESPACE"
-  - script: "cd {{ .Env.ROOT_DIR }} && kustomize build config/namespaced > {{ .Env.ROOT_DIR }}/new_config.yaml"
+  - script: "cd {{ .Env.ROOT_DIR }}/config/default && {{ .Env.KUSTOMIZE }} edit set namespace $NAMESPACE"
+  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }} build config/namespaced > {{ .Env.ROOT_DIR }}/new_config.yaml"
   - script: "cat {{ .Env.ROOT_DIR }}/new_config.yaml"
   - script: "kubectl apply -f {{ .Env.ROOT_DIR }}/new_config.yaml"

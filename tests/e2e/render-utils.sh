@@ -888,6 +888,7 @@ export SUITE_DIR=$(dirname "$0")
 # Check the dependencies are there
 $ROOT_DIR/hack/install/install-gomplate.sh
 $ROOT_DIR/hack/install/install-yq.sh
+$ROOT_DIR/hack/install/install-kustomize.sh
 
 
 # Elasticsearch settings
