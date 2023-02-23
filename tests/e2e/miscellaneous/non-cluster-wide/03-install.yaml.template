@@ -2,4 +2,6 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
   # Restore operator
-  - script: "cd {{ .Env.ROOT_DIR }} && kustomize build config/namespaced | kubectl delete -f - -n $NAMESPACE && cd config/default && kustomize edit set namespace observability && cd ../.. && make deploy"
+  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }}  build config/namespaced | kubectl delete -f - -n $NAMESPACE"
+  - script: "cd {{ .Env.ROOT_DIR }}/config/default && {{ .Env.KUSTOMIZE }} edit set namespace observability"
+  - script: "cd {{ .Env.ROOT_DIR }} && make deploy"
