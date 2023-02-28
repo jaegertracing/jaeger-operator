@@ -152,6 +152,7 @@ if [ $IS_OPENSHIFT = true ]; then
     skip_test "non-cluster-wide" "Test not supported in OpenShift"
 else
     start_test "non-cluster-wide"
+    $GOMPLATE -f ./00-undeploy.yaml.template -o 00-undeploy.yaml
     $GOMPLATE -f ./01-install.yaml.template -o 01-install.yaml
     jaeger_name="my-jaeger"
     render_install_jaeger "$jaeger_name" "allInOne" "02"
