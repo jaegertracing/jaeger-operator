@@ -161,17 +161,12 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
+	instruments := make([]instrument.Asynchronous, 0, len(i.observations))
 	for _, o := range i.observations {
-		_, err = meter.RegisterCallback(
-			func(ctx context.Context, observer metric.Observer) error {
-				return i.callback(ctx, observer)
-			},
-			o.Gauge)
-		if err != nil {
-			return err
-		}
+		instruments = append(instruments, o.Gauge)
 	}
-	return nil
+	_, err = meter.RegisterCallback(i.callback, instruments...)
+	return err
 }
 
 func isInstanceNormalized(jaeger v1.Jaeger) bool {
