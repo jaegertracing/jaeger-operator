@@ -3616,6 +3616,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecagentresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -3629,6 +3636,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecagentresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -5409,6 +5443,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -5430,6 +5471,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -5443,6 +5491,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecagentvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -9223,6 +9298,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecallinoneresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -9236,6 +9318,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.allInOne.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecallinoneresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -10819,6 +10928,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -10840,6 +10956,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -10853,6 +10976,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.allInOne.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecallinonevolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -14647,6 +14797,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspeccollectorresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -14660,6 +14817,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.collector.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspeccollectorresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -16243,6 +16427,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -16264,6 +16455,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -16277,6 +16475,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.collector.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspeccollectorvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -20349,6 +20574,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingesterresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -20362,6 +20594,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingester.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecingesterresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -21945,6 +22204,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -21966,6 +22232,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -21979,6 +22252,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingester.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecingestervolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -25801,6 +26101,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingressresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -25814,6 +26121,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingress.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecingressresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -27363,6 +27697,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -27384,6 +27725,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -27397,6 +27745,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingress.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecingressvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -31499,6 +31874,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecqueryresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -31512,6 +31894,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.query.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecqueryresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -33095,6 +33504,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -33116,6 +33532,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -33129,6 +33552,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.query.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecqueryvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -34847,6 +35297,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -34860,6 +35317,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -38714,6 +39198,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstoragedependenciesresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -38727,6 +39218,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.dependencies.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstoragedependenciesresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -40242,6 +40760,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -40263,6 +40788,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -40276,6 +40808,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.dependencies.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstoragedependenciesvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -42095,6 +42654,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageelasticsearchproxyresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -42108,6 +42674,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.elasticsearch.proxyResources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageelasticsearchproxyresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -42129,6 +42722,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageelasticsearchresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -42142,6 +42742,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.elasticsearch.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageelasticsearchresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -44309,6 +44936,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesindexcleanerresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -44322,6 +44956,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esIndexCleaner.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanerresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -45837,6 +46498,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -45858,6 +46526,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -45871,6 +46546,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esIndexCleaner.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanervolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -49637,6 +50339,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesrolloverresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -49650,6 +50359,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esRollover.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageesrolloverresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -51165,6 +51901,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -51186,6 +51929,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -51199,6 +51949,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esRollover.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecstorageesrollovervolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -54205,6 +54982,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -54226,6 +55010,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecvolumesindexephemeralvolumeclaimtemplatespecresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -54239,6 +55030,33 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.volumes[index].ephemeral.volumeClaimTemplate.spec.resources.claims[index]
+<sup><sup>[↩ Parent](#jaegerspecvolumesindexephemeralvolumeclaimtemplatespecresources)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 

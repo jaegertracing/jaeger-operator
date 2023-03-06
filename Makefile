@@ -128,7 +128,7 @@ ensure-generate-is-noop: set-image-controller generate bundle
 
 
 .PHONY: format
-format:
+format: install-tools
 	$(ECHO) Formatting code...
 	$(VECHO)./.ci/format.sh
 
