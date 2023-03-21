@@ -494,3 +494,16 @@ func TestQueryContainerSecurityContextOverride(t *testing.T) {
 
 	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
 }
+
+func TestQueryNodeSelector(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	nodeSelector := map[string]string{
+		"agentpool": "service",
+	}
+	jaeger.Spec.Query.NodeSelector = nodeSelector
+
+	q := NewQuery(jaeger)
+	dep := q.Get()
+
+	assert.Equal(t, nodeSelector, dep.Spec.Template.Spec.NodeSelector)
+}
