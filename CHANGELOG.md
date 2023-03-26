@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+## v1.43.0 (2023-02-07)
+* update operator-sdk to 1.27.0 ([#2178](https://github.com/jaegertracing/jaeger-operator/pull/2178), [@iblancasa](https://github.com/iblancasa))
+* Support JaegerCommonSpec in JaegerCassandraCreateSchemaSpec ([#2176](https://github.com/jaegertracing/jaeger-operator/pull/2176), [@haanhvu](https://github.com/haanhvu))
+
+## v1.42.0 (2023-02-07)
+* Upgrade Kafka Operator default version to 0.32.0 ([#2150](https://github.com/jaegertracing/jaeger-operator/pull/2150), [@iblancasa](https://github.com/iblancasa))
+* Upgrade Kind, Kind images and add Kubernetes 1.26 ([#2161](https://github.com/jaegertracing/jaeger-operator/pull/2161), [@iblancasa](https://github.com/iblancasa))
+
 1.41.1 (2023-01-23)
 -------------------
 * Fix the Jaeger version for the Jaeger Operator 1.41.x  ([#2157](https://github.com/jaegertracing/jaeger-operator/pull/2157), [@iblancasa](https://github.com/iblancasa))
