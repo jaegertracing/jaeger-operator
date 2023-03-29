@@ -39,6 +39,10 @@ func clusteripCollectorService(jaeger *v1.Jaeger, selector map[string]string) *c
 
 func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Service {
 	trueVar := true
+
+	args := jaeger.Spec.Collector.Options.ToArgs()
+	adminPort := util.GetAdminPort(args, 14269)
+
 	ports := []corev1.ServicePort{
 		{
 			Name: "http-zipkin",
@@ -55,6 +59,10 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 		{
 			Name: "http-c-binary-trft",
 			Port: 14268,
+		},
+		{
+			Name: "admin-http",
+			Port: adminPort,
 		},
 	}
 

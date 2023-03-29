@@ -26,6 +26,7 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 		14250: false,
 		14267: false,
 		14268: false,
+		14269: false,
 	}
 
 	svc := svcs[0]

@@ -13,6 +13,10 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 	trueVar := true
 	name := util.DNSName(util.Truncate("%s-agent", 63, jaeger.Name))
 
+	args := jaeger.Spec.Agent.Options.ToArgs()
+
+	adminPort := util.GetAdminPort(args, 14271)
+
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -54,6 +58,10 @@ func NewAgentService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 					Name:     "jg-binary-trft",
 					Port:     6832,
 					Protocol: corev1.ProtocolUDP,
+				},
+				{
+					Name: "admin-http",
+					Port: adminPort,
 				},
 			},
 		},

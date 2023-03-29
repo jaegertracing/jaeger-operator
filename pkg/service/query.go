@@ -21,6 +21,10 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
 	}
 
+	args := jaeger.Spec.Query.Options.ToArgs()
+
+	adminPort := util.GetAdminPort(args, 16687)
+
 	ports := []corev1.ServicePort{
 		{
 			Name:       GetPortNameForQueryService(jaeger),
@@ -31,6 +35,11 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 			Name:       "grpc-query",
 			Port:       int32(16685),
 			TargetPort: intstr.FromInt(16685),
+		},
+		{
+			Name:       "admin-http",
+			Port:       int32(adminPort),
+			TargetPort: intstr.FromInt(int(adminPort)),
 		},
 	}
 	if jaeger.Spec.Query.ServiceType == corev1.ServiceTypeNodePort {
