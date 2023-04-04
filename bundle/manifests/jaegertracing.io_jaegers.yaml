@@ -3855,6 +3855,11 @@ spec:
                   minReplicas:
                     format: int32
                     type: integer
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    nullable: true
+                    type: object
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
@@ -5362,6 +5367,11 @@ spec:
                   minReplicas:
                     format: int32
                     type: integer
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    nullable: true
+                    type: object
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
@@ -8307,6 +8317,11 @@ spec:
                   nodePort:
                     format: int32
                     type: integer
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    nullable: true
+                    type: object
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true

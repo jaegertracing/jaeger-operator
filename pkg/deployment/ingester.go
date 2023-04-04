@@ -119,7 +119,12 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		livenessProbe = i.jaeger.Spec.Ingester.LivenessProbe
 	}
 
-	return &appsv1.Deployment{
+	var nodeSelector map[string]string
+	if i.jaeger.Spec.Ingester.NodeSelector != nil {
+		nodeSelector = i.jaeger.Spec.Ingester.NodeSelector
+	}
+
+	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -190,6 +195,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 			},
 		},
 	}
+	if nodeSelector != nil {
+		deployment.Spec.Template.Spec.NodeSelector = nodeSelector
+	}
+	return deployment
 }
 
 func (i *Ingester) labels() map[string]string {

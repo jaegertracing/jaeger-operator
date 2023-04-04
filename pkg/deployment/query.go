@@ -115,7 +115,12 @@ func (q *Query) Get() *appsv1.Deployment {
 		livenessProbe = q.jaeger.Spec.Query.LivenessProbe
 	}
 
-	return &appsv1.Deployment{
+	var nodeSelector map[string]string
+	if q.jaeger.Spec.Query.NodeSelector != nil {
+		nodeSelector = q.jaeger.Spec.Query.NodeSelector
+	}
+
+	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -202,6 +207,10 @@ func (q *Query) Get() *appsv1.Deployment {
 			},
 		},
 	}
+	if nodeSelector != nil {
+		deployment.Spec.Template.Spec.NodeSelector = nodeSelector
+	}
+	return deployment
 }
 
 // Services returns a list of services to be deployed along with the query deployment
