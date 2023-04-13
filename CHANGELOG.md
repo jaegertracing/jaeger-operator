@@ -1,6 +1,9 @@
 Changes by Version
 ==================
 
+## v1.44.0 (2023-04-13)
+* Feat: add `NodeSelector` to jaeger collector, query, and ingestor ([#2200](https://github.com/jaegertracing/jaeger-operator/pull/2200), [@AhmedGrati](https://github.com/AhmedGrati))
+
 ## v1.43.0 (2023-02-07)
 * update operator-sdk to 1.27.0 ([#2178](https://github.com/jaegertracing/jaeger-operator/pull/2178), [@iblancasa](https://github.com/iblancasa))
 * Support JaegerCommonSpec in JaegerCassandraCreateSchemaSpec ([#2176](https://github.com/jaegertracing/jaeger-operator/pull/2176), [@haanhvu](https://github.com/haanhvu))
