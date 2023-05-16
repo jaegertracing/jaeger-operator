@@ -1,5 +1,6 @@
 Changes by Version
 ==================
+## v1.45.0 (2023-05-16)
 
 ## v1.44.0 (2023-04-13)
 * Feat: add `NodeSelector` to jaeger collector, query, and ingestor ([#2200](https://github.com/jaegertracing/jaeger-operator/pull/2200), [@AhmedGrati](https://github.com/AhmedGrati))
