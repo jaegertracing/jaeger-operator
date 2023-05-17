@@ -404,6 +404,9 @@ type JaegerAllInOneSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Strategy"
 	Strategy *appsv1.DeploymentStrategy `json:"strategy,omitempty"`
+
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // AutoScaleSpec defines the common elements used for create HPAs
