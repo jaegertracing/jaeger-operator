@@ -2423,6 +2423,8 @@ spec:
                   options:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  priorityClassName:
+                    type: string
                   resources:
                     nullable: true
                     properties:
