@@ -114,8 +114,8 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	}
 
 	priorityClassName := ""
-	if a.jaeger.Spec.Collector.PriorityClassName != "" {
-		priorityClassName = a.jaeger.Spec.Collector.PriorityClassName
+	if a.jaeger.Spec.AllInOne.PriorityClassName != "" {
+		priorityClassName = a.jaeger.Spec.AllInOne.PriorityClassName
 	}
 
 	livenessProbe := &corev1.Probe{

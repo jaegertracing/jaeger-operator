@@ -601,7 +601,7 @@ func TestAllInOneContainerSecurityContextOverride(t *testing.T) {
 func TestAllInOnePriorityClassName(t *testing.T) {
 	priorityClassName := "test-class"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.AllInOne.PriorityClassName = "priorityClassName"
+	jaeger.Spec.AllInOne.PriorityClassName = priorityClassName
 	a := NewAllInOne(jaeger)
 	dep := a.Get()
 	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
