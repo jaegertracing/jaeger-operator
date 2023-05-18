@@ -113,6 +113,11 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		strategy = *a.jaeger.Spec.AllInOne.Strategy
 	}
 
+	priorityClassName := ""
+	if a.jaeger.Spec.Collector.PriorityClassName != "" {
+		priorityClassName = a.jaeger.Spec.Collector.PriorityClassName
+	}
+
 	livenessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
@@ -246,6 +251,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 						ImagePullPolicy: commonSpec.ImagePullPolicy,
 						SecurityContext: commonSpec.ContainerSecurityContext,
 					}},
+					PriorityClassName:  priorityClassName,
 					Volumes:            commonSpec.Volumes,
 					ServiceAccountName: account.JaegerServiceAccountFor(a.jaeger, account.AllInOneComponent),
 					Affinity:           commonSpec.Affinity,
