@@ -269,3 +269,34 @@ func TestEsIndexCleanerImagePullSecrets(t *testing.T) {
 
 	assert.Equal(t, pullSecret, esIndexCleaner.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
+
+func TestEsIndexCleanerImagePullPolicy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerImagePullPolicy"})
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	const ImagePullPolicy = corev1.PullPolicy("Always")
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	jaeger.Spec.Storage.EsIndexCleaner.ImagePullPolicy = corev1.PullPolicy("Always")
+
+	esIndexCleaner := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, ImagePullPolicy, esIndexCleaner.Spec.JobTemplate.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+}
+
+func TestEsIndexCleaneContainerSecurityContext(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsIndexCleanerContainerSecurityContext"})
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+
+	true := true
+	ContainerSecurityContext := &corev1.SecurityContext{
+		ReadOnlyRootFilesystem: &true,
+	}
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	jaeger.Spec.Storage.EsIndexCleaner.ContainerSecurityContext = ContainerSecurityContext
+
+	esIndexCleaner := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, ContainerSecurityContext, esIndexCleaner.Spec.JobTemplate.Spec.Template.Spec.Containers[0].SecurityContext)
+}
