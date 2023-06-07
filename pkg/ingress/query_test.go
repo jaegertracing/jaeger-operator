@@ -3,6 +3,7 @@ package ingress
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -274,6 +275,9 @@ func TestQueryIngressTLSSecret(t *testing.T) {
 }
 
 func TestQueryIngressClass(t *testing.T) {
+	viper.Set(v1.FlagDefaultIngressClass, "nginx")
+	defer viper.Reset()
+
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
 	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
 
@@ -287,7 +291,7 @@ func TestQueryIngressClass(t *testing.T) {
 
 	assert.NotNil(t, dep.Spec.IngressClassName)
 	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
-	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
+	assert.Equal(t, "nginx", *ingressNoClass.Get().Spec.IngressClassName)
 }
 
 func TestQueryIngressTLSHosts(t *testing.T) {

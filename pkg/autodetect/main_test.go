@@ -612,7 +612,7 @@ func TestDetectDefaultIngressClass(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "nginx",
-						Annotations: map[string]string {
+						Annotations: map[string]string{
 							"ingressclass.kubernetes.io/is-default-class": "true",
 						},
 					},
@@ -744,7 +744,7 @@ func TestCleanDeployments(t *testing.T) {
 type fakeClient struct {
 	client.Client
 	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
-	ListFunc func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
+	ListFunc   func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 }
 
 func customFakeClient() *fakeClient {
