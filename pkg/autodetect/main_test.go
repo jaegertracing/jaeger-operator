@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -581,6 +582,55 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	assert.False(t, viper.GetBool("auth-delegator-available"))
 }
 
+func TestSkipDefaultIngressClassOpenShift(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformOpenShift)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
+func TestDetectDefaultIngressClass(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformKubernetes)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+
+	cl.ListFunc = func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+		if listPointer, ok := list.(*networkingv1.IngressClassList); ok {
+			listPointer.Items = []networkingv1.IngressClass{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
+						Annotations: map[string]string {
+							"ingressclass.kubernetes.io/is-default-class": "true",
+						},
+					},
+				},
+			}
+		}
+
+		return nil
+	}
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "nginx", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
 func TestCleanDeployments(t *testing.T) {
 	for _, tt := range []struct {
 		cap             string // caption for the test
@@ -694,15 +744,20 @@ func TestCleanDeployments(t *testing.T) {
 type fakeClient struct {
 	client.Client
 	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
+	ListFunc func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 }
 
 func customFakeClient() *fakeClient {
 	c := fake.NewClientBuilder().Build()
-	return &fakeClient{Client: c, CreateFunc: c.Create}
+	return &fakeClient{Client: c, CreateFunc: c.Create, ListFunc: c.List}
 }
 
 func (f *fakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return f.CreateFunc(ctx, obj)
+}
+
+func (f *fakeClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return f.ListFunc(ctx, list)
 }
 
 type fakeDiscoveryClient struct {

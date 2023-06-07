@@ -6,6 +6,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/spf13/viper"
+
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -50,8 +52,11 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 
 	i.addTLSSpec(&spec)
 
+	clusterDefaultIngressClass := viper.GetString(v1.FlagDefaultIngressClass)
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
+	} else if clusterDefaultIngressClass != "" {
+		spec.IngressClassName = &clusterDefaultIngressClass
 	}
 
 	return &networkingv1.Ingress{

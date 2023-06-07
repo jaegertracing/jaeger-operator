@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -101,6 +102,7 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectKafka(ctx, apiList)
 		b.detectCronjobsVersion(ctx)
 		b.detectAutoscalingVersion(ctx)
+		b.detectDefaultIngressClass(ctx)
 	}
 
 	b.detectClusterRoles(ctx)
@@ -284,6 +286,34 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 			)
 		}
 		viper.Set("auth-delegator-available", true)
+	}
+}
+
+func (b *Background) detectDefaultIngressClass(ctx context.Context) {
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+		return
+	}
+
+	ingressClasses := networkingv1.IngressClassList{}
+	err := b.cl.List(ctx, &ingressClasses)
+	if err != nil {
+		log.Log.Info("It was not possible to get any IngressClasses from the Kubernetes cluster")
+		viper.Set(v1.FlagDefaultIngressClass, "")
+	}
+
+	oldValue := viper.GetString(v1.FlagDefaultIngressClass)
+
+	for _, ingressClass := range ingressClasses.Items {
+		val, ok := ingressClass.Annotations["ingressclass.kubernetes.io/is-default-class"]
+		if ok {
+			if val == "true" {
+				if oldValue != ingressClass.Name {
+					log.Log.Info("New default IngressClass value found", "old", oldValue, "new", ingressClass.Name)
+				}
+				viper.Set(v1.FlagDefaultIngressClass, ingressClass.Name)
+				return
+			}
+		}
 	}
 }
 

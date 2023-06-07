@@ -27,6 +27,9 @@ const (
 	// FlagCronJobsVersionBatchV1Beta1 represents the batch/v1beta1 version of the Kubernetes CronJob API, no longer available as of 1.25
 	FlagCronJobsVersionBatchV1Beta1 = "batch/v1beta1"
 
+	// FlagDefaultIngressClass represents the default Ingress class from the cluster
+	FlagDefaultIngressClass = "default-ingressclass"
+
 	// FlagAutoscalingVersion represents the version of the Kubernetes Autoscaling API
 	FlagAutoscalingVersion = "autoscaling-version"
 
