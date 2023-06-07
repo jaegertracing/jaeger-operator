@@ -1,5 +1,17 @@
 Changes by Version
 ==================
+## v1.45.0 (2023-05-16)
+
+## v1.44.0 (2023-04-13)
+* Feat: add `NodeSelector` to jaeger collector, query, and ingestor ([#2200](https://github.com/jaegertracing/jaeger-operator/pull/2200), [@AhmedGrati](https://github.com/AhmedGrati))
+
+## v1.43.0 (2023-02-07)
+* update operator-sdk to 1.27.0 ([#2178](https://github.com/jaegertracing/jaeger-operator/pull/2178), [@iblancasa](https://github.com/iblancasa))
+* Support JaegerCommonSpec in JaegerCassandraCreateSchemaSpec ([#2176](https://github.com/jaegertracing/jaeger-operator/pull/2176), [@haanhvu](https://github.com/haanhvu))
+
+## v1.42.0 (2023-02-07)
+* Upgrade Kafka Operator default version to 0.32.0 ([#2150](https://github.com/jaegertracing/jaeger-operator/pull/2150), [@iblancasa](https://github.com/iblancasa))
+* Upgrade Kind, Kind images and add Kubernetes 1.26 ([#2161](https://github.com/jaegertracing/jaeger-operator/pull/2161), [@iblancasa](https://github.com/iblancasa))
 
 1.41.1 (2023-01-23)
 -------------------

@@ -1,0 +1,12 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
+  # observability namespace. To run this test, we modify that
+  # deployment to watch only in certain namespaces
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Before executing the KUTTL tests, the Jaeger Operator is deployed in the
+  # observability namespace. We remove it to deploy it later
+  - script: "cd {{ .Env.ROOT_DIR }} && make undeploy ignore-not-found=true"

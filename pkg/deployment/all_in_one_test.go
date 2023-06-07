@@ -598,6 +598,15 @@ func TestAllInOneContainerSecurityContextOverride(t *testing.T) {
 	assert.Equal(t, overrideSecurityContextVar, *dep.Spec.Template.Spec.Containers[0].SecurityContext)
 }
 
+func TestAllInOnePriorityClassName(t *testing.T) {
+	priorityClassName := "test-class"
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.AllInOne.PriorityClassName = priorityClassName
+	a := NewAllInOne(jaeger)
+	dep := a.Get()
+	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
+}
+
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {
 	envVar := corev1.EnvVar{}
 	for _, v := range vars {

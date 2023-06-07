@@ -161,7 +161,12 @@ func (c *Collector) Get() *appsv1.Deployment {
 		},
 	}
 
-	return &appsv1.Deployment{
+	var nodeSelector map[string]string
+	if c.jaeger.Spec.Collector.NodeSelector != nil {
+		nodeSelector = c.jaeger.Spec.Collector.NodeSelector
+	}
+
+	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -226,6 +231,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 			},
 		},
 	}
+	if nodeSelector != nil {
+		deployment.Spec.Template.Spec.NodeSelector = nodeSelector
+	}
+	return deployment
 }
 
 // Services returns a list of services to be deployed along with the all-in-one deployment

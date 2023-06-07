@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/asyncint64"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -31,7 +30,7 @@ type instancesView struct {
 	Name  string
 	Label string
 	Count map[string]int
-	Gauge asyncint64.Gauge
+	Gauge instrument.Int64ObservableGauge
 	KeyFn func(jaeger v1.Jaeger) string
 }
 
@@ -48,12 +47,12 @@ func (i *instancesView) Record(jaeger v1.Jaeger) {
 	}
 }
 
-func (i *instancesView) Report(ctx context.Context) {
+func (i *instancesView) Report(ctx context.Context, observer metric.Observer) {
 	for key, count := range i.Count {
 		attrs := []attribute.KeyValue{
 			attribute.String(i.Label, key),
 		}
-		i.Gauge.Observe(ctx, int64(count), attrs...)
+		observer.ObserveInt64(i.Gauge, int64(count), attrs...)
 	}
 }
 
@@ -80,7 +79,7 @@ func newObservation(meter metric.Meter, name, desc, label string, keyFn func(jae
 		Label: label,
 	}
 
-	g, err := meter.AsyncInt64().Gauge(instanceMetricName(name), instrument.WithDescription(desc))
+	g, err := meter.Int64ObservableGauge(instanceMetricName(name), instrument.WithDescription(desc))
 	if err != nil {
 		return instancesView{}, err
 	}
@@ -166,8 +165,8 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	for _, o := range i.observations {
 		instruments = append(instruments, o.Gauge)
 	}
-
-	return meter.RegisterCallback(instruments, i.callback)
+	_, err = meter.RegisterCallback(i.callback, instruments...)
+	return err
 }
 
 func isInstanceNormalized(jaeger v1.Jaeger) bool {
@@ -186,13 +185,13 @@ func (i *instancesMetric) reset() {
 	}
 }
 
-func (i *instancesMetric) report(ctx context.Context) {
+func (i *instancesMetric) report(ctx context.Context, observer metric.Observer) {
 	for _, o := range i.observations {
-		o.Report(ctx)
+		o.Report(ctx, observer)
 	}
 }
 
-func (i *instancesMetric) callback(ctx context.Context) {
+func (i *instancesMetric) callback(ctx context.Context, observer metric.Observer) error {
 	instances := &v1.JaegerList{}
 	if err := i.client.List(ctx, instances); err == nil {
 		i.reset()
@@ -208,6 +207,7 @@ func (i *instancesMetric) callback(ctx context.Context) {
 				}
 			}
 		}
-		i.report(ctx)
+		i.report(ctx, observer)
 	}
+	return nil
 }
