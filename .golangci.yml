@@ -10,7 +10,6 @@ linters-settings:
 
 linters:
   enable:
-    - depguard
     - gofmt
     - gofumpt
     - goimports
