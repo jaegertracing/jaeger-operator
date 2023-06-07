@@ -43,8 +43,7 @@ fi
 ELASTICSEARCH_NODECOUNT="1"
 render_install_jaeger "$jaeger_name" "$jaeger_deploy_mode" "01"
 # Change the resource limits for the Jaeger deployment
-$YQ e -i '.spec.collector.resources.requests.memory="400m"' 01-install.yaml
-$YQ e -i '.spec.collector.resources.requests.cpu="400m"' 01-install.yaml
+$YQ e -i '.spec.collector.resources.requests.memory="200m"' 01-install.yaml
 
 # Enable autoscale
 $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
