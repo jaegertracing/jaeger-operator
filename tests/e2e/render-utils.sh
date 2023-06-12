@@ -600,7 +600,7 @@ function render_install_tracegen() {
     step=$2
 
     # We detected this value is good enough to make the operator scale
-    replicas=4
+    replicas=1
 
     $GOMPLATE -f $EXAMPLES_DIR/tracegen.yaml -o ./$step-install.yaml
     $YQ e -i ".spec.replicas=$replicas" ./$step-install.yaml
