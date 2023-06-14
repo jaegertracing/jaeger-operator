@@ -75,13 +75,15 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) runtime.Object {
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
-						Name:         util.Truncate(name, 63),
-						Image:        util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
-						Args:         []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
-						Env:          util.RemoveEmptyVars(envs),
-						EnvFrom:      envFromSource,
-						Resources:    commonSpec.Resources,
-						VolumeMounts: commonSpec.VolumeMounts,
+						Name:            util.Truncate(name, 63),
+						Image:           util.ImageName(jaeger.Spec.Storage.EsIndexCleaner.Image, "jaeger-es-index-cleaner-image"),
+						ImagePullPolicy: jaeger.Spec.Storage.EsIndexCleaner.ImagePullPolicy,
+						Args:            []string{strconv.Itoa(*jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays), esUrls},
+						Env:             util.RemoveEmptyVars(envs),
+						EnvFrom:         envFromSource,
+						SecurityContext: jaeger.Spec.Storage.EsIndexCleaner.ContainerSecurityContext,
+						Resources:       commonSpec.Resources,
+						VolumeMounts:    commonSpec.VolumeMounts,
 					},
 				},
 				ImagePullSecrets:   commonSpec.ImagePullSecrets,
