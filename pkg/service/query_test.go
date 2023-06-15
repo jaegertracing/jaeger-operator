@@ -24,7 +24,9 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
+	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Len(t, svc.Spec.ClusterIP, 0)                        // make sure we get a cluster IP
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeClusterIP) // make sure we get a ClusterIP service
 }
@@ -87,7 +89,9 @@ func TestQueryServiceLoadBalancerWithIngress(t *testing.T) {
 	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
 	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
+	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeLoadBalancer) // make sure we get a LoadBalancer service
 }
 

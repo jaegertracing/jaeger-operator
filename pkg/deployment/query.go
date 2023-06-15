@@ -173,6 +173,10 @@ func (q *Query) Get() *appsv1.Deployment {
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{
 							{
+								ContainerPort: 16685,
+								Name:          "grpc-query",
+							},
+							{
 								ContainerPort: 16686,
 								Name:          "query",
 							},
