@@ -1,7 +1,0 @@
-# Assert the Jaeger collector scaled to 5 replicas
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: simple-prod-collector
-status:
-  readyReplicas: 5

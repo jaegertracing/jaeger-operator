@@ -186,6 +186,10 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Name:          "c-binary-trft",
 		},
 		{
+			ContainerPort: 16685,
+			Name:          "grpc-query",
+		},
+		{
 			ContainerPort: 16686,
 			Name:          "query",
 		},
