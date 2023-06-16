@@ -55,7 +55,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 	clusterDefaultIngressClass := viper.GetString(v1.FlagDefaultIngressClass)
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
-	} else if clusterDefaultIngressClass != "" {
+	} else if clusterDefaultIngressClass != ""{
 		spec.IngressClassName = &clusterDefaultIngressClass
 	}
 

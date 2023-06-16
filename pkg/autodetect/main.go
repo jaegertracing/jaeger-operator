@@ -298,7 +298,6 @@ func (b *Background) detectDefaultIngressClass(ctx context.Context) {
 	err := b.cl.List(ctx, &ingressClasses)
 	if err != nil {
 		log.Log.Info("It was not possible to get any IngressClasses from the Kubernetes cluster")
-		viper.Set(v1.FlagDefaultIngressClass, "")
 	}
 
 	oldValue := viper.GetString(v1.FlagDefaultIngressClass)

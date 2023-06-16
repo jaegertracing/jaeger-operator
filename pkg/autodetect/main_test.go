@@ -631,6 +631,37 @@ func TestDetectDefaultIngressClass(t *testing.T) {
 	assert.Equal(t, "nginx", viper.GetString(v1.FlagDefaultIngressClass))
 }
 
+func TestDetectNoDefaultIngressClass(t *testing.T) {
+	// prepare
+	viper.Set("platform", v1.FlagPlatformKubernetes)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+
+	cl.ListFunc = func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+		if listPointer, ok := list.(*networkingv1.IngressClassList); ok {
+			listPointer.Items = []networkingv1.IngressClass{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
+					},
+				},
+			}
+		}
+
+		return nil
+	}
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
+
 func TestCleanDeployments(t *testing.T) {
 	for _, tt := range []struct {
 		cap             string // caption for the test
