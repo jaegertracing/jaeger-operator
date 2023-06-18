@@ -466,6 +466,12 @@ type JaegerCollectorSpec struct {
 	// +optional
 	// +nullable
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// +optional
+	Lifecycle *v1.Lifecycle `json:"lifecycle,omitempty"`
+
+	// +optional
+	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester

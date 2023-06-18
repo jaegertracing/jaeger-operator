@@ -827,3 +827,31 @@ func TestCollectorNodeSelector(t *testing.T) {
 
 	assert.Equal(t, nodeSelector, dep.Spec.Template.Spec.NodeSelector)
 }
+
+func TestCollectorLifecyle(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	lifecycle := &corev1.Lifecycle{
+		PreStop: &corev1.LifecycleHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"command"},
+			},
+		},
+	}
+	jaeger.Spec.Collector.Lifecycle = lifecycle
+
+	c := NewCollector(jaeger)
+	dep := c.Get()
+
+	assert.Equal(t, lifecycle, dep.Spec.Template.Spec.Containers[0].Lifecycle)
+}
+
+func TestCollectorTerminationGracePeriodSeconds(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	terminationGracePeriodSeconds := int64(10)
+	jaeger.Spec.Collector.TerminationGracePeriodSeconds = &terminationGracePeriodSeconds
+
+	c := NewCollector(jaeger)
+	dep := c.Get()
+
+	assert.Equal(t, terminationGracePeriodSeconds, *dep.Spec.Template.Spec.TerminationGracePeriodSeconds)
+}
