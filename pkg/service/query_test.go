@@ -26,8 +26,10 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
 	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
+	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
 	assert.Len(t, svc.Spec.ClusterIP, 0)                        // make sure we get a cluster IP
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeClusterIP) // make sure we get a ClusterIP service
 }
@@ -72,6 +74,8 @@ func TestQueryServiceNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
 	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, int32(0), svc.Spec.Ports[0].NodePort)
 	assert.Equal(t, int32(0), svc.Spec.Ports[1].NodePort)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
@@ -93,6 +97,7 @@ func TestQueryServiceLoadBalancerWithIngress(t *testing.T) {
 	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
 	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeLoadBalancer) // make sure we get a LoadBalancer service
@@ -113,6 +118,8 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
 	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, int32(32767), svc.Spec.Ports[0].NodePort) // make sure we get the same NodePort as set above
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
@@ -132,6 +139,8 @@ func TestQueryServiceSpecAnnotations(t *testing.T) {
 	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
 	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
 	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, map[string]string{"component": "jaeger"}, svc.Annotations)
 }
