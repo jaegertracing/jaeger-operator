@@ -1,5 +1,14 @@
 Changes by Version
 ==================
+
+## v1.46.0 (2025-06-16)
+* Missing exposed port 16685 in query deployments ([#2239](https://github.com/jaegertracing/jaeger-operator/pull/2239), [@iblancasa](https://github.com/iblancasa))
+* Use Golang 1.20 ([#2205](https://github.com/jaegertracing/jaeger-operator/pull/2205), [@iblancasa](https://github.com/iblancasa))
+* [BugFix] Properly set imagePullPolicy and containerSecurityContext for EsIndexCleaner cronjob container ([#2224](https://github.com/jaegertracing/jaeger-operator/pull/2224), [@michalschott](https://github.com/michalschott))
+* Remove resource limitation for the operator pod ([#2221](https://github.com/jaegertracing/jaeger-operator/pull/2221), [@iblancasa](https://github.com/iblancasa))
+* Add PriorityClass for AllInOne strategy ([#2218](https://github.com/jaegertracing/jaeger-operator/pull/2218), [@sonofgibs](https://github.com/sonofgibs))
+
+
 ## v1.45.0 (2023-05-16)
 
 ## v1.44.0 (2023-04-13)
