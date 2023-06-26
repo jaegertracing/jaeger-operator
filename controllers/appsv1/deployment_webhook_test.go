@@ -245,7 +245,7 @@ func TestReconcilieDeployment(t *testing.T) {
 					Allowed: true,
 					Result: &metav1.Status{
 						Message: "is jaeger deployment, we do not touch it",
-						Code:   200,
+						Code:    200,
 					},
 				},
 			},
@@ -315,7 +315,7 @@ func TestReconcilieDeployment(t *testing.T) {
 					Allowed: true,
 					Result: &metav1.Status{
 						Message: "no suitable Jaeger instances found to inject a sidecar",
-						Code:   200,
+						Code:    200,
 					},
 				},
 			},
@@ -370,7 +370,7 @@ func TestReconcilieDeployment(t *testing.T) {
 					Allowed: true,
 					Result: &metav1.Status{
 						Message: "not watching in namespace, we do not touch the deployment",
-						Code:   200,
+						Code:    200,
 					},
 				},
 			},

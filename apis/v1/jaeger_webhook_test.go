@@ -177,7 +177,7 @@ func TestDefault(t *testing.T) {
 }
 
 func TestValidateDelete(t *testing.T) {
-	warnings, err:= new(Jaeger).ValidateDelete()
+	warnings, err := new(Jaeger).ValidateDelete()
 	assert.Nil(t, warnings)
 	assert.Nil(t, err)
 }
