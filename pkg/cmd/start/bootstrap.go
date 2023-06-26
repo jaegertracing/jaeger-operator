@@ -24,6 +24,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -427,8 +428,9 @@ func setupWebhooks(_ context.Context, mgr manager.Manager) {
 
 	// register webhook
 	srv := mgr.GetWebhookServer()
+	decoder := admission.NewDecoder(mgr.GetScheme())
 	srv.Register("/mutate-v1-deployment", &webhook.Admission{
-		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient()),
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient(), decoder),
 	})
 }
 

@@ -177,7 +177,9 @@ func TestDefault(t *testing.T) {
 }
 
 func TestValidateDelete(t *testing.T) {
-	assert.Nil(t, new(Jaeger).ValidateDelete())
+	warnings, err:= new(Jaeger).ValidateDelete()
+	assert.Nil(t, warnings)
+	assert.Nil(t, err)
 }
 
 func TestValidate(t *testing.T) {
@@ -275,13 +277,14 @@ func TestValidate(t *testing.T) {
 			fakeCl := fake.NewClientBuilder().WithRuntimeObjects(test.objsToCreate...).Build()
 			cl = fakeCl
 
-			err := test.current.ValidateCreate()
+			warnings, err := test.current.ValidateCreate()
 			if test.err != "" {
 				assert.NotNil(t, err)
 				assert.Equal(t, test.err, err.Error())
 			} else {
 				assert.Nil(t, err)
 			}
+			assert.Nil(t, warnings)
 		})
 	}
 }

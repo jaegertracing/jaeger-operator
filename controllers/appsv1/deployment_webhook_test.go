@@ -244,7 +244,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: true,
 					Result: &metav1.Status{
-						Reason: "is jaeger deployment, we do not touch it",
+						Message: "is jaeger deployment, we do not touch it",
 						Code:   200,
 					},
 				},
@@ -314,7 +314,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: true,
 					Result: &metav1.Status{
-						Reason: "no suitable Jaeger instances found to inject a sidecar",
+						Message: "no suitable Jaeger instances found to inject a sidecar",
 						Code:   200,
 					},
 				},
@@ -369,7 +369,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: true,
 					Result: &metav1.Status{
-						Reason: "not watching in namespace, we do not touch the deployment",
+						Message: "not watching in namespace, we do not touch the deployment",
 						Code:   200,
 					},
 				},
@@ -398,7 +398,8 @@ func TestReconcilieDeployment(t *testing.T) {
 				errors:    tc.errors,
 			}
 
-			r := NewDeploymentInterceptorWebhook(cl)
+			decoder := admission.NewDecoder(scheme.Scheme)
+			r := NewDeploymentInterceptorWebhook(cl, decoder)
 
 			req := admission.Request{}
 			if !tc.emptyRequest {
@@ -419,9 +420,6 @@ func TestReconcilieDeployment(t *testing.T) {
 				}
 			}
 
-			decoder, err := admission.NewDecoder(s)
-			require.NoError(t, err)
-			admission.InjectDecoderInto(decoder, r)
 			resp := r.Handle(context.Background(), req)
 
 			assert.Len(t, resp.Patches, len(tc.resp.Patches))
@@ -433,8 +431,6 @@ func TestReconcilieDeployment(t *testing.T) {
 			})
 
 			assert.Equal(t, tc.resp, resp)
-
-			require.NoError(t, err)
 		})
 	}
 }

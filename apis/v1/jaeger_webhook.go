@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 const (
@@ -86,13 +87,13 @@ func (j *Jaeger) Default() {
 var _ webhook.Validator = &Jaeger{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (j *Jaeger) ValidateCreate() error {
+func (j *Jaeger) ValidateCreate() (admission.Warnings, error) {
 	jaegerlog.Info("validate create", "name", j.Name)
 	return j.ValidateUpdate(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (j *Jaeger) ValidateUpdate(_ runtime.Object) error {
+func (j *Jaeger) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	jaegerlog.Info("validate update", "name", j.Name)
 
 	if ShouldInjectOpenShiftElasticsearchConfiguration(j.Spec.Storage) && j.Spec.Storage.Elasticsearch.DoNotProvision {
@@ -103,24 +104,24 @@ func (j *Jaeger) ValidateUpdate(_ runtime.Object) error {
 			Name:      j.Spec.Storage.Elasticsearch.Name,
 		}, es)
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("elasticsearch instance not found: %v", err)
+			return nil, fmt.Errorf("elasticsearch instance not found: %v", err)
 		}
 	}
 
 	for _, opt := range j.objsWithOptions() {
 		got := opt.DeepCopy().ToArgs()
 		if f := getAdditionalTLSFlags(got); f != nil {
-			return fmt.Errorf("tls flags incomplete, got: %v", got)
+			return nil, fmt.Errorf("tls flags incomplete, got: %v", got)
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (j *Jaeger) ValidateDelete() error {
+func (j *Jaeger) ValidateDelete() (admission.Warnings, error) {
 	jaegerlog.Info("validate delete", "name", j.Name)
-	return nil
+	return nil, nil
 }
 
 // OpenShiftElasticsearchNodeCount returns total node count of Elasticsearch nodes.

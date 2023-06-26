@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
@@ -26,7 +26,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 		Name: "TestElasticsearchesCreate",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -78,7 +78,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 		"app.kubernetes.io/part-of":  "jaeger",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -124,7 +124,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 		"app.kubernetes.io/part-of":  "jaeger",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -163,7 +163,7 @@ func TestElasticsearchesCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&esv1.Elasticsearch{

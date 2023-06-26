@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-lib/handler"
 
@@ -69,7 +68,10 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 func (r *JaegerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Jaeger{}).
-		Watches(&source.Kind{Type: &v1.Jaeger{}}, &handler.InstrumentedEnqueueRequestForObject{}).
+		Watches(
+			&v1.Jaeger{},
+			&handler.InstrumentedEnqueueRequestForObject{},
+		).
 		Complete(r)
 	return err
 }
