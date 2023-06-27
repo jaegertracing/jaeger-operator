@@ -356,8 +356,9 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	// Also note that you may face performance issues when using this with a high number of namespaces.
 	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 	if strings.Contains(namespace, ",") {
-		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+		options.Cache = cache.Options{
+			Namespaces: strings.Split(namespace, ","),
+		}
 	}
 
 	// Create a new manager to provide shared dependencies and start components

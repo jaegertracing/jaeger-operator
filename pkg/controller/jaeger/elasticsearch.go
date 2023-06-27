@@ -95,79 +95,85 @@ func waitForAvailableElastic(ctx context.Context, c client.Client, es esv1.Elast
 
 	seen := false
 	once := &sync.Once{}
-	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		depList := appsv1.DeploymentList{}
-		labels := map[string]string{
-			"cluster-name": es.Name,
-			"component":    "elasticsearch",
-		}
-		opts := []client.ListOption{
-			client.InNamespace(es.Namespace),
-			client.MatchingLabels(labels),
-		}
-
-		if err = c.List(ctx, &depList, opts...); err != nil {
-			if k8serrors.IsNotFound(err) {
-				if seen {
-					// we have seen this object before, but it doesn't exist anymore!
-					// we don't have anything else to do here, break the poll
-					log.Log.V(1).Info(
-						"Elasticsearch cluster has been removed.",
-						"namespace", es.Namespace,
-						"name", es.Name,
-					)
-					return true, ErrElasticsearchRemoved
+	return wait.PollUntilContextTimeout(
+		ctx,
+		time.Second,
+		2*time.Minute,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				depList := appsv1.DeploymentList{}
+				labels := map[string]string{
+					"cluster-name": es.Name,
+					"component":    "elasticsearch",
+				}
+				opts := []client.ListOption{
+					client.InNamespace(es.Namespace),
+					client.MatchingLabels(labels),
 				}
 
-				// the object might have not been created yet
-				log.Log.V(-1).Info(
-					"Elasticsearch cluster doesn't exist yet.",
-					"namespace", es.Namespace,
-					"name", es.Name,
-				)
-				return false, nil
-			}
-			return false, tracing.HandleError(err, span)
-		}
+				if err = c.List(ctx, &depList, opts...); err != nil {
+					if k8serrors.IsNotFound(err) {
+						if seen {
+							// we have seen this object before, but it doesn't exist anymore!
+							// we don't have anything else to do here, break the poll
+							log.Log.V(1).Info(
+								"Elasticsearch cluster has been removed.",
+								"namespace", es.Namespace,
+								"name", es.Name,
+							)
+							return true, ErrElasticsearchRemoved
+						}
 
-		seen = true
-		availableDep := int32(0)
-		for _, d := range depList.Items {
-			if d.Status.Replicas == d.Status.AvailableReplicas {
-				availableDep++
-			}
-		}
-		ssList := appsv1.StatefulSetList{}
-		if err = c.List(ctx, &ssList, opts...); err != nil {
-			if k8serrors.IsNotFound(err) {
-				// the object might have not been created yet
-				log.Log.V(-1).Info(
-					"Elasticsearch cluster doesn't exist yet.",
-					"namespace", es.Namespace,
-					"name", es.Name,
-				)
-				return false, nil
-			}
-			return false, tracing.HandleError(err, span)
-		}
-		ssAvailableRep := int32(0)
-		ssReplicas := int32(0)
-		for _, s := range ssList.Items {
-			ssReplicas += *s.Spec.Replicas
-			ssAvailableRep += s.Status.ReadyReplicas
-		}
-		once.Do(func() {
-			log.Log.V(-1).Info(
-				"Waiting for Elasticsearch to be available",
-				"namespace", es.Namespace,
-				"name", es.Name,
-				"desiredESNodes", expectedSize,
-				"desiredStatefulSetNodes", ssReplicas,
-				"availableStatefulSetNodes", ssAvailableRep,
-				"desiredDeploymentNodes", expectedSize-ssReplicas,
-				"availableDeploymentNodes", availableDep,
-			)
-		})
-		return availableDep+ssAvailableRep == expectedSize, nil
-	})
+						// the object might have not been created yet
+						log.Log.V(-1).Info(
+							"Elasticsearch cluster doesn't exist yet.",
+							"namespace", es.Namespace,
+							"name", es.Name,
+						)
+						return false, nil
+					}
+					return false, tracing.HandleError(err, span)
+				}
+
+				seen = true
+				availableDep := int32(0)
+				for _, d := range depList.Items {
+					if d.Status.Replicas == d.Status.AvailableReplicas {
+						availableDep++
+					}
+				}
+				ssList := appsv1.StatefulSetList{}
+				if err = c.List(ctx, &ssList, opts...); err != nil {
+					if k8serrors.IsNotFound(err) {
+						// the object might have not been created yet
+						log.Log.V(-1).Info(
+							"Elasticsearch cluster doesn't exist yet.",
+							"namespace", es.Namespace,
+							"name", es.Name,
+						)
+						return false, nil
+					}
+					return false, tracing.HandleError(err, span)
+				}
+				ssAvailableRep := int32(0)
+				ssReplicas := int32(0)
+				for _, s := range ssList.Items {
+					ssReplicas += *s.Spec.Replicas
+					ssAvailableRep += s.Status.ReadyReplicas
+				}
+				once.Do(func() {
+					log.Log.V(-1).Info(
+						"Waiting for Elasticsearch to be available",
+						"namespace", es.Namespace,
+						"name", es.Name,
+						"desiredESNodes", expectedSize,
+						"desiredStatefulSetNodes", ssReplicas,
+						"availableStatefulSetNodes", ssAvailableRep,
+						"desiredDeploymentNodes", expectedSize-ssReplicas,
+						"availableDeploymentNodes", availableDep,
+					)
+				})
+				return availableDep+ssAvailableRep == expectedSize, nil
+			}))
 }
