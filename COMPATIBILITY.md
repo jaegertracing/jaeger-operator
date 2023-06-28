@@ -20,10 +20,3 @@ The following table shows the compatibility of jaeger operator with different co
 | v1.32.x         | v1.19 to v1.22  | v0.23              | v1.6.1       |
 | v1.31.x         | v1.19 to v1.22  | v0.23              | v1.6.1       |
 | v1.30.x         | v1.19 to v1.22  | v0.23              |              |
-| v1.29.x         | v1.19 to v1.22  | v0.23              |              |
-| v1.28.x         | v1.19 to v1.22  | v0.23              |              |
-| v1.27.x         | v1.19 to v1.22  | v0.23              |              |
-| v1.26.x         | v1.19 to v1.22  | v0.23              |              |
-| v1.25.x         | v1.19 to v1.21  | v0.23              |              |
-| v1.24.x         | v1.19 to v1.21  | v0.23              |              |
-| v1.23.x         | v1.19 to v1.21  | v0.19              |              |
