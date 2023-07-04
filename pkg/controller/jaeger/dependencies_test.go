@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -22,7 +22,7 @@ func TestHandleDependencies(t *testing.T) {
 		Name: "TestHandleDependencies",
 	}
 
-	objs := []runtime.Object{v1.NewJaeger(nsn)}
+	objs := []client.Object{v1.NewJaeger(nsn)}
 
 	dep := batchv1.Job{}
 	dep.Name = nsn.Name

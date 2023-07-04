@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -25,7 +26,7 @@ func TestHorizontalPodAutoscalerCreateV2(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -71,7 +72,7 @@ func TestHorizontalPodAutoscalerCreateV2Beta2(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -126,7 +127,7 @@ func TestHorizontalPodAutoscalerUpdateV2(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -176,7 +177,7 @@ func TestHorizontalPodAutoscalerUpdateV2Beta2(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -223,7 +224,7 @@ func TestHorizontalPodAutoscalerDeleteV2(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -262,7 +263,7 @@ func TestHorizontalPodAutoscalerDeleteV2Beta2(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -299,7 +300,7 @@ func TestHorizontalPodAutoscalerCreateExistingNameInAnotherNamespaceV2(t *testin
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&autoscalingv2.HorizontalPodAutoscaler{
@@ -358,7 +359,7 @@ func TestHorizontalPodAutoscalerCreateExistingNameInAnotherNamespaceV2Beta2(t *t
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&autoscalingv2beta2.HorizontalPodAutoscaler{

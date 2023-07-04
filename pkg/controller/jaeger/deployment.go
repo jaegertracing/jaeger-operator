@@ -106,53 +106,59 @@ func (r *ReconcileJaeger) waitForStability(ctx context.Context, dep appsv1.Deplo
 
 	seen := false
 	once := &sync.Once{}
-	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		d := &appsv1.Deployment{}
-		if err := r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
-			if k8serrors.IsNotFound(err) {
-				if seen {
-					// we have seen this object before, but it doesn't exist anymore!
-					// we don't have anything else to do here, break the poll
-					log.Log.V(1).Info(
-						"Deployment has been removed.",
-						"namespace", dep.Namespace,
-						"name", dep.Name,
-					)
-					return true, ErrDeploymentRemoved
+	return wait.PollUntilContextTimeout(
+		ctx,
+		time.Second,
+		5*time.Minute,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				d := &appsv1.Deployment{}
+				if err := r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, d); err != nil {
+					if k8serrors.IsNotFound(err) {
+						if seen {
+							// we have seen this object before, but it doesn't exist anymore!
+							// we don't have anything else to do here, break the poll
+							log.Log.V(1).Info(
+								"Deployment has been removed.",
+								"namespace", dep.Namespace,
+								"name", dep.Name,
+							)
+							return true, ErrDeploymentRemoved
+						}
+
+						// the object might have not been created yet
+						log.Log.V(-1).Info(
+							"Deployment doesn't exist yet.",
+							"namespace", dep.Namespace,
+							"name", dep.Name,
+						)
+						return false, nil
+					}
+					return false, tracing.HandleError(err, span)
 				}
 
-				// the object might have not been created yet
-				log.Log.V(-1).Info(
-					"Deployment doesn't exist yet.",
-					"namespace", dep.Namespace,
-					"name", dep.Name,
-				)
-				return false, nil
-			}
-			return false, tracing.HandleError(err, span)
-		}
+				seen = true
+				if d.Status.ReadyReplicas != d.Status.Replicas {
+					once.Do(func() {
+						log.Log.V(-1).Info(
+							"Waiting for deployment to stabilize",
+							"namespace", dep.Namespace,
+							"name", dep.Name,
+							"ready", d.Status.ReadyReplicas,
+							"desired", d.Status.Replicas,
+						)
+					})
+					return false, nil
+				}
 
-		seen = true
-		if d.Status.ReadyReplicas != d.Status.Replicas {
-			once.Do(func() {
 				log.Log.V(-1).Info(
-					"Waiting for deployment to stabilize",
+					"Deployment has stabilized",
 					"namespace", dep.Namespace,
 					"name", dep.Name,
 					"ready", d.Status.ReadyReplicas,
 					"desired", d.Status.Replicas,
 				)
-			})
-			return false, nil
-		}
-
-		log.Log.V(-1).Info(
-			"Deployment has stabilized",
-			"namespace", dep.Namespace,
-			"name", dep.Name,
-			"ready", d.Status.ReadyReplicas,
-			"desired", d.Status.Replicas,
-		)
-		return true, nil
-	})
+				return true, nil
+			}))
 }
