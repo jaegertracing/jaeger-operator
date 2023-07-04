@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -27,7 +27,7 @@ func TestKafkaUserCreate(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -101,7 +101,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 		},
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -167,7 +167,7 @@ func TestKafkaUserDelete(t *testing.T) {
 		},
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -206,7 +206,7 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&v1beta2.KafkaUser{

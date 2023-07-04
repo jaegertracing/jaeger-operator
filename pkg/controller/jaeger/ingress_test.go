@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -21,7 +21,7 @@ func TestIngressesCreate(t *testing.T) {
 		Name: "TestIngressesCreate",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -70,7 +70,7 @@ func TestIngressesUpdate(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -113,7 +113,7 @@ func TestIngressesDelete(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -149,7 +149,7 @@ func TestIngressesCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&networkingv1.Ingress{

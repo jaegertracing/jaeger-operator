@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,7 +64,7 @@ func TestReconcileSyncOnJaegerChanges(t *testing.T) {
 		Name: "TestNewJaegerInstance",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -97,7 +96,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 		Name:      "my-instance",
 	})
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
 			Name: "ns-with-annotation",
 			Annotations: map[string]string{
@@ -171,7 +170,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 	)
 
 	cl := &modifiedClient{
-		Client:  fake.NewClientBuilder().WithRuntimeObjects(objs...).Build(),
+		Client:  fake.NewClientBuilder().WithObjects(objs...).Build(),
 		listErr: errList,
 		getErr:  errGet,
 	}
@@ -202,7 +201,7 @@ func TestNewJaegerInstance(t *testing.T) {
 		Name: "TestNewJaegerInstance",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -279,7 +278,7 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 
 	s := scheme.Scheme
 	s.AddKnownTypes(v1.GroupVersion, jaeger)
-	cl := fake.NewClientBuilder().WithObjects(jaeger).Build()
+	cl := fake.NewClientBuilder().WithStatusSubresource(jaeger).WithObjects(jaeger).Build()
 
 	r := &ReconcileJaeger{client: cl, scheme: s, rClient: cl}
 	req := reconcile.Request{NamespacedName: nsn}
@@ -379,7 +378,7 @@ func TestElasticsearchProvisioning(t *testing.T) {
 	j.Spec.Storage.Elasticsearch.Name = "elasticserach"
 	j.Spec.Storage.Elasticsearch.NodeCount = 1
 
-	reconciler, cl := getReconciler([]runtime.Object{j})
+	reconciler, cl := getReconciler([]client.Object{j})
 
 	req := reconcile.Request{NamespacedName: namespacedName}
 	result, err := reconciler.Reconcile(req)
@@ -415,7 +414,7 @@ func createSecret(secretNamespace, secretName string) corev1.Secret {
 	}
 }
 
-func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
+func getReconciler(objs []client.Object) (*ReconcileJaeger, client.Client) {
 	s := scheme.Scheme
 
 	// OpenShift Route
@@ -433,7 +432,8 @@ func getReconciler(objs []runtime.Object) (*ReconcileJaeger, client.Client) {
 	// Kafka
 	s.AddKnownTypes(v1beta2.GroupVersion, &v1beta2.Kafka{}, &v1beta2.KafkaList{}, &v1beta2.KafkaUser{}, &v1beta2.KafkaUserList{})
 
-	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
+	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(objs...).WithObjects(objs...).Build()
+
 	r := New(cl, cl, s)
 	r.certGenerationScript = "../../../scripts/cert_generation.sh"
 	return r, cl

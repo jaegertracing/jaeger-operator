@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -24,7 +24,7 @@ func TestDeploymentCreate(t *testing.T) {
 		Namespace: "tenant1",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -76,7 +76,7 @@ func TestDeploymentUpdate(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -120,7 +120,7 @@ func TestDeploymentDelete(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -158,7 +158,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 		"app.kubernetes.io/instance":   nsn.Name,
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
-	objs := []runtime.Object{v1.NewJaeger(nsn), &depToDelete}
+	objs := []client.Object{v1.NewJaeger(nsn), &depToDelete}
 
 	// the deployment to be created
 	dep := appsv1.Deployment{}
@@ -220,7 +220,7 @@ func TestDeploymentCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&appsv1.Deployment{

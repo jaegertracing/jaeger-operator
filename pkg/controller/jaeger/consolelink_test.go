@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
@@ -31,7 +31,7 @@ func TestConsoleLinkCreate(t *testing.T) {
 	viper.Set(v1.ConfigOperatorScope, v1.OperatorScopeCluster)
 	defer viper.Reset()
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -96,7 +96,7 @@ func TestConsoleLinkUpdate(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -153,7 +153,7 @@ func TestConsoleLinkDelete(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -200,7 +200,7 @@ func TestConsoleLinksCreateExistingNameInAnotherNamespace(t *testing.T) {
 	defer viper.Reset()
 
 	// Existing console link and route
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&osconsolev1.ConsoleLink{
@@ -295,7 +295,7 @@ func TestConsoleLinksSkipped(t *testing.T) {
 		Namespace: namespace,
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
