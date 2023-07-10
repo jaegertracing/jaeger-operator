@@ -63,46 +63,52 @@ func (r *ReconcileJaeger) handleDependency(ctx context.Context, str strategy.S, 
 
 	seen := false
 	once := &sync.Once{}
-	return wait.PollImmediate(time.Second, deadline*time.Second, func() (done bool, err error) {
-		batch := &batchv1.Job{}
-		if err = r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
-			if k8serrors.IsNotFound(err) {
-				if seen {
-					// we have seen this object before, but it doesn't exist anymore!
-					// we don't have anything else to do here, break the poll
-					log.Log.V(1).Info(
-						"Dependency has been removed.",
-						"namespace", dep.Namespace,
-						"name", dep.Name,
-					)
-					span.SetStatus(codes.Error, ErrDependencyRemoved.Error())
-					return true, ErrDependencyRemoved
+	return wait.PollUntilContextTimeout(
+		ctx,
+		time.Second,
+		deadline*time.Second,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				batch := &batchv1.Job{}
+				if err = r.client.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, batch); err != nil {
+					if k8serrors.IsNotFound(err) {
+						if seen {
+							// we have seen this object before, but it doesn't exist anymore!
+							// we don't have anything else to do here, break the poll
+							log.Log.V(1).Info(
+								"Dependency has been removed.",
+								"namespace", dep.Namespace,
+								"name", dep.Name,
+							)
+							span.SetStatus(codes.Error, ErrDependencyRemoved.Error())
+							return true, ErrDependencyRemoved
+						}
+
+						// the object might have not been created yet
+						log.Log.V(-1).Info(
+							"Dependency doesn't exist yet.",
+							"namespace", dep.Namespace,
+							"name", dep.Name,
+						)
+						return false, nil
+					}
+					return false, tracing.HandleError(err, span)
 				}
 
-				// the object might have not been created yet
-				log.Log.V(-1).Info(
-					"Dependency doesn't exist yet.",
-					"namespace", dep.Namespace,
-					"name", dep.Name,
-				)
-				return false, nil
-			}
-			return false, tracing.HandleError(err, span)
-		}
+				seen = true
+				// for now, we just assume each batch job has one pod
+				if batch.Status.Succeeded != 1 {
+					once.Do(func() {
+						log.Log.V(-1).Info(
+							"Waiting for dependency to complete",
+							"namespace", dep.Namespace,
+							"name", dep.Name,
+						)
+					})
+					return false, nil
+				}
 
-		seen = true
-		// for now, we just assume each batch job has one pod
-		if batch.Status.Succeeded != 1 {
-			once.Do(func() {
-				log.Log.V(-1).Info(
-					"Waiting for dependency to complete",
-					"namespace", dep.Namespace,
-					"name", dep.Name,
-				)
-			})
-			return false, nil
-		}
-
-		return true, nil
-	})
+				return true, nil
+			}))
 }

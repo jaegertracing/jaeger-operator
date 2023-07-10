@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -27,7 +28,7 @@ func TestCronJobsCreate(t *testing.T) {
 		Name: "TestCronJobsCreate",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -81,7 +82,7 @@ func TestCronJobsUpdate(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -127,7 +128,7 @@ func TestCronJobsDelete(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -163,7 +164,7 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&batchv1.CronJob{
@@ -187,7 +188,7 @@ func TestCronJobsCreateExistingNameInAnotherNamespace(t *testing.T) {
 		},
 	}
 
-	var updatedCronJob runtime.Object = cj
+	var updatedCronJob client.Object = cj
 	cronjobs := []runtime.Object{updatedCronJob}
 
 	r.strategyChooser = func(ctx context.Context, jaeger *v1.Jaeger) strategy.S {

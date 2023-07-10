@@ -25,15 +25,13 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
-var (
-	_ admission.DecoderInjector = (*deploymentInterceptor)(nil)
-	_ webhook.AdmissionHandler  = (*deploymentInterceptor)(nil)
-)
+var _ webhook.AdmissionHandler = (*deploymentInterceptor)(nil)
 
 // NewDeploymentInterceptorWebhook creates a new deployment mutating webhook to be registered
-func NewDeploymentInterceptorWebhook(c client.Client) webhook.AdmissionHandler {
+func NewDeploymentInterceptorWebhook(c client.Client, decoder *admission.Decoder) webhook.AdmissionHandler {
 	return &deploymentInterceptor{
-		client: c,
+		client:  c,
+		decoder: decoder,
 	}
 }
 

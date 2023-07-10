@@ -39,61 +39,64 @@ func checkCronJobExists(clientset *kubernetes.Clientset) error {
 
 	logrus.Debugln("Checking if the", cronjobName, "CronJob exists")
 
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-
-		beta1v1JobsFound := true
-		cronjobsV1beta1, err := clientset.BatchV1beta1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
-		if err != nil {
-			beta1v1JobsFound = false
-			if apierrors.IsNotFound(err) {
-				logrus.Debug("No BatchV1beta1/Cronjobs were found")
-			}
-		}
-
-		if beta1v1JobsFound {
-			for _, cronjob := range cronjobsV1beta1.Items {
-				if cronjob.Name == cronjobName {
-					return true, nil
+	err := wait.PollUntilContextTimeout(
+		context.Background(),
+		retryInterval,
+		timeout,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				beta1v1JobsFound := true
+				cronjobsV1beta1, err := clientset.BatchV1beta1().CronJobs(namespace).List(context.Background(), metav1.ListOptions{})
+				if err != nil {
+					beta1v1JobsFound = false
+					if apierrors.IsNotFound(err) {
+						logrus.Debug("No BatchV1beta1/Cronjobs were found")
+					}
 				}
-			}
 
-			logrus.Warningln("The BatchV1beta1/Cronjob", cronjobName, "was not found")
+				if beta1v1JobsFound {
+					for _, cronjob := range cronjobsV1beta1.Items {
+						if cronjob.Name == cronjobName {
+							return true, nil
+						}
+					}
 
-			if cronjobsV1beta1.Size() > 0 {
-				logrus.Debugln("Found BatchV1beta1/Cronjobs:")
-				for _, cronjob := range cronjobsV1beta1.Items {
-					logrus.Debugln("\t", cronjob.Name)
+					logrus.Warningln("The BatchV1beta1/Cronjob", cronjobName, "was not found")
+
+					if cronjobsV1beta1.Size() > 0 {
+						logrus.Debugln("Found BatchV1beta1/Cronjobs:")
+						for _, cronjob := range cronjobsV1beta1.Items {
+							logrus.Debugln("\t", cronjob.Name)
+						}
+					}
 				}
-			}
-		}
 
-		cronjobsV1, err := clientset.BatchV1().CronJobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logrus.Debug("No BatchV1/Cronjobs were found")
-				return false, err
-			}
-		}
+				cronjobsV1, err := clientset.BatchV1().CronJobs(namespace).List(context.Background(), metav1.ListOptions{})
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						logrus.Debug("No BatchV1/Cronjobs were found")
+						return false, err
+					}
+				}
 
-		for _, cronjob := range cronjobsV1.Items {
-			if cronjob.Name == cronjobName {
-				return true, nil
-			}
-		}
+				for _, cronjob := range cronjobsV1.Items {
+					if cronjob.Name == cronjobName {
+						return true, nil
+					}
+				}
 
-		logrus.Warningln("The BatchV1/Cronjob", cronjobName, "was not found")
+				logrus.Warningln("The BatchV1/Cronjob", cronjobName, "was not found")
 
-		if cronjobsV1.Size() > 0 {
-			logrus.Debugln("Found BatchV/Cronjobs:")
-			for _, cronjob := range cronjobsV1.Items {
-				logrus.Debugln("\t", cronjob.Name)
-			}
-		}
+				if cronjobsV1.Size() > 0 {
+					logrus.Debugln("Found BatchV/Cronjobs:")
+					for _, cronjob := range cronjobsV1.Items {
+						logrus.Debugln("\t", cronjob.Name)
+					}
+				}
 
-		return false, nil
-	})
+				return false, nil
+			}))
 
 	logrus.Infoln("Cronjob", cronjobName, "found successfully")
 	return err
@@ -109,45 +112,48 @@ func waitForNextJob(clientset *kubernetes.Clientset) error {
 	start := time.Now()
 
 	logrus.Debugln("Waiting for the next scheduled job from", cronjobName, "cronjob")
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
+	err := wait.PollUntilContextTimeout(
+		context.Background(),
+		retryInterval,
+		timeout,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				jobList, err := clientset.BatchV1().Jobs(namespace).List(context.Background(), metav1.ListOptions{})
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						logrus.Debug("No jobs provided by the Kubernetes API")
+						return false, nil
+					}
+					return false, err
+				}
 
-		jobList, err := clientset.BatchV1().Jobs(namespace).List(ctxWithTimeout, metav1.ListOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logrus.Debug("No jobs provided by the Kubernetes API")
+				for _, j := range jobList.Items {
+					for _, r := range j.OwnerReferences {
+						// Check if this job is related to the desired CronJob
+						if cronjobName != r.Name {
+							continue
+						}
+
+						// Check if the job has finished properly
+						if j.Status.Succeeded == 0 || j.Status.Failed != 0 || j.Status.Active != 0 {
+							continue
+						}
+
+						timeSinceCompleted := j.Status.CompletionTime.Sub(start)
+
+						// The job finished before this program started. We are interested in a newer execution
+						if timeSinceCompleted <= 0 {
+							continue
+						}
+
+						return true, nil
+					}
+				}
+
+				logrus.Debugln("Waiting for next job from", cronjobName, "to succeed")
 				return false, nil
-			}
-			return false, err
-		}
-
-		for _, j := range jobList.Items {
-			for _, r := range j.OwnerReferences {
-				// Check if this job is related to the desired CronJob
-				if cronjobName != r.Name {
-					continue
-				}
-
-				// Check if the job has finished properly
-				if j.Status.Succeeded == 0 || j.Status.Failed != 0 || j.Status.Active != 0 {
-					continue
-				}
-
-				timeSinceCompleted := j.Status.CompletionTime.Sub(start)
-
-				// The job finished before this program started. We are interested in a newer execution
-				if timeSinceCompleted <= 0 {
-					continue
-				}
-
-				return true, nil
-			}
-		}
-
-		logrus.Debugln("Waiting for next job from", cronjobName, "to succeed")
-		return false, nil
-	})
+			}))
 	logrus.Infoln("Job of owner", cronjobName, "succeeded after", cronjobName, time.Since(start))
 	return err
 }
