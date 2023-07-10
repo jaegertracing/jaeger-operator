@@ -31,12 +31,12 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
+	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
@@ -59,12 +59,12 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
+	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
 func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
@@ -87,12 +87,12 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
 	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
-	assert.Equal(t, opver.Get().Jaeger, persisted.Status.Version)
+	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
 func TestUnknownVersion(t *testing.T) {
@@ -109,7 +109,7 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}

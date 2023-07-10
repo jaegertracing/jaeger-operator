@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -21,7 +21,7 @@ func TestSecretsCreate(t *testing.T) {
 		Name: "TestSecretsCreate",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 	}
 
@@ -70,7 +70,7 @@ func TestSecretsUpdate(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -113,7 +113,7 @@ func TestSecretsDelete(t *testing.T) {
 		"app.kubernetes.io/managed-by": "jaeger-operator",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		&orig,
 	}
@@ -149,7 +149,7 @@ func TestSecretsCreateExistingNameInAnotherNamespace(t *testing.T) {
 		Namespace: "tenant2",
 	}
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		v1.NewJaeger(nsn),
 		v1.NewJaeger(nsnExisting),
 		&corev1.Secret{

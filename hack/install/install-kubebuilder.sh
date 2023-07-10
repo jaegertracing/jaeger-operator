@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="3.6.0"
+VERSION="3.10.0"
 
 echo "Installing kubebuilder"
 

@@ -103,56 +103,62 @@ func (r *ReconcileJaeger) waitForKafkaStability(ctx context.Context, kafka kafka
 
 	seen := false
 	once := &sync.Once{}
-	return wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		k := &kafkav1beta2.Kafka{}
-		if err := r.client.Get(ctx, types.NamespacedName{Name: kafka.GetName(), Namespace: kafka.GetNamespace()}, k); err != nil {
-			if k8serrors.IsNotFound(err) {
-				if seen {
-					// we have seen this object before, but it doesn't exist anymore!
-					// we don't have anything else to do here, break the poll
-					log.Log.V(1).Info(
-						"kafka has been removed.",
-						"namespace", kafka.GetNamespace(),
-						"name", kafka.GetName(),
-					)
-					return true, ErrKafkaRemoved
+	return wait.PollUntilContextTimeout(
+		ctx,
+		time.Second,
+		5*time.Minute,
+		true,
+		wait.ConditionWithContextFunc(
+			func(context.Context) (done bool, err error) {
+				k := &kafkav1beta2.Kafka{}
+				if err := r.client.Get(ctx, types.NamespacedName{Name: kafka.GetName(), Namespace: kafka.GetNamespace()}, k); err != nil {
+					if k8serrors.IsNotFound(err) {
+						if seen {
+							// we have seen this object before, but it doesn't exist anymore!
+							// we don't have anything else to do here, break the poll
+							log.Log.V(1).Info(
+								"kafka has been removed.",
+								"namespace", kafka.GetNamespace(),
+								"name", kafka.GetName(),
+							)
+							return true, ErrKafkaRemoved
+						}
+
+						// the object might have not been created yet
+						log.Log.V(-1).Info(
+							"kafka doesn't exist yet.",
+							"namespace", kafka.GetNamespace(),
+							"name", kafka.GetName(),
+						)
+						return false, nil
+					}
+					return false, tracing.HandleError(err, span)
 				}
 
-				// the object might have not been created yet
-				log.Log.V(-1).Info(
-					"kafka doesn't exist yet.",
-					"namespace", kafka.GetNamespace(),
-					"name", kafka.GetName(),
-				)
-				return false, nil
-			}
-			return false, tracing.HandleError(err, span)
-		}
+				seen = true
+				readyCondition := getReadyCondition(k.Status.Conditions)
+				if !strings.EqualFold(readyCondition.Status, "true") {
+					once.Do(func() {
+						log.Log.V(-1).Info(
+							"Waiting for kafka to stabilize",
+							"namespace", k.GetNamespace(),
+							"name", k.GetName(),
+							"conditionStatus", readyCondition.Status,
+							"conditionType", readyCondition.Type,
+						)
+					})
+					return false, nil
+				}
 
-		seen = true
-		readyCondition := getReadyCondition(k.Status.Conditions)
-		if !strings.EqualFold(readyCondition.Status, "true") {
-			once.Do(func() {
 				log.Log.V(-1).Info(
-					"Waiting for kafka to stabilize",
+					"kafka has stabilized",
 					"namespace", k.GetNamespace(),
 					"name", k.GetName(),
 					"conditionStatus", readyCondition.Status,
 					"conditionType", readyCondition.Type,
 				)
-			})
-			return false, nil
-		}
-
-		log.Log.V(-1).Info(
-			"kafka has stabilized",
-			"namespace", k.GetNamespace(),
-			"name", k.GetName(),
-			"conditionStatus", readyCondition.Status,
-			"conditionType", readyCondition.Type,
-		)
-		return true, nil
-	})
+				return true, nil
+			}))
 }
 
 func getReadyCondition(conditions []kafkav1beta2.KafkaStatusCondition) kafkav1beta2.KafkaStatusCondition {
