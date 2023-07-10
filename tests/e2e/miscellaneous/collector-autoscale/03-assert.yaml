@@ -13,13 +13,13 @@ spec:
   maxReplicas: 2
   metrics:
   - resource:
-      name: memory
+      name: cpu
       target:
         averageUtilization: 90
         type: Utilization
     type: Resource
   - resource:
-      name: cpu
+      name: memory
       target:
         averageUtilization: 90
         type: Utilization
