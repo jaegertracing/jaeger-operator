@@ -50,9 +50,13 @@ $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
 $YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
-# Deploy Tracegen instance to generate load in the Jaeger collector
-render_install_tracegen "$jaeger_name" "03"
-
+if kubectl api-versions | grep "autoscaling/v2beta2" -q; then
+    # Use the autoscaling/v2beta2 file
+    rm ./03-assert.yaml
+else
+    # Use the autoscaling/v2 file
+    rm ./04-assert.yaml
+fi
 
 ###############################################################################
 # TEST NAME: collector-otlp-*
