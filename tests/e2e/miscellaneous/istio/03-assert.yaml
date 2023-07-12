@@ -30,6 +30,10 @@ spec:
     port: 14268
     protocol: TCP
     targetPort: 14268
+  - name: admin-http
+    port: 14269
+    protocol: TCP
+    targetPort: 14269
   - name: grpc-otlp
     port: 4317
     protocol: TCP
@@ -61,6 +65,10 @@ spec:
     port: 14268
     protocol: TCP
     targetPort: 14268
+  - name: admin-http
+    port: 14269
+    protocol: TCP
+    targetPort: 14269
   - name: grpc-otlp
     port: 4317
     protocol: TCP
