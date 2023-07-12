@@ -1,6 +1,13 @@
 Changes by Version
 ==================
 
+## v1.47.0 (2025-07-12)
+* Expose admin ports for agent, collector, and query Deployments via the equivalent Service ([#2262](https://github.com/jaegertracing/jaeger-operator/pull/2262), [@thomaspaulin](https://github.com/thomaspaulin))
+* update otel sdk to v1.16.0/v0.39.0 ([#2261](https://github.com/jaegertracing/jaeger-operator/pull/2261), [@frzifus](https://github.com/frzifus))
+* Extended compatibility matrix ([#2255](https://github.com/jaegertracing/jaeger-operator/pull/2255), [@shazib-summar](https://github.com/shazib-summar))
+* Add support for Kubernetes 1.27 ([#2235](https://github.com/jaegertracing/jaeger-operator/pull/2235), [@iblancasa](https://github.com/iblancasa))
+* Jaeger Collector Config: `Lifecycle` and `TerminationGracePeriodSeconds` ([#2242](https://github.com/jaegertracing/jaeger-operator/pull/2242), [@taj-p](https://github.com/taj-p))
+
 ## v1.46.0 (2025-06-16)
 * Missing exposed port 16685 in query deployments ([#2239](https://github.com/jaegertracing/jaeger-operator/pull/2239), [@iblancasa](https://github.com/iblancasa))
 * Use Golang 1.20 ([#2205](https://github.com/jaegertracing/jaeger-operator/pull/2205), [@iblancasa](https://github.com/iblancasa))
