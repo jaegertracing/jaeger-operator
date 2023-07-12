@@ -8,8 +8,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -30,7 +28,7 @@ type instancesView struct {
 	Name  string
 	Label string
 	Count map[string]int
-	Gauge instrument.Int64ObservableGauge
+	Gauge metric.Int64ObservableGauge
 	KeyFn func(jaeger v1.Jaeger) string
 }
 
@@ -49,10 +47,10 @@ func (i *instancesView) Record(jaeger v1.Jaeger) {
 
 func (i *instancesView) Report(ctx context.Context, observer metric.Observer) {
 	for key, count := range i.Count {
-		attrs := []attribute.KeyValue{
-			attribute.String(i.Label, key),
-		}
-		observer.ObserveInt64(i.Gauge, int64(count), attrs...)
+		opt := metric.WithAttributes(
+			attribute.Key(i.Label).String(key),
+		)
+		observer.ObserveInt64(i.Gauge, int64(count), opt)
 	}
 }
 
@@ -79,7 +77,7 @@ func newObservation(meter metric.Meter, name, desc, label string, keyFn func(jae
 		Label: label,
 	}
 
-	g, err := meter.Int64ObservableGauge(instanceMetricName(name), instrument.WithDescription(desc))
+	g, err := meter.Int64ObservableGauge(instanceMetricName(name), metric.WithDescription(desc))
 	if err != nil {
 		return instancesView{}, err
 	}
@@ -92,7 +90,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	_, span := tracer.Start(ctx, "setup-jaeger-instances-metrics") // nolint:ineffassign,staticcheck
 	defer span.End()
-	meter := global.Meter(meterName)
+	meter := otel.Meter(meterName)
 
 	obs, err := newObservation(meter,
 		agentStrategiesMetric,
@@ -161,7 +159,7 @@ func (i *instancesMetric) Setup(ctx context.Context) error {
 	}
 	i.observations = append(i.observations, obs)
 
-	instruments := make([]instrument.Asynchronous, 0, len(i.observations))
+	instruments := make([]metric.Observable, 0, len(i.observations))
 	for _, o := range i.observations {
 		instruments = append(instruments, o.Gauge)
 	}
