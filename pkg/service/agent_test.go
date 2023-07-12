@@ -19,10 +19,11 @@ func TestAgentServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, "testagentservicenameandports-agent", svc.ObjectMeta.Name)
 
 	ports := map[int32]bool{
-		5775: false,
-		5778: false,
-		6831: false,
-		6832: false,
+		5775:  false,
+		5778:  false,
+		6831:  false,
+		6832:  false,
+		14271: false,
 	}
 
 	for _, port := range svc.Spec.Ports {
