@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -143,13 +143,14 @@ func TestValueObservedMetrics(t *testing.T) {
 
 	reader := metric.NewManualReader()
 	provider := metric.NewMeterProvider(metric.WithReader(reader))
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
 
-	metrics, err := reader.Collect(context.Background())
+	metrics := metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	for _, e := range expected {
@@ -162,7 +163,8 @@ func TestValueObservedMetrics(t *testing.T) {
 
 	// Reset measurement batches
 	reader.ForceFlush(context.Background())
-	metrics, err = reader.Collect(context.Background())
+	metrics = metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	// Set new numbers
@@ -228,13 +230,14 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 
 	reader := metric.NewManualReader()
 	provider := metric.NewMeterProvider(metric.WithReader(reader))
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
 
-	metrics, err := reader.Collect(context.Background())
+	metrics := metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	expectedMetric := newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 1)
@@ -246,7 +249,8 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 
 	// Reset measurement batches
 	reader.ForceFlush(context.Background())
-	metrics, err = reader.Collect(context.Background())
+	metrics = metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
@@ -256,7 +260,9 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	_ = cl.Delete(context.Background(), &noAutoProvisioningInstance)
 
 	reader.ForceFlush(context.Background())
-	metrics, err = reader.Collect(context.Background())
+
+	metrics = metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	expectedMetric = newExpectedMetric(autoprovisioningMetric, attribute.String("type", "elasticsearch"), 0)
@@ -305,13 +311,14 @@ func TestManagerByMetric(t *testing.T) {
 
 	reader := metric.NewManualReader()
 	provider := metric.NewMeterProvider(metric.WithReader(reader))
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	instancesObservedValue := newInstancesMetric(cl)
 	err := instancesObservedValue.Setup(context.Background())
 	require.NoError(t, err)
 
-	metrics, err := reader.Collect(context.Background())
+	metrics := metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	expectedMetric := newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 1)
@@ -326,7 +333,8 @@ func TestManagerByMetric(t *testing.T) {
 
 	// Reset measurement batches
 	reader.ForceFlush(context.Background())
-	metrics, err = reader.Collect(context.Background())
+	metrics = metricdata.ResourceMetrics{}
+	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
 
 	expectedMetric = newExpectedMetric(managedMetric, attribute.String("tool", "maistra-istio-operator"), 0)

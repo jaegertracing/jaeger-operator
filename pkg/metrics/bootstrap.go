@@ -5,7 +5,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -30,7 +29,7 @@ func Bootstrap(ctx context.Context, namespace string, client client.Client) erro
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	// Create metrics
 	instancesObservedValue := newInstancesMetric(client)
