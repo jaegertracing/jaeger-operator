@@ -125,7 +125,7 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
 	assert.Equal(t, int32(32767), svc.Spec.Ports[0].NodePort) // make sure we get the same NodePort as set above
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
-	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[1].TargetPort)
+	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
 	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
 }
