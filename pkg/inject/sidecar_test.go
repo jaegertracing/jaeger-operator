@@ -194,6 +194,63 @@ func TestInjectSidecarWithEnvVarsOverridePropagation(t *testing.T) {
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
 }
 
+func TestInjectSidecarWithEnvFromK8sAppName(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	envFromconfigMaps := []corev1.ConfigMap{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			envVarServiceName: "jaeger,b3,w3c",
+			envVarPropagation: "test-service",
+		},
+	}}
+	dep := depEnvFromConfigRef(map[string]string{}, map[string]string{
+		"app":                    "noapp",
+		"app.kubernetes.io/name": "testapp",
+	}, []corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}}})
+
+	// test
+	dep = Sidecar(jaeger, dep, WithEnvFromConfigMaps(envFromconfigMaps))
+
+	// verify
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].EnvFrom, 1)
+	actualConfigName := dep.Spec.Template.Spec.Containers[0].EnvFrom[0].ConfigMapRef.Name
+	assert.Contains(t, "test-config", actualConfigName)
+}
+
+func TestInjectSidecarWithoutEnvFromK8sAppName(t *testing.T) {
+	// prepare
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	envFromconfigMaps := []corev1.ConfigMap{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config",
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"USRNAME":  "=XUSUDA",
+			"PASSWORD": "+S=KDKS",
+		},
+	}}
+	dep := depEnvFromConfigRef(map[string]string{}, map[string]string{
+		"app":                    "noapp",
+		"app.kubernetes.io/name": "testapp",
+	}, []corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}}})
+
+	// test
+	dep = Sidecar(jaeger, dep, WithEnvFromConfigMaps(envFromconfigMaps))
+
+	// verify
+	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 2)
+	assert.Len(t, dep.Spec.Template.Spec.Containers[0].EnvFrom, 1)
+	assert.Contains(t, dep.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{Name: envVarServiceName, Value: "testapp.default"})
+}
+
 func TestInjectSidecarWithVolumeMounts(t *testing.T) {
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -758,6 +815,28 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
 						Name: "only_container",
+					}},
+				},
+			},
+		},
+	}
+}
+
+func depEnvFromConfigRef(annotations map[string]string, labels map[string]string, envFromConfigRef []corev1.EnvFromSource) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: annotations,
+			Labels:      labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:    "only_container",
+						EnvFrom: envFromConfigRef,
 					}},
 				},
 			},
