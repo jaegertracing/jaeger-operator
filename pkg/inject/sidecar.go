@@ -514,8 +514,8 @@ func isContainerPortAvailable(port int32, dep *appsv1.Deployment) bool {
 	return true
 }
 
-// GetEnvFromConfigMaps return configMap which matches with configMapRef
-func GetConfigMapsMatchedEnvFromInDeplyment(dep appsv1.Deployment, configMaps []corev1.ConfigMap) []corev1.ConfigMap {
+// GetConfigMapsMatchedEnvFromInDeployment returns configMap which matches with configMapRef
+func GetConfigMapsMatchedEnvFromInDeployment(dep appsv1.Deployment, configMaps []corev1.ConfigMap) []corev1.ConfigMap {
 	configMapSearchMap := make(map[string]corev1.ConfigMap)
 	for _, cm := range configMaps {
 		configMapSearchMap[cm.Name] = cm
@@ -524,8 +524,8 @@ func GetConfigMapsMatchedEnvFromInDeplyment(dep appsv1.Deployment, configMaps []
 	matchedConfigMaps := []corev1.ConfigMap{}
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		for _, envConfigMap := range container.EnvFrom {
-			if matchedcm, ok := configMapSearchMap[envConfigMap.ConfigMapRef.Name]; ok {
-				matchedConfigMaps = append(matchedConfigMaps, matchedcm)
+			if matchedCM, ok := configMapSearchMap[envConfigMap.ConfigMapRef.Name]; ok {
+				matchedConfigMaps = append(matchedConfigMaps, matchedCM)
 			}
 		}
 	}
