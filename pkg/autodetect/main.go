@@ -95,20 +95,22 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
-		})
 
+			// the version of the APIs provided by the platform will not change
+			b.detectCronjobsVersion(ctx)
+			b.detectAutoscalingVersion(ctx)
+		})
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
-		b.detectCronjobsVersion(ctx)
-		b.detectAutoscalingVersion(ctx)
 	}
-
 	b.detectClusterRoles(ctx)
 	b.cleanDeployments(ctx)
 }
 
 func (b *Background) detectCronjobsVersion(ctx context.Context) {
 	apiGroupVersions := []string{v1.FlagCronJobsVersionBatchV1, v1.FlagCronJobsVersionBatchV1Beta1}
+	detectedVersion := ""
+
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
@@ -119,20 +121,26 @@ func (b *Background) detectCronjobsVersion(ctx context.Context) {
 		}
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "cronjobs" {
-				viper.Set(v1.FlagCronJobsVersion, apiGroupVersion)
-				log.Log.V(-1).Info(fmt.Sprintf("found the cronjobs api in %s", apiGroupVersion))
-				return
+				detectedVersion = apiGroupVersion
+				break
 			}
 		}
 	}
 
-	log.Log.V(2).Info(
-		fmt.Sprintf("did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
-	)
+	if detectedVersion == "" {
+		log.Log.V(2).Info(
+			fmt.Sprintf("did not find the cronjobs api in %s", strings.Join(apiGroupVersions, " or ")),
+		)
+	} else {
+		viper.Set(v1.FlagCronJobsVersion, detectedVersion)
+		log.Log.V(-1).Info(fmt.Sprintf("found the cronjobs api in %s", detectedVersion))
+	}
 }
 
 func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 	apiGroupVersions := []string{v1.FlagAutoscalingVersionV2, v1.FlagAutoscalingVersionV2Beta2}
+	detectedVersion := ""
+
 	for _, apiGroupVersion := range apiGroupVersions {
 		groupAPIList, err := b.dcl.ServerResourcesForGroupVersion(apiGroupVersion)
 		if err != nil {
@@ -143,16 +151,21 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 		}
 		for _, api := range groupAPIList.APIResources {
 			if api.Name == "horizontalpodautoscalers" {
-				viper.Set(v1.FlagAutoscalingVersion, apiGroupVersion)
-				log.Log.V(-1).Info(fmt.Sprintf("found the horizontalpodautoscalers api in %s", apiGroupVersion))
-				return
+				detectedVersion = apiGroupVersion
+				break
 			}
 		}
 	}
 
-	log.Log.V(2).Info(
-		fmt.Sprintf("did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
-	)
+	if detectedVersion == "" {
+		log.Log.V(2).Info(
+			fmt.Sprintf("did not find the autoscaling api in %s", strings.Join(apiGroupVersions, " or ")),
+		)
+	} else {
+		viper.Set(v1.FlagAutoscalingVersion, detectedVersion)
+		log.Log.V(-1).Info(fmt.Sprintf("found the horizontalpodautoscalers api in %s", detectedVersion))
+	}
+
 }
 
 // AvailableAPIs returns available list of CRDs from the cluster.
@@ -179,78 +192,81 @@ func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]boo
 
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
-	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformAutoDetect) {
-		log.Log.V(-1).Info("Attempting to auto-detect the platform")
-		if isOpenShift(apiList) {
-			viper.Set("platform", v1.FlagPlatformOpenShift)
-		} else {
-			viper.Set("platform", v1.FlagPlatformKubernetes)
-		}
+	platform := viper.GetString("platform")
+	detectedPlatform := ""
 
-		log.Log.Info(
-			"Auto-detected the platform",
-			"platform", viper.GetString("platform"),
-		)
-	} else {
+	if !strings.EqualFold(platform, v1.FlagPlatformAutoDetect) {
 		log.Log.V(-1).Info(
 			"The 'platform' option is explicitly set",
-			"platform", viper.GetString("platform"),
+			"platform", platform,
 		)
+		return
 	}
+
+	log.Log.V(-1).Info("Attempting to auto-detect the platform")
+	if isOpenShift(apiList) {
+		detectedPlatform = v1.FlagPlatformOpenShift
+	} else {
+		detectedPlatform = v1.FlagPlatformKubernetes
+	}
+
+	viper.Set("platform", detectedPlatform)
+	log.Log.Info(
+		"Auto-detected the platform",
+		"platform", detectedPlatform,
+	)
 }
 
 func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect whether the Elasticsearch operator is available
-	if b.retryDetectEs {
-		log.Log.V(-1).Info(
-			"Determining whether we should enable the Elasticsearch Operator integration",
-		)
-		previous := viper.GetString("es-provision")
-		if IsElasticsearchOperatorAvailable(apiList) {
-			viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
-		} else {
-			viper.Set("es-provision", v1.FlagProvisionElasticsearchNo)
-		}
-
-		if previous != viper.GetString("es-provision") {
-			log.Log.Info(
-				"Automatically adjusted the 'es-provision' flag",
-				"es-provision", viper.GetString("es-provision"),
-			)
-		}
-	} else {
+	currentESProvision := viper.GetString("es-provision")
+	if !b.retryDetectEs {
 		log.Log.V(-1).Info(
 			"The 'es-provision' option is explicitly set",
-			"es-provision", viper.GetString("es-provision"),
+			"es-provision", currentESProvision,
 		)
+	}
+
+	log.Log.V(-1).Info("Determining whether we should enable the Elasticsearch Operator integration")
+
+	esProvision := v1.FlagProvisionElasticsearchNo
+	if IsElasticsearchOperatorAvailable(apiList) {
+		esProvision = v1.FlagProvisionElasticsearchYes
+	}
+
+	if currentESProvision != esProvision {
+		log.Log.Info(
+			"Automatically adjusted the 'es-provision' flag",
+			"es-provision", esProvision,
+		)
+		viper.Set("es-provision", esProvision)
 	}
 }
 
 // detectKafka checks whether the Kafka Operator is available
 func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourceList) {
-	// viper has a "IsSet" method that we could use, except that it returns "true" even
-	// when nothing is set but it finds a 'Default' value...
-	if b.retryDetectKafka {
-		log.Log.V(-1).Info("Determining whether we should enable the Kafka Operator integration")
-
-		previous := viper.GetString("kafka-provision")
-		if isKafkaOperatorAvailable(apiList) {
-			viper.Set("kafka-provision", v1.FlagProvisionKafkaYes)
-		} else {
-			viper.Set("kafka-provision", v1.FlagProvisionKafkaNo)
-		}
-
-		if previous != viper.GetString("kafka-provision") {
-			log.Log.Info(
-				"Automatically adjusted the 'kafka-provision' flag",
-				"kafka-provision", viper.GetString("kafka-provision"),
-			)
-		}
-	} else {
+	currentKafkaProvision := viper.GetString("kafka-provision")
+	if !b.retryDetectKafka {
 		log.Log.V(-1).Info(
 			"The 'kafka-provision' option is explicitly set",
-			"kafka-provision", viper.GetString("kafka-provision"),
+			"kafka-provision", currentKafkaProvision,
 		)
+		return
+	}
+
+	log.Log.V(-1).Info("Determining whether we should enable the Kafka Operator integration")
+
+	kafkaProvision := v1.FlagProvisionKafkaNo
+	if isKafkaOperatorAvailable(apiList) {
+		kafkaProvision = v1.FlagProvisionKafkaYes
+	}
+
+	if currentKafkaProvision != kafkaProvision {
+		log.Log.Info(
+			"Automatically adjusted the 'kafka-provision' flag",
+			"kafka-provision", kafkaProvision,
+		)
+		viper.Set("kafka-provision", kafkaProvision)
 	}
 }
 
@@ -264,26 +280,31 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 			Token: "TEST",
 		},
 	}
+	currentAuthDelegator := viper.GetBool("auth-delegator-available")
+	var newAuthDelegator bool
 	if err := b.cl.Create(ctx, tr); err != nil {
-		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && viper.GetBool("auth-delegator-available")) {
+		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && currentAuthDelegator) {
 			// for the first run, we log this info, or when the previous value was true
 			log.Log.Info(
 				"The service account running this operator does not have the role 'system:auth-delegator', consider granting it for additional capabilities",
 			)
 		}
-		viper.Set("auth-delegator-available", false)
+		newAuthDelegator = false
 	} else {
 		// this isn't technically correct, as we only ensured that we can create token reviews (which is what the OAuth Proxy does)
 		// but it might be the case that we have *another* cluster role that includes this access and still not have
 		// the "system:auth-delegator". This is an edge case, and it's more complicated to check that, so, we'll keep it simple for now
 		// and deal with the edge case if it ever manifests in the real world
-		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && !viper.GetBool("auth-delegator-available")) {
+		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && !currentAuthDelegator) {
 			// for the first run, we log this info, or when the previous value was 'false'
 			log.Log.Info(
 				"The service account running this operator has the role 'system:auth-delegator', enabling OAuth Proxy's 'delegate-urls' option",
 			)
 		}
-		viper.Set("auth-delegator-available", true)
+		newAuthDelegator = true
+	}
+	if currentAuthDelegator != newAuthDelegator || !viper.IsSet("auth-delegator-available") {
+		viper.Set("auth-delegator-available", newAuthDelegator)
 	}
 }
 
