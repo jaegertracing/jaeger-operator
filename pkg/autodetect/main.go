@@ -165,7 +165,6 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 		viper.Set(v1.FlagAutoscalingVersion, detectedVersion)
 		log.Log.V(-1).Info(fmt.Sprintf("found the horizontalpodautoscalers api in %s", detectedVersion))
 	}
-
 }
 
 // AvailableAPIs returns available list of CRDs from the cluster.
