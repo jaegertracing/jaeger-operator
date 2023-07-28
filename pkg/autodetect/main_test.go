@@ -453,7 +453,6 @@ func TestAutoDetectCronJobsVersion(t *testing.T) {
 
 		// verify
 		assert.Equal(t, apiGroup, viper.GetString(v1.FlagCronJobsVersion))
-		fmt.Printf("Test finished on [%s]\n", apiGroup)
 	}
 }
 
