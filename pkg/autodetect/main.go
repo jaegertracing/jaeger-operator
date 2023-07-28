@@ -297,6 +297,7 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 		}
 		newAuthDelegator = true
 	}
+
 	if currentAuthDelegator != newAuthDelegator || !viper.IsSet("auth-delegator-available") {
 		viper.Set("auth-delegator-available", newAuthDelegator)
 	}
