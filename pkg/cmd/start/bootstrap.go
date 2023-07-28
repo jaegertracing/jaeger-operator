@@ -42,6 +42,7 @@ import (
 	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
 	esv1controllers "github.com/jaegertracing/jaeger-operator/controllers/elasticsearch"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
+	"github.com/jaegertracing/jaeger-operator/pkg/autoclean"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	opmetrics "github.com/jaegertracing/jaeger-operator/pkg/metrics"
@@ -123,6 +124,15 @@ func bootstrap(ctx context.Context) manager.Manager {
 		)
 	} else {
 		d.Start()
+	}
+
+	if c, err := autoclean.New(mgr); err != nil {
+		log.Log.Error(
+			err,
+			"failed to start the background process to auto-clean the operator objects",
+		)
+	} else {
+		c.Start()
 	}
 
 	detectNamespacePermissions(ctx, mgr)
