@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 )
 
 func TestCollectorServiceNameAndPorts(t *testing.T) {
@@ -122,7 +123,7 @@ func TestCollectorGRPCPortName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// prepare
 			if tt.inOpenShift {
-				viper.Set("platform", v1.FlagPlatformOpenShift)
+				viper.Set("platform", autodetect.OpenShiftPlatform.String())
 				defer viper.Reset()
 			}
 

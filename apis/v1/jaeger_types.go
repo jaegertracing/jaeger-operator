@@ -36,14 +36,8 @@ const (
 	// FlagAutoscalingVersionV2Beta2 represents the v2beta2 version of the Kubernetes Autoscaling API, no longer available as of 1.26
 	FlagAutoscalingVersionV2Beta2 = "autoscaling/v2beta2"
 
-	// FlagPlatformKubernetes represents the value for the 'platform' flag for Kubernetes
-	FlagPlatformKubernetes = "kubernetes"
-
-	// FlagPlatformOpenShift represents the value for the 'platform' flag for OpenShift
-	FlagPlatformOpenShift = "openshift"
-
-	// FlagPlatformAutoDetect represents the "auto-detect" value for the platform flag
-	FlagPlatformAutoDetect = "auto-detect"
+	// FlagPlatform represents the flag to set the platform
+	FlagPlatform = "platform"
 
 	// FlagProvisionElasticsearchAuto represents the 'auto' value for the 'es-provision' flag
 	FlagProvisionElasticsearchAuto = "auto"

@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
@@ -93,8 +94,7 @@ func TestReconcileConfigMaps(t *testing.T) {
 				errors:    tC.errors,
 			}
 
-			viper.Set("platform", v1.FlagPlatformOpenShift)
-			defer viper.Reset()
+			autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 
 			// test
 			err := reconcileConfigMaps(context.Background(), cl, jaeger, &dep)

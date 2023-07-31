@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
@@ -350,7 +351,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 		return jaeger, tracing.HandleError(err, span)
 	}
 
-	if strings.EqualFold(viper.GetString("platform"), v1.FlagPlatformOpenShift) {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		if err := r.applyRoutes(ctx, jaeger, str.Routes()); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}

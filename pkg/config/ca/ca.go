@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -24,7 +24,7 @@ const (
 // GetTrustedCABundle returns a trusted CA bundle configmap if platform is OpenShift
 func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	// Only configure the trusted CA if running in OpenShift
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() != autodetect.OpenShiftPlatform {
 		return nil
 	}
 
@@ -59,7 +59,7 @@ func GetTrustedCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 // GetServiceCABundle returns a service CA configmap if platform is OpenShift
 func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 	// Only configure the service CA if running in OpenShift
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() != autodetect.OpenShiftPlatform {
 		return nil
 	}
 
@@ -93,7 +93,7 @@ func GetServiceCABundle(jaeger *v1.Jaeger) *corev1.ConfigMap {
 // trusted CA bundle volume and volumeMount, if running on OpenShift
 func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 	// Only configure the trusted CA if running in OpenShift
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() != autodetect.OpenShiftPlatform {
 		return
 	}
 
@@ -130,7 +130,7 @@ func Update(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
 // AddServiceCA will modify the supplied common spec, to include
 // the service CA volume and volumeMount, if running on OpenShift
 func AddServiceCA(jaeger *v1.Jaeger, commonSpec *v1.JaegerCommonSpec) {
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() != autodetect.OpenShiftPlatform {
 		return
 	}
 

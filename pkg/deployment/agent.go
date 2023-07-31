@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +13,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -47,7 +47,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 	}
 
 	// Enable tls by default for openshift platform
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))

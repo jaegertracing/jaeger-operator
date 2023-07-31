@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 )
 
 func TestGetWithoutTrustedCA(t *testing.T) {
@@ -29,7 +30,7 @@ func TestGetWithoutTrustedCA(t *testing.T) {
 
 func TestGetWithTrustedCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -45,7 +46,7 @@ func TestGetWithTrustedCA(t *testing.T) {
 
 func TestGetWithServiceCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -60,7 +61,7 @@ func TestGetWithServiceCA(t *testing.T) {
 
 func TestGetWithExistingTrustedCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -78,7 +79,7 @@ func TestGetWithExistingTrustedCA(t *testing.T) {
 
 func TestGetWithExistingServiceCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -113,7 +114,7 @@ func TestUpdateWithoutCAs(t *testing.T) {
 
 func TestUpdateWithTrustedCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -130,7 +131,7 @@ func TestUpdateWithTrustedCA(t *testing.T) {
 
 func TestUpdateWithExistingTrustedCA(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})

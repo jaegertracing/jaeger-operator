@@ -105,7 +105,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 		log.Log.V(6).Info("%s", err)
 	}
 
-	span.SetAttributes(otelattribute.String("Platform", viper.GetString("platform")))
+	span.SetAttributes(otelattribute.String("Platform", autodetect.OperatorConfiguration.GetPlatform().String()))
 	watchNamespace, found := os.LookupEnv("WATCH_NAMESPACE")
 	if found {
 		setupLog.Info("watching namespace(s)", "namespaces", watchNamespace)
@@ -152,7 +152,7 @@ func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
 	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
 
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() != autodetect.OpenShiftPlatform {
 		log.Log.V(-1).Info(
 			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
 		)

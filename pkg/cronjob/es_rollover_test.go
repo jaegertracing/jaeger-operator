@@ -6,6 +6,7 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
 	"github.com/spf13/viper"
@@ -49,8 +50,8 @@ func TestRollover(t *testing.T) {
 	assert.Equal(t, historyLimits, *cjob.Spec.SuccessfulJobsHistoryLimit)
 
 	// Test openshift settings
-	viper.Set("platform", v1.FlagPlatformOpenShift)
-	defer viper.Set("platform", v1.FlagPlatformKubernetes)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
+	defer autodetect.OperatorConfiguration.SetPlatform(autodetect.KubernetesPlatform)
 	cjob = rollover(j).(*batchv1.CronJob)
 	assert.Equal(t,
 		[]corev1.EnvVar{

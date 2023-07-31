@@ -15,6 +15,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	crb "github.com/jaegertracing/jaeger-operator/pkg/clusterrolebinding"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
@@ -97,7 +98,7 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	}
 
 	// add the routes/ingresses
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		if q := route.NewQueryRoute(jaeger).Get(); nil != q {
 			manifest.routes = append(manifest.routes, *q)
 			if link := consolelink.Get(jaeger, q); link != nil {

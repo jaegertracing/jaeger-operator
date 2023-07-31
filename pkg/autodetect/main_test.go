@@ -21,7 +21,7 @@ import (
 )
 
 func TestStart(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	// sanity check
@@ -57,7 +57,7 @@ func TestStart(t *testing.T) {
 }
 
 func TestStartContinuesInBackground(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	// prepare
@@ -67,6 +67,9 @@ func TestStartContinuesInBackground(t *testing.T) {
 		return fmt.Errorf("faked error")
 	}
 	b := WithClients(cl, dcl, cl)
+
+	fmt.Println(viper.IsSet("auth-delegator-available"))
+	fmt.Println(viper.GetBool("auth-delegator-available"))
 
 	done := make(chan bool)
 	go func() {
@@ -176,7 +179,7 @@ func TestAutoDetectWithServerResourcesForGroupVersionError(t *testing.T) {
 
 func TestAutoDetectOpenShift(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformAutoDetect)
+	viper.Set("platform", "auto-detect")
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -197,7 +200,7 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
+	assert.Equal(t, OpenShiftPlatform, OperatorConfiguration.GetPlatform())
 
 	// set the error
 	dcl.ServerResourcesForGroupVersionFunc = func(_ string) (apiGroupList *metav1.APIResourceList, err error) {
@@ -208,12 +211,12 @@ func TestAutoDetectOpenShift(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify again
-	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
+	assert.Equal(t, OpenShiftPlatform, OperatorConfiguration.GetPlatform())
 }
 
 func TestAutoDetectKubernetes(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformAutoDetect)
+	viper.Set("platform", "auto-detect")
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -224,12 +227,12 @@ func TestAutoDetectKubernetes(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagPlatformKubernetes, viper.GetString("platform"))
+	assert.Equal(t, KubernetesPlatform, OperatorConfiguration.GetPlatform())
 }
 
 func TestExplicitPlatform(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -240,7 +243,7 @@ func TestExplicitPlatform(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagPlatformOpenShift, viper.GetString("platform"))
+	assert.Equal(t, OpenShiftPlatform, OperatorConfiguration.GetPlatform())
 }
 
 func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
@@ -499,7 +502,7 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformKubernetes)
+	OperatorConfiguration.SetPlatform(KubernetesPlatform)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -515,7 +518,7 @@ func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
 
 func TestNoAuthDelegatorAvailable(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -534,7 +537,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 
 func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -555,7 +558,7 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 
 func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}

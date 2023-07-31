@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,7 +81,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	// Enable tls by default for openshift platform
 	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
 	// as it might receive connections from external agents
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		if len(util.FindItem("--reporter.grpc.host-port=", options)) == 0 &&
 			len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
 			options = append(options, "--reporter.grpc.tls.enabled=true")

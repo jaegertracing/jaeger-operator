@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 )
@@ -591,7 +592,7 @@ func TestCollectorAutoscalersSetMaxReplicas(t *testing.T) {
 }
 
 func TestCollectoArgumentsOpenshiftTLS(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 	for _, tt := range []struct {
 		name            string

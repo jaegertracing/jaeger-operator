@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -112,7 +112,7 @@ func GetPortNameForGRPC(jaeger *v1.Jaeger) string {
 		protoSecure   = "tls-grpc-jaeger"
 		protoInsecure = "grpc-jaeger"
 	)
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		// we always have TLS certs when running on OpenShift, so, TLS is always enabled
 		return protoSecure
 	}
