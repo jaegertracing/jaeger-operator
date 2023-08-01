@@ -134,6 +134,9 @@ func TestCollectorLabels(t *testing.T) {
 	assert.Equal(t, "operator", dep.Spec.Template.Labels["name"])
 	assert.Equal(t, "world", dep.Spec.Template.Labels["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Labels["another"])
+	assert.Equal(t, "operator", dep.Spec.Selector.MatchLabels["name"])
+	assert.Equal(t, "world", dep.Spec.Selector.MatchLabels["hello"])
+	assert.Equal(t, "false", dep.Spec.Selector.MatchLabels["another"])
 }
 
 func TestCollectorSecrets(t *testing.T) {
