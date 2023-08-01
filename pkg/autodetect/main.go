@@ -7,12 +7,15 @@ import (
 	"sync"
 	"time"
 
+	osimagev1 "github.com/openshift/api/image/v1"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -20,6 +23,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/inject"
+	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
 var listenedGroupsMap = map[string]bool{"logging.openshift.io": true, "kafka.strimzi.io": true, "route.openshift.io": true}
@@ -95,6 +99,8 @@ func (b *Background) autoDetectCapabilities() {
 		b.firstRun.Do(func() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
+
+			b.detectOAuthProxyImageStream(ctx)
 
 			// the version of the APIs provided by the platform will not change
 			b.detectCronjobsVersion(ctx)
@@ -213,6 +219,82 @@ func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIRe
 	log.Log.Info(
 		"Auto-detected the platform",
 		"platform", detectedPlatform,
+	)
+}
+
+func (b *Background)detectOAuthProxyImageStream(ctx context.Context) {
+	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
+	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
+	defer span.End()
+
+	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+		log.Log.V(-1).Info(
+			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
+		)
+		return
+	}
+
+	imageStreamNamespace := viper.GetString("openshift-oauth-proxy-imagestream-ns")
+	imageStreamName := viper.GetString("openshift-oauth-proxy-imagestream-name")
+	if imageStreamNamespace == "" || imageStreamName == "" {
+		log.Log.Info(
+			"OAuthProxy ImageStream namespace and/or name not defined",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
+		return
+	}
+
+	imageStream := &osimagev1.ImageStream{}
+	namespacedName := types.NamespacedName{
+		Name:      imageStreamName,
+		Namespace: imageStreamNamespace,
+	}
+
+	if err := b.cl.Get(ctx, namespacedName, imageStream); err != nil {
+		log.Log.Error(
+			err,
+			"Failed to obtain OAuthProxy ImageStream",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
+		tracing.HandleError(err, span)
+		return
+	}
+
+	if len(imageStream.Status.Tags) == 0 {
+		log.Log.V(6).Info(
+			"OAuthProxy ImageStream has no tags",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
+		return
+	}
+
+	if len(imageStream.Status.Tags[0].Items) == 0 {
+		log.Log.V(6).Info(
+			"OAuthProxy ImageStream tag has no items",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
+		return
+	}
+
+	if len(imageStream.Status.Tags[0].Items[0].DockerImageReference) == 0 {
+		log.Log.V(5).Info(
+			"OAuthProxy ImageStream tag has no DockerImageReference",
+			"namespace", imageStreamNamespace,
+			"name", imageStreamName,
+		)
+		return
+	}
+
+	image := imageStream.Status.Tags[0].Items[0].DockerImageReference
+
+	viper.Set("openshift-oauth-proxy-image", image)
+	log.Log.Info(
+		"Updated OAuth Proxy image flag",
+		"image", image,
 	)
 }
 

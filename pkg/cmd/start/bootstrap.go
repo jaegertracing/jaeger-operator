@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -129,87 +128,11 @@ func bootstrap(ctx context.Context) manager.Manager {
 	performUpgrades(ctx, mgr)
 	setupControllers(ctx, mgr)
 	setupWebhooks(ctx, mgr)
-	detectOAuthProxyImageStream(ctx, mgr)
 	err = opmetrics.Bootstrap(ctx, namespace, mgr.GetClient())
 	if err != nil {
 		log.Log.Error(err, "failed to initialize metrics")
 	}
 	return mgr
-}
-
-func detectOAuthProxyImageStream(ctx context.Context, mgr manager.Manager) {
-	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
-	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
-	defer span.End()
-
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
-		log.Log.V(-1).Info(
-			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
-		)
-		return
-	}
-
-	imageStreamNamespace := viper.GetString("openshift-oauth-proxy-imagestream-ns")
-	imageStreamName := viper.GetString("openshift-oauth-proxy-imagestream-name")
-	if imageStreamNamespace == "" || imageStreamName == "" {
-		log.Log.Info(
-			"OAuthProxy ImageStream namespace and/or name not defined",
-			"namespace", imageStreamNamespace,
-			"name", imageStreamName,
-		)
-		return
-	}
-
-	imageStream := &osimagev1.ImageStream{}
-	namespacedName := types.NamespacedName{
-		Name:      imageStreamName,
-		Namespace: imageStreamNamespace,
-	}
-	if err := mgr.GetAPIReader().Get(ctx, namespacedName, imageStream); err != nil {
-		log.Log.Error(
-			err,
-			"Failed to obtain OAuthProxy ImageStream",
-			"namespace", imageStreamNamespace,
-			"name", imageStreamName,
-		)
-		tracing.HandleError(err, span)
-		return
-	}
-
-	if len(imageStream.Status.Tags) == 0 {
-		log.Log.V(6).Info(
-			"OAuthProxy ImageStream has no tags",
-			"namespace", imageStreamNamespace,
-			"name", imageStreamName,
-		)
-		return
-	}
-
-	if len(imageStream.Status.Tags[0].Items) == 0 {
-		log.Log.V(6).Info(
-			"OAuthProxy ImageStream tag has no items",
-			"namespace", imageStreamNamespace,
-			"name", imageStreamName,
-		)
-		return
-	}
-
-	if len(imageStream.Status.Tags[0].Items[0].DockerImageReference) == 0 {
-		log.Log.V(5).Info(
-			"OAuthProxy ImageStream tag has no DockerImageReference",
-			"namespace", imageStreamNamespace,
-			"name", imageStreamName,
-		)
-		return
-	}
-
-	image := imageStream.Status.Tags[0].Items[0].DockerImageReference
-
-	viper.Set("openshift-oauth-proxy-image", image)
-	log.Log.Info(
-		"Updated OAuth Proxy image flag",
-		"image", image,
-	)
 }
 
 func detectNamespacePermissions(ctx context.Context, mgr manager.Manager) {
