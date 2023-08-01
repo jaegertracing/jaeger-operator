@@ -222,7 +222,7 @@ func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIRe
 	)
 }
 
-func (b *Background)detectOAuthProxyImageStream(ctx context.Context) {
+func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 	tracer := otel.GetTracerProvider().Tracer(v1.BootstrapTracer)
 	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
