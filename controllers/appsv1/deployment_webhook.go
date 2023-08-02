@@ -136,7 +136,9 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 				span.AddEvent(msg)
 			}
 
-			dep = inject.Sidecar(jaeger, dep)
+			envConfigMaps := corev1.ConfigMapList{}
+			d.client.List(ctx, &envConfigMaps, client.InNamespace(dep.Namespace))
+			dep = inject.Sidecar(jaeger, dep, inject.WithEnvFromConfigMaps(inject.GetConfigMapsMatchedEnvFromInDeployment(*dep, envConfigMaps.Items)))
 			marshaledDeploy, err := json.Marshal(dep)
 			if err != nil {
 				return admission.Errored(http.StatusInternalServerError, tracing.HandleError(err, span))
