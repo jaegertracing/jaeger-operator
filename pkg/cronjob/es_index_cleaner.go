@@ -106,6 +106,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) runtime.Object {
 	cronjobsVersion := viper.GetString(v1.FlagCronJobsVersion)
 	if cronjobsVersion == v1.FlagCronJobsVersionBatchV1Beta1 {
 		cj := &batchv1beta1.CronJob{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CronJob",
+				APIVersion: cronjobsVersion,
+			},
 			ObjectMeta: objectmeta,
 			Spec: batchv1beta1.CronJobSpec{
 				Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,
@@ -118,6 +122,10 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) runtime.Object {
 		o = cj
 	} else {
 		cj := &batchv1.CronJob{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CronJob",
+				APIVersion: cronjobsVersion,
+			},
 			ObjectMeta: objectmeta,
 			Spec: batchv1.CronJobSpec{
 				Schedule:                   jaeger.Spec.Storage.EsIndexCleaner.Schedule,

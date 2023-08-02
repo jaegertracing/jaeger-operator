@@ -5,6 +5,7 @@ import (
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/jaegertracing/jaeger-operator/pkg/version"
 
@@ -27,6 +28,34 @@ func init() {
 func TestCreateRollover(t *testing.T) {
 	cj := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
 	assert.Equal(t, 2, len(cj))
+}
+
+func TestCreateRolloverTypeMeta(t *testing.T) {
+	testData := []struct {
+		Name string
+		flag string
+	}{
+		{Name: "Test batch/v1beta1", flag: v1.FlagCronJobsVersionBatchV1Beta1},
+		{Name: "Test batch/v1", flag: v1.FlagCronJobsVersionBatchV1},
+	}
+	for _, td := range testData {
+		if td.flag == v1.FlagCronJobsVersionBatchV1Beta1 {
+			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+		}
+		cjs := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
+		assert.Equal(t, 2, len(cjs))
+		for _, cj := range cjs {
+			switch tt := cj.(type) {
+			case *batchv1beta1.CronJob:
+				assert.Equal(t, tt.Kind, "CronJob")
+				assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+				viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+			case *batchv1.CronJob:
+				assert.Equal(t, tt.Kind, "CronJob")
+				assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+			}
+		}
+	}
 }
 
 func TestRollover(t *testing.T) {

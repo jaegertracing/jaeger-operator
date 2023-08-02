@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -132,6 +133,32 @@ func TestStorageEnvs(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	assert.NotNil(t, CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}}))
+}
+
+func TestCreateTypeMeta(t *testing.T) {
+	testData := []struct {
+		Name string
+		flag string
+	}{
+		{Name: "Test batch/v1beta1", flag: v1.FlagCronJobsVersionBatchV1Beta1},
+		{Name: "Test batch/v1", flag: v1.FlagCronJobsVersionBatchV1},
+	}
+	for _, td := range testData {
+		if td.flag == v1.FlagCronJobsVersionBatchV1Beta1 {
+			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+		}
+		sd := CreateSparkDependencies(&v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Type: v1.JaegerESStorage}}})
+		assert.NotNil(t, sd)
+		switch tt := sd.(type) {
+		case *batchv1beta1.CronJob:
+			assert.Equal(t, tt.Kind, "CronJob")
+			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+		case *batchv1.CronJob:
+			assert.Equal(t, tt.Kind, "CronJob")
+			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+		}
+	}
 }
 
 func TestSparkDependenciesSecrets(t *testing.T) {
