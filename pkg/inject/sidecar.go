@@ -43,8 +43,20 @@ const (
 	envVarHostIP      = "HOST_IP"
 )
 
+type SidecarOptions struct {
+	EnvConfigMaps []corev1.ConfigMap
+}
+
+type Options func(f *SidecarOptions)
+
+func WithEnvFromConfigMaps(configMaps []corev1.ConfigMap) Options {
+	return func(s *SidecarOptions) {
+		s.EnvConfigMaps = configMaps
+	}
+}
+
 // Sidecar adds a new container to the deployment, connecting to the given jaeger instance
-func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
+func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment, opts ...Options) *appsv1.Deployment {
 	deployment.NewAgent(jaeger) // we need some initialization from that, but we don't actually need the agent's instance here
 	logFields := jaeger.Logger().WithValues("deployment", dep.Name)
 
@@ -57,7 +69,7 @@ func Sidecar(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 		logFields.V(-2).Info("deployment is assigned to a different Jaeger instance, skipping sidecar injection")
 		return dep
 	}
-	decorate(dep)
+	decorate(dep, opts...)
 	hasAgent, agentContainerIndex := HasJaegerAgent(dep)
 	logFields.V(-1).Info("injecting sidecar")
 	if hasAgent { // This is an update
@@ -337,7 +349,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	return containerDefinition
 }
 
-func decorate(dep *appsv1.Deployment) {
+func decorate(dep *appsv1.Deployment, opts ...Options) {
 	app, found := dep.Spec.Template.Labels["app.kubernetes.io/instance"]
 	if !found {
 		app, found = dep.Spec.Template.Labels["app.kubernetes.io/name"]
@@ -353,14 +365,20 @@ func decorate(dep *appsv1.Deployment) {
 		} else {
 			app += ".default"
 		}
+
+		sideCarOpt := &SidecarOptions{}
+		for _, opt := range opts {
+			opt(sideCarOpt)
+		}
+
 		for i := 0; i < len(dep.Spec.Template.Spec.Containers); i++ {
-			if !hasEnv(envVarServiceName, dep.Spec.Template.Spec.Containers[i].Env) {
+			if !hasEnv(envVarServiceName, dep.Spec.Template.Spec.Containers[i].Env) && !haskeyInEnvFromConfigMaps(envVarServiceName, sideCarOpt.EnvConfigMaps) {
 				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarServiceName,
 					Value: app,
 				})
 			}
-			if !hasEnv(envVarPropagation, dep.Spec.Template.Spec.Containers[i].Env) {
+			if !hasEnv(envVarPropagation, dep.Spec.Template.Spec.Containers[i].Env) && !haskeyInEnvFromConfigMaps(envVarPropagation, sideCarOpt.EnvConfigMaps) {
 				dep.Spec.Template.Spec.Containers[i].Env = append(dep.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  envVarPropagation,
 					Value: "jaeger,b3,w3c",
@@ -374,6 +392,16 @@ func decorate(dep *appsv1.Deployment) {
 			dep.Annotations[key] = value
 		}
 	}
+}
+
+func haskeyInEnvFromConfigMaps(key string, configMaps []corev1.ConfigMap) bool {
+	found := false
+	for _, cm := range configMaps {
+		if _, ok := cm.Data[key]; ok {
+			found = true
+		}
+	}
+	return found
 }
 
 func hasEnv(name string, vars []corev1.EnvVar) bool {
@@ -484,4 +512,22 @@ func isContainerPortAvailable(port int32, dep *appsv1.Deployment) bool {
 		}
 	}
 	return true
+}
+
+// GetConfigMapsMatchedEnvFromInDeployment returns configMap which matches with configMapRef
+func GetConfigMapsMatchedEnvFromInDeployment(dep appsv1.Deployment, configMaps []corev1.ConfigMap) []corev1.ConfigMap {
+	configMapSearchMap := make(map[string]corev1.ConfigMap)
+	for _, cm := range configMaps {
+		configMapSearchMap[cm.Name] = cm
+	}
+
+	matchedConfigMaps := []corev1.ConfigMap{}
+	for _, container := range dep.Spec.Template.Spec.Containers {
+		for _, envConfigMap := range container.EnvFrom {
+			if matchedCM, ok := configMapSearchMap[envConfigMap.ConfigMapRef.Name]; ok {
+				matchedConfigMaps = append(matchedConfigMaps, matchedCM)
+			}
+		}
+	}
+	return matchedConfigMaps
 }
