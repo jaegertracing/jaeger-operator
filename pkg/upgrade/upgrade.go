@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -101,6 +102,29 @@ func ManagedInstances(ctx context.Context, c client.Client, reader client.Reader
 		}
 	}
 
+	return nil
+}
+
+// Add the labels to the existing service account related to user
+func AddLabelsToExistingServiceAccounts(ctx context.Context, rClient client.Reader, jaeger v1.Jaeger) error {
+	eLabel := map[string]string{
+		"app.kubernetes.io/instance":   jaeger.Namespace,
+		"app.kubernetes.io/managed-by": "jaeger-operator",
+	}
+	opts := []client.ListOption{
+		client.InNamespace(jaeger.Namespace),
+	}
+	list := &corev1.ServiceAccountList{}
+	if err := rClient.List(ctx, list, opts...); err != nil {
+		return err
+	}
+	for _, sa := range list.Items {
+		for key, val := range eLabel {
+			if sa.Labels[key] != val {
+				sa.Labels[key] = val
+			}
+		}
+	}
 	return nil
 }
 

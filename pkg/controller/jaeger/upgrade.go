@@ -18,6 +18,11 @@ func (r *ReconcileJaeger) applyUpgrades(ctx context.Context, jaeger v1.Jaeger) (
 
 	currentVersions := version.Get()
 
+	err := upgrade.AddLabelsToExistingServiceAccounts(ctx, r.rClient, jaeger)
+	if err != nil {
+		return jaeger, tracing.HandleError(err, span)
+	}
+
 	if len(jaeger.Status.Version) > 0 {
 		if jaeger.Status.Version != currentVersions.Jaeger {
 			// in theory, the version from the Status could be higher than currentVersions.Jaeger, but we let the upgrade routine
