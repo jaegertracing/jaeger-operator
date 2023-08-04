@@ -10,11 +10,8 @@ import (
 	osimagev1 "github.com/openshift/api/image/v1"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
-	appsv1 "k8s.io/api/apps/v1"
 	authenticationapi "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -110,7 +106,6 @@ func (b *Background) autoDetectCapabilities() {
 		b.detectKafka(ctx, apiList)
 	}
 	b.detectClusterRoles(ctx)
-	b.cleanDeployments(ctx)
 }
 
 func (b *Background) detectCronjobsVersion(ctx context.Context) {
@@ -384,82 +379,9 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 		}
 		newAuthDelegator = true
 	}
+
 	if currentAuthDelegator != newAuthDelegator || !viper.IsSet("auth-delegator-available") {
 		viper.Set("auth-delegator-available", newAuthDelegator)
-	}
-}
-
-func (b *Background) cleanDeployments(ctx context.Context) {
-	log.Log.V(-1).Info("detecting orphaned deployments.")
-
-	instancesMap := make(map[string]*v1.Jaeger)
-	deployments := &appsv1.DeploymentList{}
-	deployOpts := []client.ListOption{
-		matchingLabelKeys(map[string]string{inject.Label: ""}),
-	}
-
-	// if we are not watching all namespaces, we have to get items from each namespace being watched
-	if namespaces := viper.GetString(v1.ConfigWatchNamespace); namespaces != v1.WatchAllNamespaces {
-		for _, ns := range strings.Split(namespaces, ",") {
-			nsDeps := &appsv1.DeploymentList{}
-			if err := b.clReader.List(ctx, nsDeps, append(deployOpts, client.InNamespace(ns))...); err != nil {
-				log.Log.Error(
-					err,
-					"error getting a list of deployments to analyze in namespace",
-					"namespace", ns,
-				)
-			}
-			deployments.Items = append(deployments.Items, nsDeps.Items...)
-
-			instances := &v1.JaegerList{}
-			if err := b.clReader.List(ctx, instances, client.InNamespace(ns)); err != nil {
-				log.Log.Error(
-					err,
-					"error getting a list of existing jaeger instances in namespace",
-					"namespace", ns,
-				)
-			}
-			for i := range instances.Items {
-				instancesMap[instances.Items[i].Name] = &instances.Items[i]
-			}
-		}
-	} else {
-		if err := b.clReader.List(ctx, deployments, deployOpts...); err != nil {
-			log.Log.Error(
-				err,
-				"error getting a list of deployments to analyze",
-			)
-		}
-
-		instances := &v1.JaegerList{}
-		if err := b.clReader.List(ctx, instances); err != nil {
-			log.Log.Error(
-				err,
-				"error getting a list of existing jaeger instances",
-			)
-		}
-		for i := range instances.Items {
-			instancesMap[instances.Items[i].Name] = &instances.Items[i]
-		}
-	}
-
-	// check deployments to see which one needs to be cleaned.
-	for i := range deployments.Items {
-		dep := deployments.Items[i]
-		if instanceName, ok := dep.Labels[inject.Label]; ok {
-			_, instanceExists := instancesMap[instanceName]
-			if !instanceExists { // Jaeger instance not exist anymore, we need to clean this up.
-				inject.CleanSidecar(instanceName, &dep)
-				if err := b.cl.Update(ctx, &dep); err != nil {
-					log.Log.Error(
-						err,
-						"error cleaning orphaned deployment",
-						"deploymentName", dep.Name,
-						"deploymentNamespace", dep.Namespace,
-					)
-				}
-			}
-		}
 	}
 }
 
@@ -493,19 +415,4 @@ func isKafkaOperatorAvailable(apiList []*metav1.APIResourceList) bool {
 		}
 	}
 	return false
-}
-
-type matchingLabelKeys map[string]string
-
-func (m matchingLabelKeys) ApplyToList(opts *client.ListOptions) {
-	sel := labels.NewSelector()
-	for k := range map[string]string(m) {
-		req, err := labels.NewRequirement(k, selection.Exists, []string{})
-		if err != nil {
-			log.Log.Error(err, "failed to build label selector")
-			return
-		}
-		sel.Add(*req)
-	}
-	opts.LabelSelector = sel
 }
