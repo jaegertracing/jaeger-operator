@@ -187,7 +187,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: c.jaeger.Spec.Collector.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
+				MatchLabels: commonSpec.Labels,
 			},
 			Strategy: strategy,
 			Template: corev1.PodTemplateSpec{
