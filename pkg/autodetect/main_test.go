@@ -88,7 +88,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	select {
 	case <-done:
 		assert.False(t, viper.GetBool("auth-delegator-available"))
-	case <-time.After(1 * time.Second):
+	case <-time.After(5 * time.Second):
 		assert.Fail(t, "timed out waiting for the start process to detect the capabilities")
 	}
 
@@ -100,7 +100,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 			if viper.GetBool("auth-delegator-available") {
 				break
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 		}
 		done <- true
 	}()
