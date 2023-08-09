@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -44,6 +45,11 @@ func collectorService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Ser
 	adminPort := util.GetAdminPort(args, 14269)
 
 	ports := []corev1.ServicePort{
+		{
+			Name: GetPortNameForCollectorService(jaeger),
+			Port: int32(GetPortForCollectorService(jaeger)),
+			TargetPort: intstr.FromInt(getTargetPortForCollectorService(jaeger)),
+		},
 		{
 			Name: "http-zipkin",
 			Port: 9411,
@@ -102,6 +108,30 @@ func GetNameForCollectorService(jaeger *v1.Jaeger) string {
 // GetNameForHeadlessCollectorService returns the headless service name for the collector in this Jaeger instance
 func GetNameForHeadlessCollectorService(jaeger *v1.Jaeger) string {
 	return util.DNSName(util.Truncate("%s-collector-headless", 63, jaeger.Name))
+}
+
+// GetPortForCollectorService returns the query service port number for this Jaeger instance
+func GetPortForCollectorService(jaeger *v1.Jaeger) int {
+	if jaeger.Spec.Collector.Ingress.Security == v1.IngressSecurityOAuthProxy {
+		return 443
+	}
+	return 16686
+}
+
+// GetPortNameForCollectorService returns the query service port name for this Jaeger instance
+func GetPortNameForCollectorService(jaeger *v1.Jaeger) string {
+	if jaeger.Spec.Collector.Ingress.Security == v1.IngressSecurityOAuthProxy {
+		return "https-query"
+	}
+	return "http-query"
+}
+
+func getTargetPortForCollectorService(jaeger *v1.Jaeger) int {
+	if jaeger.Spec.Query.Ingress.Security == v1.IngressSecurityOAuthProxy {
+		return 8443
+	}
+	//TODO: add a different port number
+	return 16686
 }
 
 // GetPortNameForGRPC returns the port name for 'grpc'. It may either be

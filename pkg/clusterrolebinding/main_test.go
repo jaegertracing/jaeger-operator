@@ -20,9 +20,9 @@ func TestGetClusterRoleBinding(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &trueVar
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Enabled = &trueVar
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -44,9 +44,9 @@ func TestIngressDisabled(t *testing.T) {
 	falseVar := false
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &falseVar
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Enabled = &falseVar
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityNone
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -61,9 +61,9 @@ func TestNotOAuthProxy(t *testing.T) {
 	trueVar := true
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &trueVar
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Enabled = &trueVar
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityNone
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)
@@ -81,9 +81,9 @@ func TestAuthDelegatorNotAvailable(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &trueVar
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Enabled = &trueVar
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "default", "resource": "pods", "verb": "get"}}`
 
 	// test
 	crbs := Get(jaeger)

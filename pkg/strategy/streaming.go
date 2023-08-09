@@ -110,6 +110,10 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 	}
 
+	if ci := ingress.NewCollectorIngress(jaeger).Get(); nil != ci {
+		manifest.ingresses = append(manifest.ingresses, *ci)
+	}
+
 	// add autoscalers
 	manifest.horizontalPodAutoscalers = append(collector.Autoscalers(), ingester.Autoscalers()...)
 

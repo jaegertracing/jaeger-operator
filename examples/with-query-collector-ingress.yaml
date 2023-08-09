@@ -1,0 +1,15 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: ingress-with-hosts
+spec:
+  query:
+    ingress:
+      enabled: true
+      hosts:
+        - query-mesh-jaeger.xxx.com #your domain name.
+  collector:
+    ingress:
+      enabled: true
+      hosts:
+        - collector-mesh-jaeger.xxx.com #your domain name.

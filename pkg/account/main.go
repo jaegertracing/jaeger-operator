@@ -11,7 +11,7 @@ import (
 // Get returns all the service accounts to be created for this Jaeger instance
 func Get(jaeger *v1.Jaeger) []*corev1.ServiceAccount {
 	accounts := []*corev1.ServiceAccount{}
-	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
+	if jaeger.Spec.Query.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		sa := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Query.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec}).ServiceAccount
 		if len(sa) == 0 {
 			// if there's a service account specified for the query component, that's the one we use

@@ -140,6 +140,10 @@ func (c *Collector) Get() *appsv1.Deployment {
 
 	ports := []corev1.ContainerPort{
 		{
+			ContainerPort: 16686,
+			Name:          "collector",
+		},
+		{
 			ContainerPort: 9411,
 			Name:          "zipkin",
 		},

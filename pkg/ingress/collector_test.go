@@ -11,34 +11,34 @@ import (
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
 
-func TestQueryIngress(t *testing.T) {
-	name := "TestQueryIngress"
+func TestCollectorIngress(t *testing.T) {
+	name := "TestCollectorIngress"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
-	assert.Contains(t, dep.Spec.DefaultBackend.Service.Name, "testqueryingress-query")
+	assert.Contains(t, dep.Spec.DefaultBackend.Service.Name, "testcollectoringress-collector")
 }
 
-func TestQueryIngressDisabled(t *testing.T) {
+func TestCollectorIngressDisabled(t *testing.T) {
 	enabled := false
-	name := "TestQueryIngressDisabled"
+	name := "TestCollectorIngressDisabled"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	ingress := NewQueryIngress(jaeger)
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
 	assert.Nil(t, dep)
 }
 
-func TestQueryIngressEnabled(t *testing.T) {
+func TestCollectorIngressEnabled(t *testing.T) {
 	enabled := true
-	name := "TestQueryIngressEnabled"
+	name := "TestCollectorIngressEnabled"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	ingress := NewQueryIngress(jaeger)
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -46,15 +46,15 @@ func TestQueryIngressEnabled(t *testing.T) {
 	assert.NotNil(t, dep.Spec.DefaultBackend)
 }
 
-func TestIngressWithPath(t *testing.T) {
+func TestCollectorIngressWithPath(t *testing.T) {
 	type test struct {
 		name     string
 		strategy v1.DeploymentStrategy
 		basePath string
 	}
-	allInOne := test{name: "TestQueryIngressAllInOneBasePath", strategy: v1.DeploymentStrategyAllInOne, basePath: "/jaeger"}
-	production := test{name: "TestQueryIngressProduction", strategy: v1.DeploymentStrategyProduction, basePath: "/jaeger-production"}
-	streaming := test{name: "TestQueryIngressStreaming", strategy: v1.DeploymentStrategyStreaming, basePath: "/jaeger-streaming"}
+	allInOne := test{name: "TestCollectorIngressAllInOneBasePath", strategy: v1.DeploymentStrategyAllInOne, basePath: "/jaeger"}
+	production := test{name: "TestCollectorIngressProduction", strategy: v1.DeploymentStrategyProduction, basePath: "/jaeger-production"}
+	streaming := test{name: "TestCollectorIngressStreaming", strategy: v1.DeploymentStrategyStreaming, basePath: "/jaeger-streaming"}
 
 	tests := []test{allInOne, production, streaming}
 
@@ -62,15 +62,15 @@ func TestIngressWithPath(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			enabled := true
 			jaeger := v1.NewJaeger(types.NamespacedName{Name: test.name})
-			jaeger.Spec.Query.Ingress.Enabled = &enabled
+			jaeger.Spec.Collector.Ingress.Enabled = &enabled
 			jaeger.Spec.Strategy = test.strategy
 			if test.strategy == v1.DeploymentStrategyAllInOne {
-				jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"query.base-path": test.basePath})
+				jaeger.Spec.AllInOne.Options = v1.NewOptions(map[string]interface{}{"collector.base-path": test.basePath})
 			} else {
-				jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": test.basePath})
+				jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{"collector.base-path": test.basePath})
 			}
 
-			ingress := NewQueryIngress(jaeger)
+			ingress := NewCollectorIngress(jaeger)
 			dep := ingress.Get()
 
 			assert.NotNil(t, dep)
@@ -85,18 +85,18 @@ func TestIngressWithPath(t *testing.T) {
 	}
 }
 
-func TestQueryIngressAnnotations(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressAnnotations"})
+func TestCollectorIngressAnnotations(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressAnnotations"})
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
 	}
-	jaeger.Spec.Query.Ingress.Annotations = map[string]string{
+	jaeger.Spec.Collector.Ingress.Annotations = map[string]string{
 		"hello":                "world", // Override top level annotation
 		"prometheus.io/scrape": "false",
 	}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Equal(t, "operator", dep.Annotations["name"])
@@ -104,18 +104,18 @@ func TestQueryIngressAnnotations(t *testing.T) {
 	assert.Equal(t, "false", dep.Annotations["prometheus.io/scrape"])
 }
 
-func TestQueryIngressLabels(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressLabels"})
+func TestCollectorIngressLabels(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressLabels"})
 	jaeger.Spec.Labels = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
 	}
-	jaeger.Spec.Query.Ingress.Labels = map[string]string{
+	jaeger.Spec.Collector.Ingress.Labels = map[string]string{
 		"hello":   "world", // Override top level annotation
 		"another": "false",
 	}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Equal(t, "operator", dep.Labels["name"])
@@ -123,13 +123,13 @@ func TestQueryIngressLabels(t *testing.T) {
 	assert.Equal(t, "false", dep.Labels["another"])
 }
 
-func TestQueryIngressWithHosts(t *testing.T) {
+func TestCollectorIngressWithHosts(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithHosts"})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	jaeger.Spec.Query.Ingress.Hosts = []string{"test-host-1"}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressWithHosts"})
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	jaeger.Spec.Collector.Ingress.Hosts = []string{"test-host-1"}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -144,14 +144,14 @@ func TestQueryIngressWithHosts(t *testing.T) {
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
-func TestQueryIngressWithPathType(t *testing.T) {
+func TestCollectorIngressWithPathType(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithHosts"})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	jaeger.Spec.Query.Ingress.PathType = networkingv1.PathType("Prefix")
-	jaeger.Spec.Query.Ingress.Hosts = []string{"test-host-1"}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressWithHosts"})
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	jaeger.Spec.Collector.Ingress.PathType = networkingv1.PathType("Prefix")
+	jaeger.Spec.Collector.Ingress.Hosts = []string{"test-host-1"}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -166,13 +166,13 @@ func TestQueryIngressWithPathType(t *testing.T) {
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
 }
 
-func TestQueryIngressWithMultipleHosts(t *testing.T) {
+func TestCollectorIngressWithMultipleHosts(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithMultipleHosts"})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	jaeger.Spec.Query.Ingress.Hosts = []string{"test-host-1", "test-host-2"}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressWithMultipleHosts"})
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	jaeger.Spec.Collector.Ingress.Hosts = []string{"test-host-1", "test-host-2"}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -191,12 +191,12 @@ func TestQueryIngressWithMultipleHosts(t *testing.T) {
 	assert.NotNil(t, dep.Spec.Rules[1].HTTP.Paths[0].Backend)
 }
 
-func TestQueryIngressWithoutHosts(t *testing.T) {
+func TestCollectorIngressWithoutHosts(t *testing.T) {
 	enabled := true
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithoutHosts"})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressWithoutHosts"})
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -205,15 +205,15 @@ func TestQueryIngressWithoutHosts(t *testing.T) {
 	assert.Empty(t, dep.Spec.Rules)
 }
 
-func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
+func TestCollectorIngressQueryBasePathWithHosts(t *testing.T) {
 	enabled := true
-	name := "TestQueryIngressQueryBasePathWithHosts"
+	name := "TestCollectorIngressQueryBasePathWithHosts"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Query.Ingress.Enabled = &enabled
-	jaeger.Spec.Query.Ingress.Hosts = []string{"test-host-1"}
+	jaeger.Spec.Collector.Ingress.Enabled = &enabled
+	jaeger.Spec.Collector.Ingress.Hosts = []string{"test-host-1"}
 	jaeger.Spec.Strategy = v1.DeploymentStrategyProduction
-	jaeger.Spec.Query.Options = v1.NewOptions(map[string]interface{}{"query.base-path": "/jaeger"})
-	ingress := NewQueryIngress(jaeger)
+	jaeger.Spec.Collector.Options = v1.NewOptions(map[string]interface{}{"collector.base-path": "/jaeger"})
+	ingress := NewCollectorIngress(jaeger)
 
 	dep := ingress.Get()
 
@@ -228,60 +228,60 @@ func TestQueryIngressQueryBasePathWithHosts(t *testing.T) {
 }
 
 // TODO: Remove this test when ingress.secretName is removed from the spec
-func TestQueryIngressDeprecatedSecretName(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressDeprecatedSecretName"})
+func TestCollectorIngressDeprecatedSecretName(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressDeprecatedSecretName"})
 
-	jaeger.Spec.Query.Ingress.SecretName = "test-secret"
+	jaeger.Spec.Collector.Ingress.SecretName = "test-secret"
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
 }
 
 // TODO: Remove this test when ingress.secretName is removed from the spec
-func TestQueryIngressTLSOverridesDeprecatedSecretName(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSOverridesDeprecatedSecretName"})
+func TestCollectorIngressTLSOverridesDeprecatedSecretName(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressTLSOverridesDeprecatedSecretName"})
 
-	jaeger.Spec.Query.Ingress.SecretName = "test-secret-secret-name"
+	jaeger.Spec.Collector.Ingress.SecretName = "test-secret-secret-name"
 
-	jaeger.Spec.Query.Ingress.TLS = []v1.JaegerIngressTLSSpec{
+	jaeger.Spec.Collector.Ingress.TLS = []v1.JaegerIngressTLSSpec{
 		{
 			SecretName: "test-secret-tls",
 		},
 	}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Len(t, dep.Spec.TLS, 1)
 	assert.Equal(t, "test-secret-tls", dep.Spec.TLS[0].SecretName)
 }
 
-func TestQueryIngressTLSSecret(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSSecret"})
+func TestCollectorIngressTLSSecret(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressTLSSecret"})
 
-	jaeger.Spec.Query.Ingress.TLS = []v1.JaegerIngressTLSSpec{
+	jaeger.Spec.Collector.Ingress.TLS = []v1.JaegerIngressTLSSpec{
 		{
 			SecretName: "test-secret",
 		},
 	}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Equal(t, "test-secret", dep.Spec.TLS[0].SecretName)
 }
 
-func TestQueryIngressClass(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
-	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
+func TestCollectorIngressClass(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressClass"})
+	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressNoClass"})
 
 	inressClassName := "nginx"
-	jaeger.Spec.Query.Ingress.IngressClassName = &inressClassName
+	jaeger.Spec.Collector.Ingress.IngressClassName = &inressClassName
 
-	ingress := NewQueryIngress(jaeger)
-	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
+	ingress := NewCollectorIngress(jaeger)
+	ingressNoClass := NewCollectorIngress(jaegerNoIngressNoClass)
 
 	dep := ingress.Get()
 
@@ -290,10 +290,10 @@ func TestQueryIngressClass(t *testing.T) {
 	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
 }
 
-func TestQueryIngressTLSHosts(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressTLSHosts"})
+func TestCollectorIngressTLSHosts(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCollectorIngressTLSHosts"})
 
-	jaeger.Spec.Query.Ingress.TLS = []v1.JaegerIngressTLSSpec{
+	jaeger.Spec.Collector.Ingress.TLS = []v1.JaegerIngressTLSSpec{
 		{
 			Hosts: []string{"test-host-1"},
 		},
@@ -302,7 +302,7 @@ func TestQueryIngressTLSHosts(t *testing.T) {
 		},
 	}
 
-	ingress := NewQueryIngress(jaeger)
+	ingress := NewCollectorIngress(jaeger)
 	dep := ingress.Get()
 
 	assert.Len(t, dep.Spec.TLS, 2)

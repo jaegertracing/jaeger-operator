@@ -14,7 +14,7 @@ import (
 
 // Get returns all the service accounts to be created for this Jaeger instance
 func Get(jaeger *v1.Jaeger) []rbac.ClusterRoleBinding {
-	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy && len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 {
+	if jaeger.Spec.Query.Ingress.Security == v1.IngressSecurityOAuthProxy && len(jaeger.Spec.Query.Ingress.Openshift.DelegateUrls) > 0 {
 		if viper.GetBool("auth-delegator-available") {
 			return []rbac.ClusterRoleBinding{oauthProxyAuthDelegator(jaeger)}
 		}

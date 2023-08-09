@@ -27,6 +27,7 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 		14267: false,
 		14268: false,
 		14269: false,
+		16686: false,
 	}
 
 	svc := svcs[0]
@@ -37,6 +38,10 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	for k, v := range ports {
 		assert.Equal(t, v, true, "Expected port %v to be specified, but wasn't", k)
 	}
+
+	// ensure the port name are same for both the services
+	assert.Equal(t, "http-query", svcs[0].Spec.Ports[0].Name)
+	assert.Equal(t, "http-query", svcs[1].Spec.Ports[0].Name)
 
 	// we ensure the ports are the same for both services
 	assert.Equal(t, svcs[0].Spec.Ports, svcs[1].Spec.Ports)
