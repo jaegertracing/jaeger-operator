@@ -383,6 +383,14 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 	if currentAuthDelegator != newAuthDelegator || !viper.IsSet("auth-delegator-available") {
 		viper.Set("auth-delegator-available", newAuthDelegator)
 	}
+
+	if err := b.cl.Delete(ctx, tr); err != nil {
+		// Remove the test Token.
+		// If the token could not be created due to permissions, we're ok.
+		// If the token was created, we remove it to ensure the next iteration doesn't fail.
+		// If the token creation failed because it was created before, we remove it to ensure the next iteration doesn't fail.
+		log.Log.V(2).Info("The jaeger-operator-TEST TokenReview could not be removed: %w", err)
+	}
 }
 
 func isOpenShift(apiList []*metav1.APIResourceList) bool {
