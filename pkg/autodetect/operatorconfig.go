@@ -24,6 +24,21 @@ func (p Platform) String() string {
 	return [...]string{"Kubernetes", "OpenShift"}[p]
 }
 
+// ESOperatorIntegration holds the if the ES Operator integration is enabled.
+type ESOperatorIntegration int
+
+const (
+	// ESOperatorIntegrationYes represents the ES Operator integration is enabled.
+	ESOperatorIntegrationYes ESOperatorIntegration = iota
+
+	// ESOperatorIntegrationNo represents the ES Operator integration is disabled.
+	ESOperatorIntegrationNo
+)
+
+func (p ESOperatorIntegration) String() string {
+	return [...]string{"Yes", "No"}[p]
+}
+
 var OperatorConfiguration operatorConfigurationWrapper
 
 type operatorConfigurationWrapper struct {
@@ -69,4 +84,43 @@ func (c *operatorConfigurationWrapper) IsPlatformAutodetectionEnabled() bool {
 	c.mu.RUnlock()
 
 	return strings.EqualFold(p, "auto-detect")
+}
+
+func (c *operatorConfigurationWrapper) SetESIngration(e interface{}) {
+	var integration string
+	switch v := e.(type) {
+	case string:
+		integration = v
+	case ESOperatorIntegration:
+		integration = v.String()
+	default:
+		integration = ESOperatorIntegrationNo.String()
+	}
+
+	c.mu.Lock()
+	viper.Set(v1.FlagESProvision, integration)
+	c.mu.Unlock()
+}
+
+func (c *operatorConfigurationWrapper) GetESPIntegration() ESOperatorIntegration {
+	c.mu.RLock()
+	e := viper.GetString(v1.FlagESProvision)
+	c.mu.RUnlock()
+
+	e = strings.ToLower(e)
+
+	var integration ESOperatorIntegration
+	switch e {
+	case "yes":
+		integration = ESOperatorIntegrationYes
+	default:
+		integration = ESOperatorIntegrationNo
+	}
+	return integration
+}
+
+// IsESOperatorIntegrationEnabled returns true if the integration with the
+// Elasticsearch OpenShift Operator is enabled
+func (c *operatorConfigurationWrapper) IsESOperatorIntegrationEnabled() bool {
+	return c.GetESPIntegration() == ESOperatorIntegrationYes
 }

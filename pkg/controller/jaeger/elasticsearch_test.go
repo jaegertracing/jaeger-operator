@@ -14,11 +14,12 @@ import (
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
 
 func TestElasticsearchesCreate(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
+	autodetect.OperatorConfiguration.SetESIngration(autodetect.ESOperatorIntegrationYes)
 	defer viper.Reset()
 
 	// prepare
@@ -62,7 +63,7 @@ func TestElasticsearchesCreate(t *testing.T) {
 }
 
 func TestElasticsearchesUpdate(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
+	autodetect.OperatorConfiguration.SetESIngration(autodetect.ESOperatorIntegrationYes)
 	defer viper.Reset()
 
 	// prepare
@@ -109,7 +110,7 @@ func TestElasticsearchesUpdate(t *testing.T) {
 }
 
 func TestElasticsearchesDelete(t *testing.T) {
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
+	autodetect.OperatorConfiguration.SetESIngration(autodetect.ESOperatorIntegrationYes)
 	defer viper.Reset()
 
 	// prepare
@@ -151,7 +152,7 @@ func TestElasticsearchesDelete(t *testing.T) {
 
 func TestElasticsearchesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchYes)
+	autodetect.OperatorConfiguration.SetESIngration(autodetect.ESOperatorIntegrationYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{

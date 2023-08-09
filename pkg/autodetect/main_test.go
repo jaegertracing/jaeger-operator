@@ -68,9 +68,6 @@ func TestStartContinuesInBackground(t *testing.T) {
 	}
 	b := WithClients(cl, dcl, cl)
 
-	fmt.Println(viper.IsSet("auth-delegator-available"))
-	fmt.Println(viper.GetBool("auth-delegator-available"))
-
 	done := make(chan bool)
 	go func() {
 		for {
@@ -88,7 +85,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	select {
 	case <-done:
 		assert.False(t, viper.GetBool("auth-delegator-available"))
-	case <-time.After(5 * time.Second):
+	case <-time.After(1 * time.Second):
 		assert.Fail(t, "timed out waiting for the start process to detect the capabilities")
 	}
 
@@ -100,7 +97,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 			if viper.GetBool("auth-delegator-available") {
 				break
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 		}
 		done <- true
 	}()
@@ -248,7 +245,7 @@ func TestExplicitPlatform(t *testing.T) {
 
 func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
+	viper.Set("es-provision", "auto")
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -259,12 +256,12 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionElasticsearchNo, viper.GetString("es-provision"))
+	assert.False(t, OperatorConfiguration.IsESOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
+	viper.Set("es-provision", "auto")
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -289,7 +286,7 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 			}, nil
 		}
 		b.autoDetectCapabilities()
-		assert.Equal(t, v1.FlagProvisionElasticsearchYes, viper.GetString("es-provision"))
+		assert.True(t, OperatorConfiguration.IsESOperatorIntegrationEnabled())
 	})
 
 	t.Run("no kind Elasticsearch", func(t *testing.T) {
@@ -304,7 +301,7 @@ func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 			}, nil
 		}
 		b.autoDetectCapabilities()
-		assert.Equal(t, v1.FlagProvisionElasticsearchNo, viper.GetString("es-provision"))
+		assert.False(t, OperatorConfiguration.IsESOperatorIntegrationEnabled())
 	})
 }
 
