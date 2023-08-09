@@ -69,6 +69,10 @@ func autoscalers(component component) []runtime.Object {
 
 	if autoscalingVersion == v1.FlagAutoscalingVersionV2Beta2 {
 		autoscaler := autoscalingv2beta2.HorizontalPodAutoscaler{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "HorizontalPodAutoscaler",
+				APIVersion: autoscalingVersion,
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        component.name(),
 				Namespace:   jaeger.Namespace,
@@ -119,6 +123,10 @@ func autoscalers(component component) []runtime.Object {
 		result = append(result, &autoscaler)
 	} else {
 		autoscaler := autoscalingv2.HorizontalPodAutoscaler{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "HorizontalPodAutoscaler",
+				APIVersion: autoscalingVersion,
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        component.name(),
 				Namespace:   jaeger.Namespace,

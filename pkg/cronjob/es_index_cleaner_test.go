@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,6 +38,38 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 	assert.Equal(t, "INDEX_PREFIX", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "tenant1", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Value)
 	assert.Equal(t, historyLimits, *cronJob.Spec.SuccessfulJobsHistoryLimit)
+}
+
+func TestCreateEsIndexCleanerTypeMeta(t *testing.T) {
+	testData := []struct {
+		Name string
+		flag string
+	}{
+		{Name: "Test batch/v1beta1", flag: v1.FlagCronJobsVersionBatchV1Beta1},
+		{Name: "Test batch/v1", flag: v1.FlagCronJobsVersionBatchV1},
+	}
+
+	jaeger := &v1.Jaeger{Spec: v1.JaegerSpec{Storage: v1.JaegerStorageSpec{Options: v1.NewOptions(
+		map[string]interface{}{"es.index-prefix": "tenant1", "es.server-urls": "http://nowhere:666,foo"})}}}
+	days := 0
+	jaeger.Spec.Storage.EsIndexCleaner.NumberOfDays = &days
+	historyLimits := int32(1)
+	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
+	for _, td := range testData {
+		if td.flag == v1.FlagCronJobsVersionBatchV1Beta1 {
+			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+		}
+		cronJobs := CreateEsIndexCleaner(jaeger)
+		switch tt := cronJobs.(type) {
+		case *batchv1beta1.CronJob:
+			assert.Equal(t, tt.Kind, "CronJob")
+			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
+		case *batchv1.CronJob:
+			assert.Equal(t, tt.Kind, "CronJob")
+			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+		}
+	}
 }
 
 func TestEsIndexCleanerSecrets(t *testing.T) {
