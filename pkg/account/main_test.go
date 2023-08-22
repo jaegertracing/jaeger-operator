@@ -11,7 +11,7 @@ import (
 
 func TestWithSecurityNil(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyNil"})
-	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNone, jaeger.Spec.Query.Ingress.Security)
 	sas := Get(jaeger)
 	assert.Len(t, sas, 1)
 	assert.Equal(t, getMain(jaeger), sas[0])
@@ -19,7 +19,7 @@ func TestWithSecurityNil(t *testing.T) {
 
 func TestWithSecurityNone(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyFalse"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityNone
 	sas := Get(jaeger)
 	assert.Len(t, sas, 1)
 	assert.Equal(t, getMain(jaeger), sas[0])
@@ -27,7 +27,7 @@ func TestWithSecurityNone(t *testing.T) {
 
 func TestWithSecurityOAuthProxy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestWithOAuthProxyTrue"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	assert.Len(t, Get(jaeger), 2)
 }

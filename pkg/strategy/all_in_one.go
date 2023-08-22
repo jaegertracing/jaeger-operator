@@ -87,6 +87,10 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 		}
 	}
 
+	if ci := ingress.NewCollectorIngress(jaeger).Get(); nil != ci {
+		c.ingresses = append(c.ingresses, *ci)
+	}
+
 	if isBoolTrue(jaeger.Spec.Storage.Dependencies.Enabled) {
 		if cronjob.SupportedStorage(jaeger.Spec.Storage.Type) {
 			c.cronJobs = append(c.cronJobs, cronjob.CreateSparkDependencies(jaeger))

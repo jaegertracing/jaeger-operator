@@ -109,6 +109,8 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 		ingresses[fmt.Sprintf("%s-query", name)] = false
 	}
 
+	ingresses[fmt.Sprintf("%s-collector", name)] = false
+
 	serviceAccounts := map[string]bool{}
 	if hasOAuthProxy {
 		serviceAccounts[fmt.Sprintf("%s-ui-proxy", name)] = false

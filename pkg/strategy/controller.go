@@ -110,20 +110,24 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Strategy = v1.DeploymentStrategyAllInOne
 	}
 
+	// normalize the ingress spec before performing any ingress related validations
+	// this should be removed whenever we plan to drop support for the deprecated .spec.ingress
+	normalizeIngress(jaeger)
+
 	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Query.Ingress.Security != v1.IngressSecurityNoneExplicit {
+		jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	} else {
 		// cases:
 		// - omitted on Kubernetes
 		// - 'none' on any platform
-		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
+		jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
-		jaeger.Spec.Ingress.Openshift.SAR == nil {
+	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Query.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+		jaeger.Spec.Query.Ingress.Openshift.SAR == nil {
 		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
-		jaeger.Spec.Ingress.Openshift.SAR = &sar
+		jaeger.Spec.Query.Ingress.Openshift.SAR = &sar
 	}
 
 	// note that the order normalization matters - UI norm expects all normalized properties
@@ -135,6 +139,23 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 
 	if jaeger.Spec.Storage.Elasticsearch.Name == "" {
 		jaeger.Spec.Storage.Elasticsearch.Name = "elasticsearch"
+	}
+}
+
+func normalizeIngress(jaeger *v1.Jaeger) {
+	query := &jaeger.Spec.Query
+	ingress := &jaeger.Spec.Ingress
+	if query.Ingress.Enabled != nil && ingress.Enabled != nil {
+		jaeger.Logger().Info("Both .spec.query.ingress and .spec.ingress are set. .spec.query.ingress takes precedence.")
+		query.Ingress.DeepCopyInto(ingress)
+		return
+	}
+	if query.Ingress.Enabled == nil && ingress.Enabled != nil {
+		ingress.DeepCopyInto(&query.Ingress)
+		return
+	}
+	if query.Ingress.Enabled != nil && ingress.Enabled == nil {
+		query.Ingress.DeepCopyInto(ingress)
 	}
 }
 

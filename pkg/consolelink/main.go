@@ -21,7 +21,7 @@ func Name(jaeger *v1.Jaeger) string {
 // Get returns a ConsoleLink specification for the current instance
 func Get(jaeger *v1.Jaeger, route *routev1.Route) *consolev1.ConsoleLink {
 	// If ingress is not enable there is no reason for create a console link
-	if jaeger.Spec.Ingress.Enabled != nil && !*jaeger.Spec.Ingress.Enabled {
+	if jaeger.Spec.Query.Ingress.Enabled != nil && !*jaeger.Spec.Query.Ingress.Enabled {
 		return nil
 	}
 

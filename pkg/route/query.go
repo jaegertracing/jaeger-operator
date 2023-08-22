@@ -22,14 +22,14 @@ func NewQueryRoute(jaeger *v1.Jaeger) *QueryRoute {
 
 // Get returns an ingress specification for the current instance
 func (r *QueryRoute) Get() *corev1.Route {
-	if r.jaeger.Spec.Ingress.Enabled != nil && !*r.jaeger.Spec.Ingress.Enabled {
+	if r.jaeger.Spec.Query.Ingress.Enabled != nil && !*r.jaeger.Spec.Query.Ingress.Enabled {
 		return nil
 	}
 
 	trueVar := true
 
 	var termination corev1.TLSTerminationType
-	if r.jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
+	if r.jaeger.Spec.Query.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		termination = corev1.TLSTerminationReencrypt
 	} else {
 		termination = corev1.TLSTerminationEdge

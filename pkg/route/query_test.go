@@ -25,7 +25,7 @@ func TestQueryRouteDisabled(t *testing.T) {
 	enabled := false
 	name := "TestQueryRouteDisabled"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Query.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
 	dep := route.Get()
@@ -37,7 +37,7 @@ func TestQueryRouteEnabled(t *testing.T) {
 	enabled := true
 	name := "TestQueryRouteEnabled"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
-	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Query.Ingress.Enabled = &enabled
 	route := NewQueryRoute(jaeger)
 
 	dep := route.Get()
@@ -47,7 +47,7 @@ func TestQueryRouteEnabled(t *testing.T) {
 
 func TestQueryRouteWithOAuthProxy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryRouteWithOAuthProxy"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	route := NewQueryRoute(jaeger)
 
 	r := route.Get()
@@ -57,7 +57,7 @@ func TestQueryRouteWithOAuthProxy(t *testing.T) {
 
 func TestQueryRouteWithoutOAuthProxy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryRouteWithOAuthProxy"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityNone
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityNone
 	route := NewQueryRoute(jaeger)
 
 	r := route.Get()

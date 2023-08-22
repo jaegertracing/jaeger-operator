@@ -28,7 +28,7 @@ func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
 
 func TestOAuthProxyContainerIsAdded(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Equal(t, "oauth-proxy", dep.Spec.Template.Spec.Containers[1].Name)
@@ -36,7 +36,7 @@ func TestOAuthProxyContainerIsAdded(t *testing.T) {
 
 func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 1)
 	assert.Equal(t, dep.Spec.Template.Spec.Volumes[0].Name, service.GetTLSSecretNameForQueryService(jaeger))
@@ -51,7 +51,7 @@ func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
 func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 	// see https://github.com/openshift/oauth-proxy/issues/95
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
@@ -65,14 +65,14 @@ func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {
 
 func TestOAuthProxyWithCustomSAR(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	sar := `{"namespace": "default", "resource": "pods", "verb": "get"}`
-	jaeger.Spec.Ingress.Openshift.SAR = &sar
+	jaeger.Spec.Query.Ingress.Openshift.SAR = &sar
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR) {
+		if a == fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Query.Ingress.Openshift.SAR) {
 			found = true
 		}
 	}
@@ -81,13 +81,13 @@ func TestOAuthProxyWithCustomSAR(t *testing.T) {
 
 func TestOAuthProxyWithHtpasswdFile(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.HtpasswdFile = "/etc/htpasswd"
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.HtpasswdFile = "/etc/htpasswd"
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Ingress.Openshift.HtpasswdFile) {
+		if a == fmt.Sprintf("--htpasswd-file=%s", jaeger.Spec.Query.Ingress.Openshift.HtpasswdFile) {
 			found = true
 		}
 	}
@@ -96,8 +96,8 @@ func TestOAuthProxyWithHtpasswdFile(t *testing.T) {
 
 func TestMountVolumeSpecifiedAtMainSpec(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.HtpasswdFile = "/etc/passwd"
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.HtpasswdFile = "/etc/passwd"
 	jaeger.Spec.VolumeMounts = []corev1.VolumeMount{{
 		Name: "the-volume",
 	}}
@@ -114,7 +114,7 @@ func TestMountVolumeSpecifiedAtMainSpec(t *testing.T) {
 
 func TestDoNotMountWhenNotNeeded(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	jaeger.Spec.VolumeMounts = []corev1.VolumeMount{{
 		Name: "the-volume",
 	}}
@@ -134,13 +134,13 @@ func TestOAuthProxyWithCustomDelegateURLs(t *testing.T) {
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls) {
+		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Query.Ingress.Openshift.DelegateUrls) {
 			found = true
 		}
 	}
@@ -155,13 +155,13 @@ func TestOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *testing.T) 
 	}()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
-	jaeger.Spec.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Openshift.DelegateUrls = `{"/":{"namespace": "{{ .Release.Namespace }}", "resource": "pods", "verb": "get"}}`
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
-		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls) {
+		if a == fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Query.Ingress.Openshift.DelegateUrls) {
 			found = true
 		}
 	}
@@ -170,7 +170,7 @@ func TestOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *testing.T) 
 
 func TestOAuthProxyOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 
 	sortedArgs := make([]string, len(dep.Spec.Template.Spec.Containers[1].Args))
@@ -194,7 +194,7 @@ func TestOAuthProxyResourceLimits(t *testing.T) {
 			corev1.ResourceRequestsEphemeralStorage: *resource.NewQuantity(512, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Ingress.Resources = corev1.ResourceRequirements{
+	jaeger.Spec.Query.Ingress.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:    *resource.NewQuantity(2048, resource.BinarySI),
 			corev1.ResourceLimitsMemory: *resource.NewQuantity(123, resource.DecimalSI),
@@ -204,7 +204,7 @@ func TestOAuthProxyResourceLimits(t *testing.T) {
 			corev1.ResourceRequestsMemory: *resource.NewQuantity(123, resource.DecimalSI),
 		},
 	}
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Limits[corev1.ResourceLimitsCPU])
 	assert.Equal(t, *resource.NewQuantity(2048, resource.BinarySI), dep.Spec.Template.Spec.Containers[1].Resources.Requests[corev1.ResourceRequestsCPU])
@@ -225,7 +225,7 @@ func findCookieSecret(containers []corev1.Container) (string, bool) {
 
 func TestPropagateOAuthCookieSecret(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 	depSrc := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	depDst := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
 	srcSecret, _ := findCookieSecret(depSrc.Spec.Template.Spec.Containers)
@@ -245,7 +245,7 @@ func TestTrustedCAVolumeIsUsed(t *testing.T) {
 
 	// prepare
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 
 	// test
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())

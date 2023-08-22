@@ -157,6 +157,7 @@ type JaegerSpec struct {
 	// +optional
 	Storage JaegerStorageSpec `json:"storage,omitempty"`
 
+	// Deprecated in favour of .Spec.Collector.Ingress and .Spec.Query.Ingress
 	// +optional
 	Ingress JaegerIngressSpec `json:"ingress,omitempty"`
 
@@ -296,6 +297,9 @@ type JaegerQuerySpec struct {
 	// +optional
 	// +nullable
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// +optional
+	Ingress JaegerIngressSpec `json:"ingress,omitempty"`
 }
 
 // JaegerUISpec defines the options to be used to configure the UI
@@ -472,6 +476,9 @@ type JaegerCollectorSpec struct {
 
 	// +optional
 	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
+
+	// +optional
+	Ingress JaegerIngressSpec `json:"ingress,omitempty"`
 }
 
 // JaegerIngesterSpec defines the options to be used when deploying the ingester

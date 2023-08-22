@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -137,7 +138,7 @@ func TestStorageMemoryOnlyUsedWithAllInOneStrategy(t *testing.T) {
 func TestSetSecurityToNoneByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	normalize(context.Background(), jaeger)
-	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Query.Ingress.Security)
 }
 
 func TestSetSecurityToNoneWhenExplicitSettingToNone(t *testing.T) {
@@ -154,7 +155,7 @@ func TestSetSecurityToOAuthProxyByDefaultOnOpenShift(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	normalize(context.Background(), jaeger)
 
-	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityOAuthProxy, jaeger.Spec.Query.Ingress.Security)
 }
 
 func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
@@ -163,7 +164,7 @@ func TestSetSecurityToNoneOnNonOpenShift(t *testing.T) {
 
 	normalize(context.Background(), jaeger)
 
-	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Ingress.Security)
+	assert.Equal(t, v1.IngressSecurityNoneExplicit, jaeger.Spec.Query.Ingress.Security)
 }
 
 func TestAcceptExplicitValueFromSecurityWhenOnOpenShift(t *testing.T) {
@@ -189,6 +190,188 @@ func TestRemoveReservedLabels(t *testing.T) {
 
 	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/instance")
 	assert.NotContains(t, jaeger.Spec.Labels, "app.kubernetes.io/managed-by")
+}
+
+func TestNormalizeIngress(t *testing.T) {
+	trueVar := true
+	tests := []struct {
+		underTest v1.Jaeger
+		expected  v1.JaegerIngressSpec
+	}{
+		{
+			underTest: v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Ingress: v1.JaegerIngressSpec{
+						Enabled:  &trueVar,
+						Security: v1.IngressSecurityNoneExplicit,
+						Openshift: v1.JaegerIngressOpenShiftSpec{
+							DelegateUrls: "delegateUrl1",
+						},
+						Hosts:    []string{"host1", "host2"},
+						PathType: "pathtype1",
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceMemory: resource.MustParse("1Gi"),
+								},
+							},
+						},
+						IngressClassName: new(string),
+					},
+					Query: v1.JaegerQuerySpec{
+						Ingress: v1.JaegerIngressSpec{
+							Enabled:  &trueVar,
+							Security: v1.IngressSecurityOAuthProxy,
+							Openshift: v1.JaegerIngressOpenShiftSpec{
+								DelegateUrls: "delegateUrl2",
+							},
+							Hosts:    []string{"host3", "host4"},
+							PathType: "pathtype2",
+							JaegerCommonSpec: v1.JaegerCommonSpec{
+								Resources: corev1.ResourceRequirements{
+									Limits: corev1.ResourceList{
+										corev1.ResourceMemory: resource.MustParse("5Gi"),
+									},
+								},
+							},
+							SecretName:       "secretName1",
+							IngressClassName: new(string),
+							Options:          v1.NewOptions(nil),
+						},
+					},
+				},
+			},
+			expected: v1.JaegerIngressSpec{
+				Enabled:  &trueVar,
+				Security: v1.IngressSecurityOAuthProxy,
+				Openshift: v1.JaegerIngressOpenShiftSpec{
+					DelegateUrls: "delegateUrl2",
+				},
+				Hosts:    []string{"host3", "host4"},
+				PathType: "pathtype2",
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceMemory: resource.MustParse("5Gi"),
+						},
+					},
+				},
+				SecretName:       "secretName1",
+				IngressClassName: new(string),
+				Options:          v1.NewOptions(nil),
+			},
+		},
+		{
+			underTest: v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Ingress: v1.JaegerIngressSpec{
+						Enabled:  &trueVar,
+						Security: v1.IngressSecurityOAuthProxy,
+						Openshift: v1.JaegerIngressOpenShiftSpec{
+							DelegateUrls: "delegateUrl2",
+						},
+						Hosts:    []string{"host3", "host4"},
+						PathType: "pathtype2",
+						JaegerCommonSpec: v1.JaegerCommonSpec{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceMemory: resource.MustParse("5Gi"),
+								},
+							},
+						},
+						SecretName:       "secretName1",
+						IngressClassName: new(string),
+						Options:          v1.NewOptions(nil),
+					},
+					Query: v1.JaegerQuerySpec{
+						Ingress: v1.JaegerIngressSpec{},
+					},
+				},
+			},
+			expected: v1.JaegerIngressSpec{
+				Enabled:  &trueVar,
+				Security: v1.IngressSecurityOAuthProxy,
+				Openshift: v1.JaegerIngressOpenShiftSpec{
+					DelegateUrls: "delegateUrl2",
+				},
+				Hosts:    []string{"host3", "host4"},
+				PathType: "pathtype2",
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceMemory: resource.MustParse("5Gi"),
+						},
+					},
+				},
+				SecretName:       "secretName1",
+				IngressClassName: new(string),
+				Options:          v1.NewOptions(nil),
+			},
+		},
+		{
+			underTest: v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Ingress: v1.JaegerIngressSpec{},
+					Query: v1.JaegerQuerySpec{
+						Ingress: v1.JaegerIngressSpec{
+							Enabled:  &trueVar,
+							Security: v1.IngressSecurityOAuthProxy,
+							Openshift: v1.JaegerIngressOpenShiftSpec{
+								DelegateUrls: "delegateUrl2",
+							},
+							Hosts:    []string{"host3", "host4"},
+							PathType: "pathtype2",
+							JaegerCommonSpec: v1.JaegerCommonSpec{
+								Resources: corev1.ResourceRequirements{
+									Limits: corev1.ResourceList{
+										corev1.ResourceMemory: resource.MustParse("5Gi"),
+									},
+								},
+							},
+							SecretName:       "secretName1",
+							IngressClassName: new(string),
+							Options:          v1.NewOptions(nil),
+						},
+					},
+				},
+			},
+			expected: v1.JaegerIngressSpec{
+				Enabled:  &trueVar,
+				Security: v1.IngressSecurityOAuthProxy,
+				Openshift: v1.JaegerIngressOpenShiftSpec{
+					DelegateUrls: "delegateUrl2",
+				},
+				Hosts:    []string{"host3", "host4"},
+				PathType: "pathtype2",
+				JaegerCommonSpec: v1.JaegerCommonSpec{
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceMemory: resource.MustParse("5Gi"),
+						},
+					},
+				},
+				SecretName:       "secretName1",
+				IngressClassName: new(string),
+				Options:          v1.NewOptions(nil),
+			},
+		},
+		{
+			underTest: v1.Jaeger{
+				Spec: v1.JaegerSpec{
+					Ingress: v1.JaegerIngressSpec{},
+					Query: v1.JaegerQuerySpec{
+						Ingress: v1.JaegerIngressSpec{},
+					},
+				},
+			},
+			expected:  v1.JaegerIngressSpec{},
+		},
+	}
+	for _, test := range tests {
+		normalizeIngress(&test.underTest)
+		assert.Equal(t, test.expected, test.underTest.Spec.Ingress)
+		assert.Equal(t, test.expected, test.underTest.Spec.Query.Ingress)
+	}
 }
 
 func TestNormalizeIndexCleaner(t *testing.T) {
@@ -736,14 +919,14 @@ func TestNormalizeSAR(t *testing.T) {
 
 	t.Run("not on openshift", func(t *testing.T) {
 		normalize(context.Background(), j)
-		assert.Nil(t, j.Spec.Ingress.Openshift.SAR)
+		assert.Nil(t, j.Spec.Query.Ingress.Openshift.SAR)
 	})
 
 	t.Run("on openshift", func(t *testing.T) {
-		j.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+		j.Spec.Query.Ingress.Security = v1.IngressSecurityOAuthProxy
 		viper.Set("platform", "openshift")
 		defer viper.Reset()
 		normalize(context.Background(), j)
-		assert.Equal(t, "{\"namespace\": \"foo\", \"resource\": \"pods\", \"verb\": \"get\"}", *j.Spec.Ingress.Openshift.SAR)
+		assert.Equal(t, "{\"namespace\": \"foo\", \"resource\": \"pods\", \"verb\": \"get\"}", *j.Spec.Query.Ingress.Openshift.SAR)
 	})
 }

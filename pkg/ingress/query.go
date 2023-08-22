@@ -23,7 +23,7 @@ func NewQueryIngress(jaeger *v1.Jaeger) *QueryIngress {
 
 // Get returns an ingress specification for the current instance
 func (i *QueryIngress) Get() *networkingv1.Ingress {
-	if i.jaeger.Spec.Ingress.Enabled != nil && !*i.jaeger.Spec.Ingress.Enabled {
+	if i.jaeger.Spec.Query.Ingress.Enabled != nil && !*i.jaeger.Spec.Query.Ingress.Enabled {
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 		Labels: util.Labels(fmt.Sprintf("%s-query", i.jaeger.Name), "query-ingress", *i.jaeger),
 	}
 
-	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
+	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Query.Ingress.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 
 	spec := networkingv1.IngressSpec{}
 
@@ -50,8 +50,8 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 
 	i.addTLSSpec(&spec)
 
-	if i.jaeger.Spec.Ingress.IngressClassName != nil {
-		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
+	if i.jaeger.Spec.Query.Ingress.IngressClassName != nil {
+		spec.IngressClassName = i.jaeger.Spec.Query.Ingress.IngressClassName
 	}
 
 	return &networkingv1.Ingress{
@@ -90,11 +90,11 @@ func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *net
 	}
 
 	pathType := networkingv1.PathTypeImplementationSpecific
-	if pt := i.jaeger.Spec.Ingress.PathType; pt != "" {
+	if pt := i.jaeger.Spec.Query.Ingress.PathType; pt != "" {
 		pathType = networkingv1.PathType(pt)
 	}
-	if len(i.jaeger.Spec.Ingress.Hosts) > 0 || path != "" {
-		spec.Rules = append(spec.Rules, getRules(path, &pathType, i.jaeger.Spec.Ingress.Hosts, backend)...)
+	if len(i.jaeger.Spec.Query.Ingress.Hosts) > 0 || path != "" {
+		spec.Rules = append(spec.Rules, getRules(path, &pathType, i.jaeger.Spec.Query.Ingress.Hosts, backend)...)
 	} else {
 		// no hosts and no custom path -> fall back to a single service Ingress
 		spec.DefaultBackend = backend
@@ -102,51 +102,24 @@ func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *net
 }
 
 func (i *QueryIngress) addTLSSpec(spec *networkingv1.IngressSpec) {
-	if len(i.jaeger.Spec.Ingress.TLS) > 0 {
-		for _, tls := range i.jaeger.Spec.Ingress.TLS {
+	if len(i.jaeger.Spec.Query.Ingress.TLS) > 0 {
+		for _, tls := range i.jaeger.Spec.Query.Ingress.TLS {
 			spec.TLS = append(spec.TLS, networkingv1.IngressTLS{
 				Hosts:      tls.Hosts,
 				SecretName: tls.SecretName,
 			})
 		}
-		if i.jaeger.Spec.Ingress.SecretName != "" {
+		if i.jaeger.Spec.Query.Ingress.SecretName != "" {
 			i.jaeger.Logger().V(1).Info(
 				"Both 'ingress.secretName' and 'ingress.tls' are set. 'ingress.secretName' is deprecated and is therefore ignored.",
 			)
 		}
-	} else if i.jaeger.Spec.Ingress.SecretName != "" {
+	} else if i.jaeger.Spec.Query.Ingress.SecretName != "" {
 		spec.TLS = append(spec.TLS, networkingv1.IngressTLS{
-			SecretName: i.jaeger.Spec.Ingress.SecretName,
+			SecretName: i.jaeger.Spec.Query.Ingress.SecretName,
 		})
 		i.jaeger.Logger().V(1).Info(
 			"'ingress.secretName' property is deprecated and will be removed in the future. Please use 'ingress.tls' instead.",
 		)
 	}
-}
-
-func getRules(path string, pathType *networkingv1.PathType, hosts []string, backend *networkingv1.IngressBackend) []networkingv1.IngressRule {
-	if len(hosts) > 0 {
-		rules := make([]networkingv1.IngressRule, len(hosts))
-		for i, host := range hosts {
-			rule := getRule(host, path, pathType, backend)
-			rules[i] = rule
-		}
-		return rules
-	}
-	return []networkingv1.IngressRule{getRule("", path, pathType, backend)}
-}
-
-func getRule(host string, path string, pathType *networkingv1.PathType, backend *networkingv1.IngressBackend) networkingv1.IngressRule {
-	rule := networkingv1.IngressRule{}
-	rule.Host = host
-	rule.HTTP = &networkingv1.HTTPIngressRuleValue{
-		Paths: []networkingv1.HTTPIngressPath{
-			{
-				PathType: pathType,
-				Path:     path,
-				Backend:  *backend,
-			},
-		},
-	}
-	return rule
 }
