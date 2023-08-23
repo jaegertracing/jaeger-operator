@@ -13,6 +13,7 @@ import (
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/cronjob"
 )
 
@@ -111,7 +112,7 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 	}
 
 	// we always set the value to None, except when we are on OpenShift *and* the user has not explicitly set to 'none'
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform && jaeger.Spec.Ingress.Security != v1.IngressSecurityNoneExplicit {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
 	} else {
 		// cases:
@@ -120,7 +121,7 @@ func normalize(ctx context.Context, jaeger *v1.Jaeger) {
 		jaeger.Spec.Ingress.Security = v1.IngressSecurityNoneExplicit
 	}
 
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform && jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy &&
 		jaeger.Spec.Ingress.Openshift.SAR == nil {
 		sar := fmt.Sprintf("{\"namespace\": \"%s\", \"resource\": \"pods\", \"verb\": \"get\"}", jaeger.Namespace)
 		jaeger.Spec.Ingress.Openshift.SAR = &sar

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 
@@ -237,7 +238,7 @@ func TestPropagateOAuthCookieSecret(t *testing.T) {
 }
 
 func TestTrustedCAVolumeIsUsed(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer func() {
 		viper.Reset()
 		setDefaults()

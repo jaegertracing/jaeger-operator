@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -57,7 +58,7 @@ func TestInjectSidecar(t *testing.T) {
 }
 
 func TestInjectSidecarOpenShift(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -690,7 +691,7 @@ func TestCleanSidecars(t *testing.T) {
 
 func TestCleanSidecarsOpenShift(t *testing.T) {
 	// prepare
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	instanceName := "my-instance"
@@ -874,7 +875,7 @@ func containsOptionWithPrefix(t *testing.T, args []string, prefix string) bool {
 }
 
 func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	for _, tt := range []struct {
@@ -984,7 +985,7 @@ func TestEqualSidecar(t *testing.T) {
 }
 
 func TestInjectSidecarOnOpenShift(t *testing.T) {
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})

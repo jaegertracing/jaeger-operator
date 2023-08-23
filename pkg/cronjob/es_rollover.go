@@ -15,6 +15,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
@@ -235,7 +236,7 @@ func EsScriptEnvVars(opts v1.Options) []corev1.EnvVar {
 
 	if val, ok := options["skip-dependencies"]; ok {
 		envs = append(envs, corev1.EnvVar{Name: "SKIP_DEPENDENCIES", Value: val})
-	} else if !ok && viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	} else if !ok && autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		envs = append(envs, corev1.EnvVar{Name: "SKIP_DEPENDENCIES", Value: "true"})
 	}
 

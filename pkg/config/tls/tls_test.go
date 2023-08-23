@@ -3,16 +3,16 @@ package tls
 import (
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 )
 
 func TestUpdateWithTLSSecret(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestUpdateWithTLSSecret"})
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 
 	commonSpec := v1.JaegerCommonSpec{}
 	options := []string{}
@@ -28,7 +28,7 @@ func TestUpdateWithTLSSecret(t *testing.T) {
 
 func TestIgnoreDefaultTLSSecretWhenGrpcHostPortIsSet(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestIgnoreDefaultTLSSecretWhenGrpcHostPortIsSet"})
-	viper.Set("platform", v1.FlagPlatformOpenShift)
+	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 
 	commonSpec := v1.JaegerCommonSpec{}
 	options := []string{}

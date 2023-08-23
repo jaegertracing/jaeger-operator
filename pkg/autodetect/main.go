@@ -192,10 +192,10 @@ func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]boo
 
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect the platform, we run this only once, as the platform can't change between runs ;)
-	platform := viper.GetString("platform")
+	platform := OperatorConfiguration.GetPlatform()
 	detectedPlatform := ""
 
-	if !strings.EqualFold(platform, v1.FlagPlatformAutoDetect) {
+	if !OperatorConfiguration.IsPlatformAutodetectionEnabled() {
 		log.Log.V(-1).Info(
 			"The 'platform' option is explicitly set",
 			"platform", platform,
@@ -205,12 +205,12 @@ func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIRe
 
 	log.Log.V(-1).Info("Attempting to auto-detect the platform")
 	if isOpenShift(apiList) {
-		detectedPlatform = v1.FlagPlatformOpenShift
+		detectedPlatform = OpenShiftPlatform.String()
 	} else {
-		detectedPlatform = v1.FlagPlatformKubernetes
+		detectedPlatform = KubernetesPlatform.String()
 	}
 
-	viper.Set("platform", detectedPlatform)
+	OperatorConfiguration.SetPlatform(detectedPlatform)
 	log.Log.Info(
 		"Auto-detected the platform",
 		"platform", detectedPlatform,
@@ -222,7 +222,7 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
 
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if OperatorConfiguration.GetPlatform() == OpenShiftPlatform {
 		log.Log.V(-1).Info(
 			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
 		)
@@ -347,7 +347,7 @@ func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourc
 }
 
 func (b *Background) detectClusterRoles(ctx context.Context) {
-	if viper.GetString("platform") != v1.FlagPlatformOpenShift {
+	if OperatorConfiguration.GetPlatform() != OpenShiftPlatform {
 		return
 	}
 	tr := &authenticationapi.TokenReview{

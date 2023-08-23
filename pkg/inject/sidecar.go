@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -216,7 +216,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	}
 
 	// Enable tls by default for openshift platform
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		if len(util.FindItem("--reporter.grpc.tls.enabled=", args)) == 0 {
 			args = append(args, "--reporter.grpc.tls.enabled=true")
 			args = append(args, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
@@ -423,7 +423,7 @@ func CleanSidecar(instanceName string, deployment *appsv1.Deployment) {
 			break
 		}
 	}
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		names := map[string]bool{
 			ca.TrustedCANameFromString(instanceName): true,
 			ca.ServiceCANameFromString(instanceName): true,

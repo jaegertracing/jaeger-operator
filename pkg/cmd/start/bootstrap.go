@@ -104,7 +104,7 @@ func bootstrap(ctx context.Context) manager.Manager {
 		log.Log.V(6).Info("%s", err)
 	}
 
-	span.SetAttributes(otelattribute.String("Platform", viper.GetString("platform")))
+	span.SetAttributes(otelattribute.String("Platform", autodetect.OperatorConfiguration.GetPlatform().String()))
 	watchNamespace, found := os.LookupEnv("WATCH_NAMESPACE")
 	if found {
 		setupLog.Info("watching namespace(s)", "namespaces", watchNamespace)

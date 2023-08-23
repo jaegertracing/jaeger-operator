@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/consolelink"
 
 	"github.com/spf13/viper"
@@ -101,7 +102,7 @@ func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, 
 	ingresses := map[string]bool{}
 	routes := map[string]bool{}
 	consoleLinks := map[string]bool{}
-	if viper.GetString("platform") == v1.FlagPlatformOpenShift {
+	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
 		routes[util.DNSName(name)] = false
 		consoleLinks[consolelink.Name(instance)] = false
 
