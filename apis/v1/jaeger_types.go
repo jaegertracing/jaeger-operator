@@ -39,8 +39,14 @@ const (
 	// FlagPlatform represents the flag to set the platform
 	FlagPlatform = "platform"
 
+	// FlagPlatformAutoDetect represents the "auto-detect" value for the platform flag
+	FlagPlatformAutoDetect = "auto-detect"
+
 	// FlagESProvision represents the 'es-provision' flag
 	FlagESProvision = "es-provision"
+
+	// FlagProvisionElasticsearchAuto represents the 'auto' value for the 'es-provision' flag
+	FlagProvisionElasticsearchAuto = "auto"
 
 	// FlagProvisionKafkaAuto represents the 'auto' value for the 'kafka-provision' flag
 	FlagProvisionKafkaAuto = "auto"

@@ -176,7 +176,7 @@ func TestAutoDetectWithServerResourcesForGroupVersionError(t *testing.T) {
 
 func TestAutoDetectOpenShift(t *testing.T) {
 	// prepare
-	viper.Set("platform", "auto-detect")
+	viper.Set("platform", v1.FlagPlatformAutoDetect)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -213,7 +213,7 @@ func TestAutoDetectOpenShift(t *testing.T) {
 
 func TestAutoDetectKubernetes(t *testing.T) {
 	// prepare
-	viper.Set("platform", "auto-detect")
+	viper.Set("platform", v1.FlagPlatformAutoDetect)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -245,7 +245,7 @@ func TestExplicitPlatform(t *testing.T) {
 
 func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", "auto")
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -261,7 +261,7 @@ func TestAutoDetectEsProvisionNoEsOperator(t *testing.T) {
 
 func TestAutoDetectEsProvisionWithEsOperator(t *testing.T) {
 	// prepare
-	viper.Set("es-provision", "auto")
+	viper.Set("es-provision", v1.FlagProvisionElasticsearchAuto)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}

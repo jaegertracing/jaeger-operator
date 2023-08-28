@@ -66,16 +66,10 @@ func (c *operatorConfigurationWrapper) GetPlatform() Platform {
 	p := viper.GetString(v1.FlagPlatform)
 	c.mu.RUnlock()
 
-	p = strings.ToLower(p)
-
-	var platform Platform
-	switch p {
-	case "openshift":
-		platform = OpenShiftPlatform
-	default:
-		platform = KubernetesPlatform
+	if strings.ToLower(p) == "openshift" {
+		return OpenShiftPlatform
 	}
-	return platform
+	return KubernetesPlatform
 }
 
 func (c *operatorConfigurationWrapper) IsPlatformAutodetectionEnabled() bool {
@@ -83,7 +77,7 @@ func (c *operatorConfigurationWrapper) IsPlatformAutodetectionEnabled() bool {
 	p := viper.GetString(v1.FlagPlatform)
 	c.mu.RUnlock()
 
-	return strings.EqualFold(p, "auto-detect")
+	return strings.EqualFold(p, v1.FlagPlatformAutoDetect)
 }
 
 func (c *operatorConfigurationWrapper) SetESIngration(e interface{}) {
@@ -107,16 +101,10 @@ func (c *operatorConfigurationWrapper) GetESPIntegration() ESOperatorIntegration
 	e := viper.GetString(v1.FlagESProvision)
 	c.mu.RUnlock()
 
-	e = strings.ToLower(e)
-
-	var integration ESOperatorIntegration
-	switch e {
-	case "yes":
-		integration = ESOperatorIntegrationYes
-	default:
-		integration = ESOperatorIntegrationNo
+	if strings.ToLower(e) == "yes" {
+		return ESOperatorIntegrationYes
 	}
-	return integration
+	return ESOperatorIntegrationNo
 }
 
 // IsESOperatorIntegrationEnabled returns true if the integration with the

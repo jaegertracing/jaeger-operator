@@ -49,7 +49,7 @@ func New(mgr manager.Manager) (*Background, error) {
 // WithClients builds a new Background with the provided clients
 func WithClients(cl client.Client, dcl discovery.DiscoveryInterface, clr client.Reader) *Background {
 	// whether we should keep adjusting depending on the environment
-	retryDetectEs := viper.GetString("es-provision") == "auto"
+	retryDetectEs := viper.GetString("es-provision") == v1.FlagProvisionElasticsearchAuto
 	retryDetectKafka := viper.GetString("kafka-provision") == v1.FlagProvisionKafkaAuto
 
 	return &Background{
