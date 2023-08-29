@@ -1,14 +1,23 @@
 Changes by Version
 ==================
 
-## v1.47.0 (2025-07-12)
+## v1.48.0 (2023-08-28)
+
+* Remove the TokenReview after checking we can create it ([#2286](https://github.com/jaegertracing/jaeger-operator/pull/2286), [@iblancasa](https://github.com/iblancasa))
+* Fix apiVersion and kind are missing in jaeger-operator generate output ([#2281](https://github.com/jaegertracing/jaeger-operator/pull/2281), [@hiteshwani29](https://github.com/hiteshwani29))
+* Fix custom labels for the deployable components in production strategy  ([#2277](https://github.com/jaegertracing/jaeger-operator/pull/2277), [@hiteshwani29](https://github.com/hiteshwani29))
+* Ensure the OAuth Proxy image detection is run after the platform detection ([#2280](https://github.com/jaegertracing/jaeger-operator/pull/2280), [@iblancasa](https://github.com/iblancasa))
+* Added changes to respect env variable set from envFrom configMaps ([#2272](https://github.com/jaegertracing/jaeger-operator/pull/2272), [@hiteshwani29](https://github.com/hiteshwani29))
+* Refactor the autodetect module to reduce the number of writes/reads in viper configuration ([#2274](https://github.com/jaegertracing/jaeger-operator/pull/2274), [@iblancasa](https://github.com/iblancasa))
+
+## v1.47.0 (2023-07-12)
 * Expose admin ports for agent, collector, and query Deployments via the equivalent Service ([#2262](https://github.com/jaegertracing/jaeger-operator/pull/2262), [@thomaspaulin](https://github.com/thomaspaulin))
 * update otel sdk to v1.16.0/v0.39.0 ([#2261](https://github.com/jaegertracing/jaeger-operator/pull/2261), [@frzifus](https://github.com/frzifus))
 * Extended compatibility matrix ([#2255](https://github.com/jaegertracing/jaeger-operator/pull/2255), [@shazib-summar](https://github.com/shazib-summar))
 * Add support for Kubernetes 1.27 ([#2235](https://github.com/jaegertracing/jaeger-operator/pull/2235), [@iblancasa](https://github.com/iblancasa))
 * Jaeger Collector Config: `Lifecycle` and `TerminationGracePeriodSeconds` ([#2242](https://github.com/jaegertracing/jaeger-operator/pull/2242), [@taj-p](https://github.com/taj-p))
 
-## v1.46.0 (2025-06-16)
+## v1.46.0 (2023-06-16)
 * Missing exposed port 16685 in query deployments ([#2239](https://github.com/jaegertracing/jaeger-operator/pull/2239), [@iblancasa](https://github.com/iblancasa))
 * Use Golang 1.20 ([#2205](https://github.com/jaegertracing/jaeger-operator/pull/2205), [@iblancasa](https://github.com/iblancasa))
 * [BugFix] Properly set imagePullPolicy and containerSecurityContext for EsIndexCleaner cronjob container ([#2224](https://github.com/jaegertracing/jaeger-operator/pull/2224), [@michalschott](https://github.com/michalschott))
