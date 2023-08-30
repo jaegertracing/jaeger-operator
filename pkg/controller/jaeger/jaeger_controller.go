@@ -289,7 +289,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 	}
 
 	elasticsearches := str.Elasticsearches()
-	if strings.EqualFold(viper.GetString("es-provision"), v1.FlagProvisionElasticsearchYes) {
+	if autodetect.OperatorConfiguration.IsESOperatorIntegrationEnabled() {
 		if err := r.applyElasticsearches(ctx, jaeger, elasticsearches); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}

@@ -295,27 +295,27 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 
 func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.APIResourceList) {
 	// detect whether the Elasticsearch operator is available
-	currentESProvision := viper.GetString("es-provision")
+	currentESProvision := OperatorConfiguration.GetESPIntegration()
 	if !b.retryDetectEs {
 		log.Log.V(-1).Info(
-			"The 'es-provision' option is explicitly set",
-			"es-provision", currentESProvision,
+			"ES Operator integration explicitly set",
+			v1.FlagESProvision, currentESProvision.String(),
 		)
 	}
 
 	log.Log.V(-1).Info("Determining whether we should enable the Elasticsearch Operator integration")
 
-	esProvision := v1.FlagProvisionElasticsearchNo
+	esProvision := ESOperatorIntegrationNo
 	if IsElasticsearchOperatorAvailable(apiList) {
-		esProvision = v1.FlagProvisionElasticsearchYes
+		esProvision = ESOperatorIntegrationYes
 	}
 
 	if currentESProvision != esProvision {
 		log.Log.Info(
-			"Automatically adjusted the 'es-provision' flag",
-			"es-provision", esProvision,
+			"Automatically adjusted the integration with the ES Operator",
+			v1.FlagESProvision, esProvision.String(),
 		)
-		viper.Set("es-provision", esProvision)
+		OperatorConfiguration.SetESIngration(esProvision)
 	}
 }
 
