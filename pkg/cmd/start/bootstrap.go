@@ -23,6 +23,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
@@ -255,8 +256,6 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	probeAddr := viper.GetString("health-probe-bind-address")
 	webhookPort := viper.GetInt("webhook-bind-port")
 
-	namespace := viper.GetString(v1.ConfigWatchNamespace)
-
 	var tlsOpt tlsConfig
 	tlsOpt.minVersion = viper.GetString("tls-min-version")
 	tlsOpt.cipherSuites = viper.GetStringSlice("tls-cipher-suites")
@@ -270,28 +269,37 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 		func(config *tls.Config) { tlsConfigSetting(config, tlsOpt) },
 	}
 
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
+	// Also note that you may face performance issues when using this with a high number of namespaces.
+	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+	namespace := viper.GetString(v1.ConfigWatchNamespace)
+	var namespaces map[string]cache.Config
+	if namespace != "" {
+		namespaces = map[string]cache.Config{}
+		for _, ns := range strings.Split(namespace, ",") {
+			namespaces[ns] = cache.Config{}
+		}
+	}
+
 	options := ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   webhookPort,
-		TLSOpts:                optionsTlSOptsFuncs,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    webhookPort,
+			TLSOpts: optionsTlSOptsFuncs,
+		}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "31e04290.jaegertracing.io",
 		LeaseDuration:          &leaseDuration,
 		RenewDeadline:          &renewDeadline,
 		RetryPeriod:            &retryPeriod,
-		Namespace:              namespace,
-	}
-
-	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
-	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
-	// Also note that you may face performance issues when using this with a high number of namespaces.
-	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
-	if strings.Contains(namespace, ",") {
-		options.Cache = cache.Options{
-			Namespaces: strings.Split(namespace, ","),
-		}
+		Cache: cache.Options{
+			DefaultNamespaces: namespaces,
+		},
 	}
 
 	// Create a new manager to provide shared dependencies and start components

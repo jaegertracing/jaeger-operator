@@ -6,6 +6,22 @@ updates:
       interval: daily
       time: "03:00"
       timezone: "Europe/Berlin"
+    groups:
+      golang-org-x:
+        patterns:
+          - "golang.org/x/*"
+      prometheus:
+        patterns:
+          - "github.com/prometheus-operator/prometheus-operator"
+          - "github.com/prometheus-operator/prometheus-operator/*"
+          - "github.com/prometheus/prometheus"
+          - "github.com/prometheus/prometheus/*"
+          - "github.com/prometheus/client_go"
+          - "github.com/prometheus/client_go/*"
+      kubernetes:
+        patterns:
+          - "k8s.io/*"
+          - "sigs.k8s.io/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
