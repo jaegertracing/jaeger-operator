@@ -256,8 +256,6 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	probeAddr := viper.GetString("health-probe-bind-address")
 	webhookPort := viper.GetInt("webhook-bind-port")
 
-	namespace := viper.GetString(v1.ConfigWatchNamespace)
-
 	var tlsOpt tlsConfig
 	tlsOpt.minVersion = viper.GetString("tls-min-version")
 	tlsOpt.cipherSuites = viper.GetStringSlice("tls-cipher-suites")
@@ -275,8 +273,9 @@ func createManager(ctx context.Context, cfg *rest.Config) manager.Manager {
 	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate
 	// Also note that you may face performance issues when using this with a high number of namespaces.
 	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+	namespace := viper.GetString(v1.ConfigWatchNamespace)
 	var namespaces map[string]cache.Config
-	if strings.Contains(namespace, ",") {
+	if namespace != "" {
 		namespaces = map[string]cache.Config{}
 		for _, ns := range strings.Split(namespace, ",") {
 			namespaces[ns] = cache.Config{}
