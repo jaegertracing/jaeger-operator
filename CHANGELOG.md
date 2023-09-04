@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+## v1.48.1 (2023-09-04)
+* Use base image that does not require subscription (centos 9 stream) ([#2313](https://github.com/jaegertracing/jaeger-operator/pull/2313), [@pavolloffay](https://github.com/pavolloffay))
+* Update go dependencies to Kubernetes 0.28.1 ([#2301](https://github.com/jaegertracing/jaeger-operator/pull/2301), [@pavolloffay](https://github.com/pavolloffay))
+* Protect the ESProvisioning setting behind a mutex ([#2287](https://github.com/jaegertracing/jaeger-operator/pull/2287), [@iblancasa](https://github.com/iblancasa))
+
 ## v1.48.0 (2023-08-28)
 
 * Remove the TokenReview after checking we can create it ([#2286](https://github.com/jaegertracing/jaeger-operator/pull/2286), [@iblancasa](https://github.com/iblancasa))
