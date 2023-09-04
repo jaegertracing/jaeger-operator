@@ -303,7 +303,7 @@ func (r *ReconcileJaeger) apply(ctx context.Context, jaeger v1.Jaeger, str strat
 
 	kafkas := str.Kafkas()
 	kafkaUsers := str.KafkaUsers()
-	if strings.EqualFold(viper.GetString("kafka-provision"), v1.FlagProvisionKafkaYes) {
+	if autodetect.OperatorConfiguration.IsKafkaOperatorIntegrationEnabled() {
 		if err := r.applyKafkas(ctx, jaeger, kafkas); err != nil {
 			return jaeger, tracing.HandleError(err, span)
 		}

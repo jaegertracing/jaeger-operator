@@ -321,28 +321,28 @@ func (b *Background) detectElasticsearch(ctx context.Context, apiList []*metav1.
 
 // detectKafka checks whether the Kafka Operator is available
 func (b *Background) detectKafka(_ context.Context, apiList []*metav1.APIResourceList) {
-	currentKafkaProvision := viper.GetString("kafka-provision")
+	currentKafkaProvision := OperatorConfiguration.GetKafkaIntegration()
 	if !b.retryDetectKafka {
 		log.Log.V(-1).Info(
 			"The 'kafka-provision' option is explicitly set",
-			"kafka-provision", currentKafkaProvision,
+			"kafka-provision", currentKafkaProvision.String(),
 		)
 		return
 	}
 
 	log.Log.V(-1).Info("Determining whether we should enable the Kafka Operator integration")
 
-	kafkaProvision := v1.FlagProvisionKafkaNo
+	kafkaProvision := KafkaOperatorIntegrationNo
 	if isKafkaOperatorAvailable(apiList) {
-		kafkaProvision = v1.FlagProvisionKafkaYes
+		kafkaProvision = KafkaOperatorIntegrationYes
 	}
 
 	if currentKafkaProvision != kafkaProvision {
 		log.Log.Info(
 			"Automatically adjusted the 'kafka-provision' flag",
-			"kafka-provision", kafkaProvision,
+			"kafka-provision", kafkaProvision.String(),
 		)
-		viper.Set("kafka-provision", kafkaProvision)
+		OperatorConfiguration.SetKafkaIntegration(kafkaProvision)
 	}
 }
 

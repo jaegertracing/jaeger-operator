@@ -51,11 +51,8 @@ const (
 	// FlagProvisionKafkaAuto represents the 'auto' value for the 'kafka-provision' flag
 	FlagProvisionKafkaAuto = "auto"
 
-	// FlagProvisionKafkaYes represents the value 'yes' for the 'kafka-provision' flag
-	FlagProvisionKafkaYes = "yes"
-
-	// FlagProvisionKafkaNo represents the value 'no' for the 'kafka-provision' flag
-	FlagProvisionKafkaNo = "no"
+	// FlagKafkaProvision represents the 'kafka-provision' flag.
+	FlagKafkaProvision = "kafka-provision"
 
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""

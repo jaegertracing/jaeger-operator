@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	kafkav1beta2 "github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
@@ -19,7 +20,7 @@ import (
 
 func TestKafkaUserCreate(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
+	autodetect.OperatorConfiguration.SetKafkaIntegration(autodetect.KafkaOperatorIntegrationYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -75,7 +76,7 @@ func TestKafkaUserCreate(t *testing.T) {
 
 func TestKafkaUserUpdate(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
+	autodetect.OperatorConfiguration.SetKafkaIntegration(autodetect.KafkaOperatorIntegrationYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -149,7 +150,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 
 func TestKafkaUserDelete(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
+	autodetect.OperatorConfiguration.SetKafkaIntegration(autodetect.KafkaOperatorIntegrationYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
@@ -194,7 +195,7 @@ func TestKafkaUserDelete(t *testing.T) {
 
 func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 	// prepare
-	viper.SetDefault("kafka-provision", v1.FlagProvisionKafkaYes)
+	autodetect.OperatorConfiguration.SetKafkaIntegration(autodetect.KafkaOperatorIntegrationYes)
 	defer viper.Reset()
 
 	nsn := types.NamespacedName{
