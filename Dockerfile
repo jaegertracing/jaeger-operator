@@ -34,15 +34,15 @@ ARG TARGETARCH
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o jaeger-operator main.go
 
-FROM registry.access.redhat.com/ubi8/ubi
+FROM quay.io/centos/centos:stream9
 
 ENV USER_UID=1001 \
     USER_NAME=jaeger-operator
 
 RUN INSTALL_PKGS="openssl" && \
-    yum install -y $INSTALL_PKGS && \
+    dnf install -y $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum clean all && \
+    dnf clean all && \
     mkdir /tmp/_working_dir && \
     chmod og+w /tmp/_working_dir
 
