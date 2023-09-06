@@ -3,19 +3,19 @@ package clusterrolebinding
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // Get returns all the service accounts to be created for this Jaeger instance
 func Get(jaeger *v1.Jaeger) []rbac.ClusterRoleBinding {
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy && len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 {
-		if viper.GetBool("auth-delegator-available") {
+		if autodetect.OperatorConfiguration.IsAuthDelegatorAvailable() {
 			return []rbac.ClusterRoleBinding{oauthProxyAuthDelegator(jaeger)}
 		}
 

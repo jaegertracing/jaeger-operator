@@ -11,6 +11,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
@@ -90,7 +91,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 		args = append(args, fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR))
 	}
 
-	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && viper.GetBool("auth-delegator-available") {
+	if len(jaeger.Spec.Ingress.Openshift.DelegateUrls) > 0 && autodetect.OperatorConfiguration.IsAuthDelegatorAvailable() {
 		args = append(args, fmt.Sprintf("--openshift-delegate-urls=%s", jaeger.Spec.Ingress.Openshift.DelegateUrls))
 	}
 

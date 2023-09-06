@@ -54,6 +54,9 @@ const (
 	// FlagKafkaProvision represents the 'kafka-provision' flag.
 	FlagKafkaProvision = "kafka-provision"
 
+	// FlagAuthDelegatorAvailability represents the 'auth-delegator-available' flag.
+	FlagAuthDelegatorAvailability = "auth-delegator-available"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""
 

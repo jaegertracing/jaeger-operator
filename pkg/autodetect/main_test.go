@@ -25,7 +25,7 @@ func TestStart(t *testing.T) {
 	defer viper.Reset()
 
 	// sanity check
-	assert.False(t, viper.IsSet("auth-delegator-available"))
+	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 
 	// prepare
 	dcl := &fakeDiscoveryClient{}
@@ -35,7 +35,7 @@ func TestStart(t *testing.T) {
 	done := make(chan bool)
 	go func() {
 		for {
-			if viper.IsSet("auth-delegator-available") {
+			if OperatorConfiguration.IsAuthDelegatorSet() {
 				break
 			}
 			// it would typically take less than 10ms to get the first result already, so, it should wait only once
@@ -50,7 +50,7 @@ func TestStart(t *testing.T) {
 	// verify
 	select {
 	case <-done:
-		assert.True(t, viper.GetBool("auth-delegator-available"))
+		assert.True(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 	case <-time.After(1 * time.Second):
 		assert.Fail(t, "timed out waiting for the start process to detect the capabilities")
 	}
@@ -71,7 +71,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	done := make(chan bool)
 	go func() {
 		for {
-			if viper.IsSet("auth-delegator-available") {
+			if OperatorConfiguration.IsAuthDelegatorSet() {
 				break
 			}
 			// it would typically take less than 10ms to get the first result already, so, it should wait only once
@@ -84,7 +84,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 
 	select {
 	case <-done:
-		assert.False(t, viper.GetBool("auth-delegator-available"))
+		assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 	case <-time.After(1 * time.Second):
 		assert.Fail(t, "timed out waiting for the start process to detect the capabilities")
 	}
@@ -94,7 +94,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 
 	go func() {
 		for {
-			if viper.GetBool("auth-delegator-available") {
+			if OperatorConfiguration.IsAuthDelegatorAvailable() {
 				break
 			}
 			time.Sleep(500 * time.Millisecond)
@@ -105,7 +105,7 @@ func TestStartContinuesInBackground(t *testing.T) {
 	// verify
 	select {
 	case <-done:
-		assert.True(t, viper.GetBool("auth-delegator-available"))
+		assert.True(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 	case <-time.After(6 * time.Second): // this one might take up to 5 seconds to run again + processing time
 		assert.Fail(t, "timed out waiting for the start process to detect the new capabilities")
 	}
@@ -510,7 +510,7 @@ func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
 	b.detectClusterRoles(context.Background())
 
 	// verify
-	assert.False(t, viper.IsSet("auth-delegator-available"))
+	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 }
 
 func TestNoAuthDelegatorAvailable(t *testing.T) {
@@ -529,7 +529,7 @@ func TestNoAuthDelegatorAvailable(t *testing.T) {
 	b.detectClusterRoles(context.Background())
 
 	// verify
-	assert.False(t, viper.GetBool("auth-delegator-available"))
+	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 }
 
 func TestAuthDelegatorBecomesAvailable(t *testing.T) {
@@ -546,11 +546,11 @@ func TestAuthDelegatorBecomesAvailable(t *testing.T) {
 
 	// test
 	b.detectClusterRoles(context.Background())
-	assert.False(t, viper.GetBool("auth-delegator-available"))
+	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 
 	cl.CreateFunc = cl.Client.Create
 	b.detectClusterRoles(context.Background())
-	assert.True(t, viper.GetBool("auth-delegator-available"))
+	assert.True(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 }
 
 func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
@@ -564,13 +564,13 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 
 	// test
 	b.detectClusterRoles(context.Background())
-	assert.True(t, viper.GetBool("auth-delegator-available"))
+	assert.True(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 
 	cl.CreateFunc = func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 		return fmt.Errorf("faked error")
 	}
 	b.detectClusterRoles(context.Background())
-	assert.False(t, viper.GetBool("auth-delegator-available"))
+	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 }
 
 type fakeClient struct {
