@@ -39,6 +39,21 @@ func (p ESOperatorIntegration) String() string {
 	return [...]string{"Yes", "No"}[p]
 }
 
+// KafkaOperatorIntegration holds the if the Kafka Operator integration is enabled.
+type KafkaOperatorIntegration int
+
+const (
+	// KafkaOperatorIntegrationYes represents the Kafka Operator integration is enabled.
+	KafkaOperatorIntegrationYes KafkaOperatorIntegration = iota
+
+	// KafkaOperatorIntegrationNo represents the Kafka Operator integration is disabled.
+	KafkaOperatorIntegrationNo
+)
+
+func (p KafkaOperatorIntegration) String() string {
+	return [...]string{"Yes", "No"}[p]
+}
+
 var OperatorConfiguration operatorConfigurationWrapper
 
 type operatorConfigurationWrapper struct {
@@ -111,4 +126,37 @@ func (c *operatorConfigurationWrapper) GetESPIntegration() ESOperatorIntegration
 // Elasticsearch OpenShift Operator is enabled
 func (c *operatorConfigurationWrapper) IsESOperatorIntegrationEnabled() bool {
 	return c.GetESPIntegration() == ESOperatorIntegrationYes
+}
+
+func (c *operatorConfigurationWrapper) SetKafkaIntegration(e interface{}) {
+	var integration string
+	switch v := e.(type) {
+	case string:
+		integration = v
+	case KafkaOperatorIntegration:
+		integration = v.String()
+	default:
+		integration = KafkaOperatorIntegrationNo.String()
+	}
+
+	c.mu.Lock()
+	viper.Set(v1.FlagKafkaProvision, integration)
+	c.mu.Unlock()
+}
+
+func (c *operatorConfigurationWrapper) GetKafkaIntegration() KafkaOperatorIntegration {
+	c.mu.RLock()
+	e := viper.GetString(v1.FlagKafkaProvision)
+	c.mu.RUnlock()
+
+	if strings.ToLower(e) == "yes" {
+		return KafkaOperatorIntegrationYes
+	}
+	return KafkaOperatorIntegrationNo
+}
+
+// IsKafkaOperatorIntegrationEnabled returns true if the integration with the
+// Kafaka Operator is enabled
+func (c *operatorConfigurationWrapper) IsKafkaOperatorIntegrationEnabled() bool {
+	return c.GetKafkaIntegration() == KafkaOperatorIntegrationYes
 }

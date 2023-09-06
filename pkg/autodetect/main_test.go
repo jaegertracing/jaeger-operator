@@ -318,7 +318,7 @@ func TestAutoDetectKafkaProvisionNoKafkaOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
+	assert.False(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
@@ -344,12 +344,12 @@ func TestAutoDetectKafkaProvisionWithKafkaOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
+	assert.True(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectKafkaExplicitYes(t *testing.T) {
 	// prepare
-	viper.Set("kafka-provision", v1.FlagProvisionKafkaYes)
+	OperatorConfiguration.SetKafkaIntegration(KafkaOperatorIntegrationYes)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -360,12 +360,12 @@ func TestAutoDetectKafkaExplicitYes(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
+	assert.True(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectKafkaExplicitNo(t *testing.T) {
 	// prepare
-	viper.Set("kafka-provision", v1.FlagProvisionKafkaNo)
+	OperatorConfiguration.SetKafkaIntegration(KafkaOperatorIntegrationNo)
 	defer viper.Reset()
 
 	dcl := &fakeDiscoveryClient{}
@@ -376,7 +376,7 @@ func TestAutoDetectKafkaExplicitNo(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
+	assert.False(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
@@ -392,7 +392,7 @@ func TestAutoDetectKafkaDefaultNoOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaNo, viper.GetString("kafka-provision"))
+	assert.False(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
@@ -417,7 +417,7 @@ func TestAutoDetectKafkaDefaultWithOperator(t *testing.T) {
 	b.autoDetectCapabilities()
 
 	// verify
-	assert.Equal(t, v1.FlagProvisionKafkaYes, viper.GetString("kafka-provision"))
+	assert.True(t, OperatorConfiguration.IsKafkaOperatorIntegrationEnabled())
 }
 
 func TestAutoDetectCronJobsVersion(t *testing.T) {
