@@ -1,6 +1,9 @@
 Changes by Version
 ==================
 
+## v1.49.1 (2023-09-07)
+* fix: protect the kafka-profision setting behind a mutex ([#2308](https://github.com/jaegertracing/jaeger-operator/pull/2308), [@iblancasa](https://github.com/iblancasa))
+
 ## v1.48.1 (2023-09-04)
 * Use base image that does not require subscription (centos 9 stream) ([#2313](https://github.com/jaegertracing/jaeger-operator/pull/2313), [@pavolloffay](https://github.com/pavolloffay))
 * Update go dependencies to Kubernetes 0.28.1 ([#2301](https://github.com/jaegertracing/jaeger-operator/pull/2301), [@pavolloffay](https://github.com/pavolloffay))

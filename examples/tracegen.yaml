@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: tracegen
-        image: jaegertracing/jaeger-tracegen:1.48.0
+        image: jaegertracing/jaeger-tracegen:1.49.0
         args:
         - -duration=30m
         - -workers=10
