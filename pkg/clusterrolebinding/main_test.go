@@ -9,6 +9,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 )
 
 func TestGetClusterRoleBinding(t *testing.T) {
@@ -16,7 +17,7 @@ func TestGetClusterRoleBinding(t *testing.T) {
 	name := "TestGetClusterRoleBinding"
 	trueVar := true
 
-	viper.Set("auth-delegator-available", true)
+	autodetect.OperatorConfiguration.SetAuthDelegatorAvailability(autodetect.AuthDelegatorAvailabilityYes)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
@@ -77,7 +78,7 @@ func TestAuthDelegatorNotAvailable(t *testing.T) {
 	name := "TestAuthDelegatorNotAvailable"
 	trueVar := true
 
-	viper.Set("auth-delegator-available", false)
+	autodetect.OperatorConfiguration.SetAuthDelegatorAvailability(autodetect.AuthDelegatorAvailabilityNo)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})

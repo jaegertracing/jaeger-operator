@@ -54,6 +54,24 @@ func (p KafkaOperatorIntegration) String() string {
 	return [...]string{"Yes", "No"}[p]
 }
 
+// AuthDelegatorAvailability holds the if the AuthDelegator available.
+type AuthDelegatorAvailability int
+
+const (
+	// AuthDelegatorAvailabilityYes represents the AuthDelegator is available.
+	AuthDelegatorAvailabilityYes AuthDelegatorAvailability = iota
+
+	// AuthDelegatorAvailabilityNo represents the AuthDelegator is not available.
+	AuthDelegatorAvailabilityNo
+
+	// AuthDelegatorAvailabilityUnknown represents the AuthDelegator availability is not known.
+	AuthDelegatorAvailabilityUnknown
+)
+
+func (p AuthDelegatorAvailability) String() string {
+	return [...]string{"Yes", "No", "Unknown"}[p]
+}
+
 var OperatorConfiguration operatorConfigurationWrapper
 
 type operatorConfigurationWrapper struct {
@@ -159,4 +177,47 @@ func (c *operatorConfigurationWrapper) GetKafkaIntegration() KafkaOperatorIntegr
 // Kafaka Operator is enabled
 func (c *operatorConfigurationWrapper) IsKafkaOperatorIntegrationEnabled() bool {
 	return c.GetKafkaIntegration() == KafkaOperatorIntegrationYes
+}
+
+func (c *operatorConfigurationWrapper) SetAuthDelegatorAvailability(e interface{}) {
+	var availability string
+	switch v := e.(type) {
+	case string:
+		availability = v
+	case AuthDelegatorAvailability:
+		availability = v.String()
+	default:
+		availability = AuthDelegatorAvailabilityUnknown.String()
+	}
+
+	c.mu.Lock()
+	viper.Set(v1.FlagAuthDelegatorAvailability, availability)
+	c.mu.Unlock()
+}
+
+func (c *operatorConfigurationWrapper) GetAuthDelegator() AuthDelegatorAvailability {
+	c.mu.RLock()
+	e := viper.GetString(v1.FlagAuthDelegatorAvailability)
+	c.mu.RUnlock()
+
+	var available AuthDelegatorAvailability
+	switch strings.ToLower(e) {
+	case "yes":
+		available = AuthDelegatorAvailabilityYes
+	case "no":
+		available = AuthDelegatorAvailabilityNo
+	default:
+		available = AuthDelegatorAvailabilityUnknown
+	}
+	return available
+}
+
+// IsAuthDelegatorAvailable returns true if the AuthDelegator is available
+func (c *operatorConfigurationWrapper) IsAuthDelegatorAvailable() bool {
+	return c.GetAuthDelegator() == AuthDelegatorAvailabilityYes
+}
+
+// IsAuthDelegatorAvailable returns true if the AuthDelegator is set
+func (c *operatorConfigurationWrapper) IsAuthDelegatorSet() bool {
+	return c.GetAuthDelegator() != AuthDelegatorAvailabilityUnknown
 }

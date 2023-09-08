@@ -131,7 +131,7 @@ func TestDoNotMountWhenNotNeeded(t *testing.T) {
 }
 
 func TestOAuthProxyWithCustomDelegateURLs(t *testing.T) {
-	viper.Set("auth-delegator-available", true)
+	autodetect.OperatorConfiguration.SetAuthDelegatorAvailability(autodetect.AuthDelegatorAvailabilityYes)
 	defer viper.Reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -149,7 +149,7 @@ func TestOAuthProxyWithCustomDelegateURLs(t *testing.T) {
 }
 
 func TestOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *testing.T) {
-	viper.Set("auth-delegator-available", false)
+	autodetect.OperatorConfiguration.SetAuthDelegatorAvailability(autodetect.AuthDelegatorAvailabilityNo)
 	defer func() {
 		viper.Reset()
 		setDefaults()

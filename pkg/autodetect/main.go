@@ -356,32 +356,32 @@ func (b *Background) detectClusterRoles(ctx context.Context) {
 			Token: "TEST",
 		},
 	}
-	currentAuthDelegator := viper.GetBool("auth-delegator-available")
-	var newAuthDelegator bool
+	currentAuthDelegator := OperatorConfiguration.GetAuthDelegator()
+	var newAuthDelegator AuthDelegatorAvailability
 	if err := b.cl.Create(ctx, tr); err != nil {
-		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && currentAuthDelegator) {
+		if !OperatorConfiguration.IsAuthDelegatorSet() || OperatorConfiguration.IsAuthDelegatorAvailable() {
 			// for the first run, we log this info, or when the previous value was true
 			log.Log.Info(
 				"The service account running this operator does not have the role 'system:auth-delegator', consider granting it for additional capabilities",
 			)
 		}
-		newAuthDelegator = false
+		newAuthDelegator = AuthDelegatorAvailabilityNo
 	} else {
 		// this isn't technically correct, as we only ensured that we can create token reviews (which is what the OAuth Proxy does)
 		// but it might be the case that we have *another* cluster role that includes this access and still not have
 		// the "system:auth-delegator". This is an edge case, and it's more complicated to check that, so, we'll keep it simple for now
 		// and deal with the edge case if it ever manifests in the real world
-		if !viper.IsSet("auth-delegator-available") || (viper.IsSet("auth-delegator-available") && !currentAuthDelegator) {
+		if !OperatorConfiguration.IsAuthDelegatorSet() || (OperatorConfiguration.IsAuthDelegatorSet() && !OperatorConfiguration.IsAuthDelegatorAvailable()) {
 			// for the first run, we log this info, or when the previous value was 'false'
 			log.Log.Info(
 				"The service account running this operator has the role 'system:auth-delegator', enabling OAuth Proxy's 'delegate-urls' option",
 			)
 		}
-		newAuthDelegator = true
+		newAuthDelegator = AuthDelegatorAvailabilityYes
 	}
 
-	if currentAuthDelegator != newAuthDelegator || !viper.IsSet("auth-delegator-available") {
-		viper.Set("auth-delegator-available", newAuthDelegator)
+	if currentAuthDelegator != newAuthDelegator || !OperatorConfiguration.IsAuthDelegatorSet() {
+		OperatorConfiguration.SetAuthDelegatorAvailability(newAuthDelegator)
 	}
 
 	if err := b.cl.Delete(ctx, tr); err != nil {
