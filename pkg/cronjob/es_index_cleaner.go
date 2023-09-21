@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -30,6 +31,7 @@ func CreateEsIndexCleaner(jaeger *v1.Jaeger) runtime.Object {
 
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 	envs := EsScriptEnvVars(jaeger.Spec.Storage.Options)
+	envs = append(envs, proxy.ReadProxyVarsFromEnv()...)
 	if val, ok := jaeger.Spec.Storage.Options.StringMap()["es.use-aliases"]; ok && strings.EqualFold(val, "true") {
 		envs = append(envs, corev1.EnvVar{Name: "ROLLOVER", Value: "true"})
 	}

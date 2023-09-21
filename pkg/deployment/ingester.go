@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +125,13 @@ func (i *Ingester) Get() *appsv1.Deployment {
 		nodeSelector = i.jaeger.Spec.Ingester.NodeSelector
 	}
 
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: string(i.jaeger.Spec.Storage.Type),
+		},
+	}
+	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -155,13 +163,10 @@ func (i *Ingester) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: i.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
-						Name:  "jaeger-ingester",
-						Args:  options,
-						Env: []corev1.EnvVar{{
-							Name:  "SPAN_STORAGE_TYPE",
-							Value: string(i.jaeger.Spec.Storage.Type),
-						}},
+						Image:        util.ImageName(i.jaeger.Spec.Ingester.Image, "jaeger-ingester-image"),
+						Name:         "jaeger-ingester",
+						Args:         options,
+						Env:          envVars,
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{

@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -97,6 +97,7 @@ func rollover(jaeger *v1.Jaeger) runtime.Object {
 
 func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar) *corev1.PodTemplateSpec {
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
+	envs = append(envs, proxy.ReadProxyVarsFromEnv()...)
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "false",

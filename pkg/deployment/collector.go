@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -137,6 +138,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 			Value: ":9411",
 		},
 	}
+	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 
 	ports := []corev1.ContainerPort{
 		{
