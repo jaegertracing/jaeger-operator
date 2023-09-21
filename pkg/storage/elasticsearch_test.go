@@ -295,7 +295,7 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{{
 					Args: []string{
 						"foo",
-						"--es.server-urls=https://elasticsearch:9200",
+						"--es.server-urls=https://elasticsearch.project.svc.cluster.local:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -333,7 +333,7 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{{
 					Args: []string{
 						"foo",
-						"--es.server-urls=https://elasticsearch:9200",
+						"--es.server-urls=https://elasticsearch.project.svc.cluster.local:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPathESCerManagement,
 						"--es.tls.cert=" + certPathESCertManagement,
@@ -369,7 +369,7 @@ func TestInject(t *testing.T) {
 						"--es.num-shards=15",
 						"--es.num-replicas=55",
 						"--es.timeout=99s",
-						"--es.server-urls=https://elasticsearch:9200",
+						"--es.server-urls=https://elasticsearch.project.svc.cluster.local:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -398,7 +398,7 @@ func TestInject(t *testing.T) {
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Args: []string{
-						"--es.server-urls=https://my-es:9200",
+						"--es.server-urls=https://my-es.project.svc.cluster.local:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -437,7 +437,7 @@ func TestInject(t *testing.T) {
 				Containers: []corev1.Container{{
 					Args: []string{
 						"--es-archive.enabled=true",
-						"--es.server-urls=https://es-tenant2:9200",
+						"--es.server-urls=https://es-tenant2.project.svc.cluster.local:9200",
 						"--es.tls.enabled=true",
 						"--es.tls.ca=" + caPath,
 						"--es.tls.cert=" + certPath,
@@ -445,7 +445,7 @@ func TestInject(t *testing.T) {
 						"--es.timeout=15s",
 						"--es.num-shards=15",
 						"--es.num-replicas=14",
-						"--es-archive.server-urls=https://es-tenant2:9200",
+						"--es-archive.server-urls=https://es-tenant2.project.svc.cluster.local:9200",
 						"--es-archive.tls.enabled=true",
 						"--es-archive.tls.ca=" + caPath,
 						"--es-archive.tls.cert=" + certPath,
@@ -471,7 +471,7 @@ func TestInject(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "jtest"})}
+			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "jtest", Namespace: "project"})}
 			es.Jaeger.Spec.Storage.Elasticsearch = test.es
 			es.InjectStorageConfiguration(test.pod)
 			assert.Equal(t, test.expected, test.pod)
@@ -501,7 +501,7 @@ func TestInjectJobs(t *testing.T) {
 			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
-					Args: []string{"init", "https://elasticsearch:9200"},
+					Args: []string{"init", "https://elasticsearch.project.svc.cluster.local:9200"},
 					Env: []corev1.EnvVar{
 						{
 							Name:  "ES_TLS_ENABLED",
@@ -557,7 +557,7 @@ func TestInjectJobs(t *testing.T) {
 			},
 			expected: &corev1.PodSpec{
 				Containers: []corev1.Container{{
-					Args: []string{"init", "https://elasticsearch:9200"},
+					Args: []string{"init", "https://elasticsearch.project.svc.cluster.local:9200"},
 					Env: []corev1.EnvVar{
 						{
 							Name:  "ES_TLS_ENABLED",
@@ -602,7 +602,7 @@ func TestInjectJobs(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "jtest"})}
+			es := &ElasticsearchDeployment{Jaeger: v1.NewJaeger(types.NamespacedName{Name: "jtest", Namespace: "project"})}
 			es.Jaeger.Spec.Storage.Elasticsearch = test.es
 			es.InjectSecretsConfiguration(test.pod)
 			assert.Equal(t, test.expected, test.pod)
