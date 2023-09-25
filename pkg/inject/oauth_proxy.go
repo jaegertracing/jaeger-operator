@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -111,6 +112,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 			},
 		},
 		Resources: commonSpec.Resources,
+		Env:       proxy.ReadProxyVarsFromEnv(),
 	}
 }
 

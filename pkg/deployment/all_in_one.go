@@ -5,9 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
-	"github.com/jaegertracing/jaeger-operator/pkg/storage"
-
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,11 +13,13 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
 	configmap "github.com/jaegertracing/jaeger-operator/pkg/config/ui"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
@@ -152,6 +152,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Value: strconv.FormatBool(jaegerDisabled),
 		},
 	}
+	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 
 	ports := []corev1.ContainerPort{
 		{
