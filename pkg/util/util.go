@@ -314,6 +314,7 @@ func CreateEnvsFromSecret(secretName string) []corev1.EnvFromSource {
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+// #nosec   G404: Use of weak random number generator (math/rand instead of crypto/rand) (gosec)
 var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // GenerateProxySecret generate random secret key for oauth proxy cookie.
