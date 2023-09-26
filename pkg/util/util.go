@@ -1,12 +1,12 @@
 package util
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/spf13/viper"
@@ -312,17 +312,18 @@ func CreateEnvsFromSecret(secretName string) []corev1.EnvFromSource {
 	return envs
 }
 
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 // GenerateProxySecret generate random secret key for oauth proxy cookie.
-func GenerateProxySecret() (string, error) {
+func GenerateProxySecret() string {
 	const secretLength = 16
-	randString := make([]byte, secretLength)
-	_, err := rand.Read(randString)
-	if err != nil {
-		// If we cannot generate random, return fixed.
-		return "", err
+	b := make([]byte, secretLength)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
 	}
-	base64Secret := base64.StdEncoding.EncodeToString(randString)
-	return base64Secret, nil
+	return string(b)
 }
 
 // FindEnvVar return the EnvVar with given name or nil if not found
