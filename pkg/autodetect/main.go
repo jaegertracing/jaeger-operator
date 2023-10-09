@@ -8,6 +8,7 @@ import (
 	"time"
 
 	osimagev1 "github.com/openshift/api/image/v1"
+	imagereference "github.com/openshift/library-go/pkg/image/reference"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	authenticationapi "k8s.io/api/authentication/v1"
@@ -96,12 +97,11 @@ func (b *Background) autoDetectCapabilities() {
 			// the platform won't change during the execution of the operator, need to run it only once
 			b.detectPlatform(ctx, apiList)
 
-			b.detectOAuthProxyImageStream(ctx)
-
 			// the version of the APIs provided by the platform will not change
 			b.detectCronjobsVersion(ctx)
 			b.detectAutoscalingVersion(ctx)
 		})
+		b.detectOAuthProxyImageStream(ctx)
 		b.detectElasticsearch(ctx, apiList)
 		b.detectKafka(ctx, apiList)
 	}
@@ -222,7 +222,7 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 	ctx, span := tracer.Start(ctx, "detectOAuthProxyImageStream")
 	defer span.End()
 
-	if OperatorConfiguration.GetPlatform() == OpenShiftPlatform {
+	if OperatorConfiguration.GetPlatform() != OpenShiftPlatform {
 		log.Log.V(-1).Info(
 			"Not running on OpenShift, so won't configure OAuthProxy imagestream.",
 		)
@@ -240,13 +240,27 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 		return
 	}
 
+	// if the image is already digest-based no need to get the reference from an ImageStream
+	currImage := viper.GetString("openshift-oauth-proxy-image")
+	currImageReference, err := imagereference.Parse(currImage)
+	if err == nil {
+		if currImageReference.ID != "" {
+			log.Log.V(6).Info(
+				"OAuthProxy Image already digest-based",
+				"namespace", imageStreamNamespace,
+				"name", imageStreamName,
+			)
+			return
+		}
+	}
+
 	imageStream := &osimagev1.ImageStream{}
 	namespacedName := types.NamespacedName{
 		Name:      imageStreamName,
 		Namespace: imageStreamNamespace,
 	}
 
-	if err := b.cl.Get(ctx, namespacedName, imageStream); err != nil {
+	if err = b.cl.Get(ctx, namespacedName, imageStream); err != nil {
 		log.Log.Error(
 			err,
 			"Failed to obtain OAuthProxy ImageStream",
