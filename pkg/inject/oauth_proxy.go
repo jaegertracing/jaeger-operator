@@ -90,7 +90,7 @@ func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {
 	sort.Strings(args)
 
 	return corev1.Container{
-		Image:        viper.GetString("openshift-oauth-proxy-image"),
+		Image:        viper.GetString(v1.FlagOpenShiftOauthProxyImage),
 		Name:         "oauth-proxy",
 		Args:         args,
 		VolumeMounts: volumeMounts,

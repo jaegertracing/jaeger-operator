@@ -241,7 +241,7 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 	}
 
 	// if the image is already digest-based no need to get the reference from an ImageStream
-	currImage := viper.GetString("openshift-oauth-proxy-image")
+	currImage := OperatorConfiguration.GetOautProxyImage()
 	currImageReference, err := imagereference.Parse(currImage)
 	if err == nil {
 		if currImageReference.ID != "" {
@@ -300,7 +300,7 @@ func (b *Background) detectOAuthProxyImageStream(ctx context.Context) {
 
 	image := imageStream.Status.Tags[0].Items[0].DockerImageReference
 
-	viper.Set("openshift-oauth-proxy-image", image)
+	OperatorConfiguration.SetOautProxyImage(image)
 	log.Log.Info(
 		"Updated OAuth Proxy image flag",
 		"image", image,
