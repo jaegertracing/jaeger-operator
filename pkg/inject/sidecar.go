@@ -527,6 +527,9 @@ func GetConfigMapsMatchedEnvFromInDeployment(dep appsv1.Deployment, configMaps [
 	matchedConfigMaps := []corev1.ConfigMap{}
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		for _, envConfigMap := range container.EnvFrom {
+			if envConfigMap.ConfigMapRef == nil {
+				continue
+			}
 			if matchedCM, ok := configMapSearchMap[envConfigMap.ConfigMapRef.Name]; ok {
 				matchedConfigMaps = append(matchedConfigMaps, matchedCM)
 			}
