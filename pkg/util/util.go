@@ -319,7 +319,9 @@ var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // GenerateProxySecret generate random secret key for oauth proxy cookie.
 func GenerateProxySecret() string {
-	const secretLength = 16
+	// This will be encoded as base64. We want 16 bytes so we need a secret of
+	// 22 characters
+	const secretLength = 22
 	b := make([]byte, secretLength)
 	for i := range b {
 		b[i] = charset[seededRand.Intn(len(charset))]
