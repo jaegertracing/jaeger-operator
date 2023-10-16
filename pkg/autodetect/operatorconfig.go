@@ -221,3 +221,17 @@ func (c *operatorConfigurationWrapper) IsAuthDelegatorAvailable() bool {
 func (c *operatorConfigurationWrapper) IsAuthDelegatorSet() bool {
 	return c.GetAuthDelegator() != AuthDelegatorAvailabilityUnknown
 }
+
+func (c *operatorConfigurationWrapper) SetOautProxyImage(image string) {
+	c.mu.Lock()
+	viper.Set(v1.FlagOpenShiftOauthProxyImage, image)
+	c.mu.Unlock()
+}
+
+func (c *operatorConfigurationWrapper) GetOautProxyImage() string {
+	c.mu.RLock()
+	image := viper.GetString(v1.FlagOpenShiftOauthProxyImage)
+	c.mu.RUnlock()
+
+	return image
+}

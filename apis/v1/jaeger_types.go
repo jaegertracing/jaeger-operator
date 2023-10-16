@@ -57,6 +57,9 @@ const (
 	// FlagAuthDelegatorAvailability represents the 'auth-delegator-available' flag.
 	FlagAuthDelegatorAvailability = "auth-delegator-available"
 
+	// FlagOpenShiftOauthProxyImage represents the 'openshift-oauth-proxy-image' flag.
+	FlagOpenShiftOauthProxyImage = "openshift-oauth-proxy-image"
+
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""
 
