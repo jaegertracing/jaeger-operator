@@ -172,3 +172,54 @@ func TestCassandraCreateSchemaAffinity(t *testing.T) {
 	assert.Len(t, b, 1)
 	assert.Equal(t, expectedAffinity, b[0].Spec.Template.Spec.Affinity)
 }
+
+func TestCassandraContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	falseVar := false
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar,
+		RunAsUser:                &idVar,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesContainerSecurityContext"})
+	jaeger.Spec.Collector.JaegerCommonSpec.ContainerSecurityContext = &securityContextVar
+	b := cassandraDeps(jaeger)
+
+	assert.Equal(t, securityContextVar, *b[0].Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestCassandraSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	falseVar := false
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar1,
+		RunAsUser:                &idVar1,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar2,
+		RunAsUser:                &idVar2,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestSparkDependenciesContainerSecurityContext"})
+	jaeger.Spec.JaegerCommonSpec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Collector.JaegerCommonSpec.ContainerSecurityContext = &overrideSecurityContextVar
+	b := cassandraDeps(jaeger)
+
+	assert.Equal(t, overrideSecurityContextVar, *b[0].Spec.Template.Spec.Containers[0].SecurityContext)
+}
