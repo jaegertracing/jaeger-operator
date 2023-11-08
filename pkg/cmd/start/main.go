@@ -43,6 +43,17 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 
+	_ = viper.BindEnv("jaeger-agent-image", "RELATED_IMAGE_JAEGER_AGENT")
+	_ = viper.BindEnv("jaeger-query-image", "RELATED_IMAGE_JAEGER_QUERY")
+	_ = viper.BindEnv("jaeger-collector-image", "RELATED_IMAGE_JAEGER_COLLECTOR")
+	_ = viper.BindEnv("jaeger-ingester-image", "RELATED_IMAGE_JAEGER_INGESTER")
+	_ = viper.BindEnv("jaeger-all-in-one-image", "RELATED_IMAGE_JAEGER_ALL_IN_ONE")
+	_ = viper.BindEnv("jaeger-cassandra-schema-image", "RELATED_IMAGE_CASSANDRA_SCHEMA")
+	_ = viper.BindEnv("jaeger-spark-dependencies-image", "RELATED_IMAGE_SPARK_DEPENDENCIES")
+	_ = viper.BindEnv("jaeger-es-index-cleaner-image", "RELATED_IMAGE_JAEGER_ES_INDEX_CLEANER")
+	_ = viper.BindEnv("jaeger-es-rollover-image", "RELATED_IMAGE_JAEGER_ES_ROLLOVER")
+	_ = viper.BindEnv(v1.FlagOpenShiftOauthProxyImage, "RELATED_IMAGE_OPENSHIFT_OAUTH_PROXY_IMAGE")
+
 	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
 	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
 }
