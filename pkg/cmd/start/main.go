@@ -52,7 +52,7 @@ func AddFlags(cmd *cobra.Command) {
 	_ = viper.BindEnv("jaeger-spark-dependencies-image", "RELATED_IMAGE_SPARK_DEPENDENCIES")
 	_ = viper.BindEnv("jaeger-es-index-cleaner-image", "RELATED_IMAGE_JAEGER_ES_INDEX_CLEANER")
 	_ = viper.BindEnv("jaeger-es-rollover-image", "RELATED_IMAGE_JAEGER_ES_ROLLOVER")
-	_ = viper.BindEnv(v1.FlagOpenShiftOauthProxyImage, "RELATED_IMAGE_OPENSHIFT_OAUTH_PROXY_IMAGE")
+	_ = viper.BindEnv(v1.FlagOpenShiftOauthProxyImage, "RELATED_IMAGE_OPENSHIFT_OAUTH_PROXY")
 
 	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
 	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
