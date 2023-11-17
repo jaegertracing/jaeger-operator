@@ -19,7 +19,7 @@ metadata:
     categories: Logging & Tracing
     certified: "false"
     containerImage: quay.io/jaegertracing/jaeger-operator
-    createdAt: "2023-11-17T16:05:27Z"
+    createdAt: "2023-11-17T19:09:27Z"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -403,6 +403,10 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: jaeger-operator
+                - name: LOG-LEVEL
+                  value: DEBUG
+                - name: KAFKA-PROVISIONING-MINIMAL
+                  value: "true"
                 image: quay.io/jaegertracing/jaeger-operator:1.51.0
                 livenessProbe:
                   httpGet:
