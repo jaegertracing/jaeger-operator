@@ -1,6 +1,21 @@
 Changes by Version
 ==================
 
+## v1.51.0 (2023-11-17)
+* Support configuring images via RELATED_IMAGE_ environment variables ([#2355](https://github.com/jaegertracing/jaeger-operator/pull/2355), [@andreasgerstmayr](https://github.com/andreasgerstmayr))
+* Regenerate ES certificated when is close to 1 day for expire ([#2356](https://github.com/jaegertracing/jaeger-operator/pull/2356), [@rubenvp8510](https://github.com/rubenvp8510))
+* Bump actions/checkout from 3 to 4 ([#2316](https://github.com/jaegertracing/jaeger-operator/pull/2316), [@dependabot[bot]](https://github.com/apps/dependabot))
+* bump grpc to 1.58.3 ([#2346](https://github.com/jaegertracing/jaeger-operator/pull/2346), [@rubenvp8510](https://github.com/rubenvp8510))
+* Bump golang version to 1.21 ([#2347](https://github.com/jaegertracing/jaeger-operator/pull/2347), [@rubenvp8510](https://github.com/rubenvp8510))
+* Ensure oauth-proxy ImageStream is detected eventually ([#2340](https://github.com/jaegertracing/jaeger-operator/pull/2340), [@bverschueren](https://github.com/bverschueren))
+* Check if envFrom has ConfigMapRef set ([#2342](https://github.com/jaegertracing/jaeger-operator/pull/2342), [@edwardecook](https://github.com/edwardecook))
+* Bump golang.org/x/net from 0.13.0 to 0.17.0 ([#2343](https://github.com/jaegertracing/jaeger-operator/pull/2343), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Fix issue related to new encoding in oauth-proxy image ([#2345](https://github.com/jaegertracing/jaeger-operator/pull/2345), [@iblancasa](https://github.com/iblancasa))
+* Always generate new oauth-proxy password ([#2333](https://github.com/jaegertracing/jaeger-operator/pull/2333), [@pavolloffay](https://github.com/pavolloffay))
+* Add v1.48.x and v1.49.x to the support map ([#2332](https://github.com/jaegertracing/jaeger-operator/pull/2332), [@ishaqkhattana](https://github.com/ishaqkhattana))
+* Pass proxy env vars to operands ([#2330](https://github.com/jaegertracing/jaeger-operator/pull/2330), [@pavolloffay](https://github.com/pavolloffay))
+* Protect auth delegator behind a mutex ([#2318](https://github.com/jaegertracing/jaeger-operator/pull/2318), [@iblancasa](https://github.com/iblancasa))
+
 ## v1.49.1 (2023-09-07)
 * fix: protect the kafka-profision setting behind a mutex ([#2308](https://github.com/jaegertracing/jaeger-operator/pull/2308), [@iblancasa](https://github.com/iblancasa))
 
