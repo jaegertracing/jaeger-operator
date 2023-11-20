@@ -15,41 +15,69 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - command:
-        - /jaeger-operator
-        args:
-        - start
-        - --leader-elect
-        image: controller:latest
-        name: jaeger-operator
-        securityContext:
-          allowPrivilegeEscalation: false
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        env:
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.annotations['olm.targetNamespaces']
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: OPERATOR_NAME
-          value: "jaeger-operator"
+        - command:
+            - /jaeger-operator
+          args:
+            - start
+            - --leader-elect
+          image: controller:latest
+          name: jaeger-operator
+          securityContext:
+            allowPrivilegeEscalation: false
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['olm.targetNamespaces']
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "jaeger-operator"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
+            - name: LOG-LEVEL
+              value: DEBUG
+            - name: KAFKA-PROVISIONING-MINIMAL
+              value: "true"
       serviceAccountName: jaeger-operator
       terminationGracePeriodSeconds: 10
