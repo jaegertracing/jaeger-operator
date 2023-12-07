@@ -28,7 +28,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("jaeger-spark-dependencies-image", "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", "The Docker image for the Spark Dependencies Job")
 	cmd.Flags().String("jaeger-es-index-cleaner-image", "jaegertracing/jaeger-es-index-cleaner", "The Docker image for the Jaeger Elasticsearch Index Cleaner")
 	cmd.Flags().String("jaeger-es-rollover-image", "jaegertracing/jaeger-es-rollover", "The Docker image for the Jaeger Elasticsearch Rollover")
-	cmd.Flags().String("openshift-oauth-proxy-image", "quay.io/openshift/origin-oauth-proxy:4.12", "The Docker image location definition for the OpenShift OAuth Proxy")
+	cmd.Flags().String(v1.FlagOpenShiftOauthProxyImage, "quay.io/openshift/origin-oauth-proxy:4.12", "The Docker image location definition for the OpenShift OAuth Proxy")
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-ns", "", "The namespace for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-name", "", "The name for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("platform", v1.FlagPlatformAutoDetect, "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")
@@ -42,6 +42,17 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSlice("tls-cipher-suites", nil, "Comma-separated list of cipher suites for the server. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants). If omitted, the default Go cipher suites will be used")
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
+
+	_ = viper.BindEnv("jaeger-agent-image", "RELATED_IMAGE_JAEGER_AGENT")
+	_ = viper.BindEnv("jaeger-query-image", "RELATED_IMAGE_JAEGER_QUERY")
+	_ = viper.BindEnv("jaeger-collector-image", "RELATED_IMAGE_JAEGER_COLLECTOR")
+	_ = viper.BindEnv("jaeger-ingester-image", "RELATED_IMAGE_JAEGER_INGESTER")
+	_ = viper.BindEnv("jaeger-all-in-one-image", "RELATED_IMAGE_JAEGER_ALL_IN_ONE")
+	_ = viper.BindEnv("jaeger-cassandra-schema-image", "RELATED_IMAGE_CASSANDRA_SCHEMA")
+	_ = viper.BindEnv("jaeger-spark-dependencies-image", "RELATED_IMAGE_SPARK_DEPENDENCIES")
+	_ = viper.BindEnv("jaeger-es-index-cleaner-image", "RELATED_IMAGE_JAEGER_ES_INDEX_CLEANER")
+	_ = viper.BindEnv("jaeger-es-rollover-image", "RELATED_IMAGE_JAEGER_ES_ROLLOVER")
+	_ = viper.BindEnv(v1.FlagOpenShiftOauthProxyImage, "RELATED_IMAGE_OPENSHIFT_OAUTH_PROXY")
 
 	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
 	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")

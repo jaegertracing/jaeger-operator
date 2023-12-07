@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -209,6 +210,25 @@ func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
 
 func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
 	args := jaeger.Spec.Agent.Options.ToArgs()
+	envs := []corev1.EnvVar{
+		{
+			Name: envVarPodName,
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+		{
+			Name: envVarHostIP,
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "status.hostIP",
+				},
+			},
+		},
+	}
+	envs = append(envs, proxy.ReadProxyVarsFromEnv()...)
 
 	// we only add the grpc host if we are adding the reporter type and there's no explicit value yet
 	if len(util.FindItem("--reporter.grpc.host-port=", args)) == 0 {
@@ -275,24 +295,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
 		Args:  args,
-		Env: []corev1.EnvVar{
-			{
-				Name: envVarPodName,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: "metadata.name",
-					},
-				},
-			},
-			{
-				Name: envVarHostIP,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: "status.hostIP",
-					},
-				},
-			},
-		},
+		Env:   envs,
 		Ports: []corev1.ContainerPort{
 			{
 				ContainerPort: zkCompactTrft,
@@ -524,6 +527,9 @@ func GetConfigMapsMatchedEnvFromInDeployment(dep appsv1.Deployment, configMaps [
 	matchedConfigMaps := []corev1.ConfigMap{}
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		for _, envConfigMap := range container.EnvFrom {
+			if envConfigMap.ConfigMapRef == nil {
+				continue
+			}
 			if matchedCM, ok := configMapSearchMap[envConfigMap.ConfigMapRef.Name]; ok {
 				matchedConfigMaps = append(matchedConfigMaps, matchedCM)
 			}

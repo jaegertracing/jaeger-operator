@@ -4,14 +4,13 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
+	"github.com/operator-framework/operator-lib/proxy"
+	"github.com/spf13/viper"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
@@ -35,6 +34,7 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) runtime.Object {
 		{Name: "JAVA_OPTS", Value: jaeger.Spec.Storage.Dependencies.JavaOpts},
 	}
 	envVars = append(envVars, getStorageEnvs(jaeger.Spec.Storage)...)
+	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 
 	envFromSource := util.CreateEnvsFromSecret(jaeger.Spec.Storage.SecretName)
 
@@ -91,10 +91,11 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) runtime.Object {
 						Image: image,
 						Name:  name,
 						// let spark job use its default values
-						Env:          util.RemoveEmptyVars(envVars),
-						EnvFrom:      envFromSource,
-						Resources:    commonSpec.Resources,
-						VolumeMounts: jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
+						Env:             util.RemoveEmptyVars(envVars),
+						EnvFrom:         envFromSource,
+						Resources:       commonSpec.Resources,
+						VolumeMounts:    jaeger.Spec.Storage.Dependencies.JaegerCommonSpec.VolumeMounts,
+						SecurityContext: commonSpec.ContainerSecurityContext,
 					},
 				},
 				ImagePullSecrets:   commonSpec.ImagePullSecrets,

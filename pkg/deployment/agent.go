@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -148,6 +149,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
 						Args:  args,
+						Env:   proxy.ReadProxyVarsFromEnv(),
 						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: zkCompactTrft,

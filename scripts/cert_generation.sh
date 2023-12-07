@@ -20,7 +20,7 @@ function init_cert_files() {
 }
 
 function generate_signing_ca() {
-  if [ ! -f ${WORKING_DIR}/ca.crt ] || [ ! -f ${WORKING_DIR}/ca.key ] || ! openssl x509 -checkend 0 -noout -in ${WORKING_DIR}/ca.crt; then
+  if [ ! -f ${WORKING_DIR}/ca.crt ] || [ ! -f ${WORKING_DIR}/ca.key ] || ! openssl x509 -checkend 1 -noout -in ${WORKING_DIR}/ca.crt; then
     openssl req -x509 \
                 -new \
                 -newkey rsa:4096 \
@@ -197,7 +197,7 @@ function generate_certs() {
     REGENERATE_NEEDED=$?
   fi
 
-  if [ $REGENERATE_NEEDED = 1 ] || [ ! -f ${WORKING_DIR}/${component}.crt ] || ! openssl x509 -checkend 0 -noout -in ${WORKING_DIR}/${component}.crt; then
+  if [ $REGENERATE_NEEDED = 1 ] || [ ! -f ${WORKING_DIR}/${component}.crt ] || ! openssl x509 -checkend 1 -noout -in ${WORKING_DIR}/${component}.crt; then
     generate_cert_config $component $extensions
     generate_request $component
     sign_cert $component

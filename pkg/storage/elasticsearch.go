@@ -53,7 +53,7 @@ type ElasticsearchDeployment struct {
 }
 
 func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) {
-	container.Args = append(container.Args, fmt.Sprintf("--es.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
+	container.Args = append(container.Args, fmt.Sprintf("--es.server-urls=https://%s.%s.svc.cluster.local:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name, ed.Jaeger.Namespace))
 	if util.FindItem("--es.tls=", container.Args) == "" && util.FindItem("--es.tls.enabled=", container.Args) == "" {
 		container.Args = append(container.Args, "--es.tls.enabled=true")
 	}
@@ -75,7 +75,7 @@ func (ed *ElasticsearchDeployment) injectArguments(container *corev1.Container) 
 			calculateReplicaShards(ed.Jaeger.Spec.Storage.Elasticsearch.RedundancyPolicy, int(ed.Jaeger.Spec.Storage.Elasticsearch.NodeCount))))
 	}
 	if strings.EqualFold(util.FindItem("--es-archive.enabled", container.Args), "--es-archive.enabled=true") {
-		container.Args = append(container.Args, fmt.Sprintf("--es-archive.server-urls=https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name))
+		container.Args = append(container.Args, fmt.Sprintf("--es-archive.server-urls=https://%s.%s.svc.cluster.local:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name, ed.Jaeger.Namespace))
 		if util.FindItem("--es-archive.tls=", container.Args) == "" && util.FindItem("--es-archive.tls.enabled=", container.Args) == "" {
 			container.Args = append(container.Args, "--es-archive.tls.enabled=true")
 		}
@@ -134,7 +134,7 @@ func (ed *ElasticsearchDeployment) InjectSecretsConfiguration(p *corev1.PodSpec)
 	// we assume jaeger containers are first
 	if len(p.Containers) > 0 {
 		// the size of arguments array should be always 2
-		p.Containers[0].Args[1] = fmt.Sprintf("https://%s:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name)
+		p.Containers[0].Args[1] = fmt.Sprintf("https://%s.%s.svc.cluster.local:9200", ed.Jaeger.Spec.Storage.Elasticsearch.Name, ed.Jaeger.Namespace)
 		p.Containers[0].Env = append(p.Containers[0].Env,
 			corev1.EnvVar{Name: "ES_TLS_ENABLED", Value: "true"},
 			corev1.EnvVar{Name: "ES_TLS_CA", Value: ed.getCertCaPath()},

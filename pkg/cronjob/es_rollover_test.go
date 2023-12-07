@@ -433,3 +433,54 @@ func TestEsRolloverImagePullSecrets(t *testing.T) {
 
 	assert.Equal(t, pullSecret, cjob.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets[0].Name)
 }
+
+func TestEsRolloverContainerSecurityContext(t *testing.T) {
+	trueVar := true
+	falseVar := false
+	idVar := int64(1234)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar,
+		RunAsUser:                &idVar,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverContainerSecurityContext"})
+	jaeger.Spec.Storage.EsRollover.ContainerSecurityContext = &securityContextVar
+	cjob := lookback(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, securityContextVar, *cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].SecurityContext)
+}
+
+func TestEsRolloverContainerSecurityContextOverride(t *testing.T) {
+	trueVar := true
+	falseVar := false
+	idVar1 := int64(1234)
+	idVar2 := int64(4321)
+	securityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar1,
+		RunAsUser:                &idVar1,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	overrideSecurityContextVar := corev1.SecurityContext{
+		RunAsNonRoot:             &trueVar,
+		RunAsGroup:               &idVar2,
+		RunAsUser:                &idVar2,
+		Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+		Privileged:               &falseVar,
+		AllowPrivilegeEscalation: &falseVar,
+		SeccompProfile:           &corev1.SeccompProfile{Type: "RuntimeDefault"},
+	}
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestEsRolloverContainerSecurityContext"})
+	jaeger.Spec.JaegerCommonSpec.ContainerSecurityContext = &securityContextVar
+	jaeger.Spec.Storage.EsRollover.ContainerSecurityContext = &overrideSecurityContextVar
+	cjob := lookback(jaeger).(*batchv1.CronJob)
+
+	assert.Equal(t, overrideSecurityContextVar, *cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].SecurityContext)
+}

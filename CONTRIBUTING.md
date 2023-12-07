@@ -183,9 +183,8 @@ difference are:
 * You need to log in your Kubernetes cluster before running the E2E tests
 * You need to provide the `USE_KIND_CLUSTER=false` parameter when calling `make`
 
-For instance, to run the `examples` E2E test suite in OpenShift, the command is:
 ```sh
-$ make run-e2e-tests-examples USE_KIND_CLUSTER=false
+$ make run-e2e-tests USE_KIND_CLUSTER=false
 ```
 
 ### Developing new E2E tests

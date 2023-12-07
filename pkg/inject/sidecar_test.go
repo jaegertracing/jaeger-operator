@@ -208,7 +208,7 @@ func TestInjectSidecarWithEnvFromK8sAppName(t *testing.T) {
 			envVarPropagation: "test-service",
 		},
 	}}
-	dep := depEnvFromConfigRef(map[string]string{}, map[string]string{
+	dep := depEnvFrom(map[string]string{}, map[string]string{
 		"app":                    "noapp",
 		"app.kubernetes.io/name": "testapp",
 	}, []corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}}})
@@ -237,7 +237,7 @@ func TestInjectSidecarWithoutEnvFromK8sAppName(t *testing.T) {
 			"PASSWORD": "+S=KDKS",
 		},
 	}}
-	dep := depEnvFromConfigRef(map[string]string{}, map[string]string{
+	dep := depEnvFrom(map[string]string{}, map[string]string{
 		"app":                    "noapp",
 		"app.kubernetes.io/name": "testapp",
 	}, []corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}}})
@@ -823,7 +823,7 @@ func dep(annotations map[string]string, labels map[string]string) *appsv1.Deploy
 	}
 }
 
-func depEnvFromConfigRef(annotations map[string]string, labels map[string]string, envFromConfigRef []corev1.EnvFromSource) *appsv1.Deployment {
+func depEnvFrom(annotations map[string]string, labels map[string]string, envFrom []corev1.EnvFromSource) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
@@ -837,7 +837,7 @@ func depEnvFromConfigRef(annotations map[string]string, labels map[string]string
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
 						Name:    "only_container",
-						EnvFrom: envFromConfigRef,
+						EnvFrom: envFrom,
 					}},
 				},
 			},
@@ -1076,4 +1076,40 @@ func TestGetContainerNameWithAppContainerAndJaegerAgent(t *testing.T) {
 	assert.Greater(t, agentIdx, -1)
 	containerName := getContainerName(deploy.Spec.Template.Spec.Containers, agentIdx)
 	assert.Equal(t, "only_container", containerName)
+}
+
+func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromSecretRef(t *testing.T) {
+	deploy := depEnvFrom(map[string]string{}, map[string]string{},
+		[]corev1.EnvFromSource{{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-secret"}}}})
+	configMaps := []corev1.ConfigMap{}
+
+	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
+
+	assert.Len(t, matchedConfigMaps, 0)
+}
+
+func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigMapRef(t *testing.T) {
+	deploy := depEnvFrom(map[string]string{}, map[string]string{},
+		[]corev1.EnvFromSource{{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}}})
+	configMaps := []corev1.ConfigMap{{ObjectMeta: metav1.ObjectMeta{Name: "test-config"}}}
+
+	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
+
+	assert.Len(t, matchedConfigMaps, 1)
+	assert.Equal(t, matchedConfigMaps[0].Name, "test-config")
+}
+
+func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigAndSecret(t *testing.T) {
+	deploy := depEnvFrom(map[string]string{}, map[string]string{},
+		[]corev1.EnvFromSource{
+			{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-config"}}},
+			{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "test-secret"}}},
+		},
+	)
+	configMaps := []corev1.ConfigMap{{ObjectMeta: metav1.ObjectMeta{Name: "test-config"}}}
+
+	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
+
+	assert.Len(t, matchedConfigMaps, 1)
+	assert.Equal(t, matchedConfigMaps[0].Name, "test-config")
 }

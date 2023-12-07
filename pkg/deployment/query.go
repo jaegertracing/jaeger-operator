@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/operator-framework/operator-lib/proxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,6 +121,21 @@ func (q *Query) Get() *appsv1.Deployment {
 		nodeSelector = q.jaeger.Spec.Query.NodeSelector
 	}
 
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "SPAN_STORAGE_TYPE",
+			Value: string(q.jaeger.Spec.Storage.Type),
+		},
+		{
+			Name:  "METRICS_STORAGE_TYPE",
+			Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
+		},
+		{
+			Name:  "JAEGER_DISABLED",
+			Value: strconv.FormatBool(jaegerDisabled),
+		},
+	}
+	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -152,23 +168,10 @@ func (q *Query) Get() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: q.jaeger.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
-						Name:  "jaeger-query",
-						Args:  options,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "SPAN_STORAGE_TYPE",
-								Value: string(q.jaeger.Spec.Storage.Type),
-							},
-							{
-								Name:  "METRICS_STORAGE_TYPE",
-								Value: string(q.jaeger.Spec.Query.MetricsStorage.Type),
-							},
-							{
-								Name:  "JAEGER_DISABLED",
-								Value: strconv.FormatBool(jaegerDisabled),
-							},
-						},
+						Image:        util.ImageName(q.jaeger.Spec.Query.Image, "jaeger-query-image"),
+						Name:         "jaeger-query",
+						Args:         options,
+						Env:          envVars,
 						VolumeMounts: commonSpec.VolumeMounts,
 						EnvFrom:      envFromSource,
 						Ports: []corev1.ContainerPort{
