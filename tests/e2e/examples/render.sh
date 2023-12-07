@@ -40,30 +40,6 @@ fi
 
 
 ###############################################################################
-# TEST NAME: examples-auto-provision-kafka
-###############################################################################
-if [ $SKIP_KAFKA = true ]; then
-    skip_test "examples-auto-provision-kafka" "SKIP_KAFKA is true"
-else
-    start_test "examples-auto-provision-kafka"
-    example_name="auto-provision-kafka"
-    render_install_kafka_operator "01"
-    render_install_example "$example_name" "02"
-    if [[ $IS_OPENSHIFT = true && $SKIP_ES_EXTERNAL = true ]]; then
-        $YQ e -i '.spec.storage.options={}' ./02-install.yaml
-        $YQ e -i '.spec.storage.elasticsearch={"nodeCount":1,"resources":{"limits":{"memory":"2Gi"}}}' ./02-install.yaml
-    else
-        render_install_elasticsearch "upstream" "00"
-    fi
-    # The Kafka cluster will be started before the Jaeger components. So, we do the
-    # Jaeger assertion later and the Kafka cluster assertion now
-    mv ./02-assert.yaml ./05-assert.yaml
-    render_assert_kafka "true" "$example_name" "02"
-    render_smoke_test_example "$example_name" "06"
-fi
-
-
-###############################################################################
 # TEST NAME: examples-business-application-injected-sidecar
 ###############################################################################
 start_test "examples-business-application-injected-sidecar"

@@ -1,28 +1,9 @@
-apiVersion: autoscaling/v2
+apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
   labels:
     app: jaeger
     app.kubernetes.io/component: hpa-collector
-    app.kubernetes.io/instance: auto-provisioned
-    app.kubernetes.io/managed-by: jaeger-operator
-    app.kubernetes.io/name: auto-provisioned-collector
-    app.kubernetes.io/part-of: jaeger
-  name: auto-provisioned-collector
-spec:
-  maxReplicas: 100
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: auto-provisioned-collector
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  labels:
-    app: jaeger
-    app.kubernetes.io/component: hpa-ingester
     app.kubernetes.io/instance: auto-provisioned
     app.kubernetes.io/managed-by: jaeger-operator
     app.kubernetes.io/name: auto-provisioned-ingester
@@ -35,3 +16,24 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: auto-provisioned-ingester
+  targetCPUUtilizationPercentage: 90
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    app: jaeger
+    app.kubernetes.io/component: hpa-collector
+    app.kubernetes.io/instance: auto-provisioned
+    app.kubernetes.io/managed-by: jaeger-operator
+    app.kubernetes.io/name: auto-provisioned-collector
+    app.kubernetes.io/part-of: jaeger
+  name: auto-provisioned-collector
+spec:
+  maxReplicas: 2
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auto-provisioned-collector
+  targetCPUUtilizationPercentage: 90

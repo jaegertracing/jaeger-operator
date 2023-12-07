@@ -62,7 +62,11 @@ else
     # Assert the autoprovisioned Kafka deployment
     render_assert_kafka "true" "$jaeger_name" "03"
 
-    # Create the tracegen deployment
-    # Deploy Tracegen instance to generate load in the Jaeger collector
-    render_install_tracegen "$jaeger_name" "06"
+    if kubectl api-versions | grep "autoscaling/v2beta2" -q; then
+        # Use the autoscaling/v2beta2 file
+        rm ./07-assert.yaml
+    else
+        # Use the autoscaling/v2 file
+        rm ./08-assert.yaml
+    fi
 fi

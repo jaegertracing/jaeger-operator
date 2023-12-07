@@ -1,4 +1,4 @@
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   labels:
@@ -16,4 +16,3 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: simple-prod-collector
-  targetCPUUtilizationPercentage: 90

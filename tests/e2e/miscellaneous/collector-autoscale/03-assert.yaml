@@ -1,4 +1,4 @@
-apiVersion: autoscaling/v2
+apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
   labels:
@@ -11,21 +11,9 @@ metadata:
   name: simple-prod-collector
 spec:
   maxReplicas: 2
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 90
-        type: Utilization
-    type: Resource
-  - resource:
-      name: memory
-      target:
-        averageUtilization: 90
-        type: Utilization
-    type: Resource
   minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: simple-prod-collector
+  targetCPUUtilizationPercentage: 90

@@ -52,10 +52,10 @@ $YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
 if kubectl api-versions | grep "autoscaling/v2beta2" -q; then
     # Use the autoscaling/v2beta2 file
-    rm ./03-assert.yaml
+    rm ./02-assert.yaml
 else
     # Use the autoscaling/v2 file
-    rm ./04-assert.yaml
+    rm ./03-assert.yaml
 fi
 
 ###############################################################################
