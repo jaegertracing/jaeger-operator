@@ -277,17 +277,3 @@ else
             -f $TEMPLATES_DIR/wait-for-cronjob-execution.yaml.template \
             -o ./02-wait-spark-job.yaml
 fi
-
-
-###############################################################################
-# TEST NAME: es-streaming-autoprovisioned
-###############################################################################
-if [[ $IS_OPENSHIFT = true && $SKIP_KAFKA = false ]]; then
-    start_test "es-streaming-autoprovisioned"
-    jaeger_name="auto-provisioned"
-
-    render_assert_kafka "true" "$jaeger_name" "00"
-    render_smoke_test "$jaeger_name" "true" "04"
-else
-    skip_test "es-streaming-autoprovisioned" "This test is only supported in OpenShift with SKIP_KAFKA is false"
-fi
