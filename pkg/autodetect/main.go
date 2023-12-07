@@ -156,6 +156,9 @@ func (b *Background) detectAutoscalingVersion(ctx context.Context) {
 				break
 			}
 		}
+		if detectedVersion != "" {
+			break
+		}
 	}
 
 	if detectedVersion == "" {
