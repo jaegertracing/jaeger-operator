@@ -1113,3 +1113,60 @@ func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigAndSecret(t *te
 	assert.Len(t, matchedConfigMaps, 1)
 	assert.Equal(t, matchedConfigMaps[0].Name, "test-config")
 }
+
+func TestGetJaeger(t *testing.T) {
+	jaegers := v1.JaegerList{
+		Items: []v1.Jaeger{
+			*v1.NewJaeger(types.NamespacedName{
+				Namespace: "project1",
+				Name:      "jaeger",
+			}),
+			*v1.NewJaeger(types.NamespacedName{
+				Namespace: "project1",
+				Name:      "jaeger2",
+			}),
+			*v1.NewJaeger(types.NamespacedName{
+				Namespace: "project2",
+				Name:      "jaeger",
+			}),
+		},
+	}
+
+	tests := []struct {
+		testName     string
+		deploymentNs string
+		jaegerName   string
+		jaeger       *v1.Jaeger
+	}{
+		{
+			testName:     "deployment matches jaeger namespace",
+			deploymentNs: "project1",
+			jaegerName:   "jaeger",
+			jaeger: v1.NewJaeger(types.NamespacedName{
+				Namespace: "project1",
+				Name:      "jaeger",
+			}),
+		},
+		{
+			testName:     "deployment in other namespace",
+			deploymentNs: "app",
+			jaegerName:   "jaeger",
+			jaeger: v1.NewJaeger(types.NamespacedName{
+				Namespace: "project1",
+				Name:      "jaeger",
+			}),
+		},
+		{
+			testName:     "jaeger name does not match",
+			deploymentNs: "app",
+			jaegerName:   "does-not-exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			selectedJaeger := getJaeger(tt.deploymentNs, tt.jaegerName, &jaegers)
+			assert.Equal(t, tt.jaeger, selectedJaeger)
+		})
+	}
+}
