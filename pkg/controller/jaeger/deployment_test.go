@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -47,7 +48,7 @@ func TestDeploymentCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &appsv1.Deployment{}
@@ -57,7 +58,7 @@ func TestDeploymentCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDeploymentUpdate(t *testing.T) {
@@ -94,7 +95,7 @@ func TestDeploymentUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &appsv1.Deployment{}
@@ -104,7 +105,7 @@ func TestDeploymentUpdate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDeploymentDelete(t *testing.T) {
@@ -132,7 +133,7 @@ func TestDeploymentDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &appsv1.Deployment{}
@@ -142,7 +143,7 @@ func TestDeploymentDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }
 
 func TestDeploymentDeleteAfterCreate(t *testing.T) {
@@ -174,7 +175,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 
 	// sanity check that the deployment to be removed is indeed there in the first place...
 	persistedDelete := &appsv1.Deployment{}
-	assert.NoError(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
+	require.NoError(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
 	assert.Equal(t, depToDelete.Name, persistedDelete.Name)
 
 	// test
@@ -184,7 +185,7 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 		// will block until it finishes, which should happen after the deployments
 		// have achieved stability and everything has been created/updated/deleted
 		_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		wg.Done()
 	}()
 
@@ -192,20 +193,20 @@ func TestDeploymentDeleteAfterCreate(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	persisted := &appsv1.Deployment{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	persisted.Status.ReadyReplicas = 2
-	assert.NoError(t, cl.Status().Update(context.Background(), persisted))
+	require.NoError(t, cl.Status().Update(context.Background(), persisted))
 
 	wg.Wait() // will block until the reconcile logic finishes
 
 	// verify that the deployment to be created was created
 	persisted = &appsv1.Deployment{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, nsn.Name, persisted.Name)
 
 	// check that the deployment to be deleted was indeed deleted
 	persistedDelete = &appsv1.Deployment{}
-	assert.Error(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
+	require.Error(t, cl.Get(context.Background(), types.NamespacedName{Name: depToDelete.Name, Namespace: depToDelete.Namespace}, persistedDelete))
 	assert.Empty(t, persistedDelete.Name)
 }
 
@@ -250,18 +251,18 @@ func TestDeploymentCreateExistingNameInAnotherNamespace(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &appsv1.Deployment{}
 	err = cl.Get(context.Background(), nsn, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
 	persistedExisting := &appsv1.Deployment{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

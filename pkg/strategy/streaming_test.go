@@ -50,7 +50,7 @@ func TestStreamingNoKafkaProvisioningWhenConsumerBrokersSet(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
-	assert.Len(t, c.Kafkas(), 0)
+	assert.Empty(t, c.Kafkas())
 }
 
 func TestStreamingNoKafkaProvisioningWhenProducerBrokersSet(t *testing.T) {
@@ -62,7 +62,7 @@ func TestStreamingNoKafkaProvisioningWhenProducerBrokersSet(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), jaeger)
 
 	// one Kafka, one KafkaUser
-	assert.Len(t, c.Kafkas(), 0)
+	assert.Empty(t, c.Kafkas())
 }
 
 func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
@@ -233,7 +233,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Equal(t, 2, len(dep.Spec.Template.Spec.Containers))
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 		}
 	}
@@ -246,7 +246,7 @@ func TestAgentSidecarNotInjectedTracingEnabledFalseForStreaming(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 		}
 	}
 }
@@ -374,7 +374,7 @@ func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
 
 	c := newStreamingStrategy(context.Background(), jaeger)
 	// there should be index-cleaner, rollover, lookback
-	assert.Equal(t, 3, len(c.cronJobs))
+	assert.Len(t, c.cronJobs, 3)
 	assertEsInjectSecretsStreaming(t, c.cronJobs[0].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 	assertEsInjectSecretsStreaming(t, c.cronJobs[1].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 	assertEsInjectSecretsStreaming(t, c.cronJobs[2].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
@@ -382,7 +382,7 @@ func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
 
 func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
 	// first two volumes are from the common spec
-	assert.Equal(t, 3, len(p.Volumes))
+	assert.Len(t, p.Volumes, 3)
 	assert.Equal(t, "certs", p.Volumes[2].Name)
 	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[2].Name)
 	envs := map[string]corev1.EnvVar{}

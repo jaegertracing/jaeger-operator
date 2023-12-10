@@ -30,8 +30,8 @@ func TestQueryServiceNameAndPorts(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
-	assert.Len(t, svc.Spec.ClusterIP, 0)                        // make sure we get a cluster IP
-	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeClusterIP) // make sure we get a ClusterIP service
+	assert.Empty(t, svc.Spec.ClusterIP)                         // make sure we get a cluster IP
+	assert.Equal(t, corev1.ServiceTypeClusterIP, svc.Spec.Type) // make sure we get a ClusterIP service
 }
 
 func TestQueryDottedServiceName(t *testing.T) {
@@ -81,7 +81,7 @@ func TestQueryServiceNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
-	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort) // make sure we get a NodePort service
+	assert.Equal(t, corev1.ServiceTypeNodePort, svc.Spec.Type) // make sure we get a NodePort service
 }
 
 func TestQueryServiceLoadBalancerWithIngress(t *testing.T) {
@@ -103,7 +103,7 @@ func TestQueryServiceLoadBalancerWithIngress(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
-	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeLoadBalancer) // make sure we get a LoadBalancer service
+	assert.Equal(t, corev1.ServiceTypeLoadBalancer, svc.Spec.Type) // make sure we get a LoadBalancer service
 }
 
 func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
@@ -127,7 +127,7 @@ func TestQueryServiceSpecifiedNodePortWithIngress(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
-	assert.Equal(t, svc.Spec.Type, corev1.ServiceTypeNodePort)
+	assert.Equal(t, corev1.ServiceTypeNodePort, svc.Spec.Type)
 }
 
 func TestQueryServiceSpecAnnotations(t *testing.T) {

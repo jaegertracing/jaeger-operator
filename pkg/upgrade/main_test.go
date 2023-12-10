@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 )
@@ -34,7 +35,7 @@ func TestVersions(t *testing.T) {
 	}
 
 	semVersions, err := versions(maptoTest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, semVersions, sortedSemVersions)
 }
 
@@ -48,5 +49,5 @@ func TestVersionsError(t *testing.T) {
 	}
 
 	_, err := versions(maptoTest)
-	assert.Error(t, err)
+	require.Error(t, err)
 }

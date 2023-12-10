@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -29,11 +30,11 @@ func TestUpgradeDeprecatedOptionsv1_15_0(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, latestVersion, persisted.Status.Version)
 
 	opts := persisted.Spec.Collector.Options.Map()
@@ -59,7 +60,7 @@ func TestRemoveDeprecatedFlagWithNoReplacementv1_15_0(t *testing.T) {
 	updated, err := upgrade1_15_0(context.Background(), nil, *existing)
 
 	// verify
-	assert.NoError(t, err)
-	assert.Len(t, updated.Spec.Collector.Options.Map(), 0)
+	require.NoError(t, err)
+	assert.Empty(t, updated.Spec.Collector.Options.Map())
 	assert.NotContains(t, updated.Spec.Collector.Options.Map(), "cassandra.enable-dependencies-v2")
 }

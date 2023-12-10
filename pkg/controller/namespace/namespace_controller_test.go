@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -200,7 +201,7 @@ func TestReconcilieDeployment(t *testing.T) {
 			}
 
 			persisted := &appsv1.DeploymentList{}
-			assert.Nil(t, cl.List(context.Background(), persisted))
+			require.NoError(t, cl.List(context.Background(), persisted))
 
 			for _, p := range persisted.Items {
 				const notFound = -2
@@ -225,7 +226,7 @@ func TestReconcilieDeployment(t *testing.T) {
 				} else {
 					assert.True(t, ok)
 					rev, err := strconv.Atoi(revStr)
-					assert.Nil(t, err)
+					require.NoError(t, err)
 					assert.Equal(t, expectedRevision, rev)
 				}
 			}

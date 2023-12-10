@@ -184,7 +184,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction(t *testing.T) 
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
 			assert.Equal(t, "TestAgentSidecarIsInjectedIntoQueryForStreamingForProduction", dep.Annotations["sidecar.jaegertracing.io/inject"])
-			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 			assert.Equal(t, "jaeger-query", dep.Spec.Template.Spec.Containers[0].Name)
 		}
 	}
@@ -197,7 +197,7 @@ func TestAgentSidecarNotInjectedTracingEnabledFalseForProduction(t *testing.T) {
 	c := newProductionStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 		}
 	}
 }
@@ -212,14 +212,14 @@ func TestElasticsearchInject(t *testing.T) {
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.use-aliases": true})
 	c := newProductionStrategy(context.Background(), j)
 	// there should be index-cleaner, rollover, lookback
-	assert.Equal(t, 3, len(c.cronJobs))
+	assert.Len(t, c.cronJobs, 3)
 	assertEsInjectSecrets(t, c.cronJobs[0].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 	assertEsInjectSecrets(t, c.cronJobs[1].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 	assertEsInjectSecrets(t, c.cronJobs[2].(*batchv1.CronJob).Spec.JobTemplate.Spec.Template.Spec)
 }
 
 func assertEsInjectSecrets(t *testing.T, p corev1.PodSpec) {
-	assert.Equal(t, 1, len(p.Volumes))
+	assert.Len(t, p.Volumes, 1)
 	assert.Equal(t, "certs", p.Volumes[0].Name)
 	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[0].Name)
 	envs := map[string]corev1.EnvVar{}

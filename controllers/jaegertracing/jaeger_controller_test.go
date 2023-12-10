@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 	k8sconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -52,5 +51,5 @@ func TestRegisterWithManager(t *testing.T) {
 	err = reconciler.SetupWithManager(mgr)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

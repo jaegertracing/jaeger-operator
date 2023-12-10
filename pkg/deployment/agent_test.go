@@ -269,12 +269,12 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 			assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, len(tt.expectedArgs))
 
 			for _, arg := range tt.expectedArgs {
-				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
 			}
 
 			if tt.nonExpectedArgs != nil {
 				for _, arg := range tt.nonExpectedArgs {
-					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+					assert.Empty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
 				}
 			}
 

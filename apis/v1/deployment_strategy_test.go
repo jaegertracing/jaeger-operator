@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -28,7 +29,7 @@ func TestUnmarshalJSON(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ds := DeploymentStrategy("")
 			err := json.Unmarshal([]byte(tc.json), &ds)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, ds)
 		})
 	}
@@ -48,7 +49,7 @@ func TestMarshalJSON(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			data, err := json.Marshal(tc.strategy)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, string(data))
 		})
 	}

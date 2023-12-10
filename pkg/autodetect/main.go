@@ -183,7 +183,7 @@ func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]boo
 			if err == nil {
 				apiLists = append(apiLists, groupAPIList)
 			} else {
-				errors = fmt.Errorf("%v; Error getting resources for server group %s: %v", errors, sg.Name, err)
+				errors = fmt.Errorf("%w; Error getting resources for server group %s: %w", errors, sg.Name, err)
 			}
 		}
 	}

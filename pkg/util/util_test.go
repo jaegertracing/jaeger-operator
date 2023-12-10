@@ -48,7 +48,7 @@ func TestRemoveDuplicatedVolumeMounts(t *testing.T) {
 
 	assert.Len(t, RemoveDuplicatedVolumeMounts(volumeMounts), 2)
 	assert.Equal(t, "data1", volumeMounts[0].Name)
-	assert.Equal(t, false, volumeMounts[0].ReadOnly)
+	assert.False(t, volumeMounts[0].ReadOnly)
 	assert.Equal(t, "data2", volumeMounts[1].Name)
 }
 
@@ -187,7 +187,7 @@ func TestMergeMountVolumes(t *testing.T) {
 	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
 
 	assert.Equal(t, "data1", merged.VolumeMounts[0].Name)
-	assert.Equal(t, false, merged.VolumeMounts[0].ReadOnly)
+	assert.False(t, merged.VolumeMounts[0].ReadOnly)
 	assert.Equal(t, "data2", merged.VolumeMounts[1].Name)
 }
 
@@ -392,7 +392,7 @@ func TestFindItem(t *testing.T) {
 	args := opts.ToArgs()
 
 	assert.Equal(t, "--reporter.type=thrift", FindItem("--reporter.type=", args))
-	assert.Len(t, FindItem("--c-option", args), 0)
+	assert.Empty(t, FindItem("--c-option", args))
 }
 
 func TestGetPortDefault(t *testing.T) {
@@ -679,7 +679,7 @@ func TestFindEnvVars(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			result := FindEnvVar(envVars, tc.envName)
-			assert.Equal(t, result, tc.expected)
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
@@ -710,7 +710,7 @@ func TestIsOTLPEnable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			enable := IsOTLPEnable(AllArgs(tc.options))
-			assert.Equal(t, enable, tc.expected)
+			assert.Equal(t, tc.expected, enable)
 		})
 	}
 }
@@ -741,7 +741,7 @@ func TestIsOTLPExplcitSet(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			enable := IsOTLPExplcitSet(AllArgs(tc.options))
-			assert.Equal(t, enable, tc.expected)
+			assert.Equal(t, tc.expected, enable)
 		})
 	}
 }

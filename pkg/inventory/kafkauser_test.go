@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -54,7 +55,7 @@ func TestKafkaUserInventory(t *testing.T) {
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, "to-update", inv.Update[0].Name)
 	contentMap, err := inv.Update[0].Spec.GetMap()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "changed", contentMap["key"])
 
 	assert.Len(t, inv.Delete, 1)
@@ -78,6 +79,6 @@ func TestKafkaUserInventoryWithSameNameInstances(t *testing.T) {
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, inv.Create, create[0])
 	assert.Contains(t, inv.Create, create[1])
-	assert.Len(t, inv.Update, 0)
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Update)
+	assert.Empty(t, inv.Delete)
 }

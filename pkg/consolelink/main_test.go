@@ -51,7 +51,7 @@ func TestUpdateHref(t *testing.T) {
 	}
 
 	link := Get(jaeger, &route)
-	assert.Equal(t, link.Spec.Href, "")
+	assert.Equal(t, "", link.Spec.Href)
 	route.Spec.Host = "namespace.somehostname"
 	newLinks := UpdateHref([]corev1.Route{route}, []consolev1.ConsoleLink{*link})
 	assert.Equal(t, fmt.Sprintf("https://%s", route.Spec.Host), newLinks[0].Spec.Href)

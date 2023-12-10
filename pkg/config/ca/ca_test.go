@@ -108,8 +108,8 @@ func TestUpdateWithoutCAs(t *testing.T) {
 	AddServiceCA(jaeger, &commonSpec)
 
 	// verify
-	assert.Len(t, commonSpec.Volumes, 0)
-	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Empty(t, commonSpec.Volumes)
+	assert.Empty(t, commonSpec.VolumeMounts)
 }
 
 func TestUpdateWithTrustedCA(t *testing.T) {
@@ -152,6 +152,6 @@ func TestUpdateWithExistingTrustedCA(t *testing.T) {
 	AddServiceCA(jaeger, &commonSpec)
 
 	// verify
-	assert.Len(t, commonSpec.Volumes, 0)
-	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Empty(t, commonSpec.Volumes)
+	assert.Empty(t, commonSpec.VolumeMounts)
 }

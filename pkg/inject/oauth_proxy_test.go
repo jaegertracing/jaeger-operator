@@ -46,7 +46,7 @@ func TestOAuthProxyTLSSecretVolumeIsAdded(t *testing.T) {
 func TestOAuthProxyTLSSecretVolumeIsNotAddedByDefault(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
+	assert.Empty(t, dep.Spec.Template.Spec.Volumes)
 }
 
 func TestOAuthProxyConsistentServiceAccountName(t *testing.T) {

@@ -186,7 +186,7 @@ func TestSyncOnJaegerChanges(t *testing.T) {
 
 	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
 	assert.Equal(t, 4, cl.counter)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	cl.counter = 0
 
 	cl.updateErr = errUpdate
@@ -219,13 +219,13 @@ func TestNewJaegerInstance(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &v1.Jaeger{}
 	err = cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.Equal(t, persisted.Name, nsn.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// these are filled with default values
 	assert.Equal(t, v1.DeploymentStrategyAllInOne, persisted.Spec.Strategy)
@@ -259,7 +259,7 @@ func TestDeletedInstance(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &v1.Jaeger{}
@@ -287,7 +287,7 @@ func TestSetOwnerOnNewInstance(t *testing.T) {
 	_, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	persisted := &v1.Jaeger{}
 	cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotNil(t, persisted.Labels)
@@ -315,7 +315,7 @@ func TestSkipOnNonOwnedCR(t *testing.T) {
 	_, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	persisted := &v1.Jaeger{}
 	cl.Get(context.Background(), req.NamespacedName, persisted)
 	assert.NotNil(t, persisted.Labels)
@@ -347,10 +347,10 @@ func TestGetResourceFromNonCachedClient(t *testing.T) {
 	_, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	persisted := &v1.Jaeger{}
 	err = client.Get(context.Background(), req.NamespacedName, persisted)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }
 
@@ -362,12 +362,12 @@ func TestGetSecretsForNamespace(t *testing.T) {
 
 	secrets := []corev1.Secret{secretOne, secretTwo}
 	filteredSecrets := r.getSecretsForNamespace(secrets, "foo")
-	assert.Equal(t, 2, len(filteredSecrets))
+	assert.Len(t, filteredSecrets, 2)
 
 	secretThree := createSecret("bar", "secretThree")
 	secrets = append(secrets, secretThree)
 	filteredSecrets = r.getSecretsForNamespace(secrets, "bar")
-	assert.Equal(t, 1, len(filteredSecrets))
+	assert.Len(t, filteredSecrets, 1)
 	assert.Contains(t, filteredSecrets, secretThree)
 }
 
@@ -388,7 +388,7 @@ func TestElasticsearchProvisioning(t *testing.T) {
 	secrets := &corev1.SecretList{}
 	err = cl.List(context.Background(), secrets, client.InNamespace("jaeger"))
 	require.NoError(t, err)
-	assert.Equal(t, 4, len(secrets.Items))
+	assert.Len(t, secrets.Items, 4)
 	assert.NotNil(t, getSecret("prod-jaeger-elasticsearch", *secrets))
 	assert.NotNil(t, getSecret("prod-master-certs", *secrets))
 	assert.NotNil(t, getSecret("prod-curator", *secrets))

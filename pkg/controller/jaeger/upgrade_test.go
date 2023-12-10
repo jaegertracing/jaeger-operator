@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
@@ -28,7 +29,7 @@ func TestDirectNextMinor(t *testing.T) {
 	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// we cannot make any other assumptions here, but we know that 1.12.0 is an older
 	// version, so, at least the status field should have been updated
@@ -44,7 +45,7 @@ func TestSetVersionOnNewInstance(t *testing.T) {
 	j, err := r.applyUpgrades(context.Background(), j)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// we cannot make any other assumptions here, but we know that 1.12.0 is an older
 	// version, so, at least the status field should have been updated

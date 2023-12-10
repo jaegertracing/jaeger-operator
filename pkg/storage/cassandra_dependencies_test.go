@@ -90,7 +90,7 @@ func TestCassandraCreateSchemaDisabled(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraCreateSchemaDisabled"})
 	jaeger.Spec.Storage.CassandraCreateSchema.Enabled = &falseVar
 
-	assert.Len(t, cassandraDeps(jaeger), 0)
+	assert.Empty(t, cassandraDeps(jaeger))
 }
 
 func TestCassandraCreateSchemaEnabled(t *testing.T) {
@@ -147,7 +147,7 @@ func TestCassandraCreateSchemaSecurityContext(t *testing.T) {
 	b := cassandraDeps(jaeger)
 
 	assert.Len(t, b, 1)
-	assert.Equal(t, b[0].Spec.Template.Spec.SecurityContext, expectedSecurityContext)
+	assert.Equal(t, expectedSecurityContext, b[0].Spec.Template.Spec.SecurityContext)
 }
 
 func TestCassandraCreateSchemaSecret(t *testing.T) {

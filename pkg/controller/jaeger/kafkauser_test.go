@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -61,7 +62,7 @@ func TestKafkaUserCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &v1beta2.KafkaUser{}
@@ -71,7 +72,7 @@ func TestKafkaUserCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.GetName())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestKafkaUserUpdate(t *testing.T) {
@@ -133,7 +134,7 @@ func TestKafkaUserUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &v1beta2.KafkaUser{}
@@ -142,9 +143,9 @@ func TestKafkaUserUpdate(t *testing.T) {
 		Namespace: orig.GetNamespace(),
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
 }
 
@@ -180,7 +181,7 @@ func TestKafkaUserDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &v1beta2.KafkaUser{}
@@ -190,7 +191,7 @@ func TestKafkaUserDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.GetName())
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }
 
 func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
@@ -257,18 +258,18 @@ func TestKafkaUserCreateExistingNameInAnotherNamespace(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &v1beta2.KafkaUser{}
 	err = cl.Get(context.Background(), nsn, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.GetName())
 	assert.Equal(t, nsn.Namespace, persisted.GetNamespace())
 
 	persistedExisting := &v1beta2.KafkaUser{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.GetName())
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.GetNamespace())
 }
