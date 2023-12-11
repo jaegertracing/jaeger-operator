@@ -37,6 +37,11 @@ func ForDeployments(existing []appsv1.Deployment, desired []appsv1.Deployment) D
 			// we can't blindly DeepCopyInto, so, we select what we bring from the new to the old object
 			tp.Spec = v.Spec
 			tp.Spec = inject.PropagateOAuthCookieSecret(t.Spec, v.Spec)
+
+			// Deployment.Spec.Selector is an immutable field: we can't update
+			// this field with a new value, we MUST keep the original field value
+			tp.Spec.Selector = t.Spec.Selector
+
 			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
 
 			for k, v := range v.ObjectMeta.Annotations {
