@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -100,7 +99,7 @@ func (ed *ElasticsearchDeployment) ExtractSecrets() []corev1.Secret {
 func (ed *ElasticsearchDeployment) CreateCerts() error {
 	err := extractSecretsToFile(ed.Jaeger, ed.Secrets, masterSecret, esSecret, jaegerSecret, curatorSecret)
 	if err != nil {
-		return errors.Wrap(err, "failed to extract certificates from secrets to file")
+		return fmt.Errorf("failed to extract certificates from secrets to file: %w", err)
 	}
 	return createESCerts(ed.CertScript, ed.Jaeger)
 }
@@ -119,7 +118,7 @@ func extractSecretsToFile(jaeger *v1.Jaeger, secrets []corev1.Secret, s ...secre
 	for _, sec := range s {
 		if secret, ok := secretMap[sec.instanceName(jaeger)]; ok {
 			if err := extractSecretToFile(getWorkingDir(jaeger), secret.Data, sec); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("failed to extract secret %s", secret.Name))
+				return fmt.Errorf("failed to extract secret %s: %w", secret.Name, err)
 			}
 		}
 	}
@@ -154,7 +153,7 @@ func createESCerts(script string, jaeger *v1.Jaeger) error {
 			"script", script,
 			"out", string(out),
 		)
-		return fmt.Errorf("error running script %s: %v", script, err)
+		return fmt.Errorf("error running script %s: %w", script, err)
 	}
 	return nil
 }
