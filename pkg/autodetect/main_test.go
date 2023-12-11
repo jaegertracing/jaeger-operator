@@ -501,20 +501,20 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 	b = WithClients(cl, dcl, cl)
 	dcl.ServerGroupsFunc = func() (apiGroupList *metav1.APIGroupList, err error) {
 		return &metav1.APIGroupList{
-				Groups: []metav1.APIGroup{
-					{
-					Name:     v1.FlagAutoscalingVersionV2,
+			Groups: []metav1.APIGroup{
+				{
+					Name: v1.FlagAutoscalingVersionV2,
 					Versions: []metav1.GroupVersionForDiscovery{
 						{Version: v1.FlagAutoscalingVersionV2},
-						},
 					},
-					{
-						Name:     v1.FlagAutoscalingVersionV2Beta2,
-						Versions: []metav1.GroupVersionForDiscovery{
-							{Version: v1.FlagAutoscalingVersionV2Beta2},
-							},
-						},
-		},
+				},
+				{
+					Name: v1.FlagAutoscalingVersionV2Beta2,
+					Versions: []metav1.GroupVersionForDiscovery{
+						{Version: v1.FlagAutoscalingVersionV2Beta2},
+					},
+				},
+			},
 		}, nil
 	}
 
@@ -522,7 +522,7 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 		if requestedApiVersion == v1.FlagAutoscalingVersionV2 {
 			apiResourceList := &metav1.APIResourceList{GroupVersion: v1.FlagAutoscalingVersionV2, APIResources: []metav1.APIResource{{Name: "horizontalpodautoscalers"}}}
 			return apiResourceList, nil
-		} else if (requestedApiVersion == v1.FlagAutoscalingVersionV2Beta2) {
+		} else if requestedApiVersion == v1.FlagAutoscalingVersionV2Beta2 {
 			apiResourceList := &metav1.APIResourceList{GroupVersion: v1.FlagAutoscalingVersionV2Beta2, APIResources: []metav1.APIResource{{Name: "horizontalpodautoscalers"}}}
 			return apiResourceList, nil
 		}
@@ -534,7 +534,7 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 
 	// verify
 	assert.Equal(t, v1.FlagAutoscalingVersionV2, viper.GetString(v1.FlagAutoscalingVersion))
-	
+
 }
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
