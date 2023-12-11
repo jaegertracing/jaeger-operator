@@ -23,8 +23,7 @@ jobs:
 
     - name: "install kustomize"
       run: ./hack/install/install-kustomize.sh
-
-    - uses: docker/setup-qemu-action@v2.2.0
+    - uses: docker/setup-qemu-action@v3.0.0
     - uses: docker/setup-buildx-action@v3.0.0
 
     - name: "generate release resources"
