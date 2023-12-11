@@ -51,7 +51,7 @@ CERTMANAGER_VERSION ?= 1.6.1
 CMCTL ?= $(LOCALBIN)/cmctl
 # Operator SDK
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
-OPERATOR_SDK_VERSION ?= 1.27.0
+OPERATOR_SDK_VERSION ?= 1.32.0
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
  # Is Jaeger Operator installed via OLM?
