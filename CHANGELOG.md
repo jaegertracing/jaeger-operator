@@ -1,6 +1,9 @@
 Changes by Version
 ==================
 
+## v1.52.0 (2023-12-07)
+* Add missing container security context settings and tests ([#2354](https://github.com/jaegertracing/jaeger-operator/pull/2354), [@tingeltangelthomas](https://github.com/tingeltangelthomas))
+
 ## v1.51.0 (2023-11-17)
 * Support configuring images via RELATED_IMAGE_ environment variables ([#2355](https://github.com/jaegertracing/jaeger-operator/pull/2355), [@andreasgerstmayr](https://github.com/andreasgerstmayr))
 * Regenerate ES certificated when is close to 1 day for expire ([#2356](https://github.com/jaegertracing/jaeger-operator/pull/2356), [@rubenvp8510](https://github.com/rubenvp8510))
