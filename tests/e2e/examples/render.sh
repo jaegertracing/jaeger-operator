@@ -3,23 +3,15 @@
 source $(dirname "$0")/../render-utils.sh
 
 ###############################################################################
-# TEST NAME: examples-agent-as-daemonset
-###############################################################################
-start_test "examples-agent-as-daemonset"
-example_name="agent-as-daemonset"
-
-prepare_daemonset "00"
-render_install_example "$example_name" "01"
-render_smoke_test_example "$example_name" "02"
-
-
-###############################################################################
 # TEST NAME: examples-agent-with-priority-class
 ###############################################################################
 start_test "examples-agent-with-priority-class"
 example_name="agent-with-priority-class"
 prepare_daemonset "00"
-render_install_example "$example_name" "01"
+if [ $IS_OPENSHIFT != true ]; then
+    rm ./01-add-policy.yaml # This is just for OpenShift
+fi
+render_install_example "$example_name" "02"
 render_smoke_test_example "$example_name" "02"
 
 
@@ -152,23 +144,22 @@ render_install_cassandra "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
 
+###############################################################################
+# TEST NAME: examples-agent-as-daemonset
+###############################################################################
+start_test "examples-agent-as-daemonset"
+if [ $IS_OPENSHIFT = true ]; then
+    prepare_daemonset "00"
+    $GOMPLATE -f $EXAMPLES_DIR/openshift/agent-as-daemonset.yaml -o 02-install.yaml
+else
+    rm ./01-add-policy.yaml # This is just for OpenShift
+    render_install_example "agent-as-daemonset" "02"
+fi
+
 
 ###############################################################################
 # OpenShift examples ##########################################################
 ###############################################################################
-if [ $IS_OPENSHIFT = true ]; then
-    start_test "examples-openshift-agent-as-daemonset"
-    prepare_daemonset "00"
-    $GOMPLATE -f $EXAMPLES_DIR/openshift/agent-as-daemonset.yaml -o 02-install.yaml
-    JAEGER_NAME="agent-as-daemonset" $GOMPLATE -f $TEMPLATES_DIR/allinone-jaeger-assert.yaml.template -o ./02-assert.yaml
-    render_install_vertx "03"
-    $YQ e -i '.spec.template.spec.containers[0].env=[{"name": "JAEGER_AGENT_HOST", "valueFrom": {"fieldRef": {"apiVersion": "v1", "fieldPath": "status.hostIP"}}}]' ./03-install.yaml
-    render_find_service "agent-as-daemonset" "production" "order" "00" "04"
-else
-    skip_test "examples-openshift-agent-as-daemonset" "This test is only supported in OpenShift"
-fi
-
-
 if [ $IS_OPENSHIFT = true ]; then
     start_test "examples-openshift-with-htpasswd"
     export JAEGER_NAME="with-htpasswd"
