@@ -140,3 +140,43 @@ func TestDeploymentSetReplicasWhenDesiredIsNotNil(t *testing.T) {
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, desiredReplicas, *inv.Update[0].Spec.Replicas)
 }
+
+func TestDeploymentKeepSelectorOnUpdate(t *testing.T) {
+	desired := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"foo": "bar"},
+			},
+		},
+	}}
+
+	desiredSelector := &metav1.LabelSelector{
+		MatchLabels: map[string]string{"keep": "me"},
+	}
+	existing := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Selector: desiredSelector,
+		},
+	}}
+
+	inv := ForDeployments(existing, desired)
+	assert.Len(t, inv.Update, 1)
+	assert.Equal(t, desiredSelector, inv.Update[0].Spec.Selector)
+}
+
+func TestDeploymentSetSelectorOnCreate(t *testing.T) {
+	desiredSelector := &metav1.LabelSelector{
+		MatchLabels: map[string]string{"foo": "bar"},
+	}
+	desired := []appsv1.Deployment{{
+		Spec: appsv1.DeploymentSpec{
+			Selector: desiredSelector,
+		},
+	}}
+
+	existing := make([]appsv1.Deployment, 0)
+
+	inv := ForDeployments(existing, desired)
+	assert.Len(t, inv.Create, 1)
+	assert.Equal(t, desiredSelector, inv.Create[0].Spec.Selector)
+}

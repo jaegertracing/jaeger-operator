@@ -10,6 +10,9 @@ updates:
       golang-org-x:
         patterns:
           - "golang.org/x/*"
+      opentelemetry:
+        patterns:
+          - "go.opentelemetry.io/*"
       prometheus:
         patterns:
           - "github.com/prometheus-operator/prometheus-operator"
