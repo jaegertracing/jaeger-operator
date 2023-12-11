@@ -10,16 +10,3 @@ spec:
     kind: Deployment
     name: auto-provisioned-ingester
   targetCPUUtilizationPercentage: 90
----
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: auto-provisioned-collector
-spec:
-  maxReplicas: 100
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: auto-provisioned-collector
-  targetCPUUtilizationPercentage: 90
