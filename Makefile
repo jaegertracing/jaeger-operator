@@ -349,6 +349,7 @@ $(ENVTEST): $(LOCALBIN)
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	$(SED) -i "s#containerImage: quay.io/jaegertracing/jaeger-operator:$(OPERATOR_VERSION)#containerImage: quay.io/jaegertracing/jaeger-operator:$(VERSION)#g" config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)

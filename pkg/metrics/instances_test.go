@@ -162,7 +162,7 @@ func TestValueObservedMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	reader.ForceFlush(context.Background())
+	provider.ForceFlush(context.Background())
 	metrics = metricdata.ResourceMetrics{}
 	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	reader.ForceFlush(context.Background())
+	provider.ForceFlush(context.Background())
 	metrics = metricdata.ResourceMetrics{}
 	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
@@ -259,7 +259,7 @@ func TestAutoProvisioningESObservedMetric(t *testing.T) {
 	// Create no autoprovisioned instance
 	_ = cl.Delete(context.Background(), &noAutoProvisioningInstance)
 
-	reader.ForceFlush(context.Background())
+	provider.ForceFlush(context.Background())
 
 	metrics = metricdata.ResourceMetrics{}
 	err = reader.Collect(context.Background(), &metrics)
@@ -332,7 +332,7 @@ func TestManagerByMetric(t *testing.T) {
 	require.NoError(t, err)
 
 	// Reset measurement batches
-	reader.ForceFlush(context.Background())
+	provider.ForceFlush(context.Background())
 	metrics = metricdata.ResourceMetrics{}
 	err = reader.Collect(context.Background(), &metrics)
 	require.NoError(t, err)
