@@ -156,12 +156,12 @@ func Select(target *appsv1.Deployment, ns *corev1.Namespace, availableJaegerPods
 
 	if jaegerNameDep != "" && !strings.EqualFold(jaegerNameDep, "true") {
 		// name on the deployment has precedence
-		if jaeger := getJaeger(jaegerNameDep, availableJaegerPods); jaeger != nil {
+		if jaeger := getJaeger(target.Namespace, jaegerNameDep, availableJaegerPods); jaeger != nil {
 			return jaeger
 		}
 		return nil
 	}
-	if jaeger := getJaeger(jaegerNameNs, availableJaegerPods); jaeger != nil {
+	if jaeger := getJaeger(target.Namespace, jaegerNameNs, availableJaegerPods); jaeger != nil {
 		return jaeger
 	}
 
@@ -198,14 +198,23 @@ func getJaegerFromNamespace(namespace string, jaegers *v1.JaegerList) []*v1.Jaeg
 	return instances
 }
 
-func getJaeger(name string, jaegers *v1.JaegerList) *v1.Jaeger {
-	for _, p := range jaegers.Items {
-		if p.Name == name {
-			// matched the name!
-			return &p
+// The implementation is non-deterministic. It selects first jaeger instance that matches inject name.
+// However, the implementation at least prefers to inject the jaeger that is in the same namespace as workload.
+// In effect this solves the non-deterministic issue injection issue for jaeger-query that sets
+// the inject annotation to the Jaeger name.
+func getJaeger(deploymentNamespace string, name string, jaegers *v1.JaegerList) *v1.Jaeger {
+	var bestCaseCandidate *v1.Jaeger
+	for i := range jaegers.Items {
+		if jaegers.Items[i].Name == name {
+			if bestCaseCandidate == nil {
+				bestCaseCandidate = &jaegers.Items[i]
+			}
+			if deploymentNamespace == jaegers.Items[i].Namespace {
+				return &jaegers.Items[i]
+			}
 		}
 	}
-	return nil
+	return bestCaseCandidate
 }
 
 func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.Container {
