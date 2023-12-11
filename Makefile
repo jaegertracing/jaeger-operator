@@ -354,6 +354,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 	./hack/ignore-createdAt-bundle.sh
+	$(SED) -i "s#containerImage: quay.io/jaegertracing/jaeger-operator#containerImage: quay.io/jaegertracing/jaeger-operator:$(VERSION)#g" bundle/manifests/jaeger-operator.clusterserviceversion.yaml
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
