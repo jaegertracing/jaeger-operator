@@ -30,7 +30,7 @@ metadata:
     app.kubernetes.io/part-of: jaeger
   name: auto-provisioned-collector
 spec:
-  maxReplicas: 2
+  maxReplicas: 100
   minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
