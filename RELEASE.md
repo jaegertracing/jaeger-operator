@@ -27,7 +27,6 @@ Steps to release a new version of the Jaeger Operator:
    ```sh
    git commit -sm "Preparing release v1.30.0"
    ```
-    Note that the OpenShift CI test job fails. This is expected and the release PR can be merged.
 
 5. Once the changes above are merged and available in `main` tag it with the desired version, prefixed with `v`, eg. `v1.30.0`
 
