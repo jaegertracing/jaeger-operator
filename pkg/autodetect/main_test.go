@@ -534,7 +534,6 @@ func TestAutoDetectAutoscalingVersion(t *testing.T) {
 
 	// verify
 	assert.Equal(t, v1.FlagAutoscalingVersionV2, viper.GetString(v1.FlagAutoscalingVersion))
-
 }
 
 func TestSkipAuthDelegatorNonOpenShift(t *testing.T) {
