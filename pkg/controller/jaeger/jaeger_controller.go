@@ -8,7 +8,6 @@ import (
 	"time"
 
 	osv1 "github.com/openshift/api/route/v1"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
@@ -219,7 +218,7 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 func validate(jaeger *v1.Jaeger) error {
 	if jaeger.Spec.Storage.EsRollover.ReadTTL != "" {
 		if _, err := time.ParseDuration(jaeger.Spec.Storage.EsRollover.ReadTTL); err != nil {
-			return errors.Wrap(err, "failed to parse esRollover.readTTL to time.Duration")
+			return fmt.Errorf("failed to parse esRollover.readTTL to time.Duration: %w", err)
 		}
 	}
 	return nil

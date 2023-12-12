@@ -2,11 +2,12 @@ package jaeger
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,7 +53,7 @@ func (r *ReconcileJaeger) applyElasticsearches(ctx context.Context, jaeger v1.Ja
 		}
 
 		if err := waitForAvailableElastic(ctx, r.client, d); err != nil {
-			return tracing.HandleError(errors.Wrap(err, "elasticsearch cluster didn't get to ready state"), span)
+			return tracing.HandleError(fmt.Errorf("elasticsearch cluster didn't get to ready state: %w", err), span)
 		}
 	}
 
