@@ -527,7 +527,7 @@ function render_assert_kafka(){
         REPLICAS=$replicas \
         $GOMPLATE \
         -f $TEMPLATES_DIR/assert-kafka-cluster.yaml.template \
-        -o ./$(expr $test_step + 1 )-assert.yaml
+        -o ./0$(expr $test_step + 1 )-assert.yaml
     CLUSTER_NAME=$cluster_name \
         $GOMPLATE \
         -f $TEMPLATES_DIR/assert-entity-operator.yaml.template \

@@ -50,12 +50,12 @@ $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
 $YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
-if kubectl api-versions | grep "autoscaling/v2beta2" -q; then
+if version_lt $KUBE_VERSION "1.23"; then
     # Use the autoscaling/v2beta2 file
-    rm ./03-assert.yaml
+    rm ./02-assert.yaml
 else
     # Use the autoscaling/v2 file
-    rm ./04-assert.yaml
+    rm ./03-assert.yaml
 fi
 
 ###############################################################################

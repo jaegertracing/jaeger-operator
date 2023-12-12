@@ -1,7 +1,23 @@
-# Assert the ingester scaled
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: auto-provisioned-collector
+spec:
+  maxReplicas: 100
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auto-provisioned-collector
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
   name: auto-provisioned-ingester
-status:
-  readyReplicas: 2
+spec:
+  maxReplicas: 2
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auto-provisioned-ingester
