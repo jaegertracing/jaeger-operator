@@ -50,7 +50,7 @@ $YQ e -i '.spec.collector.autoscale=true' 01-install.yaml
 $YQ e -i '.spec.collector.minReplicas=1' 01-install.yaml
 $YQ e -i '.spec.collector.maxReplicas=2' 01-install.yaml
 
-if version_gt $KUBE_VERSION "1.23"; then
+if version_lt $KUBE_VERSION "1.23"; then
     # Use the autoscaling/v2beta2 file
     rm ./02-assert.yaml
 else

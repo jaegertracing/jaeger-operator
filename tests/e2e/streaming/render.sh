@@ -62,7 +62,7 @@ else
     # Assert the autoprovisioned Kafka deployment
     render_assert_kafka "true" "$jaeger_name" "03"
 
-    if version_gt $KUBE_VERSION "1.23"; then
+    if version_lt $KUBE_VERSION "1.23"; then
         rm ./07-assert.yaml
     else
         rm ./08-assert.yaml
