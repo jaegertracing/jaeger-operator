@@ -1,6 +1,10 @@
-run:
-  go: '1.21'
-  timeout: 10m
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gosec
 
 linters-settings:
   goimports:
@@ -10,20 +14,17 @@ linters-settings:
 
 linters:
   enable:
-    - gofmt
+    - bidichk
+    - errorlint
     - gofumpt
     - goimports
     - gosec
     - govet
     - misspell
-    - bidichk
+    - testifylint
   disable:
     - errcheck
 
-issues:
-  # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - gosec
+run:
+  go: '1.20'
+  timeout: 10m

@@ -253,7 +253,7 @@ func TestAllInOneMountGlobalVolumes(t *testing.T) {
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// allInOne volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[0].Name)
 }
 
 func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
@@ -277,7 +277,7 @@ func TestAllInOneVolumeMountsWithSameName(t *testing.T) {
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 2)
 	// allInOne volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
+	assert.False(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly)
 }
 
 func TestAllInOneVolumeWithSameName(t *testing.T) {
@@ -301,7 +301,7 @@ func TestAllInOneVolumeWithSameName(t *testing.T) {
 	// Count includes the sampling configmap
 	assert.Len(t, podSpec.Volumes, 2)
 	// allInOne volume is mounted
-	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
+	assert.Equal(t, "/data2", podSpec.Volumes[0].VolumeSource.HostPath.Path)
 }
 
 func TestAllInOneResources(t *testing.T) {
@@ -447,7 +447,7 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 
 		if tt.nonExpectedArgs != nil {
 			for _, arg := range tt.nonExpectedArgs {
-				assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args)), 0)
+				assert.Empty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[0].Args))
 			}
 		}
 	}
@@ -554,7 +554,7 @@ func TestAllInOneGRPCPlugin(t *testing.T) {
 			},
 		},
 	}, dep.Spec.Template.Spec.InitContainers)
-	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	require.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 

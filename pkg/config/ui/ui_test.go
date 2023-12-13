@@ -49,9 +49,9 @@ func TestUpdateNoUIConfig(t *testing.T) {
 	options := []string{}
 
 	Update(jaeger, &commonSpec, &options)
-	assert.Len(t, commonSpec.Volumes, 0)
-	assert.Len(t, commonSpec.VolumeMounts, 0)
-	assert.Len(t, options, 0)
+	assert.Empty(t, commonSpec.Volumes)
+	assert.Empty(t, commonSpec.VolumeMounts)
+	assert.Empty(t, options)
 }
 
 func TestUpdateWithUIConfig(t *testing.T) {

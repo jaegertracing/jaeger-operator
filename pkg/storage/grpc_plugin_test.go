@@ -57,13 +57,13 @@ func TestUpdatesOnlyAffectsGRPCStoragePlugin(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	commonSpec := &v1.JaegerCommonSpec{}
 	UpdateGRPCPlugin(jaeger, commonSpec)
-	assert.Len(t, commonSpec.Volumes, 0)
-	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Empty(t, commonSpec.Volumes)
+	assert.Empty(t, commonSpec.VolumeMounts)
 }
 
 func TestGetInitContainersOnlyAffectsGRPCStoragePlugin(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	assert.Len(t, GetGRPCPluginInitContainers(jaeger, nil), 0)
+	assert.Empty(t, GetGRPCPluginInitContainers(jaeger, nil))
 }
 
 func TestGetInitContainersGRPCStoragePlugin(t *testing.T) {

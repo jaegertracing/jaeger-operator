@@ -46,12 +46,12 @@ func (connection *EsConnection) LoadCertificate(secretPath string) error {
 
 	certificate, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		return fmt.Errorf("something failed while loading the x509 key pair: %s", err)
+		return fmt.Errorf("something failed while loading the x509 key pair: %w", err)
 	}
 
 	caCert, err := os.ReadFile(filepath.Clean(caFile))
 	if err != nil {
-		return fmt.Errorf("something failed while reading the CA file: %s", err)
+		return fmt.Errorf("something failed while reading the CA file: %w", err)
 	}
 
 	rootCAs := x509.NewCertPool()
@@ -133,12 +133,12 @@ func (index *EsIndex) GetIndexSpans() ([]EsSpan, error) {
 
 	bodyBytes, err := executeEsRequest(index.es, http.MethodPost, fmt.Sprintf("/%s/_search?format=json", index.Index), bodyReq)
 	if err != nil {
-		return []EsSpan{}, fmt.Errorf("something failed while quering the ES REST API: %s", err)
+		return []EsSpan{}, fmt.Errorf("something failed while quering the ES REST API: %w", err)
 	}
 
 	err = json.Unmarshal(bodyBytes, &searchResponse)
 	if err != nil {
-		return []EsSpan{}, fmt.Errorf("something failed while unmarshalling API response: %s", err)
+		return []EsSpan{}, fmt.Errorf("something failed while unmarshalling API response: %w", err)
 	}
 
 	spans := []EsSpan{}
@@ -154,7 +154,7 @@ func (index *EsIndex) GetIndexSpans() ([]EsSpan, error) {
 func CheckESConnection(es EsConnection) error {
 	_, err := executeEsRequest(es, http.MethodGet, "/", nil)
 	if err != nil {
-		return fmt.Errorf("there was a problem while connecting to the ES instance: %s", err)
+		return fmt.Errorf("there was a problem while connecting to the ES instance: %w", err)
 	}
 	return nil
 }
@@ -183,7 +183,7 @@ func GetEsIndex(es EsConnection, indexName string) EsIndex {
 func GetEsIndices(es EsConnection) ([]EsIndex, error) {
 	bodyBytes, err := executeEsRequest(es, http.MethodGet, "/_cat/indices?format=json", nil)
 	if err != nil {
-		return nil, fmt.Errorf("something failed while quering the ES REST API: %s", err)
+		return nil, fmt.Errorf("something failed while quering the ES REST API: %w", err)
 	}
 
 	// Convert JSON data to struct format
@@ -192,7 +192,7 @@ func GetEsIndices(es EsConnection) ([]EsIndex, error) {
 	if err != nil {
 		logrus.Debugln("Response:")
 		logrus.Debugf("%s", bodyBytes)
-		return nil, fmt.Errorf("something failed while unmarshalling API response: %s", err)
+		return nil, fmt.Errorf("something failed while unmarshalling API response: %w", err)
 	}
 
 	for i := range esIndices {
@@ -229,7 +229,7 @@ func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]b
 
 	req, err := http.NewRequest(httpMethod, esURL, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, fmt.Errorf("the HTTP request creation failed: %s", err)
+		return nil, fmt.Errorf("the HTTP request creation failed: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -237,7 +237,7 @@ func executeEsRequest(es EsConnection, httpMethod, api string, body []byte) ([]b
 	logrus.Debugln("Executing request...")
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("the HTTP request failed: %s", err)
+		return nil, fmt.Errorf("the HTTP request failed: %w", err)
 	}
 
 	defer resp.Body.Close()

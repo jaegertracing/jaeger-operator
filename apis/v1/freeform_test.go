@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFreeForm(t *testing.T) {
@@ -16,7 +17,7 @@ func TestFreeForm(t *testing.T) {
 		},
 	})
 	json, err := o.MarshalJSON()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, json)
 	assert.Equal(t, uiconfig, string(*o.json))
 }
@@ -26,7 +27,7 @@ func TestFreeFormUnmarhalMarshal(t *testing.T) {
 	o := NewFreeForm(nil)
 	o.UnmarshalJSON([]byte(uiconfig))
 	json, err := o.MarshalJSON()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, json)
 	assert.Equal(t, uiconfig, string(*o.json))
 }
@@ -66,9 +67,9 @@ func TestToMap(t *testing.T) {
 		f := NewFreeForm(test.m)
 		got, err := f.GetMap()
 		if test.err != "" {
-			assert.EqualError(t, err, test.err)
+			require.EqualError(t, err, test.err)
 		} else {
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, test.expected, got)
 		}
 	}

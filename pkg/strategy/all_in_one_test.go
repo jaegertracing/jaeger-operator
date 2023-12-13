@@ -75,7 +75,7 @@ func TestDelegateAllInOneDependencies(t *testing.T) {
 func TestNoAutoscaleForAllInOne(t *testing.T) {
 	j := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	c := newAllInOneStrategy(context.Background(), j)
-	assert.Len(t, c.HorizontalPodAutoscalers(), 0)
+	assert.Empty(t, c.HorizontalPodAutoscalers())
 }
 
 func assertDeploymentsAndServicesForAllInOne(t *testing.T, instance *v1.Jaeger, s S, hasDaemonSet bool, hasOAuthProxy bool, hasConfigMap bool) {
@@ -160,9 +160,9 @@ func testSparkDependencies(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 		s := fce(test.jaeger)
 		cronJobs := s.CronJobs()
 		if test.sparkCronJobEnabled {
-			assert.Equal(t, 1, len(cronJobs))
+			assert.Len(t, cronJobs, 1)
 		} else {
-			assert.Equal(t, 0, len(cronJobs))
+			assert.Empty(t, cronJobs)
 		}
 	}
 }
@@ -206,9 +206,9 @@ func testEsIndexCleaner(t *testing.T, fce func(jaeger *v1.Jaeger) S) {
 		s := fce(test.jaeger)
 		cronJobs := s.CronJobs()
 		if test.sparkCronJobEnabled {
-			assert.Equal(t, 1, len(cronJobs))
+			assert.Len(t, cronJobs, 1)
 		} else {
-			assert.Equal(t, 0, len(cronJobs))
+			assert.Empty(t, cronJobs)
 		}
 	}
 }

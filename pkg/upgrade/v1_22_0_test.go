@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -45,11 +46,11 @@ func TestUpgradeJaegerTagssv1_22_0(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, latestVersion, persisted.Status.Version)
 
 	aioOpts := persisted.Spec.AllInOne.Options.Map()
@@ -89,12 +90,12 @@ func TestDeleteQueryRemovedFlags(t *testing.T) {
 	s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 	s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, latestVersion, persisted.Status.Version)
-	assert.Len(t, persisted.Spec.Query.Options.Map(), 0)
+	assert.Empty(t, persisted.Spec.Query.Options.Map())
 	assert.NotContains(t, persisted.Spec.Query.Options.Map(), "downsampling.hashsalt")
 	assert.NotContains(t, persisted.Spec.Query.Options.Map(), "downsampling.ratio")
 }
@@ -138,10 +139,10 @@ func TestCassandraVerifyHostFlags(t *testing.T) {
 			s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 			s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 			cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-			assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+			require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 			persisted := &v1.Jaeger{}
-			assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+			require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 			assert.Equal(t, latestVersion, persisted.Status.Version)
 			if tt.flagPresent {
 				assert.Len(t, persisted.Spec.Collector.Options.Map(), 1)
@@ -149,7 +150,7 @@ func TestCassandraVerifyHostFlags(t *testing.T) {
 				assert.Contains(t, persisted.Spec.Collector.Options.Map(), newFlag)
 				assert.Equal(t, tt.flagValue, persisted.Spec.Collector.Options.Map()[newFlag])
 			} else {
-				assert.Len(t, persisted.Spec.Collector.Options.Map(), 0)
+				assert.Empty(t, persisted.Spec.Collector.Options.Map())
 				assert.NotContains(t, persisted.Spec.Collector.Options.Map(), oldFlag)
 			}
 		})
@@ -243,10 +244,10 @@ func TestMigrateQueryHostPortFlagsv1_22_0(t *testing.T) {
 		s.AddKnownTypes(v1.GroupVersion, &v1.Jaeger{})
 		s.AddKnownTypes(v1.GroupVersion, &v1.JaegerList{})
 		cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-		assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+		require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 		persisted := &v1.Jaeger{}
-		assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+		require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 		assert.Equal(t, latestVersion, persisted.Status.Version)
 		assert.Equal(t, tt.expectedOps, persisted.Spec.Query.Options.StringMap())
 

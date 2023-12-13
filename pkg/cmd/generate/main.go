@@ -2,6 +2,7 @@ package generate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,7 +56,7 @@ func createSpecFromYAML(filename string) (*v1.Jaeger, error) {
 
 	var spec v1.Jaeger
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 8192)
-	if err := decoder.Decode(&spec); err != nil && err != io.EOF {
+	if err := decoder.Decode(&spec); err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 

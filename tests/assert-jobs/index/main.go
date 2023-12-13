@@ -32,7 +32,7 @@ const (
 func filterIndices(indices *[]elasticsearch.EsIndex, pattern string) ([]elasticsearch.EsIndex, error) {
 	regexPattern, err := regexp.Compile(pattern)
 	if err != nil {
-		return nil, fmt.Errorf("there was a problem with the pattern: %s", err)
+		return nil, fmt.Errorf("there was a problem with the pattern: %w", err)
 	}
 
 	var matchingIndices []elasticsearch.EsIndex

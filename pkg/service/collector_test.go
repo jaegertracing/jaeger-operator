@@ -36,7 +36,7 @@ func TestCollectorServiceNameAndPorts(t *testing.T) {
 	}
 
 	for k, v := range ports {
-		assert.Equal(t, v, true, "Expected port %v to be specified, but wasn't", k)
+		assert.True(t, v, "Expected port %v to be specified, but wasn't", k)
 	}
 
 	// we ensure the ports are the same for both services
@@ -55,7 +55,7 @@ func TestCollectorServiceWithClusterIPEmptyAndNone(t *testing.T) {
 	assert.Len(t, svcs, 2)
 	assert.NotEqual(t, svcs[0].Name, svcs[1].Name) // they can't have the same name
 	assert.Equal(t, "None", svcs[0].Spec.ClusterIP)
-	assert.Len(t, svcs[1].Spec.ClusterIP, 0)
+	assert.Empty(t, svcs[1].Spec.ClusterIP)
 }
 
 func TestCollectorGRPCPortName(t *testing.T) {
@@ -143,7 +143,7 @@ func TestCollectorServiceLoadBalancer(t *testing.T) {
 	svc := NewCollectorServices(jaeger, selector)
 
 	// Only the non-headless service will receive the type
-	assert.Equal(t, svc[1].Spec.Type, corev1.ServiceTypeLoadBalancer)
+	assert.Equal(t, corev1.ServiceTypeLoadBalancer, svc[1].Spec.Type)
 }
 
 func TestCollectorServiceAnnotations(t *testing.T) {

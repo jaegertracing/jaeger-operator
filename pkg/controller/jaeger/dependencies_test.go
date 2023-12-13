@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +39,7 @@ func TestHandleDependencies(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		wg.Done()
 	}()
 
@@ -46,14 +47,14 @@ func TestHandleDependencies(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	persisted := &batchv1.Job{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	persisted.Status.Succeeded = 1
-	assert.NoError(t, cl.Status().Update(context.Background(), persisted))
+	require.NoError(t, cl.Status().Update(context.Background(), persisted))
 
 	wg.Wait()
 
 	// verify
 	persisted = &batchv1.Job{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, nsn.Name, persisted.Name)
 }

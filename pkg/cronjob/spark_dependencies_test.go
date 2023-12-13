@@ -151,12 +151,12 @@ func TestCreateTypeMeta(t *testing.T) {
 		assert.NotNil(t, sd)
 		switch tt := sd.(type) {
 		case *batchv1beta1.CronJob:
-			assert.Equal(t, tt.Kind, "CronJob")
-			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+			assert.Equal(t, "CronJob", tt.Kind)
+			assert.Equal(t, v1.FlagCronJobsVersionBatchV1Beta1, tt.APIVersion)
 			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 		case *batchv1.CronJob:
-			assert.Equal(t, tt.Kind, "CronJob")
-			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+			assert.Equal(t, "CronJob", tt.Kind)
+			assert.Equal(t, v1.FlagCronJobsVersionBatchV1, tt.APIVersion)
 		}
 	}
 }

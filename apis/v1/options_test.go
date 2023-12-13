@@ -18,7 +18,7 @@ func TestSimpleOption(t *testing.T) {
 
 func TestNoOptions(t *testing.T) {
 	o := Options{}
-	assert.Len(t, o.ToArgs(), 0)
+	assert.Empty(t, o.ToArgs())
 }
 
 func TestNestedOption(t *testing.T) {
@@ -40,7 +40,7 @@ func TestMarshalling(t *testing.T) {
 	})
 
 	b, err := json.Marshal(o)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	s := string(b)
 	assert.Contains(t, s, `"es.password":"changeme"`)
 	assert.Contains(t, s, `"es.server-urls":"http://elasticsearch.default.svc:9200"`)
@@ -85,9 +85,9 @@ func TestUnmarshalToArgs(t *testing.T) {
 		opts := Options{}
 		err := opts.UnmarshalJSON([]byte(test.in))
 		if test.err != "" {
-			assert.EqualError(t, err, test.err)
+			require.EqualError(t, err, test.err)
 		} else {
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			args := opts.ToArgs()
 			sort.SliceStable(args, func(i, j int) bool {
 				return args[i] < args[j]
@@ -129,7 +129,7 @@ func TestMarshallRaw(t *testing.T) {
 	o := NewOptions(nil)
 	o.json = &json
 	bytes, err := o.MarshalJSON()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, bytes, json)
 }
 
@@ -137,7 +137,7 @@ func TestMarshallEmpty(t *testing.T) {
 	o := NewOptions(nil)
 	json := []byte(`{}`)
 	bytes, err := o.MarshalJSON()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, bytes, json)
 }
 
@@ -151,7 +151,7 @@ func TestUpdate(t *testing.T) {
 	o.Map()["key"] = "new"
 
 	// verify
-	assert.Equal(t, o.opts["key"], "new")
+	assert.Equal(t, "new", o.opts["key"])
 }
 
 func TestStringMap(t *testing.T) {
@@ -170,7 +170,7 @@ func TestDeepCopy(t *testing.T) {
 	require.NoError(t, err)
 	copy := o1.opts.DeepCopy()
 
-	assert.Equal(t, copy, &(o1.opts))
+	assert.Equal(t, &(o1.opts), copy)
 }
 
 func TestRepetitiveArguments(t *testing.T) {

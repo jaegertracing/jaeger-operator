@@ -229,7 +229,7 @@ func TestQueryMountGlobalVolumes(t *testing.T) {
 
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// query volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[0].Name)
 }
 
 func TestQueryVolumeMountsWithSameName(t *testing.T) {
@@ -256,7 +256,7 @@ func TestQueryVolumeMountsWithSameName(t *testing.T) {
 
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// query volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
+	assert.False(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly)
 }
 
 func TestQueryVolumeWithSameName(t *testing.T) {
@@ -283,7 +283,7 @@ func TestQueryVolumeWithSameName(t *testing.T) {
 
 	assert.Len(t, podSpec.Volumes, 1)
 	// query volume is mounted
-	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
+	assert.Equal(t, "/data2", podSpec.Volumes[0].VolumeSource.HostPath.Path)
 }
 
 func TestQueryResources(t *testing.T) {
@@ -453,7 +453,7 @@ func TestQueryGRPCPlugin(t *testing.T) {
 			},
 		},
 	}, dep.Spec.Template.Spec.InitContainers)
-	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	require.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 

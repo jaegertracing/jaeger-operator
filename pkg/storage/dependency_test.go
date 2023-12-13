@@ -11,7 +11,7 @@ import (
 
 func TestDefaultDependencies(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestCassandraDependencies"})
-	assert.Len(t, Dependencies(jaeger), 0)
+	assert.Empty(t, Dependencies(jaeger))
 }
 
 func TestCassandraDependencies(t *testing.T) {

@@ -87,8 +87,8 @@ func TestHorizontalPodAutoscalerInventoryWithSameNameInstances(t *testing.T) {
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, create, create[0])
 	assert.Contains(t, create, create[1])
-	assert.Len(t, inv.Update, 0)
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Update)
+	assert.Empty(t, inv.Delete)
 }
 
 func TestHorizontalPodAutoscalerInventoryNewWithSameNameAsExisting(t *testing.T) {
@@ -118,7 +118,7 @@ func TestHorizontalPodAutoscalerInventoryNewWithSameNameAsExisting(t *testing.T)
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, inv.Update[0], existing[0])
 
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Delete)
 }
 
 func TestHorizontalPodAutoscalerInventoryNewWithSameNameAsExistingBeta2(t *testing.T) {
@@ -148,5 +148,5 @@ func TestHorizontalPodAutoscalerInventoryNewWithSameNameAsExistingBeta2(t *testi
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, inv.Update[0], existing[0])
 
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Delete)
 }

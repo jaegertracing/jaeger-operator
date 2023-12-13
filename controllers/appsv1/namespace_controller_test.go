@@ -3,7 +3,6 @@ package appsv1_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	k8sconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -27,5 +26,5 @@ func TestNamespaceControllerRegisterWithManager(t *testing.T) {
 	err = reconciler.SetupWithManager(mgr)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

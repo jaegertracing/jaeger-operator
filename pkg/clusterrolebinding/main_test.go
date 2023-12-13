@@ -36,7 +36,7 @@ func TestGetClusterRoleBinding(t *testing.T) {
 	assert.Len(t, crbs[0].Subjects, 1)
 	assert.Equal(t, account.OAuthProxyAccountNameFor(jaeger), crbs[0].Subjects[0].Name)
 	assert.Equal(t, "ServiceAccount", crbs[0].Subjects[0].Kind)
-	assert.Len(t, crbs[0].Subjects[0].Namespace, 0) // cluster roles aren't namespaced
+	assert.Empty(t, crbs[0].Subjects[0].Namespace) // cluster roles aren't namespaced
 }
 
 func TestIngressDisabled(t *testing.T) {
@@ -53,7 +53,7 @@ func TestIngressDisabled(t *testing.T) {
 	crbs := Get(jaeger)
 
 	// verify
-	assert.Len(t, crbs, 0)
+	assert.Empty(t, crbs)
 }
 
 func TestNotOAuthProxy(t *testing.T) {
@@ -70,7 +70,7 @@ func TestNotOAuthProxy(t *testing.T) {
 	crbs := Get(jaeger)
 
 	// verify
-	assert.Len(t, crbs, 0)
+	assert.Empty(t, crbs)
 }
 
 func TestAuthDelegatorNotAvailable(t *testing.T) {
@@ -90,5 +90,5 @@ func TestAuthDelegatorNotAvailable(t *testing.T) {
 	crbs := Get(jaeger)
 
 	// verify
-	assert.Len(t, crbs, 0)
+	assert.Empty(t, crbs)
 }

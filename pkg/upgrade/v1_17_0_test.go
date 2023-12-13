@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,11 +38,11 @@ func TestUpgradeDeprecatedOptionsv1_17_0(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, latestVersion))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, latestVersion, persisted.Status.Version)
 
 	opts := persisted.Spec.Collector.Options.Map()
@@ -70,7 +71,7 @@ func TestAddTLSOptionsForKafka_v1_17_0(t *testing.T) {
 
 	result, err := upgrade1_17_0(context.Background(), nil, *jaeger)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "true", result.Spec.Collector.Options.Map()["kafka.producer.tls.enabled"])
 	assert.Equal(t, "true", result.Spec.Ingester.Options.Map()["kafka.producer.tls.enabled"])
 	assert.Equal(t, "true", result.Spec.Ingester.Options.Map()["kafka.consumer.tls.enabled"])

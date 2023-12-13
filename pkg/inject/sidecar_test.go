@@ -52,9 +52,9 @@ func TestInjectSidecar(t *testing.T) {
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 0)
-	assert.Len(t, dep.Spec.Template.Spec.Volumes, 0)
+	assert.Empty(t, dep.Spec.Template.Spec.Containers[0].Env)
+	assert.Empty(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts)
+	assert.Empty(t, dep.Spec.Template.Spec.Volumes)
 }
 
 func TestInjectSidecarOpenShift(t *testing.T) {
@@ -62,21 +62,21 @@ func TestInjectSidecarOpenShift(t *testing.T) {
 	defer reset()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
-	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
-	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
+	assert.Empty(t, jaeger.Spec.Agent.VolumeMounts)
+	assert.Empty(t, jaeger.Spec.Agent.Volumes)
 
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Equal(t, dep.Labels[Label], jaeger.Name)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	assert.Contains(t, dep.Spec.Template.Spec.Containers[1].Image, "jaeger-agent")
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
+	assert.Empty(t, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[1].VolumeMounts, 2)
 	assert.Len(t, dep.Spec.Template.Spec.Volumes, 2)
 
 	// CR should not be touched.
-	assert.Len(t, jaeger.Spec.Agent.VolumeMounts, 0)
-	assert.Len(t, jaeger.Spec.Agent.Volumes, 0)
+	assert.Empty(t, jaeger.Spec.Agent.VolumeMounts)
+	assert.Empty(t, jaeger.Spec.Agent.Volumes)
 }
 
 func TestInjectSidecarWithEnvVars(t *testing.T) {
@@ -218,7 +218,7 @@ func TestInjectSidecarWithEnvFromK8sAppName(t *testing.T) {
 
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 0)
+	assert.Empty(t, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].EnvFrom, 1)
 	actualConfigName := dep.Spec.Template.Spec.Containers[0].EnvFrom[0].ConfigMapRef.Name
 	assert.Contains(t, "test-config", actualConfigName)
@@ -318,8 +318,8 @@ func TestSidecarImagePullSecrets(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	assert.Len(t, dep.Spec.Template.Spec.ImagePullSecrets, 2)
-	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[0].Name, "deploymentImagePullSecret")
-	assert.Equal(t, dep.Spec.Template.Spec.ImagePullSecrets[1].Name, "agentImagePullSecret")
+	assert.Equal(t, "deploymentImagePullSecret", dep.Spec.Template.Spec.ImagePullSecrets[0].Name)
+	assert.Equal(t, "agentImagePullSecret", dep.Spec.Template.Spec.ImagePullSecrets[1].Name)
 }
 
 func TestSidecarDefaultPorts(t *testing.T) {
@@ -606,7 +606,7 @@ func TestSidecarOrderOfArguments(t *testing.T) {
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--reporter.grpc.host-port")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+	assert.Equal(t, "only_container", agentTagsMap["container.name"])
 }
 
 func TestSidecarExplicitTags(t *testing.T) {
@@ -621,7 +621,7 @@ func TestSidecarExplicitTags(t *testing.T) {
 	// verify
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
 	agentTags := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, agentTags, map[string]string{"key": "val"})
+	assert.Equal(t, map[string]string{"key": "val"}, agentTags)
 }
 
 func TestSidecarCustomReporterPort(t *testing.T) {
@@ -682,11 +682,11 @@ func TestCleanSidecars(t *testing.T) {
 	}
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
-	assert.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
-	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
+	assert.Len(t, dep1.Spec.Template.Spec.Containers, 2)
+	assert.Empty(t, dep1.Spec.Template.Spec.Volumes)
 	CleanSidecar(instanceName, dep1)
-	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Containers))
-	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
+	assert.Len(t, dep1.Spec.Template.Spec.Containers, 1)
+	assert.Empty(t, dep1.Spec.Template.Spec.Volumes)
 }
 
 func TestCleanSidecarsOpenShift(t *testing.T) {
@@ -703,15 +703,15 @@ func TestCleanSidecarsOpenShift(t *testing.T) {
 	dep1 := Sidecar(jaeger, dep(map[string]string{}, map[string]string{}))
 
 	// sanity check
-	require.Equal(t, 2, len(dep1.Spec.Template.Spec.Containers))
-	require.Equal(t, 2, len(dep1.Spec.Template.Spec.Volumes))
+	require.Len(t, dep1.Spec.Template.Spec.Containers, 2)
+	require.Len(t, dep1.Spec.Template.Spec.Volumes, 2)
 
 	// test
 	CleanSidecar(instanceName, dep1)
 
 	// verify
-	assert.Equal(t, 1, len(dep1.Spec.Template.Spec.Containers))
-	assert.Equal(t, 0, len(dep1.Spec.Template.Spec.Volumes))
+	assert.Len(t, dep1.Spec.Template.Spec.Containers, 1)
+	assert.Empty(t, dep1.Spec.Template.Spec.Volumes)
 }
 
 func TestSidecarWithLabel(t *testing.T) {
@@ -722,12 +722,12 @@ func TestSidecarWithLabel(t *testing.T) {
 	jaeger := v1.NewJaeger(nsn)
 	dep1 := dep(map[string]string{}, map[string]string{})
 	dep1 = Sidecar(jaeger, dep1)
-	assert.Equal(t, dep1.Labels[Label], "my-instance")
+	assert.Equal(t, "my-instance", dep1.Labels[Label])
 	dep2 := dep(map[string]string{}, map[string]string{})
 	dep2.Labels = map[string]string{"anotherLabel": "anotherValue"}
 	dep2 = Sidecar(jaeger, dep2)
-	assert.Equal(t, len(dep2.Labels), 2)
-	assert.Equal(t, dep2.Labels["anotherLabel"], "anotherValue")
+	assert.Len(t, dep2.Labels, 2)
+	assert.Equal(t, "anotherValue", dep2.Labels["anotherLabel"])
 	assert.Equal(t, dep2.Labels[Label], jaeger.Name)
 }
 
@@ -756,8 +756,8 @@ func TestSidecarWithPrometheusAnnotations(t *testing.T) {
 	dep = Sidecar(jaeger, dep)
 
 	// verify
-	assert.Equal(t, dep.Annotations["prometheus.io/scrape"], "false")
-	assert.Equal(t, dep.Annotations["prometheus.io/port"], "9090")
+	assert.Equal(t, "false", dep.Annotations["prometheus.io/scrape"])
+	assert.Equal(t, "9090", dep.Annotations["prometheus.io/port"])
 }
 
 func TestSidecarAgentTagsWithMultipleContainers(t *testing.T) {
@@ -782,7 +782,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	agentTagsMap := parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+	assert.Equal(t, "only_container", agentTagsMap["container.name"])
 
 	// inject - 2nd time due to deployment/namespace reconciliation
 	dep = Sidecar(jaeger, dep)
@@ -790,7 +790,7 @@ func TestSidecarAgentContainerNameTagWithDoubleInjectedContainer(t *testing.T) {
 	assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 	containsOptionWithPrefix(t, dep.Spec.Template.Spec.Containers[1].Args, "--agent.tags")
 	agentTagsMap = parseAgentTags(dep.Spec.Template.Spec.Containers[1].Args)
-	assert.Equal(t, agentTagsMap["container.name"], "only_container")
+	assert.Equal(t, "only_container", agentTagsMap["container.name"])
 }
 
 func ns(annotations map[string]string) *corev1.Namespace {
@@ -942,12 +942,12 @@ func TestSidecarArgumentsOpenshiftTLS(t *testing.T) {
 			assert.Len(t, dep.Spec.Template.Spec.Containers[1].Args, len(tt.expectedArgs))
 
 			for _, arg := range tt.expectedArgs {
-				assert.Greater(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+				assert.NotEmpty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args))
 			}
 
 			if tt.nonExpectedArgs != nil {
 				for _, arg := range tt.nonExpectedArgs {
-					assert.Equal(t, len(util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args)), 0)
+					assert.Empty(t, util.FindItem(arg, dep.Spec.Template.Spec.Containers[1].Args))
 				}
 			}
 
@@ -1007,7 +1007,7 @@ func TestSidecarWithSecurityContext(t *testing.T) {
 	dep := dep(map[string]string{}, map[string]string{})
 	dep = Sidecar(jaeger, dep)
 	assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-	assert.Equal(t, dep.Spec.Template.Spec.Containers[1].SecurityContext, expectedSecurityContext)
+	assert.Equal(t, expectedSecurityContext, dep.Spec.Template.Spec.Containers[1].SecurityContext)
 }
 
 func TestSortedTags(t *testing.T) {
@@ -1046,7 +1046,7 @@ func TestSortedTagsWithContainer(t *testing.T) {
 
 func TestParseEmptyAgentTags(t *testing.T) {
 	tags := parseAgentTags([]string{})
-	assert.Equal(t, tags, map[string]string{})
+	assert.Equal(t, map[string]string{}, tags)
 }
 
 func TestGetContainerNameWithOneAppContainer(t *testing.T) {
@@ -1085,7 +1085,7 @@ func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromSecretRef(t *testing.
 
 	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
 
-	assert.Len(t, matchedConfigMaps, 0)
+	assert.Empty(t, matchedConfigMaps)
 }
 
 func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigMapRef(t *testing.T) {
@@ -1096,7 +1096,7 @@ func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigMapRef(t *testi
 	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
 
 	assert.Len(t, matchedConfigMaps, 1)
-	assert.Equal(t, matchedConfigMaps[0].Name, "test-config")
+	assert.Equal(t, "test-config", matchedConfigMaps[0].Name)
 }
 
 func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigAndSecret(t *testing.T) {
@@ -1111,7 +1111,7 @@ func TestGetConfigMapsMatchedEnvFromInDeploymentWithEnvFromConfigAndSecret(t *te
 	matchedConfigMaps := GetConfigMapsMatchedEnvFromInDeployment(*deploy, configMaps)
 
 	assert.Len(t, matchedConfigMaps, 1)
-	assert.Equal(t, matchedConfigMaps[0].Name, "test-config")
+	assert.Equal(t, "test-config", matchedConfigMaps[0].Name)
 }
 
 func TestGetJaeger(t *testing.T) {

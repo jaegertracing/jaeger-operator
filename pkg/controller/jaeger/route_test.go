@@ -7,6 +7,7 @@ import (
 	osv1 "github.com/openshift/api/route/v1"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,7 +48,7 @@ func TestRoutesCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &osv1.Route{}
@@ -57,7 +58,7 @@ func TestRoutesCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestRoutesUpdate(t *testing.T) {
@@ -94,7 +95,7 @@ func TestRoutesUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &osv1.Route{}
@@ -104,7 +105,7 @@ func TestRoutesUpdate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestRoutesDelete(t *testing.T) {
@@ -135,7 +136,7 @@ func TestRoutesDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &osv1.Route{}
@@ -145,7 +146,7 @@ func TestRoutesDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }
 
 func TestRoutesCreateExistingNameInAnotherNamespace(t *testing.T) {
@@ -192,18 +193,18 @@ func TestRoutesCreateExistingNameInAnotherNamespace(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &osv1.Route{}
 	err = cl.Get(context.Background(), nsn, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
 	persistedExisting := &osv1.Route{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

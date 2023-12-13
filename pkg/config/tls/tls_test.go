@@ -35,8 +35,8 @@ func TestIgnoreDefaultTLSSecretWhenGrpcHostPortIsSet(t *testing.T) {
 	options = append(options, "--reporter.grpc.host-port=my.host-port.com")
 
 	Update(jaeger, &commonSpec, &options)
-	assert.Len(t, commonSpec.Volumes, 0)
-	assert.Len(t, commonSpec.VolumeMounts, 0)
+	assert.Empty(t, commonSpec.Volumes)
+	assert.Empty(t, commonSpec.VolumeMounts)
 	assert.Len(t, options, 1)
 	assert.Equal(t, "--reporter.grpc.host-port=my.host-port.com", options[0])
 }

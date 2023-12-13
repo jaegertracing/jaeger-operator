@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -44,7 +45,7 @@ func TestConfigMapsCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &corev1.ConfigMap{}
@@ -54,7 +55,7 @@ func TestConfigMapsCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestConfigMapsUpdate(t *testing.T) {
@@ -88,7 +89,7 @@ func TestConfigMapsUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &corev1.ConfigMap{}
@@ -98,7 +99,7 @@ func TestConfigMapsUpdate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestConfigMapsDelete(t *testing.T) {
@@ -126,7 +127,7 @@ func TestConfigMapsDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &corev1.ConfigMap{}
@@ -136,7 +137,7 @@ func TestConfigMapsDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }
 
 func TestConfigMapCreateExistingNameInAnotherNamespace(t *testing.T) {
@@ -180,18 +181,18 @@ func TestConfigMapCreateExistingNameInAnotherNamespace(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &corev1.ConfigMap{}
 	err = cl.Get(context.Background(), nsn, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
 	persistedExisting := &corev1.ConfigMap{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }
@@ -244,16 +245,16 @@ func TestConfigMapsClean(t *testing.T) {
 	// The three defined ConfigMaps exist
 	configMaps := &corev1.ConfigMapList{}
 	err := cl.List(context.Background(), configMaps)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, configMaps.Items, 3)
 
 	// Reconcile non-exist jaeger
 	_, err = r.Reconcile(reconcile.Request{NamespacedName: nsnNonExist})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Check that configmaps were clean up.
 	err = cl.List(context.Background(), configMaps)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, configMaps.Items, 1)
 	assert.Equal(t, fmt.Sprintf("%s-service-ca", nsnExisting.Name), configMaps.Items[0].Name)
 }

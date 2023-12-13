@@ -70,6 +70,6 @@ func TestSecretInventoryWithSameNameInstances(t *testing.T) {
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, inv.Create, create[0])
 	assert.Contains(t, inv.Create, create[1])
-	assert.Len(t, inv.Update, 0)
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Update)
+	assert.Empty(t, inv.Delete)
 }

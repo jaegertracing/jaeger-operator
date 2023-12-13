@@ -31,10 +31,10 @@ func TestCreateEsIndexCleaner(t *testing.T) {
 	jaeger.Spec.Storage.EsIndexCleaner.SuccessfulJobsHistoryLimit = &historyLimits
 	cronJob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 
-	assert.Equal(t, 2, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args))
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args, 2)
 	// default number of days (7) is applied in normalize in controller
 	assert.Equal(t, []string{"0", "http://nowhere:666"}, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
-	assert.Equal(t, 1, len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env))
+	assert.Len(t, cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env, 1)
 	assert.Equal(t, "INDEX_PREFIX", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Name)
 	assert.Equal(t, "tenant1", cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env[0].Value)
 	assert.Equal(t, historyLimits, *cronJob.Spec.SuccessfulJobsHistoryLimit)
@@ -62,12 +62,12 @@ func TestCreateEsIndexCleanerTypeMeta(t *testing.T) {
 		cronJobs := CreateEsIndexCleaner(jaeger)
 		switch tt := cronJobs.(type) {
 		case *batchv1beta1.CronJob:
-			assert.Equal(t, tt.Kind, "CronJob")
-			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+			assert.Equal(t, "CronJob", tt.Kind)
+			assert.Equal(t, v1.FlagCronJobsVersionBatchV1Beta1, tt.APIVersion)
 			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 		case *batchv1.CronJob:
-			assert.Equal(t, tt.Kind, "CronJob")
-			assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+			assert.Equal(t, "CronJob", tt.Kind)
+			assert.Equal(t, v1.FlagCronJobsVersionBatchV1, tt.APIVersion)
 		}
 	}
 }

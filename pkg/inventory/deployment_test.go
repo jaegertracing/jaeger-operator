@@ -76,8 +76,8 @@ func TestDeploymentInventoryWithSameNameInstances(t *testing.T) {
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, create, create[0])
 	assert.Contains(t, create, create[1])
-	assert.Len(t, inv.Update, 0)
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Update)
+	assert.Empty(t, inv.Delete)
 }
 
 func TestDeploymentInventoryNewWithSameNameAsExisting(t *testing.T) {
@@ -104,7 +104,7 @@ func TestDeploymentInventoryNewWithSameNameAsExisting(t *testing.T) {
 	assert.Len(t, inv.Update, 1)
 	assert.Equal(t, inv.Update[0], existing[0])
 
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Delete)
 }
 
 func TestDeploymentKeepReplicasWhenDesiredIsNil(t *testing.T) {

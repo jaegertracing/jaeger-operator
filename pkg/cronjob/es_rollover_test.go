@@ -28,7 +28,7 @@ func init() {
 
 func TestCreateRollover(t *testing.T) {
 	cj := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
-	assert.Equal(t, 2, len(cj))
+	assert.Len(t, cj, 2)
 }
 
 func TestCreateRolloverTypeMeta(t *testing.T) {
@@ -44,16 +44,16 @@ func TestCreateRolloverTypeMeta(t *testing.T) {
 			viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1Beta1)
 		}
 		cjs := CreateRollover(v1.NewJaeger(types.NamespacedName{Name: "pikachu"}))
-		assert.Equal(t, 2, len(cjs))
+		assert.Len(t, cjs, 2)
 		for _, cj := range cjs {
 			switch tt := cj.(type) {
 			case *batchv1beta1.CronJob:
-				assert.Equal(t, tt.Kind, "CronJob")
-				assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1Beta1)
+				assert.Equal(t, "CronJob", tt.Kind)
+				assert.Equal(t, v1.FlagCronJobsVersionBatchV1Beta1, tt.APIVersion)
 				viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 			case *batchv1.CronJob:
-				assert.Equal(t, tt.Kind, "CronJob")
-				assert.Equal(t, tt.APIVersion, v1.FlagCronJobsVersionBatchV1)
+				assert.Equal(t, "CronJob", tt.Kind)
+				assert.Equal(t, v1.FlagCronJobsVersionBatchV1, tt.APIVersion)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func TestRollover(t *testing.T) {
 	assert.Equal(t, j.Namespace, cjob.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, cjob.OwnerReferences)
 	assert.Equal(t, util.Labels("eevee-es-rollover", "cronjob-es-rollover", *j), cjob.Labels)
-	assert.Equal(t, 1, len(cjob.Spec.JobTemplate.Spec.Template.Spec.Containers))
+	assert.Len(t, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, j.Spec.Storage.EsRollover.Image, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"rollover", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "CONDITIONS", Value: "weheee"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)
@@ -118,7 +118,7 @@ func TestLookback(t *testing.T) {
 	assert.Equal(t, j.Namespace, cjob.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, cjob.OwnerReferences)
 	assert.Equal(t, util.Labels("squirtle-es-lookback", "cronjob-es-lookback", *j), cjob.Labels)
-	assert.Equal(t, 1, len(cjob.Spec.JobTemplate.Spec.Template.Spec.Containers))
+	assert.Len(t, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, j.Spec.Storage.EsRollover.Image, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"lookback", "foo"}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}, {Name: "UNIT", Value: "hours"}, {Name: "UNIT_COUNT", Value: "2"}}, cjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Env)

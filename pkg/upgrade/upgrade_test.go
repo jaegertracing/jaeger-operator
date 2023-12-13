@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -31,11 +32,11 @@ func TestVersionUpgradeToLatest(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
@@ -59,11 +60,11 @@ func TestVersionUpgradeToLatestMultinamespace(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
@@ -87,11 +88,11 @@ func TestVersionUpgradeToLatestOwnedResource(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.12.0", persisted.Status.Version)
 }
 
@@ -109,11 +110,11 @@ func TestUnknownVersion(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, "1.12.0"))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.10.0", persisted.Status.Version)
 }
 
@@ -137,11 +138,11 @@ func TestSkipForNonOwnedInstances(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, "1.11.0", persisted.Status.Version)
 }
 
@@ -156,7 +157,7 @@ func TestErrorForInvalidSemVer(t *testing.T) {
 	}
 	_, err := versions(testUpdates)
 	// test
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
@@ -173,15 +174,15 @@ func TestSkipUpgradeForVersionsGreaterThanLatest(t *testing.T) {
 	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
 
 	// test
-	assert.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
+	require.NoError(t, ManagedInstances(context.Background(), cl, cl, opver.Get().Jaeger))
 
 	// verify
 	persisted := &v1.Jaeger{}
-	assert.NoError(t, cl.Get(context.Background(), nsn, persisted))
+	require.NoError(t, cl.Get(context.Background(), nsn, persisted))
 	assert.Equal(t, existing.Status.Version, persisted.Status.Version)
 }
 
 func TestVersionMapIsValid(t *testing.T) {
 	_, err := versions(upgrades)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

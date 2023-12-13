@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDefault(t *testing.T) {
@@ -179,7 +180,7 @@ func TestDefault(t *testing.T) {
 func TestValidateDelete(t *testing.T) {
 	warnings, err := new(Jaeger).ValidateDelete()
 	assert.Nil(t, warnings)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestValidate(t *testing.T) {
@@ -279,10 +280,10 @@ func TestValidate(t *testing.T) {
 
 			warnings, err := test.current.ValidateCreate()
 			if test.err != "" {
-				assert.NotNil(t, err)
+				require.Error(t, err)
 				assert.Equal(t, test.err, err.Error())
 			} else {
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			}
 			assert.Nil(t, warnings)
 		})

@@ -55,13 +55,13 @@ func TestElasticsearchDependencies(t *testing.T) {
 	j.Spec.Storage.Options = v1.NewOptions(map[string]interface{}{"es.server-urls": "foo,bar", "es.index-prefix": "shortone"})
 
 	deps := elasticsearchDependencies(j)
-	assert.Equal(t, 1, len(deps))
+	assert.Len(t, deps, 1)
 	job := deps[0]
 
 	assert.Equal(t, j.Namespace, job.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, job.OwnerReferences)
 	assert.Equal(t, util.Labels("eevee-es-rollover-create-mapping", "job-es-rollover-create-mapping", *j), job.Labels)
-	assert.Equal(t, 1, len(job.Spec.Template.Spec.Containers))
+	assert.Len(t, job.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, j.Spec.Storage.EsRollover.Image, job.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"init", "foo"}, job.Spec.Template.Spec.Containers[0].Args)
 	assert.Equal(t, []corev1.EnvVar{{Name: "INDEX_PREFIX", Value: "shortone"}}, job.Spec.Template.Spec.Containers[0].Env)

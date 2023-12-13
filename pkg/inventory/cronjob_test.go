@@ -85,8 +85,8 @@ func TestCronJobInventoryWithSameNameInstances(t *testing.T) {
 	assert.Len(t, inv.Create, 2)
 	assert.Contains(t, inv.Create, createObj[0])
 	assert.Contains(t, inv.Create, createObj[1])
-	assert.Len(t, inv.Update, 0)
-	assert.Len(t, inv.Delete, 0)
+	assert.Empty(t, inv.Update)
+	assert.Empty(t, inv.Delete)
 }
 
 func TestCronJobInventoryWithRepeats(t *testing.T) {
@@ -112,5 +112,5 @@ func TestCronJobInventoryWithRepeats(t *testing.T) {
 	for _, v := range inventory.Update {
 		fmt.Printf(v.(*batchv1.CronJob).Name)
 	}
-	assert.Len(t, inventory.Delete, 0)
+	assert.Empty(t, inventory.Delete)
 }

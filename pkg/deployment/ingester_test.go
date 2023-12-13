@@ -249,7 +249,7 @@ func TestIngesterMountGlobalVolumes(t *testing.T) {
 
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// ingester volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].Name, "globalVolume")
+	assert.Equal(t, "globalVolume", podSpec.Containers[0].VolumeMounts[0].Name)
 }
 
 func TestIngesterVolumeMountsWithSameName(t *testing.T) {
@@ -276,7 +276,7 @@ func TestIngesterVolumeMountsWithSameName(t *testing.T) {
 
 	assert.Len(t, podSpec.Containers[0].VolumeMounts, 1)
 	// ingester volume is mounted
-	assert.Equal(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly, false)
+	assert.False(t, podSpec.Containers[0].VolumeMounts[0].ReadOnly)
 }
 
 func TestIngesterVolumeWithSameName(t *testing.T) {
@@ -303,7 +303,7 @@ func TestIngesterVolumeWithSameName(t *testing.T) {
 
 	assert.Len(t, podSpec.Volumes, 1)
 	// ingester volume is mounted
-	assert.Equal(t, podSpec.Volumes[0].VolumeSource.HostPath.Path, "/data2")
+	assert.Equal(t, "/data2", podSpec.Volumes[0].VolumeSource.HostPath.Path)
 }
 
 func TestIngesterResources(t *testing.T) {
@@ -438,7 +438,7 @@ func TestIngesterAutoscalersDisabledByExplicitReplicaSize(t *testing.T) {
 		a := c.Autoscalers()
 
 		// verify
-		assert.Len(t, a, 0)
+		assert.Empty(t, a)
 	}
 }
 
@@ -453,7 +453,7 @@ func TestIngesterAutoscalersDisabledByExplicitOption(t *testing.T) {
 	a := c.Autoscalers()
 
 	// verify
-	assert.Len(t, a, 0)
+	assert.Empty(t, a)
 }
 
 func TestIngesterAutoscalersSetMaxReplicas(t *testing.T) {
@@ -577,7 +577,7 @@ func TestIngesterGRPCPlugin(t *testing.T) {
 			},
 		},
 	}, dep.Spec.Template.Spec.InitContainers)
-	require.Equal(t, 1, len(dep.Spec.Template.Spec.Containers))
+	require.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin"}, dep.Spec.Template.Spec.Containers[0].Args)
 }
 

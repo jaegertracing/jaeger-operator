@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +49,7 @@ func TestClusterRoleBindingsCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &rbac.ClusterRoleBinding{}
@@ -58,7 +59,7 @@ func TestClusterRoleBindingsCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestClusterRoleBindingsSkipped(t *testing.T) {
@@ -92,7 +93,7 @@ func TestClusterRoleBindingsSkipped(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &rbac.ClusterRoleBinding{}
@@ -138,7 +139,7 @@ func TestClusterRoleBindingsUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &rbac.ClusterRoleBinding{}
@@ -148,7 +149,7 @@ func TestClusterRoleBindingsUpdate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestClusterRoleBindingsDelete(t *testing.T) {
@@ -179,7 +180,7 @@ func TestClusterRoleBindingsDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &rbac.ClusterRoleBinding{}
@@ -189,5 +190,5 @@ func TestClusterRoleBindingsDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,7 +44,7 @@ func TestDaemonSetsCreate(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &appsv1.DaemonSet{}
@@ -53,7 +54,7 @@ func TestDaemonSetsCreate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, persistedName.Name, persisted.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDaemonSetsUpdate(t *testing.T) {
@@ -87,7 +88,7 @@ func TestDaemonSetsUpdate(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &appsv1.DaemonSet{}
@@ -97,7 +98,7 @@ func TestDaemonSetsUpdate(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Equal(t, "new-value", persisted.Annotations["key"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDaemonSetsDelete(t *testing.T) {
@@ -125,7 +126,7 @@ func TestDaemonSetsDelete(t *testing.T) {
 
 	// test
 	_, err := r.Reconcile(reconcile.Request{NamespacedName: nsn})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// verify
 	persisted := &appsv1.DaemonSet{}
@@ -135,7 +136,7 @@ func TestDaemonSetsDelete(t *testing.T) {
 	}
 	err = cl.Get(context.Background(), persistedName, persisted)
 	assert.Empty(t, persisted.Name)
-	assert.Error(t, err) // not found
+	require.Error(t, err) // not found
 }
 
 func TestDaemonSetsCreateExistingNameInAnotherNamespace(t *testing.T) {
@@ -179,18 +180,18 @@ func TestDaemonSetsCreateExistingNameInAnotherNamespace(t *testing.T) {
 	res, err := r.Reconcile(req)
 
 	// verify
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, res.Requeue, "We don't requeue for now")
 
 	persisted := &appsv1.DaemonSet{}
 	err = cl.Get(context.Background(), nsn, persisted)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsn.Name, persisted.Name)
 	assert.Equal(t, nsn.Namespace, persisted.Namespace)
 
 	persistedExisting := &appsv1.DaemonSet{}
 	err = cl.Get(context.Background(), nsnExisting, persistedExisting)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, nsnExisting.Name, persistedExisting.Name)
 	assert.Equal(t, nsnExisting.Namespace, persistedExisting.Namespace)
 }

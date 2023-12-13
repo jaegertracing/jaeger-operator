@@ -104,7 +104,7 @@ func (j *Jaeger) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 			Name:      j.Spec.Storage.Elasticsearch.Name,
 		}, es)
 		if errors.IsNotFound(err) {
-			return nil, fmt.Errorf("elasticsearch instance not found: %v", err)
+			return nil, fmt.Errorf("elasticsearch instance not found: %w", err)
 		}
 	}
 
