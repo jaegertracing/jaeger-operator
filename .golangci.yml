@@ -5,6 +5,9 @@ issues:
     - path: _test\.go
       linters:
         - gosec
+    - linters:
+        - staticcheck
+      text: "SA1019:"
 
 linters-settings:
   goimports:
@@ -26,5 +29,5 @@ linters:
     - errcheck
 
 run:
-  go: '1.20'
+  go: '1.21'
   timeout: 10m
