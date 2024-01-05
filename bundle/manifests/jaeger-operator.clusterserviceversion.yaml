@@ -19,7 +19,7 @@ metadata:
     categories: Logging & Tracing
     certified: "false"
     containerImage: quay.io/jaegertracing/jaeger-operator:1.52.0
-    createdAt: "2023-12-19T17:01:11Z"
+    createdAt: "2024-01-05T14:17:46Z"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -369,6 +369,12 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes/custom-host
+          verbs:
+          - create
         serviceAccountName: jaeger-operator
       deployments:
       - label:
