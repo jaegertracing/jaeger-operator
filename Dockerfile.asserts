@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.21 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.21@sha256:672a2286da3ee7a854c3e0a56e0838918d0dbb1c18652992930293312de898a6 as builder
 
 WORKDIR /workspace
 
@@ -27,7 +27,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./index -a ./tests/assert-
 
 # Use the curl container image to ensure we have curl installed. Also, it is a
 # minimal container image
-FROM curlimages/curl:7.81.0
+FROM curlimages/curl@sha256:4bfa3e2c0164fb103fb9bfd4dc956facce32b6c5d47cc09fcec883ce9535d5ac
 WORKDIR /
 COPY --from=builder /workspace/reporter .
 COPY --from=builder /workspace/reporter-otlp .
