@@ -12,7 +12,7 @@ require (
 	github.com/openshift/elasticsearch-operator v0.0.0-20231013125000-a5c132efd4e0
 	github.com/openshift/library-go v0.0.0-20231130204458-653f82d961a1
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/operator-framework/operator-lib v0.11.1-0.20231020142438-152ee1fb7f83
+	github.com/operator-framework/operator-lib v0.12.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -104,7 +104,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.28.3 // indirect
+	k8s.io/apiextensions-apiserver v0.28.5 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
