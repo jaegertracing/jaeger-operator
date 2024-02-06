@@ -1,10 +1,12 @@
 package ingress
 
 import (
+	"context"
 	"fmt"
-
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -52,6 +54,38 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
+	} else {
+		class := ""
+		nginxIngressAvailable := false
+		config, err := rest.InClusterConfig()
+		if err == nil {
+			clientSet, err := kubernetes.NewForConfig(config)
+			if err == nil {
+				ingressList, err := clientSet.NetworkingV1().IngressClasses().List(context.Background(), metav1.ListOptions{})
+				if err == nil {
+					for _, ingress := range ingressList.Items {
+						if ingress.Name == "nginx" {
+							nginxIngressAvailable = true
+						}
+						for k, v := range ingress.Annotations {
+							if k == "ingressclass.kubernetes.io/is-default-class" {
+								if v == "true" {
+									class = ingress.Name
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if len(class) > 0 {
+			spec.IngressClassName = &class
+		} else if nginxIngressAvailable {
+			class = "nginx"
+			spec.IngressClassName = &class
+		}
 	}
 
 	return &networkingv1.Ingress{
