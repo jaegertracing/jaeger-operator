@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.21@sha256:8144f2d44d2262fa930b437200fc4ada624d8a0b9c83d688e2a6f545d097c45b as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.22@sha256:ef61a20960397f4d44b0e729298bf02327ca94f1519239ddc6d91689615b1367 as builder
 
 WORKDIR /workspace
 
