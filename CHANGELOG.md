@@ -1,6 +1,9 @@
 Changes by Version
 ==================
 
+## v1.54.0 (2024-02-14)
+* apis/v1: add jaeger agent deprecation warning ([#2471](https://github.com/jaegertracing/jaeger-operator/pull/2471), [@frzifus](https://github.com/frzifus))
+
 ## V1.53.0 (2024-01-17)
 * Choose the newer autoscaling version by default ([#2374](https://github.com/jaegertracing/jaeger-operator/pull/2374), [@iblancasa](https://github.com/iblancasa))
 * Upgrade operator-sdk to 1.32.0 ([#2388](https://github.com/jaegertracing/jaeger-operator/pull/2388), [@iblancasa](https://github.com/iblancasa))
