@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -163,6 +162,8 @@ func getRule(host string, path string, pathType *networkingv1.PathType, backend 
 func getIngressClass() (string, bool) {
 	ingressClass := ""
 	nginxIngressAvailable := false
+	// This statement only work if it is running inside cluster, if you want to test outside replace this statement with
+	// config, err := clientcmd.BuildConfigFromFlags("", "PATH_TO_YOUR_CLUSTER_CONFIG_FILE")
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return "", true

@@ -287,7 +287,13 @@ func TestQueryIngressClass(t *testing.T) {
 
 	assert.NotNil(t, dep.Spec.IngressClassName)
 	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
-	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
+	_, err := getIngressClass()
+	if !err {
+		assert.NotNil(t, ingressNoClass.Get().Spec.IngressClassName)
+	} else {
+		assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
+	}
+
 }
 
 func TestQueryIngressTLSHosts(t *testing.T) {
