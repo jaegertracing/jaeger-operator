@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
-	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/service"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // QueryIngress builds pods for jaegertracing/jaeger-query
@@ -56,8 +55,8 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
 	} else {
-		ingressClass, err := getIngressClass()
-		if !err {
+		ingressClass, err := getInClusterAvailableIngressClasses()
+		if err == nil {
 			spec.IngressClassName = &ingressClass
 		}
 	}
@@ -159,22 +158,20 @@ func getRule(host string, path string, pathType *networkingv1.PathType, backend 
 	return rule
 }
 
-func getIngressClass() (string, bool) {
+func getInClusterAvailableIngressClasses() (string, error) {
 	ingressClass := ""
 	nginxIngressAvailable := false
-	// This statement only work if it is running inside cluster, if you want to test outside replace this statement with
-	// config, err := clientcmd.BuildConfigFromFlags("", "PATH_TO_YOUR_CLUSTER_CONFIG_FILE")
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return "", true
+		return "", err
 	}
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return "", true
+		return "", err
 	}
 	ingressList, err := clientSet.NetworkingV1().IngressClasses().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return "", true
+		return "", err
 	}
 	for _, ingress := range ingressList.Items {
 		if ingress.Name == "nginx" {
@@ -190,9 +187,9 @@ func getIngressClass() (string, bool) {
 		}
 	}
 	if len(ingressClass) > 0 {
-		return ingressClass, false
+		return ingressClass, nil
 	} else if nginxIngressAvailable {
-		return "nginx", false
+		return "nginx", nil
 	}
-	return "", true
+	return "", fmt.Errorf("no available ingress controller found")
 }
