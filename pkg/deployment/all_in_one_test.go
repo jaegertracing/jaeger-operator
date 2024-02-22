@@ -608,6 +608,18 @@ func TestAllInOnePriorityClassName(t *testing.T) {
 	assert.Equal(t, priorityClassName, dep.Spec.Template.Spec.PriorityClassName)
 }
 
+func TestAllInOnePrometheusMetricStorage(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOnePrometheusMetricStorage"})
+
+	jaeger.Spec.AllInOne.MetricsStorage.Type = "prometheus"
+	jaeger.Spec.AllInOne.MetricsStorage.ServerUrl = "http://prometheus:9090"
+
+	d := NewAllInOne(jaeger).Get()
+
+	assert.Equal(t, "prometheus", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "METRICS_STORAGE_TYPE").Value)
+	assert.NotEmpty(t, getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "PROMETHEUS_SERVER_URL").Value)
+}
+
 func getEnvVarByName(vars []corev1.EnvVar, name string) corev1.EnvVar {
 	envVar := corev1.EnvVar{}
 	for _, v := range vars {

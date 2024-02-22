@@ -135,6 +135,14 @@ func (q *Query) Get() *appsv1.Deployment {
 			Value: strconv.FormatBool(jaegerDisabled),
 		},
 	}
+
+	if q.jaeger.Spec.Query.MetricsStorage.Type == "prometheus" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "PROMETHEUS_SERVER_URL",
+			Value: q.jaeger.Spec.Query.MetricsStorage.ServerUrl,
+		})
+	}
+
 	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
