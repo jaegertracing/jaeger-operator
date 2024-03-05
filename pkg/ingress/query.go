@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/service"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 // QueryIngress builds pods for jaegertracing/jaeger-query
