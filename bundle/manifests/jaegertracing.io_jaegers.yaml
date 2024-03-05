@@ -2564,6 +2564,8 @@ spec:
                     type: object
                   metricsStorage:
                     properties:
+                      server-url:
+                        type: string
                       type:
                         type: string
                     type: object
@@ -8850,6 +8852,8 @@ spec:
                     type: object
                   metricsStorage:
                     properties:
+                      server-url:
+                        type: string
                       type:
                         type: string
                     type: object
