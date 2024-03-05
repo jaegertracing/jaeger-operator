@@ -153,7 +153,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 		},
 	}
 
-	if a.jaeger.Spec.AllInOne.MetricsStorage.Type == "prometheus" {
+	if a.jaeger.Spec.AllInOne.MetricsStorage.Type == "prometheus" && a.jaeger.Spec.AllInOne.MetricsStorage.ServerUrl != "" {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "PROMETHEUS_SERVER_URL",
 			Value: a.jaeger.Spec.AllInOne.MetricsStorage.ServerUrl,
