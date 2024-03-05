@@ -11,6 +11,9 @@ LABEL operators.operatorframework.io.metrics.builder=operator-sdk-v1.13.0+git
 LABEL operators.operatorframework.io.metrics.mediatype.v1=metrics+v1
 LABEL operators.operatorframework.io.metrics.project_layout=go.kubebuilder.io/v3
 
+# OpenShift specific labels.
+LABEL com.redhat.openshift.versions=v4.12
+
 # Copy files to locations specified by labels.
 COPY bundle/manifests /manifests/
 COPY bundle/metadata /metadata/
