@@ -55,7 +55,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
 	} else {
-		ingressClass, err := getInClusterAvailableIngressClasses()
+		ingressClass, err := getInClusterAvailableIngressClass()
 		if err == nil {
 			spec.IngressClassName = &ingressClass
 		}
@@ -158,7 +158,7 @@ func getRule(host string, path string, pathType *networkingv1.PathType, backend 
 	return rule
 }
 
-func getInClusterAvailableIngressClasses() (string, error) {
+func getInClusterAvailableIngressClass() (string, error) {
 	ingressClass := ""
 	nginxIngressAvailable := false
 	config, err := rest.InClusterConfig()

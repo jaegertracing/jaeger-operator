@@ -326,7 +326,7 @@ func TestForDefaultIngressClass(t *testing.T) {
 		}
 	}
 
-	getIngressClass, err := getInClusterAvailableIngressClasses()
+	getIngressClass, err := getInClusterAvailableIngressClass()
 	if err != nil {
 		if len(AvailableIngressController) > 0 {
 			t.Fatalf("%v", err)

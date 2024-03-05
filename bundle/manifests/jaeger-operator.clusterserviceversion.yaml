@@ -336,6 +336,7 @@ spec:
         - apiGroups:
           - networking.k8s.io
           resources:
+          - ingressclasses
           - ingresses
           verbs:
           - create
