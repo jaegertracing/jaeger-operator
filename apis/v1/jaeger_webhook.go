@@ -48,6 +48,7 @@ func (j *Jaeger) objsWithOptions() []*Options {
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (j *Jaeger) Default() {
 	jaegerlog.Info("default", "name", j.Name)
+	jaegerlog.Info("WARNING jaeger-agent is deprecated and will removed in v1.55.0. See https://github.com/jaegertracing/jaeger/issues/4739", "component", "agent")
 
 	if j.Spec.Storage.Elasticsearch.Name == "" {
 		j.Spec.Storage.Elasticsearch.Name = defaultElasticsearchName

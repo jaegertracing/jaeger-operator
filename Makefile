@@ -52,6 +52,9 @@ CMCTL ?= $(LOCALBIN)/cmctl
 # Operator SDK
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 OPERATOR_SDK_VERSION ?= 1.32.0
+# Minimum Kubernetes and OpenShift versions
+MIN_KUBERNETES_VERSION ?= 1.19.0
+MIN_OPENSHIFT_VERSION ?= 4.12
 # Use a KIND cluster for the E2E tests
 USE_KIND_CLUSTER ?= true
  # Is Jaeger Operator installed via OLM?
@@ -350,6 +353,10 @@ $(ENVTEST): $(LOCALBIN)
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(SED) -i "s#containerImage: quay.io/jaegertracing/jaeger-operator:$(OPERATOR_VERSION)#containerImage: quay.io/jaegertracing/jaeger-operator:$(VERSION)#g" config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
+	$(SED) -i 's/minKubeVersion: .*/minKubeVersion: $(MIN_KUBERNETES_VERSION)/' config/manifests/bases/jaeger-operator.clusterserviceversion.yaml
+	$(SED) -i 's/com.redhat.openshift.versions=.*/com.redhat.openshift.versions=v$(MIN_OPENSHIFT_VERSION)/' bundle.Dockerfile
+	$(SED) -i 's/com.redhat.openshift.versions: .*/com.redhat.openshift.versions: v$(MIN_OPENSHIFT_VERSION)/' bundle/metadata/annotations.yaml
+
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --manifests --version $(VERSION) $(BUNDLE_METADATA_OPTS)

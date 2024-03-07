@@ -1,6 +1,15 @@
 Changes by Version
 ==================
 
+## v1.54.0 (2024-02-14)
+* apis/v1: add jaeger agent deprecation warning ([#2471](https://github.com/jaegertracing/jaeger-operator/pull/2471), [@frzifus](https://github.com/frzifus))
+
+## V1.53.0 (2024-01-17)
+* Choose the newer autoscaling version by default ([#2374](https://github.com/jaegertracing/jaeger-operator/pull/2374), [@iblancasa](https://github.com/iblancasa))
+* Upgrade operator-sdk to 1.32.0 ([#2388](https://github.com/jaegertracing/jaeger-operator/pull/2388), [@iblancasa](https://github.com/iblancasa))
+* Fix containerImage field and remove statement about failing CI ([#2386](https://github.com/jaegertracing/jaeger-operator/pull/2386), [@iblancasa](https://github.com/iblancasa))
+* Fix injection: prefer jaeger in the same namespace ([#2383](https://github.com/jaegertracing/jaeger-operator/pull/2383), [@pavolloffay](https://github.com/pavolloffay))
+
 ## v1.52.0 (2023-12-07)
 * Add missing container security context settings and tests ([#2354](https://github.com/jaegertracing/jaeger-operator/pull/2354), [@tingeltangelthomas](https://github.com/tingeltangelthomas))
 

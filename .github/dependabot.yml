@@ -1,11 +1,35 @@
 version: 2
 updates:
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    labels:
+      - dependencies
+      - docker
+      - ok-to-test
+  - package-ecosystem: docker
+    directory: "/tests"
+    schedule:
+      interval: daily
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    labels:
+      - dependencies
+      - docker
+      - ok-to-test
   - package-ecosystem: gomod
     directory: "/"
     schedule:
       interval: daily
       time: "03:00"
       timezone: "Europe/Berlin"
+    labels:
+      - dependencies
+      - go
+      - ok-to-test
     groups:
       golang-org-x:
         patterns:
@@ -32,3 +56,7 @@ updates:
       interval: "daily"
       time: "03:00"
       timezone: "Europe/Berlin"
+    labels:
+      - dependencies
+      - github_actions
+      - ok-to-test
