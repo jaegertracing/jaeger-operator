@@ -2,7 +2,6 @@ package namespace
 
 import (
 	"context"
-	"fmt"
 
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
@@ -16,7 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -93,27 +91,5 @@ func (r *ReconcileNamespace) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
-	for i := 0; i < len(deps.Items); i++ {
-		dep := &deps.Items[i]
-		if dep.Labels["app"] == "jaeger" {
-			// Don't touch jaeger deployments
-			continue
-		}
-
-		// NOTE: If a deployment does not provide an "inject" annotation and
-		// has an agent, we need to verify if this is caused by a annotated
-		// namespace.
-		hasAgent, _ := inject.HasJaegerAgent(dep)
-		_, hasDepAnnotation := dep.Annotations[inject.Annotation]
-		verificationNeeded := hasAgent && !hasDepAnnotation
-
-		if inject.Needed(dep, ns) || verificationNeeded {
-			inject.IncreaseRevision(dep.Annotations)
-			if err := r.client.Update(context.Background(), dep); err != nil {
-				logger.V(5).Info(fmt.Sprintf("%s", err))
-				return reconcile.Result{}, tracing.HandleError(err, span)
-			}
-		}
-	}
 	return reconcile.Result{}, nil
 }

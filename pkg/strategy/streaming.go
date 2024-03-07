@@ -145,9 +145,6 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled {
-		queryDep = inject.Sidecar(jaeger, queryDep)
-	}
 	var ingesterDep *appsv1.Deployment
 	if d := ingester.Get(); d != nil {
 		ingesterDep = d
