@@ -36,18 +36,27 @@ func (r *QueryRoute) Get() *corev1.Route {
 	}
 
 	var name string
+
+	host := ""
+	if len(r.jaeger.Spec.Ingress.Hosts) > 0 {
+		host = r.jaeger.Spec.Ingress.Hosts[0]
+	}
+
 	if len(r.jaeger.Namespace) >= 63 {
 		// the route is doomed already, nothing we can do...
 		name = r.jaeger.Name
-		r.jaeger.Logger().V(1).Info(
-			"the route's hostname will have more than 63 chars and will not be valid",
-			"name", name,
-		)
+		if host == "" {
+			r.jaeger.Logger().V(1).Info(
+				"the route's hostname will have more than 63 chars and will not be valid",
+				"name", name,
+			)
+		}
 	} else {
 		// -namespace is added to the host by OpenShift
 		name = util.Truncate(r.jaeger.Name, 62-len(r.jaeger.Namespace))
 	}
 	name = util.DNSName(name)
+
 	return &corev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
@@ -78,6 +87,7 @@ func (r *QueryRoute) Get() *corev1.Route {
 			TLS: &corev1.TLSConfig{
 				Termination: termination,
 			},
+			Host: host,
 		},
 	}
 }

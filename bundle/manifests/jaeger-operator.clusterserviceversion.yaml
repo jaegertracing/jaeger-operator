@@ -370,6 +370,12 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes/custom-host
+          verbs:
+          - create
         serviceAccountName: jaeger-operator
       deployments:
       - label:
@@ -518,6 +524,7 @@ spec:
   - email: jaeger-tracing@googlegroups.com
     name: Jaeger Google Group
   maturity: alpha
+  minKubeVersion: 1.19.0
   provider:
     name: CNCF
   replaces: jaeger-operator.v1.53.0
