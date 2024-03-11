@@ -24,6 +24,8 @@ Steps to release a new version of the Jaeger Operator:
 
 4. Prepare a changelog since last release.
 
+4. Update the release manager schedule.
+
 5. Commit the changes and create a pull request:
 
    ```sh
