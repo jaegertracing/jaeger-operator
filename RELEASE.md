@@ -60,14 +60,11 @@ After the PRs have been made it must be ensured that:
 
 ## Release managers
 
-The operator should be released within a week after the [OpenTelemetry collector release](https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/release.md#release-schedule).
+The operator should be released within a week after the [Jaeger release](https://github.com/jaegertracing/jaeger/blob/main/RELEASE.md#release-managers).
 
-| Version  | Release manager |
-|----------|-----------------|
-| v0.97.0  | @pavolloffay    |
-| v0.98.0  | @yuriolisa      |
-| v0.99.0  | @pavolloffay    |
-| v0.100.0 | @VineethReddy02 |
-| v0.101.0 | @TylerHelmuth   |
-| v0.102.0 | @swiatekm-sumo  |
-| v0.103.0 | @frzifus        |
+| Version | Release Manager                                          |
+|---------| -------------------------------------------------------- |
+| 1.55.0  | [Pavol Loffay](https://github.com/pavolloffay)           |
+| 1.56.0  | [Israel Blancas](https://github.com/iblancasa)           |
+| 1.57.0  | [Ruben Vargas](https://github.com/rubenvp8510)           |
+| 1.58.0  | [Benedikt Bongartz](https://github.com/frzifus)          |
