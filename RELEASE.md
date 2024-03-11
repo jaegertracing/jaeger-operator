@@ -16,6 +16,8 @@ Steps to release a new version of the Jaeger Operator:
 
 1. Change the `versions.txt `so that it lists the target version of the Jaeger (if it is required). **Don't touch the operator version**: it will be changed automatically in the next step.
 
+2. Confirm that `MIN_KUBERNETES_VERSION` and `MIN_OPENSHIFT_VERSION` in the `Makefile` are still up-to-date, and update them if required.
+
 2. Run `OPERATOR_VERSION=1.30.0 make prepare-release`, using the operator version that will be released.
 
 3. Run the E2E tests in OpenShift as described in [the CONTRIBUTING.md](CONTRIBUTING.md#an-external-cluster-like-openshift) file. The tests will be executed automatically in Kubernetes by the GitHub Actions CI later.
