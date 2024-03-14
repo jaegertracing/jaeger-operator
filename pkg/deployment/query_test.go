@@ -512,7 +512,6 @@ func TestQueryNodeSelector(t *testing.T) {
 }
 
 func TestQueryPrometheusMetricStorage(t *testing.T) {
-
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryPrometheusMetricStorage"})
 
 	jaeger.Spec.Query.MetricsStorage.Type = "prometheus"
