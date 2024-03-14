@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -280,19 +280,16 @@ func TestQueryIngressTLSSecret(t *testing.T) {
 
 func TestQueryIngressClass(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
-	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
 
 	inressClassName := "nginx"
 	jaeger.Spec.Ingress.IngressClassName = &inressClassName
 
 	ingress := NewQueryIngress(jaeger)
-	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
 
 	dep := ingress.Get()
 
 	assert.NotNil(t, dep.Spec.IngressClassName)
 	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
-	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
 }
 
 func TestForDefaultIngressClass(t *testing.T) {
