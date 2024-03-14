@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	authenticationapi "k8s.io/api/authentication/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
@@ -100,6 +101,7 @@ func (b *Background) autoDetectCapabilities() {
 			// the version of the APIs provided by the platform will not change
 			b.detectCronjobsVersion(ctx)
 			b.detectAutoscalingVersion(ctx)
+			b.detectDefaultIngressClass(ctx)
 		})
 		b.detectOAuthProxyImageStream(ctx)
 		b.detectElasticsearch(ctx, apiList)
@@ -191,6 +193,33 @@ func AvailableAPIs(discovery discovery.DiscoveryInterface, groups map[string]boo
 		}
 	}
 	return apiLists, errors
+}
+
+func (b *Background) detectDefaultIngressClass(ctx context.Context) {
+	if OperatorConfiguration.GetPlatform() == OpenShiftPlatform {
+		return
+	}
+
+	ingressClasses := networkingv1.IngressClassList{}
+	err := b.cl.List(ctx, &ingressClasses)
+	if err != nil {
+		log.Log.Info("It was not possible to get any IngressClasses from the Kubernetes cluster")
+	}
+
+	oldValue := viper.GetString(v1.FlagDefaultIngressClass)
+
+	for _, ingressClass := range ingressClasses.Items {
+		val, ok := ingressClass.Annotations["ingressclass.kubernetes.io/is-default-class"]
+		if ok {
+			if val == "true" {
+				if oldValue != ingressClass.Name {
+					log.Log.Info("New default IngressClass value found", "old", oldValue, "new", ingressClass.Name)
+				}
+				viper.Set(v1.FlagDefaultIngressClass, ingressClass.Name)
+				return
+			}
+		}
+	}
 }
 
 func (b *Background) detectPlatform(ctx context.Context, apiList []*metav1.APIResourceList) {

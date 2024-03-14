@@ -9,6 +9,7 @@ import (
 	openapi_v2 "github.com/google/gnostic-models/openapiv2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
@@ -612,18 +613,102 @@ func TestAuthDelegatorBecomesUnavailable(t *testing.T) {
 	assert.False(t, OperatorConfiguration.IsAuthDelegatorAvailable())
 }
 
+func TestSkipDefaultIngressClassOpenShift(t *testing.T) {
+	// prepare
+	OperatorConfiguration.SetPlatform(OpenShiftPlatform)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
+func TestDetectDefaultIngressClass(t *testing.T) {
+	// prepare
+	OperatorConfiguration.SetPlatform(KubernetesPlatform)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+
+	cl.ListFunc = func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+		if listPointer, ok := list.(*networkingv1.IngressClassList); ok {
+			listPointer.Items = []networkingv1.IngressClass{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
+						Annotations: map[string]string{
+							"ingressclass.kubernetes.io/is-default-class": "true",
+						},
+					},
+				},
+			}
+		}
+
+		return nil
+	}
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "nginx", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
+func TestDetectNoDefaultIngressClass(t *testing.T) {
+	// prepare
+	OperatorConfiguration.SetPlatform(KubernetesPlatform)
+	defer viper.Reset()
+
+	dcl := &fakeDiscoveryClient{}
+	cl := customFakeClient()
+
+	cl.ListFunc = func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+		if listPointer, ok := list.(*networkingv1.IngressClassList); ok {
+			listPointer.Items = []networkingv1.IngressClass{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
+					},
+				},
+			}
+		}
+
+		return nil
+	}
+	b := WithClients(cl, dcl, cl)
+
+	// test
+	b.detectDefaultIngressClass(context.Background())
+
+	// verify
+	assert.Equal(t, "", viper.GetString(v1.FlagDefaultIngressClass))
+}
+
 type fakeClient struct {
 	client.Client
 	CreateFunc func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
+	ListFunc   func(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 }
 
 func customFakeClient() *fakeClient {
 	c := fake.NewClientBuilder().Build()
-	return &fakeClient{Client: c, CreateFunc: c.Create}
+	return &fakeClient{Client: c, CreateFunc: c.Create, ListFunc: c.List}
 }
 
 func (f *fakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	return f.CreateFunc(ctx, obj)
+}
+
+func (f *fakeClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return f.ListFunc(ctx, list)
 }
 
 type fakeDiscoveryClient struct {

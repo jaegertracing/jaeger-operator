@@ -1,13 +1,12 @@
 package ingress
 
 import (
-	"context"
 	"fmt"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+
+	"github.com/spf13/viper"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
@@ -56,10 +55,7 @@ func (i *QueryIngress) Get() *networkingv1.Ingress {
 	if i.jaeger.Spec.Ingress.IngressClassName != nil {
 		spec.IngressClassName = i.jaeger.Spec.Ingress.IngressClassName
 	} else {
-		ingressClass, err := getInClusterAvailableIngressClass()
-		if err == nil {
-			spec.IngressClassName = &ingressClass
-		}
+		spec.IngressClassName = getInClusterAvailableIngressClass()
 	}
 
 	return &networkingv1.Ingress{
@@ -159,38 +155,10 @@ func getRule(host string, path string, pathType *networkingv1.PathType, backend 
 	return rule
 }
 
-func getInClusterAvailableIngressClass() (string, error) {
-	ingressClass := ""
-	nginxIngressAvailable := false
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return "", err
+func getInClusterAvailableIngressClass() *string {
+	ingressClassName := viper.GetString(v1.FlagDefaultIngressClass)
+	if ingressClassName == "" {
+		return nil
 	}
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return "", err
-	}
-	ingressList, err := clientSet.NetworkingV1().IngressClasses().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return "", err
-	}
-	for _, ingress := range ingressList.Items {
-		if ingress.Name == "nginx" {
-			nginxIngressAvailable = true
-		}
-		for k, v := range ingress.Annotations {
-			if k == "ingressclass.kubernetes.io/is-default-class" {
-				if v == "true" {
-					ingressClass = ingress.Name
-					break
-				}
-			}
-		}
-	}
-	if len(ingressClass) > 0 {
-		return ingressClass, nil
-	} else if nginxIngressAvailable {
-		return "nginx", nil
-	}
-	return "", fmt.Errorf("no available ingress controller found")
+	return &ingressClassName
 }
