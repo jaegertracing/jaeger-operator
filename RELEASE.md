@@ -24,6 +24,8 @@ Steps to release a new version of the Jaeger Operator:
 
 4. Prepare a changelog since last release.
 
+4. Update the release manager schedule.
+
 5. Commit the changes and create a pull request:
 
    ```sh
@@ -57,3 +59,14 @@ After the PRs have been made it must be ensured that:
 - Images listed in the ClusterServiceVersion (CSV) have a versions tag [#1682](https://github.com/jaegertracing/jaeger-operator/issues/1682)
 - No `bundle` folder is included in the release
 - No foreign CRs like prometheus are in the manifests
+
+## Release managers
+
+The operator should be released within a week after the [Jaeger release](https://github.com/jaegertracing/jaeger/blob/main/RELEASE.md#release-managers).
+
+| Version | Release Manager                                          |
+|---------| -------------------------------------------------------- |
+| 1.55.0  | [Pavol Loffay](https://github.com/pavolloffay)           |
+| 1.56.0  | [Israel Blancas](https://github.com/iblancasa)           |
+| 1.57.0  | [Ruben Vargas](https://github.com/rubenvp8510)           |
+| 1.58.0  | [Benedikt Bongartz](https://github.com/frzifus)          |
