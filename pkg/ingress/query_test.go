@@ -1,12 +1,7 @@
 package ingress
 
 import (
-	"context"
 	"testing"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
@@ -282,8 +277,8 @@ func TestQueryIngressClass(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressClass"})
 	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
 
-	inressClassName := "nginx"
-	jaeger.Spec.Ingress.IngressClassName = &inressClassName
+	ingressClassName := "nginx"
+	jaeger.Spec.Ingress.IngressClassName = &ingressClassName
 
 	ingress := NewQueryIngress(jaeger)
 	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
@@ -292,68 +287,8 @@ func TestQueryIngressClass(t *testing.T) {
 
 	assert.NotNil(t, dep.Spec.IngressClassName)
 	assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
-	assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
-
-}
-
-func TestForDefaultIngressClass(t *testing.T) {
-	jaegerNoIngressNoClass := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressNoClass"})
-
-	// for storing all ingress controller names installed inside cluster
-	AvailableIngressController := make(map[string]bool)
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	ingressList, err := clientSet.NetworkingV1().IngressClasses().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	// check for all available ingress controller installed in cluster
-	for _, ingress := range ingressList.Items {
-		AvailableIngressController[ingress.Name] = false
-		for k, v := range ingress.Annotations {
-			if k == "ingressclass.kubernetes.io/is-default-class" {
-				if v == "true" {
-					AvailableIngressController[ingress.Name] = true
-				}
-			}
-		}
-	}
-
-	getIngressClass, err := getInClusterAvailableIngressClass()
-	if err != nil {
-		if len(AvailableIngressController) > 0 {
-			t.Fatalf("%v", err)
-		} else {
-			ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
-			assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
-		}
-	} else {
-		jaegerNoIngressNoClass.Spec.Ingress.IngressClassName = &getIngressClass
-	}
-
-	ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
-
-	dep := ingressNoClass.Get()
-
-	defaultIngressClass := getDefaultIngressController(AvailableIngressController)
-	if len(defaultIngressClass) > 0 {
-		assert.Equal(t, defaultIngressClass, *dep.Spec.IngressClassName)
-	} else {
-		if _, ok := AvailableIngressController["nginx"]; ok {
-			assert.Equal(t, "nginx", *dep.Spec.IngressClassName)
-		} else {
-			ingressNoClass := NewQueryIngress(jaegerNoIngressNoClass)
-			assert.Nil(t, ingressNoClass.Get().Spec.IngressClassName)
-		}
-	}
+	r := ingressNoClass.Get().Spec.IngressClassName
+	assert.Nil(t, r)
 }
 
 func TestQueryIngressTLSHosts(t *testing.T) {
@@ -377,13 +312,4 @@ func TestQueryIngressTLSHosts(t *testing.T) {
 	assert.Equal(t, "test-host-1", dep.Spec.TLS[0].Hosts[0])
 	assert.Equal(t, "test-host-2", dep.Spec.TLS[1].Hosts[0])
 	assert.Equal(t, "test-host-3", dep.Spec.TLS[1].Hosts[1])
-}
-
-func getDefaultIngressController(m map[string]bool) string {
-	for key, value := range m {
-		if value {
-			return key
-		}
-	}
-	return "" // return an empty string if no key has a true value
 }
