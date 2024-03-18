@@ -77,7 +77,6 @@ func main() {
 		logrus.Debug(resp.Data)
 		return false, nil
 	})
-
 	if err != nil {
 		logrus.Fatalln("Error querying the Jaeger instance: ", err)
 	}

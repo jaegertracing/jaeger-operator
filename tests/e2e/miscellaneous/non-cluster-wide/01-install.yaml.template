@@ -9,4 +9,4 @@ kind: TestStep
 commands:
   # To run this test, we modify the operator to only run and look in this namespace
   - script: "cd {{ .Env.ROOT_DIR }}/config/default && {{ .Env.KUSTOMIZE }} edit set namespace $NAMESPACE"
-  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }} build config/namespaced | kubectl apply -f - -n $NAMESPACE"
+  - script: "cd {{ .Env.ROOT_DIR }} && {{ .Env.KUSTOMIZE }} build config/default | kubectl apply -f - -n $NAMESPACE"

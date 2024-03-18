@@ -63,6 +63,9 @@ const (
 	// IngressSecurityNone disables any form of security for ingress objects (default)
 	IngressSecurityNone IngressSecurityType = ""
 
+	// FlagDefaultIngressClass represents the default Ingress class from the cluster
+	FlagDefaultIngressClass = "default-ingressclass"
+
 	// IngressSecurityNoneExplicit used when the user specifically set it to 'none'
 	IngressSecurityNoneExplicit IngressSecurityType = "none"
 
