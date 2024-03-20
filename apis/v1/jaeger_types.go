@@ -576,6 +576,9 @@ type JaegerStorageSpec struct {
 type JaegerMetricsStorageSpec struct {
 	// +optional
 	Type JaegerStorageType `json:"type,omitempty"`
+
+	// +optional
+	ServerUrl string `json:"server-url,omitempty"`
 }
 
 // ElasticsearchSpec represents the ES configuration options that we pass down to the OpenShift Elasticsearch operator.

@@ -152,6 +152,14 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 			Value: strconv.FormatBool(jaegerDisabled),
 		},
 	}
+
+	if a.jaeger.Spec.AllInOne.MetricsStorage.Type == "prometheus" && a.jaeger.Spec.AllInOne.MetricsStorage.ServerUrl != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "PROMETHEUS_SERVER_URL",
+			Value: a.jaeger.Spec.AllInOne.MetricsStorage.ServerUrl,
+		})
+	}
+
 	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)
 
 	ports := []corev1.ContainerPort{

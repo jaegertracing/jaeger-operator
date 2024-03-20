@@ -9556,6 +9556,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>server-url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>type</b></td>
         <td>string</td>
         <td>
@@ -33321,6 +33328,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>server-url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>type</b></td>
         <td>string</td>
         <td>

@@ -510,3 +510,15 @@ func TestQueryNodeSelector(t *testing.T) {
 
 	assert.Equal(t, nodeSelector, dep.Spec.Template.Spec.NodeSelector)
 }
+
+func TestQueryPrometheusMetricStorage(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryPrometheusMetricStorage"})
+
+	jaeger.Spec.Query.MetricsStorage.Type = "prometheus"
+	jaeger.Spec.Query.MetricsStorage.ServerUrl = "http://prometheus:9090"
+
+	d := NewQuery(jaeger).Get()
+
+	assert.Equal(t, "prometheus", getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "METRICS_STORAGE_TYPE").Value)
+	assert.NotEmpty(t, getEnvVarByName(d.Spec.Template.Spec.Containers[0].Env, "PROMETHEUS_SERVER_URL").Value)
+}
