@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+## v1.55.0 (2024-03-22)
+* Add server URL to JaegerMetricsStorageSpec ([#2481](https://github.com/jaegertracing/jaeger-operator/pull/2481), [@antoniomerlin](https://github.com/antoniomerlin))
+* Use the host set in the Ingess field for the OpenShift Route ([#2409](https://github.com/jaegertracing/jaeger-operator/pull/2409), [@iblancasa](https://github.com/iblancasa))
+* Add minimum Kubernetes and OpenShift versions ([#2492](https://github.com/jaegertracing/jaeger-operator/pull/2492), [@andreasgerstmayr](https://github.com/andreasgerstmayr))
+
 ## v1.54.0 (2024-02-14)
 * apis/v1: add jaeger agent deprecation warning ([#2471](https://github.com/jaegertracing/jaeger-operator/pull/2471), [@frzifus](https://github.com/frzifus))
 
