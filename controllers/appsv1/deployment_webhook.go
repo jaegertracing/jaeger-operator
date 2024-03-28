@@ -2,7 +2,6 @@ package appsv1
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -21,7 +20,6 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
 )
 
@@ -113,60 +111,6 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 		return admission.Errored(http.StatusInternalServerError, tracing.HandleError(err, span))
 	}
 
-	if inject.Needed(dep, ns) {
-		jaeger := inject.Select(dep, ns, jaegers)
-		if jaeger != nil && jaeger.GetDeletionTimestamp() == nil {
-			logger := logger.WithValues(
-				"jaeger", jaeger.Name,
-				"jaeger-namespace", jaeger.Namespace,
-			)
-			if jaeger.Namespace != dep.Namespace {
-				if err := reconcileConfigMaps(ctx, d.client, jaeger, dep); err != nil {
-					const msg = "failed to reconcile config maps for the namespace"
-					logger.Error(err, msg)
-					span.AddEvent(msg)
-				}
-			}
-
-			// a suitable jaeger instance was found! let's inject a sidecar pointing to it then
-			// Verified that jaeger instance was found and is not marked for deletion.
-			{
-				msg := "injecting Jaeger Agent sidecar"
-				logger.Info(msg)
-				span.AddEvent(msg)
-			}
-
-			envConfigMaps := corev1.ConfigMapList{}
-			d.client.List(ctx, &envConfigMaps, client.InNamespace(dep.Namespace))
-			dep = inject.Sidecar(jaeger, dep, inject.WithEnvFromConfigMaps(inject.GetConfigMapsMatchedEnvFromInDeployment(*dep, envConfigMaps.Items)))
-			marshaledDeploy, err := json.Marshal(dep)
-			if err != nil {
-				return admission.Errored(http.StatusInternalServerError, tracing.HandleError(err, span))
-			}
-
-			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeploy)
-		}
-
-		const msg = "no suitable Jaeger instances found to inject a sidecar"
-		span.AddEvent(msg)
-		logger.V(-1).Info(msg)
-		return admission.Allowed(msg)
-	}
-
-	if hasAgent, _ := inject.HasJaegerAgent(dep); hasAgent {
-		if _, hasLabel := dep.Labels[inject.Label]; hasLabel {
-			const msg = "remove sidecar"
-			logger.Info(msg)
-			span.AddEvent(msg)
-			inject.CleanSidecar(dep.Labels[inject.Label], dep)
-			marshaledDeploy, err := json.Marshal(dep)
-			if err != nil {
-				return admission.Errored(http.StatusInternalServerError, tracing.HandleError(err, span))
-			}
-
-			return admission.PatchResponseFromRaw(req.Object.Raw, marshaledDeploy)
-		}
-	}
 	return admission.Allowed("no action needed")
 }
 
