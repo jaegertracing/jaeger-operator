@@ -3,6 +3,12 @@ The following table shows the compatibility of jaeger operator with different co
 
 | Jaeger Operator | Kubernetes      | Strimzi Operator   | Cert-Manager |
 |-----------------|-----------------|--------------------|--------------|
+| v1.55.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.54.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.53.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.52.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.51.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.50.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
 | v1.49.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
 | v1.48.x         | v1.19 to v1.27  | v0.32              | v1.6.1       |
 | v1.47.x         | v1.19 to v1.27  | v0.32              | v1.6.1       |
