@@ -6,7 +6,7 @@ on:
     - 'v*'
 
 jobs:
-  unit-tests:
+  release:
     runs-on: ubuntu-20.04
     env:
       USER: jaegertracing
