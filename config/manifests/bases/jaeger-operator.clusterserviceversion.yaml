@@ -125,7 +125,7 @@ spec:
   minKubeVersion: 1.19.0
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.55.0
+  replaces: jaeger-operator.v1.56.0
   selector:
     matchLabels:
       name: jaeger-operator
