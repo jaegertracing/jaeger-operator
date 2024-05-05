@@ -1,5 +1,6 @@
 Changes by Version
 ==================
+## v1.57.0 (2024-05-06)
 
 ## v1.55.0 (2024-03-22)
 * Add server URL to JaegerMetricsStorageSpec ([#2481](https://github.com/jaegertracing/jaeger-operator/pull/2481), [@antoniomerlin](https://github.com/antoniomerlin))
