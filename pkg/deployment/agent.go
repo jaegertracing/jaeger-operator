@@ -144,7 +144,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 					Annotations: commonSpec.Annotations,
 				},
 				Spec: corev1.PodSpec{
-					ImagePullSecrets: a.jaeger.Spec.ImagePullSecrets,
+					ImagePullSecrets: a.jaeger.Spec.Agent.ImagePullSecrets,
 					Containers: []corev1.Container{{
 						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
