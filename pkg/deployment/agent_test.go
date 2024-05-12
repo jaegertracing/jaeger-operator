@@ -288,7 +288,7 @@ func TestAgentImagePullSecrets(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
 	const pullSecret = "mysecret"
 	jaeger.Spec.Agent.Strategy = "daemonset"
-	jaeger.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+	jaeger.Spec.Agent.ImagePullSecrets = []corev1.LocalObjectReference{
 		{
 			Name: pullSecret,
 		},
