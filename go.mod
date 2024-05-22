@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/google/gnostic-models v0.6.8
 	github.com/google/go-cmp v0.6.0
 	github.com/mitchellh/go-homedir v1.1.0
