@@ -135,26 +135,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - apps
-          resources:
-          - deployments
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - apps
-          resources:
-          - deployments/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
@@ -218,26 +198,6 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - ""
-          resources:
-          - namespaces
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - namespaces/status
-          verbs:
-          - get
-          - patch
-          - update
         - apiGroups:
           - extensions
           resources:
@@ -533,32 +493,6 @@ spec:
       name: jaeger-operator
   version: 1.57.0
   webhookdefinitions:
-  - admissionReviewVersions:
-    - v1
-    containerPort: 443
-    deploymentName: jaeger-operator
-    failurePolicy: Ignore
-    generateName: deployment.sidecar-injector.jaegertracing.io
-    objectSelector:
-      matchExpressions:
-      - key: name
-        operator: NotIn
-        values:
-        - jaeger-operator
-    rules:
-    - apiGroups:
-      - apps
-      apiVersions:
-      - v1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - deployments
-    sideEffects: None
-    targetPort: 9443
-    type: MutatingAdmissionWebhook
-    webhookPath: /mutate-v1-deployment
   - admissionReviewVersions:
     - v1
     containerPort: 443
