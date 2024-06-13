@@ -3,19 +3,6 @@
 source $(dirname "$0")/../render-utils.sh
 
 ###############################################################################
-# TEST NAME: examples-agent-with-priority-class
-###############################################################################
-start_test "examples-agent-with-priority-class"
-example_name="agent-with-priority-class"
-prepare_daemonset "00"
-if [ $IS_OPENSHIFT != true ]; then
-    rm ./01-add-policy.yaml # This is just for OpenShift
-fi
-render_install_example "$example_name" "02"
-render_smoke_test_example "$example_name" "02"
-
-
-###############################################################################
 # TEST NAME: examples-all-in-one-with-options
 ###############################################################################
 start_test "examples-all-in-one-with-options"
@@ -29,25 +16,6 @@ if [ $IS_OPENSHIFT = true ]; then
 else
     sed -i "s~my-jaeger-query:16686~my-jaeger-query:16686/jaeger~gi" ./01-smoke-test.yaml
 fi
-
-
-###############################################################################
-# TEST NAME: examples-business-application-injected-sidecar
-###############################################################################
-start_test "examples-business-application-injected-sidecar"
-example_name="simplest"
-cp $EXAMPLES_DIR/business-application-injected-sidecar.yaml ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].image=strenv(VERTX_IMG)' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.httpGet.path="/"' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.httpGet.port=8080' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.initialDelaySeconds=1' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.failureThreshold=3' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.periodSeconds=10' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.successThreshold=1' ./00-install.yaml
-$YQ e -i '.spec.template.spec.containers[0].livenessProbe.timeoutSeconds=1' ./00-install.yaml
-render_install_example "$example_name" "01"
-render_smoke_test_example "$example_name" "02"
-
 
 ###############################################################################
 # TEST NAME: examples-collector-with-priority-class
@@ -143,18 +111,6 @@ export example_name="with-sampling"
 render_install_cassandra "00"
 render_install_example "$example_name" "01"
 render_smoke_test_example "$example_name" "02"
-
-###############################################################################
-# TEST NAME: examples-agent-as-daemonset
-###############################################################################
-start_test "examples-agent-as-daemonset"
-if [ $IS_OPENSHIFT = true ]; then
-    prepare_daemonset "00"
-    $GOMPLATE -f $EXAMPLES_DIR/openshift/agent-as-daemonset.yaml -o 02-install.yaml
-else
-    rm ./01-add-policy.yaml # This is just for OpenShift
-    render_install_example "agent-as-daemonset" "02"
-fi
 
 
 ###############################################################################
