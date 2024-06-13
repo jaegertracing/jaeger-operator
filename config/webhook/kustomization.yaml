@@ -9,3 +9,4 @@ configurations:
 
 patchesStrategicMerge:
   - deployment_inject_patch.yaml
+  - remove_deployment_webhook_patch.yaml
