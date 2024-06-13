@@ -77,14 +77,14 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	assertDeploymentsAndServicesForStreaming(t, jaeger, c, false, true, false)
 }
 
-func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
+func TestCreateStreamingDeploymentWithNoDaemonSetAgent(t *testing.T) {
 	name := "my-instance"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newStreamingStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForStreaming(t, j, c, true, false, false)
+	assertDeploymentsAndServicesForStreaming(t, j, c, false, false, false)
 }
 
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {

@@ -700,7 +700,7 @@ func assertHasAllObjects(t *testing.T, name string, s S, deployments map[string]
 	}
 
 	for k, v := range daemonsets {
-		assert.False(t, v, "Expected %s to have been not returned from the list of daemonsets", k)
+		assert.True(t, v, "Expected %s to have been returned from the list of daemonsets", k)
 	}
 
 	for k, v := range services {

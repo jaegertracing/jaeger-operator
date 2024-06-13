@@ -41,14 +41,14 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, true, false)
 }
 
-func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
+func TestCreateAllInOneDeploymentWithNoDaemonSetAgent(t *testing.T) {
 	name := "TestCreateAllInOneDeploymentWithDaemonSetAgent"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {
