@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/kafka/v1beta2"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 )
@@ -87,112 +85,6 @@ func TestReconcileSyncOnJaegerChanges(t *testing.T) {
 	// test
 	_, err := r.Reconcile(req)
 	assert.Equal(t, errList, err)
-}
-
-func TestSyncOnJaegerChanges(t *testing.T) {
-	// prepare
-	jaeger := v1.NewJaeger(types.NamespacedName{
-		Namespace: "observability",
-		Name:      "my-instance",
-	})
-
-	objs := []client.Object{
-		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
-			Name: "ns-with-annotation",
-			Annotations: map[string]string{
-				inject.Annotation: "true",
-			},
-		}},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-without-annotation",
-				Namespace: "ns-with-annotation",
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-with-annotation",
-				Namespace: "ns-with-annotation",
-				Annotations: map[string]string{
-					inject.Annotation: "true",
-				},
-			},
-		},
-
-		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
-			Name: "ns-without-annotation",
-		}},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-without-annotation",
-				Namespace: "ns-without-annotation",
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-with-annotation",
-				Namespace: "ns-without-annotation",
-				Annotations: map[string]string{
-					inject.Annotation: "true",
-				},
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-with-another-jaegers-label",
-				Namespace: "ns-without-annotation",
-				Annotations: map[string]string{
-					inject.Annotation: "true",
-				},
-				Labels: map[string]string{
-					inject.Label: "some-other-jaeger",
-				},
-			},
-		},
-		&appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dep-affected-jaeger-label",
-				Namespace: "ns-without-annotation",
-				Annotations: map[string]string{
-					inject.Annotation: "true",
-				},
-				Labels: map[string]string{
-					inject.Label: jaeger.Name,
-				},
-			},
-		},
-	}
-
-	var (
-		errList   = fmt.Errorf("no no listing")
-		errGet    = fmt.Errorf("no no get")
-		errUpdate = fmt.Errorf("no no update")
-	)
-
-	cl := &modifiedClient{
-		Client:  fake.NewClientBuilder().WithObjects(objs...).Build(),
-		listErr: errList,
-		getErr:  errGet,
-	}
-
-	err := syncOnJaegerChanges(cl, cl, jaeger.Name)
-	assert.Equal(t, errList, err)
-	cl.listErr = nil
-
-	_ = syncOnJaegerChanges(cl, cl, jaeger.Name)
-	assert.Equal(t, 3, cl.counter)
-	cl.counter = 0
-	cl.getErr = nil
-
-	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
-	assert.Equal(t, 4, cl.counter)
-	require.NoError(t, err)
-	cl.counter = 0
-
-	cl.updateErr = errUpdate
-	err = syncOnJaegerChanges(cl, cl, jaeger.Name)
-	assert.Equal(t, 1, cl.counter)
-	assert.Equal(t, errUpdate, err)
 }
 
 func TestNewJaegerInstance(t *testing.T) {

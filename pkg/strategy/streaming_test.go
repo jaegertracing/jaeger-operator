@@ -233,8 +233,7 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
-			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
 		}
 	}
 }

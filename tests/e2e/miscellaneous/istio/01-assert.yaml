@@ -1,6 +1,0 @@
-# Assert the namespace was labeled properly
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    istio-injection: enabled

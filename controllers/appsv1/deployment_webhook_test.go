@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	jsonpatch "gomodules.xyz/jsonpatch/v2"
 	admissionv1 "k8s.io/api/admission/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +24,6 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
-	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 )
 
 func TestReconcileConfigMaps(t *testing.T) {
@@ -181,176 +179,6 @@ func TestReconcilieDeployment(t *testing.T) {
 				},
 			},
 			emptyRequest: true,
-		},
-		{
-			desc: "can not get namespaces and list jaegers",
-			errors: errorGroup{
-				listErr: fmt.Errorf("ups cant list"),
-				getErr:  fmt.Errorf("ups cant get"),
-			},
-			dep: inject.Sidecar(jaeger, &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        namespacedName.Name,
-					Namespace:   namespacedName.Namespace,
-					Annotations: map[string]string{},
-					Labels: map[string]string{
-						"app": "not jaeger",
-					},
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "only_container",
-							}},
-						},
-					},
-				},
-			}),
-			resp: admission.Response{
-				AdmissionResponse: admissionv1.AdmissionResponse{
-					Allowed: false,
-					Result: &metav1.Status{
-						Message: "ups cant list",
-						Code:    500,
-					},
-				},
-			},
-		},
-		{
-			desc: "Should not remove the instance from a jaeger component",
-			dep: inject.Sidecar(jaeger, &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        namespacedName.Name,
-					Namespace:   namespacedName.Namespace,
-					Annotations: map[string]string{},
-					Labels: map[string]string{
-						"app": "jaeger",
-					},
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "only_container",
-							}},
-						},
-					},
-				},
-			}),
-			resp: admission.Response{
-				AdmissionResponse: admissionv1.AdmissionResponse{
-					Allowed: true,
-					Result: &metav1.Status{
-						Message: "is jaeger deployment, we do not touch it",
-						Code:    200,
-					},
-				},
-			},
-		},
-		{
-			desc: "Should remove the instance",
-			dep: inject.Sidecar(jaeger, &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        namespacedName.Name,
-					Namespace:   namespacedName.Namespace,
-					Annotations: map[string]string{},
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "only_container",
-							}},
-						},
-					},
-				},
-			}),
-			resp: admission.Response{
-				Patches: []jsonpatch.JsonPatchOperation{
-					{
-						Operation: "remove",
-						Path:      "/metadata/labels",
-					},
-					{
-						Operation: "remove",
-						Path:      "/spec/template/spec/containers/1",
-					},
-				},
-				AdmissionResponse: admissionv1.AdmissionResponse{
-					Allowed:   true,
-					PatchType: func() *admissionv1.PatchType { str := admissionv1.PatchTypeJSONPatch; return &str }(),
-				},
-			},
-		},
-		{
-			desc: "Should inject but no jaeger instace found",
-			dep: inject.Sidecar(jaeger, &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      namespacedName.Name,
-					Namespace: namespacedName.Namespace,
-					Annotations: map[string]string{
-						inject.Annotation: "true",
-					},
-					Labels: map[string]string{
-						"app": "something",
-					},
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "only_container",
-							}},
-						},
-					},
-				},
-			}),
-			resp: admission.Response{
-				AdmissionResponse: admissionv1.AdmissionResponse{
-					Allowed: true,
-					Result: &metav1.Status{
-						Message: "no suitable Jaeger instances found to inject a sidecar",
-						Code:    200,
-					},
-				},
-			},
-		},
-		{
-			desc: "Should inject but empty instance - no patch",
-			dep: inject.Sidecar(jaeger, &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      namespacedName.Name,
-					Namespace: namespacedName.Namespace,
-					Annotations: map[string]string{
-						inject.Annotation: "true",
-					},
-					Labels: map[string]string{
-						"app": "something",
-					},
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "only_container",
-							}},
-						},
-					},
-				},
-			}),
-			resp: admission.Response{
-				Patches: []jsonpatch.JsonPatchOperation{},
-				AdmissionResponse: admissionv1.AdmissionResponse{
-					Allowed: true,
-				},
-			},
-			jaeger: &v1.Jaeger{},
 		},
 		{
 			desc: "should not touch deployment on other namespaces != watch_namespaces",
