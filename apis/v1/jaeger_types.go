@@ -508,7 +508,7 @@ type JaegerIngesterSpec struct {
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
-// JaegerAgentSpec defines the options to be used when deploying the agent
+// JaegerAgentSpec is deprecated and disabled.
 type JaegerAgentSpec struct {
 	// Strategy can be either 'DaemonSet' or 'Sidecar' (default)
 	// +optional
