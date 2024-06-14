@@ -23,7 +23,6 @@ import (
 )
 
 func init() {
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
 	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 }
 

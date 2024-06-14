@@ -21,10 +21,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
-func init() {
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
-}
-
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "my-instance"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})

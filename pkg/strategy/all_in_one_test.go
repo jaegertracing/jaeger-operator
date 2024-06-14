@@ -18,10 +18,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-func init() {
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
-}
-
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
