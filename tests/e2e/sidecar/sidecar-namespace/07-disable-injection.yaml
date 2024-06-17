@@ -1,4 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - script: kubectl annotate --overwrite namespaces $NAMESPACE "sidecar.jaegertracing.io/inject"="false"

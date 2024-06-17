@@ -18,10 +18,6 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-func init() {
-	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
-}
-
 func TestCreateAllInOneDeployment(t *testing.T) {
 	name := "TestCreateAllInOneDeployment"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
@@ -41,14 +37,14 @@ func TestCreateAllInOneDeploymentOnOpenShift(t *testing.T) {
 	assertDeploymentsAndServicesForAllInOne(t, jaeger, c, false, true, false)
 }
 
-func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
+func TestCreateAllInOneDeploymentWithNoDaemonSetAgent(t *testing.T) {
 	name := "TestCreateAllInOneDeploymentWithDaemonSetAgent"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newAllInOneStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false)
+	assertDeploymentsAndServicesForAllInOne(t, j, c, false, false, false)
 }
 
 func TestCreateAllInOneDeploymentWithUIConfigMap(t *testing.T) {

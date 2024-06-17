@@ -1,6 +1,0 @@
-apiVersion: apps/v1
-kind: DaemonSet
-metadata: 
-  name: agent-as-daemonset-agent-daemonset
-status:
-  numberReady: 1

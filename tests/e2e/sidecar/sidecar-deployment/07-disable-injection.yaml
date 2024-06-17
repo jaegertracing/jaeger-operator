@@ -1,6 +1,0 @@
-# Add annotation to the deployment
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - command: kubectl annotate --overwrite deployment vertx-create-span-sidecar "sidecar.jaegertracing.io/inject"="false"
-    namespaced: true

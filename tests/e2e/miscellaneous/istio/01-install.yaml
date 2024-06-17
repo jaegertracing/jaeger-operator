@@ -1,5 +1,0 @@
-# Label the namespace to enable Istio
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - script: "kubectl label namespaces $NAMESPACE istio-injection=enabled"

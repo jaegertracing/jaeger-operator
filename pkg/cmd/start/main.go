@@ -19,7 +19,6 @@ import (
 func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("log-level", "info", "The log-level for the operator. Possible values: trace, debug, info, warning, error, fatal, panic")
 	cmd.Flags().String("jaeger-version", version.DefaultJaeger(), "Deprecated: the Jaeger version is now managed entirely by the operator. This option is currently no-op.")
-	cmd.Flags().String("jaeger-agent-image", "jaegertracing/jaeger-agent", "The Docker image for the Jaeger Agent")
 	cmd.Flags().String("jaeger-query-image", "jaegertracing/jaeger-query", "The Docker image for the Jaeger Query")
 	cmd.Flags().String("jaeger-collector-image", "jaegertracing/jaeger-collector", "The Docker image for the Jaeger Collector")
 	cmd.Flags().String("jaeger-ingester-image", "jaegertracing/jaeger-ingester", "The Docker image for the Jaeger Ingester")
@@ -43,7 +42,6 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 
-	_ = viper.BindEnv("jaeger-agent-image", "RELATED_IMAGE_JAEGER_AGENT")
 	_ = viper.BindEnv("jaeger-query-image", "RELATED_IMAGE_JAEGER_QUERY")
 	_ = viper.BindEnv("jaeger-collector-image", "RELATED_IMAGE_JAEGER_COLLECTOR")
 	_ = viper.BindEnv("jaeger-ingester-image", "RELATED_IMAGE_JAEGER_INGESTER")
@@ -73,7 +71,6 @@ func NewStartCommand() *cobra.Command {
 	AddFlags(cmd)
 	cmd.Flags().String("metrics-host", "0.0.0.0", "The host to bind the metrics port")
 	cmd.Flags().Int32("metrics-port", 8383, "The metrics port")
-	cmd.Flags().String("jaeger-agent-hostport", "localhost:6831", "The location for the Jaeger Agent")
 	cmd.Flags().Bool("tracing-enabled", false, "Whether the Operator should report its own spans to a Jaeger instance")
 
 	return cmd

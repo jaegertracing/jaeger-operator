@@ -152,7 +152,6 @@ func TestOAuthProxyWithCustomDelegateURLsWithoutProperClusterRole(t *testing.T) 
 	autodetect.OperatorConfiguration.SetAuthDelegatorAvailability(autodetect.AuthDelegatorAvailabilityNo)
 	defer func() {
 		viper.Reset()
-		setDefaults()
 	}()
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
@@ -241,7 +240,6 @@ func TestTrustedCAVolumeIsUsed(t *testing.T) {
 	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
 	defer func() {
 		viper.Reset()
-		setDefaults()
 	}()
 
 	// prepare

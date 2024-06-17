@@ -39,7 +39,6 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	manifest := S{typ: v1.DeploymentStrategyStreaming}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
-	agent := deployment.NewAgent(jaeger)
 	ingester := deployment.NewIngester(jaeger)
 
 	// add all service accounts
@@ -81,11 +80,6 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 			"Kafka auto provisioning is enabled. A Kafka cluster will be deployed if it does not exist.",
 		)
 		manifest = autoProvisionKafka(ctx, jaeger, manifest)
-	}
-
-	// add the daemonsets
-	if ds := agent.Get(); ds != nil {
-		manifest.daemonSets = []appsv1.DaemonSet{*ds}
 	}
 
 	// add the services
@@ -145,9 +139,6 @@ func newStreamingStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// prepare the deployments, which may get changed by the elasticsearch routine
 	cDep := collector.Get()
 	queryDep := inject.OAuthProxy(jaeger, query.Get())
-	if jaeger.Spec.Query.TracingEnabled == nil || *jaeger.Spec.Query.TracingEnabled {
-		queryDep = inject.Sidecar(jaeger, queryDep)
-	}
 	var ingesterDep *appsv1.Deployment
 	if d := ingester.Get(); d != nil {
 		ingesterDep = d
