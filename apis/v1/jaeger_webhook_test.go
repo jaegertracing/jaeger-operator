@@ -269,6 +269,20 @@ func TestValidate(t *testing.T) {
 			},
 			err: `tls flags incomplete, got: [--something.tls.else=fails]`,
 		},
+		{
+			name: "configured jaeger agent spec",
+			current: &Jaeger{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "project1",
+				},
+				Spec: JaegerSpec{
+					Agent: JaegerAgentSpec{
+						Strategy: "something",
+					},
+				},
+			},
+			err: `Jaeger agent configuration is no longer supported. Please remove any agent configuration. For more details see https://github.com/jaegertracing/jaeger/issues/4739.`,
+		},
 	}
 
 	for _, test := range tests {

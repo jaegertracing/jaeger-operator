@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -96,8 +97,13 @@ func (j *Jaeger) ValidateCreate() (admission.Warnings, error) {
 func (j *Jaeger) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	jaegerlog.Info("validate update", "name", j.Name)
 
-	if len(j.Spec.Agent.Options.opts) != 0 {
-		return nil, fmt.Errorf("Jaeger agent configuration is no longer supported. See https://github.com/jaegertracing/jaeger/issues/4739. Values: %+v", j.Spec.Agent.Options.opts)
+	got, err := json.Marshal(j.Spec.Agent)
+	if err != nil {
+		return nil, err
+	}
+	want, _ := json.Marshal(JaegerAgentSpec{})
+	if string(got) != string(want) {
+		return nil, fmt.Errorf("Jaeger agent configuration is no longer supported. Please remove any agent configuration. For more details see https://github.com/jaegertracing/jaeger/issues/4739.")
 	}
 
 	if ShouldInjectOpenShiftElasticsearchConfiguration(j.Spec.Storage) && j.Spec.Storage.Elasticsearch.DoNotProvision {
