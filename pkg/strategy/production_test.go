@@ -23,6 +23,7 @@ import (
 )
 
 func init() {
+	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
 	viper.SetDefault(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1)
 }
 
@@ -45,14 +46,14 @@ func TestCreateProductionDeploymentOnOpenShift(t *testing.T) {
 	assertDeploymentsAndServicesForProduction(t, jaeger, c, false, true, false)
 }
 
-func TestCreateProductionDeploymentWithNoDaemonSetAgent(t *testing.T) {
+func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "TestCreateProductionDeploymentWithDaemonSetAgent"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newProductionStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForProduction(t, j, c, false, false, false)
+	assertDeploymentsAndServicesForProduction(t, j, c, true, false, false)
 }
 
 func TestCreateProductionDeploymentWithUIConfigMap(t *testing.T) {

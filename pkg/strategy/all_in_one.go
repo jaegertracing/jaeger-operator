@@ -63,6 +63,11 @@ func newAllInOneStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the deployments
 	c.deployments = []appsv1.Deployment{*inject.OAuthProxy(jaeger, dep.Get())}
 
+	// add the daemonsets
+	if ds := deployment.NewAgent(jaeger).Get(); ds != nil {
+		c.daemonSets = []appsv1.DaemonSet{*ds}
+	}
+
 	// add the services
 	for _, svc := range dep.Services() {
 		c.services = append(c.services, *svc)

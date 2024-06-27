@@ -37,6 +37,7 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	c := S{typ: v1.DeploymentStrategyProduction}
 	collector := deployment.NewCollector(jaeger)
 	query := deployment.NewQuery(jaeger)
+	agent := deployment.NewAgent(jaeger)
 
 	// add all service accounts
 	for _, acc := range account.Get(jaeger) {
@@ -64,6 +65,11 @@ func newProductionStrategy(ctx context.Context, jaeger *v1.Jaeger) S {
 	// add the service CA config map
 	if cm := ca.GetServiceCABundle(jaeger); cm != nil {
 		c.configMaps = append(c.configMaps, *cm)
+	}
+
+	// add the daemonsets
+	if ds := agent.Get(); ds != nil {
+		c.daemonSets = []appsv1.DaemonSet{*ds}
 	}
 
 	// add the services

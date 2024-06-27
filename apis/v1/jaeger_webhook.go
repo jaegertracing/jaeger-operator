@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -49,6 +48,7 @@ func (j *Jaeger) objsWithOptions() []*Options {
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (j *Jaeger) Default() {
 	jaegerlog.Info("default", "name", j.Name)
+	jaegerlog.Info("WARNING jaeger-agent is deprecated and will removed in v1.55.0. See https://github.com/jaegertracing/jaeger/issues/4739", "component", "agent")
 
 	if j.Spec.Storage.Elasticsearch.Name == "" {
 		j.Spec.Storage.Elasticsearch.Name = defaultElasticsearchName
@@ -96,15 +96,6 @@ func (j *Jaeger) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (j *Jaeger) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	jaegerlog.Info("validate update", "name", j.Name)
-
-	got, err := json.Marshal(j.Spec.Agent)
-	if err != nil {
-		return nil, err
-	}
-	want, _ := json.Marshal(JaegerAgentSpec{})
-	if string(got) != string(want) {
-		return nil, fmt.Errorf("Jaeger agent configuration is no longer supported. Please remove any agent configuration. For more details see https://github.com/jaegertracing/jaeger/issues/4739.")
-	}
 
 	if ShouldInjectOpenShiftElasticsearchConfiguration(j.Spec.Storage) && j.Spec.Storage.Elasticsearch.DoNotProvision {
 		// check if ES instance exists

@@ -21,6 +21,10 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 )
 
+func init() {
+	viper.SetDefault("jaeger-agent-image", "jaegertracing/jaeger-agent")
+}
+
 func TestCreateStreamingDeployment(t *testing.T) {
 	name := "my-instance"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
@@ -73,14 +77,14 @@ func TestCreateStreamingDeploymentOnOpenShift(t *testing.T) {
 	assertDeploymentsAndServicesForStreaming(t, jaeger, c, false, true, false)
 }
 
-func TestCreateStreamingDeploymentWithNoDaemonSetAgent(t *testing.T) {
+func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 	name := "my-instance"
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
 
 	c := newStreamingStrategy(context.Background(), j)
-	assertDeploymentsAndServicesForStreaming(t, j, c, false, false, false)
+	assertDeploymentsAndServicesForStreaming(t, j, c, true, false, false)
 }
 
 func TestCreateStreamingDeploymentWithUIConfigMap(t *testing.T) {
@@ -229,7 +233,8 @@ func TestAgentSidecarIsInjectedIntoQueryForStreaming(t *testing.T) {
 	c := newStreamingStrategy(context.Background(), j)
 	for _, dep := range c.Deployments() {
 		if strings.HasSuffix(dep.Name, "-query") {
-			assert.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			assert.Len(t, dep.Spec.Template.Spec.Containers, 2)
+			assert.Equal(t, "jaeger-agent", dep.Spec.Template.Spec.Containers[1].Name)
 		}
 	}
 }

@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: kubectl label deployment vertx-create-span-sidecar "app.kubernetes.io/name"="jaeger-operator"
+    namespaced: true
+  - command: kubectl annotate --overwrite deployment vertx-create-span-sidecar "sidecar.jaegertracing.io/inject"="true"
+    namespaced: true

@@ -1,0 +1,16 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority # priorityClassName here
+value: 1000000
+globalDefault: false
+description: "This priority class should be used for XYZ service pods only."
+---
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: agent-as-daemonset
+spec:
+  agent:
+    strategy: DaemonSet
+    priorityClassName: high-priority # priorityClassName here

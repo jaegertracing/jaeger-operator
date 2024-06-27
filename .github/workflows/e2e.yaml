@@ -31,6 +31,7 @@ jobs:
          - { name: "examples", label: "Examples" }
          - { name: "generate", label: "Generate" }
          - { name: "miscellaneous", label: "Miscellaneous" }
+         - { name: "sidecar", label: "Sidecar" }
          - { name: "streaming", label: "Streaming" }
          - { name: "ui", label: "UI" }
          - { name: "upgrade", label: "Upgrade" }

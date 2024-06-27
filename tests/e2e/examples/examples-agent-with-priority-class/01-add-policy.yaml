@@ -1,0 +1,10 @@
+# Add service account to user
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "oc adm  policy --namespace $NAMESPACE add-scc-to-user daemonset-with-hostport -z jaeger-agent-daemonset"
+  # Sometimes, the previous command needs some time to take effect. If we create
+  # the Jaeger deployment before the command takes effect, the Jaeger instance
+  # is not deployed. There is not a way to verify it is there except wait some
+  # seconds
+  - script: "sleep 5"

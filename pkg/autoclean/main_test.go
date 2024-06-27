@@ -89,9 +89,10 @@ func TestCleanDeployments(t *testing.T) {
 					},
 				},
 			}
+			dep = inject.Sidecar(jaeger, dep)
 
 			// sanity check
-			require.Len(t, dep.Spec.Template.Spec.Containers, 1)
+			require.Len(t, dep.Spec.Template.Spec.Containers, 2)
 
 			// prepare the list of existing objects
 			objs := []runtime.Object{dep}
@@ -123,8 +124,8 @@ func TestCleanDeployments(t *testing.T) {
 				assert.Len(t, persisted.Spec.Template.Spec.Containers, 1)
 				assert.NotContains(t, persisted.Labels, inject.Label)
 			} else {
-				assert.Len(t, persisted.Spec.Template.Spec.Containers, 1)
-				assert.NotContains(t, persisted.Labels, inject.Label)
+				assert.Len(t, persisted.Spec.Template.Spec.Containers, 2)
+				assert.Contains(t, persisted.Labels, inject.Label)
 			}
 		})
 	}

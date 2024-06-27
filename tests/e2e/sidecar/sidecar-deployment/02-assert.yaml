@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: vertx-create-span-sidecar
+spec:
+  containers:
+    - name: vertx-create-span-sidecar
+    # Assert the Jaeger agent is there
+    - name: jaeger-agent
+status:
+  phase: Running

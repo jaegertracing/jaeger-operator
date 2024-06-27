@@ -1,0 +1,8 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-as-sidecar
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
