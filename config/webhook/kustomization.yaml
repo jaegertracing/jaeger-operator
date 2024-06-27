@@ -8,4 +8,4 @@ configurations:
 - kustomizeconfig.yaml
 
 patchesStrategicMerge:
-  - remove_deployment_webhook_patch.yaml
+  - deployment_inject_patch.yaml

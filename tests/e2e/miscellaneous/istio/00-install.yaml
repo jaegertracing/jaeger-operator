@@ -1,0 +1,5 @@
+# Start Istio
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - script: "cd ../../../../.. && make istio"

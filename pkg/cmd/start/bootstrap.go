@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	//  import OIDC cluster authentication plugin, e.g. for IBM Cloud
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -38,6 +39,7 @@ import (
 
 	jaegertracingv1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	appsv1controllers "github.com/jaegertracing/jaeger-operator/controllers/appsv1"
 	esv1controllers "github.com/jaegertracing/jaeger-operator/controllers/elasticsearch"
 	jaegertracingcontrollers "github.com/jaegertracing/jaeger-operator/controllers/jaegertracing"
 	"github.com/jaegertracing/jaeger-operator/pkg/autoclean"
@@ -346,7 +348,12 @@ func setupControllers(ctx context.Context, mgr manager.Manager) {
 	}
 
 	if viper.GetBool(v1.ConfigEnableNamespaceController) {
-		log.Log.V(1).Info("skipping reconciliation for namespaces, agents are no longer supported")
+		if err := appsv1controllers.NewNamespaceReconciler(client, clientReader, schema).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Namespace")
+			os.Exit(1)
+		}
+	} else {
+		log.Log.V(1).Info("skipping reconciliation for namespaces, do not have permissions to list and watch namespaces")
 	}
 
 	if err := esv1controllers.NewReconciler(client, clientReader).SetupWithManager(mgr); err != nil {
@@ -360,6 +367,13 @@ func setupWebhooks(_ context.Context, mgr manager.Manager) {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Jaeger")
 		os.Exit(1)
 	}
+
+	// register webhook
+	srv := mgr.GetWebhookServer()
+	decoder := admission.NewDecoder(mgr.GetScheme())
+	srv.Register("/mutate-v1-deployment", &webhook.Admission{
+		Handler: appsv1controllers.NewDeploymentInterceptorWebhook(mgr.GetClient(), decoder),
+	})
 }
 
 func getNamespace(ctx context.Context) string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	osv1 "github.com/openshift/api/route/v1"
@@ -11,9 +12,11 @@ import (
 	"go.opentelemetry.io/otel"
 	otelattribute "go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -21,6 +24,7 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	"github.com/jaegertracing/jaeger-operator/pkg/inject"
 	"github.com/jaegertracing/jaeger-operator/pkg/storage"
 	"github.com/jaegertracing/jaeger-operator/pkg/strategy"
 	"github.com/jaegertracing/jaeger-operator/pkg/tracing"
@@ -86,6 +90,10 @@ func (r *ReconcileJaeger) Reconcile(request reconcile.Request) (reconcile.Result
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return reconcile.Result{}, tracing.HandleError(err, span)
+	}
+
+	if err := syncOnJaegerChanges(r.rClient, r.client, instance.Name); err != nil {
 		return reconcile.Result{}, tracing.HandleError(err, span)
 	}
 
@@ -393,4 +401,81 @@ func (r ReconcileJaeger) getSecretsForNamespace(secrets []corev1.Secret, namespa
 		}
 	}
 	return secretsForNamespace
+}
+
+// syncOnJaegerChanges sync deployments with sidecars when a jaeger CR changes
+func syncOnJaegerChanges(rClient client.Reader, kclient client.Client, jaegerName string) error {
+	deps := []appsv1.Deployment{}
+	nssupdate := []corev1.Namespace{}
+	nss := map[string]corev1.Namespace{} // namespace cache
+
+	deployments := appsv1.DeploymentList{}
+
+	if namespaces := viper.GetString(v1.ConfigWatchNamespace); namespaces != v1.WatchAllNamespaces {
+		for _, ns := range strings.Split(namespaces, ",") {
+			nsDeps := &appsv1.DeploymentList{}
+			if err := rClient.List(context.Background(), nsDeps, client.InNamespace(ns)); err != nil {
+				return err
+			}
+			deployments.Items = append(deployments.Items, nsDeps.Items...)
+		}
+	} else {
+		err := rClient.List(context.Background(), &deployments)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, dep := range deployments.Items {
+		// if there's an assigned instance to this deployment, and it's not the one that triggered the current event,
+		// we don't need to trigger a reconciliation for it
+		if val, ok := dep.Labels[inject.Label]; ok && val != jaegerName {
+			continue
+		}
+
+		// if the deployment has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := dep.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
+			continue
+		}
+
+		// if we don't have the namespace in the cache yet, retrieve it
+		ns, ok := nss[dep.Namespace]
+		if !ok {
+			err := rClient.Get(context.Background(), types.NamespacedName{Name: dep.Namespace}, &ns)
+			if err != nil {
+				continue
+			}
+			nss[ns.Name] = ns
+		}
+
+		// if the namespace has the sidecar annotation, trigger a deployment evaluation (webhook)
+		if _, ok := ns.Annotations[inject.Annotation]; ok {
+			inject.IncreaseRevision(dep.Annotations)
+			deps = append(deps, dep)
+			continue
+		}
+	}
+	for i := range deps {
+		if err := kclient.Update(context.Background(), &deps[i]); err != nil {
+			log.Log.Error(
+				err,
+				"error while updating the dependency",
+				"component", "jaeger-cr-sync",
+			)
+			return err
+		}
+	}
+	for i := range nssupdate {
+		if err := kclient.Update(context.Background(), &nssupdate[i]); err != nil {
+			log.Log.Error(
+				err,
+				"error while upgrading the namespace",
+				"component", "jaeger-cr-sync",
+			)
+			return err
+		}
+	}
+	return nil
 }

@@ -1,0 +1,12 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 00-find-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: asserts-container
+          image: {{ .Env.ASSERT_IMG }}
+          command: ["/bin/sh","-c"]
+          args: ["./query && curl -sf -XPOST http://localhost:15000/quitquitquit"]
