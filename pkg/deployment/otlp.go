@@ -6,7 +6,11 @@ import (
 	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
-const collectorOTLPEnvVarName = "COLLECTOR_OTLP_ENABLED"
+const (
+	collectorOTLPEnvVarName     = "COLLECTOR_OTLP_ENABLED"
+	collectorOTLPEnvAddressGRPC = "COLLECTOR_OTLP_GRPC_HOST_PORT"
+	collectorOTLPEnvAddressHTTP = "COLLECTOR_OTLP_HTTP_HOST_PORT"
+)
 
 func getOTLPEnvVars(options []string) []corev1.EnvVar {
 	if !util.IsOTLPExplcitSet(options) {
@@ -14,6 +18,14 @@ func getOTLPEnvVars(options []string) []corev1.EnvVar {
 			{
 				Name:  collectorOTLPEnvVarName,
 				Value: "true",
+			},
+			{
+				Name:  collectorOTLPEnvAddressGRPC,
+				Value: "0.0.0.0:4317",
+			},
+			{
+				Name:  collectorOTLPEnvAddressHTTP,
+				Value: "0.0.0.0:4318",
 			},
 		}
 	}

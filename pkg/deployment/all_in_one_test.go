@@ -54,6 +54,14 @@ func TestDefaultAllInOneImage(t *testing.T) {
 			Name:  "COLLECTOR_OTLP_ENABLED",
 			Value: "true",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_GRPC_HOST_PORT",
+			Value: "0.0.0.0:4317",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_HTTP_HOST_PORT",
+			Value: "0.0.0.0:4318",
+		},
 	}
 	assert.Equal(t, envvars, d.Spec.Template.Spec.Containers[0].Env)
 }
