@@ -93,6 +93,14 @@ func TestDefaultCollectorImage(t *testing.T) {
 			Name:  "COLLECTOR_OTLP_ENABLED",
 			Value: "true",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_GRPC_HOST_PORT",
+			Value: "0.0.0.0:4317",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_HTTP_HOST_PORT",
+			Value: "0.0.0.0:4318",
+		},
 	}
 	assert.Equal(t, envvars, containers[0].Env)
 }
@@ -393,6 +401,14 @@ func TestCollectorWithDirectStorageType(t *testing.T) {
 			Name:  "COLLECTOR_OTLP_ENABLED",
 			Value: "true",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_GRPC_HOST_PORT",
+			Value: "0.0.0.0:4317",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_HTTP_HOST_PORT",
+			Value: "0.0.0.0:4318",
+		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 2)
@@ -436,6 +452,14 @@ func TestCollectorWithKafkaStorageType(t *testing.T) {
 			Name:  "COLLECTOR_OTLP_ENABLED",
 			Value: "true",
 		},
+		{
+			Name:  "COLLECTOR_OTLP_GRPC_HOST_PORT",
+			Value: "0.0.0.0:4317",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_HTTP_HOST_PORT",
+			Value: "0.0.0.0:4318",
+		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)
 	assert.Len(t, dep.Spec.Template.Spec.Containers[0].Args, 3)
@@ -474,6 +498,14 @@ func TestCollectorWithIngesterNoOptionsStorageType(t *testing.T) {
 		{
 			Name:  "COLLECTOR_OTLP_ENABLED",
 			Value: "true",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_GRPC_HOST_PORT",
+			Value: "0.0.0.0:4317",
+		},
+		{
+			Name:  "COLLECTOR_OTLP_HTTP_HOST_PORT",
+			Value: "0.0.0.0:4318",
 		},
 	}
 	assert.Equal(t, envvars, dep.Spec.Template.Spec.Containers[0].Env)

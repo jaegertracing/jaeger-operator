@@ -2,6 +2,8 @@ The following table shows the compatibility of Jaeger Operator with three differ
 
 | Jaeger Operator | Kubernetes      | Strimzi Operator   | Cert-Manager |
 |-----------------|-----------------|--------------------|--------------|
+| v1.59.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
+| v1.58.x         | skipped         | skipped            | skipped      |
 | v1.57.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
 | v1.56.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
 | v1.55.x         | v1.19 to v1.28  | v0.32              | v1.6.1       |
@@ -28,5 +30,3 @@ The following table shows the compatibility of Jaeger Operator with three differ
 | v1.34.x         | v1.19 to v1.24  | v0.23              | v1.6.1       |
 | v1.33.x         | v1.19 to v1.23  | v0.23              | v1.6.1       |
 | v1.32.x         | v1.19 to v1.22  | v0.23              | v1.6.1       |
-| v1.31.x         | v1.19 to v1.22  | v0.23              | v1.6.1       |
-| v1.30.x         | v1.19 to v1.22  | v0.23              |              |

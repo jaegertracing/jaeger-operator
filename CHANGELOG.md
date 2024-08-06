@@ -1,5 +1,9 @@
 Changes by Version
 ==================
+## v1.58.0 (2024-05-06)
+* Update compatibility matrix for v1.57.x ([#2594](https://github.com/jaegertracing/jaeger-operator/pull/2594), [@mooneeb](https://github.com/mooneeb))
+* imagePullSecrets is not set for agent DaemonSet ([#2563](https://github.com/jaegertracing/jaeger-operator/pull/2563), [@antoniomerlin](https://github.com/antoniomerlin))
+
 ## v1.57.0 (2024-05-06)
 
 ## v1.55.0 (2024-03-22)
