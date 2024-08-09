@@ -13,7 +13,7 @@ linters-settings:
   goimports:
     local-prefixes: github.com/jaegertracing/jaeger-operator
   gosimple:
-    go: "1.21"
+    go: "1.22"
 
 linters:
   enable:
@@ -29,5 +29,5 @@ linters:
     - errcheck
 
 run:
-  go: '1.21'
+  go: '1.22'
   timeout: 10m
