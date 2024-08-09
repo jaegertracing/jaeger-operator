@@ -28,7 +28,7 @@ import (
 var _ webhook.AdmissionHandler = (*deploymentInterceptor)(nil)
 
 // NewDeploymentInterceptorWebhook creates a new deployment mutating webhook to be registered
-func NewDeploymentInterceptorWebhook(c client.Client, decoder *admission.Decoder) webhook.AdmissionHandler {
+func NewDeploymentInterceptorWebhook(c client.Client, decoder admission.Decoder) webhook.AdmissionHandler {
 	return &deploymentInterceptor{
 		client:  c,
 		decoder: decoder,
@@ -46,7 +46,7 @@ func NewDeploymentInterceptorWebhook(c client.Client, decoder *admission.Decoder
 // deploymentInterceptor label pods if Sidecar is specified in deployment
 type deploymentInterceptor struct {
 	client  client.Client
-	decoder *admission.Decoder
+	decoder admission.Decoder
 }
 
 func (d *deploymentInterceptor) shouldHandleDeployment(req admission.Request) bool {
@@ -174,7 +174,7 @@ func (d *deploymentInterceptor) Handle(ctx context.Context, req admission.Reques
 // A decoder will be automatically injected.
 
 // InjectDecoder injects the decoder.
-func (d *deploymentInterceptor) InjectDecoder(decoder *admission.Decoder) error {
+func (d *deploymentInterceptor) InjectDecoder(decoder admission.Decoder) error {
 	d.decoder = decoder
 	return nil
 }

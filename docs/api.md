@@ -3155,6 +3155,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecagentcontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecagentcontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -3224,6 +3231,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecagentcontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecagentcontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -3417,6 +3458,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3796,6 +3839,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecagentsecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -3867,6 +3917,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecagentsecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecagentsecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -4063,6 +4147,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecagentsidecarsecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecagentsidecarsecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -4132,6 +4223,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecagentsidecarsecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.agent.sidecarSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecagentsidecarsecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -4401,6 +4526,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -4889,6 +5021,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4964,6 +5098,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5007,6 +5143,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5139,6 +5277,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5870,6 +6010,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6196,6 +6338,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6601,6 +6745,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6837,6 +6983,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7095,6 +7243,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7212,6 +7362,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7387,6 +7539,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8983,6 +9137,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecallinonecontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecallinonecontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -9052,6 +9213,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecallinonecontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.allInOne.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecallinonecontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -9245,6 +9440,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9658,6 +9855,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecallinonesecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -9729,6 +9933,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecallinonesecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.allInOne.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecallinonesecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -10066,6 +10304,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -10554,6 +10799,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10629,6 +10876,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10672,6 +10921,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10804,6 +11055,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11535,6 +11788,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11861,6 +12116,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12266,6 +12523,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12502,6 +12761,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12760,6 +13021,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12877,6 +13140,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13052,6 +13317,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14705,6 +14972,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspeccollectorcontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspeccollectorcontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -14774,6 +15048,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspeccollectorcontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.collector.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspeccollectorcontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -14967,6 +15275,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -15834,6 +16144,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspeccollectorsecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -15905,6 +16222,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspeccollectorsecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.collector.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspeccollectorsecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -16242,6 +16593,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -16730,6 +17088,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -16805,6 +17165,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -16848,6 +17210,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16980,6 +17344,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -17711,6 +18077,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -18037,6 +18405,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -18442,6 +18812,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -18678,6 +19050,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -18936,6 +19310,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19053,6 +19429,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19228,6 +19606,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19306,6 +19686,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspeccontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspeccontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -19375,6 +19762,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspeccontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspeccontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -19568,6 +19989,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21143,6 +21566,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecingestercontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecingestercontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -21212,6 +21642,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingestercontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingester.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecingestercontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -21405,6 +21869,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21784,6 +22250,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingestersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -21855,6 +22328,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingestersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingester.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecingestersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -22192,6 +22699,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -22680,6 +23194,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -22755,6 +23271,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -22798,6 +23316,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -22930,6 +23450,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -23661,6 +24183,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -23987,6 +24511,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -24392,6 +24918,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -24628,6 +25156,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -24886,6 +25416,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -25003,6 +25535,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -25178,6 +25712,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -26788,6 +27324,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecingresscontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecingresscontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -26857,6 +27400,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingresscontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingress.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecingresscontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -27050,6 +27627,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -27477,6 +28056,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecingresssecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -27548,6 +28134,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecingresssecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.ingress.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecingresssecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -27851,6 +28471,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -28339,6 +28966,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -28414,6 +29043,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -28457,6 +29088,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -28589,6 +29222,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -29320,6 +29955,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -29646,6 +30283,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -30051,6 +30690,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -30287,6 +30928,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -30545,6 +31188,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -30662,6 +31307,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -30837,6 +31484,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -32755,6 +33404,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecquerycontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecquerycontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -32824,6 +33480,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecquerycontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.query.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecquerycontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -33017,6 +33707,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -33430,6 +34122,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecquerysecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -33501,6 +34200,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecquerysecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.query.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecquerysecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -33838,6 +34571,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -34326,6 +35066,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -34401,6 +35143,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -34444,6 +35188,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -34576,6 +35322,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -35307,6 +36055,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -35633,6 +36383,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -36038,6 +36790,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -36274,6 +37028,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -36532,6 +37288,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -36649,6 +37407,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -36824,6 +37584,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -36990,6 +37752,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecsecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -37061,6 +37830,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecsecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecsecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -40335,6 +41138,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstoragedependenciescontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstoragedependenciescontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -40404,6 +41214,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstoragedependenciescontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.dependencies.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstoragedependenciescontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -40597,6 +41441,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -40976,6 +41822,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstoragedependenciessecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -41047,6 +41900,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstoragedependenciessecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.dependencies.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstoragedependenciessecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -41316,6 +42203,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -41804,6 +42698,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -41879,6 +42775,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -41922,6 +42820,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -42054,6 +42954,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -42785,6 +43687,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -43111,6 +44015,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -43516,6 +44422,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -43752,6 +44660,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -44010,6 +44920,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -44127,6 +45039,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -44302,6 +45216,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -46239,6 +47155,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstorageesindexcleanercontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstorageesindexcleanercontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -46308,6 +47231,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstorageesindexcleanercontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esIndexCleaner.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanercontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -46501,6 +47458,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -46880,6 +47839,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesindexcleanersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -46951,6 +47917,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstorageesindexcleanersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esIndexCleaner.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstorageesindexcleanersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -47220,6 +48220,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -47708,6 +48715,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -47783,6 +48792,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -47826,6 +48837,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -47958,6 +48971,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -48689,6 +49704,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -49015,6 +50032,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -49420,6 +50439,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -49656,6 +50677,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -49914,6 +50937,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -50031,6 +51056,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -50206,6 +51233,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -51808,6 +52837,13 @@ Resource Types:
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#jaegerspecstorageesrollovercontainersecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#jaegerspecstorageesrollovercontainersecuritycontextcapabilities">capabilities</a></b></td>
         <td>object</td>
         <td>
@@ -51877,6 +52913,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstorageesrollovercontainersecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esRollover.containerSecurityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstorageesrollovercontainersecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -52070,6 +53140,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -52449,6 +53521,13 @@ Resource Types:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#jaegerspecstorageesrolloversecuritycontextapparmorprofile">appArmorProfile</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>fsGroup</b></td>
         <td>integer</td>
         <td>
@@ -52520,6 +53599,40 @@ Resource Types:
       </tr><tr>
         <td><b><a href="#jaegerspecstorageesrolloversecuritycontextwindowsoptions">windowsOptions</a></b></td>
         <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Jaeger.spec.storage.esRollover.securityContext.appArmorProfile
+<sup><sup>[↩ Parent](#jaegerspecstorageesrolloversecuritycontext)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>localhostProfile</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -52789,6 +53902,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -53277,6 +54397,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -53352,6 +54474,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -53395,6 +54519,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -53527,6 +54653,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -54258,6 +55386,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -54584,6 +55714,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -54989,6 +56121,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -55225,6 +56359,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -55483,6 +56619,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -55600,6 +56738,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -55775,6 +56915,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -55980,6 +57122,13 @@ Resource Types:
       </tr><tr>
         <td><b>readOnly</b></td>
         <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>recursiveReadOnly</b></td>
+        <td>string</td>
         <td>
           <br/>
         </td>
@@ -56468,6 +57617,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -56543,6 +57694,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -56586,6 +57739,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -56718,6 +57873,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -57449,6 +58606,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -57775,6 +58934,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -58180,6 +59341,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -58416,6 +59579,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -58674,6 +59839,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -58791,6 +59958,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -58966,6 +60135,8 @@ Resource Types:
         <td>string</td>
         <td>
           <br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
