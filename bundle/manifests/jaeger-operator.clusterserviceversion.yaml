@@ -414,7 +414,7 @@ spec:
                   value: DEBUG
                 - name: KAFKA-PROVISIONING-MINIMAL
                   value: "true"
-                image: quay.io/ploffay/jaeger-operator:1.59.0
+                image: quay.io/jaegertracing/jaeger-operator:1.59.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
