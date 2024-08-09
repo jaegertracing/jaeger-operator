@@ -1,6 +1,11 @@
 Changes by Version
 ==================
-## v1.58.0 (2024-05-06)
+
+## v1.60.0 (2024-08-09)
+* Test on k8s 1.30 ([#2647](https://github.com/jaegertracing/jaeger-operator/pull/2647), [@pavolloffay](https://github.com/pavolloffay))
+* Bump go to 1.22 and controller-gen to 1.14 ([#2646](https://github.com/jaegertracing/jaeger-operator/pull/2646), [@pavolloffay](https://github.com/pavolloffay))
+
+## v1.59.0 (2024-08-06)
 * Update compatibility matrix for v1.57.x ([#2594](https://github.com/jaegertracing/jaeger-operator/pull/2594), [@mooneeb](https://github.com/mooneeb))
 * imagePullSecrets is not set for agent DaemonSet ([#2563](https://github.com/jaegertracing/jaeger-operator/pull/2563), [@antoniomerlin](https://github.com/antoniomerlin))
 

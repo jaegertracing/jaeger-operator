@@ -66,7 +66,7 @@ The operator should be released within a week after the [Jaeger release](https:/
 
 | Version | Release Manager                                          |
 |---------| -------------------------------------------------------- |
-| 1.60.0  | [Pavol Loffay](https://github.com/pavolloffay)           |
 | 1.61.0  | [Israel Blancas](https://github.com/iblancasa)           |
 | 1.62.0  | [Ruben Vargas](https://github.com/rubenvp8510)           |
 | 1.63.0  | [Benedikt Bongartz](https://github.com/frzifus)          |
+| 1.64.0  | [Pavol Loffay](https://github.com/pavolloffay)           |
