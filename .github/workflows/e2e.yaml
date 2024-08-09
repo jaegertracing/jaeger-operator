@@ -25,7 +25,7 @@ jobs:
       matrix:
        kube-version:
          - "1.19"
-         - "1.28"
+         - "1.30"
        testsuite:
          - { name: "elasticsearch", label: "Elasticsearch" }
          - { name: "examples", label: "Examples" }
