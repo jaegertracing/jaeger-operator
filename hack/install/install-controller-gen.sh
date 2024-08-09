@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.12.0"
+VERSION="0.14.0"
 
 echo "Installing controller-gen"
 
