@@ -1,6 +1,9 @@
 Changes by Version
 ==================
 
+## v1.60.0 (2024-08-13)
+* Fix Golang version in go.mod ([#2652](https://github.com/jaegertracing/jaeger-operator/pull/2652), [@iblancasa](https://github.com/iblancasa))
+
 ## v1.60.0 (2024-08-09)
 * Test on k8s 1.30 ([#2647](https://github.com/jaegertracing/jaeger-operator/pull/2647), [@pavolloffay](https://github.com/pavolloffay))
 * Bump go to 1.22 and controller-gen to 1.14 ([#2646](https://github.com/jaegertracing/jaeger-operator/pull/2646), [@pavolloffay](https://github.com/pavolloffay))
