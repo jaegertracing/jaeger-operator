@@ -6,6 +6,9 @@ Changes by Version
 * Bump google.golang.org/grpc from 1.65.0 to 1.66.0 ([#2670](https://github.com/jaegertracing/jaeger-operator/pull/2670), [@dependabot[bot]](https://github.com/apps/dependabot))
 * Bump the opentelemetry group with 9 updates ([#2668](https://github.com/jaegertracing/jaeger-operator/pull/2668), [@dependabot[bot]](https://github.com/apps/dependabot))
 
+## v1.60.0 (2024-08-13)
+* Fix Golang version in go.mod ([#2652](https://github.com/jaegertracing/jaeger-operator/pull/2652), [@iblancasa](https://github.com/iblancasa))
+
 ## v1.60.0 (2024-08-09)
 * Test on k8s 1.30 ([#2647](https://github.com/jaegertracing/jaeger-operator/pull/2647), [@pavolloffay](https://github.com/pavolloffay))
 * Bump go to 1.22 and controller-gen to 1.14 ([#2646](https://github.com/jaegertracing/jaeger-operator/pull/2646), [@pavolloffay](https://github.com/pavolloffay))
