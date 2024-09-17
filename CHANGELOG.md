@@ -1,5 +1,10 @@
 Changes by Version
 ==================
+## v1.61.0 (2024-09-16)
+
+* Bump google.golang.org/grpc from 1.66.0 to 1.66.1 ([#2675](https://github.com/jaegertracing/jaeger-operator/pull/2675), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Bump google.golang.org/grpc from 1.65.0 to 1.66.0 ([#2670](https://github.com/jaegertracing/jaeger-operator/pull/2670), [@dependabot[bot]](https://github.com/apps/dependabot))
+* Bump the opentelemetry group with 9 updates ([#2668](https://github.com/jaegertracing/jaeger-operator/pull/2668), [@dependabot[bot]](https://github.com/apps/dependabot))
 
 ## v1.60.0 (2024-08-13)
 * Fix Golang version in go.mod ([#2652](https://github.com/jaegertracing/jaeger-operator/pull/2652), [@iblancasa](https://github.com/iblancasa))

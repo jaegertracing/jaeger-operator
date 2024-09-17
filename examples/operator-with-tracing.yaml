@@ -17,7 +17,7 @@ spec:
       serviceAccountName: jaeger-operator
       containers:
       - name: jaeger-operator
-        image: jaegertracing/jaeger-operator:1.60.1
+        image: jaegertracing/jaeger-operator:1.61.0
         ports:
         - containerPort: 8383
           name: http-metrics
@@ -41,7 +41,7 @@ spec:
         - name: OPERATOR_NAME
           value: "jaeger-operator"
       - name: jaeger-agent
-        image: jaegertracing/jaeger-agent:1.60.0
+        image: jaegertracing/jaeger-agent:1.61.0
         env:
         - name: POD_NAMESPACE
           valueFrom:
