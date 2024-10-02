@@ -39,7 +39,7 @@ func OAuthProxy(jaeger *v1.Jaeger, dep *appsv1.Deployment) *appsv1.Deployment {
 
 func proxyInitArguments(jaeger *v1.Jaeger) []string {
 	secret := util.GenerateProxySecret()
-	return []string{
+	args := []string{
 		fmt.Sprintf("--cookie-secret=%s", secret),
 		"--https-address=:8443",
 		fmt.Sprintf("--openshift-service-account=%s", account.OAuthProxyAccountNameFor(jaeger)),
@@ -48,6 +48,10 @@ func proxyInitArguments(jaeger *v1.Jaeger) []string {
 		"--tls-key=/etc/tls/private/tls.key",
 		"--upstream=http://localhost:16686",
 	}
+	if jaeger.Spec.Ingress.Openshift.Timeout != nil {
+		args = append(args, fmt.Sprintf("--upstream-timeout=%s", (*jaeger.Spec.Ingress.Openshift.Timeout).Duration.String()))
+	}
+	return args
 }
 
 func getOAuthProxyContainer(jaeger *v1.Jaeger) corev1.Container {

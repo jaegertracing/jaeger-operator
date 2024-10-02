@@ -7278,6 +7278,8 @@ spec:
                         type: string
                       skipLogout:
                         type: boolean
+                      timeout:
+                        type: string
                     type: object
                   options:
                     type: object

@@ -28,7 +28,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("jaeger-spark-dependencies-image", "ghcr.io/jaegertracing/spark-dependencies/spark-dependencies", "The Docker image for the Spark Dependencies Job")
 	cmd.Flags().String("jaeger-es-index-cleaner-image", "jaegertracing/jaeger-es-index-cleaner", "The Docker image for the Jaeger Elasticsearch Index Cleaner")
 	cmd.Flags().String("jaeger-es-rollover-image", "jaegertracing/jaeger-es-rollover", "The Docker image for the Jaeger Elasticsearch Rollover")
-	cmd.Flags().String(v1.FlagOpenShiftOauthProxyImage, "quay.io/openshift/origin-oauth-proxy:4.12", "The Docker image location definition for the OpenShift OAuth Proxy")
+	cmd.Flags().String(v1.FlagOpenShiftOauthProxyImage, "quay.io/openshift/origin-oauth-proxy:4.14", "The Docker image location definition for the OpenShift OAuth Proxy")
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-ns", "", "The namespace for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-name", "", "The name for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("platform", v1.FlagPlatformAutoDetect, "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")

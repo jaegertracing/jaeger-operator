@@ -2,8 +2,10 @@ package inject
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sort"
 	"testing"
+	"time"
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
@@ -74,6 +76,25 @@ func TestOAuthProxyWithCustomSAR(t *testing.T) {
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
 		if a == fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR) {
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestOAuthProxyWithTimeout(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
+	timeout := metav1.Duration{
+		Duration: time.Second * 70,
+	}
+	jaeger.Spec.Ingress.Openshift.Timeout = &timeout
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == "--upstream-timeout=1m10s" {
 			found = true
 		}
 	}
