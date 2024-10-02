@@ -27388,6 +27388,13 @@ Resource Types:
           <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>timeout</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

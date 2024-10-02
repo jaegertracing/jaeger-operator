@@ -63,9 +63,10 @@ func (r *QueryRoute) Get() *corev1.Route {
 			APIVersion: "route.openshift.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: r.jaeger.Namespace,
-			Labels:    util.Labels(r.jaeger.Name, "query-route", *r.jaeger),
+			Name:        name,
+			Namespace:   r.jaeger.Namespace,
+			Labels:      util.Labels(r.jaeger.Name, "query-route", *r.jaeger),
+			Annotations: r.jaeger.Spec.Ingress.Annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: r.jaeger.APIVersion,

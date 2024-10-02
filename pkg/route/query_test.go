@@ -48,11 +48,13 @@ func TestQueryRouteEnabled(t *testing.T) {
 func TestQueryRouteWithOAuthProxy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryRouteWithOAuthProxy"})
 	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+	jaeger.Spec.Ingress.Annotations = map[string]string{"timeout": "10s"}
 	route := NewQueryRoute(jaeger)
 
 	r := route.Get()
 	assert.Equal(t, corev1.TLSTerminationReencrypt, r.Spec.TLS.Termination)
 	assert.Equal(t, intstr.FromString("https-query"), r.Spec.Port.TargetPort)
+	assert.Equal(t, map[string]string{"timeout": "10s"}, r.Annotations)
 }
 
 func TestQueryRouteWithoutOAuthProxy(t *testing.T) {

@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"sort"
 	"testing"
-
-	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
-	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
-	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
-	"github.com/jaegertracing/jaeger-operator/pkg/util"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
+	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
+	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/deployment"
 	"github.com/jaegertracing/jaeger-operator/pkg/service"
+	"github.com/jaegertracing/jaeger-operator/pkg/util"
 )
 
 func TestOAuthProxyContainerIsNotAddedByDefault(t *testing.T) {
@@ -74,6 +75,25 @@ func TestOAuthProxyWithCustomSAR(t *testing.T) {
 	found := false
 	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
 		if a == fmt.Sprintf("--openshift-sar=%s", *jaeger.Spec.Ingress.Openshift.SAR) {
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestOAuthProxyWithTimeout(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Ingress.Security = v1.IngressSecurityOAuthProxy
+
+	timeout := metav1.Duration{
+		Duration: time.Second * 70,
+	}
+	jaeger.Spec.Ingress.Openshift.Timeout = &timeout
+	dep := OAuthProxy(jaeger, deployment.NewQuery(jaeger).Get())
+
+	found := false
+	for _, a := range dep.Spec.Template.Spec.Containers[1].Args {
+		if a == "--upstream-timeout=1m10s" {
 			found = true
 		}
 	}

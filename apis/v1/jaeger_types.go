@@ -374,6 +374,10 @@ type JaegerIngressOpenShiftSpec struct {
 	// SkipLogout tells the operator to not automatically add a "Log Out" menu option to the custom Jaeger configuration
 	// +optional
 	SkipLogout *bool `json:"skipLogout,omitempty"`
+
+	// Timeout defines client timeout from oauth-proxy to jaeger.
+	// +optional
+	Timeout *metav1.Duration `json:"timeout,omitempty"`
 }
 
 // JaegerAllInOneSpec defines the options to be used when deploying the query
