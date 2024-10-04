@@ -82,6 +82,8 @@ func TestCreateStreamingDeploymentWithDaemonSetAgent(t *testing.T) {
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
+	enabled := true
+	j.Spec.Agent.Enabled = &enabled
 
 	c := newStreamingStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForStreaming(t, j, c, true, false, false)

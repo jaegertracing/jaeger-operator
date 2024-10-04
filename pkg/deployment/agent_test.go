@@ -35,10 +35,27 @@ func reset() {
 func TestNewAgent(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 
 	d := NewAgent(jaeger).Get()
 	assert.Empty(t, jaeger.Spec.Agent.Image)
 	assert.Contains(t, d.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
+}
+
+func TestNewAgentDisabled(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Enabled = new(bool)
+
+	d := NewAgent(jaeger).Get()
+	assert.Nil(t, d)
+}
+
+func TestNewAgentNotDefined(t *testing.T) {
+	jaeger := v1.Jaeger{}
+
+	d := NewAgent(&jaeger).Get()
+	assert.Nil(t, d)
 }
 
 func TestDefaultAgentImage(t *testing.T) {
@@ -47,6 +64,8 @@ func TestDefaultAgentImage(t *testing.T) {
 
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 
 	d := NewAgent(jaeger).Get()
 	assert.Empty(t, jaeger.Spec.Agent.Image)
@@ -69,6 +88,9 @@ func TestGetSidecarDeployment(t *testing.T) {
 func TestGetDaemonSetDeployment(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
+
 	agent := NewAgent(jaeger)
 
 	ds := agent.Get()
@@ -78,6 +100,8 @@ func TestGetDaemonSetDeployment(t *testing.T) {
 func TestDaemonSetAgentAnnotations(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Annotations = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -100,6 +124,8 @@ func TestDaemonSetAgentAnnotations(t *testing.T) {
 func TestDaemonSetAgentLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Labels = map[string]string{
 		"name":  "operator",
 		"hello": "jaeger",
@@ -123,6 +149,8 @@ func TestDaemonSetAgentLabels(t *testing.T) {
 func TestDaemonSetAgentResources(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceLimitsCPU:              *resource.NewQuantity(1024, resource.BinarySI),
@@ -158,6 +186,8 @@ func TestDaemonSetAgentResources(t *testing.T) {
 func TestAgentLabels(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	a := NewAgent(jaeger)
 	dep := a.Get()
 	assert.Equal(t, "jaeger-operator", dep.Spec.Template.Labels["app.kubernetes.io/managed-by"])
@@ -169,6 +199,8 @@ func TestAgentLabels(t *testing.T) {
 func TestAgentOrderOfArguments(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"b-option": "b-value",
 		"a-option": "a-value",
@@ -191,6 +223,8 @@ func TestAgentOrderOfArguments(t *testing.T) {
 func TestAgentCustomReporterPort(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.Options = v1.NewOptions(map[string]interface{}{
 		"reporter.grpc.host-port": "collector:5000",
 	})
@@ -260,6 +294,8 @@ func TestAgentArgumentsOpenshiftTLS(t *testing.T) {
 				Namespace: "test",
 			})
 			jaeger.Spec.Agent.Strategy = "daemonset"
+			enabled := true
+			jaeger.Spec.Agent.Enabled = &enabled
 			jaeger.Spec.Agent.Options = tt.options
 
 			a := NewAgent(jaeger)
@@ -288,6 +324,8 @@ func TestAgentImagePullSecrets(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAllInOneImagePullSecrets"})
 	const pullSecret = "mysecret"
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.ImagePullSecrets = []corev1.LocalObjectReference{
 		{
 			Name: pullSecret,
@@ -304,6 +342,8 @@ func TestAgentImagePullPolicy(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestAgentImagePullPolicy"})
 	const pullPolicy = corev1.PullPolicy("Always")
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.ImagePullPolicy = corev1.PullPolicy("Always")
 
 	agent := NewAgent(jaeger)
@@ -315,6 +355,8 @@ func TestAgentImagePullPolicy(t *testing.T) {
 func TestAgentServiceLinks(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	a := NewAgent(jaeger)
 	dep := a.Get()
 	falseVar := false
@@ -326,6 +368,8 @@ func TestAgentHostNetwork(t *testing.T) {
 	trueVar := true
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.HostNetwork = &trueVar
 	a := NewAgent(jaeger)
 	dep := a.Get()
@@ -336,6 +380,8 @@ func TestAgentDNSPolicyWithHostNetwork(t *testing.T) {
 	trueVar := true
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.HostNetwork = &trueVar
 	a := NewAgent(jaeger)
 	dep := a.Get()
@@ -347,6 +393,8 @@ func TestAgentPriorityClassName(t *testing.T) {
 	priorityClassName := "test-class"
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.PriorityClassName = priorityClassName
 	a := NewAgent(jaeger)
 	dep := a.Get()
@@ -367,6 +415,8 @@ func TestAgentLivenessProbe(t *testing.T) {
 	}
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.LivenessProbe = livenessProbe
 	a := NewAgent(jaeger)
 	dep := a.Get()
@@ -376,6 +426,8 @@ func TestAgentLivenessProbe(t *testing.T) {
 func TestAgentEmptyEmptyLivenessProbe(t *testing.T) {
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	a := NewAgent(jaeger)
 	dep := a.Get()
 	assert.Equal(t, &corev1.Probe{
@@ -401,6 +453,8 @@ func TestAgentContainerSecurityContext(t *testing.T) {
 	}
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.Agent.ContainerSecurityContext = &securityContextVar
 
 	a := NewAgent(jaeger)
@@ -425,6 +479,8 @@ func TestAgentContainerSecurityContextOverride(t *testing.T) {
 	}
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
 	jaeger.Spec.Agent.Strategy = "daemonset"
+	enabled := true
+	jaeger.Spec.Agent.Enabled = &enabled
 	jaeger.Spec.ContainerSecurityContext = &securityContextVar
 	jaeger.Spec.Agent.ContainerSecurityContext = &overrideSecurityContextVar
 
