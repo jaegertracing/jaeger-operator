@@ -51,11 +51,13 @@ func TestNewAgentDisabled(t *testing.T) {
 	assert.Nil(t, d)
 }
 
-func TestNewAgentNotDefined(t *testing.T) {
-	jaeger := v1.Jaeger{}
+func TestNewAgentNotDefinedWithStrategy(t *testing.T) {
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "my-instance"})
+	jaeger.Spec.Agent.Strategy = "daemonset"
 
-	d := NewAgent(&jaeger).Get()
-	assert.Nil(t, d)
+	d := NewAgent(jaeger).Get()
+	assert.Empty(t, jaeger.Spec.Agent.Image)
+	assert.Contains(t, d.Spec.Template.Spec.Containers[0].Image, "jaeger-agent")
 }
 
 func TestDefaultAgentImage(t *testing.T) {

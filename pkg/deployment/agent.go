@@ -33,7 +33,7 @@ func NewAgent(jaeger *v1.Jaeger) *Agent {
 // Get returns a Agent pod
 func (a *Agent) Get() *appsv1.DaemonSet {
 	// Check if the agent is enabled
-	if a.jaeger.Spec.Agent.Enabled == nil || !*a.jaeger.Spec.Agent.Enabled {
+	if a.jaeger.Spec.Agent.Enabled != nil && !*a.jaeger.Spec.Agent.Enabled {
 		a.jaeger.Logger().V(-1).Info(
 			"agent not enabled",
 			"enabled", a.jaeger.Spec.Agent.Enabled,
