@@ -1,5 +1,11 @@
 Changes by Version
 ==================
+
+## v1.62.0 (2024-10-10)
+
+* TRACING-4238 | Fix gatewat 502 timeout ([#2694](https://github.com/jaegertracing/jaeger-operator/pull/2694), [@pavolloffay](https://github.com/pavolloffay))
+* feat: added missing test for elasticsearch reconciler ([#2662](https://github.com/jaegertracing/jaeger-operator/pull/2662), [@Ankit152](https://github.com/Ankit152))
+
 ## v1.61.0 (2024-09-16)
 
 * Bump google.golang.org/grpc from 1.66.0 to 1.66.1 ([#2675](https://github.com/jaegertracing/jaeger-operator/pull/2675), [@dependabot[bot]](https://github.com/apps/dependabot))
