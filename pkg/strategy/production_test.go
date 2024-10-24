@@ -51,6 +51,8 @@ func TestCreateProductionDeploymentWithDaemonSetAgent(t *testing.T) {
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
+	enabled := true
+	j.Spec.Agent.Enabled = &enabled
 
 	c := newProductionStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForProduction(t, j, c, true, false, false)
