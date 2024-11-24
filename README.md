@@ -90,7 +90,9 @@ kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releas
 
 Please verify all the resources (e.g., Pods and Deployments) are in a ready state in the `opentelemetry-operator-system` namespace.
 
-* Once all the resources are ready, create a Jaeger instance as follows:
+### Using Jager with in-memory storage
+
+Once all the resources are ready, create a Jaeger instance as follows:
 ```yaml
 kubectl apply -f - <<EOF
 apiVersion: opentelemetry.io/v1beta1
@@ -134,13 +136,71 @@ To use the in-memory storage ui for Jaeger V2, expose the pod, deployment or the
 kubectl port-forward deployment/jaeger-inmemory-instance-collector 8080:16686
 ```
 
+Or
+
 ```bash
 kubectl port-forward service/jaeger-inmemory-instance-collector 8080:16686
 ```
 
 Once done, type `localhost:8080` in the browser to interact with the UI.
 
-[Note] There's an ongoing development in OpenTelemetry Operator where users will able to interact directly with the UI which will also support the different storage backend in Jaeger.
+[Note] There's an ongoing development in OpenTelemetry Operator where users will be able to interact directly with the UI.
+
+### Using Jaeger with database to store traces
+To use Jaeger V2 with the supported database, it is mandatory to create database deployments and they should be in `ready` state [(ref)](https://www.jaegertracing.io/docs/2.0/storage/).
+
+Create a Kubernetes Service that exposes the database pods enabling communication between the database and Jaeger pods.
+
+This can be achieved by creating a service in two ways, first by creating it [manually](https://kubernetes.io/docs/concepts/services-networking/service/) or second by creating it using imperative command.
+
+```bash
+kubectl expose pods <pod-name> --port=<port-number> --name=<name-of-the-service>
+```
+
+Or
+
+```bash
+kubectl expose deployment <deployment-name> --port=<port-number> --name=<name-of-the-service>
+```
+
+After the service is created, add the name of the service as an endpoint in their respective config as follows:
+
+* [Cassandra DB](https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config-cassandra.yaml):
+```yaml
+jaeger_storage:
+  backends:
+    some_storage:
+      cassandra:
+        connection:
+          servers: [<name-of-the-service>]
+```
+
+* [ElasticSearch](https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config-elasticsearch.yaml):
+```yaml
+jaeger_storage:
+  backends:
+    some_storage:
+      elasticseacrh:
+        servers: [<name-of-the-service>]
+```
+
+Use the modified config to create Jaeger instance with the help of OpenTelemetry Operator.
+
+```yaml
+kubectl apply -f - <<EOF
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: jaeger-storage-instance # name of your choice
+spec:
+  image: jaegertracing/jaeger:latest
+  ports:
+  - name: jaeger
+    port: 16686
+  config:
+    # modified config
+EOF
+```
 
 ## Contributing and Developing
 
