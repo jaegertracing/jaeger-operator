@@ -32,6 +32,8 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-ns", "", "The namespace for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("openshift-oauth-proxy-imagestream-name", "", "The name for the OpenShift OAuth Proxy imagestream")
 	cmd.Flags().String("platform", v1.FlagPlatformAutoDetect, "The target platform the operator will run. Possible values: 'kubernetes', 'openshift', 'auto-detect'")
+	cmd.Flags().String(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2, "The version of the autoscaling API to use. Possible values: "+v1.FlagAutoscalingVersionV2Beta2+", "+v1.FlagAutoscalingVersionV2)
+	cmd.Flags().String(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1, "The version of the cron jobs API to use. Possible values: "+v1.FlagCronJobsVersionBatchV1Beta1+", "+v1.FlagCronJobsVersionBatchV1)
 	cmd.Flags().String("es-provision", v1.FlagProvisionElasticsearchAuto, "Whether to auto-provision an Elasticsearch cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'logging.openshift.io' is available, auto-provisioning is enabled.")
 	cmd.Flags().String("kafka-provision", "auto", "Whether to auto-provision a Kafka cluster for suitable Jaeger instances. Possible values: 'yes', 'no', 'auto'. When set to 'auto' and the API name 'kafka.strimzi.io' is available, auto-provisioning is enabled.")
 	cmd.Flags().Bool("kafka-provisioning-minimal", false, "(unsupported) Whether to provision Kafka clusters with minimal requirements, suitable for demos and tests.")
