@@ -29,6 +29,8 @@ BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 export JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
+export JAEGER_AGENT_VERSION ?= "1.64.0"
+
 # Kafka and Kafka Operator variables
 STORAGE_NAMESPACE ?= "${shell kubectl get sa default -o jsonpath='{.metadata.namespace}' || oc project -q}"
 KAFKA_NAMESPACE ?= "kafka"
@@ -81,7 +83,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION)"
+LD_FLAGS ?= "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(VERSION_DATE) -X $(VERSION_PKG).defaultJaeger=$(JAEGER_VERSION) -X $(VERSION_PKG).defaultAgent=$(JAEGER_AGENT_VERSION)"
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST ?= $(LOCALBIN)/setup-envtest
@@ -152,11 +154,11 @@ build: format
 
 .PHONY: docker
 docker:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" . ${DOCKER_BUILD_OPTIONS}
+	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker build --build-arg=GOPROXY=${GOPROXY} --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=JAEGER_AGENT_VERSION=${JAEGER_AGENT_VERSION} --build-arg=TARGETARCH=$(GOARCH) --build-arg VERSION_DATE=${VERSION_DATE}  --build-arg VERSION_PKG=${VERSION_PKG} -t "$(IMG)" . ${DOCKER_BUILD_OPTIONS}
 
 .PHONY: dockerx
 dockerx:
-	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=GOPROXY=${GOPROXY} --build-arg VERSION_DATE=${VERSION_DATE} --build-arg VERSION_PKG=${VERSION_PKG} --platform=$(PLATFORMS) $(IMAGE_TAGS) .
+	$(VECHO)[ ! -z "$(PIPELINE)" ] || docker buildx build --push --progress=plain --build-arg=VERSION=${VERSION} --build-arg=JAEGER_VERSION=${JAEGER_VERSION} --build-arg=JAEGER_AGENT_VERSION=${JAEGER_AGENT_VERSION} --build-arg=GOPROXY=${GOPROXY} --build-arg VERSION_DATE=${VERSION_DATE} --build-arg VERSION_PKG=${VERSION_PKG} --platform=$(PLATFORMS) $(IMAGE_TAGS) .
 
 .PHONY: push
 push:
