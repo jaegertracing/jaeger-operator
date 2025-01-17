@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	version            string
-	buildDate          string
-	defaultJaeger      string
-	defaultJaegerAgent string
+	version       string
+	buildDate     string
+	defaultJaeger string
+	defaultAgent  string
 )
 
 // Version holds this Operator's version as well as the version of some of the components it uses
@@ -56,9 +56,9 @@ func DefaultJaeger() string {
 
 // DefaultAgent returns the default Jaeger to use when no versions are specified via CLI or configuration
 func DefaultAgent() string {
-	if len(defaultJaegerAgent) > 0 {
+	if len(defaultAgent) > 0 {
 		// this should always be set, as it's specified during the build
-		return defaultJaegerAgent
+		return defaultAgent
 	}
 
 	// fallback value, useful for tests
