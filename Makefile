@@ -29,6 +29,9 @@ BUNDLE_IMG ?= ${IMG_PREFIX}/${OPERATOR_NAME}-bundle:$(addprefix v,${VERSION})
 OUTPUT_BINARY ?= "$(BIN_DIR)/jaeger-operator"
 VERSION_PKG ?= "github.com/jaegertracing/jaeger-operator/pkg/version"
 export JAEGER_VERSION ?= "$(shell grep jaeger= versions.txt | awk -F= '{print $$2}')"
+# agent was removed in jaeger 1.62.0, and the new versions of jaeger doesn't distribute the images anymore
+# for that reason the last version of the agent is 1.62.0 and is pined here so we can update jaeger and maintain
+# the latest agent image.
 export JAEGER_AGENT_VERSION ?= "1.62.0"
 
 # Kafka and Kafka Operator variables
