@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	esv1 "github.com/openshift/elasticsearch-operator/apis/logging/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+)
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+var (
+	_ webhook.Defaulter = &Jaeger{}
+	_ webhook.Validator = &Jaeger{}
 )
 
 func TestDefault(t *testing.T) {
@@ -166,8 +171,8 @@ func TestDefault(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			esv1.AddToScheme(scheme.Scheme)
-			AddToScheme(scheme.Scheme)
+			require.NoError(t, esv1.AddToScheme(scheme.Scheme))
+			require.NoError(t, AddToScheme(scheme.Scheme))
 			fakeCl := fake.NewClientBuilder().WithRuntimeObjects(test.objs...).Build()
 			cl = fakeCl
 
@@ -273,8 +278,8 @@ func TestValidate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			esv1.AddToScheme(scheme.Scheme)
-			AddToScheme(scheme.Scheme)
+			require.NoError(t, esv1.AddToScheme(scheme.Scheme))
+			require.NoError(t, AddToScheme(scheme.Scheme))
 			fakeCl := fake.NewClientBuilder().WithRuntimeObjects(test.objsToCreate...).Build()
 			cl = fakeCl
 
