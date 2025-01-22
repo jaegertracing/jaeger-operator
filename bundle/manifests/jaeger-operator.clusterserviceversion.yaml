@@ -19,7 +19,7 @@ metadata:
     categories: Logging & Tracing
     certified: "false"
     containerImage: quay.io/jaegertracing/jaeger-operator:1.62.0
-    createdAt: "2025-01-22T19:40:04Z"
+    createdAt: "2025-01-22T20:40:19Z"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -527,7 +527,7 @@ spec:
   minKubeVersion: 1.19.0
   provider:
     name: CNCF
-  replaces: jaeger-operator.v1.62.0
+  replaces: jaeger-operator.v1.65.0
   selector:
     matchLabels:
       name: jaeger-operator
