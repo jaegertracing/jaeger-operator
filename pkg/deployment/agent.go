@@ -146,7 +146,7 @@ func (a *Agent) Get() *appsv1.DaemonSet {
 				Spec: corev1.PodSpec{
 					ImagePullSecrets: a.jaeger.Spec.Agent.ImagePullSecrets,
 					Containers: []corev1.Container{{
-						Image: util.ImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
+						Image: util.AgentImageName(a.jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 						Name:  "jaeger-agent-daemonset",
 						Args:  args,
 						Env:   proxy.ReadProxyVarsFromEnv(),
