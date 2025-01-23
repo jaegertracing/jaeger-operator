@@ -46,10 +46,7 @@ items:
         terminationGracePeriodSeconds: 1800
         containers:
         - name: cassandra
-          image: cassandra:3.11
-          command:
-          - /docker-entrypoint.sh
-          - "-R"
+          image: cassandra:5.0
           ports:
           - containerPort: 7000
             name: intra-node

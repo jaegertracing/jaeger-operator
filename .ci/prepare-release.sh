@@ -8,6 +8,7 @@ fi
 
 
 JAEGER_VERSION=$(echo $JAEGER_VERSION | tr -d '"')
+JAEGER_AGENT_VERSION=$(echo $JAEGER_AGENT_VERSION | tr -d '"')
 
 
 PREVIOUS_VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')

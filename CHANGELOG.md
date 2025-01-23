@@ -1,5 +1,9 @@
 Changes by Version
 ==================
+## v1.65.0 (2025-01-22)
+
+* Pin agent version to 1.62.0 ([#2790](https://github.com/jaegertracing/jaeger-operator/pull/2790), [@rubenvp8510](https://github.com/rubenvp8510))
+* Added compatibility for Jaeger Operator v1.61.x and v1.62.x ([#2725](https://github.com/jaegertracing/jaeger-operator/pull/2725), [@mooneeb](https://github.com/mooneeb))
 
 ## v1.62.0 (2024-10-10)
 

@@ -301,7 +301,7 @@ func container(jaeger *v1.Jaeger, dep *appsv1.Deployment, agentIdx int) corev1.C
 	dep.Spec.Template.Spec.ImagePullSecrets = util.RemoveDuplicatedImagePullSecrets(append(dep.Spec.Template.Spec.ImagePullSecrets, jaeger.Spec.Agent.ImagePullSecrets...))
 	dep.Spec.Template.Spec.Volumes = util.RemoveDuplicatedVolumes(append(dep.Spec.Template.Spec.Volumes, volumesAndMountsSpec.Volumes...))
 	containerDefinition := corev1.Container{
-		Image: util.ImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
+		Image: util.AgentImageName(jaeger.Spec.Agent.Image, "jaeger-agent-image"),
 		Name:  "jaeger-agent",
 		Args:  args,
 		Env:   envs,
