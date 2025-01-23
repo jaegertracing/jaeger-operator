@@ -18,8 +18,8 @@ metadata:
     capabilities: Deep Insights
     categories: Logging & Tracing
     certified: "false"
-    containerImage: quay.io/jaegertracing/jaeger-operator:1.62.0
-    createdAt: "2025-01-22T20:40:19Z"
+    containerImage: quay.io/jaegertracing/jaeger-operator:1.65.1
+    createdAt: "2025-01-23T18:22:52Z"
     description: Provides tracing, monitoring and troubleshooting for microservices-based
       distributed systems
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -27,7 +27,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/jaegertracing/jaeger-operator
     support: Jaeger Community
-  name: jaeger-operator.v1.65.0
+  name: jaeger-operator.v1.65.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -414,7 +414,7 @@ spec:
                   value: DEBUG
                 - name: KAFKA-PROVISIONING-MINIMAL
                   value: "true"
-                image: quay.io/jaegertracing/jaeger-operator:1.65.0
+                image: quay.io/jaegertracing/jaeger-operator:1.65.1
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -531,7 +531,7 @@ spec:
   selector:
     matchLabels:
       name: jaeger-operator
-  version: 1.65.0
+  version: 1.65.1
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
