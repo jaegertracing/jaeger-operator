@@ -47,9 +47,6 @@ items:
         containers:
         - name: cassandra
           image: cassandra:5.0
-          command:
-          - /docker-entrypoint.sh
-          - "-R"
           ports:
           - containerPort: 7000
             name: intra-node
