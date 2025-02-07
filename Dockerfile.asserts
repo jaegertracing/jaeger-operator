@@ -27,7 +27,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o ./index -a ./tests/assert-
 
 # Use the curl container image to ensure we have curl installed. Also, it is a
 # minimal container image
-FROM curlimages/curl@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69
+FROM curlimages/curl@sha256:3dfa70a646c5d03ddf0e7c0ff518a5661e95b8bcbc82079f0fb7453a96eaae35
 WORKDIR /
 COPY --from=builder /workspace/reporter .
 COPY --from=builder /workspace/reporter-otlp .
