@@ -72,6 +72,136 @@ curl https://raw.githubusercontent.com/jaegertracing/jaeger-operator/main/exampl
 
 It is recommended to deploy the operator instead of generating a static manifest.
 
+## Jager V2 Operator
+
+As the Jaeger V2 is released, it is decided that Jaeger V2 will deployed on Kubernetes using [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator). This will benefit both the users of Jaeger and OpenTelemetry. To use Jaeger V2 with OpenTelemetry Operator, the steps are as follows:
+
+* Install the cert-manager in the existing cluster with the command:
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
+```
+
+Please verify all the resources (e.g., Pods and Deployments) are in a ready state in the `cert-manager` namespace.
+
+* Install the OpenTelemetry Operator by running:
+```bash
+kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+```
+
+Please verify all the resources (e.g., Pods and Deployments) are in a ready state in the `opentelemetry-operator-system` namespace.
+
+### Using Jager with in-memory storage
+
+Once all the resources are ready, create a Jaeger instance as follows:
+```yaml
+kubectl apply -f - <<EOF
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: jaeger-inmemory-instance
+spec:
+  image: jaegertracing/jaeger:latest
+  ports:
+  - name: jaeger
+    port: 16686
+  config:
+    service:
+      extensions: [jaeger_storage, jaeger_query]
+      pipelines:
+        traces:
+          receivers: [otlp]    
+          exporters: [jaeger_storage_exporter]
+    extensions:
+      jaeger_query:
+        storage:
+          traces: memstore
+      jaeger_storage:
+        backends:
+          memstore:
+            memory:
+              max_traces: 100000
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+    exporters:
+      jaeger_storage_exporter:
+        trace_storage: memstore
+EOF
+```
+
+To use the in-memory storage ui for Jaeger V2, expose the pod, deployment or the service as follows:
+```bash
+kubectl port-forward deployment/jaeger-inmemory-instance-collector 8080:16686
+```
+
+Or
+
+```bash
+kubectl port-forward service/jaeger-inmemory-instance-collector 8080:16686
+```
+
+Once done, type `localhost:8080` in the browser to interact with the UI.
+
+[Note] There's an ongoing development in OpenTelemetry Operator where users will be able to interact directly with the UI.
+
+### Using Jaeger with database to store traces
+To use Jaeger V2 with the supported database, it is mandatory to create database deployments and they should be in `ready` state [(ref)](https://www.jaegertracing.io/docs/2.0/storage/).
+
+Create a Kubernetes Service that exposes the database pods enabling communication between the database and Jaeger pods.
+
+This can be achieved by creating a service in two ways, first by creating it [manually](https://kubernetes.io/docs/concepts/services-networking/service/) or second by creating it using imperative command.
+
+```bash
+kubectl expose pods <pod-name> --port=<port-number> --name=<name-of-the-service>
+```
+
+Or
+
+```bash
+kubectl expose deployment <deployment-name> --port=<port-number> --name=<name-of-the-service>
+```
+
+After the service is created, add the name of the service as an endpoint in their respective config as follows:
+
+* [Cassandra DB](https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config-cassandra.yaml):
+```yaml
+jaeger_storage:
+  backends:
+    some_storage:
+      cassandra:
+        connection:
+          servers: [<name-of-the-service>]
+```
+
+* [ElasticSearch](https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config-elasticsearch.yaml):
+```yaml
+jaeger_storage:
+  backends:
+    some_storage:
+      elasticseacrh:
+        servers: [<name-of-the-service>]
+```
+
+Use the modified config to create Jaeger instance with the help of OpenTelemetry Operator.
+
+```yaml
+kubectl apply -f - <<EOF
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: jaeger-storage-instance # name of your choice
+spec:
+  image: jaegertracing/jaeger:latest
+  ports:
+  - name: jaeger
+    port: 16686
+  config:
+    # modified config
+EOF
+```
+
 ## Contributing and Developing
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
