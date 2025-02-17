@@ -1,7 +1,6 @@
 package deployment
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 
@@ -13,7 +12,6 @@ import (
 
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/account"
-	"github.com/jaegertracing/jaeger-operator/pkg/autodetect"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/ca"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/sampling"
 	"github.com/jaegertracing/jaeger-operator/pkg/config/tls"
@@ -77,18 +75,6 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	ca.Update(a.jaeger, commonSpec)
 	ca.AddServiceCA(a.jaeger, commonSpec)
 	storage.UpdateGRPCPlugin(a.jaeger, commonSpec)
-
-	// Enable tls by default for openshift platform
-	// even though the agent is in the same process as the collector, they communicate via gRPC, and the collector has TLS enabled,
-	// as it might receive connections from external agents
-	if autodetect.OperatorConfiguration.GetPlatform() == autodetect.OpenShiftPlatform {
-		if len(util.FindItem("--reporter.grpc.host-port=", options)) == 0 &&
-			len(util.FindItem("--reporter.grpc.tls.enabled=", options)) == 0 {
-			options = append(options, "--reporter.grpc.tls.enabled=true")
-			options = append(options, fmt.Sprintf("--reporter.grpc.tls.ca=%s", ca.ServiceCAPath))
-			options = append(options, fmt.Sprintf("--reporter.grpc.tls.server-name=%s.%s.svc.cluster.local", service.GetNameForHeadlessCollectorService(a.jaeger), a.jaeger.Namespace))
-		}
-	}
 
 	// ensure we have a consistent order of the arguments
 	// see https://github.com/jaegertracing/jaeger-operator/issues/334

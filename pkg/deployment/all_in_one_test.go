@@ -398,42 +398,20 @@ func TestAllInOneArgumentsOpenshiftTLS(t *testing.T) {
 				"--collector.grpc.tls.cert=/etc/tls-config/tls.crt",
 				"--collector.grpc.tls.key=/etc/tls-config/tls.key",
 				"--sampling.strategies-file",
-				"--reporter.grpc.tls.ca",
-				"--reporter.grpc.tls.enabled",
-				"--reporter.grpc.tls.server-name",
 			},
 		},
 		{
 			name: "Explicit disable TLS",
 			options: v1.NewOptions(map[string]interface{}{
 				"a-option":                   "a-value",
-				"reporter.grpc.tls.enabled":  "false",
 				"collector.grpc.tls.enabled": "false",
 			}),
 			expectedArgs: []string{
 				"--a-option=a-value",
-				"--reporter.grpc.tls.enabled=false",
 				"--collector.grpc.tls.enabled=false",
 				"--sampling.strategies-file",
 			},
 			nonExpectedArgs: []string{
-				"--reporter.grpc.tls.enabled=true",
-				"--collector.grpc.tls.enabled=true",
-			},
-		},
-		{
-			name: "Do not implicitly enable TLS when grpc.host-port is provided",
-			options: v1.NewOptions(map[string]interface{}{
-				"a-option":                "a-value",
-				"reporter.grpc.host-port": "my.host-port.com",
-			}),
-			expectedArgs: []string{
-				"--a-option=a-value",
-				"--reporter.grpc.host-port=my.host-port.com",
-				"--sampling.strategies-file",
-			},
-			nonExpectedArgs: []string{
-				"--reporter.grpc.tls.enabled=true",
 				"--collector.grpc.tls.enabled=true",
 			},
 		},

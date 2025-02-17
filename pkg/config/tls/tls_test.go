@@ -25,18 +25,3 @@ func TestUpdateWithTLSSecret(t *testing.T) {
 	assert.Equal(t, "--collector.grpc.tls.cert=/etc/tls-config/tls.crt", options[1])
 	assert.Equal(t, "--collector.grpc.tls.key=/etc/tls-config/tls.key", options[2])
 }
-
-func TestIgnoreDefaultTLSSecretWhenGrpcHostPortIsSet(t *testing.T) {
-	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestIgnoreDefaultTLSSecretWhenGrpcHostPortIsSet"})
-	autodetect.OperatorConfiguration.SetPlatform(autodetect.OpenShiftPlatform)
-
-	commonSpec := v1.JaegerCommonSpec{}
-	options := []string{}
-	options = append(options, "--reporter.grpc.host-port=my.host-port.com")
-
-	Update(jaeger, &commonSpec, &options)
-	assert.Empty(t, commonSpec.Volumes)
-	assert.Empty(t, commonSpec.VolumeMounts)
-	assert.Len(t, options, 1)
-	assert.Equal(t, "--reporter.grpc.host-port=my.host-port.com", options[0])
-}
