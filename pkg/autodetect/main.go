@@ -201,7 +201,7 @@ func (b *Background) detectDefaultIngressClass(ctx context.Context) {
 	}
 
 	ingressClasses := networkingv1.IngressClassList{}
-	err := b.cl.List(ctx, &ingressClasses)
+	err := b.clReader.List(ctx, &ingressClasses)
 	if err != nil {
 		log.Log.Info("It was not possible to get any IngressClasses from the Kubernetes cluster")
 	}
