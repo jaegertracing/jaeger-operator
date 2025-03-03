@@ -1,0 +1,16 @@
+# Create another Jaeger instance with the agent disabled
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: agent-as-sidecar3
+spec:
+  agent:
+    enabled: false
+  strategy: allinone
+  allInOne:
+    options:
+      log-level: "debug"
+      memory.max-traces: 10000
+  ingress:
+    enabled: true
+    security: "none"

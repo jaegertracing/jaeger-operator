@@ -46,6 +46,8 @@ func TestCreateAllInOneDeploymentWithDaemonSetAgent(t *testing.T) {
 
 	j := v1.NewJaeger(types.NamespacedName{Name: name})
 	j.Spec.Agent.Strategy = "DaemonSet"
+	enabled := true
+	j.Spec.Agent.Enabled = &enabled
 
 	c := newAllInOneStrategy(context.Background(), j)
 	assertDeploymentsAndServicesForAllInOne(t, j, c, true, false, false)
