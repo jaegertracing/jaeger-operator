@@ -721,18 +721,27 @@ type JaegerDependenciesSpec struct {
 
 // JaegerEsIndexCleanerSpec holds the options related to es-index-cleaner
 type JaegerEsIndexCleanerSpec struct {
+	// Whether to switch on the index cleaning when using Elasticsearch.
+	// Set this to true to enable the index cleaning feature.
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
 
+	// Specify number of days for the data to be kept in Elasticsearch.
 	// +optional
 	NumberOfDays *int `json:"numberOfDays,omitempty"`
 
+	// Schedule the cron job for cleaning Elasticsearch indices.
+	// This field must be cron expression.
+	// +kubebuilder:validation:MinLength:=1
 	// +optional
 	Schedule string `json:"schedule,omitempty"`
 
+	// Specify how many successful jobs to be kept in the history.
 	// +optional
 	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
 
+	// Set up the custom image for the jaeger-es-index-cleaner.
+	// +kubebuilder:validation:MinLength:=1
 	// +optional
 	Image string `json:"image,omitempty"`
 
@@ -746,6 +755,8 @@ type JaegerEsIndexCleanerSpec struct {
 	// +optional
 	JaegerCommonSpec `json:",inline,omitempty"`
 
+	// Priority class name for the pod.
+	// +kubebuilder:validation:MinLength:=1
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
