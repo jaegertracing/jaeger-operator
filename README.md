@@ -124,7 +124,9 @@ spec:
       otlp:
         protocols:
           grpc:
+            endpoint: 0.0.0.0:4317
           http:
+            endpoint: 0.0.0.0:4318
     exporters:
       jaeger_storage_exporter:
         trace_storage: memstore
