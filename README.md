@@ -72,7 +72,7 @@ curl https://raw.githubusercontent.com/jaegertracing/jaeger-operator/main/exampl
 
 It is recommended to deploy the operator instead of generating a static manifest.
 
-## Jager V2 Operator
+## Jaeger V2 Operator
 
 As the Jaeger V2 is released, it is decided that Jaeger V2 will deployed on Kubernetes using [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator). This will benefit both the users of Jaeger and OpenTelemetry. To use Jaeger V2 with OpenTelemetry Operator, the steps are as follows:
 
@@ -90,7 +90,7 @@ kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releas
 
 Please verify all the resources (e.g., Pods and Deployments) are in a ready state in the `opentelemetry-operator-system` namespace.
 
-### Using Jager with in-memory storage
+### Using Jaeger with in-memory storage
 
 Once all the resources are ready, create a Jaeger instance as follows:
 ```yaml
