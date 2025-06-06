@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -150,4 +151,34 @@ func TestQueryServiceSpecAnnotations(t *testing.T) {
 	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
 	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
 	assert.Equal(t, map[string]string{"component": "jaeger"}, svc.Annotations)
+}
+
+func TestQueryServiceSpecLabels(t *testing.T) {
+	name := "TestQueryServiceSpecLabels"
+	selector := map[string]string{"app": "myapp", "jaeger": name, "jaeger-component": "query"}
+
+	// Test 1: Without custom labels
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: name})
+	svc := NewQueryService(jaeger, selector)
+	fmt.Println(svc.ObjectMeta.Labels)
+
+	// Verify default labels from util.Labels are present
+	assert.Equal(t, "testqueryservicespeclabels-query", svc.ObjectMeta.Name)
+	assert.Len(t, svc.Spec.Ports, 3)
+	assert.Equal(t, int32(16686), svc.Spec.Ports[0].Port)
+	assert.Equal(t, int32(16685), svc.Spec.Ports[1].Port)
+	assert.Equal(t, int32(16687), svc.Spec.Ports[2].Port)
+	assert.Equal(t, "http-query", svc.Spec.Ports[0].Name)
+	assert.Equal(t, "grpc-query", svc.Spec.Ports[1].Name)
+	assert.Equal(t, "admin-http", svc.Spec.Ports[2].Name)
+	assert.Equal(t, intstr.FromInt(16686), svc.Spec.Ports[0].TargetPort)
+	assert.Equal(t, intstr.FromInt(16685), svc.Spec.Ports[1].TargetPort)
+	assert.Equal(t, intstr.FromInt(16687), svc.Spec.Ports[2].TargetPort)
+
+	assert.Equal(t, "jaeger", svc.ObjectMeta.Labels["app"])
+	assert.Equal(t, fmt.Sprintf("%s", svc.ObjectMeta.Name), svc.ObjectMeta.Labels["app.kubernetes.io/name"])
+	assert.Equal(t, name, svc.ObjectMeta.Labels["app.kubernetes.io/instance"])
+	assert.Equal(t, "service-query", svc.ObjectMeta.Labels["app.kubernetes.io/component"])
+	assert.Equal(t, "jaeger", svc.ObjectMeta.Labels["app.kubernetes.io/part-of"])
+	assert.Equal(t, "jaeger-operator", svc.ObjectMeta.Labels["app.kubernetes.io/managed-by"])
 }
