@@ -17,6 +17,14 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 	if jaeger.Spec.Query.Annotations != nil {
 		annotations = jaeger.Spec.Query.Annotations
 	}
+
+	labels := util.Labels(GetNameForQueryService(jaeger), "service-query", *jaeger)
+	if jaeger.Spec.Query.Labels != nil {
+		for k, v := range jaeger.Spec.Query.Labels {
+			labels[k] = v
+		}
+
+	}
 	if jaeger.Spec.Ingress.Security == v1.IngressSecurityOAuthProxy {
 		annotations["service.alpha.openshift.io/serving-cert-secret-name"] = GetTLSSecretNameForQueryService(jaeger)
 	}
@@ -56,7 +64,7 @@ func NewQueryService(jaeger *v1.Jaeger, selector map[string]string) *corev1.Serv
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        GetNameForQueryService(jaeger),
 			Namespace:   jaeger.Namespace,
-			Labels:      util.Labels(GetNameForQueryService(jaeger), "service-query", *jaeger),
+			Labels:      labels,
 			Annotations: annotations,
 			OwnerReferences: []metav1.OwnerReference{
 				{
