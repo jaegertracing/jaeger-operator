@@ -21,6 +21,7 @@ COPY pkg/ pkg/
 COPY versions.txt versions.txt
 
 ARG JAEGER_VERSION
+ARG JAEGER_AGENT_VERSION
 ARG VERSION_PKG
 ARG VERSION
 ARG VERSION_DATE
@@ -32,7 +33,7 @@ ARG VERSION_DATE
 # see last part of https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
 ARG TARGETARCH
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o jaeger-operator main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}  -X ${VERSION_PKG}.defaultAgent=${JAEGER_AGENT_VERSION}" -a -o jaeger-operator main.go
 
 FROM quay.io/centos/centos:stream9
 

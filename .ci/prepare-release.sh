@@ -5,7 +5,11 @@ if [[ -z $OPERATOR_VERSION ]]; then
     exit 1
 fi
 
+
+
 JAEGER_VERSION=$(echo $JAEGER_VERSION | tr -d '"')
+JAEGER_AGENT_VERSION=$(echo $JAEGER_AGENT_VERSION | tr -d '"')
+
 
 PREVIOUS_VERSION=$(grep operator= versions.txt | awk -F= '{print $2}')
 
@@ -20,11 +24,11 @@ sed "s~replaces: jaeger-operator.v.*~replaces: jaeger-operator.v${PREVIOUS_VERSI
 sed -i "s~all-in-one:.*~all-in-one:${JAEGER_VERSION}~gi" examples/all-in-one-with-options.yaml
 
 # statefulset-manual-sidecar
-sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_VERSION}~gi" examples/statefulset-manual-sidecar.yaml
+sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_AGENT_VERSION}~gi" examples/statefulset-manual-sidecar.yaml
 
 # operator-with-tracing
 sed -i "s~jaeger-operator:.*~jaeger-operator:${OPERATOR_VERSION}~gi" examples/operator-with-tracing.yaml
-sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_VERSION}~gi" examples/operator-with-tracing.yaml
+sed -i "s~jaeger-agent:.*~jaeger-agent:${JAEGER_AGENT_VERSION}~gi" examples/operator-with-tracing.yaml
 
 # tracegen
 sed -i "s~jaeger-tracegen:.*~jaeger-tracegen:${JAEGER_VERSION}~gi" examples/tracegen.yaml

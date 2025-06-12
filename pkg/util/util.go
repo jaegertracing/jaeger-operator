@@ -286,6 +286,18 @@ func ImageName(image, param string) string {
 	return image
 }
 
+func AgentImageName(image, param string) string {
+	if image == "" {
+		param := viper.GetString(param)
+		if strings.IndexByte(param, ':') == -1 {
+			image = fmt.Sprintf("%s:%s", param, version.Get().Agent)
+		} else {
+			image = param
+		}
+	}
+	return image
+}
+
 // RemoveEmptyVars removes empty variables from the input slice.
 func RemoveEmptyVars(envVars []corev1.EnvVar) []corev1.EnvVar {
 	var notEmpty []corev1.EnvVar
