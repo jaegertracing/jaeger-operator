@@ -930,6 +930,8 @@ spec:
                     type: object
                   dnsPolicy:
                     type: string
+                  enabled:
+                    type: boolean
                   hostNetwork:
                     type: boolean
                   image:

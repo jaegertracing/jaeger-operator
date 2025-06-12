@@ -514,6 +514,9 @@ type JaegerIngesterSpec struct {
 
 // JaegerAgentSpec defines the options to be used when deploying the agent
 type JaegerAgentSpec struct {
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
 	// Strategy can be either 'DaemonSet' or 'Sidecar' (default)
 	// +optional
 	Strategy string `json:"strategy,omitempty"`
