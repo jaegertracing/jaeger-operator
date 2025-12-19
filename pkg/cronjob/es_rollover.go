@@ -116,13 +116,14 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 			Annotations: commonSpec.Annotations,
 		},
 		Spec: corev1.PodSpec{
-			ImagePullSecrets:   commonSpec.ImagePullSecrets,
-			RestartPolicy:      corev1.RestartPolicyOnFailure,
-			Affinity:           commonSpec.Affinity,
-			Tolerations:        commonSpec.Tolerations,
-			SecurityContext:    commonSpec.SecurityContext,
-			ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
-			Volumes:            commonSpec.Volumes,
+			ImagePullSecrets:          commonSpec.ImagePullSecrets,
+			RestartPolicy:             corev1.RestartPolicyOnFailure,
+			Affinity:                  commonSpec.Affinity,
+			TopologySpreadConstraints: commonSpec.TopologySpreadConstraints,
+			Tolerations:               commonSpec.Tolerations,
+			SecurityContext:           commonSpec.SecurityContext,
+			ServiceAccountName:        account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
+			Volumes:                   commonSpec.Volumes,
 			Containers: []corev1.Container{
 				{
 					Name:            name,
