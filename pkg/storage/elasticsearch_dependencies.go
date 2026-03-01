@@ -25,11 +25,11 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 	commonSpec := &v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "false",
-			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
 		Labels: util.Labels(name, "job-es-rollover-create-mapping", *jaeger),
 	}
+	commonSpec.Labels["sidecar.istio.io/inject"] = "false"
 	commonSpec = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.EsRollover.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, *commonSpec})
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

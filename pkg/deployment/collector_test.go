@@ -120,7 +120,7 @@ func TestCollectorAnnotations(t *testing.T) {
 	dep := collector.Get()
 
 	assert.Equal(t, "operator", dep.Spec.Template.Annotations["name"])
-	assert.Equal(t, "false", dep.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "false", dep.Spec.Template.Labels["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", dep.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", dep.Spec.Template.Annotations["prometheus.io/scrape"])
 	assert.Equal(t, "disabled", dep.Spec.Template.Annotations["linkerd.io/inject"])

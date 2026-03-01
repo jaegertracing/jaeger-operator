@@ -139,7 +139,7 @@ func TestEsIndexCleanerAnnotations(t *testing.T) {
 
 	cjob := CreateEsIndexCleaner(jaeger).(*batchv1.CronJob)
 	assert.Equal(t, "operator", cjob.Spec.JobTemplate.Spec.Template.Annotations["name"])
-	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["sidecar.istio.io/inject"])
+	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Labels["sidecar.istio.io/inject"])
 	assert.Equal(t, "world", cjob.Spec.JobTemplate.Spec.Template.Annotations["hello"])
 	assert.Equal(t, "false", cjob.Spec.JobTemplate.Spec.Template.Annotations["prometheus.io/scrape"])
 	assert.Equal(t, "disabled", cjob.Spec.JobTemplate.Spec.Template.Annotations["linkerd.io/inject"])

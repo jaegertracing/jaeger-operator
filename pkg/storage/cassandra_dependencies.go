@@ -96,11 +96,11 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 	commonSpec := &v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "false",
-			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
 		Labels: util.Labels(truncatedName, "cronjob-cassandra-schema", *jaeger),
 	}
+	commonSpec.Labels["sidecar.istio.io/inject"] = "false"
 	commonSpec = util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Collector.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, *commonSpec})
 
 	// Set job deadline to 1 day by default. If the job does not succeed within

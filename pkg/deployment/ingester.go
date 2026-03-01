@@ -60,9 +60,8 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	}
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{i.jaeger.Spec.Ingester.JaegerCommonSpec, i.jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
-	_, ok := commonSpec.Annotations["sidecar.istio.io/inject"]
-	if !ok {
-		commonSpec.Annotations["sidecar.istio.io/inject"] = "false"
+	if _, ok := commonSpec.Labels["sidecar.istio.io/inject"]; !ok {
+		commonSpec.Labels["sidecar.istio.io/inject"] = "false"
 	}
 
 	var envFromSource []corev1.EnvFromSource
