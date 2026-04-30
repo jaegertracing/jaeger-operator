@@ -182,7 +182,7 @@ jaeger_storage:
 jaeger_storage:
   backends:
     some_storage:
-      elasticseacrh:
+      elasticsearch:
         servers: [<name-of-the-service>]
 ```
 
