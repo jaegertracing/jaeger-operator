@@ -23,8 +23,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-lib/handler"
-
 	v1 "github.com/jaegertracing/jaeger-operator/apis/v1"
 	"github.com/jaegertracing/jaeger-operator/pkg/controller/jaeger"
 )
@@ -69,10 +67,6 @@ func (r *JaegerReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 func (r *JaegerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Jaeger{}).
-		Watches(
-			&v1.Jaeger{},
-			&handler.InstrumentedEnqueueRequestForObject{},
-		).
 		Complete(r)
 	return err
 }
