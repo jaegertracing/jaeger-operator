@@ -1,5 +1,9 @@
 [![Build Status][ci-img]][ci] [![Go Report Card][goreport-img]][goreport] [![Code Coverage][cov-img]][cov] [![GoDoc][godoc-img]][godoc] [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jaegertracing/jaeger-operator/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jaegertracing/jaeger-operator)
 
+🛑 DEPRECATED!
+  * This Operator only works with retired Jaeger v1.
+  * Jaeger v2 can be deployed using [OpenTelemetry Collector Operator](https://opentelemetry.io/docs/platforms/kubernetes/operator/)
+
 # Jaeger Operator for Kubernetes
 
 The Jaeger Operator is an implementation of a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
