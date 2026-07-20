@@ -45,13 +45,14 @@ func elasticsearchDependencies(jaeger *v1.Jaeger) []batchv1.Job {
 					Labels:      commonSpec.Labels,
 				},
 				Spec: corev1.PodSpec{
-					ImagePullSecrets:   commonSpec.ImagePullSecrets,
-					RestartPolicy:      corev1.RestartPolicyOnFailure,
-					Affinity:           commonSpec.Affinity,
-					Tolerations:        commonSpec.Tolerations,
-					SecurityContext:    commonSpec.SecurityContext,
-					ServiceAccountName: account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
-					Volumes:            commonSpec.Volumes,
+					ImagePullSecrets:          commonSpec.ImagePullSecrets,
+					RestartPolicy:             corev1.RestartPolicyOnFailure,
+					Affinity:                  commonSpec.Affinity,
+					TopologySpreadConstraints: commonSpec.TopologySpreadConstraints,
+					Tolerations:               commonSpec.Tolerations,
+					SecurityContext:           commonSpec.SecurityContext,
+					ServiceAccountName:        account.JaegerServiceAccountFor(jaeger, account.EsRolloverComponent),
+					Volumes:                   commonSpec.Volumes,
 					Containers: []corev1.Container{
 						{
 							Name:            name,

@@ -73,6 +73,7 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	var volumes []corev1.Volume
 	resources := &corev1.ResourceRequirements{}
 	var affinity *corev1.Affinity
+	var topologySpreadConstraints []corev1.TopologySpreadConstraint
 	var tolerations []corev1.Toleration
 	var securityContext *corev1.PodSecurityContext
 	var containerSecurityContext *corev1.SecurityContext
@@ -106,6 +107,8 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 			affinity = commonSpec.Affinity
 		}
 
+		topologySpreadConstraints = append(topologySpreadConstraints, commonSpec.TopologySpreadConstraints...)
+
 		tolerations = append(tolerations, commonSpec.Tolerations...)
 
 		if securityContext == nil {
@@ -128,18 +131,19 @@ func Merge(commonSpecs []v1.JaegerCommonSpec) *v1.JaegerCommonSpec {
 	}
 
 	return &v1.JaegerCommonSpec{
-		Annotations:              annotations,
-		Labels:                   labels,
-		VolumeMounts:             RemoveDuplicatedVolumeMounts(volumeMounts),
-		Volumes:                  RemoveDuplicatedVolumes(volumes),
-		ImagePullSecrets:         RemoveDuplicatedImagePullSecrets(imagePullSecrets),
-		ImagePullPolicy:          imagePullPolicy,
-		Resources:                *resources,
-		Affinity:                 affinity,
-		Tolerations:              tolerations,
-		SecurityContext:          securityContext,
-		ContainerSecurityContext: containerSecurityContext,
-		ServiceAccount:           serviceAccount,
+		Annotations:               annotations,
+		Labels:                    labels,
+		VolumeMounts:              RemoveDuplicatedVolumeMounts(volumeMounts),
+		Volumes:                   RemoveDuplicatedVolumes(volumes),
+		ImagePullSecrets:          RemoveDuplicatedImagePullSecrets(imagePullSecrets),
+		ImagePullPolicy:           imagePullPolicy,
+		Resources:                 *resources,
+		Affinity:                  affinity,
+		TopologySpreadConstraints: topologySpreadConstraints,
+		Tolerations:               tolerations,
+		SecurityContext:           securityContext,
+		ContainerSecurityContext:  containerSecurityContext,
+		ServiceAccount:            serviceAccount,
 	}
 }
 

@@ -1,0 +1,13 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: query-with-topology-spread-constraints
+spec:
+  query:
+    topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: jaeger-query
+        maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule

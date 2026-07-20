@@ -346,6 +346,34 @@ func TestMergeTolerations(t *testing.T) {
 	assert.Equal(t, "toleration1", merged.Tolerations[2].Key)
 }
 
+func TestMergeTopologySpreadConstraints(t *testing.T) {
+	generalSpec := v1.JaegerCommonSpec{
+		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
+			TopologyKey: "topologyKey1",
+			MaxSkew:     1,
+		}},
+	}
+	specificSpec := v1.JaegerCommonSpec{
+		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
+			TopologyKey: "topologyKey1",
+			MaxSkew:     1,
+		}, {
+			TopologyKey: "topologyKey2",
+			MaxSkew:     2,
+		}},
+	}
+
+	merged := Merge([]v1.JaegerCommonSpec{specificSpec, generalSpec})
+
+	assert.Len(t, merged.TopologySpreadConstraints, 3)
+	assert.Equal(t, "topologyKey1", merged.TopologySpreadConstraints[0].TopologyKey)
+	assert.Equal(t, int32(1), merged.TopologySpreadConstraints[0].MaxSkew)
+	assert.Equal(t, "topologyKey2", merged.TopologySpreadConstraints[1].TopologyKey)
+	assert.Equal(t, int32(2), merged.TopologySpreadConstraints[1].MaxSkew)
+	assert.Equal(t, "topologyKey1", merged.TopologySpreadConstraints[2].TopologyKey)
+	assert.Equal(t, int32(1), merged.TopologySpreadConstraints[2].MaxSkew)
+}
+
 func TestGetEsHostname(t *testing.T) {
 	tests := []struct {
 		underTest map[string]interface{}

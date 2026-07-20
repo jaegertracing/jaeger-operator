@@ -223,6 +223,14 @@ type JaegerCommonSpec struct {
 	Affinity *v1.Affinity `json:"affinity,omitempty"`
 
 	// +optional
+	// +patchMergeKey=topologyKey
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=topologyKey
+	// +listMapKey=whenUnsatisfiable
+	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+
+	// +optional
 	// +listType=atomic
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
@@ -782,7 +790,7 @@ type JaegerEsRolloverSpec struct {
 	JaegerCommonSpec `json:",inline,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // JaegerList contains a list of Jaeger
 type JaegerList struct {
