@@ -47,11 +47,11 @@ func CreateSparkDependencies(jaeger *v1.Jaeger) runtime.Object {
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
 			"prometheus.io/scrape":    "false",
-			"sidecar.istio.io/inject": "false",
 			"linkerd.io/inject":       "disabled",
 		},
 		Labels: util.Labels(name, "spark-dependencies", *jaeger),
 	}
+	baseCommonSpec.Labels["sidecar.istio.io/inject"] = "false"
 
 	commonSpec := util.Merge([]v1.JaegerCommonSpec{jaeger.Spec.Storage.Dependencies.JaegerCommonSpec, jaeger.Spec.JaegerCommonSpec, baseCommonSpec})
 

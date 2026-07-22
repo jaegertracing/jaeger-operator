@@ -58,9 +58,12 @@ func TestElasticsearchDependencies(t *testing.T) {
 	assert.Len(t, deps, 1)
 	job := deps[0]
 
+	jobLabels := util.Labels("eevee-es-rollover-create-mapping", "job-es-rollover-create-mapping", *j)
+	jobLabels["sidecar.istio.io/inject"] = "false"
+
 	assert.Equal(t, j.Namespace, job.Namespace)
 	assert.Equal(t, []metav1.OwnerReference{util.AsOwner(j)}, job.OwnerReferences)
-	assert.Equal(t, util.Labels("eevee-es-rollover-create-mapping", "job-es-rollover-create-mapping", *j), job.Labels)
+	assert.Equal(t, jobLabels, job.Labels)
 	assert.Len(t, job.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, j.Spec.Storage.EsRollover.Image, job.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, []string{"init", "foo"}, job.Spec.Template.Spec.Containers[0].Args)

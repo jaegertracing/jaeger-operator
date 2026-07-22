@@ -100,9 +100,11 @@ func createTemplate(name, action string, jaeger *v1.Jaeger, envs []corev1.EnvVar
 	envs = append(envs, proxy.ReadProxyVarsFromEnv()...)
 	baseCommonSpec := v1.JaegerCommonSpec{
 		Annotations: map[string]string{
-			"prometheus.io/scrape":    "false",
+			"prometheus.io/scrape": "false",
+			"linkerd.io/inject":    "disabled",
+		},
+		Labels: map[string]string{
 			"sidecar.istio.io/inject": "false",
-			"linkerd.io/inject":       "disabled",
 		},
 	}
 
