@@ -280,14 +280,21 @@ func TestAutoProvisionedKafkaInjectsIntoInstance(t *testing.T) {
 	assert.Contains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.consumer.tls.ca")
 	assert.NotContains(t, jaeger.Spec.Ingester.Options.Map(), "kafka.producer.brokers")
 
-	assert.Len(t, jaeger.Spec.Volumes, 2)
-	assert.Len(t, jaeger.Spec.VolumeMounts, 2)
+	assert.Len(t, jaeger.Spec.Collector.Volumes, 2)
+	assert.Len(t, jaeger.Spec.Collector.VolumeMounts, 2)
+	assert.Len(t, jaeger.Spec.Ingester.Volumes, 2)
+	assert.Len(t, jaeger.Spec.Ingester.VolumeMounts, 2)
+
+	// the kafka certs are only needed by the collector and the ingester, so they should not
+	// leak into the instance's common spec, which is shared by every other component
+	assert.Empty(t, jaeger.Spec.Volumes)
+	assert.Empty(t, jaeger.Spec.VolumeMounts)
 }
 
 func TestReplaceVolume(t *testing.T) {
 	// prepare
 	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
-	instance.Spec.Volumes = []corev1.Volume{
+	instance.Spec.Collector.Volumes = []corev1.Volume{
 		{
 			Name: "kafkauser-my-instance",
 			VolumeSource: corev1.VolumeSource{
@@ -317,10 +324,10 @@ func TestReplaceVolume(t *testing.T) {
 	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
-	assert.Len(t, instance.Spec.Volumes, 3)
+	assert.Len(t, instance.Spec.Collector.Volumes, 3)
 
 	found := 0
-	for _, v := range instance.Spec.Volumes {
+	for _, v := range instance.Spec.Collector.Volumes {
 		if v.Name == "kafkauser-my-instance-cluster-ca" {
 			found = found + 1
 			assert.Equal(t, "my-instance-cluster-ca-cert", v.VolumeSource.Secret.SecretName)
@@ -336,7 +343,7 @@ func TestReplaceVolume(t *testing.T) {
 func TestReplaceVolumeMount(t *testing.T) {
 	// prepare
 	instance := v1.NewJaeger(types.NamespacedName{Name: "my-instance", Namespace: "tenant-1"})
-	instance.Spec.VolumeMounts = []corev1.VolumeMount{
+	instance.Spec.Collector.VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "kafkauser-my-instance-cluster-ca",
 			MountPath: "/var/path",
@@ -354,9 +361,9 @@ func TestReplaceVolumeMount(t *testing.T) {
 	autoProvisionKafka(ctx, instance, newStreamingStrategy(ctx, instance))
 
 	// verify
-	assert.Len(t, instance.Spec.VolumeMounts, 3)
+	assert.Len(t, instance.Spec.Collector.VolumeMounts, 3)
 	found := 0
-	for _, v := range instance.Spec.VolumeMounts {
+	for _, v := range instance.Spec.Collector.VolumeMounts {
 		if v.Name == "kafkauser-my-instance-cluster-ca" || v.Name == "kafkauser-my-instance" {
 			found = found + 1
 			assert.True(t, strings.HasPrefix(v.MountPath, "/var/run/secrets"))
@@ -383,10 +390,11 @@ func TestAutoProvisionedKafkaAndElasticsearch(t *testing.T) {
 }
 
 func assertEsInjectSecretsStreaming(t *testing.T, p corev1.PodSpec) {
-	// first two volumes are from the common spec
-	assert.Len(t, p.Volumes, 3)
-	assert.Equal(t, "certs", p.Volumes[2].Name)
-	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[2].Name)
+	// the auto-provisioned kafka certs are only injected into the collector/ingester,
+	// so cronjobs should only see the elasticsearch "certs" volume
+	assert.Len(t, p.Volumes, 1)
+	assert.Equal(t, "certs", p.Volumes[0].Name)
+	assert.Equal(t, "certs", p.Containers[0].VolumeMounts[0].Name)
 	envs := map[string]corev1.EnvVar{}
 	for _, e := range p.Containers[0].Env {
 		envs[e.Name] = e

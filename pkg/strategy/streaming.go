@@ -217,7 +217,7 @@ func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 	clusterCAPath := fmt.Sprintf("/var/run/secrets/%s-cluster-ca", jaeger.Name)
 	clientCertPath := fmt.Sprintf("/var/run/secrets/%s", ku.Name)
 
-	// store the new volumes/volume mounts in a common spec, later to be merged with the instance's common spec
+	// store the new volumes/volume mounts in a common spec, later to be merged into the collector's and ingester's common specs
 	commonSpec := v1.JaegerCommonSpec{}
 
 	// this is the volume containing the client TLS details, like the cert and key
@@ -272,7 +272,13 @@ func autoProvisionKafka(ctx context.Context, jaeger *v1.Jaeger, manifest S) S {
 
 	jaeger.Spec.Collector.Options = v1.NewOptions(collectorOpts)
 	jaeger.Spec.Ingester.Options = v1.NewOptions(ingesterOpts)
-	jaeger.Spec.JaegerCommonSpec = *util.Merge([]v1.JaegerCommonSpec{commonSpec, jaeger.Spec.JaegerCommonSpec})
+
+	// only the collector and the ingester actually talk to kafka, so the volumes/volume mounts
+	// with the TLS material are injected into their specs, instead of the instance's common spec
+	// (which would leak the kafka certs into every other component, like the query service or the
+	// storage cronjobs)
+	jaeger.Spec.Collector.JaegerCommonSpec = *util.Merge([]v1.JaegerCommonSpec{commonSpec, jaeger.Spec.Collector.JaegerCommonSpec})
+	jaeger.Spec.Ingester.JaegerCommonSpec = *util.Merge([]v1.JaegerCommonSpec{commonSpec, jaeger.Spec.Ingester.JaegerCommonSpec})
 
 	return manifest
 }
