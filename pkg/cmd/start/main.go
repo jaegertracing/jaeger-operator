@@ -54,6 +54,9 @@ func AddFlags(cmd *cobra.Command) {
 	_ = viper.BindEnv("jaeger-es-rollover-image", "RELATED_IMAGE_JAEGER_ES_ROLLOVER")
 	_ = viper.BindEnv(v1.FlagOpenShiftOauthProxyImage, "RELATED_IMAGE_OPENSHIFT_OAUTH_PROXY")
 
+	cmd.Flags().String(v1.FlagCronJobsVersion, v1.FlagCronJobsVersionBatchV1, "The version of the CronJob API to use, e.g. batch/v1 or batch/v1beta1")
+	cmd.Flags().String(v1.FlagAutoscalingVersion, v1.FlagAutoscalingVersionV2, "The version of the Autoscaling API to use, e.g. autoscaling/v2 or autoscaling/v2beta2")
+
 	docURL := fmt.Sprintf("https://www.jaegertracing.io/docs/%s", version.DefaultJaegerMajorMinor())
 	cmd.Flags().String("documentation-url", docURL, "The URL for the 'Documentation' menu item")
 }
