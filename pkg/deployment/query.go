@@ -124,7 +124,7 @@ func (q *Query) Get() *appsv1.Deployment {
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: string(q.jaeger.Spec.Storage.Type),
+			Value: q.jaeger.Spec.Storage.Type.SpanStorageType(),
 		},
 		{
 			Name:  "METRICS_STORAGE_TYPE",
