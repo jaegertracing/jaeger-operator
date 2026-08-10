@@ -128,7 +128,7 @@ func (i *Ingester) Get() *appsv1.Deployment {
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: string(i.jaeger.Spec.Storage.Type),
+			Value: i.jaeger.Spec.Storage.Type.SpanStorageType(),
 		},
 	}
 	envVars = append(envVars, proxy.ReadProxyVarsFromEnv()...)

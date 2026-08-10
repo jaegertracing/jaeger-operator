@@ -126,6 +126,16 @@ func (storageType JaegerStorageType) OptionsPrefix() string {
 	return string(storageType)
 }
 
+// SpanStorageType returns the value to use for the SPAN_STORAGE_TYPE environment variable
+// passed to the Jaeger components. The operator identifies the gRPC storage plugin as
+// "grpc-plugin", but Jaeger's storage factory only recognizes "grpc".
+func (storageType JaegerStorageType) SpanStorageType() string {
+	if storageType == JaegerGRPCPluginStorage {
+		return "grpc"
+	}
+	return string(storageType)
+}
+
 // JaegerSpec defines the desired state of Jaeger
 type JaegerSpec struct {
 	// +optional

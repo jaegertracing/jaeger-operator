@@ -123,7 +123,7 @@ func (a *AllInOne) Get() *appsv1.Deployment {
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: string(a.jaeger.Spec.Storage.Type),
+			Value: a.jaeger.Spec.Storage.Type.SpanStorageType(),
 		},
 		{
 			Name:  "METRICS_STORAGE_TYPE",

@@ -808,6 +808,9 @@ func TestCollectorGRPCPlugin(t *testing.T) {
 	}, dep.Spec.Template.Spec.InitContainers)
 	require.Len(t, dep.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, []string{"--grpc-storage-plugin.binary=/plugin/plugin", "--sampling.strategies-file=/etc/jaeger/sampling/sampling.json"}, dep.Spec.Template.Spec.Containers[0].Args)
+
+	envVars := dep.Spec.Template.Spec.Containers[0].Env
+	assert.Contains(t, envVars, corev1.EnvVar{Name: "SPAN_STORAGE_TYPE", Value: "grpc"})
 }
 
 func TestCollectorContainerSecurityContext(t *testing.T) {

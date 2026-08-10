@@ -131,7 +131,7 @@ func (c *Collector) Get() *appsv1.Deployment {
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPAN_STORAGE_TYPE",
-			Value: string(storageType),
+			Value: storageType.SpanStorageType(),
 		},
 		{
 			Name:  "COLLECTOR_ZIPKIN_HOST_PORT",
