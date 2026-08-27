@@ -160,10 +160,30 @@ func TestQueryIngressWithPathType(t *testing.T) {
 	assert.Len(t, dep.Spec.Rules, 1)
 
 	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
-	assert.Empty(t, dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	// Prefix requires an absolute path, so an unset query base-path must default to "/"
+	// rather than producing an Ingress that the API server rejects.
+	assert.Equal(t, "/", dep.Spec.Rules[0].HTTP.Paths[0].Path)
 	assert.Equal(t, networkingv1.PathType("Prefix"), *dep.Spec.Rules[0].HTTP.Paths[0].PathType)
 	assert.Equal(t, "test-host-1", dep.Spec.Rules[0].Host)
 	assert.NotNil(t, dep.Spec.Rules[0].HTTP.Paths[0].Backend)
+}
+
+func TestQueryIngressWithExactPathTypeDefaultsPath(t *testing.T) {
+	enabled := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithExactPathTypeDefaultsPath"})
+	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Ingress.PathType = networkingv1.PathType("Exact")
+	jaeger.Spec.Ingress.Hosts = []string{"test-host-1"}
+
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
+	assert.Len(t, dep.Spec.Rules, 1)
+	assert.Len(t, dep.Spec.Rules[0].HTTP.Paths, 1)
+	assert.Equal(t, "/", dep.Spec.Rules[0].HTTP.Paths[0].Path)
+	assert.Equal(t, networkingv1.PathType("Exact"), *dep.Spec.Rules[0].HTTP.Paths[0].PathType)
 }
 
 func TestQueryIngressWithMultipleHosts(t *testing.T) {
@@ -195,6 +215,21 @@ func TestQueryIngressWithoutHosts(t *testing.T) {
 	enabled := true
 	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithoutHosts"})
 	jaeger.Spec.Ingress.Enabled = &enabled
+
+	ingress := NewQueryIngress(jaeger)
+
+	dep := ingress.Get()
+
+	assert.NotNil(t, dep)
+	assert.NotNil(t, dep.Spec.DefaultBackend)
+	assert.Empty(t, dep.Spec.Rules)
+}
+
+func TestQueryIngressWithoutHostsAndPathTypeKeepsDefaultBackend(t *testing.T) {
+	enabled := true
+	jaeger := v1.NewJaeger(types.NamespacedName{Name: "TestQueryIngressWithoutHostsAndPathTypeKeepsDefaultBackend"})
+	jaeger.Spec.Ingress.Enabled = &enabled
+	jaeger.Spec.Ingress.PathType = networkingv1.PathType("Prefix")
 
 	ingress := NewQueryIngress(jaeger)
 
