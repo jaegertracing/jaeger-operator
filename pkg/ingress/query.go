@@ -98,6 +98,12 @@ func (i *QueryIngress) addRulesSpec(spec *networkingv1.IngressSpec, backend *net
 		pathType = networkingv1.PathType(pt)
 	}
 	if len(i.jaeger.Spec.Ingress.Hosts) > 0 || path != "" {
+		// Prefix and Exact path types require an absolute path, unlike ImplementationSpecific.
+		// Default to "/" so the generated Ingress isn't rejected by the API server when no
+		// query base-path has been configured.
+		if path == "" && (pathType == networkingv1.PathTypePrefix || pathType == networkingv1.PathTypeExact) {
+			path = "/"
+		}
 		spec.Rules = append(spec.Rules, getRules(path, &pathType, i.jaeger.Spec.Ingress.Hosts, backend)...)
 	} else {
 		// no hosts and no custom path -> fall back to a single service Ingress
