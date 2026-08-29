@@ -37,20 +37,28 @@ func cassandraDeps(jaeger *v1.Jaeger) []batchv1.Job {
 		jaeger.Spec.Storage.CassandraCreateSchema.Mode = "prod"
 	}
 
-	envVars := []corev1.EnvVar{{
-		Name:  "MODE",
-		Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
-	}, {
-		Name:  "DATACENTER",
-		Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
-	}}
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "MODE",
+			Value: jaeger.Spec.Storage.CassandraCreateSchema.Mode,
+		},
+		{
+			Name:  "DATACENTER",
+			Value: jaeger.Spec.Storage.CassandraCreateSchema.Datacenter,
+		},
+	}
 
-	servers := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
-	host := strings.Split(servers, ",")[0] //  <- choose first server address
+	host := jaeger.Spec.Storage.Options.StringMap()["cassandra.servers"]
+	if len(host) > 0 {
+		serverList := strings.Split(host, ",")
+		host = strings.TrimSpace(serverList[0])
+	}
+
 	if host == "" {
 		jaeger.Logger().Info("Cassandra hostname not specified. Using 'cassandra' for the cassandra-create-schema job.")
 		host = "cassandra" // this is the default in the image
 	}
+
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "CQLSH_HOST",
 		Value: host,
